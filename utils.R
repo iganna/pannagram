@@ -19,16 +19,18 @@ pokazStage <- function(...) {
   fancy <- combine_styles(text.color, bg)
   # message(arguments)
   cat(fancy(arguments))
+  cat('\n')
 }
 
 pokazAttention <- function(...) {
   arguments <- paste('  Attention:', paste(..., sep = " "), sep = ' ')
   
-  text.color <- make_style("#FF8080")
+  text.color <- make_style("#FC345C")
   bg <- make_style("grey20", bg = TRUE)
   fancy <- combine_styles(text.color, bg)
   # message(arguments)
   cat(fancy(arguments))
+  cat('\n')
 }
 
 
@@ -43,9 +45,10 @@ pokaz <- function(...) {
   
   arguments <- paste('  ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#F6F9F6")
+  text.color <- make_style("#FDFFE7")
   bg <- make_style("grey20", bg = TRUE)
   fancy <- combine_styles(text.color, bg)
   # message(arguments)
   cat(fancy(arguments))
+  cat('\n')
 }
