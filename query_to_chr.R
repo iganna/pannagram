@@ -71,16 +71,15 @@ pokazAttention(msg)
 #' ----------------------------------------------------------------------
 
 
-
 pokaz('Path with genomes:', path.query)
 files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
 query.name = gsub(paste0('*.', query.type, collapse = ''), "" ,files.query)
 pokaz('Names of genomes:', query.name)
 
-for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %dopar% {
-#for.flag = T
-#for(acc in query.name[1:length(query.name)]){
+# for.flag = F
+# tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %dopar% {
+for.flag = T
+for(acc in query.name[1:length(query.name)]){
   
   
   #' --- --- --- --- --- --- --- --- --- --- ---
@@ -88,7 +87,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %
   n.exist = 0
   for(i.chr in 1:n.chr){
     acc.s = gsub('_', '-', acc)
-    file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
+    file.out = paste0(path.chr, acc.s, '_chr', i.chr, query.type, collapse = '')
     if(file.exists(file.out)){
       n.exist = n.exist + 1
     }
@@ -103,26 +102,15 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %
   #' --- --- --- --- --- --- --- --- --- --- ---
   
   
-  flag.exist = 0
-  for(i.chr in 1:n.chr){
-    acc.s = gsub('_', '-', acc)
-    file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
-    if(file.exists(file.out)){
-      flag.exist = flag.exist + 1
-    }
-  }
-  if(flag.exist == 5){
-    next
-  } else {
-    return(NULL)
-  }
-  
-  
   print(acc)
   q.fasta = read.fasta(paste0(path.query, acc, '.', query.type, collapse = ''))
   
   if(length(q.fasta) < n.chr){
-    return(NULL)
+    if(for.flag){
+      next
+    } else {
+      return(NULL)
+    }
   }
   
   if(sort.by.lengths){
