@@ -61,7 +61,6 @@ len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
 query.type <- ifelse(!is.null(opt$type), opt$type, "fasta")
 
 
-
 #' ----------------------------------------------------------------------
 pokazStage('Chromosomes into parts')
 
@@ -76,7 +75,6 @@ if(length(query.name) == 0){
 
 for.flag = F
 tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %dopar% {
-
 #for.flag = T
 #for(acc in query.name){
   
@@ -84,7 +82,10 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %
     file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
-    if( file.exists(file.out)) next
+    if( file.exists(file.out)) {
+      if(for.flag) next
+      return(NULL)
+    }
     
     q.fasta = read.fasta(file.in)[[1]]
     len.chr = length(q.fasta)
