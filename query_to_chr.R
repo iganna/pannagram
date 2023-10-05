@@ -60,13 +60,16 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
 
 
 # ------------------------------------------------------------------------------------
+
+pokazStage('Genomes into chromosomes')
+
 msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
 # message(paste0(rep('-', nchar(msg)), collapse = ''))
 pokazAttention(msg)
 # message(paste0(rep('-', nchar(msg)), collapse = ''))
 # ------------------------------------------------------------------------------------
 
-pokazStage('Genomes into chromosomes')
+
 
 pokaz('Path with genomes:', path.query)
 files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
