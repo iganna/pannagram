@@ -74,7 +74,7 @@ pokazAttention(msg)
 pokaz('Path with genomes:', path.query)
 files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
 query.name = gsub(paste0('*.', query.type, collapse = ''), "" ,files.query)
-message(paste0(c('Names of genomes:', query.name), collapse = ' '))
+pokaz('Names of genomes:', query.name)
 
 for.flag = F
 tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %dopar% {
