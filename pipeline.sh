@@ -134,17 +134,17 @@ fi
 Rscript query_to_chr.R -n ${n_chr_query} -t fasta --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores}
 # Split quiery chromosomes into parts
 Rscript query_to_parts.R -n ${n_chr_query} -t fasta --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
-# Rename the reference, it sould not contain any '_' symbol, because it is used later for ssplitting
+# Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
 ref_pref=${ref_pref//_/$'-'}
 
-# # Create a database on the reference genome
-# for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do
-# 	makeblastdb -in ${file} -dbtype nucl > /dev/null
-# done
+# Create a database on the reference genome
+for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do
+	makeblastdb -in ${file} -dbtype nucl > /dev/null
+done
 
-# # Blast parts on the reference genome
-# ./arab_blast.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ../${pref_global}_blast_res_${ref_pref}/ \
-#  -ref_pref ${ref_pref}_chr -ref_type fasta -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores 30
+# Blast parts on the reference genome
+./blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ../${pref_global}_blast_res_${ref_pref}/ \
+ -ref_pref ${ref_pref}_chr -ref_type fasta -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores 30
 
 
 # # First round of alignments
