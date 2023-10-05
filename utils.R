@@ -14,7 +14,7 @@ library(crayon)
 pokazStage <- function(...) {
   arguments <- paste('*', paste(..., sep = " "), sep = ' ')
   
-  text.color <- make_style("#C9FDD7")
+  text.color <- make_style("#64CCC5")
   bg <- make_style("grey5", bg = TRUE)
   fancy <- combine_styles(text.color)
   # message(arguments)
