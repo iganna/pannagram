@@ -28,7 +28,9 @@ option_list <- list(
   make_option(c("-b", "--bp"), type = "character", default = NULL, 
               help = "number of base pairs in the part file", metavar = "character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("-a", "--acc.anal"), type = "character", default = NULL,
+              help = "what axes to analyze", metavar = "character")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -43,6 +45,16 @@ registerDoParallel(myCluster)
 
 # Ensure the number of chromosomes is specified and set it
 n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
+acc.anal <- ifelse(!is.null(opt$n.chr), (opt$n.chr), NULL)
+if(!is.null(acc.anal)){
+  if (!file.exists(acc.anal)) {
+    acc.anal = NULL
+    pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.')
+  } else {
+    tmp = read.table(acc.anal, stringsAsFactors = F)
+    acc.anal = tmp[,1]
+  }
+}
 
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))

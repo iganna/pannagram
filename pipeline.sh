@@ -8,6 +8,10 @@
 
 # ./pipeline.sh -pref_global 'ly' -ref_pref '0' -path_chr_ref "../pb_chromosomes/" -n_chr_ref 5 -path_in '../lyrata/' -n_chr_query 8
 
+
+# ./pipeline.sh -pref_global 'col' -ref_pref '0'  -n_chr_ref 5 -path_in '../col0/' -n_chr_query 5 -all_cmp F -acc_acc_anal 'acc_analysis.txt'
+
+
 print_usage() {
   echo "-pref_global"
   
@@ -57,6 +61,8 @@ do
 
 	-all_cmp) all_cmp=$2; shift ;;   # has a defaul value "T": compare all vs all
 	-p_ident) p_ident=$2; shift ;;
+
+  -acc_anal) acc_anal=$2; shift ;;  # accessions to analyse
 
 	-cores) cores=$2; shift ;;
     
@@ -131,7 +137,7 @@ fi
 
 # ==============================================================================
 # Split quiery fasta into chromosomes
-Rscript query_to_chr.R -n ${n_chr_query} -t fasta --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores}
+Rscript query_to_chr.R -n ${n_chr_query} -t fasta --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} -acc.anal {acc_anal}
 # Split quiery chromosomes into parts
 Rscript query_to_parts.R -n ${n_chr_query} -t fasta --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
 # Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
