@@ -133,9 +133,9 @@ fi
 # Split quiery fasta into chromosomes
 Rscript query_to_chr.R -n ${n_chr_query} -t fasta --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores}
 # Split quiery chromosomes into parts
-# Rscript query_to_parts.R -n ${n_chr_query} -t fasta --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
-# # Rename the reference, it sould not contain any '_' symbol, because it is used later for ssplitting
-# ref_pref=${ref_pref//_/$'-'}
+Rscript query_to_parts.R -n ${n_chr_query} -t fasta --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+# Rename the reference, it sould not contain any '_' symbol, because it is used later for ssplitting
+ref_pref=${ref_pref//_/$'-'}
 
 # # Create a database on the reference genome
 # for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do

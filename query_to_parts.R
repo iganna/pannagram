@@ -1,12 +1,12 @@
-suppressMessages(library("optparse"))
-suppressMessages(library(Biostrings))
-suppressMessages(library('seqinr'))  # read.fasta
-suppressMessages(library('foreach'))
-suppressMessages(library(doParallel))
+suppressMessages({
+  library("optparse")
+  library(Biostrings)
+  library("seqinr")       # read.fasta
+  library("foreach")
+  library(doParallel)
+})
 
-message('=====================================================')
-message('             Chromosomes into parts  ')
-message('-----------------------------------------------------') 
+source("utils.R")
 
 #Rscript query_to_parts.R -n 5 -t fasta --path.chr ../pb_chromosomes/ -b 5000 --path.parts ../pb_parts/
 # Rscript query_to_parts.R -n 8 -t fasta --path.chr ../ly_chromosomes/ -b 5000 --path.parts ../ly_parts/
@@ -24,36 +24,51 @@ registerDoParallel(myCluster)
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("-b", "--part.len"), type="character", default=NULL, 
-              help="number of base pairs in the part file", metavar="character"),
-  make_option(c("-n", "--n.chr"), type="character", default=NULL, 
-              help="number of chromosomes", metavar="character"),
-  make_option(c("-t", "--type"), type="character", default=NULL, 
-              help="type of fasta files", metavar="character"),
-  make_option(c("-i", "--path.chr"), type="character", default=NULL, 
-              help="pathway to the input directory", metavar="character"),
-  make_option(c("-o", "--path.parts"), type="character", default=NULL, 
-              help="pathway to the output directory", metavar="character")
-); 
+option_list <- list(
+  make_option(c("-b", "--part.len"), type = "character", default = NULL, 
+              help = "number of base pairs in the part file", metavar = "character"),
+  make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
+              help = "number of chromosomes", metavar = "character"),
+  make_option(c("-t", "--type"), type = "character", default = NULL, 
+              help = "type of fasta files", metavar = "character"),
+  make_option(c("-i", "--path.chr"), type = "character", default = NULL, 
+              help = "pathway to the chromosome directory", metavar = "character"),
+  make_option(c("-o", "--path.parts"), type = "character", default = NULL, 
+              help = "pathway to the parts directory", metavar = "character"),
+  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+              help = "number of cores to use for parallel processing", metavar = "integer")
+)
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# print(opt)
+# Set the number of cores for parallel processing
+num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
+myCluster <- makeCluster(num_cores, type = "PSOCK")
+registerDoParallel(myCluster)
 
-if (!is.null(opt$part.len)) len.parts <- as.numeric(opt$part.len)
-if (!is.null(opt$path.chr)) path.chr <- opt$path.chr
-if (!is.null(opt$path.parts)) path.parts <- opt$path.parts
-if (!is.null(opt$type)) query.type <- opt$type
-if (!is.null(opt$n.chr)) n.chr <- as.numeric(opt$n.chr)
+# Ensure the number of chromosomes is specified and set it
+n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
 
+# Set chromosome and parts paths
+path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
+path.parts <- ifelse(!is.null(opt$path.parts), opt$path.parts, stop("The parts path 'path.parts' must be specified!"))
 if(!dir.exists(path.parts)) dir.create(path.parts)
 
-message(paste('Directory with chromosomes:', path.chr))
+# Common attributes
+len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
+query.type <- ifelse(!is.null(opt$type), opt$type, "fasta")
+
+
+
+#' ----------------------------------------------------------------------
+pokazStage('Chromosomes into parts')
+
+pokaz('Directory with chromosomes:', path.chr)
 files.query = list.files(path = path.chr, pattern = paste0('\\.', query.type, '$', collapse = '') )
 query.name = unique(sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]))
-message(paste0(c('Names of genomes:', query.name), collapse = ' '))
+pokaz('Names of genomes:', query.name)
 
 if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')

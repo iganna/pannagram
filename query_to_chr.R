@@ -35,7 +35,7 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# ------------------------------------------------------------------------------------
+#' ----------------------------------------------------------------------
 
 # Set the number of cores for parallel processing
 num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
@@ -59,7 +59,7 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
 # pokaz('sort_chr_by_length', sort.by.lengths)
 
 
-# ------------------------------------------------------------------------------------
+#' ----------------------------------------------------------------------
 
 pokazStage('Genomes into chromosomes')
 
@@ -67,7 +67,8 @@ msg = 'Please be sure that all chromosomes in files are sorted in the same order
 # message(paste0(rep('-', nchar(msg)), collapse = ''))
 pokazAttention(msg)
 # message(paste0(rep('-', nchar(msg)), collapse = ''))
-# ------------------------------------------------------------------------------------
+
+#' ----------------------------------------------------------------------
 
 
 
@@ -82,7 +83,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %
 #for(acc in query.name[1:length(query.name)]){
   
   
-  # --- --- --- --- --- --- --- --- --- --- ---
+  #' --- --- --- --- --- --- --- --- --- --- ---
   # Don't run if the chromosomes exist
   n.exist = 0
   for(i.chr in 1:n.chr){
@@ -99,7 +100,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %
       return(NULL)
     }
   }
-  # --- --- --- --- --- --- --- --- --- --- ---
+  #' --- --- --- --- --- --- --- --- --- --- ---
   
   
   flag.exist = 0
