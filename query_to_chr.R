@@ -12,7 +12,6 @@ source("utils.R")
 # Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.out ../ly_chromosomes/    
 # Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.out ../rhiz_chromosomes/ -s T
 
-
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
@@ -64,12 +63,9 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
 pokazStage('Genomes into chromosomes')
 
 msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
-# message(paste0(rep('-', nchar(msg)), collapse = ''))
 pokazAttention(msg)
-# message(paste0(rep('-', nchar(msg)), collapse = ''))
 
 #' ----------------------------------------------------------------------
-
 
 pokaz('Path with genomes:', path.query)
 files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
@@ -102,7 +98,7 @@ for(acc in query.name[1:length(query.name)]){
   #' --- --- --- --- --- --- --- --- --- --- ---
   
   
-  print(acc)
+  pokaz('Accession', acc)
   q.fasta = read.fasta(paste0(path.query, acc, '.', query.type, collapse = ''))
   
   if(length(q.fasta) < n.chr){
@@ -118,11 +114,7 @@ for(acc in query.name[1:length(query.name)]){
     q.fasta = q.fasta[order(-q.len)]
   }
   
-  # message(paste0(c('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed'),
-  #                sep = ' ', collapse = ''))
-  
   pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed')
-  
   
   if(length(q.fasta) > n.chr){
     pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed')
@@ -138,7 +130,7 @@ for(acc in query.name[1:length(query.name)]){
         return(NULL)
       }
     }
-    print(file.out)
+    pokaz('File out', file.out)
     q.tmp = paste0(q.fasta[[i.chr]], collapse = '')
     
     s = toupper(q.tmp)
