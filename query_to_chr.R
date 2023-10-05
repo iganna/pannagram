@@ -8,6 +8,8 @@ suppressMessages({
 
 source("utils.R")
 
+pokazStage('Genomes into chromosomes')
+
 # Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.out ../pb_chromosomes/
 # Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.out ../ly_chromosomes/    
 # Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.out ../rhiz_chromosomes/ -s T
@@ -45,7 +47,7 @@ registerDoParallel(myCluster)
 
 # Ensure the number of chromosomes is specified and set it
 n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
-acc.anal <- ifelse(!is.null(opt$n.chr), (opt$n.chr), NULL)
+acc.anal <- ifelse(!is.null(opt$acc.anal), (opt$acc.anal), NULL)
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
     acc.anal = NULL
@@ -72,7 +74,7 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
 
 #' ----------------------------------------------------------------------
 
-pokazStage('Genomes into chromosomes')
+
 
 msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
 pokazAttention(msg)
