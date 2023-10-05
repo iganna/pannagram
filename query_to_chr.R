@@ -73,7 +73,7 @@ query.name = gsub(paste0('*.', query.type, collapse = ''), "" ,files.query)
 pokaz('Names of genomes:', query.name)
 
 for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr')) %dopar% {
+tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
 # for.flag = T
 # for(acc in query.name[1:length(query.name)]){
   
