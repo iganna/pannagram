@@ -14,6 +14,8 @@ source("utils.R")
 
 args = commandArgs(trailingOnly=TRUE)
 
+print(args)
+
 option_list <- list(
   make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
