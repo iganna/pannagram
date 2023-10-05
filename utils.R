@@ -16,7 +16,7 @@ pokazStage <- function(...) {
   
   text.color <- make_style("#C9FDD7")
   bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color, bg)
+  fancy <- combine_styles(text.color)
   # message(arguments)
   cat(fancy(arguments))
   cat('\n')
@@ -27,7 +27,7 @@ pokazAttention <- function(...) {
   
   text.color <- make_style("#FC345C")
   bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color, bg)
+  fancy <- combine_styles(text.color)
   # message(arguments)
   cat(fancy(arguments))
   cat('\n')
@@ -47,7 +47,7 @@ pokaz <- function(...) {
   
   text.color <- make_style("#FDFFE7")
   bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color, bg)
+  fancy <- combine_styles(text.color)
   # message(arguments)
   cat(fancy(arguments))
   cat('\n')
