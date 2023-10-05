@@ -9,7 +9,7 @@
 # ./pipeline.sh -pref_global 'ly' -ref_pref '0' -path_chr_ref "../pb_chromosomes/" -n_chr_ref 5 -path_in '../lyrata/' -n_chr_query 8
 
 
-# ./pipeline.sh -pref_global 'col' -ref_pref '0'  -n_chr_ref 5 -path_in '../col0/' -n_chr_query 5 -all_cmp F -acc_acc_anal 'acc_analysis.txt'
+# ./pipeline.sh -pref_global 'toy' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_chromosomes/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_analysis.txt'
 
 
 print_usage() {
@@ -113,6 +113,7 @@ path_consensus="${path_consensus:-../${pref_global}_consensus/}"
 # echo $cores
 # echo $sort_chr_len
 
+echo ${acc_anal}
 
 # exit 1
 
