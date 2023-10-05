@@ -14,8 +14,6 @@ source("utils.R")
 
 args = commandArgs(trailingOnly=TRUE)
 
-print(args)
-
 option_list <- list(
   make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
@@ -84,6 +82,10 @@ pokazAttention(msg)
 pokaz('Path with genomes:', path.query)
 files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
 query.name = gsub(paste0('*.', query.type, collapse = ''), "" ,files.query)
+if(!is.null(acc.anal)){
+  query.name = intersect(query.name, acc.anal)
+}
+if(length(query.name) == 0) stop('No accessions for the analysys.')
 pokaz('Names of genomes:', query.name)
 
 for.flag = F
