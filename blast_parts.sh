@@ -51,7 +51,7 @@ penalty="${penalty:--2}"
 gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
 max_hsps="${max_hsps:-30}"
-cores="${cores:-30}"
+cores="${cores:-1}"
 
 
 #echo $blastres
