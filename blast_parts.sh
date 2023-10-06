@@ -50,8 +50,8 @@ done
 penalty="${penalty:--2}"
 gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
-max_hsps="${max_hsps:-30}"
-cores="${cores:-1}"
+max_hsps="${max_hsps:-1}"
+cores="${cores:-30}"
 
 
 #echo $blastres
