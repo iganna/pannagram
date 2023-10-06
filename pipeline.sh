@@ -9,7 +9,9 @@
 # ./pipeline.sh -pref_global 'ly' -ref_pref '0' -path_chr_ref "../pb_chromosomes/" -n_chr_ref 5 -path_in '../lyrata/' -n_chr_query 8
 
 
-# ./pipeline.sh -pref_global 'toy' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_chromosomes/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_analysis.txt'
+# ./pipeline.sh -pref_global 'ly2' -ref_pref '0' -path_chr_ref "../pb_chromosomes/" -n_chr_ref 5 -path_in '../lyrata/' -n_chr_query 8
+
+# ./pipeline.sh -pref_global 'toy' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_genomes/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_analysis.txt'
 
 
 print_usage() {
@@ -86,6 +88,8 @@ then
   done
 fi
 
+
+acc_anal="${acc_anal:-NULL}"
 
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"

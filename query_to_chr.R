@@ -48,6 +48,7 @@ registerDoParallel(myCluster)
 # Ensure the number of chromosomes is specified and set it
 n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
 acc.anal <- ifelse(!is.null(opt$acc.anal), (opt$acc.anal), NULL)
+if(acc.anal == 'NULL') acc.anal = NULL
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
     acc.anal = NULL
@@ -57,8 +58,6 @@ if(!is.null(acc.anal)){
     acc.anal = tmp[,1]
   }
 }
-
-print(acc.anal)
 
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))
@@ -91,7 +90,6 @@ if(!is.null(acc.anal)){
 }
 if(length(query.name) == 0) stop('No accessions for the analysys.')
 pokaz('Names of genomes:', query.name)
-print(query.name)
 
 for.flag = F
 tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
