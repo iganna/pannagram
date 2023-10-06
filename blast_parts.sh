@@ -50,7 +50,7 @@ done
 penalty="${penalty:--2}"
 gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
-max_hsps="${max_hsps:-5}"
+max_hsps="${max_hsps:-2}"
 cores="${cores:-30}"
 
 
