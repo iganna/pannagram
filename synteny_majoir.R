@@ -237,6 +237,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       x.block = x.block[-idx.remove,]
       # rownames(x.block) = NULL
     }
+    if(!isSorted(x.major$p.beg)) pokazAttention('1!!')
     
     # Remove wrong blocks completely
     remain.block = x.block$block.id
@@ -250,6 +251,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x.major$block = x.major$block + c(1, abs(x.major$dir[-1] != x.major$dir[-nrow(x.major)])) 
     x.major$block = (x.major$block > 0) * 1
     
+    if(!isSorted(x.major$p.beg)) pokazAttention('2!!')
+    
     x.major$block.id = cumsum(x.major$block)  # block ID
     cnt = table(x.major$block.id, x.major$dir)
     print(cnt)
@@ -258,6 +261,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     # Determine short overlaps
     x.major = defineSmallOverlapps(x.major)
+    if(!isSorted(x.major$p.beg)) pokazAttention('3!!')
     
     file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
     file.maj.idx <- paste(path.aln, paste0(pref.comb, '_maj_idx.rds', collapse = ''), sep = '')
