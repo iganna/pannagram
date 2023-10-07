@@ -269,7 +269,18 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
     # Remove shprt overlaps
-    x.sk = removeSmallOverlapps(x.sk)
+    x = removeSmallOverlapps(x)
+    
+    # Check uniquness of occupancy
+    pos.q.occup = rep(0, base.len)
+    for(irow in 1:nrow(x.sk)){
+      # pos.q.occup[x.sk$V2[irow]:x.sk$V3[irow]] = pos.q.occup[x.sk$V2[irow]:x.sk$V3[irow]] + 1
+      # if(sum(pos.q.occup[x.sk$V4[irow]:x.sk$V5[irow]]) > 0) stop()
+      pos.q.occup[x.sk$V4[irow]:x.sk$V5[irow]] = pos.q.occup[x.sk$V4[irow]:x.sk$V5[irow]] + 1
+    }
+    if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')
+    pokaz('Occupancy of base', sum(pos.q.occup))
+    
     
     saveRDS(x, file.aln.pre, compress = F)
     saveRDS(x.major, file.maj.idx, compress = F)
