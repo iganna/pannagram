@@ -107,7 +107,7 @@ for(acc in query.name){
     # if(sum(sapply(s, nchar)) != len.chr) stop('aa')
     
     file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
-    writeFasta(s, file.out)
+    writeFastaMy(s, file.out)
     
     # write('', file=file.out, append=F)
     # for(i in 1:length(s)){
