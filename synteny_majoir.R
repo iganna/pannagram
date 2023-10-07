@@ -268,6 +268,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
+    x$rm.len = x.major$rm.len
     # Remove shprt overlaps
     x = removeSmallOverlapps(x)
     
