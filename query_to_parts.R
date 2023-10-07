@@ -96,7 +96,7 @@ for(acc in query.name){
     pos.beg = seq(1, len.chr, len.parts)
     
     if(length(s) != length(pos.beg)) stop('Problem with chunks')
-    names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', i, '|', pos.beg, sep='')
+    names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
     
     # len.chr = length(q.fasta)
     # q.tmp = paste0(q.fasta, collapse = '')
