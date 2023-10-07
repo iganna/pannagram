@@ -66,6 +66,8 @@ defineSmallOverlapps <- function(x.major){
 #' 
 removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
   
+  if(!isSorted(x.sk$p.beg)) pokazAttention('2!!')
+  
   x.sk =  x.sk[((abs(x.sk$rm.len) / x.sk$V7) <= rm.threshold) | (x.sk$rm.len == 0),]
   
   idx.remove = c()
