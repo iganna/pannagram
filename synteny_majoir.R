@@ -247,6 +247,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # Check remained blocks
     x.major$id = rank(x.major$id)
     x.major$block = c(1, abs(x.major$id[-1] - x.major$id[-nrow(x.major)]) != 1) 
+    x.major$block = x.major$block + c(1, abs(x.major$dir[-1] - x.major$dir[-nrow(x.major)]) != 1) 
+    x.major$block = (x.major$block > 0) * 1
+    
     x.major$block.id = cumsum(x.major$block)  # block ID
     cnt = table(x.major$block.id, x.major$dir)
     print(cnt)
