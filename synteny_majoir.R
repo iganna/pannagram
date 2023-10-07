@@ -270,6 +270,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # Save
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
+    print(x.sk[159 + (-3:3),])
+    
     if(!isSorted(x.major$p.beg)) pokazAttention('4!!')
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
