@@ -270,11 +270,16 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # Save
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
+    if(!isSorted(x.major$p.beg)) pokazAttention('4!!')
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
     x$rm.len = x.major$rm.len
+    
+    if(!isSorted(x$p.beg)) pokazAttention('5!!')
     # Remove shprt overlaps
     x = removeSmallOverlapps(x)
+    
+    if(!isSorted(x$p.beg)) pokazAttention('6!!')
     
     # Check uniquness of occupancy
     pos.q.occup = rep(0, base.len)
