@@ -73,10 +73,10 @@ if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')
 }
 
-# for.flag = F
-# tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
-for.flag = T
-for(acc in query.name){
+for.flag = F
+tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+# for.flag = T
+# for(acc in query.name){
   
   for(i.chr in 1:n.chr){
     file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
@@ -87,7 +87,7 @@ for(acc in query.name){
       return(NULL)
     }
     
-    # q.fasta = read.fasta(file.in)[[1]]
+    
     q.fasta = readFastaMy(file.in)[1]
     q.fasta = toupper(q.fasta)
     
@@ -98,23 +98,8 @@ for(acc in query.name){
     if(length(s) != length(pos.beg)) stop('Problem with chunks')
     names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
     
-    # len.chr = length(q.fasta)
-    # q.tmp = paste0(q.fasta, collapse = '')
-    # pos.beg = seq(1, len.chr, len.parts)
-    # pos.end = c(seq(len.parts, len.chr, len.parts), len.chr)
-    # s = substring(q.tmp, pos.beg, pos.end)
-    # s = toupper(s)
-    # if(sum(sapply(s, nchar)) != len.chr) stop('aa')
-    
     file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
     writeFastaMy(s, file.out)
-    
-    # write('', file=file.out, append=F)
-    # for(i in 1:length(s)){
-    #   write(paste0('>acc_', acc, '|chr_', i.chr, '|part_', i, '|', pos.beg[i], collapse=''), file=file.out, append=T)
-    #   write(s[i], file=file.out, append=T)
-    #   write('\n', file=file.out, append=T)
-    # }
     
     rm(q.fasta)
     rm(s)
