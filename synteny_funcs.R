@@ -12,12 +12,12 @@
 #
 defineSmallOverlapps <- function(x.major){
   
-  sort.flaf = isSorted(x.major$p.beg)
-  new.col.name = 'tmp'
-  if(!sort.flaf){
-    x.major[,new.col.name] = 1:nrow(x.major)
-    x.major[order(x.major$p.beg),]
-  }
+  # sort.flaf = isSorted(x.major$p.beg)
+  # new.col.name = 'tmp'
+  # if(!sort.flaf){
+  #   x.major[,new.col.name] = 1:nrow(x.major)
+  #   x.major[order(x.major$p.beg),]
+  # }
   
   x.major$rm.len = 0
   idx.overlap = which(x.major$p.beg[-1] <= x.major$p.end[-nrow(x.major)])
@@ -45,10 +45,10 @@ defineSmallOverlapps <- function(x.major){
     x.major$rm.len[icut] = ncut * tail.iсut
   }
   
-  if(!sort.flaf){
-    x.major[order(x.major[,new.col.name]),]
-    x.major = x.major[,colnames(x.major) != new.col.name]
-  }
+  # if(!sort.flaf){
+  #   x.major[order(x.major[,new.col.name]),]
+  #   x.major = x.major[,colnames(x.major) != new.col.name]
+  # }
   
   return(x.major)
 }
