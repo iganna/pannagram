@@ -271,6 +271,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
     print(x.major[159 + (-3:3),])
+    saveRDS(x.major, file.maj.idx, compress = F)
     
     if(!isSorted(x.major$p.beg)) pokazAttention('4!!')
     x = x[x.major$idx.maj,]
