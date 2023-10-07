@@ -249,6 +249,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x.major$block = c(1, abs(x.major$id[-1] - x.major$id[-nrow(x.major)]) != 1) 
     x.major$block.id = cumsum(x.major$block)  # block ID
     cnt = table(x.major$block.id, x.major$dir)
+    print(cnt)
     if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     
     
