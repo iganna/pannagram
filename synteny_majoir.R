@@ -1,16 +1,20 @@
 #library(ggplot2)
-suppressMessages(library(Biostrings))
-suppressMessages(library('seqinr'))
-suppressMessages(library('spgs'))  # reverseComplement("actg")
-suppressMessages(library('foreach'))
-suppressMessages(library(doParallel))
-suppressMessages(library(stringr))
-suppressMessages(library("optparse"))
+
+suppressMessages({
+  library(Biostrings)
+  library(seqinr)
+  library(spgs)  # reverseComplement("actg")
+  library(foreach)
+  library(doParallel)
+  library(stringr)
+  library(optparse)
+})
+
+
 source("utils.R")
 source("synteny_funcs.R")
 
 pokazStage('Alignment1: after first blast of parts')
-
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -34,7 +38,9 @@ option_list = list(
   make_option(c("-m", "--n.chr.acc"), type="character", default=NULL, 
               help="number of chromosomes in the accessions", metavar="character"),
   make_option(c("-a", "--all.vs.all"), type="character", default=NULL, 
-              help="alignment of all chromosomes vs all or not: T/F", metavar="character")
+              help="alignment of all chromosomes vs all or not: T/F", metavar="character"),
+  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+              help = "number of cores to use for parallel processing", metavar = "integer")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -42,33 +48,33 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-if (!is.null(opt$path.query)) path.query <- opt$path.query
-if (!is.null(opt$path.blast)) path.blast.res <- opt$path.blast
-if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
-if (!is.null(opt$path.ref)) path.base <- opt$path.ref
-if (!is.null(opt$type)) base.suff <- opt$type
-if (!is.null(opt$pref)) base.acc <- opt$pref
-if (!is.null(opt$path.gaps)) path.gaps <- opt$path.gaps
+# Set the number of cores for parallel processing
+num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
+myCluster <- makeCluster(num_cores, type = "PSOCK")
+registerDoParallel(myCluster)
 
-if (!is.null(opt$n.chr.ref)) n.chr.ref <- opt$n.chr.ref
-if (!is.null(opt$n.chr.acc)) n.chr.acc <- opt$n.chr.acc
-if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
+path.query    <- ifelse(!is.null(opt$path.query), opt$path.query, path.query)
+path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, path.blast.res)
+path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, path.aln)
+path.base     <- ifelse(!is.null(opt$path.ref), opt$path.ref, path.base)
+base.suff     <- ifelse(!is.null(opt$type), opt$type, base.suff)
+base.acc      <- ifelse(!is.null(opt$pref), opt$pref, base.acc)
+path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, path.gaps)
+
+n.chr.ref     <- ifelse(!is.null(opt$n.chr.ref), opt$n.chr.ref, n.chr.ref)
+n.chr.acc     <- ifelse(!is.null(opt$n.chr.acc), opt$n.chr.acc, n.chr.acc)
+all.vs.all    <- ifelse(!is.null(opt$all.vs.all), as.logical(opt$all.vs.all), all.vs.all)
 
 
+# Create folders for the alignment results
 if(!dir.exists(path.aln)) dir.create(path.aln)
 if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
-# ============================================================================
 
-myCluster <- makeCluster(30, # number of cores to use
-                         type = "PSOCK") # type of cluster
-registerDoParallel(myCluster)
-
-# ============================================================================
+#' ============================================================================
 
 max.len = 10^6
-
-file.log <- NULL
+len.blast = 50
 
 files.query = list.files(path = path.query, pattern = "\\.fasta$")
 query.name = gsub("*.fasta","",files.query)
@@ -76,8 +82,8 @@ query.name = gsub("*.fasta","",files.query)
 query.name = unique(sapply(query.name, function(s){ strsplit(s, '_')[[1]][1] }))
 names(query.name) <- NULL
 
-message(paste0(c('Accessions:', query.name), collapse = " "))
-message(paste('Base accession:', base.acc))
+pokaz('Accessions:', query.name)
+pokaz('Base accession:', base.acc)
 
 
 # Combinations of chromosomes query-base to cheate the alignments
@@ -96,17 +102,13 @@ for(i.query in 1:length(query.name)){
 }
 # print(chromosome.pairs)
 
-
-for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
-  
-# for.flag = T
-# for(i.chr.pair in 1:nrow(chromosome.pairs)){
-  
+# for.flag = F
+# tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
+for.flag = T
+for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   
   i.query = chromosome.pairs[i.chr.pair, 1]
-  
   if(query.name[i.query] == base.acc){
     if(for.flag) next
     return(NULL)
@@ -131,22 +133,22 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     return(NULL)
   }  
   
-  # # Read reference sequences
-  # base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
-  # pokaz('Base:', base.file)
-  # 
-  # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
-  # base.fas.fw = seq2nt(base.fas.fw)
-  # base.fas.bw = revCompl(base.fas.fw)
-  # base.len = length(base.fas.bw)
-  # 
-  # # Read query sequences
-  # query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
-  # pokaz('Query:', query.file)
-  # 
-  # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
-  # query.fas.chr = seq2nt(query.fas.chr)
-  # query.len = length(query.fas.chr)
+  # Read reference sequences
+  base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
+  pokaz('Base:', base.file)
+
+  base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  base.fas.fw = seq2nt(base.fas.fw)
+  base.fas.bw = revCompl(base.fas.fw)
+  base.len = length(base.fas.bw)
+
+  # Read query sequences
+  query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
+  pokaz('Query:', query.file)
+
+  query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  query.fas.chr = seq2nt(query.fas.chr)
+  query.len = length(query.fas.chr)
   
   # Output files
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
@@ -242,133 +244,151 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
       x.major = x.major[x.major$block.id %in% remain.block,]
     }
     
+    # Check remained blocks
+    x.major$id = rank(x.major$id)
+    x.major$block = c(1, abs(x.major$id[-1] - x.major$id[-nrow(x.major)]) != 1) 
+    x.major$block.id = cumsum(x.major$block)  # block ID
+    cnt = table(x.major$block.id, x.major$dir)
+    if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
+    
+    
+    # Determine short overlaps
+    x.major = defineSmallOverlapps(x.major)
+    
     file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
     file.maj.idx <- paste(path.aln, paste0(pref.comb, '_maj_idx.rds', collapse = ''), sep = '')
     file.raw.idx <- paste(path.aln, paste0(pref.comb, '_raw_idx.rds', collapse = ''), sep = '')
     
-    
-    x.sk = x[x.major$idx.maj,]
-    saveRDS(x.sk, file.aln.pre, compress = F)
-    saveRDS(x.major, file.maj.idx, compress = F)
+    # Save
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
-
+    x = x[x.major$idx.maj,]
+    x$block.id = x.major$block.id
+    # Remove shprt overlaps
+    x.sk = removeSmallOverlapps(x.sk)
+    
+    saveRDS(x, file.aln.pre, compress = F)
+    saveRDS(x.major, file.maj.idx, compress = F)
+    
   } else {
     pokaz('Reading instead of analysis', file.aln.pre)
-    t = readRDS(file.aln.pre)
+    x = readRDS(file.aln.pre)
   } # if blast alignment exists
+
+  if((nrow(x) <= 1) || (is.null(x))) {
+    pokaz('No gaps')
+    if(for.flag) next
+    return(NULL)
+  }
   
-  # if((nrow(t) <= 1) || (is.null(t))) {
-  #   message('no gaps')
-  #   
-  #   if(for.flag) next
-  #   return(NULL)
-  #   
-  # }
   
-  # 
-  # # ---- Get gaps ----
-  # print('Get gaps')
-  # t = t[t[,'V7'] > 10000,,drop=F]
-  # if((nrow(t) <= 1) || (is.null(t))) {
-  #   message('no gaps')
-  #   if(for.flag) next
-  #   return(NULL)
-  # }
-  # 
-  # t = cleanJumps2(t, base.len, min.len = 30000)
-  # saveRDS(object = t, file = file.aln.pre) 
-  # 
-  # query.len <- length(query.fas.chr)
-  # 
-  # pos.q.free = rep(0, query.len)  # free positions if query
-  # pos.b.free = rep(0, base.len)  # free positions if base
-  # 
-  # t = getBase(t, base.len)
-  # for(irow in 1:nrow(t)){
-  #   pos.q.free[t$V2[irow]:t$V3[irow]] <- 1
-  #   pos.b.free[t$V4[irow]:t$V5[irow]] <- 1
-  #   # print(sum(pos.q.free))
-  #   # print(sum(pos.b.free))
-  # }
-  # 
-  # print(sum(pos.q.free))
-  # print(sum(pos.b.free))
-  # 
-  # idx.gaps.ok = c()
-  # for(irow in 1:(nrow(t) - 1)){
-  #   pos.gap.q = t$V3[irow]:t$V2[irow + 1] 
-  #   pos = sort(c(t$V4[irow], t$V5[irow], t$V4[irow+1], t$V5[irow+1]))
-  #   pos.gap.b = pos[2]:pos[3]
-  #   
-  #   if(length(pos.gap.q) == 2) next
-  #   if(length(pos.gap.b) == 2) next
-  #   
-  #   pos.gap.q = pos.gap.q[-c(1, length(pos.gap.q))]
-  #   pos.gap.b = pos.gap.b[-c(1, length(pos.gap.b))]
-  #   
-  #   n.q.occ = sum(pos.q.free[pos.gap.q])
-  #   n.b.occ = sum(pos.b.free[pos.gap.b])
-  #   if(!((n.q.occ == 0) && (n.b.occ == 0))) next
-  # 
-  #   i.gap = irow
-  #   file.gap.query = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_query_',i.gap,'.txt', collapse = '')
-  #   file.gap.base = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_base_',i.gap,'.txt', collapse = '')
-  #   if(file.exists(file.gap.query)) next
-  #     
-  #   
-  #   p.beg = min(pos.gap.q)
-  #   p.end = max(pos.gap.q)
-  #   if(p.end - p.beg > max.len) next
-  #   
-  #   # Split region into pieces of 500nt for more effective BLAST
-  #   if(p.end-p.beg > 500){      
-  #     p.tmp <- seq(p.beg, p.end, 500)
-  #     
-  #     # print(c(p.beg, p.end))
-  #     # print(p.tmp)
-  #     
-  #     p.beg = p.tmp
-  #     p.end = p.tmp-1
-  #     p.beg = p.beg[-length(p.beg)]
-  #     p.end = p.end[-1]
-  #     p.end[length(p.end)] = max(pos.gap.q)
-  #   }
-  #   
-  #   s.query = c()
-  #   s.query.names = c()
-  #   for(j.gap in 1:length(p.beg)){
-  #     # print(c(p.beg[j.gap], p.end[j.gap], length(query.fas.chr)))
-  #     s.query = c(s.query, paste0(query.fas.chr[p.beg[j.gap]:p.end[j.gap]], 
-  #                                 collapse = ''))
-  #     s.query.names = c(s.query.names, 
-  #                       paste0('gap', 
-  #                              '_', i.gap, '_', i.gap + 1,
-  #                              '|',query.name[i.query] , '|', query.chr, '|',
-  #                              'query', '|', p.beg[j.gap], '|', p.end[j.gap], collapse = ''))
-  #   }
-  #   
-  #   names(s.query) <- s.query.names      
-  #   # Write query
-  #   # print(file.gap.query)
-  #   writeFasta(s = s.query, file.gap.query)
-  #   
-  #   s.base= c()
-  #   s.base.names = c()
-  # 
-  #   p.beg = min(pos.gap.b)
-  #   p.end = max(pos.gap.b)
-  #   if(p.end - p.beg > max.len) next
-  #   
-  #   s.base = paste0(base.fas.fw[p.beg:p.end], collapse = '')
-  #   s.base.names = paste0('gap', 
-  #                         '_', i.gap, '_', i.gap + 1,
-  #                           '|',query.name[i.query] , '|', query.chr, '|',
-  #                           'base','|', p.beg, '|', p.end, collapse = '')
-  # 
-  #   names(s.base) <- s.base.names
-  #   # Write base
-  #   writeFasta(s = s.base, file.gap.base)
-  #   
-  # }
+  # ---- Get gaps ----
+  print('Get gaps')
+  t = t[t[,'V7'] > 10000,,drop=F]
+  if((nrow(t) <= 1) || (is.null(t))) {
+    message('no gaps')
+    if(for.flag) next
+    return(NULL)
+  }
+
+  
+  checkCorrespToGenome(x, query.fas = query.fas.chr, 
+                       base.fas.fw = base.fas.fw, 
+                       base.fas.bw = base.fas.bw)
+  
+
+  # Find occupied positions
+  pos.q.free = rep(0, query.len)  # free positions if query
+  pos.b.free = rep(0, base.len)  # free positions if base
+  for(irow in 1:nrow(t)){
+    pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
+    pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
+  }
+  if((sum(pos.q.free > 1) != 0) || (sum(pos.b.free > 1) != 0)) stop('Coverage is wrong')
+  
+  pos.q.free = -pos.q.free
+  pos.b.free = -pos.b.free
+  
+  # Within non-occupied positions fins those, which sould be st
+  
+
+  for(irow in 1:(nrow(x)-1)){
+    if(x$bl[irow] != x$bl[irow+1]) next
+    d1 = x$V2[irow+1] - x$V3[irow]
+    d2 = x$V4[irow+1] - x$V5[irow]
+    if(d1 * d2 == 0) next  # Glue Zero, but not necessary
+    
+    # Short gaps will be covered later!!!
+    # if((d1 <= len.blast) & (d2 <= len.blast)){
+    #   x.tmp = x[c(irow,irow+1),]
+    #   x.tmp = setDir(x.tmp, base.len = base.len)
+    #   x.tmp = glueByThreshold(x.tmp, 100, query.fas = query.fas.chr,
+    #                       base.fas.fw = base.fas.fw,
+    #                       base.fas.bw = base.fas.bw, file.log=NULL)
+    #   x.tmp = getBase(x.tmp, base.len = base.len)
+    #   x[irow+1,] = x.tmp
+    #   idx.remove = c(idx.remove, irow)
+    # }
+    
+    # Don't consider for blast
+    if(d1 <= len.blast){
+      pos.q.free[(x$V3[irow]+1):(x$V2[irow+1]-1)] = -1
+    }
+    if(d2 <= len.blast){
+      pos.b.free[(x$V5[irow]+1):(x$V4[irow+1]-1)] = -1
+    }
+    
+    if(!((d1 >= len.blast) & (d2 >= len.blast))) next
+    
+    
+    # If both are long
+    pos.q.free[(x$V3[irow]+1):(x$V2[irow+1]-1)] = irow
+    pos.b.free[(x$V5[irow]+1):(x$V4[irow+1]-1)] = irow
+    
+    # Create files for BLAST
+    pos.gap.q = t$V3[irow]:t$V2[irow + 1]
+    pos = sort(c(t$V4[irow], t$V5[irow], t$V4[irow+1], t$V5[irow+1]))
+    pos.gap.b = pos[2]:pos[3]
+    pos.gap.q = pos.gap.q[-c(1, length(pos.gap.q))]
+    pos.gap.b = pos.gap.b[-c(1, length(pos.gap.b))]
+    
+    i.gap = irow
+    file.gap.query = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_query_',i.gap,'.txt', collapse = '')
+    file.gap.base = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_base_',i.gap,'.txt', collapse = '')
+    if(file.exists(file.gap.query)) next
+    
+    if(abs(pos.gap.q[1] - pos.gap.q[length(pos.gap.q)]) > max.len) next
+    if(abs(pos.gap.b[1] - pos.gap.b[length(pos.gap.b)]) > max.len) next
+    
+    # ---- Write query ----
+    # Define Sequences
+    s.q = query.fas.chr[pos.gap.q]
+    s.q = nt2seq(s.q)
+    n.bl = 500
+    p.beg = seq(1, nchar(s.q), n.bl)
+    p.end = seq(n.bl, nchar(s.q), n.bl)
+    s.q = splitSeq(s.q, n = n.bl)
+    
+    # Standsrd naming (as before)
+    pref.q = paste0('gap',
+                    '_', i.gap, '_', i.gap + 1,
+                    '|',query.name[i.query] , '|', query.chr, '|',
+                    'query', '|', p.beg, '|', p.end, collapse = '')
+    names(s.q) = pref.q
+    writeFasta(s.q, file.gap.query)
+    
+    # ---- Write base ----
+    s.b = base.fas.fw[pos.gap.q]
+    s.b = nt2seq(s.b)
+    s.base.names = paste0('gap',
+                          '_', i.gap, '_', i.gap + 1,
+                          '|',query.name[i.query] , '|', query.chr, '|',
+                          'base','|', p.beg, '|', p.end, collapse = '')
+    names(s.b) = s.base.names
+      
+    writeFastaMy(s.b, file.gap.base)
+    
+
+  }
+  
 }  # combinations

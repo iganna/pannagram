@@ -1,3 +1,125 @@
+#' Determine Small Overlaps
+#'
+#' This function identifies small overlaps between rows in a data frame.
+#' It compares adjacent rows based on their overlap and 
+#' removes the smaller overlap based on column 'V7' (length).
+#' The function adds a new column 'rm.len' which indicates the length of the overlap removed.
+#'
+#' @param x.major A data frame with alignment.
+#'               Expected to be sorted based on 'p.beg'.
+#'
+#' @return A data frame similar to the input but with column 'rm.len' added.
+#
+defineSmallOverlapps <- function(x.major){
+  
+  sort.flaf = isSorted(x.major$p.beg)
+  new.col.name = 'tmp'
+  if(!sort.flaf){
+    x.major[,new.col.name] = 1:nrow(x.major)
+    x.major[order(x.major$p.beg),]
+  }
+  
+  x.major$rm.len = 0
+  idx.overlap = which(x.major$p.beg[-1] <= x.major$p.end[-nrow(x.major)])
+  
+  # x.major[c(irow, irow+1),]
+  
+  for(irow in idx.overlap){
+    # We cut either irow or [irow+1]
+    
+    # Which row to cut
+    icut = ifelse(x.major$V7[irow] > x.major$V7[irow + 1], irow + 1, irow)
+    ibig = ifelse(x.major$V7[irow] > x.major$V7[irow + 1], irow, irow + 1)
+    
+    # Find left(value = 1) or right(value = -1) tails 
+    # of irow(i.e., tail.irow) or [irow+1](i.e., tail.next), 
+    # which are involved in the overlap
+    tail.iсut = ifelse((x.major$V4[icut] >= x.major$p.beg[ibig]) & 
+                         (x.major$V4[icut] <= x.major$p.end[ibig]), 
+                       1, -1)
+    
+    # how much to cut
+    ncut = length(intersect(x.major$V4[irow]:x.major$V5[irow],
+                            x.major$V4[irow+1]:x.major$V5[irow+1]))
+    # Remember the cut
+    x.major$rm.len[icut] = ncut * tail.iсut
+  }
+  
+  if(!sort.flaf){
+    x.major[order(x.major[,new.col.name]),]
+    x.major = x.major[,colnames(x.major) != new.col.name]
+  }
+  
+  return(x.major)
+}
+
+
+#' Remove Small Overlaps
+#'
+#' The function identifies and processes reviously defined overlaps
+#'
+#' @param x.sk A data frame with the alignment
+#' @param rm.threshold A threshold value to decide which rows to process. 
+#' Rows which should loose more than rm.threshold of their lengths - are removed
+#'
+#' @return A modified data frame based on the overlap criteria.
+#' 
+removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
+  
+  x.sk =  x.sk[((abs(x.sk$rm.len) / x.sk$V7) <= rm.threshold) | (x.sk$rm.len == 0),]
+  
+  idx.remove = c()
+  idx.cut = which(x.sk$rm.len != 0)
+  for(irow in idx.cut){
+    
+    if(x.sk$dir[irow] == 1) stop('dir')
+    
+    adjustment <- x.sk$rm.len[irow]  # sing says about "begin" or "end"
+    adjustment.dir <- ifelse(x.sk$dir[irow] == 0, adjustment, (-1) * adjustment)
+    n.symbols = abs(adjustment)
+    
+    if(adjustment > 0){
+      # stop('3')
+      # From the befinning!
+      
+      # Adjust strings in the alignment
+      seq = seq2nt(x.sk$V9[irow])
+      aln.adjust = which(seq != '-')[n.symbols]
+      x.sk$V8[irow] = substr(x.sk$V8[irow], (aln.adjust+1), nchar(x.sk$V8[irow]))
+      x.sk$V9[irow] = substr(x.sk$V9[irow], (aln.adjust+1), nchar(x.sk$V9[irow]))
+      
+      # Adjust positions
+      x.sk$V2[irow] = x.sk$V2[irow] + adjustment
+      x.sk$V4[irow] = x.sk$V4[irow] + adjustment.dir
+      
+    }
+    if(adjustment < 0){
+      # stop('4')
+      # From the ending!
+      
+      # Adjust strings in the alignment
+      seq = seq2nt(x.sk$V9[irow])
+      aln.adjust = tail(which(seq != '-'), n=n.symbols)[1]
+      x.sk$V8[irow] = substr(x.sk$V8[irow], 1, (aln.adjust-1))
+      x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
+      
+      # Adjust positions
+      x.sk$V3[irow] = x.sk$V3[irow] + adjustment
+      x.sk$V5[irow] = x.sk$V5[irow] + adjustment.dir
+    }
+    
+    x.sk$V7[irow] = nchar(x.sk$V8[irow])
+    
+  }
+  return(x.sk)
+}
+
+
+# ----  OLD FUNCTIONS  ----
+
+
+
+
 
 getCorresponding2BasePositions <- function(t, base.len){
   t.base = getBase(t, base.len)
@@ -3504,3 +3626,4 @@ cleanJumps2 <- function(t, base.len, echo=F, min.len = 20000){
   rownames(t) <- NULL
   return(t)
 }
+
