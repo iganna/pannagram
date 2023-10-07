@@ -128,6 +128,64 @@ splitSeq <- function(sequence, n = 5000) {
   return(s.chunks)
 }
 
+#' ----------------------------------------------------------------------
+#' Convert a string to a vector of nucleotides
+#'
+#' @param s A single string representing a sequence.
+#' 
+#' @return A character vector where each element is a single nucleotide.
+#' 
+#' @author Anna A. Igolkina 
+#' 
+seq2nt <- function(s){
+  if(length(s) != 1) stop('There should be only one sequence')
+  return(strsplit(s, '')[[1]])
+}
+
+
+#' ----------------------------------------------------------------------
+#' Convert a vector of nucleotides to a string
+#'
+#' @param s A character vector where each element is a single nucleotide.
+#' @return A single string representing a sequence.
+#' 
+#' @author Anna A. Igolkina 
+#' 
+nt2seq <- function(s){
+  return(paste0(s, collapse = ''))
+}
+
+
+#' ----------------------------------------------------------------------
+#' Generate the reverse complement of a vectorized sequence
+#'
+#' @param s A character vector where each element is a single nucleotide.
+#' @return A character vector representing the reverse complement of the input.
+#' 
+#' @examples
+#' revCompl(c("A", "T", "G", "C"))
+#' 
+#' @author Anna A. Igolkina 
+#' 
+revCompl <- function(s){
+  
+  if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
+  complementary_nts <- c(
+    A='T', T='A', C='G', G='C', 
+    R='Y', Y='R', S='S', W='W', 
+    K='M', M='K', B='V', D='H', 
+    H='D', V='B', N='N', 
+    a='T', t='A', c='G', g='C', 
+    r='Y', y='R', s='S', w='W', 
+    k='M', m='K', b='V', d='H', 
+    h='D', v='B', n='N'
+  )
+  
+  seqs.rc = rev(complementary_nts[s])
+  if(sum(is.na(seqs.rc)) != 0) stop('Wrong nucleotides are provided')
+  return()
+}
+
 
 #' ----------------------------------------------------------------------
 #' Display stylized stage messages
