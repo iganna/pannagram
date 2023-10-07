@@ -72,7 +72,7 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
   idx.cut = which(x.sk$rm.len != 0)
   for(irow in idx.cut){
     
-    if(x.sk$dir[irow] == 1) stop('dir')
+    # if(x.sk$dir[irow] == 1) stop('dir')
     
     adjustment <- x.sk$rm.len[irow]  # sing says about "begin" or "end"
     adjustment.dir <- ifelse(x.sk$dir[irow] == 0, adjustment, (-1) * adjustment)
