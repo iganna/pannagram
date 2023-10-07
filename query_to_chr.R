@@ -115,7 +115,8 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   
   
   pokaz('Accession', acc)
-  q.fasta = read.fasta(paste0(path.query, acc, '.', query.type, collapse = ''))
+  q.fasta = readFastaMy(paste0(path.query, acc, '.', query.type, collapse = ''))
+  # q.fasta = read.fasta(paste0(path.query, acc, '.', query.type, collapse = ''))
   
   if(length(q.fasta) < n.chr){
     if(for.flag) next
@@ -141,14 +142,16 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
       return(NULL)
     }
     pokaz('File out', file.out)
-    q.tmp = paste0(q.fasta[[i.chr]], collapse = '')
     
-    s = toupper(q.tmp)
+    s = toupper(q.fasta[i.chr])
+    writeFastaMy(s, file=file.out, append=F, pref = paste(acc.s, '_Chr', i.chr , sep=''))
     
-    write(paste('>', acc.s, '_Chr', i.chr , sep=''), file=file.out, append=F)
-    write(s, file=file.out, append=T)
-    write('\n', file=file.out, append=T)
+    # write(paste('>', acc.s, '_Chr', i.chr , sep=''), file=file.out, append=F)
+    # write(s, file=file.out, append=T)
+    # write('\n', file=file.out, append=T)
   }
+  
+  rm(q.fasta)
 }
 
 
