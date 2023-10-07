@@ -131,22 +131,22 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     return(NULL)
   }  
   
-  # Read reference sequences
-  base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
-  pokaz('Base:', base.file)
-
-  base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
-  base.fas.fw = seq2nt(base.fas.fw)
-  base.fas.bw = revCompl(base.fas.fw)
-  base.len = length(base.fas.bw)
-  
-  # Read query sequences
-  query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
-  pokaz('Query:', query.file)
-
-  query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
-  query.fas.chr = seq2nt(query.fas.chr)
-  query.len = length(query.fas.chr)
+  # # Read reference sequences
+  # base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
+  # pokaz('Base:', base.file)
+  # 
+  # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  # base.fas.fw = seq2nt(base.fas.fw)
+  # base.fas.bw = revCompl(base.fas.fw)
+  # base.len = length(base.fas.bw)
+  # 
+  # # Read query sequences
+  # query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
+  # pokaz('Query:', query.file)
+  # 
+  # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  # query.fas.chr = seq2nt(query.fas.chr)
+  # query.len = length(query.fas.chr)
   
   # Output files
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
@@ -231,7 +231,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       if(length(idx) == 0) break
       if(min(x.block$len[idx]) > 20000) break
       idx.remove = idx[x.block$len[idx] == min(x.block$len[idx])][1]
-      print(c(idx.remove, x.block$len[idx.remove]))
+      pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove])
       x.block = x.block[-idx.remove,]
       # rownames(x.block) = NULL
     }
