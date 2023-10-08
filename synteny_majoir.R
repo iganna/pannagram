@@ -154,8 +154,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   file.maj.idx <- paste(path.aln, paste0(pref.comb, '_maj_idx.rds', collapse = ''), sep = '')
   file.raw.idx <- paste(path.aln, paste0(pref.comb, '_raw_idx.rds', collapse = ''), sep = '')
   
-  if(T){   
-  # if(!file.exists(file.aln.pre)){   
+  # if(T){   
+  if(!file.exists(file.aln.pre)){
     
     pokaz('Alignment:', query.name[i.query], query.chr, base.chr)
     
@@ -261,9 +261,13 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     if(!isSorted(x.major$p.beg)) pokazAttention('2!!')
     
     x.major$block.id = cumsum(x.major$block)  # block ID
-    cnt = table(x.major$block.id, x.major$dir)
-    print(cnt)
-    if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
+    
+    if(sum(x.major$dir) > 0){  # different difertions exist
+      cnt = table(x.major$block.id, x.major$dir)
+      print(cnt)
+      if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
+    }
+    
     
     if(!isSorted(x.major$p.beg)) pokazAttention('3!!')
     
