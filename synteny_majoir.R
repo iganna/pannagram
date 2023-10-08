@@ -154,7 +154,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   file.maj.idx <- paste(path.aln, paste0(pref.comb, '_maj_idx.rds', collapse = ''), sep = '')
   file.raw.idx <- paste(path.aln, paste0(pref.comb, '_raw_idx.rds', collapse = ''), sep = '')
   
-  if(!file.exists(file.aln.pre)){    
+  if(T){   
+  # if(!file.exists(file.aln.pre)){   
     
     pokaz('Alignment:', query.name[i.query], query.chr, base.chr)
     
@@ -174,10 +175,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x[,2:3] = x[,2:3] + start.pos
     
     
-    # x.dir = setDir(x, base.len = base.len)
-    # checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
-    #                      base.fas.fw = base.fas.fw, 
-    #                      base.fas.bw = base.fas.bw)
+    x.dir = setDir(x, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
     
     # Set direction
     x$dir = (x$V4 > x$V5) * 1
@@ -277,7 +278,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # ---- Filtration ----
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
-    # saveRDS(x, file.aln.pre, compress = F)
+    saveRDS(x, file.aln.pre, compress = F)
     
     
     # ---- Remove short overlaps: twice, because from "both sides" ----
