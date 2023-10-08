@@ -91,7 +91,9 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       x.sk$V9[irow] = substr(x.sk$V9[irow], (aln.adjust+1), nchar(x.sk$V9[irow]))
       
       # Adjust positions
-      x.sk$V2[irow] = x.sk$V2[irow] + adjustment
+      s.q.cut = str2nt(substr(x.sk$V8[irow], 1, aln.adjust))
+      adjustment.q = sum(s.q.cut != '-')
+      x.sk$V2[irow] = x.sk$V2[irow] + adjustment.q * sing(adjustment)
       x.sk$V4[irow] = x.sk$V4[irow] + adjustment.dir
       
     }
@@ -106,7 +108,10 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
       
       # Adjust positions
-      x.sk$V3[irow] = x.sk$V3[irow] + adjustment
+      
+      s.q.cut = str2nt(substr(x.sk$V8[irow], (aln.adjust), nchar(x.sk$V8[irow])))
+      adjustment.q = sum(s.q.cut != '-') 
+      x.sk$V3[irow] = x.sk$V3[irow] + adjustment.q * sing(adjustment)
       x.sk$V5[irow] = x.sk$V5[irow] + adjustment.dir
     }
     
