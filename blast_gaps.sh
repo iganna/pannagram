@@ -68,6 +68,7 @@ for query_file_path in ${path_gaps}*queryseq*.fasta; do
     blast_number=$(pgrep -c blastn)
 
     if (( ${blast_number} > $cores )); then
+        echo ${blast_number}
         wait -n
     fi
 
