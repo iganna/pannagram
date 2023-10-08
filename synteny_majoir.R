@@ -339,7 +339,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
                        base.fas.fw = base.fas.fw, 
                        base.fas.bw = base.fas.bw)
   
-  print('1')
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions if query
   pos.b.free = rep(0, base.len)  # free positions if base
@@ -358,9 +357,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
 
   pref.comarisson = paste('acc_', query.name[i.query], '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
   # Query-file
-  file.gap.query = paste0(pref.comarisson, 'query.fasta', collapse = '')
+  file.gap.query = paste0(path.query, pref.comarisson, 'query.fasta', collapse = '')
   # Base file
-  file.gap.base = paste0(pref.comarisson, 'base.fasta', collapse = '')
+  file.gap.base = paste0(path.query, pref.comarisson, 'base.fasta', collapse = '')
   pokaz('Create gaps for', pref.comarisson)
   
   for(irow in 1:(nrow(x)-1)){
