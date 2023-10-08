@@ -322,7 +322,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   
   # ---- Get gaps ----
-  print('Get gaps')
+  pokaz('Get gaps')
   if((nrow(x) <= 1) || (is.null(x))) {
     message('no gaps')
     if(for.flag) next
@@ -379,9 +379,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     if(!((d1 >= len.blast) & (d2 >= len.blast))) next
     
-    print('3')
-    
-    
     # Create files for BLAST
     pos.gap.q = x$V3[irow]:x$V2[irow + 1]
     pos = sort(c(x$V4[irow], x$V5[irow], x$V4[irow+1], x$V5[irow+1]))
@@ -402,7 +399,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     if(abs(pos.gap.b[1] - pos.gap.b[length(pos.gap.b)]) > max.len) next
     
     # ---- Write query ----
-    # Define Sequences
+    # Define Chunks
     s.q = query.fas.chr[pos.gap.q]
     s.q = nt2seq(s.q)
     n.bl = 500
@@ -414,26 +411,27 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       p.beg = 1
       p.end = len.s.q
     }
-    
     s.q = splitSeq(s.q, n = n.bl)
     
-    print('4')
-    
     # Standsrd naming (as before)
-    pref.q = paste0('gap',
+    pref.q = paste('gap',
                     '_', i.gap, '_', i.gap + 1,
                     '|',query.name[i.query] , '|', query.chr, '|',
-                    'query', '|', p.beg, '|', p.end, collapse = '')
+                    'query', '|', p.beg, '|', p.end, sep = '')
+    
+    if(length(s.q) != length(pref.q)) stop('Chonk lengths do not much')
     names(s.q) = pref.q
     writeFasta(s.q, file.gap.query)
     
     # ---- Write base ----
     s.b = base.fas.fw[pos.gap.q]
     s.b = nt2seq(s.b)
-    s.base.names = paste0('gap',
+    p.beg = 1
+    p.end = nchar(s.b)
+    s.base.names = paste('gap',
                           '_', i.gap, '_', i.gap + 1,
                           '|',query.name[i.query] , '|', query.chr, '|',
-                          'base','|', p.beg, '|', p.end, collapse = '')
+                          'base','|', p.beg, '|', p.end, sep = '')
     names(s.b) = s.base.names
       
     writeFastaMy(s.b, file.gap.base)
