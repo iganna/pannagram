@@ -106,12 +106,6 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       # stop('4')
       # From the ending!
       
-      # Adjust strings in the alignment
-      seq = seq2nt(x.sk$V9[irow])
-      aln.adjust = tail(which(seq != '-'), n=n.symbols)[1]
-      x.sk$V8[irow] = substr(x.sk$V8[irow], 1, (aln.adjust-1))
-      x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
-      
       # Adjust positions
       print(nchar(x.sk$V8[irow]))
       print(aln.adjust)
@@ -124,11 +118,20 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       
       x.sk$V3[irow] = x.sk$V3[irow] + adjustment.q * sign(adjustment)
       x.sk$V5[irow] = x.sk$V5[irow] + adjustment.dir
+      
+      
+      # Adjust strings in the alignment
+      seq = seq2nt(x.sk$V9[irow])
+      aln.adjust = tail(which(seq != '-'), n=n.symbols)[1]
+      x.sk$V8[irow] = substr(x.sk$V8[irow], 1, (aln.adjust-1))
+      x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
+      
+ 
     }
     
     x.sk$V7[irow] = nchar(x.sk$V8[irow])
     
-    print(x.sk[irow, 1:7])
+    print(x.sk[irow, -c(8,9)])
     if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
   
