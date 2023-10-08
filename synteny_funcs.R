@@ -91,14 +91,11 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       x.sk$V9[irow] = substr(x.sk$V9[irow], (aln.adjust+1), nchar(x.sk$V9[irow]))
       
       # Adjust positions
-      s.q.cut = seq2nt(substr(x.sk$V8[irow], 1, aln.adjust))
-      print(s.q.cut)
-      adjustment.q = sum(s.q.cut != '-')
+      s.q.cut = seq2nt(x.sk$V8[irow])
+      adjustment.q = sum(s.q.cut != '-') - 1
+      x.sk$V2[irow] = x.sk$V3[irow] - adjustment.q
       
-      print(adjustment.q)
-      print(adjustment)
-      
-      x.sk$V2[irow] = x.sk$V2[irow] + adjustment.q * sign(adjustment)
+      # x.sk$V2[irow] = x.sk$V2[irow] + adjustment.q * sign(adjustment)
       x.sk$V4[irow] = x.sk$V4[irow] + adjustment.dir
       
     }
@@ -106,34 +103,26 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       # stop('4')
       # From the ending!
       
-      # Adjust positions
-      print(nchar(x.sk$V8[irow]))
-      print(aln.adjust)
-      print(substr(x.sk$V8[irow], aln.adjust, nchar(x.sk$V8[irow])))
-      s.q.cut = seq2nt(substr(x.sk$V8[irow], aln.adjust, nchar(x.sk$V8[irow])))
-      adjustment.q = sum(s.q.cut != '-') 
-      # print(s.q.cut)
-      pokaz('len', length(s.q.cut))
-      print(adjustment.q)
-      print(adjustment)
-      
-      x.sk$V3[irow] = x.sk$V3[irow] + adjustment.q * sign(adjustment)
-      x.sk$V5[irow] = x.sk$V5[irow] + adjustment.dir
-      
-      
       # Adjust strings in the alignment
       seq = seq2nt(x.sk$V9[irow])
       aln.adjust = tail(which(seq != '-'), n=n.symbols)[1]
       x.sk$V8[irow] = substr(x.sk$V8[irow], 1, (aln.adjust-1))
       x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
       
- 
+      # Adjust positions
+     
+      s.q.cut = seq2nt(x.sk$V8[irow])
+      adjustment.q = sum(s.q.cut != '-') - 1
+      x.sk$V3[irow] = x.sk$V2[irow] + adjustment.q
+      
+      # x.sk$V3[irow] = x.sk$V3[irow] + adjustment.q * sign(adjustment)
+      x.sk$V5[irow] = x.sk$V5[irow] + adjustment.dir
     }
     
     x.sk$V7[irow] = nchar(x.sk$V8[irow])
     
-    print(x.sk[irow, -c(8,9)])
-    if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
+    # print(x.sk[irow, -c(8,9)])
+    # if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
   
   
