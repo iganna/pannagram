@@ -406,6 +406,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     s.q = query.fas.chr[pos.gap.q]
     s.q = nt2seq(s.q)
     n.bl = 500
+    pokaz(nchar(s.q), n.bl)
     p.beg = seq(1, nchar(s.q), n.bl)
     p.end = seq(n.bl, nchar(s.q), n.bl)
     s.q = splitSeq(s.q, n = n.bl)
