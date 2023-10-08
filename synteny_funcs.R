@@ -126,9 +126,10 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
     
     x.sk$V7[irow] = nchar(x.sk$V8[irow])
     
+    print(x.sk[irow, 1:7])
+    if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
-  print(x.sk[irow, 1:7])
-  if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
+  
   
   # Undate begin-eng positions
   x.sk$p.beg <- ifelse(x.sk$V4 < x.sk$V5, x.sk$V4, x.sk$V5)
