@@ -136,12 +136,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
   pokaz('Base:', base.file)
-  pokaz(paste(path.base, base.file, sep = ''))
   base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
-  pokaz('base.len', base.len)
 
   # Read query sequences
   query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
@@ -176,10 +174,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x[,2:3] = x[,2:3] + start.pos
     
     
-    x.dir = setDir(x, base.len = base.len)
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
-                         base.fas.fw = base.fas.fw, 
-                         base.fas.bw = base.fas.bw)
+    # x.dir = setDir(x, base.len = base.len)
+    # checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
+    #                      base.fas.fw = base.fas.fw, 
+    #                      base.fas.bw = base.fas.bw)
     
     # Set direction
     x$dir = (x$V4 > x$V5) * 1
@@ -266,33 +264,37 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     print(cnt)
     if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     
-    
-    # Determine short overlaps
     if(!isSorted(x.major$p.beg)) pokazAttention('3!!')
     
+    # Files to save
     file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
     file.maj.idx <- paste(path.aln, paste0(pref.comb, '_maj_idx.rds', collapse = ''), sep = '')
     file.raw.idx <- paste(path.aln, paste0(pref.comb, '_raw_idx.rds', collapse = ''), sep = '')
     
-    # Save
+    # Save - Raw without sequences
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
+    # ---- Filtration ----
     x = x[x.major$idx.maj,]
-    
-
-    pokaz('New stage')
-    
     x$block.id = x.major$block.id
-    saveRDS(x, file.aln.pre, compress = F)
-    # ---- Remove short overlaps: twice, because from "both sides"
+    # saveRDS(x, file.aln.pre, compress = F)
+    
+    
+    # ---- Remove short overlaps: twice, because from "both sides" ----
     for(i.tmp in 1:2){
-      x.sk = defineSmallOverlapps(x.sk)
-      x.sk = removeSmallOverlapps(x.sk)
+      x = defineSmallOverlapps(x)
+      x = removeSmallOverlapps(x)
     }
+    
+    # ---- Check sequences after cuts ----
+    x.dir = setDir(x, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
     
     if(!isSorted(x$p.beg)) pokazAttention('6!!')
     
-    # Check uniquness of occupancy
+    # ---- Check uniquness of occupancy ----
     pos.q.occup = rep(0, base.len)
     for(irow in 1:nrow(x)){
       # pos.q.occup[x.sk$V2[irow]:x.sk$V3[irow]] = pos.q.occup[x.sk$V2[irow]:x.sk$V3[irow]] + 1
@@ -302,7 +304,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')
     pokaz('Occupancy of base', sum(pos.q.occup))
     
-    
+    # Save
     saveRDS(x, file.aln.pre, compress = F)
     saveRDS(x.major, file.maj.idx, compress = F)
     
