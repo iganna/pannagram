@@ -337,7 +337,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions if query
   pos.b.free = rep(0, base.len)  # free positions if base
-  for(irow in 1:nrow(t)){
+  for(irow in 1:nrow(x)){
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
