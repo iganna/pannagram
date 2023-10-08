@@ -269,14 +269,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # Save
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
-    print(x.major[159 + (-3:3),])
-    saveRDS(x.major, file.maj.idx, compress = F)
-    
-    if(!isSorted(x.major$p.beg)) pokazAttention('4!!')
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
-    
-    # Remove shprt overlaps: twice, because from "both sides"
+    saveRDS(x, file.aln.pre, compress = F)
+    # ---- Remove short overlaps: twice, because from "both sides"
     replicate(2, { 
       x = defineSmallOverlapps(x)
       x = removeSmallOverlapps(x)
