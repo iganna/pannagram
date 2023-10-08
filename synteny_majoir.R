@@ -410,7 +410,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
                                         '_', pos.gap.b[length(pos.gap.b)], sep = '')
     
     # Query-file
-    file.gap.query = paste0(path.gaps, file.gap.query.corename, '.txt', collapse = '')
+    file.gap.query = paste0(path.gaps, 
+                            paste0(strsplit(file.gap.query.corename, '_')[[1]][c(1, 4, 5, 8)], collapse = '_'),
+                            '.txt', collapse = '')
     
     # Base file
     file.gap.base = paste0(path.gaps, file.common.pref, 
