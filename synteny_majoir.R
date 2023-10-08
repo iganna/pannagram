@@ -162,10 +162,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # ---- Read blast results ----
     x = read.table(t.file, stringsAsFactors = F, header = F)
     
-    x.dir = setDir(x, base.len = base.len)
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
-                         base.fas.fw = base.fas.fw, 
-                         base.fas.bw = base.fas.bw)
     
     pokaz('Read blast results finished, numer of rows is', nrow(x))
     
@@ -177,6 +173,12 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # Set correct position
     start.pos = as.numeric(sapply(strsplit(x[,1], "\\|"), "[", 4)) - 1
     x[,2:3] = x[,2:3] + start.pos
+    
+    
+    x.dir = setDir(x, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
+                         base.fas.fw = base.fas.fw, 
+                         base.fas.bw = base.fas.bw)
     
     # Set direction
     x$dir = (x$V4 > x$V5) * 1
