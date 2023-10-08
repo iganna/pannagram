@@ -417,21 +417,21 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     pref.q = paste('gap',
                     '_', i.gap, '_', i.gap + 1,
                     '|',query.name[i.query] , '|', query.chr, '|',
-                    'query', '|', p.beg, '|', p.end, sep = '')
+                    'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
     
     if(length(s.q) != length(pref.q)) stop('Chonk lengths do not much')
     names(s.q) = pref.q
     writeFasta(s.q, file.gap.query)
     
     # ---- Write base ----
-    s.b = base.fas.fw[pos.gap.q]
+    s.b = base.fas.fw[pos.gap.b]
     s.b = nt2seq(s.b)
     p.beg = 1
     p.end = nchar(s.b)
     s.base.names = paste('gap',
                           '_', i.gap, '_', i.gap + 1,
                           '|',query.name[i.query] , '|', query.chr, '|',
-                          'base','|', p.beg, '|', p.end, sep = '')
+                          'base','|', pos.gap.b[p.beg], '|', pos.gap.b[p.end], sep = '')
     names(s.b) = s.base.names
       
     writeFastaMy(s.b, file.gap.base)
