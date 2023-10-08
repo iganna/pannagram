@@ -270,6 +270,13 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
     x = x[x.major$idx.maj,]
+    
+    x.dir = setDir(x, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
+                         base.fas.fw = base.fas.fw, 
+                         base.fas.bw = base.fas.bw)
+    pokaz('New stage')
+    
     x$block.id = x.major$block.id
     saveRDS(x, file.aln.pre, compress = F)
     # ---- Remove short overlaps: twice, because from "both sides"
