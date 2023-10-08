@@ -31,18 +31,28 @@ pids=""
 echo  ${path_gaps}
 
 #  BLAST
-for query_file_path in ${path_gaps}*query*.fasta; do
+for query_file_path in ${path_gaps}*queryseq*.fasta; do
 
     query_file=$(basename "$query_file_path")
-
-    base_file="${query_file/query/base}"
-
-    out_file="${query_file/query/out}"
-    out_file="${out_file%.fasta}.txt"
+    
+    # Extract base file prefix from query file name
+    base_pref=$(echo "$query_file" | awk -F'_' '{print $1 "_" $4 "_" $5 "_" $8}')
+    
+    # Construct base file name
+    base_file="${base_pref}_base.fasta"
+    
+    # Construct output file name
+    out_file="${query_file%.fasta}.txt"
+    
+    # --- Get the exact name of base-sequence
+    base_seq=$(echo "$query_file" | sed -e 's/queryseq_//' -e 's/\.fasta$//')
+    # Write base sequence to a temporary file
+    tmp_file="tmp.txt"
+    echo "$base_seq" > ${path_gaps}${tmp_file}
 
     # Create BLAST database
     if [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
-        makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${base_file}  &> /dev/null
+        makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -parse_seqids -out ${base_file}  # &> /dev/null
     fi
     
     # Execute BLAST search
@@ -50,7 +60,8 @@ for query_file_path in ${path_gaps}*query*.fasta; do
            -query ${path_gaps}${query_file}  \
            -out ${path_gaps}${out_file} \
            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-           -max_hsps 10 &
+           -seqidlist ${path_gaps}${tmp_file} \
+           -max_hsps 5 &
 
     # Process tracking for parallel tasks
     pids="$pids $!"
