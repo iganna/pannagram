@@ -273,11 +273,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x$block.id = x.major$block.id
     saveRDS(x, file.aln.pre, compress = F)
     # ---- Remove short overlaps: twice, because from "both sides"
-    replicate(2, { 
-      x = defineSmallOverlapps(x)
-      x = removeSmallOverlapps(x)
-    }, simplify = FALSE)
-    
+    for(i.tmp in 1:2){
+      x.sk = defineSmallOverlapps(x.sk)
+      x.sk = removeSmallOverlapps(x.sk)
+    }
     
     if(!isSorted(x$p.beg)) pokazAttention('6!!')
     
