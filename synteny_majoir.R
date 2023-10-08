@@ -260,7 +260,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     
     # Determine short overlaps
-    x.major = defineSmallOverlapps(x.major)
     if(!isSorted(x.major$p.beg)) pokazAttention('3!!')
     
     file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
@@ -276,11 +275,13 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     if(!isSorted(x.major$p.beg)) pokazAttention('4!!')
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
-    x$rm.len = x.major$rm.len
     
-    if(!isSorted(x$p.beg)) pokazAttention('5!!')
-    # Remove shprt overlaps
-    x = removeSmallOverlapps(x)
+    # Remove shprt overlaps: twice, because from "both sides"
+    replicate(2, { 
+      x = defineSmallOverlapps(x)
+      x = removeSmallOverlapps(x)
+    }, simplify = FALSE)
+    
     
     if(!isSorted(x$p.beg)) pokazAttention('6!!')
     
