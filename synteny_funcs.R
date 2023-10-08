@@ -94,6 +94,10 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       s.q.cut = seq2nt(substr(x.sk$V8[irow], 1, aln.adjust))
       print(s.q.cut)
       adjustment.q = sum(s.q.cut != '-')
+      
+      print(adjustment.q)
+      print(adjustment)
+      
       x.sk$V2[irow] = x.sk$V2[irow] + adjustment.q * sign(adjustment)
       x.sk$V4[irow] = x.sk$V4[irow] + adjustment.dir
       
@@ -111,8 +115,11 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       # Adjust positions
       
       s.q.cut = seq2nt(substr(x.sk$V8[irow], (aln.adjust), nchar(x.sk$V8[irow])))
-      print(s.q.cut)
       adjustment.q = sum(s.q.cut != '-') 
+      
+      print(adjustment.q)
+      print(adjustment)
+      
       x.sk$V3[irow] = x.sk$V3[irow] + adjustment.q * sign(adjustment)
       x.sk$V5[irow] = x.sk$V5[irow] + adjustment.dir
     }
@@ -120,6 +127,8 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
     x.sk$V7[irow] = nchar(x.sk$V8[irow])
     
   }
+  print(x.sk[irow, 1:7])
+  if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   
   # Undate begin-eng positions
   x.sk$p.beg <- ifelse(x.sk$V4 < x.sk$V5, x.sk$V4, x.sk$V5)
