@@ -321,6 +321,14 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
 
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps')
+    
+    rm(x)
+    rm(x.major)
+    rm(base.fas.bw)
+    rm(base.fas.fw)
+    rm(query.fas.chr)
+    gc()
+    
     if(for.flag) next
     return(NULL)
   }
@@ -328,11 +336,6 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   
   # ---- Get gaps ----
   pokaz('Get gaps')
-  if((nrow(x) <= 1) || (is.null(x))) {
-    message('no gaps')
-    if(for.flag) next
-    return(NULL)
-  }
 
   x.dir = setDir(x, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
@@ -447,6 +450,13 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
       
     writeFastaMy(s.b, file.gap.base, append = T)
     
-  }
+  }  # irow search for gaps
+  
+  rm(x)
+  rm(x.major)
+  rm(base.fas.bw)
+  rm(base.fas.fw)
+  rm(query.fas.chr)
+  gc()
   
 }  # combinations
