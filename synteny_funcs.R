@@ -113,10 +113,10 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
       x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
       
       # Adjust positions
-      
-      s.q.cut = seq2nt(substr(x.sk$V8[irow], (aln.adjust), nchar(x.sk$V8[irow])))
+      print(substr(x.sk$V8[irow], aln.adjust, nchar(x.sk$V8[irow])))
+      s.q.cut = seq2nt(substr(x.sk$V8[irow], aln.adjust, nchar(x.sk$V8[irow])))
       adjustment.q = sum(s.q.cut != '-') 
-      
+      print(s.q.cut)
       print(adjustment.q)
       print(adjustment)
       
