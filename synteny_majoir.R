@@ -398,10 +398,24 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     pos.b.free[pos.gap.b] = irow
     
     i.gap = irow
-    file.gap.query = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, 
-                            '_query_',i.gap,'.txt', collapse = '')
-    file.gap.base = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, 
-                           '_base_',i.gap,'.txt', collapse = '')
+    
+    # Commonf file namse
+    file.common.pref = paste('gap_', i.gap, '_', i.gap + 1,
+                             '_',query.name[i.query] , 
+                             '_', query.chr, '_', sep = '')
+    file.gap.query.corename = paste(file.common.pref,
+                                    'queryseq_',
+                                    'base_', base.chr, 
+                                        '_', pos.gap.b[p.beg], 
+                                        '_', pos.gap.b[p.end], sep = '')
+    
+    # Query-file
+    file.gap.query = paste0(path.gaps, file.gap.query.corename, '.txt', collapse = '')
+    
+    # Base file
+    file.gap.base = paste0(path.gaps, file.common.pref, 
+                           'base.txt', collapse = '')
+    
     if(file.exists(file.gap.query)) next
     
     if(abs(pos.gap.q[1] - pos.gap.q[length(pos.gap.q)]) > max.len) next
@@ -423,9 +437,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     s.q = splitSeq(s.q, n = n.bl)
     
     # Standsrd naming (as before)
-    pref.q = paste('gap',
-                    '_', i.gap, '_', i.gap + 1,
-                    '|',query.name[i.query] , '|', query.chr, '|',
+    pref.q = paste(file.common.pref,
                     'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
     
     if(length(s.q) != length(pref.q)) stop('Chonk lengths do not much')
@@ -437,21 +449,12 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     s.b = nt2seq(s.b)
     p.beg = 1
     p.end = nchar(s.b)
-    s.base.names = paste('gap',
-                          '_', i.gap, '_', i.gap + 1,
-                          '|',query.name[i.query] , '|', query.chr, '|',
-                          'base','|', pos.gap.b[p.beg], '|', pos.gap.b[p.end], sep = '')
     
-    
-    s.base.names = paste('gap',
-                         '_', i.gap, '_', i.gap + 1,
-                         '|',query.name[i.query] , '|', query.chr, '|',
-                         'base','|', pos.gap.b[p.beg], '|', pos.gap.b[p.end], sep = '')
-    
+    s.base.names = gsub("queryseq_", "", file.gap.query.corename)
     
     names(s.b) = s.base.names
       
-    writeFastaMy(s.b, file.gap.base)
+    writeFastaMy(s.b, file.gap.base, append = T)
     
 
   }
