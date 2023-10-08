@@ -278,12 +278,12 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     file.raw.idx <- paste(path.aln, paste0(pref.comb, '_raw_idx.rds', collapse = ''), sep = '')
     
     # Save - Raw without sequences
-    saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
+    # saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
     
     # ---- Filtration ----
     x = x[x.major$idx.maj,]
     x$block.id = x.major$block.id
-    saveRDS(x, file.aln.pre, compress = F)
+    # saveRDS(x, file.aln.pre, compress = F)
     
     
     # ---- Remove short overlaps: twice, because from "both sides" ----
@@ -312,7 +312,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     
     # Save
     saveRDS(x, file.aln.pre, compress = F)
-    saveRDS(x.major, file.maj.idx, compress = F)
+    # saveRDS(x.major, file.maj.idx, compress = F)
     
   } else {
     pokaz('Reading instead of analysis', file.aln.pre)
