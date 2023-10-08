@@ -334,7 +334,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
                        base.fas.fw = base.fas.fw, 
                        base.fas.bw = base.fas.bw)
   
-
+  print('1')
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions if query
   pos.b.free = rep(0, base.len)  # free positions if base
@@ -349,7 +349,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   pos.b.free = -pos.b.free
   
   # Within non-occupied positions fins those, which sould be st
-  
+  print('2')
 
   for(irow in 1:(nrow(x)-1)){
     if(x$bl[irow] != x$bl[irow+1]) next
@@ -379,7 +379,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     if(!((d1 >= len.blast) & (d2 >= len.blast))) next
     
-    
+    print('3')
     # If both are long
     pos.q.free[(x$V3[irow]+1):(x$V2[irow+1]-1)] = irow
     pos.b.free[(x$V5[irow]+1):(x$V4[irow+1]-1)] = irow
@@ -407,6 +407,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     p.beg = seq(1, nchar(s.q), n.bl)
     p.end = seq(n.bl, nchar(s.q), n.bl)
     s.q = splitSeq(s.q, n = n.bl)
+    
+    print('4')
     
     # Standsrd naming (as before)
     pref.q = paste0('gap',
