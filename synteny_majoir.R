@@ -357,10 +357,11 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
 
   pref.comarisson = paste('acc_', query.name[i.query], '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
   # Query-file
-  file.gap.query = paste0(path.query, pref.comarisson, 'query.fasta', collapse = '')
+  file.gap.query = paste0(path.gaps, pref.comarisson, 'query.fasta', collapse = '')
   # Base file
-  file.gap.base = paste0(path.query, pref.comarisson, 'base.fasta', collapse = '')
-  pokaz('Create gaps for', pref.comarisson)
+  file.gap.base = paste0(path.gaps, pref.comarisson, 'base.fasta', collapse = '')
+  pokaz('Create gaps for', file.gap.query)
+  pokaz('Create gaps for', file.gap.base)
   
   for(irow in 1:(nrow(x)-1)){
     
