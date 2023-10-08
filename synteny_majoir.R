@@ -398,8 +398,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     pos.b.free[pos.gap.b] = irow
     
     i.gap = irow
-    file.gap.query = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_query_',i.gap,'.txt', collapse = '')
-    file.gap.base = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_base_',i.gap,'.txt', collapse = '')
+    file.gap.query = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, 
+                            '_query_',i.gap,'.txt', collapse = '')
+    file.gap.base = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, 
+                           '_base_',i.gap,'.txt', collapse = '')
     if(file.exists(file.gap.query)) next
     
     if(abs(pos.gap.q[1] - pos.gap.q[length(pos.gap.q)]) > max.len) next
@@ -439,6 +441,14 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
                           '_', i.gap, '_', i.gap + 1,
                           '|',query.name[i.query] , '|', query.chr, '|',
                           'base','|', pos.gap.b[p.beg], '|', pos.gap.b[p.end], sep = '')
+    
+    
+    s.base.names = paste('gap',
+                         '_', i.gap, '_', i.gap + 1,
+                         '|',query.name[i.query] , '|', query.chr, '|',
+                         'base','|', pos.gap.b[p.beg], '|', pos.gap.b[p.end], sep = '')
+    
+    
     names(s.b) = s.base.names
       
     writeFastaMy(s.b, file.gap.base)
