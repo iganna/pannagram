@@ -153,6 +153,7 @@ checkCorrespToGenome <- function(t, base.fas.fw, base.fas.bw, query.fas, k = 10)
     if(nchar(s1) == 0){
       s2 = s1
     } else {
+      print(t[irow, c('V4','V5')])
       print((-(nchar(s1)-1):0) + t[irow, 'V5'])
       s2 = toupper(paste0(base.fas[(-(nchar(s1)-1):0) + t[irow, 'V5']], collapse = ''))
     }
