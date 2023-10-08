@@ -1,63 +1,77 @@
+#!/bin/bash
+
+# Выделение текста цветом
 echo -e "\e[38;2;52;252;252m* BLAST of gaps between syn blocks\e[0m"
 
-
+# Функция показа инструкции по использованию
 print_usage() {
   echo "-path_gaps"
 }
 
-while [ $# -gt 0 ]
-do
+# Парсинг аргументов командной строки
+while [ $# -gt 0 ]; do
     case $1 in
-    # for options with required arguments, an additional shift is required
-    -path_gaps) path_gaps=$2; shift ;;
-    *) print_usage
-       echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+        -path_gaps) 
+            path_gaps=$2
+            shift
+            ;;
+        *) 
+            print_usage
+            echo "$0: error - unrecognized option $1" 1>&2
+            exit 1
+            ;;
     esac
     shift
 done
 
 
-for file in ${path_gaps}*_base*.txt; do
-
-tmp="${file}.nhr"
-if [ -f $tmp ]; then
-    continue
-fi
-#echo "DTABASE ${file}"
-    makeblastdb -in $file -dbtype nucl &> /dev/null
-done
-
-
-
 cores=30
+pids=""
 
-for file_q in ${path_gaps}*_query*.txt; do
+#  BLAST
+#!/bin/bash
+
+for query_file in *queryseq*; do
     
-    file_b="${file_q/query/base}"
-    file_out="${file_q/query/out}"
-
-if [ ! -f ${path_gaps}${file_b} ]
-then
-#	echo "File not found"
-continue
-fi
-
-#    echo $file_b
-    blastn -db  ${path_gaps}${file_b} -query  ${path_gaps}${file_q} \
-     -out  ${path_gaps}${file_out} \
-     -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" &  # -perc_identity 85 -penalty -2 -gapopen 5 -gapextend 2
-     #-max_hsps 5  \
+    # Extract base file prefix from query file name
+    base_pref=$(echo "$query_file" | awk -F'_' '{print $1 "_" $4 "_" $5 "_" $8}')
     
-   pids="$pids $!"
-blast_number=$(pgrep -c blastn)
-#echo $blast_number
-#    background=( $(jobs -p) )
+    # Construct base file name
+    base_file="${base_pref}_base.fasta"
+    
+    # Construct output file name
+    out_file="${query_file%.fasta}.txt"
+    
+    # --- Get the exact name of base-sequence
+    base_seq=$(echo "$query_file" | sed -e 's/queryseq_//' -e 's/\.fasta$//')
+    # Write base sequence to a temporary file
+    tmp_file="tmp.txt"
+    echo "$base_seq" > ${tmp_file}
+
+    # Create BLAST database
+    if [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
+        makeblastdb -in ${base_file} -dbtype nucl -parse_seqids -out ${base_file}
+    fi
+    
+    # Execute BLAST search
+    blastn -db ${base_file} \
+           -query ${query_file}  \
+           -out ${out_file} \
+           -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+           -seqidlist ${tmp_file} \
+           -max_hsps 25 &
+
+    # Process tracking for parallel tasks
+    pids="$pids $!"
+    blast_number=$(pgrep -c blastn)
+
     if (( ${blast_number} > $cores )); then
         wait -n
     fi
+
 done
+
 
 wait $pids
 
 echo "  Done!"
-#Rscript ../pipeline/get_alignments_fixed.R --path.blast ../blast_res_ref/ --path.aln ../alignments_ref/ --type fasta --pref TAIR10 --path.ref  ../ref/ --path.gaps ../gaps_ref/
