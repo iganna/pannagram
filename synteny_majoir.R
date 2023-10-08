@@ -181,10 +181,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x[,2:3] = x[,2:3] + start.pos
     
     
-    x.dir = setDir(x, base.len = base.len)
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)
+    # x.dir = setDir(x, base.len = base.len)
+    # checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+    #                      base.fas.fw = base.fas.fw,
+    #                      base.fas.bw = base.fas.bw)
     
     # Set direction
     x$dir = (x$V4 > x$V5) * 1
@@ -353,10 +353,21 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   pos.q.free = -pos.q.free
   pos.b.free = -pos.b.free
   
-  # Within non-occupied positions fins those, which sould be st
-  print('2')
+  # ---- Write gaps ----
+  # Within non-occupied positions find those, which can be
 
+  pref.comarisson = paste('acc_', query.name[i.query], '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
+  # Query-file
+  file.gap.query = paste0(pref.comarisson, 'query.fasta', collapse = '')
+  # Base file
+  file.gap.base = paste0(pref.comarisson, 'base.fasta', collapse = '')
+  pokaz('Create gaps for', pref.comarisson)
+  
   for(irow in 1:(nrow(x)-1)){
+    
+    # Common file name
+    pref.gap = paste('gap_', irow, '_', irow + 1, '_', sep = '')
+    
     if(x$bl[irow] != x$bl[irow+1]) next
     d1 = x$V2[irow+1] - x$V3[irow]
     
@@ -397,27 +408,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     pos.q.free[pos.gap.q] = irow
     pos.b.free[pos.gap.b] = irow
     
-    i.gap = irow
-    
-    # Commonf file namse
-    file.common.pref = paste('gap_', i.gap, '_', i.gap + 1,
-                             '_',query.name[i.query] , 
-                             '_', query.chr, '_', sep = '')
-    file.gap.query.corename = paste(file.common.pref,
-                                    'queryseq_',
-                                    'base_', base.chr, 
-                                        '_', pos.gap.b[1], 
-                                        '_', pos.gap.b[length(pos.gap.b)], sep = '')
-    
-    # Query-file
-    file.gap.query = paste0(path.gaps, file.gap.query.corename, '.fasta', collapse = '')
-    
-    # Base file
-    file.gap.base = paste0(path.gaps, 
-                           paste0(strsplit(file.gap.query.corename, '_')[[1]][c(1, 4, 5, 8)], collapse = '_'),
-                           '_base.fasta', collapse = '')
-    
-    if(file.exists(file.gap.query)) next
+    # if(file.exists(file.gap.query)) next
     
     if(abs(pos.gap.q[1] - pos.gap.q[length(pos.gap.q)]) > max.len) next
     if(abs(pos.gap.b[1] - pos.gap.b[length(pos.gap.b)]) > max.len) next
@@ -438,24 +429,24 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     s.q = splitSeq(s.q, n = n.bl)
     
     # Standsrd naming (as before)
-    pref.q = paste(file.common.pref,
-                    'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+    pref.q = paste(pref.comarisson, pref.gap,
+                    '|query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
     
-    if(length(s.q) != length(pref.q)) stop('Chonk lengths do not much')
+    if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
     names(s.q) = pref.q
-    writeFasta(s.q, file.gap.query)
+    writeFasta(s.q, file.gap.query, append = T)
     
     # ---- Write base ----
     s.b = base.fas.fw[pos.gap.b]
     s.b = nt2seq(s.b)
     
-    s.base.names = gsub("queryseq_", "", file.gap.query.corename)
+    s.base.names = paste(pref.comarisson, pref.gap,
+                         '|base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
     
     names(s.b) = s.base.names
       
     writeFastaMy(s.b, file.gap.base, append = T)
     
-
   }
   
 }  # combinations
