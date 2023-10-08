@@ -183,7 +183,7 @@ revCompl <- function(s){
   
   seqs.rc = rev(complementary_nts[s])
   if(sum(is.na(seqs.rc)) != 0) stop('Wrong nucleotides are provided')
-  return()
+  return(seqs.rc)
 }
 
 
