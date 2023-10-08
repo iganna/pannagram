@@ -136,7 +136,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
   pokaz('Base:', base.file)
-
+  pokez(paste(path.base, base.file, sep = ''))
   base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
