@@ -341,7 +341,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
-  if((sum(pos.q.free > 1) != 0) || (sum(pos.b.free > 1) != 0)) stop('Coverage is wrong')
+  if((sum(pos.q.free > 1) != 0)) stop('Coverage query is wrong')
+  if((sum(pos.b.free > 1) != 0)) stop('Coverage base is wrong')
   
   pos.q.free = -pos.q.free
   pos.b.free = -pos.b.free
