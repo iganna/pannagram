@@ -308,8 +308,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   # ---- Get gaps ----
   print('Get gaps')
-  t = t[t[,'V7'] > 10000,,drop=F]
-  if((nrow(t) <= 1) || (is.null(t))) {
+  if((nrow(x) <= 1) || (is.null(x))) {
     message('no gaps')
     if(for.flag) next
     return(NULL)
