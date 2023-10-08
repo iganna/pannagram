@@ -120,10 +120,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   pref.comb = paste0(query.name[i.query], '_', query.chr, '_', base.chr, collapse = '')
   
-  if(query.chr != 4) next
-  if(base.chr != 4) next
-  if(query.name[i.query] != '10024') next
-  
+  # if(query.chr != 4) next
+  # if(base.chr != 4) next
+  # if(query.name[i.query] != '10024') next
+  # 
   
   # If the blast-result is not there -> next
   t.file <- paste(path.blast.res, pref.comb, '.txt', sep = '')
