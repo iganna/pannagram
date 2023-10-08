@@ -61,7 +61,7 @@ for query_file_path in ${path_gaps}*queryseq*.fasta; do
            -out ${path_gaps}${out_file} \
            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
            -seqidlist ${path_gaps}${tmp_file} \
-           -max_hsps 25 &
+           -max_hsps 5 &
 
     # Process tracking for parallel tasks
     pids="$pids $!"
