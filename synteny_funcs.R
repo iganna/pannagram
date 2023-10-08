@@ -10,7 +10,7 @@
 #'
 #' @return A data frame similar to the input but with column 'rm.len' added.
 #
-defineSmallOverlapps <- function(x.major){
+defineOverlapps <- function(x.major){
   
   # sort.flaf = isSorted(x.major$p.beg)
   # new.col.name = 'tmp'
@@ -55,6 +55,18 @@ defineSmallOverlapps <- function(x.major){
 }
 
 
+cleanBigOverlaps <- function(x.sk, rm.threshold = 0.5){
+  
+  while(T){
+    n.row = nrow(x.sk)
+    x.sk = defineOverlapps(x.sk)
+    x.sk =  x.sk[((abs(x.sk$rm.len) / x.sk$V7) <= rm.threshold) | (x.sk$rm.len == 0),]
+    if(n.row == nrow(x.sk)) break
+    pokaz(n.row)
+  }
+  return(x.sk)
+}
+
 #' Remove Small Overlaps
 #'
 #' The function identifies and processes reviously defined overlaps
@@ -65,11 +77,9 @@ defineSmallOverlapps <- function(x.major){
 #'
 #' @return A modified data frame based on the overlap criteria.
 #' 
-removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
+cutSmallOverlaps <- function(x.sk){
   
-  if(!isSorted(x.sk$p.beg)) pokazAttention('2!!')
-  
-  x.sk =  x.sk[((abs(x.sk$rm.len) / x.sk$V7) <= rm.threshold) | (x.sk$rm.len == 0),]
+  # if(!isSorted(x.sk$p.beg)) pokazAttention('2!!')
   
   idx.cut = which(x.sk$rm.len != 0)
   for(irow in idx.cut){

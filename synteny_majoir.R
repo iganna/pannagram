@@ -283,8 +283,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     # ---- Remove short overlaps: twice, because from "both sides" ----
     for(i.tmp in 1:2){
-      x = defineSmallOverlapps(x)
-      x = removeSmallOverlapps(x)
+      x = cleanBigOverlaps(x)
+      x = cutSmallOverlaps(x)
     }
     
     # ---- Check sequences after cuts ----
