@@ -122,6 +122,51 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
 }
 
 
+
+checkCorrespToGenome <- function(t, base.fas.fw, base.fas.bw, query.fas, k = 10){
+  for(irow in 1:nrow(t)) {
+    s1 = toupper(remainLastN(t[irow, 'V8'], k))
+    s1 = gsub("\\-","",s1)
+    
+    if(nchar(s1) == 0){
+      s2 = s1
+    } else {
+      s2 = toupper(paste0(query.fas[(-(nchar(s1)-1):0) + t[irow, 'V3']], collapse = ''))
+    }
+    
+    
+    if(s1 != s2 ){
+      pokaz('Row', irow)
+      pokaz(s1)
+      pokaz(s2)
+      stop('Checking the query not passed')
+    }
+    
+    s1 = toupper(remainLastN(t[irow, 'V9'], k))
+    s1 = gsub("\\-","",s1)
+    if(t$dir[irow] == 0) {
+      base.fas = base.fas.fw
+    } else {
+      base.fas = base.fas.bw
+    }
+    
+    if(nchar(s1) == 0){
+      s2 = s1
+    } else {
+      s2 = toupper(paste0(base.fas[(-(nchar(s1)-1):0) + t[irow, 'V5']], collapse = ''))
+    }
+    
+    
+    if(s1 != s2 ){
+      pokaz('Row', irow)
+      pokaz(s1)
+      pokaz(s2)
+      stop('Checking the base was not passed')
+    }
+  }
+}
+
+
 # ----  OLD FUNCTIONS  ----
 
 
@@ -331,48 +376,6 @@ sumGapFirstN <- function(x, n){
   return(sum(strsplit(s, '')[[1]] == '-'))
 }
 
-checkCorrespToGenome <- function(t, base.fas.fw, base.fas.bw, query.fas, k = 10){
-  for(irow in 1:nrow(t)) {
-    s1 = toupper(remainLastN(t[irow, 'V8'], k))
-    s1 = gsub("\\-","",s1)
-    
-    if(nchar(s1) == 0){
-      s2 = s1
-    } else {
-      s2 = toupper(paste0(query.fas[(-(nchar(s1)-1):0) + t[irow, 'V3']], collapse = ''))
-    }
-    
-    
-    if(s1 != s2 ){
-      print(irow)
-      print(s1)
-      print(s2)
-      stop('Checking the query not passed')
-    }
-    
-    s1 = toupper(remainLastN(t[irow, 'V9'], k))
-    s1 = gsub("\\-","",s1)
-    if(t$dir[irow] == 0) {
-      base.fas = base.fas.fw
-    } else {
-      base.fas = base.fas.bw
-    }
-    
-    if(nchar(s1) == 0){
-      s2 = s1
-    } else {
-      s2 = toupper(paste0(base.fas[(-(nchar(s1)-1):0) + t[irow, 'V5']], collapse = ''))
-    }
-    
-    
-    if(s1 != s2 ){
-      print(irow)
-      print(s1)
-      print(s2)
-      stop('Checking the base was not passed')
-    }
-  }
-}
 
 fixDirection <- function(t, base.fas.bw){
   t$dir = c()

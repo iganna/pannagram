@@ -314,8 +314,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     return(NULL)
   }
 
-  
-  checkCorrespToGenome(x, query.fas = query.fas.chr, 
+  x.dir = setDir(x)
+  checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
                        base.fas.fw = base.fas.fw, 
                        base.fas.bw = base.fas.bw)
   
