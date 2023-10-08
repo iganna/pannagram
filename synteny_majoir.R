@@ -380,16 +380,18 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     if(!((d1 >= len.blast) & (d2 >= len.blast))) next
     
     print('3')
-    # If both are long
-    pos.q.free[(x$V3[irow]+1):(x$V2[irow+1]-1)] = irow
-    pos.b.free[(x$V5[irow]+1):(x$V4[irow+1]-1)] = irow
+    
     
     # Create files for BLAST
-    pos.gap.q = t$V3[irow]:t$V2[irow + 1]
-    pos = sort(c(t$V4[irow], t$V5[irow], t$V4[irow+1], t$V5[irow+1]))
+    pos.gap.q = x$V3[irow]:x$V2[irow + 1]
+    pos = sort(c(x$V4[irow], x$V5[irow], x$V4[irow+1], x$V5[irow+1]))
     pos.gap.b = pos[2]:pos[3]
     pos.gap.q = pos.gap.q[-c(1, length(pos.gap.q))]
     pos.gap.b = pos.gap.b[-c(1, length(pos.gap.b))]
+    
+    # Save occupancy
+    pos.q.free[pos.gap.q] = irow
+    pos.b.free[pos.gap.b] = irow
     
     i.gap = irow
     file.gap.query = paste0(path.gaps, query.name[i.query], '_', query.chr, '_', base.chr, '_query_',i.gap,'.txt', collapse = '')
