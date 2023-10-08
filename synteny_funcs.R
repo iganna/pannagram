@@ -49,6 +49,7 @@ defineSmallOverlapps <- function(x.major){
   #   x.major[order(x.major[,new.col.name]),]
   #   x.major = x.major[,colnames(x.major) != new.col.name]
   # }
+
   
   return(x.major)
 }
@@ -70,7 +71,6 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
   
   x.sk =  x.sk[((abs(x.sk$rm.len) / x.sk$V7) <= rm.threshold) | (x.sk$rm.len == 0),]
   
-  idx.remove = c()
   idx.cut = which(x.sk$rm.len != 0)
   for(irow in idx.cut){
     
@@ -113,6 +113,11 @@ removeSmallOverlapps <- function(x.sk, rm.threshold = 0.5){
     x.sk$V7[irow] = nchar(x.sk$V8[irow])
     
   }
+  
+  # Undate begin-eng positions
+  x.sk$p.beg <- ifelse(x.sk$V4 < x.sk$V5, x.sk$V4, x.sk$V5)
+  x.sk$p.end <- ifelse(x.sk$V4 < x.sk$V5, x.sk$V5, x.sk$V4)
+  
   return(x.sk)
 }
 
