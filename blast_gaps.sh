@@ -31,7 +31,7 @@ pids=""
 #  BLAST
 #!/bin/bash
 
-for query_file in *queryseq*; do
+for query_file in ${path_gaps}*queryseq*.fasta; do
     
     # Extract base file prefix from query file name
     base_pref=$(echo "$query_file" | awk -F'_' '{print $1 "_" $4 "_" $5 "_" $8}')
