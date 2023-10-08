@@ -117,7 +117,13 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   query.chr = chromosome.pairs[i.chr.pair, 2]
   base.chr = chromosome.pairs[i.chr.pair, 3]
   
+  
   pref.comb = paste0(query.name[i.query], '_', query.chr, '_', base.chr, collapse = '')
+  
+  if(query.chr != 4) next
+  if(base.chr != 4) next
+  if(query.name[i.query] != '10024') next
+  
   
   # If the blast-result is not there -> next
   t.file <- paste(path.blast.res, pref.comb, '.txt', sep = '')
@@ -353,7 +359,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   for(irow in 1:(nrow(x)-1)){
     if(x$bl[irow] != x$bl[irow+1]) next
     d1 = x$V2[irow+1] - x$V3[irow]
-    d2 = x$V4[irow+1] - x$V5[irow]
+    
+    pos = sort(c(x$V4[irow], x$V5[irow], x$V4[irow+1], x$V5[irow+1]))
+    d2 = pos[3] - pos[2]
     if(d1 * d2 == 0) next  # Glue Zero, but not necessary
     
     # Short gaps will be covered later!!!
