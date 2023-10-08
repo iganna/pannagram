@@ -406,8 +406,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     file.gap.query.corename = paste(file.common.pref,
                                     'queryseq_',
                                     'base_', base.chr, 
-                                        '_', pos.gap.b[p.beg], 
-                                        '_', pos.gap.b[p.end], sep = '')
+                                        '_', pos.gap.b[1], 
+                                        '_', pos.gap.b[length(pos.gap.b)], sep = '')
     
     # Query-file
     file.gap.query = paste0(path.gaps, file.gap.query.corename, '.txt', collapse = '')
@@ -447,8 +447,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # ---- Write base ----
     s.b = base.fas.fw[pos.gap.b]
     s.b = nt2seq(s.b)
-    p.beg = 1
-    p.end = nchar(s.b)
     
     s.base.names = gsub("queryseq_", "", file.gap.query.corename)
     
