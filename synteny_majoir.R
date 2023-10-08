@@ -162,6 +162,11 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     # ---- Read blast results ----
     x = read.table(t.file, stringsAsFactors = F, header = F)
     
+    x.dir = setDir(x, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
+                         base.fas.fw = base.fas.fw, 
+                         base.fas.bw = base.fas.bw)
+    
     pokaz('Read blast results finished, numer of rows is', nrow(x))
     
     ## ---- Pre-processing ----
@@ -271,10 +276,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     x = x[x.major$idx.maj,]
     
-    x.dir = setDir(x, base.len = base.len)
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
-                         base.fas.fw = base.fas.fw, 
-                         base.fas.bw = base.fas.bw)
+
     pokaz('New stage')
     
     x$block.id = x.major$block.id
