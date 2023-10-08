@@ -258,8 +258,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x.major$block = x.major$block + c(1, abs(x.major$dir[-1] != x.major$dir[-nrow(x.major)])) 
     x.major$block = (x.major$block > 0) * 1
     
-    if(!isSorted(x.major$p.beg)) pokazAttention('2!!')
-    
     x.major$block.id = cumsum(x.major$block)  # block ID
     
     if(sum(x.major$dir) > 0){  # different difertions exist
@@ -267,9 +265,6 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       print(cnt)
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     }
-    
-    
-    if(!isSorted(x.major$p.beg)) pokazAttention('3!!')
     
     # Files to save
     file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
