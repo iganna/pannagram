@@ -414,8 +414,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     
     # Base file
     file.gap.base = paste0(path.gaps, 
-                           paste0(strsplit(file.gap.query.corename, '_')[[1]][c(1, 4, 5, 8)], collapse = '_')
-                           ,'base.fasta', collapse = '')
+                           paste0(strsplit(file.gap.query.corename, '_')[[1]][c(1, 4, 5, 8)], collapse = '_'),
+                           '_base.fasta', collapse = '')
     
     if(file.exists(file.gap.query)) next
     
