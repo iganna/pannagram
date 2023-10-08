@@ -141,6 +141,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
+  pokaz('base.len', base.len)
 
   # Read query sequences
   query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
