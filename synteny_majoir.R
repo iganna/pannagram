@@ -338,8 +338,8 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
                        base.fas.bw = base.fas.bw)
   
   # Find occupied positions
-  pos.q.free = rep(0, query.len)  # free positions if query
-  pos.b.free = rep(0, base.len)  # free positions if base
+  pos.q.free = rep(0, query.len)  # free positions in query
+  pos.b.free = rep(0, base.len)  # free positions in base
   for(irow in 1:nrow(x)){
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
@@ -428,7 +428,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     
     # Standsrd naming (as before)
     pref.q = paste(pref.comarisson, pref.gap,
-                    '|query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+                    'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
     
     if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
     names(s.q) = pref.q
@@ -439,13 +439,80 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     s.b = nt2seq(s.b)
     
     s.base.names = paste(pref.comarisson, pref.gap,
-                         '|base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
+                         'base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
     
     names(s.b) = s.base.names
       
     writeFastaMy(s.b, file.gap.base, append = T)
     
   }  # irow search for gaps
+  
+  # ---- Write remained blocks ----
+  pokaz('Create fasta for the remained sequences')
+  file.gap.query = paste0(path.gaps, pref.comarisson, 'residual_query.fasta', collapse = '')
+  # Base file
+  file.gap.base = paste0(path.gaps, pref.comarisson, 'residual_base.fasta', collapse = '')
+  pokaz('Create gaps for', file.gap.query)
+  pokaz('Create gaps for', file.gap.base)
+  
+  
+  ## ---- Write query ----
+  # Query: Zero-coverage blocks
+  diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
+  begs = which(diffs == -1)
+  ends = which(diffs == 1) - 1
+  
+  for(irow in 1:length(begs)){
+    if((ends[irow] - begs[irow]) < len.blast) next
+    if((ends[irow] - begs[irow]) > max.len) next
+    pos.gap.q = begs[irow]:ends[irow]
+    
+    # Define Chunks
+    s.q = query.fas.chr[pos.gap.q]
+    s.q = nt2seq(s.q)
+    n.bl = 500
+    len.s.q = nchar(s.q)
+    if(len.s.q > n.bl){
+      p.beg = seq(1, len.s.q, n.bl)
+      p.end = seq(n.bl, len.s.q, n.bl)
+    } else {
+      p.beg = 1
+      p.end = len.s.q
+    }
+    s.q = splitSeq(s.q, n = n.bl)
+    
+    # Standard naming (as before)
+    pref.q = paste(pref.comarisson,
+                   'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+    
+    if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
+    names(s.q) = pref.q
+    writeFasta(s.q, file.gap.query, append = T)
+  }
+  
+  
+  ## ---- Write base ----
+  # Query: Zero-coverage blocks
+  diffs = diff(c(1, (pos.b.free != 0) * 1, 1))
+  begs = which(diffs == -1)
+  ends = which(diffs == 1) - 1
+  for(irow in 1:length(begs)){
+    if((ends[irow] - begs[irow]) < len.blast) next
+    if((ends[irow] - begs[irow]) > max.len) next
+    
+    pos.gap.b = begs[irow]:ends[irow]
+    
+    s.b = base.fas.fw[pos.gap.b]
+    s.b = nt2seq(s.b)
+    
+    s.base.names = paste(pref.comarisson,
+                         'resid_base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
+    
+    names(s.b) = s.base.names
+    
+    writeFastaMy(s.b, file.gap.base, append = T)
+  }
+  
   
   rm(x)
   rm(x.major)
