@@ -46,11 +46,33 @@ for query_file_path in ${path_gaps}*query*.fasta; do
     fi
     
     # Execute BLAST search
-    blastn -db ${base_file} \
-           -query ${path_gaps}${query_file}  \
-           -out ${path_gaps}${out_file} \
-           -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-           -max_hsps 10 &
+    if [[ ! -e ${path_gaps}${out_file} ]]; then
+        blastn -db ${base_file} \
+               -query ${path_gaps}${query_file}  \
+               -out ${path_gaps}${out_file} \
+               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -max_hsps 10 &
+    fi
+
+
+    # BLAST seqarch in "cross" mode
+    if [[ $query_file != *residual* ]]; then
+        base_file="${query_file/query/residual_base}"
+        out_file="${query_file/query/out_on_residual}"
+        out_file="${out_file%.fasta}.txt"
+    else
+        base_file="${query_file/residual_query/residual}"
+        out_file="${query_file/query/out_on_core}"
+        out_file="${out_file%.fasta}.txt"
+    fi
+
+    if [[ ! -e ${path_gaps}${out_file} ]]; then
+        blastn -db ${base_file} \
+               -query ${path_gaps}${query_file}  \
+               -out ${path_gaps}${out_file} \
+               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -max_hsps 5 &
+    fi
 
     # Process tracking for parallel tasks
     pids="$pids $!"
