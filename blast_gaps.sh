@@ -51,7 +51,7 @@ for query_file_path in ${path_gaps}*query*.fasta; do
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -max_hsps 10 &
+               -max_hsps 10 > /dev/null 2>> log_err.txt &
     fi
 
 
@@ -71,7 +71,7 @@ for query_file_path in ${path_gaps}*query*.fasta; do
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -max_hsps 5 &
+               -max_hsps 5 > /dev/null 2>> log_err.txt &
     fi
 
     # Process tracking for parallel tasks
