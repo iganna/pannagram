@@ -45,7 +45,7 @@ for query_file_path in ${path_gaps}*query*.fasta; do
     # Check if BLAST database files do not exist.
     if [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
         # Create BLAST database and run the process in the background.
-        makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${base_file}  &> /dev/null &
+        makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_gaps}${base_file}  &> /dev/null &
         # Add the PID of the last background process to the array.
         pids+=($!)
     fi
@@ -85,7 +85,7 @@ for query_file_path in ${path_gaps}*query*.fasta; do
     
     # Execute BLAST search
     if [[ ! -e ${path_gaps}${out_file} ]]; then
-        blastn -db ${base_file} \
+        blastn -db ${path_gaps}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
@@ -120,7 +120,7 @@ for query_file_path in ${path_gaps}*query*.fasta; do
     fi
 
     if [[ ! -e ${path_gaps}${out_file} ]]; then
-        blastn -db ${base_file} \
+        blastn -db ${path_gaps}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
