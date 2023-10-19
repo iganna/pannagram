@@ -31,7 +31,7 @@ pids=""
 # echo  ${path_gaps}
 
 # Path to databases
-path_db=${path_gaps}/db
+path_db=${path_gaps}db/
 if [ ! -d "${path_db}" ]; then
   mkdir -p "${path_db}"
 fi
