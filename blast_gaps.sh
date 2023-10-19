@@ -101,7 +101,6 @@ fi
 
 
 
-
 function process_file {
     query_file_path="$1"
     path_gaps="$2"
@@ -125,83 +124,83 @@ find ${path_gaps} -name '*query*.fasta' | parallel -j 30 process_file {} $path_g
 
 
 
-# ======================================================================================================
-#  BLAST
-# Declare an array to store the process IDs (PIDs) of the background processes.
-declare -a pids=()
+# # ======================================================================================================
+# #  BLAST
+# # Declare an array to store the process IDs (PIDs) of the background processes.
+# declare -a pids=()
 
-# Loop through all files matching the pattern '*query*.fasta' in the directory specified by 'path_gaps'.
-for query_file_path in ${path_gaps}*query*.fasta; do
-    query_file=$(basename "$query_file_path")
-    base_file="${query_file/query/base}"
+# # Loop through all files matching the pattern '*query*.fasta' in the directory specified by 'path_gaps'.
+# for query_file_path in ${path_gaps}*query*.fasta; do
+#     query_file=$(basename "$query_file_path")
+#     base_file="${query_file/query/base}"
 
-    out_file="${query_file/query/out}"
-    out_file="${out_file%.fasta}.txt"
+#     out_file="${query_file/query/out}"
+#     out_file="${out_file%.fasta}.txt"
     
-    # Execute BLAST search
-    if [[ ! -e ${path_gaps}${out_file} ]]; then
-        blastn -db ${path_db}${base_file} \
-               -query ${path_gaps}${query_file}  \
-               -out ${path_gaps}${out_file} \
-               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -max_hsps 10 > /dev/null 2>> log_err.txt &
-        # Store the PID of the last background process.
-        pids+=($!)
-    fi
-    # If the number of background processes equals or exceeds the number specified by '$cores'.
-    if (( ${#pids[@]} >= $cores )); then
-        # Wait for any one of the background processes to complete.
-        wait -n
-        # Check and remove completed processes from the array.
-        for pid in "${pids[@]}"; do
-            # If the process is no longer running, remove its PID from the array.
-            if ! kill -0 $pid 2>/dev/null; then
-                pids=("${pids[@]/$pid}")
-            fi
-        done
-    fi
+#     # Execute BLAST search
+#     if [[ ! -e ${path_gaps}${out_file} ]]; then
+#         blastn -db ${path_db}${base_file} \
+#                -query ${path_gaps}${query_file}  \
+#                -out ${path_gaps}${out_file} \
+#                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+#                -max_hsps 10 > /dev/null 2>> log_err.txt &
+#         # Store the PID of the last background process.
+#         pids+=($!)
+#     fi
+#     # If the number of background processes equals or exceeds the number specified by '$cores'.
+#     if (( ${#pids[@]} >= $cores )); then
+#         # Wait for any one of the background processes to complete.
+#         wait -n
+#         # Check and remove completed processes from the array.
+#         for pid in "${pids[@]}"; do
+#             # If the process is no longer running, remove its PID from the array.
+#             if ! kill -0 $pid 2>/dev/null; then
+#                 pids=("${pids[@]/$pid}")
+#             fi
+#         done
+#     fi
 
 
-    # ==============================================================
-    # BLAST search in "cross" mode
-    if [[ $query_file != *residual* ]]; then
-        base_file="${query_file/query/residual_base}"
-        out_file="${query_file/query/out_on_residual}"
-        out_file="${out_file%.fasta}.txt"
-    else
-        base_file="${query_file/residual_query/base}"
-        out_file="${query_file/query/out_on_core}"
-        out_file="${out_file%.fasta}.txt"
-    fi
+#     # ==============================================================
+#     # BLAST search in "cross" mode
+#     if [[ $query_file != *residual* ]]; then
+#         base_file="${query_file/query/residual_base}"
+#         out_file="${query_file/query/out_on_residual}"
+#         out_file="${out_file%.fasta}.txt"
+#     else
+#         base_file="${query_file/residual_query/base}"
+#         out_file="${query_file/query/out_on_core}"
+#         out_file="${out_file%.fasta}.txt"
+#     fi
 
-    if [[ ! -e ${path_gaps}${out_file} ]]; then
-        blastn -db ${path_db}${base_file} \
-               -query ${path_gaps}${query_file}  \
-               -out ${path_gaps}${out_file} \
-               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -max_hsps 5 > /dev/null 2>> log_err.txt &
-        # Store the PID of the last background process.
-        pids+=($!)
-    fi
+#     if [[ ! -e ${path_gaps}${out_file} ]]; then
+#         blastn -db ${path_db}${base_file} \
+#                -query ${path_gaps}${query_file}  \
+#                -out ${path_gaps}${out_file} \
+#                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+#                -max_hsps 5 > /dev/null 2>> log_err.txt &
+#         # Store the PID of the last background process.
+#         pids+=($!)
+#     fi
 
-    # If the number of background processes equals or exceeds the number specified by '$cores'.
-    if (( ${#pids[@]} >= $cores )); then
-        # Wait for any one of the background processes to complete.
-        wait -n
-        # Check and remove completed processes from the array.
-        for pid in "${pids[@]}"; do
-            # If the process is no longer running, remove its PID from the array.
-            if ! kill -0 $pid 2>/dev/null; then
-                pids=("${pids[@]/$pid}")
-            fi
-        done
-    fi
-done
+#     # If the number of background processes equals or exceeds the number specified by '$cores'.
+#     if (( ${#pids[@]} >= $cores )); then
+#         # Wait for any one of the background processes to complete.
+#         wait -n
+#         # Check and remove completed processes from the array.
+#         for pid in "${pids[@]}"; do
+#             # If the process is no longer running, remove its PID from the array.
+#             if ! kill -0 $pid 2>/dev/null; then
+#                 pids=("${pids[@]/$pid}")
+#             fi
+#         done
+#     fi
+# done
 
-# Wait for all remaining background processes to complete.
-for pid in "${pids[@]}"; do
-    wait $pid
-done
+# # Wait for all remaining background processes to complete.
+# for pid in "${pids[@]}"; do
+#     wait $pid
+# done
 
 
-echo "  Done!"
+# echo "  Done!"
