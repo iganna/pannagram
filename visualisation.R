@@ -58,7 +58,7 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
 
 
 plotDot <- function(...) {
-  p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 0.1)
+  p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 1)
   return(p)
 }
 

@@ -69,7 +69,7 @@ cleanBigOverlaps <- function(x.sk, rm.threshold = 0.5){
 
 #' Remove Small Overlaps
 #'
-#' The function identifies and processes reviously defined overlaps
+#' The function identifies and processes peviously defined overlaps
 #'
 #' @param x.sk A data frame with the alignment
 #' @param rm.threshold A threshold value to decide which rows to process. 
@@ -189,11 +189,218 @@ checkCorrespToGenome <- function(t, base.fas.fw, base.fas.bw, query.fas, k = 10)
 }
 
 
+#' Traverse of blast results, to find the optimal path
+#'
+#' This function traverses a graph allowing the search in a last skipped window
+#'
+#' @param x.tmp A data frame containing graph information.
+#' @param irow The current row index.
+#' @param x.top The top x-coordinate (query)
+#' @param y.top The top y-coordinate (base)
+#' @param w.beg The beginning of the window (base)
+#' @param w.end The end of the window (base)
+#' @param vist.info A list containing traversal information.
+#'
+#' @return A list containing updated traversal information.
+#'
+graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info) {
+  
+  if(irow == nrow(x.tmp)) return(vist.info)
+  
+  # Find neighbours
+  i.rem = -(1:irow)
+  jrow = which(((x.tmp$V3[i.rem] - x.top) > 0) &
+                 ((x.tmp$V5[i.rem] - y.top) > 0)) + irow
+  
+  x.over = x.top - x.tmp$V2[jrow]
+  y.over = y.top - x.tmp$V4[jrow]
+  max.over = pmax(ifelse(x.over > 0, x.over, 0), ifelse(y.over > 0, y.over, 0))
+  w.pure = x.tmp$w[jrow] - 2 * max.over
+  delta = (-x.over + max.over) + (-y.over + max.over)
+  
+  d = vist.info$d.to[irow] + delta - w.pure + max.over*2
+  
+  
+  if((w.end -  w.beg) > 0){
+    jrow.add =  which((x.tmp$V3[i.rem] > x.top) & 
+                        (x.tmp$V5[i.rem] > w.beg) & 
+                        (x.tmp$V4[i.rem] < w.end)) + irow 
+    
+    y.over = ifelse(x.tmp$V5[jrow.add] > w.end, 
+                    x.tmp$V5[jrow.add] - w.end, 0) +  # up
+      ifelse(x.tmp$V4[jrow.add] < w.beg, 
+             w.beg - x.tmp$V4[jrow.add], 0)  # low
+    x.over = x.top - x.tmp$V2[jrow.add]
+    max.over = pmax(ifelse(x.over > 0, x.over, 0), y.over)
+    w.pure = x.tmp$w[jrow.add] - 2 * max.over
+
+    d.add = vist.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
+
+    
+    jrow = c(jrow, jrow.add)
+    d = c(d, d.add)
+  }
+  
+  if(length(jrow) == 0) return(vist.info)
+  
+  # Order neighbours
+  order.neighbours <- order(d)
+  d     <- d[order.neighbours]
+  jrow  <- jrow[order.neighbours]
+  
+  for (j in 1:length(jrow)) {
+    if(d[j] >= vist.info$d.to[jrow[j]]) next
+    
+    vist.info$d.to[jrow[j]] = d[j]
+    vist.info$v.prev[jrow[j]] = irow
+    
+    if(x.tmp$V5[jrow[j]] > y.top){  # Продвижение вперед
+      # New window
+      w.beg.next = y.top
+      w.end.next = x.tmp$V4[jrow[j]]
+    } else {
+      # Shrink previous window
+      w.beg.next = w.beg
+      w.end.next = x.tmp$V4[jrow[j]]
+    }
+    
+    # Remove the window, if it's covered now
+    if((w.end.next - w.beg.next < 250)){
+      w.beg.next = 0
+      w.end.next = 0
+    }
+    
+    vist.info = graphTraverseWnd(x.tmp, jrow[j], 
+                                 x.tmp$V3[jrow[j]], 
+                                 max(x.tmp$V5[jrow[j]], y.top), 
+                                 w.beg.next, 
+                                 w.end.next, 
+                                 vist.info)
+  }
+  return(vist.info)
+}
+
+
+reconstructTraverse <- function(predecessor) {
+  start = 1
+  end = length(predecessor)
+  path <- integer(0)
+  while (!is.na(end)) {
+    path <- c(end, path)
+    if (end == start) break
+    end <- predecessor[end]
+  }
+  return(path)
+}
+
+
+#' Count consecutive occurrences of a specified value in a vector.
+#'
+#' This function starts counting from the next position to a specified one (`irow`) in the vector (`vec`)
+#' and continues until a different value is encountered or the end of the vector is reached.
+#' By default, the function looks for consecutive occurrences of -1.
+#'
+#' @param vec A numeric or character vector.
+#' @param irow Starting position in `vec` to begin counting from.
+#' @param value The value to count consecutive occurrences of. Default is -1.
+#' 
+#' @return An integer representing the number of consecutive occurrences of `value`
+#' starting from position `irow`.
+#' @examples
+#' vec <- c(1, 2, -1, -1, -1, 3, 4, -1)
+#' countValueStretch(vec, 2) # 3
+#' countValueStretch(vec, 1) # 0
+#' countValueStretch(vec, 7) # 1
+#' 
+countValueStretch <- function(vec, irow, value = -1) {
+  if(irow > length(vec)) stop('Wong position in vector, irow should be <= the length.')
+  
+  count <- 0
+  if(irow == length(vec)) return(0)
+  for (i in (irow + 1):length(vec)) {
+    if (vec[i] == value) {
+      count <- count + 1
+    } else {
+      break
+    }
+  }
+  return(count)
+}
+
+
+#' Count consecutive occurrences of a specified value in a vector, moving backward.
+#'
+#' This function starts counting from the previous position to a specified one (`irow`) in the vector (`vec`)
+#' and continues backward until a different value is encountered or the beginning of the vector is reached.
+#' By default, the function looks for consecutive occurrences of -1.
+#'
+#' @param vec A numeric or character vector.
+#' @param irow Starting position in `vec` to begin counting from.
+#' @param value The value to count consecutive occurrences of. Default is -1.
+#' 
+#' @return An integer representing the number of consecutive occurrences of `value`
+#' starting from position `irow` and moving backward.
+#' @examples
+#' vec <- c(1, 2, -1, -1, -1, 3, 4, -1)
+#' countValueStretchBW(vec, 6) # 3
+#' countValueStretchBW(vec, 8) # 0
+#' countValueStretchBW(vec, 4) # 1
+#' 
+countValueStretchBW <- function(vec, irow, value = -1) {
+  if(irow < 1) stop('Wong position in vector, irow should be >= 1')
+  
+  count <- 0
+  if(irow == 1) return(0)
+  for (i in (irow - 1):1) {
+    if (vec[i] == value) {
+      count <- count + 1
+    } else {
+      break
+    }
+  }
+  return(count)
+}
+
+
+#' Initialize Visit Information for Graph Traversal in Bellman-Ford Algorithm
+#'
+#' This function prepares the initial structure required for the Bellman-Ford algorithm.
+#' It initializes data structure with `v.prev` indicating the predecessor of each vertex,
+#' and `d.to` indicating the distance to each vertex. At the start, `v.prev` is set to `NA`
+#' for all vertices, indicating no predecessors, and `d.to` is set to `Inf` for all vertices,
+#' indicating an infinite distance, except for the first vertex, which is set to 0.
+#'
+#' @param n An integer representing the number of vertices in the graph.
+#' 
+#' @return A list with two components:
+#' \itemize{
+#'   \item \code{v.prev}: A numeric vector of length `n`
+#'                        representing the predecessor of each vertex.
+#'   \item \code{d.to}: A numeric vector of length `n` representing 
+#'                        distances to each vertex.
+#' }
+#' 
+initVisitInfo <- function(n){
+  if(n <= 1) stop('Number of visits should be positive')
+  vist.info = list(v.prev = rep(NA, n),
+                   d.to = rep(Inf, n))
+  vist.info$d.to[1] = 0
+  return(vist.info)
+}
+
+#' Remove Specified Columns from a Data Frame or Matrix
+#'
+#' @param x A data frame or matrix.
+#' @param columnt.to.remove A numeric vector of column indices to remove. Default is c(8,9).
+#' 
+#' @return Modified data frame or matrix without the specified columns.
+#' 
+info <- function(x, columnt.to.remove = c(8,9)){
+  return(x[,-columnt.to.remove])
+}
+
+
 # ----  OLD FUNCTIONS  ----
-
-
-
-
 
 getCorresponding2BasePositions <- function(t, base.len){
   t.base = getBase(t, base.len)

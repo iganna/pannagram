@@ -137,24 +137,26 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Bios
   }
   
   pokaz('Alignment:', query.name[i.query], query.chr, base.chr)
+
+  # ---- Read genomes ----
   
-  # # Read reference sequences
-  # base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
-  # pokaz('Base:', base.file)
-  # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
-  # base.fas.fw = seq2nt(base.fas.fw)
-  # base.fas.bw = revCompl(base.fas.fw)
-  # base.len = length(base.fas.bw)
-  # 
-  # # Read query sequences
-  # query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
-  # pokaz('Query:', query.file)
-  # 
-  # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
-  # query.fas.chr = seq2nt(query.fas.chr)
-  # query.len = length(query.fas.chr)
+  # Read reference sequences
+  base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
+  pokaz('Base:', base.file)
+  base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  base.fas.fw = seq2nt(base.fas.fw)
+  base.fas.bw = revCompl(base.fas.fw)
+  base.len = length(base.fas.bw)
+
+  # Read query sequences
+  query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
+  pokaz('Query:', query.file)
+
+  query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  query.fas.chr = seq2nt(query.fas.chr)
+  query.len = length(query.fas.chr)
   
-  
+  # ---- Read Major ----
   x = readRDS(file = file.aln.pre) 
   
   file.gaps.out = paste0(path.gaps,
@@ -166,6 +168,10 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Bios
     if(for.flag) next
     return(NULL)
   }
+  
+  # ---- Get BLAST-gap results ----
+  
+  
   
   all_lines_start_with_hash <- system(sprintf("grep -v '^#' %s | wc -l", file.gaps.out), intern = TRUE) == 0
   if(all_lines_start_with_hash){
