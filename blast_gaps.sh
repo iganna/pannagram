@@ -36,6 +36,8 @@ if [ ! -d "${path_db}" ]; then
   mkdir -p "${path_db}"
 fi
 
+echo ${$path_db}
+
 
 # ==============================================================================
 
@@ -61,10 +63,50 @@ fi
 # ======================================================================================================
 # Create blast databases
 # Declare an array to store the process IDs (PIDs) of the background processes.
-declare -a pids=()
+# declare -a pids=()
 
-# Loop through all files with a pattern '*query*.fasta' in the directory specified by 'path_gaps'.
-for query_file_path in ${path_gaps}*query*.fasta; do
+# # Loop through all files with a pattern '*query*.fasta' in the directory specified by 'path_gaps'.
+# for query_file_path in ${path_gaps}*query*.fasta; do
+#     # Extract the file name from the full file path.
+#     query_file=$(basename "$query_file_path")
+#     # Replace 'query' with 'base' in the file name.
+#     base_file="${query_file/query/base}"
+
+#     # Check if BLAST database files do not exist.
+#     if [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
+#         # Create BLAST database and run the process in the background.
+#         makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null &
+#         # Add the PID of the last background process to the array.
+#         # pids+=($!)
+#     fi
+
+#     # # If the number of background processes equals or exceeds the number specified by '$cores'.
+#     # if (( ${#pids[@]} >= $cores )); then
+#     #     # Wait for any one of the background processes to complete.
+#     #     wait -n
+#     #     # Check and remove completed processes from the array.
+#     #     for pid in "${pids[@]}"; do
+#     #         # If the process is no longer running, remove its PID from the array.
+#     #         if ! kill -0 $pid 2>/dev/null; then
+#     #             pids=("${pids[@]/$pid}")
+#     #         fi
+#     #     done
+#     # fi
+# done
+
+# # # Wait for all remaining background processes to complete.
+# # for pid in "${pids[@]}"; do
+# #     wait $pid
+# # done
+
+
+
+
+function process_file {
+    query_file_path="$1"
+    path_gaps="$2"
+    path_db="$3"
+
     # Extract the file name from the full file path.
     query_file=$(basename "$query_file_path")
     # Replace 'query' with 'base' in the file name.
@@ -72,30 +114,15 @@ for query_file_path in ${path_gaps}*query*.fasta; do
 
     # Check if BLAST database files do not exist.
     if [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
-        # Create BLAST database and run the process in the background.
-        makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null &
-        # Add the PID of the last background process to the array.
-        pids+=($!)
+        # Create BLAST database
+        makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null
     fi
+}
 
-    # # If the number of background processes equals or exceeds the number specified by '$cores'.
-    # if (( ${#pids[@]} >= $cores )); then
-    #     # Wait for any one of the background processes to complete.
-    #     wait -n
-    #     # Check and remove completed processes from the array.
-    #     for pid in "${pids[@]}"; do
-    #         # If the process is no longer running, remove its PID from the array.
-    #         if ! kill -0 $pid 2>/dev/null; then
-    #             pids=("${pids[@]/$pid}")
-    #         fi
-    #     done
-    # fi
-done
+export -f process_file
 
-# Wait for all remaining background processes to complete.
-for pid in "${pids[@]}"; do
-    wait $pid
-done
+find ${path_gaps} -name '*query*.fasta' | parallel -j 30 process_file {} $path_gaps $path_db
+
 
 
 # ======================================================================================================
