@@ -114,7 +114,7 @@ for query_file_path in ${path_gaps}*query*.fasta; do
         out_file="${query_file/query/out_on_residual}"
         out_file="${out_file%.fasta}.txt"
     else
-        base_file="${query_file/residual_query/residual}"
+        base_file="${query_file/residual_query/base}"
         out_file="${query_file/query/out_on_core}"
         out_file="${out_file%.fasta}.txt"
     fi
