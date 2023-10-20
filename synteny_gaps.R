@@ -164,7 +164,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   file.gaps.out = paste0(path.gaps,
                          'acc_', query.name[i.query], 
-                         '_qchr', query.chr, '_bchr', base.chr, '_out.txt', collapse = '')
+                         '_qchr_', query.chr, '_bchr_', base.chr, '_out.txt', collapse = '')
   
   pokaz('gap file', file.gaps.out)
   
@@ -251,7 +251,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   file.gaps.out = paste0(path.gaps,
                          'acc_', query.name[i.query], 
-                         '_qchr', query.chr, '_bchr', base.chr, '_residual_out.txt', collapse = '')
+                         '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
   
   if(file.exists(file.gaps.out)) {
     # Fill up and down
