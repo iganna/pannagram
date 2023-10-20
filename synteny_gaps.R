@@ -166,6 +166,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
                          'acc_', query.name[i.query], 
                          '_qchr', query.chr, '_bchr', base.chr, '_out.txt', collapse = '')
   
+  pokaz('gap file', file.gaps.out)
+  
   if(file.exists(file.gaps.out)){
     
     pokaz('Read blast of good gaps..')
