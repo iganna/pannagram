@@ -218,7 +218,8 @@ checkCorrespToGenome <- function(t, base.fas.fw, base.fas.bw, query.fas, k = 10)
 #'
 #' @return A list containing updated traversal information.
 #'
-graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info) {
+graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
+                             forward = F) {
   
   if(irow == nrow(x.tmp)) return(vist.info)
   
@@ -281,6 +282,11 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info)
     
     # Remove the window, if it's covered now
     if((w.end.next - w.beg.next < 250)){
+      w.beg.next = 0
+      w.end.next = 0
+    }
+    
+    if(forward){
       w.beg.next = 0
       w.end.next = 0
     }

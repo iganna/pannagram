@@ -160,7 +160,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   x.sk = readRDS(file.aln.pre)
   
   # ---- Read Gaps bwteen normal blocks ----
-  pos.beg.info = 2
+  
+  complexity.threshold = 200  # Max number of blast hits between two synteny blocks
+  
+  pos.beg.info = 2  # Position in sequence's name, where the genome's begin is started
   
   file.gaps.out = paste0(path.gaps,
                          'acc_', query.name[i.query], 
@@ -204,6 +207,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       
       # Add two extra "nodes", for the begin and end
       x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx')]
+      
+      if(nrow(x.tmp) > complexity.threshold) next
+      
       q.beg = min(x.tmp$V2) - 1  # change
       q.end = max(x.tmp$V3) + 1  # change
       b.beg = min(c(x.tmp$V4, x.tmp$V5)) - 1  # change
@@ -302,6 +308,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       
       # Get all possible BLAST-hits, which can be "after" the block.
       x.tmp = x.comb[i.cur + (0:(n.gaps)),]
+      
+      if(nrow(x.tmp) > complexity.threshold) next
+      
       x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
       x.tmp$w[1] = 0
       
@@ -419,8 +428,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   x.comb = x.comb[order(x.comb$V2),]
   rownames(x.comb) = NULL
   
-
-  checkCorrespToGenome(x.comb, query.fas = query.fas.chr,
+  
+  # Check genomes
+  x.dir = setDir(x.comb, base.len = base.len)
+  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
   
