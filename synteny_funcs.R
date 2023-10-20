@@ -10,6 +10,166 @@
 #'
 #' @return A data frame similar to the input but with column 'rm.len' added.
 #
+defineOverlappsQuery <- function(x.df){
+  
+  # if not sorted - SORT!
+  if(is.unsorted(x.df$V2)){
+    # Sort by the position in the reference
+    x.df = x.df[order(-x.df$V7),]
+    x.df = x.df[order(x.df$V2),]
+  }
+  
+  x.df$rm.len = 0
+  idx.overlap = which(x.df$V2[-1] <= x.df$V3[-nrow(x.df)])
+  
+  # x.df[c(irow, irow+1),]
+  
+  for(irow in idx.overlap){
+    # We cut either irow or [irow+1]
+    
+    # Which row to cut
+    icut = ifelse(x.df$V7[irow] > x.df$V7[irow + 1], irow + 1, irow)
+    ibig = ifelse(x.df$V7[irow] > x.df$V7[irow + 1], irow, irow + 1)
+    
+    # Find left(value = 1) or right(value = -1) tails 
+    # of irow(i.e., tail.irow) or [irow+1](i.e., tail.next), 
+    # which are involved in the overlap
+    tail.iсut = ifelse((x.df$V2[icut] >= x.df$V2[ibig]) & 
+                         (x.df$V2[icut] <= x.df$V3[ibig]), 
+                       1, -1)
+    
+    # how much to cut
+    ncut = length(intersect(x.df$V2[irow]:x.df$V3[irow],
+                            x.df$V2[irow+1]:x.df$V3[irow+1]))
+    # Remember the cut
+    x.df$rm.len[icut] = ncut * tail.iсut
+  }
+  
+  # if(!sort.flaf){
+  #   x.df[order(x.df[,new.col.name]),]
+  #   x.df = x.df[,colnames(x.df) != new.col.name]
+  # }
+  
+  
+  return(x.df)
+}
+
+
+
+cleanBigOverlapsQuery <- function(x.df, rm.threshold = 0.5){
+  
+  while(T){
+    n.row = nrow(x.df)
+    x.df = defineOverlappsQuery(x.df)
+    x.df =  x.df[((abs(x.df$rm.len) / x.df$V7) <= rm.threshold) | (x.df$rm.len == 0),]
+    if(n.row == nrow(x.df)) break
+    pokaz(n.row)
+  }
+  
+  return(x.df)
+}
+
+#' Remove Small Overlaps
+#'
+#' The function identifies and processes peviously defined overlaps
+#'
+#' @param x.sk A data frame with the alignment
+#' @param rm.threshold A threshold value to decide which rows to process. 
+#' Rows which should loose more than rm.threshold of their lengths - are removed
+#'
+#' @return A modified data frame based on the overlap criteria.
+#' 
+cutSmallOverlapsQuery <- function(x.df){
+  
+  # if(!isSorted(x.df$p.beg)) pokazAttention('2!!')
+  
+  idx.cut = which(x.df$rm.len != 0)
+  for(irow in idx.cut){
+    
+    print(info(x.df[irow,]))
+    # if(x.df$dir[irow] == 1) stop('dir')
+    
+    adjustment <- x.df$rm.len[irow]  # sing says about "begin" or "end"
+    # adjustment.dir <- ifelse(x.df$dir[irow] == 0, adjustment, (-1) * adjustment)
+    n.symbols = abs(adjustment)
+    
+    if(adjustment > 0){
+      # stop('3')
+      # From the befinning!
+      
+      # Adjust strings in the alignment
+      seq = seq2nt(x.df$V8[irow])
+      aln.adjust = which(seq != '-')[n.symbols]
+      x.df$V8[irow] = substr(x.df$V8[irow], (aln.adjust+1), nchar(x.df$V8[irow]))
+      x.df$V9[irow] = substr(x.df$V9[irow], (aln.adjust+1), nchar(x.df$V9[irow]))
+
+      
+      # Adjust positions - query
+      s.q.cut = seq2nt(x.df$V8[irow])
+      adjustment.q = sum(s.q.cut != '-') - 1
+      x.df$V2[irow] = x.df$V3[irow] - adjustment.q
+      
+      # Adjust positions - base
+      s.b.cut = seq2nt(x.df$V9[irow])
+      adjustment.b = sum(s.b.cut != '-') - 1
+      x.df$V4[irow] = x.df$V5[irow] - adjustment.q * sign(0.5 - x.df$dir[irow])
+      
+      
+    }
+    if(adjustment < 0){
+      # stop('4')
+      # From the ending!
+      
+      # Adjust strings in the alignment
+      seq = seq2nt(x.df$V8[irow])
+      aln.adjust = tail(which(seq != '-'), n=n.symbols)[1]
+      x.df$V8[irow] = substr(x.df$V8[irow], 1, (aln.adjust-1))
+      x.df$V9[irow] = substr(x.df$V9[irow], 1, (aln.adjust-1))
+      
+      # Adjust positions
+      
+      s.q.cut = seq2nt(x.df$V9[irow])
+      adjustment.q = sum(s.q.cut != '-') - 1
+      x.df$V3[irow] = x.df$V2[irow] + adjustment.q
+      
+      # Adjust positions - base
+      s.b.cut = seq2nt(x.df$V9[irow])
+      adjustment.b = sum(s.b.cut != '-') - 1
+      x.df$V5[irow] = x.df$V4[irow] + adjustment.q * sign(0.5 - x.df$dir[irow])
+    }
+    
+    print(info(x.df[irow,]))
+    
+    x.df$V7[irow] = nchar(x.df$V8[irow])  # doesn't matter 8 or 9 here
+    
+    # print(x.df[irow, -c(8,9)])
+    # if(x.df$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
+  }
+  
+  
+  # Undate begin-eng positions
+  x.df$p.beg <- ifelse(x.df$V4 < x.df$V5, x.df$V4, x.df$V5)
+  x.df$p.end <- ifelse(x.df$V4 < x.df$V5, x.df$V5, x.df$V4)
+  
+  return(x.df)
+}
+
+# -----------
+
+
+
+#' Determine Small Overlaps
+#'
+#' This function identifies small overlaps between rows in a data frame.
+#' It compares adjacent rows based on their overlap and 
+#' removes the smaller overlap based on column 'V7' (length).
+#' The function adds a new column 'rm.len' which indicates the length of the overlap removed.
+#'
+#' @param x.df A data frame with alignment.
+#'               Expected to be sorted based on 'p.beg'.
+#'
+#' @return A data frame similar to the input but with column 'rm.len' added.
+#
 defineOverlapps <- function(x.df){
   
   # sort.flaf = isSorted(x.df$p.beg)
@@ -31,7 +191,6 @@ defineOverlapps <- function(x.df){
     x.df = x.df[order(-x.df$V7),]
     x.df = x.df[order(x.df$p.beg),]
   }
-  
   
   
   x.df$rm.len = 0
@@ -70,6 +229,7 @@ defineOverlapps <- function(x.df){
 }
 
 
+
 cleanBigOverlaps <- function(x.df, rm.threshold = 0.5){
   
   while(T){
@@ -79,6 +239,7 @@ cleanBigOverlaps <- function(x.df, rm.threshold = 0.5){
     if(n.row == nrow(x.df)) break
     pokaz(n.row)
   }
+  
   return(x.df)
 }
 

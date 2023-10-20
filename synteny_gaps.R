@@ -106,7 +106,7 @@ for(i.query in 1:length(query.name)){
 for.flag = T
 for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
-  pokaz('A pair number', i.chr.pair, ':')
+  pokaz('A pair number', i.chr.pair, chromosome.pairs[i.chr.pair], ':')
   
   i.query = chromosome.pairs[i.chr.pair, 1]
   
@@ -247,6 +247,12 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       x.res = cleanBigOverlaps(x.res)
       x.res = cutSmallOverlaps(x.res)
     }
+    
+    for(i.tmp in 1:2){
+      x.res = cleanBigOverlapsQuery(x.res)
+      x.res = cutSmallOverlapsQuery(x.res)
+    }
+    
   } else {
     # Create empty
     x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
@@ -411,6 +417,10 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       x.bw = cutSmallOverlaps(x.bw)
     }
     
+    for(i.tmp in 1:2){
+      x.bw = cleanBigOverlapsQuery(x.bw)
+      x.bw = cutSmallOverlapsQuery(x.bw)
+    }
     
   } else {
     
@@ -431,8 +441,21 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   x.comb = x.comb[order(x.comb$V2),]
   rownames(x.comb) = NULL
   
+  # ---- Check uniqueness ---- 
+  pos.q.occup = rep(0, 40000000)
+  x.sk1 = x.comb
+  # x.sk1 = x.res
+  # x.sk1 = x.bw
+  for(irow in 1:nrow(x.sk1)){
+    pp = x.sk1$V4[irow]:x.sk1$V5[irow]
+    if(sum(pos.q.occup[pp]) > 0) stop('non-unique')
+    pos.q.occup[pp] = pos.q.occup[pp] + 1
+  }
+  sum(pos.q.occup > 1)
+  sum(pos.q.occup)
   
-  # Check genomes
+  
+  # ---- Check genomes ---- 
   x.dir = setDir(x.comb, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
                        base.fas.fw = base.fas.fw,
