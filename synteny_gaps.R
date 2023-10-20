@@ -301,7 +301,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     ## ---- Remain in "up" direction ----
     idx.remain = c()
     for(i.cur in idx.end){
-      pokaz(i.cur)
+      # pokaz(i.cur)
       # if(x.comb$dir[i.cur] == 1) next
       n.gaps = countValueStretch(x.comb$bl.end, i.cur)
       if(n.gaps == 0) next
@@ -358,6 +358,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       
       # Get all possible BLAST-hits, which can be "after" the block.
       x.tmp = x.comb[i.cur + ((-n.gaps):0),]
+      
+      if(nrow(x.tmp) > complexity.threshold) next
+      
       x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
       x.tmp$w[1] = 0
       
