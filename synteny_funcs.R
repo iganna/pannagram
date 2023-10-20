@@ -5,66 +5,81 @@
 #' removes the smaller overlap based on column 'V7' (length).
 #' The function adds a new column 'rm.len' which indicates the length of the overlap removed.
 #'
-#' @param x.major A data frame with alignment.
+#' @param x.df A data frame with alignment.
 #'               Expected to be sorted based on 'p.beg'.
 #'
 #' @return A data frame similar to the input but with column 'rm.len' added.
 #
-defineOverlapps <- function(x.major){
+defineOverlapps <- function(x.df){
   
-  # sort.flaf = isSorted(x.major$p.beg)
+  # sort.flaf = isSorted(x.df$p.beg)
   # new.col.name = 'tmp'
   # if(!sort.flaf){
-  #   x.major[,new.col.name] = 1:nrow(x.major)
-  #   x.major[order(x.major$p.beg),]
+  #   x.df[,new.col.name] = 1:nrow(x.df)
+  #   x.df[order(x.df$p.beg),]
   # }
   
-  x.major$rm.len = 0
-  idx.overlap = which(x.major$p.beg[-1] <= x.major$p.end[-nrow(x.major)])
+  if(sum(c('p.beg', 'p.end') %in% colnames(x.df)) != 2){
+    x.df$p.beg <- ifelse(x.df$V4 < x.df$V5, x.df$V4, x.df$V5)
+    x.df$p.end <- ifelse(x.df$V4 < x.df$V5, x.df$V5, x.df$V4)
+  }
   
-  # x.major[c(irow, irow+1),]
+  
+  # if not sorted - SORT!
+  if(is.unsorted(x.df$p.beg)){
+    # Sort by the position in the reference
+    x.df = x.df[order(-x.df$V7),]
+    x.df = x.df[order(x.df$p.beg),]
+  }
+  
+  
+  
+  x.df$rm.len = 0
+  idx.overlap = which(x.df$p.beg[-1] <= x.df$p.end[-nrow(x.df)])
+  
+  # x.df[c(irow, irow+1),]
   
   for(irow in idx.overlap){
     # We cut either irow or [irow+1]
     
     # Which row to cut
-    icut = ifelse(x.major$V7[irow] > x.major$V7[irow + 1], irow + 1, irow)
-    ibig = ifelse(x.major$V7[irow] > x.major$V7[irow + 1], irow, irow + 1)
+    icut = ifelse(x.df$V7[irow] > x.df$V7[irow + 1], irow + 1, irow)
+    ibig = ifelse(x.df$V7[irow] > x.df$V7[irow + 1], irow, irow + 1)
     
     # Find left(value = 1) or right(value = -1) tails 
     # of irow(i.e., tail.irow) or [irow+1](i.e., tail.next), 
     # which are involved in the overlap
-    tail.iсut = ifelse((x.major$V4[icut] >= x.major$p.beg[ibig]) & 
-                         (x.major$V4[icut] <= x.major$p.end[ibig]), 
+    tail.iсut = ifelse((x.df$V4[icut] >= x.df$p.beg[ibig]) & 
+                         (x.df$V4[icut] <= x.df$p.end[ibig]), 
                        1, -1)
     
     # how much to cut
-    ncut = length(intersect(x.major$V4[irow]:x.major$V5[irow],
-                            x.major$V4[irow+1]:x.major$V5[irow+1]))
+    ncut = length(intersect(x.df$V4[irow]:x.df$V5[irow],
+                            x.df$V4[irow+1]:x.df$V5[irow+1]))
     # Remember the cut
-    x.major$rm.len[icut] = ncut * tail.iсut
+    x.df$rm.len[icut] = ncut * tail.iсut
   }
   
   # if(!sort.flaf){
-  #   x.major[order(x.major[,new.col.name]),]
-  #   x.major = x.major[,colnames(x.major) != new.col.name]
+  #   x.df[order(x.df[,new.col.name]),]
+  #   x.df = x.df[,colnames(x.df) != new.col.name]
   # }
 
   
-  return(x.major)
+  return(x.df)
 }
 
 
-cleanBigOverlaps <- function(x.sk, rm.threshold = 0.5){
+cleanBigOverlaps <- function(x.df, rm.threshold = 0.5){
   
   while(T){
-    n.row = nrow(x.sk)
-    x.sk = defineOverlapps(x.sk)
-    x.sk =  x.sk[((abs(x.sk$rm.len) / x.sk$V7) <= rm.threshold) | (x.sk$rm.len == 0),]
-    if(n.row == nrow(x.sk)) break
+    n.row = nrow(x.df)
+    x.df = defineOverlapps(x.df)
+    x.df =  x.df[((abs(x.df$rm.len) / x.df$V7) <= rm.threshold) | (x.df$rm.len == 0),]
+    if(n.row == nrow(x.df)) break
     pokaz(n.row)
   }
-  return(x.sk)
+  return(x.df)
 }
 
 #' Remove Small Overlaps
@@ -398,6 +413,162 @@ initVisitInfo <- function(n){
 info <- function(x, columnt.to.remove = c(8,9)){
   return(x[,-columnt.to.remove])
 }
+
+
+
+pathDownPlus <- function(x.tmp){
+  
+  # Flip base
+  b.max = max(c(x.tmp$V4, x.tmp$V5)) + 1
+  x.tmp$V4 = b.max - x.tmp$V4
+  x.tmp$V5 = b.max - x.tmp$V5
+  
+  # Flip query
+  q.max = max(c(x.tmp$V2, x.tmp$V3)) + 1
+  x.tmp$V2 = q.max - x.tmp$V2
+  x.tmp$V3 = q.max - x.tmp$V3
+  
+  # DON'T SORT
+  # PLEASE NO SORTING AND NO CHANGES OF V4-V5
+  
+  # Get the best path
+  idx.visit = pathUpPlus(x.tmp)
+  
+  return(idx.visit)
+}
+
+pathDownMinus <- function(x.tmp){
+  
+  # Flip query
+  q.max = max(c(x.tmp$V2, x.tmp$V3)) + 1
+  x.tmp$V2 = q.max - x.tmp$V2
+  x.tmp$V3 = q.max - x.tmp$V3
+  
+  # DON'T SORT
+  # PLEASE NO SORTING AND NO CHANGES OF V4-V5
+  
+  # Get the best path
+  idx.visit = pathUpPlus(x.tmp)
+  
+  return(idx.visit)
+}
+
+
+pathUpMinus <- function(x.tmp, irow, visit.info){
+  
+  # Flip base
+  b.max = max(c(x.tmp$V4, x.tmp$V5)) + 1
+  x.tmp$V4 = b.max - x.tmp$V4
+  x.tmp$V5 = b.max - x.tmp$V5
+  
+  # DON'T SORT
+  # PLEASE NO SORTING AND NO CHANGES OF V4-V5
+  
+  idx.visit = pathUpPlus(x.tmp)
+  return(idx.visit)
+}
+
+
+pathUpPlus <- function(x.tmp){
+  
+  # shave the initial order
+  x.tmp$ord = 1:nrow(x.tmp)
+  
+  # Flip begin-end points
+  idx.flip = x.tmp$V2 > x.tmp$V3
+  tmp = x.tmp$V2[idx.flip]
+  x.tmp$V2[idx.flip] = x.tmp$V3[idx.flip]
+  x.tmp$V3[idx.flip] = tmp
+  
+  tmp = x.tmp$V4[idx.flip]
+  x.tmp$V4[idx.flip] = x.tmp$V5[idx.flip]
+  x.tmp$V5[idx.flip] = tmp
+  
+  x.tmp = x.tmp[order(x.tmp$V2),]
+  
+  # Add final destination
+  x.tmp = rbind(x.tmp, 0)
+  n.tmp = nrow(x.tmp)
+  
+  x.max = max(c(x.tmp$V2, x.tmp$V3)) + 1
+  y.max = max(c(x.tmp$V4, x.tmp$V5)) + 1
+  
+  x.tmp$V2[n.tmp] = x.max
+  x.tmp$V3[n.tmp] = x.max
+  x.tmp$V4[n.tmp] = y.max
+  x.tmp$V5[n.tmp] = y.max
+  
+  # Set up direction
+  idx.dir = which(x.tmp$V5 < x.tmp$V4)
+  tmp = x.tmp$V4[idx.dir]
+  x.tmp$V4[idx.dir] = x.tmp$V5[idx.dir]
+  x.tmp$V5[idx.dir] = tmp
+  x.tmp$dir = 0
+  x.tmp$dir[idx.dir] = 1
+   
+  # Run the traverse
+  visit.info = initVisitInfo(nrow(x.tmp))
+  visit.info = graphTraverseWnd(x.tmp, 1, x.tmp$V3[1], x.tmp$V5[1], 0, 0, visit.info)
+  idx.visit = reconstructTraverse(visit.info$v.prev)  # Reconstruct the optimal path
+  idx.visit = idx.visit[-c(1, length(idx.visit))]
+  # idx.visit = idx.visit[-c(length(idx.visit))]  # Remain the anchor
+
+  
+  # Return previous order
+  idx.visit = x.tmp$ord[idx.visit]
+  
+  return(idx.visit)
+}
+
+
+# traverseUpPlus <- function(x.tmp, irow, visit.info) {
+#   
+#   if(irow == nrow(x.tmp)) return(visit.info)
+#   # Find neighbours
+#   jrow = which((x.tmp$V3[-(1:irow)] > x.tmp$V3[irow]) & 
+#                  (x.tmp$V5[-(1:irow)] > x.tmp$V5[irow])) + irow 
+#   if(length(jrow) == 0) return(visit.info)
+#   
+#   d = abs(x.tmp$V2[jrow] -  x.tmp$V3[irow]) + abs(x.tmp$V4[jrow] -  x.tmp$V5[irow])
+#   # d = pmin(abs(x.tmp$V2[jrow] -  x.tmp$V3[irow]), abs(x.tmp$V4[jrow] -  x.tmp$V5[irow])) * 2
+#   d = d + visit.info$d.to[irow] - x.tmp$w[jrow]
+#   
+#   # Order neighbours
+#   order.neighbours <- order(d)
+#   d     <- d[order.neighbours]
+#   jrow  <- jrow[order.neighbours]
+#   
+#   # # Remove those, which are globally not advantageous
+#   # idx.stretch = d < 0
+#   # if(sum(idx.stretch) == 0) return(visit.info)
+#   # jrow <- jrow[idx.stretch]
+#   # d <- d[idx.stretch]
+#   
+#   for (i in 1:length(jrow)) {
+#     if(d[i] < visit.info$d.to[jrow[i]]){
+#       visit.info$d.to[jrow[i]] = d[i]
+#       visit.info$v.prev[jrow[i]] = irow
+#       visit.info = traverseUpPlus(x.tmp, jrow[i], visit.info)
+#     }
+#   }
+#   return(visit.info)
+# }
+
+# reconstructUpPlus <- function(predecessor) {
+#   start = 1
+#   end = length(predecessor)
+#   while(is.na(predecessor[end])){
+#     if (end == start) return(NULL)
+#     end = end - 1
+#   }
+#   path <- integer(0)
+#   while (!is.na(end)) {
+#     path <- c(end, path)
+#     if (end == start) break
+#     end <- predecessor[end]
+#   }
+#   return(path)
+# }
 
 
 # ----  OLD FUNCTIONS  ----

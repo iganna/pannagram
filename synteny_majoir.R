@@ -298,8 +298,8 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     # ---- Check uniquness of occupancy ----
     pos.q.occup = rep(0, base.len)
     for(irow in 1:nrow(x)){
-      # pos.q.occup[x.sk$V2[irow]:x.sk$V3[irow]] = pos.q.occup[x.sk$V2[irow]:x.sk$V3[irow]] + 1
-      # if(sum(pos.q.occup[x.sk$V4[irow]:x.sk$V5[irow]]) > 0) stop()
+      # pos.q.occup[x$V2[irow]:x$V3[irow]] = pos.q.occup[x$V2[irow]:x$V3[irow]] + 1
+      # if(sum(pos.q.occup[x$V4[irow]:x$V5[irow]]) > 0) stop()
       pos.q.occup[x$V4[irow]:x$V5[irow]] = pos.q.occup[x$V4[irow]:x$V5[irow]] + 1
     }
     if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')

@@ -14,7 +14,6 @@ source("synteny_funcs.R")
 
 pokazStage('Alignment2: fill the gaps between synteny blocks')
 
-
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -101,11 +100,11 @@ for(i.query in 1:length(query.name)){
 
 
 
-for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
+# for.flag = F
+# tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
 
-#for.flag = T
-#for(i.chr.pair in 1:nrow(chromosome.pairs)){
+for.flag = T
+for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   pokaz('A pair number', i.chr.pair, ':')
   
@@ -121,15 +120,14 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Bios
   
   pref.comb = paste0(query.name[i.query], '_', query.chr, '_', base.chr, collapse = '')
   
+  # If the previous file was not created - next
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
   if(!file.exists(file.aln.pre)) {
     if(for.flag) next
     return(NULL)
   }
   
-  base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
-  pokaz('Base:', base.file, sep=' ')
-  
+  # If the full file has beed already created - next
   file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
   if(file.exists(file.aln.full)) {
     if(for.flag) next
@@ -157,105 +155,282 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Bios
   query.len = length(query.fas.chr)
   
   # ---- Read Major ----
-  x = readRDS(file = file.aln.pre) 
+  
+  pokaz('Read the skeleton alignment..')
+  x.sk = readRDS(file.aln.pre)
+  
+  # ---- Read Gaps bwteen normal blocks ----
+  pos.beg.info = 2
   
   file.gaps.out = paste0(path.gaps,
                          'acc_', query.name[i.query], 
                          '_qchr', query.chr, '_bchr', base.chr, '_out.txt', collapse = '')
   
-  if(!file.exists(file.gaps.out)){
-    saveRDS(object = x, file = file.aln.full) 
-    if(for.flag) next
-    return(NULL)
-  }
-  
-  # ---- Get BLAST-gap results ----
-  
-  
-  
-  all_lines_start_with_hash <- system(sprintf("grep -v '^#' %s | wc -l", file.gaps.out), intern = TRUE) == 0
-  if(all_lines_start_with_hash){
-    if(for.flag) next
-    return(NULL)
-  }
-  
-  t.gap <- read.table(file.gaps.out, stringsAsFactors = F, header = F)
-  
-  
-  start.pos.query = as.numeric(sapply(strsplit(t.gap$V1, "\\|"), "[", 5)) - 1
-  start.pos.base = as.numeric(sapply(strsplit(t.gap$V10, "\\|"), "[", 5)) - 1
-  t.gap[,2:3] = t.gap[,2:3] + start.pos.query
-  t.gap[,4:5] = t.gap[,4:5] + start.pos.base
-  # t.gap$base = t.gap$V10
-  t.gap$V10 = x$V10[1]
-  t.gap <- setDir(t.gap, base.len)
-  t.gap <- t.gap[order(t.gap$V2),]
-  
-  checkCorrespToGenome(t.gap[1:min(1000, nrow(t.gap)),], query.fas = query.fas.chr,
-                       base.fas.fw = base.fas.fw,
-                       base.fas.bw = base.fas.bw)
-  
-  
-  # wnd.q = sapply(strsplit(t.gap$V1, "\\|"), "[", 1)
-  # wnd.q = as.numeric(sapply(strsplit(wnd.q, "_"), "[", 2))
-  # idx.q = sort(unique(wnd.q))
-  
-  x = x[order(x$V2),]
-  irow = 1
-  idx.gap.used = c()
-  while(irow < nrow(x)){
-    p1 = x$V3[irow]
-    p2 = x$V2[irow+1]
-    idx.gap = which((t.gap$V3 >= p1) & (t.gap$V3 <= p2))
-    idx.gap = setdiff(idx.gap, idx.gap.used)
-    idx.gap.used = c(idx.gap.used, idx.gap)
-    if(length(idx.gap) == 0){
-      irow = irow + 1
-      next
-    }
-  
-    t.gap.tmp = t.gap[idx.gap, ]
-  
-    idx = c(irow, irow + 1)
-    t.gap.tmp =  rbind(x[idx,], t.gap.tmp)
-    t.gap.tmp = t.gap.tmp[order(t.gap.tmp$V2),]
+  if(file.exists(file.gaps.out)){
     
-    t.gap.tmp = removeOverlapdAfterBlastGap(t.gap.tmp)
-    t.gap.tmp = t.gap.tmp[order(t.gap.tmp$V2),]
-    t.gap.tmp = glueZero(t.gap.tmp)
-    t.gap.tmp = t.gap.tmp[order(t.gap.tmp$V2),]
-    t.gap.tmp = cleanJumps2(t.gap.tmp, min(t.gap.tmp$V7[c(1, nrow(t.gap.tmp))]))
+    pokaz('Read blast of good gaps..')
+    x.gap = read.table(file.gaps.out, stringsAsFactors = F)
+    pokaz('Number of gaps', nrow(x.gap))
     
+    x.gap$pref1 = sapply(x.gap$V1, function(s) strsplit(s, '_query')[[1]][1])
+    x.gap$pref2 = sapply(x.gap$V10, function(s) strsplit(s, '_base')[[1]][1])
+    x.gap = x.gap[x.gap$pref1 == x.gap$pref2,]
     
-    t.gap.tmp = glueZero(t.gap.tmp)
-    t.gap.tmp <- glueAlmostZero(t.gap.tmp, threshold = 2000,
-                                query.fas.chr = query.fas.chr,
-                                base.fas.fw = base.fas.fw,
-                                base.fas.bw = base.fas.bw)
-    if(nrow(t.gap.tmp) != 1){
-      thresholds = c(100, 500, 1000, 1500, 2000)
-      # print('glueByThreshold...')
-      t.gap.tmp = glueByThreshold(t.gap.tmp, thresholds, query.fas = query.fas.chr,
-                                  base.fas.fw = base.fas.fw,
-                                  base.fas.bw = base.fas.bw, file.log=file.log)
+    x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    x.gap$V2 = x.gap$V2 + x.gap$q.beg
+    x.gap$V3 = x.gap$V3 + x.gap$q.beg
+    x.gap$V4 = x.gap$V4 + x.gap$b.beg
+    x.gap$V5 = x.gap$V5 + x.gap$b.beg
+    x.gap$idx = 1:nrow(x.gap)
+    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    
+    cnt = table(x.gap$pref1)
+    
+    idx.good = c()
+    for(i in 1:length(cnt)){
+      if(i %% 100 == 0) pokaz('Number of analysed gaps', i)
       
-      t.gap.tmp = removeCompleteOverlaps2(t.gap.tmp, base.len)
-      t.gap.tmp = removeShortOverlaps2(t.gap.tmp, base.len)
+      # name of the node
+      s = names(cnt)[i]
+      
+      # If only one BLAST-hit - get it as it is.
+      if(cnt[s] == 1) {
+        idx.good = c(idx.good, x.gap$idx[x.gap$pref1 == s])
+        next
+      }
+      
+      # Add two extra "nodes", for the begin and end
+      x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx')]
+      q.beg = min(x.tmp$V2) - 1  # change
+      q.end = max(x.tmp$V3) + 1  # change
+      b.beg = min(c(x.tmp$V4, x.tmp$V5)) - 1  # change
+      b.end = max(c(x.tmp$V4, x.tmp$V5))+ 1  # change
+      
+      x.tmp = rbind(c(q.beg, q.beg, b.beg, b.beg, 0), x.tmp)
+      x.tmp = rbind(x.tmp, c(q.end, q.end, b.end, b.end, 0))
+      x.tmp = x.tmp[order(x.tmp$V2),]
+      x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
+      
+      # Set up the direction
+      x.tmp0 = x.tmp
+      idx.dir = which(x.tmp$V5 < x.tmp$V4)
+      tmp = x.tmp$V4[idx.dir]
+      x.tmp$V4[idx.dir] = x.tmp$V5[idx.dir]
+      x.tmp$V5[idx.dir] = tmp
+      
+      visit.info = initVisitInfo(nrow(x.tmp))
+      
+      visit.info2 = graphTraverseWnd(x.tmp, 1, x.tmp$V3[1], x.tmp$V5[1], 0, 0, visit.info)
+      
+      # Reconstruct the optimal path
+      idx.opt = reconstructTraverse(visit.info2$v.prev)
+      idx.opt = idx.opt[-c(1, length(idx.opt))]
+      
+      idx.good = c(idx.good, x.tmp$idx[idx.opt])
+      
     }
     
-    x = x[-idx,]
-    x = rbind(x, t.gap.tmp)
-    x = x[order(x$V2),]
+    x.res = x.gap[idx.good,]
+    rm(x.gap)
+    
+    # ---- Remove short overlaps: twice, because from "both sides" ----
+    for(i.tmp in 1:2){
+      x.res = cleanBigOverlaps(x.res)
+      x.res = cutSmallOverlaps(x.res)
+    }
+  } else {
+    # Create empty
+    x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
+                              dimnames = list(NULL, colnames(x.sk))))
   }
   
+  # ---- Read additional alignments ----
   
-  # t <- hardCleaning(t, base.len)
+  file.gaps.out = paste0(path.gaps,
+                         'acc_', query.name[i.query], 
+                         '_qchr', query.chr, '_bchr', base.chr, '_residual_out.txt', collapse = '')
   
-  checkCorrespToGenome(x, query.fas = query.fas.chr,
+  if(file.exists(file.gaps.out)) {
+    # Fill up and down
+    ## ----  Prepare ----
+    x.sk = x.sk[order(x.sk$V2),]  # because all alignment will be according to the sorted "query"
+    
+    # Find positions of blocks, so that only at block edges somethings is changing, so we need not-trivial gaps
+    x.sk$bl.end <- c(diff(x.sk$block.id) != 0, 1)
+    x.sk$bl.beg <- c(1, diff(x.sk$block.id) != 0)
+    x.sk$idx = 1:nrow(x.sk)
+    
+    y.tops = x.sk$p.beg  # top positions
+    y.bots = x.sk$p.end  # bottom positions
+    
+    # Read blast results on "between blocks"
+    pokaz('Read blast of "bad" gaps..')
+    x.gap = read.table(file.gaps.out, stringsAsFactors = F)
+    
+    # Get real positions of fragments
+    x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][2])) - 1
+    x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][2])) - 1
+    x.gap$V2 = x.gap$V2 + x.gap$q.beg
+    x.gap$V3 = x.gap$V3 + x.gap$q.beg
+    x.gap$V4 = x.gap$V4 + x.gap$b.beg
+    x.gap$V5 = x.gap$V5 + x.gap$b.beg
+    x.gap$idx = -(1:nrow(x.gap))
+    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1  # BUT DON'T change the order of V4 and V5
+    x.gap$bl.beg = -1
+    x.gap$bl.end = -1
+    
+    
+    # Combine new core skeleton and new gaps
+    comb.names = intersect(colnames(x.sk), colnames(x.gap))
+    x.comb = rbind(x.sk[, comb.names], 
+                   x.gap[, comb.names])
+    x.comb = x.comb[order(x.comb$V2),]  # This sorting is relevant, because x.sk was initially also sorted!!
+    
+    idx.end = which(x.comb$bl.end == 1)
+    idx.beg = which(x.comb$bl.beg == 1)
+    
+    ## ---- Remain in "up" direction ----
+    idx.remain = c()
+    for(i.cur in idx.end){
+      pokaz(i.cur)
+      # if(x.comb$dir[i.cur] == 1) next
+      n.gaps = countValueStretch(x.comb$bl.end, i.cur)
+      if(n.gaps == 0) next
+      
+      # Get all possible BLAST-hits, which can be "after" the block.
+      x.tmp = x.comb[i.cur + (0:(n.gaps)),]
+      x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
+      x.tmp$w[1] = 0
+      
+      # # Remain the proper direction
+      # x.tmp = x.tmp[x.tmp$dir == x.tmp$dir[1],]
+      
+      if(x.comb$dir[i.cur] == 0){
+        # Find next "top" base, so you should not consider BLAST-hits higher than this
+        y.top = min(c(Inf, y.tops[y.tops > x.comb$V5[i.cur]]))
+        y.bot = min(x.comb$V4[i.cur], x.comb$V5[i.cur])  # min - потому что хочу взять и саму затравку
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        if(nrow(x.tmp) <= 1) next
+        
+        # Run path search
+        idx.visit = pathUpPlus(x.tmp)
+      } else {
+        
+        # Find next "bottom" base, so you should not consider BLAST-hits higher than this
+        y.bot = max(c(-Inf, y.bots[y.bots < x.comb$V5[i.cur]]))
+        y.top = max(x.comb$V4[i.cur], x.comb$V5[i.cur])
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        
+        if(nrow(x.tmp) <= 1) next
+        
+        idx.visit = pathUpMinus(x.tmp)
+      }
+      
+      # If found something - add
+      if(!is.null(idx.visit)){
+        idx.remain = c(idx.remain, x.tmp$idx[idx.visit][-1])
+      }
+    }
+    
+    ## ---- Remain in "Downwards" direction ----
+    for(i.cur in idx.beg){
+      
+      # if(x.comb$dir[i.cur] == 1) next
+      n.gaps = countValueStretchBW(x.comb$bl.end, i.cur)
+      if(n.gaps == 0) next
+      
+      
+      # Get all possible BLAST-hits, which can be "after" the block.
+      x.tmp = x.comb[i.cur + ((-n.gaps):0),]
+      x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
+      x.tmp$w[1] = 0
+      
+      # # Remain the proper direction - NOT NEEDED, because I've changed to "top" and "bottom"
+      # x.tmp = x.tmp[x.tmp$dir == x.comb$dir[i.cur],]
+      
+      if(x.comb$dir[i.cur] == 0){
+        # Find next "bottom" base, so you should not consider BLAST-hits higher than this
+        y.bot = max(c(-Inf, y.bots[y.bots < x.comb$V5[i.cur]]))
+        y.top = max(x.comb$V4[i.cur], x.comb$V5[i.cur])
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        
+        if(nrow(x.tmp) <= 1) next
+        
+        # Run path search
+        idx.visit = pathDownPlus(x.tmp)
+        
+      } else {
+        # Find next "top" base, so you should not consider BLAST-hits higher than this
+        y.top = min(c(Inf, y.tops[y.tops > x.comb$V5[i.cur]]))
+        y.bot = min(x.comb$V4[i.cur], x.comb$V5[i.cur])  # min - потому что хочу взять и саму затравку
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        
+        if(nrow(x.tmp) <= 1) next
+        
+        # Run path search
+        idx.visit = pathDownMinus(x.tmp)
+        
+      }
+      
+      # If found something - add
+      if(!is.null(idx.visit)){
+        idx.remain = c(idx.remain, x.tmp$idx[idx.visit])
+      }
+    }
+    
+    
+    x.bw = x.gap[abs(idx.remain),]
+    rm(x.gap)
+    
+    # ---- Remove short overlaps: twice, because from "both sides" ----
+    for(i.tmp in 1:2){
+      x.bw = cleanBigOverlaps(x.bw)
+      x.bw = cutSmallOverlaps(x.bw)
+    }
+    
+    
+  } else {
+    
+    # Create empty
+    x.bw <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
+                              dimnames = list(NULL, colnames(x.sk))))
+    
+  }
+  
+  data.frame(matrix(ncol = length(colnames(x.comb))), dimnames = colnames(x.comb))
+  
+  
+  # ---- Combine all together ----
+  
+  comb.names = intersect(intersect(colnames(x.sk), colnames(x.bw)), colnames(x.res))
+  x.comb = rbind(x.res[,comb.names], x.sk[,comb.names])
+  x.comb = rbind(x.comb, x.bw[,comb.names])
+  x.comb = x.comb[order(x.comb$V2),]
+  rownames(x.comb) = NULL
+  
+
+  checkCorrespToGenome(x.comb, query.fas = query.fas.chr,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
   
-  saveRDS(object = x, file = file.aln.full) 
+  saveRDS(object = x.comb, file = file.aln.full) 
+  
+  rm(x.sk)
+  rm(x.res)
+  rm(x.bw)
+  rm(base.fas.bw)
+  rm(base.fas.fw)
+  rm(query.fas.chr)
+  gc()
 
 }  # accessions
 
