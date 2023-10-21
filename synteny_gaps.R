@@ -388,7 +388,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
         x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
         
         if(nrow(x.tmp) <= 1) next
-        stop('DownMinus direction found')
+        # stop('DownMinus direction found')
         
         # Run path search
         idx.visit = pathDownMinus(x.tmp)

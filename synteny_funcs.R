@@ -830,11 +830,7 @@ getCorresp2BaseSign <- function(x, base.len){
     
     # Occupied positions in base
     positions.b = rep(0, aln.len)
-    if(x$dir[irow] == 0){
-      positions.b[seq2nt(x$V9[irow]) != '-'] = t.base$V4[irow]:t.base$V5[irow]  
-    } else {
-      positions.b[seq2nt(x$V9[irow]) != '-'] = -(t.base$V5[irow]:t.base$V4[irow])
-    }
+    positions.b[seq2nt(x$V9[irow]) != '-'] = x$V4[irow]:x$V5[irow] * sign(0.5 - x$dir[irow])
     
     positions.q = positions.q[positions.b != 0]
     positions.b = positions.b[positions.b != 0]
