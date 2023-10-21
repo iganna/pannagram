@@ -86,7 +86,7 @@ cutSmallOverlapsQuery <- function(x.df){
   idx.cut = which(x.df$rm.len != 0)
   for(irow in idx.cut){
     
-    print(info(x.df[irow,]))
+    # print(info(x.df[irow,]))
     # if(x.df$dir[irow] == 1) stop('dir')
     
     adjustment <- x.df$rm.len[irow]  # sing says about "begin" or "end"
@@ -112,7 +112,7 @@ cutSmallOverlapsQuery <- function(x.df){
       # Adjust positions - base
       s.b.cut = seq2nt(x.df$V9[irow])
       adjustment.b = sum(s.b.cut != '-') - 1
-      x.df$V4[irow] = x.df$V5[irow] - adjustment.q * sign(0.5 - x.df$dir[irow])
+      x.df$V4[irow] = x.df$V5[irow] - adjustment.b * sign(0.5 - x.df$dir[irow])
       
       
     }
@@ -126,19 +126,23 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V8[irow] = substr(x.df$V8[irow], 1, (aln.adjust-1))
       x.df$V9[irow] = substr(x.df$V9[irow], 1, (aln.adjust-1))
       
+      
+      
       # Adjust positions
       
-      s.q.cut = seq2nt(x.df$V9[irow])
+      s.q.cut = seq2nt(x.df$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
       x.df$V3[irow] = x.df$V2[irow] + adjustment.q
       
+      
+      # if(x.df$dir[irow] == 1) stop('dir')
       # Adjust positions - base
       s.b.cut = seq2nt(x.df$V9[irow])
       adjustment.b = sum(s.b.cut != '-') - 1
-      x.df$V5[irow] = x.df$V4[irow] + adjustment.q * sign(0.5 - x.df$dir[irow])
+      x.df$V5[irow] = x.df$V4[irow] + adjustment.b * sign(0.5 - x.df$dir[irow])
     }
     
-    print(info(x.df[irow,]))
+    # print(info(x.df[irow,]))
     
     x.df$V7[irow] = nchar(x.df$V8[irow])  # doesn't matter 8 or 9 here
     
