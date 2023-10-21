@@ -844,3 +844,20 @@ getCorresp2BaseSign <- function(x, base.len){
   return(pos.corresp)
 }
 
+
+setDir <- function(t, base.len){
+  # direction
+  t$dir = c()
+  idx.dir = t[,'V5'] < t[,'V4']
+  pos1 = base.len - t[idx.dir,'V5'] + 1
+  pos2 = base.len - t[idx.dir,'V4'] + 1
+  
+  t[idx.dir,'V5'] <- base.len - t[idx.dir,'V5'] + 1
+  t[idx.dir,'V4'] <- base.len - t[idx.dir,'V4'] + 1
+  t[, 'dir'] = 0
+  t[idx.dir, 'dir'] = 1
+  
+  return(t)
+}
+
+

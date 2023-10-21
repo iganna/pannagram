@@ -116,8 +116,7 @@ path_consensus="${path_consensus:-../${pref_global}_consensus/}"
 # echo $p_ident
 # echo $cores
 # echo $sort_chr_len
-
-echo ${acc_anal}
+# echo ${acc_anal}
 
 # exit 1
 
