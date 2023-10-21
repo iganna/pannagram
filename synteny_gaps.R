@@ -6,6 +6,7 @@ suppressMessages({
   library(doParallel)
   library(stringr)
   library(optparse)
+  library(crayon)
 })
 
 
@@ -101,7 +102,7 @@ for(i.query in 1:length(query.name)){
 
 
 for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
+tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
 
 # for.flag = T
 # for(i.chr.pair in 1:nrow(chromosome.pairs)){
