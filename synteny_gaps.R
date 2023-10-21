@@ -100,11 +100,11 @@ for(i.query in 1:length(query.name)){
 
 
 
-# for.flag = F
-# tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
+for.flag = F
+tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
 
-for.flag = T
-for(i.chr.pair in 1:nrow(chromosome.pairs)){
+# for.flag = T
+# for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   pokaz('A pair number', i.chr.pair, chromosome.pairs[i.chr.pair], ':')
   
