@@ -844,20 +844,40 @@ getCorresp2BaseSign <- function(x, base.len){
   return(pos.corresp)
 }
 
-
-setDir <- function(t, base.len){
+#' Set Direction for Synteny Blocks in the  Alignment
+#'
+#'
+#' @param t A data frame containing alignment information with columns 'V4' and 'V5' indicating positions.
+#' @param base.len An integer representing the length of the base sequence used in the alignment.
+#'
+#' @return A modified data frame with an additional column 'dir' indicating the direction (0 for forward, 1 for reverse).
+#'
+setDir <- function(x, base.len){
   # direction
-  t$dir = c()
-  idx.dir = t[,'V5'] < t[,'V4']
-  pos1 = base.len - t[idx.dir,'V5'] + 1
-  pos2 = base.len - t[idx.dir,'V4'] + 1
+  x$dir = c()
+  idx.dir = x[,'V5'] < x[,'V4']
+  pos1 = base.len - x[idx.dir,'V5'] + 1
+  pos2 = base.len - x[idx.dir,'V4'] + 1
   
-  t[idx.dir,'V5'] <- base.len - t[idx.dir,'V5'] + 1
-  t[idx.dir,'V4'] <- base.len - t[idx.dir,'V4'] + 1
-  t[, 'dir'] = 0
-  t[idx.dir, 'dir'] = 1
+  x[idx.dir,'V5'] <- base.len - x[idx.dir,'V5'] + 1
+  x[idx.dir,'V4'] <- base.len - x[idx.dir,'V4'] + 1
+  x[, 'dir'] = 0
+  x[idx.dir, 'dir'] = 1
   
-  return(t)
+  return(x)
+}
+
+#' Extract the Last N Characters from a String
+#'
+#' This function extracts the last `n` characters from the provided string `x`.
+#'
+#' @param x A character string from which the last `n` characters will be extracted.
+#' @param n An integer specifying the number of characters to extract from the end of the string.
+#'
+#' @return A character string containing the last `n` characters of `x`.
+#
+remainLastN <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
 }
 
 
