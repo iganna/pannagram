@@ -137,23 +137,23 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   
   pokaz('Alignment:', query.name[i.query], query.chr, base.chr)
 
-  # ---- Read genomes ----
-  
-  # Read reference sequences
-  base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
-  pokaz('Base:', base.file)
-  base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
-  base.fas.fw = seq2nt(base.fas.fw)
-  base.fas.bw = revCompl(base.fas.fw)
-  base.len = length(base.fas.bw)
-
-  # Read query sequences
-  query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
-  pokaz('Query:', query.file)
-
-  query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
-  query.fas.chr = seq2nt(query.fas.chr)
-  query.len = length(query.fas.chr)
+  # # ---- Read genomes ----
+  # 
+  # # Read reference sequences
+  # base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
+  # pokaz('Base:', base.file)
+  # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  # base.fas.fw = seq2nt(base.fas.fw)
+  # base.fas.bw = revCompl(base.fas.fw)
+  # base.len = length(base.fas.bw)
+  # 
+  # # Read query sequences
+  # query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
+  # pokaz('Query:', query.file)
+  # 
+  # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  # query.fas.chr = seq2nt(query.fas.chr)
+  # query.len = length(query.fas.chr)
   
   # ---- Read Major ----
   
@@ -243,16 +243,8 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     x.res = x.gap[idx.good,]
     rm(x.gap)
     
-    # ---- Remove short overlaps: twice, because from "both sides" ----
-    for(i.tmp in 1:2){
-      x.res = cleanBigOverlaps(x.res)
-      x.res = cutSmallOverlaps(x.res)
-    }
-    
-    for(i.tmp in 1:2){
-      x.res = cleanBigOverlapsQuery(x.res)
-      x.res = cutSmallOverlapsQuery(x.res)
-    }
+    # Clean overlaps from both (base and query) sides
+    x.res = cleanOverlaps(x.res)
     
   } else {
     # Create empty
@@ -396,6 +388,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
         x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
         
         if(nrow(x.tmp) <= 1) next
+        stop('DownMinus direction found')
         
         # Run path search
         idx.visit = pathDownMinus(x.tmp)
@@ -412,17 +405,8 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     x.bw = x.gap[abs(idx.remain),]
     rm(x.gap)
     
-    # ---- Remove short overlaps: twice, because from "both sides" ----
-    for(i.tmp in 1:2){
-      x.bw = cleanBigOverlaps(x.bw)
-      x.bw = cutSmallOverlaps(x.bw)
-    }
-    
-    for(i.tmp in 1:2){
-      x.bw = cleanBigOverlapsQuery(x.bw)
-      x.bw = cutSmallOverlapsQuery(x.bw)
-    }
-    
+    # Clean overlaps from both base and query sides
+    x.bw = cleanOverlaps(x.bw)
   } else {
     
     # Create empty
@@ -457,19 +441,14 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   
   
   # ---- Check genomes ---- 
-  x.dir = setDir(x.comb, base.len = base.len)
-  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-                       base.fas.fw = base.fas.fw,
-                       base.fas.bw = base.fas.bw)
+  # x.dir = setDir(x.comb, base.len = base.len)
+  # checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+  #                      base.fas.fw = base.fas.fw,
+  #                      base.fas.bw = base.fas.bw)
   
   saveRDS(object = x.comb, file = file.aln.full) 
   
-  rm(x.sk)
-  rm(x.res)
-  rm(x.bw)
-  rm(base.fas.bw)
-  rm(base.fas.fw)
-  rm(query.fas.chr)
+  suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
   gc()
 
 }  # accessions
