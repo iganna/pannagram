@@ -432,7 +432,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     
     if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
     names(s.q) = pref.q
-    writeFasta(s.q, file.gap.query, append = T)
+    writeFastaMy(s.q, file.gap.query, append = T)
     
     # ---- Write base ----
     s.b = base.fas.fw[pos.gap.b]
@@ -487,7 +487,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     
     if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
     names(s.q) = pref.q
-    writeFasta(s.q, file.gap.query, append = T)
+    writeFastaMy(s.q, file.gap.query, append = T)
   }
   
   
