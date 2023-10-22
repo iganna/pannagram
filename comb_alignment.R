@@ -55,7 +55,7 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) system(paste('mkdir ', path.cons, sep = ''))
 
 # File with chromosomal lengths, which should be in the consensus dir
-if (!is.null(opt$path.chr.len)) path.chr.len <- opt$path.chr.len
+path.chr.len = ifelse(!is.null(opt$path.chr.len), opt$path.chr.len, 'chr_len/')
 path.chr.len = paste(path.cons, path.chr.len, sep = '')
 if(!dir.exists(path.chr.len)) system(paste('mkdir ', path.chr.len, sep = ''))
 
@@ -64,7 +64,7 @@ if (!is.null(opt$type)) base.suff <- opt$type  # to read fasta file
 if (!is.null(opt$ref.acc)) base.acc.ref <- opt$ref.acc
 
 # Path with alignments
-if (!is.null(opt$path.aln.pref)) path.pref <- opt$path.aln.pref
+if (!is.null(opt$path.aln)) path.pref <- opt$path.aln
 
 # To create combinations
 if (!is.null(opt$n.chr.ref)) n.chr.ref <- opt$n.chr.ref
@@ -116,6 +116,7 @@ if(!file.exists(file.chr.len)){
   chr.len = readRDS(file.chr.len)
 }
 
+pokaz('Chromosomal lengths', chr.len)
 
 # ------------------------------------------------------------------
 
