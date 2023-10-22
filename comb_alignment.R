@@ -105,7 +105,7 @@ if(!file.exists(file.chr.len)){
     # print(c(i.chr, acc))
     
     # Read base chromosome
-    base.file = paste0(base.acc.ref, '_chr', base.chr , '.', base.suff, collapse = '')
+    base.file = paste0(base.acc.ref, '_chr', i.chr , '.', base.suff, collapse = '')
     pokaz('Base:', base.file)
     base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
     
