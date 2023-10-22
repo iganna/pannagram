@@ -64,7 +64,7 @@ if (!is.null(opt$type)) base.suff <- opt$type  # to read fasta file
 if (!is.null(opt$ref.acc)) base.acc.ref <- opt$ref.acc
 
 # Path with alignments
-if (!is.null(opt$path.aln)) path.pref <- opt$path.aln
+if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
 
 # To create combinations
 if (!is.null(opt$n.chr.ref)) n.chr.ref <- opt$n.chr.ref
