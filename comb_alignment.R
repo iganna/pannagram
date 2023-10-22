@@ -133,7 +133,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   base.chr = chromosome.pairs[i.chr.pair, 2]
   
   
-  file.comb = paste(path.common, 'comb_', query.chr, '_', base.chr,'.h5', sep = '')
+  file.comb = paste(path.cons, 'comb_', query.chr, '_', base.chr,'.h5', sep = '')
   if (file.exists(file.comb)) file.remove(file.comb)
   h5createFile(file.comb)
   
