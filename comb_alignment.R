@@ -145,7 +145,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   h5createGroup(file.comb, gr.accs)
   
   
-  for(acc in accessions[1:10]){
+  for(acc in accessions){
+    
+    pokaz('Accession', acc)
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
@@ -158,7 +160,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     x.corr = getCorresp2BaseSign(x, base.len)
     
     # Записать данные текущей итерации в файл
-    h5write(x.corr, file.comb, paste(gr.accs, 'acc_', acc, sep = ''))
+    suppressMessages({
+      h5write(x.corr, file.comb, paste(gr.accs, 'acc_', acc, sep = ''))
+    })
    
     rm(x.corr)
     rm(x)
