@@ -67,8 +67,8 @@ if (!is.null(opt$pref)) base.acc.ref <- opt$pref
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
 
 # To create combinations
-if (!is.null(opt$n.chr.ref)) n.chr.ref <- opt$n.chr.ref
-if (!is.null(opt$n.chr.acc)) n.chr.acc <- opt$n.chr.acc
+if (!is.null(opt$n.chr.ref)) n.chr.ref <- as.numeric(opt$n.chr.ref)
+if (!is.null(opt$n.chr.acc)) n.chr.acc <- as.numeric(opt$n.chr.acc)
 if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
 
