@@ -136,7 +136,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
     if(!file.exists(file.aln.full)) next
-    pokaz('Aln exists:', file.aln.full)
+    # pokaz('Aln exists:', file.aln.full)
     
     # 
     # 
