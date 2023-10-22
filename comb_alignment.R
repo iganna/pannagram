@@ -3,6 +3,7 @@ suppressMessages({
   library(doParallel)
   library(optparse)
   library(crayon)
+  library(rhdf5)
 })
 
 
@@ -119,7 +120,7 @@ if(!file.exists(file.chr.len)){
 
 pokaz('Chromosomal lengths', chr.len)
 
-# ------------------------------------------------------------------
+# ---- Combine correspondence
 
 pokaz('Reference:', base.acc.ref)
 
@@ -131,44 +132,40 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   query.chr = chromosome.pairs[i.chr.pair, 1]
   base.chr = chromosome.pairs[i.chr.pair, 2]
   
+  
+  file.comb = paste(path.common, 'comb_', query.chr, '_', base.chr,'.h5', sep = '')
+  if (file.exists(file.comb)) file.remove(file.comb)
+  h5createFile(file.comb)
+  
+  
+  # Path to accessions chunks
+  gr.accs <- "accs/"
+  # TODO: Check the availability of the group before creating it
+  h5createGroup(file.comb, gr.accs)
+  
+  
   for(acc in accessions){
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
     if(!file.exists(file.aln.full)) next
-    # pokaz('Aln exists:', file.aln.full)
     
-    # 
-    # 
-    # print(acc)
-    # 
-    # f.acc2ref = paste(path.aln.ref, acc, '_', query.chr, '_', base.chr, aln.suff, sep = '')
-    # if(!file.exists(f.acc2ref)) next
-    # t.acc2ref = readRDS(f.acc2ref)
-    # base.len.ref = chr.len[base.chr]
-    # val = getCorresp2BaseSign(t.acc2ref, base.len.ref)
-    # rm(t.acc2ref)
-    # 
-    # val.all = cbind(val.all, val)
-    # val.names = c(val.names, acc)
-    # rm(val)
+    # Reading the alignment
+    x = readRDS(file.aln.full)
+    
+    # Get query coordinates in base order
+    x.corr = getCorresp2BaseSign(x, base.len)
+    
+    # Записать данные текущей итерации в файл
+    h5write(x.corr, file.comb, paste(gr.accs, acc))
+   
+    rm(x.corr)
+    rm(x)
+    
   }
-  # 
-  # if(length(val.names) == 0){
-  #   if(flag.for){
-  #     next
-  #   } else {
-  #     return(NULL)  
-  #   }
-  # }
-  # colnames(val.all) = val.names
-  # val.all = cbind(1:nrow(val.all),val.all)
-  # colnames(val.all)[1] = base.acc.ref
-  # 
-  # file.out.consensus = paste(path.cons, 'consensus_', query.chr, '_', base.chr, '_', base.acc.ref, '_direct.rds', sep = '')
-  # saveRDS(val.all, file.out.consensus, compress = F)
-  # rm(val.all)
-  # gc()
+  H5close()
+  gc()
+  
   
 }
 
