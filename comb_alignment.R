@@ -100,6 +100,7 @@ chromosome.pairs = unique(chromosome.pairs[,c(2,3)])
 
 file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
 if(!file.exists(file.chr.len)){
+  chr.len = c()
   for(i.chr in 1:n.chr.ref){
     acc = base.acc.ref
     # print(c(i.chr, acc))
