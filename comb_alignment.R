@@ -35,7 +35,7 @@ option_list = list(
   make_option(c("-r", "--path.ref"), type="character", default=NULL, 
               help="path to the reference file", metavar="character"),
   make_option(c("-t", "--type"), type="character", default=NULL, 
-              help="type of fasta files", metavar="character"),
+              help="type of fasta files", metavar="character")
 ); 
 
 
