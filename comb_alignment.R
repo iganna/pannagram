@@ -42,7 +42,7 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-# print(opt)
+print(opt)
 
 # Set the number of cores for parallel processing
 num.cores.max = 10
@@ -61,7 +61,7 @@ if(!dir.exists(path.chr.len)) system(paste('mkdir ', path.chr.len, sep = ''))
 
 if (!is.null(opt$path.ref)) path.base <- opt$path.ref  # to know the chromosomal lengths
 if (!is.null(opt$type)) base.suff <- opt$type  # to read fasta file
-if (!is.null(opt$ref.acc)) base.acc.ref <- opt$ref.acc
+if (!is.null(opt$pref)) base.acc.ref <- opt$pref
 
 # Path with alignments
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
