@@ -109,7 +109,7 @@ if(!file.exists(file.chr.len)){
     base.file = paste0(base.acc.ref, '_chr', i.chr , '.', base.suff, collapse = '')
     pokaz('Base:', base.file)
     base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
-    
+    base.fas.fw = seq2nt(base.fas.fw)
     chr.len = c(chr.len, length(base.fas.fw))
   }
   saveRDS(chr.len, file.chr.len)
