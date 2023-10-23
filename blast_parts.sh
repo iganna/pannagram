@@ -70,7 +70,7 @@ p_filename=$(basename "$part_file" .fasta)
 p_prefix=${p_filename%_*}
 part_chr=${p_filename##*_}
 
-r_filename=$(basename "$chromosomefile" .fasta)
+r_filename=$(basename "$ref_file" .fasta)
 r_prefix=${r_filename%_*}
 ref_chr=${r_filename##*chr}
 
