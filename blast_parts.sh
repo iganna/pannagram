@@ -57,71 +57,51 @@ cores="${cores:-30}"
 #echo $blastres
 mkdir -p $blastres
 
-pids=""
 
+
+
+declare -A running_jobs
 
 for part_file in ${parts}*.fasta; do
+    for ref_file in $tair${ref_pref}*.$ref_type; do
+        p_filename=$(basename "$part_file" .fasta)
+        p_prefix=${p_filename%_*}
+        part_chr=${p_filename##*_}
 
-  for ref_file in $tair${ref_pref}*.$ref_type; do
-  #echo $part_file $ref_file 
+        r_filename=$(basename "$ref_file" .fasta)
+        r_prefix=${r_filename%_*}
+        ref_chr=${r_filename##*chr}
 
+        outfile=${blastres}${p_filename}_${ref_chr}.txt
 
-p_filename=$(basename "$part_file" .fasta)
-p_prefix=${p_filename%_*}
-part_chr=${p_filename##*_}
+        if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
+            continue
+        fi
 
-r_filename=$(basename "$ref_file" .fasta)
-r_prefix=${r_filename%_*}
-ref_chr=${r_filename##*chr}
-
-outfile=${blastres}${p_filename}_${ref_chr}.txt
-
-# echo ${all_vs_all}
-
-
-if [[ "$p_prefix" == "$r_prefix" ]] ; then
-    continue
-fi
-  
-  if [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; then
-    continue
-fi
-  echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
-
-
-
-
-
+        echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
         
-# 	if [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]
-#   then
-# 	    continue
-# 	fi
+        blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
+               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps & 
+        job_pid=$!
 
-# 	if [[ ! -f "$outfile" ]]
-# 	then
-    	
-# #    echo "BLAST is running with output ${outfile} with reference ${ref_file}"
-#     blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
-#            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-#            -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps & 
+        running_jobs[$job_pid]=1
 
-#  	  blast_number=$(pgrep -c blastn)
-#     pids="$pids $!"
-# #    echo $blast_number
-#  # else
-# #    echo "file ${outfile} exists, no blast running"
-#   fi
-
-
-#   blast_number=$(pgrep -c blastn)
-#   if (( ${blast_number} > $cores )); then
-#       wait -n
-#   fi
-  done
-
+        # Проверка количества запущенных процессов
+        while (( ${#running_jobs[@]} >= $cores )); do
+            for pid in "${!running_jobs[@]}"; do
+                if ! kill -0 $pid 2>/dev/null; then
+                    unset running_jobs[$pid]
+                fi
+            done
+            sleep 1
+        done
+    done
 done
 
-echo "  Waiting till all BLAST of chromosomal parts is over.."
-wait $pids
+# Ожидание завершения всех процессов
+for pid in "${!running_jobs[@]}"; do
+    wait $pid
+done
+
 echo "  Done!"
