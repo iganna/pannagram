@@ -76,33 +76,43 @@ for partfile in ${parts}*.fasta; do
 	t="${t#${ref_pref}}"
 	tair_chr="${t%.${ref_type}}"
 	outfile=${blastres}${name}_${tair_chr}.txt
+
+
+  echo '---'
+  echo ${partfile}
+  echo ${tairfile}
+  echo ${part_chr}
+  echo ${tair_chr}
+  echo ${outfile}
+
+
         
-	if [[ "$part_chr" != "$tair_chr" ]] && [[ ${all_vs_all} == "F" ]]
-  then
-	    continue
-	fi
+# 	if [[ "$part_chr" != "$tair_chr" ]] && [[ ${all_vs_all} == "F" ]]
+#   then
+# 	    continue
+# 	fi
 
-	if [[ ! -f "$outfile" ]]
-	then
+# 	if [[ ! -f "$outfile" ]]
+# 	then
     	
-#    echo "BLAST is running with output ${outfile} with reference ${tairfile}"
-    blastn -db ${tairfile} -query ${partfile} -out ${outfile} \
-           -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-           -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps & 
+# #    echo "BLAST is running with output ${outfile} with reference ${tairfile}"
+#     blastn -db ${tairfile} -query ${partfile} -out ${outfile} \
+#            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+#            -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps & 
 
- 	  blast_number=$(pgrep -c blastn)
-    pids="$pids $!"
-#    echo $blast_number
- # else
-#    echo "file ${outfile} exists, no blast running"
-  fi
+#  	  blast_number=$(pgrep -c blastn)
+#     pids="$pids $!"
+# #    echo $blast_number
+#  # else
+# #    echo "file ${outfile} exists, no blast running"
+#   fi
 
 
-  blast_number=$(pgrep -c blastn)
-  if (( ${blast_number} > $cores )); then
-      wait -n
-  fi
-  done
+#   blast_number=$(pgrep -c blastn)
+#   if (( ${blast_number} > $cores )); then
+#       wait -n
+#   fi
+#   done
 
 done
 
