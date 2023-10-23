@@ -76,7 +76,7 @@ ref_chr=${r_filename##*chr}
 
 outfile=${blastres}${p_filename}_${ref_chr}.txt
 
-echo ${all_vs_all}
+# echo ${all_vs_all}
 
 
 if [[ "$p_prefix" == "$r_prefix" ]] ; then
