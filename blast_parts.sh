@@ -83,7 +83,7 @@ if [[ "$p_prefix" == "$r_prefix" ]] ; then
     continue
 fi
   
-  if [[ "$part_chr" == "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; then
+  if [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; then
     continue
 fi
   echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
