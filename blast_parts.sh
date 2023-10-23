@@ -112,7 +112,7 @@ for partfile in ${parts}*.fasta; do
 #   if (( ${blast_number} > $cores )); then
 #       wait -n
 #   fi
-#   done
+  done
 
 done
 
