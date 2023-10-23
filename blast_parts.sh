@@ -60,34 +60,34 @@ mkdir -p $blastres
 pids=""
 
 
-for partfile in ${parts}*.fasta; do
+for part_file in ${parts}*.fasta; do
 
-  for tairfile in $tair${ref_pref}*.$ref_type; do
-  #echo $partfile $tairfile 
-  if [[ "$tairfile" == "$partfile" ]] 
-  then
-      continue
-  fi
-
-	b=$(basename $partfile)
-    	name="${b%.fasta}"
-	part_chr="${name: -1}"
-	t=$(basename $tairfile)
-	t="${t#${ref_pref}}"
-	tair_chr="${t%.${ref_type}}"
-	outfile=${blastres}${name}_${tair_chr}.txt
+  for ref_file in $tair${ref_pref}*.$ref_type; do
+  #echo $part_file $ref_file 
 
 
-  echo '---'
-  echo ${partfile}
-  echo ${tairfile}
-  echo ${part_chr}
-  echo ${tair_chr}
-  echo ${outfile}
+p_filename=$(basename "$part_file" .fasta)
+p_prefix=${p_filename%_*}
+part_chr=${p_filename##*_}
+
+r_filename=$(basename "$chromosomefile" .fasta)
+r_prefix=${r_filename%_*}
+ref_chr=${r_filename##*chr}
+
+outfile=${blastres}${p_filename}_${ref_chr}.txt
+
+
+  
+  echo ${part_file} ${ref_file} ${part_chr} ${ref_chr} ${outfile}
+
+
+if [[ "$p_prefix" == "$r_prefix" && "$part_chr" == "$ref_chr" ]]; then
+    continue
+fi
 
 
         
-# 	if [[ "$part_chr" != "$tair_chr" ]] && [[ ${all_vs_all} == "F" ]]
+# 	if [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]
 #   then
 # 	    continue
 # 	fi
@@ -95,8 +95,8 @@ for partfile in ${parts}*.fasta; do
 # 	if [[ ! -f "$outfile" ]]
 # 	then
     	
-# #    echo "BLAST is running with output ${outfile} with reference ${tairfile}"
-#     blastn -db ${tairfile} -query ${partfile} -out ${outfile} \
+# #    echo "BLAST is running with output ${outfile} with reference ${ref_file}"
+#     blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
 #            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
 #            -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps & 
 
