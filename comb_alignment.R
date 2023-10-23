@@ -147,7 +147,7 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   for(acc in accessions){
     
-    pokaz('Accession', acc)
+    pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
