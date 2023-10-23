@@ -144,7 +144,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
     pokaz('File out', file.out)
     
     s = toupper(q.fasta[i.chr])
-    writeFastaMy(s, file=file.out, append=F, pref = paste(acc.s, '_Chr', i.chr , sep=''))
+    writeFastaMy(s, file=file.out, append=F, seq.names = paste(acc.s, '_Chr', i.chr , sep=''))
     
     # write(paste('>', acc.s, '_Chr', i.chr , sep=''), file=file.out, append=F)
     # write(s, file=file.out, append=T)

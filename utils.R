@@ -64,16 +64,19 @@ readFastaMy <- function(file.fasta){
 #' 
 #' @author Anna A. Igolkina
 #'  
-writeFastaMy <- function(sequences, file, pref = NULL, append = FALSE){
+writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append = FALSE){
   
-  if(!is.null(pref)){
-    seq.names = paste(pref, 1:length(sequences), sep = '')
-  } else if(!is.null(names(sequences))){
-    seq.names = names(sequences)
-  } else {
-    pref = 'seq_'
-    seq.names = paste(pref, 1:length(sequences), sep = '')
+  if(is.null(seq.names)){
+    if(!is.null(names(sequences))){
+      seq.names = names(sequences)
+    } else if(!is.null(pref)){
+      seq.names = paste(pref, 1:length(sequences), sep = '')
+    } else {
+      pref = 'seq_'
+      seq.names = paste(pref, 1:length(sequences), sep = '')
+    }
   }
+  
   
   # Open the file connection for writing or appending
   mode <- ifelse(append, "a", "w")
