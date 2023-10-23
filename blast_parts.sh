@@ -76,12 +76,17 @@ ref_chr=${r_filename##*chr}
 
 outfile=${blastres}${p_filename}_${ref_chr}.txt
 
+echo ${all_vs_all}
 
-if [[ "$p_prefix" == "$r_prefix" ]] && [[ "$part_chr" == "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; then
+
+if [[ "$p_prefix" == "$r_prefix" ]] 
     continue
 fi
   
-  echo ${part_file} ${ref_file} ${part_chr} ${ref_chr} ${outfile}
+  if [[ "$part_chr" == "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; then
+    continue
+fi
+  echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
 
 
 
