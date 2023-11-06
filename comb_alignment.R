@@ -244,6 +244,8 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs))  %dopar% {  # which accessi
     h5write(idx.gaps, file.comb, 'gaps')
   })
   
+  rm(idx.break)
+  rm(idx.gaps)
   
   H5close()
   gc()
