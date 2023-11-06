@@ -128,7 +128,8 @@ pokaz('Reference:', base.acc.ref)
 max.len.gap = 20000
 
 flag.for = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs))  %dopar% {  # which accession to use
+tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs),
+              .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 # flag.for = T
 # for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
