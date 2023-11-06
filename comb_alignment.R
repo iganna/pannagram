@@ -120,9 +120,12 @@ if(!file.exists(file.chr.len)){
 
 pokaz('Chromosomal lengths', chr.len)
 
-# ---- Combine correspondence
+# ----  Combine correspondence  ----
 
 pokaz('Reference:', base.acc.ref)
+
+
+max.len.gap = 20000
 
 flag.for = F
 tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs))  %dopar% {  # which accession to use
@@ -145,6 +148,9 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs))  %dopar% {  # which accessi
   h5createGroup(file.comb, gr.accs)
   
   
+  idx.break = 0
+  idx.gaps = rep(0, base.len)
+  
   for(acc in accessions){
     
     pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
@@ -159,18 +165,88 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs))  %dopar% {  # which accessi
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
     
-    # Записать данные текущей итерации в файл
+    # Write into file
     suppressMessages({
       h5write(x.corr, file.comb, paste(gr.accs, 'acc_', acc, sep = ''))
     })
-   
+    
+    # ----  Find gaps  ----
+    
+    idx.gaps[x.corr == 0] = idx.gaps[x.corr == 0] + 1
+    
+    # ----  Find breaks  ----
+    v = x.corr
+    
+    # Find blocks of additional breakes
+    v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
+    v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
+    v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
+    v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
+    
+    # v = v[order(v[,1]),]  # not necessary
+
+    # with the absence, but neighbouring
+    idx.tmp = which( (abs(diff(v[,4])) == 1) &  # Neighbouring in accession-based order
+                       (abs(diff(abs(v[,3])) == 1)) &  # Neighbouring in ref-based order
+                       (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
+                       (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
+                       (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
+    
+    # Fix (beg < end) order
+    idx.tmp.acc = data.frame(beg = v[idx.tmp,2], end = v[idx.tmp+1,2], acc = acc)
+    idx.ord = which(idx.tmp.acc$beg > idx.tmp.acc$end)
+    if(length(idx.ord) > 0){
+      tmp = idx.tmp.acc$beg[idx.ord]
+      idx.tmp.acc$beg[idx.ord] = idx.tmp.acc$end[idx.ord]
+      idx.tmp.acc$end[idx.ord] = tmp
+    }
+    # idx.tmp.acc = idx.tmp.acc[order(idx.tmp.acc$beg),]  # order ONLY if ordered before
+    
+    # Remove overlaps
+    idx.overlap = which( (idx.tmp.acc$beg[-1] - idx.tmp.acc$end[-nrow(idx.tmp.acc)]) <= 3)
+    
+    i.cnt = 0
+    if(length(idx.overlap) > 0){
+      j.ov = 0
+      for(i.ov in idx.overlap){
+        if(i.ov <= j.ov) next
+        j.ov = i.ov + 1
+        while(j.ov %in% idx.overlap){
+          j.ov = j.ov + 1
+        }
+        # print(c(i.ov, j.ov))
+        i.cnt = i.cnt + 1
+        idx.tmp.acc$end[i.ov] = idx.tmp.acc$end[j.ov]
+      }
+      idx.tmp.acc = idx.tmp.acc[-(idx.overlap+1),]
+    }
+    
+    # Fill up positions with breaks
+    idx.break.acc = rep(0, base.len)
+    idx.break.acc[idx.tmp.acc$beg] = 1
+    idx.break.acc[idx.tmp.acc$end] = -1
+    idx.break.acc = cumsum(idx.break.acc)
+    idx.break.acc[idx.tmp.acc$end] = 1
+    
+    # Save breaks
+    idx.break = idx.break + idx.break.acc
+    
     rm(x.corr)
     rm(x)
+    rm(v)
+    rm(idx.tmp.acc)
+    rm(idx.break.acc)
     
   }
+  
+  suppressMessages({
+    h5write(idx.break, file.comb, 'breaks')
+    h5write(idx.gaps, file.comb, 'gaps')
+  })
+  
+  
   H5close()
   gc()
-  
   
 }
 
