@@ -1,3 +1,16 @@
+#' How the output files look like:
+#'     group           name       otype   dclass      dim
+#'         /           accs   H5I_GROUP                  
+#'     /accs          acc_0 H5I_DATASET    FLOAT 28940631
+#'     /accs      acc_10002 H5I_DATASET    FLOAT 28940631
+#'     /accs      acc_10015 H5I_DATASET    FLOAT 28940631
+#'         /          break   H5I_GROUP                  
+#'    /break          acc_0 H5I_DATASET COMPOUND    28827
+#'    /break      acc_10002 H5I_DATASET COMPOUND    29059
+#'    /break      acc_10015 H5I_DATASET COMPOUND    28683
+#'         /     breaks_all H5I_DATASET    FLOAT 28940631
+#'         /       gaps_all H5I_DATASET    FLOAT 28940631
+
 suppressMessages({
   library(foreach)
   library(doParallel)
@@ -5,8 +18,6 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
 })
-
-
 
 source("utils.R")
 source("synteny_funcs.R")
@@ -78,8 +89,6 @@ aln.suff = '_maj.rds'
 aln.files <- list.files(path = path.aln, 
                         pattern = sub("\\.rds", "\\\\.rds$", aln.suff))
 accessions <- sort(unique(sub("_(.*)", "", aln.files)))
-
-accessions = accessions[1:10]
 
 pokaz('Accessions:', accessions)
 
@@ -264,6 +273,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs),
   gc()
   
 }
+
 
 
 
