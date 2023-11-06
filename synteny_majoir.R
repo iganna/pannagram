@@ -3,7 +3,7 @@
 suppressMessages({
   library(Biostrings)
   library(seqinr)
-  library(spgs)  # reverseComplement("actg")
+  #library(spgs)  # reverseComplement("actg")
   library(foreach)
   library(doParallel)
   library(stringr)
