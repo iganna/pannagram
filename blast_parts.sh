@@ -78,7 +78,7 @@ for part_file in ${parts}*.fasta; do
             continue
         fi
 
-        echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
+        # echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
         
         blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
