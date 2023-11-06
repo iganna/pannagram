@@ -79,6 +79,8 @@ aln.files <- list.files(path = path.aln,
                         pattern = sub("\\.rds", "\\\\.rds$", aln.suff))
 accessions <- sort(unique(sub("_(.*)", "", aln.files)))
 
+accessions = accessions[1:10]
+
 pokaz('Accessions:', accessions)
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -148,6 +150,9 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs),
   # TODO: Check the availability of the group before creating it
   h5createGroup(file.comb, gr.accs)
   
+  
+  gr.break = 'break/'
+  h5createGroup(file.comb, gr.break)
   
   idx.break = 0
   idx.gaps = rep(0, base.len)
@@ -222,13 +227,20 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs),
       idx.tmp.acc = idx.tmp.acc[-(idx.overlap+1),]
     }
     
+    
+    # Write into file
+    suppressMessages({
+      h5write(idx.tmp.acc, file.comb, paste(gr.break, 'acc_', acc, sep = ''))
+    })
+    
+    
     # Fill up positions with breaks
     idx.break.acc = rep(0, base.len)
     idx.break.acc[idx.tmp.acc$beg] = 1
     idx.break.acc[idx.tmp.acc$end] = -1
     idx.break.acc = cumsum(idx.break.acc)
     idx.break.acc[idx.tmp.acc$end] = 1
-    
+
     # Save breaks
     idx.break = idx.break + idx.break.acc
     
@@ -241,8 +253,8 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs),
   }
   
   suppressMessages({
-    h5write(idx.break, file.comb, 'breaks')
-    h5write(idx.gaps, file.comb, 'gaps')
+    h5write(idx.break, file.comb, 'breaks_all')
+    h5write(idx.gaps, file.comb, 'gaps_all')
   })
   
   rm(idx.break)
