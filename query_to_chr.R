@@ -66,7 +66,7 @@ if(!dir.exists(path.chr)) dir.create(path.chr)
 
 # Common attributes
 len.parts  <- ifelse(!is.null(opt$bp), as.numeric(opt$bp), 5000)
-query.type <- ifelse(!is.null(opt$type), opt$type, "fasta")
+query.type <- ifelse(!is.null(opt$type), opt$type, ".fasta")
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
@@ -91,10 +91,10 @@ if(!is.null(acc.anal)){
 if(length(query.name) == 0) stop('No accessions for the analysys.')
 pokaz('Names of genomes:', query.name)
 
-for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
-# for.flag = T
-# for(acc in query.name[1:length(query.name)]){
+# for.flag = F
+# tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+for.flag = T
+for(acc in query.name[1:length(query.name)]){
   
   
   #' --- --- --- --- --- --- --- --- --- --- ---
@@ -102,7 +102,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   n.exist = 0
   for(i.chr in 1:n.chr){
     acc.s = gsub('_', '-', acc)
-    file.out = paste0(path.chr, acc.s, '_chr', i.chr, query.type, collapse = '')
+    file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
     if(file.exists(file.out)){
       n.exist = n.exist + 1
     }
@@ -113,7 +113,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   }
   #' --- --- --- --- --- --- --- --- --- --- ---
   
-  
+  pokaz('Number of existing ')
   pokaz('Accession', acc)
   q.fasta = readFastaMy(paste0(path.query, acc, '.', query.type, collapse = ''))
   # q.fasta = read.fasta(paste0(path.query, acc, '.', query.type, collapse = ''))
