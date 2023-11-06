@@ -1,7 +1,7 @@
 suppressMessages({
   library(Biostrings)
   library(seqinr)
-  library(spgs)  # reverseComplement("actg")
+  #library(spgs)  # reverseComplement("actg")
   library(foreach)
   library(doParallel)
   library(stringr)
@@ -102,7 +102,7 @@ for(i.query in 1:length(query.name)){
 
 
 for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr', 'spgs'))  %dopar% {  # which accession to use
+tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
 
 # for.flag = T
 # for(i.chr.pair in 1:nrow(chromosome.pairs)){

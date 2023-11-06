@@ -162,17 +162,17 @@ fi
 #  -ref_pref ${ref_pref}_chr -ref_type fasta -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores 30
 
 
-# First round of alignments
-Rscript synteny_majoir.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
---type fasta --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
---path.gaps ../${pref_global}_gaps_${ref_pref}/  --path.query ${path_chr_acc} \
---n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# # First round of alignments
+# Rscript synteny_majoir.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
+# --type fasta --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+# --path.gaps ../${pref_global}_gaps_${ref_pref}/  --path.query ${path_chr_acc} \
+# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-rm -rf ../${pref_global}_blast_res_${ref_pref}/
+# # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
+# rm -rf ../${pref_global}_blast_res_${ref_pref}/
 
-# Blast regions between synteny blocks
-./blast_gaps.sh -path_gaps ../${pref_global}_gaps_${ref_pref}/ 
+# # Blast regions between synteny blocks
+# ./blast_gaps.sh -path_gaps ../${pref_global}_gaps_${ref_pref}/ 
 
 # # Second round of alignments
 Rscript synteny_gaps.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
