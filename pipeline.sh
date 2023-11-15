@@ -140,48 +140,48 @@ fi
 }
 
 # # ==============================================================================
-# # Split quiery fasta into chromosomes
-# Rscript query_to_chr.R -n ${n_chr_query} -t fasta --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
-# # Split quiery chromosomes into parts
-# Rscript query_to_parts.R -n ${n_chr_query} -t fasta --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+# Split quiery fasta into chromosomes
+Rscript query_to_chr.R -n ${n_chr_query} -t fasta --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
+# Split quiery chromosomes into parts
+Rscript query_to_parts.R -n ${n_chr_query} -t fasta --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
 
 
-# # Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
-# ref_pref=${ref_pref//_/$'-'}
+# Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
+ref_pref=${ref_pref//_/$'-'}
 
-# # Create a database on the reference genome
-# for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do
-#   # Check if the BLAST database files already exist
-#   if [ ! -f "${file}.nin" ]; then
-#       makeblastdb -in ${file} -dbtype nucl > /dev/null
-#   fi
-# done
+# Create a database on the reference genome
+for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do
+  # Check if the BLAST database files already exist
+  if [ ! -f "${file}.nin" ]; then
+      makeblastdb -in ${file} -dbtype nucl > /dev/null
+  fi
+done
 
-# # Blast parts on the reference genome
-# ./blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ../${pref_global}_blast_res_${ref_pref}/ \
-#  -ref_pref ${ref_pref}_chr -ref_type fasta -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores 30
+# Blast parts on the reference genome
+./blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ../${pref_global}_blast_res_${ref_pref}/ \
+ -ref_pref ${ref_pref}_chr -ref_type fasta -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores 30
 
 
-# # First round of alignments
-# Rscript synteny_majoir.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
-# --type fasta --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-# --path.gaps ../${pref_global}_gaps_${ref_pref}/  --path.query ${path_chr_acc} \
-# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# First round of alignments
+Rscript synteny_majoir.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
+--type fasta --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+--path.gaps ../${pref_global}_gaps_${ref_pref}/  --path.query ${path_chr_acc} \
+--n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-# rm -rf ../${pref_global}_blast_res_${ref_pref}/
+# # If the first round of alignment didn't have any errors - remove the blast which was needed for it
+rm -rf ../${pref_global}_blast_res_${ref_pref}/
 
-# # Blast regions between synteny blocks
-# ./blast_gaps.sh -path_gaps ../${pref_global}_gaps_${ref_pref}/ 
+# Blast regions between synteny blocks
+./blast_gaps.sh -path_gaps ../${pref_global}_gaps_${ref_pref}/ 
 
-# # # Second round of alignments
-# Rscript synteny_gaps.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
-# --type fasta --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-# --path.gaps ../${pref_global}_gaps_${ref_pref}/  --path.query ${path_chr_acc} \
-# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# # Second round of alignments
+Rscript synteny_gaps.R --path.blast ../${pref_global}_blast_res_${ref_pref}/ --path.aln ../${pref_global}_alignments_${ref_pref}/ \
+--type fasta --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+--path.gaps ../${pref_global}_gaps_${ref_pref}/  --path.query ${path_chr_acc} \
+--n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-# rm -rf ../${pref_global}_gaps_${ref_pref}/
+# # If the second round of alignment didn't have any errors - remove the blast which was needed for it
+rm -rf ../${pref_global}_gaps_${ref_pref}/
 
 # # -----------------------------------
 # # Creaete a consensus
