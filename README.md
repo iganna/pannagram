@@ -58,6 +58,22 @@ The pipeline for aligning genomes to the reference genome can be found in `pipel
    The number of CPU cores to use for running the pipeline.
 
 
+## Dependencies
+
+install.packages("optparse")
+install.packages("seqinr")
+install.packages("foreach")
+install.packages("doParallel")
+
+stringi and stringr,
+
+
+## TODO:
+number of cores
+path ends with /
+add "fasta" as parameter and make clever split on this parameter
+
+
 ## Acknowledgements
 
 To acknowledge the utilized process parallelization tool, reference:
