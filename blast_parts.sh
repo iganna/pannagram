@@ -58,8 +58,6 @@ cores="${cores:-30}"
 mkdir -p $blastres
 
 
-
-
 declare -A running_jobs
 
 for part_file in ${parts}*.fasta; do

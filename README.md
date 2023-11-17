@@ -18,7 +18,9 @@ The pipeline for aligning genomes to the reference genome can be found in `pipel
    The basename of the reference genome file (without extension), that the pipeline will use as a reference for alignment.
 
 - `-path_chr_ref <value>`
-   The directory containing the reference genome.
+   (Optional) 
+   The directory containing **chromosomes** of the reference genome.
+   можно -path_chr_ref ваще не указывать, если референс находится там же, где и остальные
 
 - `-n_chr_ref <value>`
    The number of chromosomes in the reference genome.
@@ -69,12 +71,17 @@ stringi and stringr,
 
 
 ## TODO:
-number of cores
-path ends with /
+
 add "fasta" as parameter and make clever split on this parameter
+следать хромосомные файлы для референса, если он не распарсен
+прописать дефолты
+все рабоает нормально. и работает без -path_chr_ref
+
 
 
 ## Acknowledgements
+
+Anna Glushkevich for testing
 
 To acknowledge the utilized process parallelization tool, reference:
 O. Tange (2018): GNU Parallel 2018, Mar 2018, ISBN 9781387509881,

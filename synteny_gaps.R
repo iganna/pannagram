@@ -20,8 +20,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("-q", "--path.query"), type="character", default=NULL, 
               help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("-i", "--path.blast"), type="character", default=NULL, 
-              help="path to blast results", metavar="character"),
   make_option(c("-o", "--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
   make_option(c("-t", "--type"), type="character", default=NULL, 
@@ -54,7 +52,6 @@ registerDoParallel(myCluster)
 
 
 if (!is.null(opt$path.query)) path.query <- opt$path.query
-if (!is.null(opt$path.blast)) path.blast.res <- opt$path.blast
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
 if (!is.null(opt$path.ref)) path.base <- opt$path.ref
 if (!is.null(opt$type)) base.suff <- opt$type
