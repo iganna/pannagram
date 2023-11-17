@@ -70,7 +70,7 @@ query.type <- ifelse(!is.null(opt$type), opt$type, ".fasta")
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
-# pokaz('sort_chr_by_length', sort.by.lengths)
+pokaz('sort_chr_by_length', sort.by.lengths)
 
 
 #' ----------------------------------------------------------------------
@@ -125,6 +125,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   
   if(sort.by.lengths){
     q.len = sapply(q.fasta, length)
+    pokaz('Lengths', q.len)
     q.fasta = q.fasta[order(-q.len)]
   }
   
