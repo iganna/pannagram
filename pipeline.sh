@@ -176,9 +176,9 @@ if [ ! -d "$path_consensus" ]; then
 fi
 
 
-path_blast_parts=${pref_global}blast_res_${ref_pref}/
+path_blast_parts=${pref_global}blast_parts_${ref_pref}/
 path_alignment=${pref_global}alignments_${ref_pref}/
-path_gaps=${pref_global}_gaps_${ref_pref}/
+path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
 
 # # ==============================================================================
