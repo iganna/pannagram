@@ -91,10 +91,10 @@ if(!is.null(acc.anal)){
 if(length(query.name) == 0) stop('No accessions for the analysys.')
 pokaz('Names of genomes:', query.name)
 
-#for.flag = F
-#tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
- for.flag = T
- for(acc in query.name[1:length(query.name)]){
+for.flag = F
+tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+# for.flag = T
+# for(acc in query.name[1:length(query.name)]){
   
   
   #' --- --- --- --- --- --- --- --- --- --- ---
