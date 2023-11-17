@@ -124,7 +124,7 @@ pokaz('Names of genomes:', query.name)
   }
   
   if(sort.by.lengths){
-    q.len = sapply(q.fasta, length)
+    q.len = sapply(q.fasta, nchar)
     pokaz('Lengths', q.len)
     q.fasta = q.fasta[order(-q.len)]
   }
