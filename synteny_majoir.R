@@ -497,24 +497,26 @@ for(i.query in 1:length(query.name)){
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
   
-  pokaz('Begins', begs)
   
-  for(irow in 1:length(begs)){
-    if((ends[irow] - begs[irow]) < len.blast) next
-    if((ends[irow] - begs[irow]) > max.len) next
-    
-    pos.gap.b = begs[irow]:ends[irow]
-    
-    s.b = base.fas.fw[pos.gap.b]
-    s.b = nt2seq(s.b)
-    
-    s.base.names = paste(pref.comarisson,
-                         'resid_base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
-    
-    names(s.b) = s.base.names
-    
-    writeFastaMy(s.b, file.gap.base, append = T)
+  if(length(begs) > 0){
+    for(irow in 1:length(begs)){
+      if((ends[irow] - begs[irow]) < len.blast) next
+      if((ends[irow] - begs[irow]) > max.len) next
+      
+      pos.gap.b = begs[irow]:ends[irow]
+      
+      s.b = base.fas.fw[pos.gap.b]
+      s.b = nt2seq(s.b)
+      
+      s.base.names = paste(pref.comarisson,
+                           'resid_base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
+      
+      names(s.b) = s.base.names
+      
+      writeFastaMy(s.b, file.gap.base, append = T)
+    }
   }
+  
   
   
   rmSafe(x)
