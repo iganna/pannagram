@@ -27,14 +27,9 @@ catch() {
 #             USAGE
 # ----------------------------------------------------------------------------
 
-# ./pipeline.sh -pref_global 'rhiz' -ref_pref 'ref_1021' -n_chr_ref 1 -path_in '../rhizobia/' -n_chr_query 1 -sort_chr_len T 
 
-# ./pipeline.sh -pref_global 'ly' -ref_pref '0' -path_chr_ref "../pb_chromosomes/" -n_chr_ref 5 -path_in '../lyrata/' -n_chr_query 8
-
-
-# ./pipeline.sh -pref_global 'ly2' -ref_pref '0' -path_chr_ref "../pb_chromosomes/" -n_chr_ref 5 -path_in '../lyrata/' -n_chr_query 8
-
-# ./pipeline.sh -pref_global 'toy' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_genomes/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_analysis.txt'
+#./work.sh -pref_global '../pan_test/tom/' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
+#./work.sh -pref_global '../pan_test/tom/' -ref_pref '6046-v1.1'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
 
 
 # ----------------------------------------------------------------------------

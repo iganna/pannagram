@@ -85,7 +85,7 @@ if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
 
 # ---- Get accession names ----
-aln.suff = '_maj.rds'
+aln.suff = '_full.rds'
 aln.files <- list.files(path = path.aln, 
                         pattern = sub("\\.rds", "\\\\.rds$", aln.suff))
 accessions <- sort(unique(sub("_(.*)", "", aln.files)))
