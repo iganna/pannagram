@@ -460,9 +460,11 @@ for(i.query in 1:length(query.name)){
   ## ---- Write query ----
   # Query: Zero-coverage blocks
   diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
-  pokaz('Diff', diffs)
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
+  
+  pokaz('Diff', begs)
+  pokaz('Diff', ends)
   
   for(irow in 1:length(begs)){
     if((ends[irow] - begs[irow]) < len.blast) next
