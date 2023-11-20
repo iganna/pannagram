@@ -468,10 +468,10 @@ for(i.query in 1:length(query.name)){
   
   for(irow in 1:length(begs)){
     print(irow)
-    print(length(begs))
-    print((ends[irow] - begs[irow]) )
-    print(len.blast)
-    print((ends[irow] - begs[irow]) < len.blast)
+    print(paste("ends[irow]:", ends[irow]))
+    print(paste("begs[irow]:", begs[irow]))
+    print(paste("len.blast:", len.blast))
+    
     
     if((ends[irow] - begs[irow]) < len.blast) next
     if((ends[irow] - begs[irow]) > max.len) next
