@@ -412,8 +412,6 @@ for(i.query in 1:length(query.name)){
     
   }
   
-  data.frame(matrix(ncol = length(colnames(x.comb))), dimnames = colnames(x.comb))
-  
   
   # ---- Combine all together ----
   
