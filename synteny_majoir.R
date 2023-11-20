@@ -469,7 +469,10 @@ for(i.query in 1:length(query.name)){
   for(irow in 1:length(begs)){
     print(irow)
     print(length(begs))
-    print((ends[irow] - begs[irow]))
+    print((ends[irow] - begs[irow]) )
+    print(len.blast)
+    print((ends[irow] - begs[irow]) < len.blast)
+    
     if((ends[irow] - begs[irow]) < len.blast) next
     if((ends[irow] - begs[irow]) > max.len) next
     pos.gap.q = begs[irow]:ends[irow]
