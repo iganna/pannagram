@@ -102,10 +102,10 @@ for(i.query in 1:length(query.name)){
 }
 # print(chromosome.pairs)
 
-for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = TRUE)  %dopar% {  # which accession to use
-# for.flag = T
-# for(i.chr.pair in 1:nrow(chromosome.pairs)){
+#for.flag = F
+#tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = TRUE)  %dopar% {  # which accession to use
+ for.flag = T
+ for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
   
   i.query = chromosome.pairs[i.chr.pair, 1]
@@ -266,7 +266,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     
     x.major$block.id = cumsum(x.major$block)  # block ID
     
-    if(sum(x.major$dir) > 0){  # different difertions exist
+    if(length(unique((x.major$dir))) > 0){  # different dirertions exist
       cnt = table(x.major$block.id, x.major$dir)
       print(cnt)
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
