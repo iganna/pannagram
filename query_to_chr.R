@@ -96,10 +96,10 @@ if(!is.null(acc.anal)){
 if(length(query.name) == 0) stop('No accessions for the analysys.')
 pokaz('Names of genomes:', query.name)
 
-for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
-# for.flag = T
-# for(acc in query.name[1:length(query.name)]){
+#for.flag = F
+#tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+ for.flag = T
+ for(acc in query.name[1:length(query.name)]){
   
   
   #' --- --- --- --- --- --- --- --- --- --- ---
@@ -112,6 +112,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
       n.exist = n.exist + 1
     }
   }
+  pokaz('Number of existing chromosomes', n.exist)
   if(n.exist == n.chr){
     if(for.flag) next
     return(NULL)
@@ -121,7 +122,6 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   pokaz('Number of existing ')
   pokaz('Accession', acc)
   q.fasta = readFastaMy(paste0(path.query, acc, '.', query.type, collapse = ''))
-  # q.fasta = read.fasta(paste0(path.query, acc, '.', query.type, collapse = ''))
   
   if(length(q.fasta) < n.chr){
     if(for.flag) next
