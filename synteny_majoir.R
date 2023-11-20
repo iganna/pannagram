@@ -103,7 +103,9 @@ for(i.query in 1:length(query.name)){
 # print(chromosome.pairs)
 
 for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
+tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), 
+              .packages=c('crayon','stringr','Biostrings', 'seqinr'), 
+              .verbose = TRUE)  %dopar% {  # which accession to use
 # for.flag = T
 # for(i.chr.pair in 1:nrow(chromosome.pairs)){
   
@@ -523,8 +525,6 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   
 }  # combinations
 
-
-print(tmp)
 
 
 
