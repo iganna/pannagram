@@ -69,7 +69,7 @@ len.parts  <- ifelse(!is.null(opt$bp), as.numeric(opt$bp), 5000)
 query.type <- ifelse(!is.null(opt$type), opt$type, ".fasta")
 
 # Decide whether to sort by length based on provided input or default to FALSE
-sort.by.lengths <- ifelse(!is.null(opt$sort), opt$sort, FALSE)
+sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
 pokaz('sort_chr_by_length', sort.by.lengths)
 
 
