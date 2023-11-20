@@ -153,35 +153,39 @@ fasta_type="${fasta_type:-fasta}"
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 
 
-# ---- Fix paths if they don't end with /
+# ---- Paths
+# Required
 
-path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
 path_in=$(add_symbol_if_missing "$path_in" "/")
-path_parts=$(add_symbol_if_missing "$path_parts" "/")
-path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
-path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
-
 pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
 
-# ---- Paths
+# Could be defined
 path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
+path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+
 path_parts="${path_parts:-${pref_global}parts/}"
+path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
 path_chr_ref="${path_chr_ref:-${path_chr_acc}}"
+path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
 
 path_consensus="${path_consensus:-${pref_global}consensus/}"
+path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 if [ ! -d "$path_consensus" ]; then
     mkdir -p "$path_consensus"
 fi
 
-
+# New paths
 path_blast_parts=${pref_global}blast_parts_${ref_pref}/
 path_alignment=${pref_global}alignments_${ref_pref}/
 path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
 
-# # ==============================================================================
+# ----------------------------------------------------------------------------
+
+conda activate bioinf
+
 # Split quiery fasta into chromosomes
 Rscript query_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
 # Split quiery chromosomes into parts
@@ -229,6 +233,10 @@ rm -rf ${path_alignment}*maj*
 # -----------------------------------
 # Creaete a consensus
 
+conda activate test
+
 Rscript  comb_alignment.R --path.cons ${path_consensus} --path.aln ${pref_global}_alignments_${ref_pref}/ \
 --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
 --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+
+conda deactivate bioinf
