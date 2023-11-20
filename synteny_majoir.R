@@ -462,17 +462,7 @@ for(i.query in 1:length(query.name)){
   diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
-  
-  pokaz('Diff', begs)
-  pokaz('Diff', ends)
-  
   for(irow in 1:length(begs)){
-    print(irow)
-    print(paste("ends[irow]:", ends[irow]))
-    print(paste("begs[irow]:", begs[irow]))
-    print(paste("len.blast:", len.blast))
-    
-    
     if((ends[irow] - begs[irow]) < len.blast) next
     if((ends[irow] - begs[irow]) > max.len) next
     pos.gap.q = begs[irow]:ends[irow]
@@ -506,6 +496,9 @@ for(i.query in 1:length(query.name)){
   diffs = diff(c(1, (pos.b.free != 0) * 1, 1))
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
+  
+  pokaz('Begins', begs)
+  
   for(irow in 1:length(begs)){
     if((ends[irow] - begs[irow]) < len.blast) next
     if((ends[irow] - begs[irow]) > max.len) next
