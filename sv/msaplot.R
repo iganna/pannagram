@@ -1,5 +1,6 @@
 msaplot <- function(seqs.mx, 
-                    msa.cols = c("A" = "#8ACD9D", "C" = "#EE7571", "G" = "#7E9CC8", "T" = "#FFD97C", '-'='#EEEDEF')){
+                    msa.cols = c("A" = "#8ACD9D", "C" = "#EE7571", "G" = "#7E9CC8", "T" = 
+"#FFD97C", '-'='#EEEDEF')){
   
   if (is.vector(seqs.mx)){
     seqs.mx = t(matrix(seqs.mx))
@@ -35,10 +36,12 @@ msadiff <- function(seqs.mx, i.ref=1){
   bin.mx[seqs.mx == '-'] = 1
   values = c('gap', 'same', 'diff')
   bin.mx <- t(apply(bin.mx, 1, function(row) values[row]))
-  
+
   b.msa = msaplot(bin.mx,
                   msa.cols = c("same" = "grey80", "diff" = "grey20", "gap" = "white"))
   
   return(b.msa)
   
 }
+
+

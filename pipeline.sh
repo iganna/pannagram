@@ -203,7 +203,6 @@ done
 ./blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
  -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
-
 # First round of alignments
 Rscript synteny_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
 --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
@@ -223,7 +222,9 @@ Rscript synteny_gaps.R --path.aln ${path_alignment} \
 --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
 # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-rm -rf ${pref_global}_gaps_${ref_pref}/
+rm -rf ${path_gaps}
+ls ${path_alignment}*maj*
+rm -rf ${path_alignment}*maj*
 
 # # -----------------------------------
 # # Creaete a consensus
@@ -233,7 +234,7 @@ rm -rf ${pref_global}_gaps_${ref_pref}/
 #   mkdir ${path_consensus}
 # fi
 
-Rscript  comb_alignment.R --path.cons ${path_consensus} --path.aln ${pref_global}_alignments_${ref_pref}/ \
---type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
---n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# Rscript  comb_alignment.R --path.cons ${path_consensus} --path.aln ${pref_global}_alignments_${ref_pref}/ \
+# --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
