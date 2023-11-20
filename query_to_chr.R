@@ -108,6 +108,7 @@ pokaz('Names of genomes:', query.name)
   for(i.chr in 1:n.chr){
     acc.s = gsub('_', '-', acc)
     file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
+    print(file.out)
     if(file.exists(file.out)){
       n.exist = n.exist + 1
     }
@@ -117,6 +118,7 @@ pokaz('Names of genomes:', query.name)
     if(for.flag) next
     return(NULL)
   }
+  pokaz('New chromosomes will be saved')
   #' --- --- --- --- --- --- --- --- --- --- ---
   
   pokaz('Number of existing ')
