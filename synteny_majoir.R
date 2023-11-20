@@ -317,11 +317,11 @@ for(i.query in 1:length(query.name)){
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps')
     
-    rm(x)
-    rm(x.major)
-    rm(base.fas.bw)
-    rm(base.fas.fw)
-    rm(query.fas.chr)
+    rmSafe(x)
+    rmSafe(x.major)
+    rmSafe(base.fas.bw)
+    rmSafe(base.fas.fw)
+    rmSafe(query.fas.chr)
     gc()
     
     if(for.flag) next
@@ -336,6 +336,7 @@ for(i.query in 1:length(query.name)){
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
                        base.fas.fw = base.fas.fw, 
                        base.fas.bw = base.fas.bw)
+  
   
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions in query
@@ -459,6 +460,7 @@ for(i.query in 1:length(query.name)){
   ## ---- Write query ----
   # Query: Zero-coverage blocks
   diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
+  pokaz('Diff', diffs)
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
   
@@ -514,11 +516,11 @@ for(i.query in 1:length(query.name)){
   }
   
   
-  rm(x)
-  rm(x.major)
-  rm(base.fas.bw)
-  rm(base.fas.fw)
-  rm(query.fas.chr)
+  rmSafe(x)
+  rmSafe(x.major)
+  rmSafe(base.fas.bw)
+  rmSafe(base.fas.fw)
+  rmSafe(query.fas.chr)
   gc()
   
 }  # combinations

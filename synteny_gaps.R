@@ -238,7 +238,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     }
     
     x.res = x.gap[idx.good,]
-    rm(x.gap)
+    rmSafe(x.gap)
     
     # Clean overlaps from both (base and query) sides
     x.res = cleanOverlaps(x.res)
@@ -400,7 +400,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     
     
     x.bw = x.gap[abs(idx.remain),]
-    rm(x.gap)
+    rmSafe(x.gap)
     
     # Clean overlaps from both base and query sides
     x.bw = cleanOverlaps(x.bw)

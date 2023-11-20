@@ -253,7 +253,7 @@ pokazAttention <- function(...) {
 
 
 #' ----------------------------------------------------------------------
-#' #' Display general stylized messages
+#' Display general stylized messages
 #'
 #' This function displays a general stylized message to the user.
 #'
@@ -279,3 +279,31 @@ pokaz <- function(...) {
   cat(fancy(arguments))
   cat('\n')
 }
+
+
+#' ----------------------------------------------------------------------
+#' Safe Removal of Variable from Global Environment
+#'
+#' This function safely removes a specified variable from the global environment
+#' if it exists. It avoids errors associated with trying to remove non-existent variables.
+#' The function uses the variable itself as an argument and internally determines its name.
+#'
+#' @param var Variable to be removed (provided as the variable itself, not as a string).
+#'
+#' @examples
+#' x <- 42
+#' rmSafe(x)
+#' rmSafe(xxx)  # no error
+#' # x is now removed from the global environment
+#'
+rmSafe <- function(var) {
+  var.name = deparse(substitute(var))
+  if (exists(var.name, envir = globalenv())) {
+    rm(list = var.name, envir = globalenv())
+  }
+}
+
+
+
+
+
