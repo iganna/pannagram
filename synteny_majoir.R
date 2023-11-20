@@ -467,6 +467,8 @@ for(i.query in 1:length(query.name)){
   pokaz('Diff', ends)
   
   for(irow in 1:length(begs)){
+    print(irow)
+    print(length(begs))
     print((ends[irow] - begs[irow]))
     if((ends[irow] - begs[irow]) < len.blast) next
     if((ends[irow] - begs[irow]) > max.len) next
