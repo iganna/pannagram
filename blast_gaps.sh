@@ -37,7 +37,6 @@ fi
 
 # exit when any command fails
 set -e
-set -x
 
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
@@ -130,15 +129,8 @@ function process_blast {
 
 export -f process_blast
 
-# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast {} $path_gaps $path_db
+find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast {} $path_gaps $path_db
 
-find ${path_gaps} -name '*query*.fasta' | while IFS= read -r file; do
-    process_blast "$file" "$path_gaps" "$path_db"
-    # проверка кода возврата
-    if [ $? -ne 0 ]; then
-        echo "process_blast failed for $file"
-    fi
-done
 
 echo "  Done!"
 
