@@ -76,9 +76,14 @@ pokaz('sort_chr_by_length', sort.by.lengths)
 #' ----------------------------------------------------------------------
 
 
+if(!sort.by.lengths){
+  msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
+  pokazAttention(msg)
+} else {
+  msg = 'Chromosomes will be sorted by their length'
+  pokazAttention(msg)
+}
 
-msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
-pokazAttention(msg)
 
 #' ----------------------------------------------------------------------
 

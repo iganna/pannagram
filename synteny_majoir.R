@@ -522,3 +522,9 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   gc()
   
 }  # combinations
+
+
+print(tmp)
+
+
+
