@@ -266,7 +266,7 @@ for(i.query in 1:length(query.name)){
     
     x.major$block.id = cumsum(x.major$block)  # block ID
     
-    if(length(unique((x.major$dir))) > 0){  # different dirertions exist
+    if(length(unique((x.major$dir))) > 1){  # different dirertions exist
       cnt = table(x.major$block.id, x.major$dir)
       print(cnt)
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
