@@ -105,11 +105,9 @@ orfFinder <- function(seqs, min.len = 30, max.len = Inf, echo=F){
         s.use = revCompl(s.use)
       }
       
-      
     }
     
   }
-  
   return(seqs.aa)
   
 }
