@@ -184,7 +184,6 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
 # ----------------------------------------------------------------------------
 
-# conda activate bioinf
 
 # # Split quiery fasta into chromosomes
 # Rscript query_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
@@ -233,10 +232,10 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 # -----------------------------------
 # Creaete a consensus
 
-conda activate test
+
 
 Rscript  comb_alignment.R --path.cons ${path_consensus} --path.aln ${pref_global}_alignments_${ref_pref}/ \
 --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
 --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-conda deactivate bioinf
+
