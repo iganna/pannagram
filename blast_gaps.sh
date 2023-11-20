@@ -70,7 +70,7 @@ function process_db {
     base_file="${query_file/query/base}"
 
     # Check if BLAST database files do not exist.
-    if [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
+    if [ -f "${path_gaps}${base_file}" ] && [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
         # Create BLAST database
         makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null
     fi
