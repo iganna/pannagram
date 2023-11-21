@@ -114,6 +114,10 @@ for(s.comb in pref.combinations){
   
   # Get the corresponsing function between two references
   s = paste(gr.accs.e, 'acc_', ref1, sep = '')
+  
+  print(h5ls(file.comb0))
+  
+  
   f01 <- h5read(file.comb0, s)
   base.len = length(f01)
   idx01 = which(f01 != 0)
@@ -134,7 +138,6 @@ for(s.comb in pref.combinations){
     s = paste('/',gr.accs.e, 'acc_',acc, sep = '')
     
     # Data from the main reference
-    print(h5ls(file.comb0))
     v0 = h5read(file.comb0, s)
     idx.solid = idx.solid + (v0!=0)
     v0 = v0[idx01]
