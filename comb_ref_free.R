@@ -85,7 +85,7 @@ pokaz('Combinations', pref.combinations)
 
 # ----  Combine correspondence  ----
 
-pokaz('References:', ref10 ref1)
+pokaz('References:', ref0, ref1)
 
 
 gr.accs.e <- "accs/"
