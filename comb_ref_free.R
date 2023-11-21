@@ -67,9 +67,9 @@ if (is.null(opt$ref1)) {
 
 
 # Find all fines with the prefix of both references and common suffixes
-path.cons = './'
-ref0 = '0'
-ref1 = '6046-v1.1'
+# path.cons = './'
+# ref0 = '0'
+# ref1 = '6046-v1.1'
 
 files.pref <- lapply(c(ref0, ref1), function(ref) {
   suff <- paste0('_ref_', ref)

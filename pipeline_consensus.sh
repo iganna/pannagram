@@ -107,5 +107,5 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
     
     Rscript comb_ref_free.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
-    echo "ref0: $ref0, ref1: $ref1"
+
 done
