@@ -76,6 +76,7 @@ add "fasta" as parameter and make clever split on this parameter
 следать хромосомные файлы для референса, если он не распарсен
 прописать дефолты
 все рабоает нормально. и работает без -path_chr_ref
+-all_clp rкак-то переделать флаг
 
 
 
