@@ -134,6 +134,7 @@ for(s.comb in pref.combinations){
     s = paste('/',gr.accs.e, 'acc_',acc, sep = '')
     
     # Data from the main reference
+    print(h5ls(file.comb0))
     v0 = h5read(file.comb0, s)
     idx.solid = idx.solid + (v0!=0)
     v0 = v0[idx01]
