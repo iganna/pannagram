@@ -140,7 +140,6 @@ for(s.comb in pref.combinations){
     
     # Data from the main reference
     v0 = h5read(file.comb0, s)
-    idx.solid = idx.solid + (v0!=0)
     v0 = v0[idx01]
     
     # Data from the second reference
