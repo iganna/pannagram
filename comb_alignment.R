@@ -252,11 +252,11 @@ max.len.gap = 20000
     # Save breaks
     idx.break = idx.break + idx.break.acc
     
-    rm(x.corr)
-    rm(x)
-    rm(v)
-    rm(idx.tmp.acc)
-    rm(idx.break.acc)
+    rmSafe(x.corr)
+    rmSafe(x)
+    rmSafe(v)
+    rmSafe(idx.tmp.acc)
+    rmSafe(idx.break.acc)
     
   }
   
@@ -269,8 +269,8 @@ max.len.gap = 20000
     # h5write(NULL, file.comb, paste(gr.break, base.acc.ref, sep = ''))
   })
   
-  rm(idx.break)
-  rm(idx.gaps)
+  rmSafe(idx.break)
+  rmSafe(idx.gaps)
   
   H5close()
   gc()
