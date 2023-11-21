@@ -136,7 +136,7 @@ for(s.comb in pref.combinations){
     # if(acc == ref1) next
     
     print(acc)
-    s = paste('/',gr.accs.e, 'acc_',acc, sep = '')
+    s = paste('/',gr.accs.e, acc, sep = '')
     
     # Data from the main reference
     v0 = h5read(file.comb0, s)
