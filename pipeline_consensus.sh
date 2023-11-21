@@ -33,7 +33,7 @@ source utils_bash.sh
 # ----------------------------------------------------------------------------
 
 
-ref_set=""
+# ref_set=""
 additional_params=""
 
 # Iterate through all arguments
@@ -47,6 +47,13 @@ while [[ $# -gt 0 ]]; do
         shift # Skip the value of the parameter
         shift # Skip the parameter itself
         ;;
+    -pref_global)
+        # Get the value of the pref_global parameter
+        pref_global="$2"
+        additional_params+=" $1 $2"
+        shift # Skip the value of the parameter
+        shift # Skip the parameter itself
+        ;;
     *)
         # Add the remaining arguments as additional parameters
         additional_params+=" $1"
@@ -55,9 +62,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ -z "$ref_set" ]]; then
+  echo "Error: -ref_set parameter is not set" >&2
+  exit 1
+fi
+
+
+
 # Split the value of ref_set into separate words
 IFS=',' read -ra refs_all <<< "$ref_set"
-
 
 # Iterate over each word in ref_set
 for ref0 in "${refs_all[@]}"; do
@@ -77,6 +90,8 @@ done
 
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
+
+echo ${path_consensus}
 
 
 
