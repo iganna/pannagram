@@ -74,13 +74,11 @@ IFS=',' read -ra refs_all <<< "$ref_set"
 
 # Iterate over each word in ref_set
 for ref0 in "${refs_all[@]}"; do
-    # Call the second script pipeline.sh, passing the current word as an argument
-    # ./pipeline.sh "$ref0" $additional_params
-
+    
     # command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
     command="./work.sh -ref_pref ${ref0} ${additional_params}"
     echo "Executing command: ${command}"
-    # eval "${command}"
+    eval "${command}"
 
 done
 

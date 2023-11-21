@@ -185,46 +185,46 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 # ----------------------------------------------------------------------------
 
 
-# # Split quiery fasta into chromosomes
-# Rscript query_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
-# # Split quiery chromosomes into parts
-# Rscript query_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+# Split quiery fasta into chromosomes
+Rscript query_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
+# Split quiery chromosomes into parts
+Rscript query_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
 
 
-# # Create a database on the reference genome
-# for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
-#   # Check if the BLAST database files already exist
-#   if [ ! -f "${file}.nin" ]; then
-#       makeblastdb -in ${file} -dbtype nucl > /dev/null
-#   fi
-# done
+# Create a database on the reference genome
+for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
+  # Check if the BLAST database files already exist
+  if [ ! -f "${file}.nin" ]; then
+      makeblastdb -in ${file} -dbtype nucl > /dev/null
+  fi
+done
 
-# # Blast parts on the reference genome
-# ./blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
-#  -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+# Blast parts on the reference genome
+./blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
+ -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
-# # First round of alignments
-# Rscript synteny_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-# --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-# --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
-# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# First round of alignments
+Rscript synteny_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+--type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+--path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
+--n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-# rm -rf ${path_blast_parts}
+# # If the first round of alignment didn't have any errors - remove the blast which was needed for it
+rm -rf ${path_blast_parts}
 
-# # Blast regions between synteny blocks
-# ./blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
+# Blast regions between synteny blocks
+./blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
 
-# # # Second round of alignments
-# Rscript synteny_gaps.R --path.aln ${path_alignment} \
-# --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-# --path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
-# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# # Second round of alignments
+Rscript synteny_gaps.R --path.aln ${path_alignment} \
+--type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+--path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
+--n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-# rm -rf ${path_gaps}
-# # ls ${path_alignment}*maj*
-# rm -rf ${path_alignment}*maj*
+# # If the second round of alignment didn't have any errors - remove the blast which was needed for it
+rm -rf ${path_gaps}
+# ls ${path_alignment}*maj*
+rm -rf ${path_alignment}*maj*
 
 # -----------------------------------
 # Creaete a consensus
