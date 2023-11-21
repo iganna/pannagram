@@ -115,6 +115,7 @@ for(s.comb in pref.combinations){
   # Get the corresponsing function between two references
   s = paste(gr.accs.e, 'acc_', ref1, sep = '')
   
+  pokaz('File0', file.comb0)
   print(h5ls(file.comb0))
   
   
