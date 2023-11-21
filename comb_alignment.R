@@ -267,7 +267,7 @@ max.len.gap = 20000
     h5write(base.acc.ref, file.comb, 'ref')
     
     h5write(1:base.len, file.comb, paste(gr.accs, base.acc.ref, sep = ''))
-    h5write(NULL, file.comb, paste(gr.break, base.acc.ref, sep = ''))
+    # h5write(NULL, file.comb, paste(gr.break, base.acc.ref, sep = ''))
   })
   
   rm(idx.break)
