@@ -88,6 +88,11 @@ done
 #             COMMON CONSENSUS
 # ----------------------------------------------------------------------------
 
+
+check_missing_variable "pref_global"
+pref_global=$(add_symbol_if_missing "$pref_global" "/")
+
+
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
