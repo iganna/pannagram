@@ -62,7 +62,7 @@ defineOverlappsQuery <- function(x.df){
     # Find left(value = 1) or right(value = -1) tails 
     # of irow(i.e., tail.irow) or [irow+1](i.e., tail.next), 
     # which are involved in the overlap
-    tail.iсut = ifelse((x.df$V2[icut] >= x.df$V2[ibig]) & 
+    tail.icut = ifelse((x.df$V2[icut] >= x.df$V2[ibig]) & 
                          (x.df$V2[icut] <= x.df$V3[ibig]), 
                        1, -1)
     
@@ -70,7 +70,7 @@ defineOverlappsQuery <- function(x.df){
     ncut = length(intersect(x.df$V2[irow]:x.df$V3[irow],
                             x.df$V2[irow+1]:x.df$V3[irow+1]))
     # Remember the cut
-    x.df$rm.len[icut] = ncut * tail.iсut
+    x.df$rm.len[icut] = ncut * tail.icut
   }
   
   # if(!sort.flaf){
@@ -252,7 +252,7 @@ defineOverlapps <- function(x.df){
     # Find left(value = 1) or right(value = -1) tails 
     # of irow(i.e., tail.irow) or [irow+1](i.e., tail.next), 
     # which are involved in the overlap
-    tail.iсut = ifelse((x.df$V4[icut] >= x.df$p.beg[ibig]) & 
+    tail.icut = ifelse((x.df$V4[icut] >= x.df$p.beg[ibig]) & 
                          (x.df$V4[icut] <= x.df$p.end[ibig]), 
                        1, -1)
     
@@ -260,7 +260,7 @@ defineOverlapps <- function(x.df){
     ncut = length(intersect(x.df$V4[irow]:x.df$V5[irow],
                             x.df$V4[irow+1]:x.df$V5[irow+1]))
     # Remember the cut
-    x.df$rm.len[icut] = ncut * tail.iсut
+    x.df$rm.len[icut] = ncut * tail.icut
   }
   
   # if(!sort.flaf){

@@ -147,6 +147,11 @@ fasta_type="${fasta_type:-fasta}"
 
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 
+# Rename the reference genome prefix
+# Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
+ref_pref_true=${ref_pref}
+ref_pref=${ref_pref//_/$'-'}
+
 
 # ---- Paths
 # Required
@@ -185,9 +190,6 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 # # Split quiery chromosomes into parts
 # Rscript query_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
 
-
-# Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
-ref_pref=${ref_pref//_/$'-'}
 
 # # Create a database on the reference genome
 # for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
