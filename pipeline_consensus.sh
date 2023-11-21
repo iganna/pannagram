@@ -65,18 +65,18 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Split the value of ref_set into separate words
-IFS=',' read -ra words <<< "$ref_set"
+IFS=',' read -ra refs_all <<< "$ref_set"
 
 
 # Iterate over each word in ref_set
-for word in "${words[@]}"; do
+for ref0 in "${refs_all[@]}"; do
     # Call the second script pipeline.sh, passing the current word as an argument
-    # ./pipeline.sh "$word" $additional_params
+    # ./pipeline.sh "$ref0" $additional_params
 
-    # command="./pipeline.sh -ref_pref ${word} ${additional_params}"
-    command="./work.sh -ref_pref ${word} ${additional_params}"
+    # command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
+    command="./work.sh -ref_pref ${ref0} ${additional_params}"
     echo "Executing command: ${command}"
-    eval "${command}"
+    # eval "${command}"
 
 done
 
@@ -86,3 +86,15 @@ done
 
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
+
+
+
+cores=10
+
+ref0=${refs_all[0]}
+for ((i = 1; i < ${#refs_all[@]}; i++)); do
+    ref1=${refs_all[i]}
+    
+    Rscript comb_ref_free.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
+    echo "ref0: $ref0, ref1: $ref1"
+done
