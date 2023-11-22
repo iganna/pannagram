@@ -151,12 +151,14 @@ for(s.comb in pref.combinations){
     v01 = v1[abs(f01)] * sign(f01)
     v01[v0 != v01] = 0
     
-    pokaz('Length of resultant doccespondence', length(v01))
+    pokaz('Length of resultant correspondence', length(v01))
     pokaz('Sum of matches', sum(v01 != 0))
     
     # Turn into real coorsinates back
     v.final = rep(0, base.len)
     v.final[idx01] = v01
+    
+    pokaz('Length of saved vector', length(v.final))
     
     suppressMessages({
       h5write(v.final, file.res, s)
