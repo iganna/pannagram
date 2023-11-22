@@ -153,8 +153,8 @@ ref_pref_true=${ref_pref}
 ref_pref=${ref_pref//_/$'-'}
 
 
----- Paths
-Required
+#---- Paths
+# Required
 
 path_in=$(add_symbol_if_missing "$path_in" "/")
 pref_global=$(add_symbol_if_missing "$pref_global" "/")
