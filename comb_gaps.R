@@ -37,6 +37,11 @@ myCluster <- makeCluster(num.cores, type = "PSOCK")
 registerDoParallel(myCluster)
 
 
+# Path with the consensus output
+if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
+
+# Reference genome
 if (is.null(opt$ref.pref)) {
   stop("ref.pref is NULL")
 } else {
