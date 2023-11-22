@@ -25,7 +25,6 @@ option_list = list(
               help="number of chromosomes in the reference genome", metavar="character"),
 ); 
 
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
@@ -46,8 +45,8 @@ if (is.null(opt$ref.pref)) {
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-# path.cons = './'
-# ref.pref = '0'
+path.cons = './'
+ref.pref = '0'
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -69,36 +68,21 @@ max.len.gap = 20000
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 flag.for = T
 for(s.comb in pref.combinations){
-  
-  query.chr = chromosome.pairs[i.chr.pair, 1]
-  base.chr = chromosome.pairs[i.chr.pair, 2]
-  
-  base.len = chr.len[base.chr]
+
   
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   
-  
+  idx.break = c()
   for(acc in accessions){
     
     pokaz('Accession', acc, 'combination', pref.combinations)
-    
-    pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
-    file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
-    if(!file.exists(file.aln.full)) next
-    
-    
-    x.corr = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-    
-    
-    # ----  Find gaps  ----
-    
-    idx.gaps[x.corr == 0] = idx.gaps[x.corr == 0] + 1
+  
+    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     
     # ----  Find breaks  ----
-    v = x.corr
     
     # Find blocks of additional breaks
     v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
@@ -144,20 +128,7 @@ for(s.comb in pref.combinations){
       idx.tmp.acc = idx.tmp.acc[-(idx.overlap+1),]
     }
     
-    
-    # Write into file
-    suppressMessages({
-      h5write(idx.tmp.acc, file.comb, paste(gr.break, 'acc_', acc, sep = ''))
-    })
-    
-    
-    # Fill up positions with breaks
-    idx.break.acc = rep(0, base.len)
-    idx.break.acc[idx.tmp.acc$beg] = 1
-    idx.break.acc[idx.tmp.acc$end] = -1
-    idx.break.acc = cumsum(idx.break.acc)
-    idx.break.acc[idx.tmp.acc$end] = 1
-    
+
     # Save breaks
     idx.break = idx.break + idx.break.acc
     
@@ -169,17 +140,10 @@ for(s.comb in pref.combinations){
     
   }
   
-  suppressMessages({
-    h5write(idx.break, file.comb, 'breaks_all')
-    h5write(idx.gaps, file.comb, 'gaps_all')
-    h5write(base.acc.ref, file.comb, 'ref')
-    
-    h5write(1:base.len, file.comb, paste(gr.accs, 'acc_', base.acc.ref, sep = ''))
-    # h5write(NULL, file.comb, paste(gr.break, base.acc.ref, sep = ''))
-  })
+  file.comb = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
+  saveRDS(idx.break, file.comb)
   
   rmSafe(idx.break)
-  rmSafe(idx.gaps)
   
   H5close()
   gc()
