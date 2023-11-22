@@ -78,45 +78,20 @@ for(s.comb in pref.combinations){
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
   groups = h5ls(file.comb)
-  accessions = groups$name[groups$group == gr.accs.b], 
-                         groups1$name[groups1$group == gr.accs.b])  # full name of accessions
-  # accessions <- sub("^.*_", "", accessions)
+  accessions = groups$name[groups$group == gr.accs.b]
   
-  
-  
-  if (file.exists(file.comb)) file.remove(file.comb)
-  h5createFile(file.comb)
-  
-  # Path to accessions chunks
-  gr.accs <- "accs/"
-  # TODO: Check the availability of the group before creating it
-  h5createGroup(file.comb, gr.accs)
-  
-  
-  gr.break = 'break/'
-  h5createGroup(file.comb, gr.break)
-  
-  idx.break = 0
-  idx.gaps = rep(0, base.len)
   
   for(acc in accessions){
     
-    pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
+    pokaz('Accession', acc, 'combination', pref.combinations)
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
     if(!file.exists(file.aln.full)) next
     
-    # Reading the alignment
-    x = readRDS(file.aln.full)
     
-    # Get query coordinates in base order
-    x.corr = getCorresp2BaseSign(x, base.len)
+    x.corr = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     
-    # Write into file
-    suppressMessages({
-      h5write(x.corr, file.comb, paste(gr.accs, 'acc_', acc, sep = ''))
-    })
     
     # ----  Find gaps  ----
     

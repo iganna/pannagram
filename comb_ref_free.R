@@ -140,17 +140,26 @@ for(s.comb in pref.combinations){
     
     # Data from the main reference
     v0 = h5read(file.comb0, s)
+    pokaz('Vector in the ref0 file', length(v0))
     v0 = v0[idx01]
+    pokaz('Vector of meaningfull positions', length(v0))
     
     # Data from the second reference
     v1 = h5read(file.comb1, s)
+    pokaz('Vector in the ref1 file', length(v1))
+    pokaz('Length of function', length(f01))
     v01 = v1[abs(f01)] * sign(f01)
+    v01[v0 != v01] = 0
     
-    v01_new = v01
-    v01_new[v0 != v01] = 0
+    pokaz('Length of resultant doccespondence', length(v01))
+    pokaz('Sum of matches', sum(v01 != 0))
+    
+    # Turn into real coorsinates back
+    v.final = rep(0, base.len)
+    v.final[idx01] = v01
     
     suppressMessages({
-      h5write(v01_new, file.res, s)
+      h5write(v.final, file.res, s)
     })
   }
   
