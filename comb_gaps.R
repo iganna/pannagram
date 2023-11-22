@@ -22,7 +22,7 @@ option_list = list(
   make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("-n", "--n.chr.ref"), type="character", default=NULL, 
-              help="number of chromosomes in the reference genome", metavar="character"),
+              help="number of chromosomes in the reference genome", metavar="character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
