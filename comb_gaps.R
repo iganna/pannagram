@@ -58,7 +58,7 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-pokaz('Reference:', base.acc.ref)
+pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
 
 # ----  Combine correspondence  ----
