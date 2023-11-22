@@ -83,7 +83,7 @@ for(s.comb in pref.combinations){
   idx.break = c()
   for(acc in accessions){
     
-    pokaz('Accession', acc, 'combination', pref.combinations)
+    pokaz('Accession', acc, 'combination', s.comb)
   
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     
@@ -135,7 +135,7 @@ for(s.comb in pref.combinations){
     
 
     # Save breaks
-    idx.break = idx.break + idx.break.acc
+    idx.break = rbind(idx.break, idx.break.acc)
     
     rmSafe(x.corr)
     rmSafe(x)
