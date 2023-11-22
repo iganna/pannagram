@@ -233,8 +233,8 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
 
 
-Rscript  comb_alignment.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
---type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
---n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# Rscript  comb_alignment.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
+# --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
 
