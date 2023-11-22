@@ -153,36 +153,38 @@ ref_pref_true=${ref_pref}
 ref_pref=${ref_pref//_/$'-'}
 
 
-# ---- Paths
-# Required
+---- Paths
+Required
 
-# path_in=$(add_symbol_if_missing "$path_in" "/")
-# pref_global=$(add_symbol_if_missing "$pref_global" "/")
-
-
-# # Could be defined
-# path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
-# path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
-
-# path_parts="${path_parts:-${pref_global}parts/}"
-# path_parts=$(add_symbol_if_missing "$path_parts" "/")
-
-# path_chr_ref="${path_chr_ref:-${path_chr_acc}}"
-# path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
-
-# path_consensus="${path_consensus:-${pref_global}consensus/}"
-# path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
-# if [ ! -d "$path_consensus" ]; then
-#     mkdir -p "$path_consensus"
-# fi
-
-# # New paths
-# path_blast_parts=${pref_global}blast_parts_${ref_pref}/
-# path_alignment=${pref_global}alignments_${ref_pref}/
-# path_gaps=${pref_global}blast_gaps_${ref_pref}/
+path_in=$(add_symbol_if_missing "$path_in" "/")
+pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
 
-# # ----------------------------------------------------------------------------
+# Could be defined
+path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
+path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+
+path_parts="${path_parts:-${pref_global}parts/}"
+path_parts=$(add_symbol_if_missing "$path_parts" "/")
+
+path_chr_ref="${path_chr_ref:-${path_chr_acc}}"
+path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
+
+path_consensus="${path_consensus:-${pref_global}consensus/}"
+path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
+if [ ! -d "$path_consensus" ]; then
+    mkdir -p "$path_consensus"
+fi
+
+# New paths
+path_blast_parts=${pref_global}blast_parts_${ref_pref}/
+path_alignment=${pref_global}alignments_${ref_pref}/
+path_gaps=${pref_global}blast_gaps_${ref_pref}/
+
+
+# ----------------------------------------------------------------------------
+#           MAIN PIPELINE
+# ----------------------------------------------------------------------------
 
 
 # # Split quiery fasta into chromosomes
