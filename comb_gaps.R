@@ -135,7 +135,7 @@ for(s.comb in pref.combinations){
     
 
     # Save breaks
-    idx.break = rbind(idx.break, idx.break.acc)
+    idx.break = rbind(idx.break, idx.tmp.acc)
     
     rmSafe(x.corr)
     rmSafe(x)
