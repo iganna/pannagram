@@ -45,8 +45,8 @@ if (is.null(opt$ref.pref)) {
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-path.cons = './'
-ref.pref = '0'
+# path.cons = './'
+# ref.pref = '0'
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
