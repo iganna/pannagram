@@ -115,6 +115,8 @@ done
 
 path_chr_acc=$(cat ${pref_global}/tmp/path_chr_acc.log)  
 
+echo ${path_chr_acc}
+
 pref_mafftin="${pref_global}mafft_in/"
 
 Rscript comb_make_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
