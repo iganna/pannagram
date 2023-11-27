@@ -88,7 +88,8 @@ for(s.comb in pref.combinations){
     
     pokaz('Accession', acc, 'combination', s.comb)
   
-    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v = v.init
     
     
     
@@ -145,6 +146,7 @@ for(s.comb in pref.combinations){
     rmSafe(x.corr)
     rmSafe(x)
     rmSafe(v)
+    rmSafe(v.init)
     rmSafe(idx.tmp.acc)
     rmSafe(idx.break.acc)
     

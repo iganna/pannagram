@@ -63,6 +63,8 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
+# library(rhdf5)
+# source('../../../pannagram/utils.R')
 # path.cons = './'
 # path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
 # ref.pref = '0'
@@ -96,22 +98,22 @@ for(s.comb in pref.combinations){
   
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
-  # 
-  # # For testing
-  # v = c()
-  # for(acc in accessions){
-  #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-  #   if(sub('acc_', '', acc) ==ref.pref){
-  #     v = cbind(v, 1:nrow(v.acc))
-  #   } else {
-  #     v = cbind(v, v.acc)
-  #   }
-  # }
-  
-  
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
+  
+  # For testing
+  v = c()
+  for(acc in accessions){
+    v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    if(sub('acc_', '', acc) ==ref.pref){
+      v = cbind(v, 1:nrow(v.acc))
+    } else {
+      v = cbind(v, v.acc)
+    }
+  }
+  
+  
   
   # ---- Merge coverages ----
   file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
@@ -212,6 +214,9 @@ for(s.comb in pref.combinations){
   v.len = v.end - v.beg -1
   v.len[v.end == 0] = 0
   v.len[v.beg == 0] = 0
+  
+  v.len[sign(v.beg * v.end) < 0] = 0
+  
   pokaz('Amount of long fragments', sum(v.len > max.len.gap))
   v.len[v.len > max.len.gap] = 0
   for(icol in 1:ncol(v.len)){
@@ -342,6 +347,9 @@ for(s.comb in pref.combinations){
                      }
   
   saveRDS(res.msa, paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
+  
+  saveRDS(list(beg = v.beg[idx.singletons,],
+               end = v.end[idx.singletons,]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
   
   # ---- Create files for mafft ----
   
