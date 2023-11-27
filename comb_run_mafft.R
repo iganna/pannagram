@@ -1,7 +1,7 @@
 
 library(Biostrings)
 library('seqinr')
-library('spgs')
+# library('spgs')
 library('foreach')
 library(doParallel)
 library(R.utils)
@@ -86,7 +86,7 @@ fasta.files = list.files(path = path.fasta, pattern = paste('_flank_',n.flank,'.
 # ------------------------------------
 # ------------------------------------
 flag.for = F
-ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'spgs', 'R.utils'))  %dopar% { 
+ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
   
 #flag.for = T
 #for(i.f in 1:length(fasta.files)){
@@ -121,20 +121,20 @@ ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', '
     }
   }
   
-  # Try to read the alignment
-  aln = NULL
-  tryCatch(
-    expr = {
-      aln = ape::as.alignment(seqinr::read.fasta(aln.fasta))
-    },
-    error = function(e){ 
-      aln = NULL
-    }
-  )
-  if(is.null(aln)){
-    if(for.flag) next
-    return(NULL)
-  }
+  # # Try to read the alignment
+  # aln = NULL
+  # tryCatch(
+  #   expr = {
+  #     aln = ape::as.alignment(seqinr::read.fasta(aln.fasta))
+  #   },
+  #   error = function(e){ 
+  #     aln = NULL
+  #   }
+  # )
+  # if(is.null(aln)){
+  #   if(for.flag) next
+  #   return(NULL)
+  # }
   
   # # ------------------------
   # # Pipeline
