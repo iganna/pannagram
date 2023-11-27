@@ -13,9 +13,7 @@ myCluster <- makeCluster(15, # number of cores to use
                          type = "PSOCK") # type of cluster
 registerDoParallel(myCluster)
 
-message('=====================================================')
-message('  Run MAFFT  ')
-message('-----------------------------------------------------')
+pokazStage('Combine all alignments together')
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -83,10 +81,10 @@ for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
-  # All MAFFT results for the combination
+  # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
   mafft.res = data.frame(file = list.files(path = path.mafft.out, 
-                                           pattern = paste('^', pref, '.*_flank_', n.flank, '.fasta$', sep='')))
+                                           pattern = paste('^', pref, '.*_flank_', n.flank, '_aligned.fasta$', sep='')))
   
   
   mafft.res$comb = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]])
@@ -98,6 +96,8 @@ for(s.comb in pref.combinations){
   mafft.res$end = as.numeric(z[,6])
   mafft.res$id = as.numeric(z[,3])
   
+  
+  # ---- Short alignments ----
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
   msa.res$beg = msa.res$idx.gap.pos
 

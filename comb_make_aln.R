@@ -352,11 +352,11 @@ for(s.comb in pref.combinations){
   saveRDS(list(aln = res.msa,
                seqs = aln.seqs[idx.short], 
                pos.idx = aln.pos[idx.short],
-               idx.gap.pos = idx.break$beg[idx.short]), paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
+               idx.gap.pos = idx.break[idx.short, c('beg', 'end')]), paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
   
   saveRDS(list(pos.beg = v.beg[idx.singletons,],
                pos.end = v.end[idx.singletons,],
-               ref.beg = idx.break$beg[idx.singletons]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
+               ref.beg = idx.break[idx.singletons, c('beg', 'end')]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
   
   # ---- Create files for mafft ----
   
