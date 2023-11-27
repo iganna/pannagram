@@ -154,7 +154,7 @@ fi
                   --path.mafft.out ${pref_mafft_out} \
 
 
-Rscript comb_after_mafft.R  --cores ${cores} \
+Rscript comb_after_mafft.R  --cores ${cores}  --ref.pref ${ref0} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
                   --path.cons ${path_consensus} 
