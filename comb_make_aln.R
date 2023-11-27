@@ -126,7 +126,7 @@ for(s.comb in pref.combinations){
   n = 0
   while(n != nrow(idx.break)){
     n = nrow(idx.break)
-    print(n)
+    # print(n)
     idx.full.cover = which(diff(idx.break$end) <= 0) + 1
     if(length(idx.full.cover) == 0) break
     idx.break = idx.break[-idx.full.cover,]
@@ -136,7 +136,7 @@ for(s.comb in pref.combinations){
   n = 0
   while(n != nrow(idx.break)){
     n = nrow(idx.break)
-    print(n)
+    # print(n)
     idx.over = which((idx.break$beg[-1] < idx.break$end[-n]))
     if(length(idx.over) == 0) break
     idx.break = idx.break[-idx.over,]
@@ -300,6 +300,7 @@ for(s.comb in pref.combinations){
   #   pos.idx = aln.pos[[irow]]
   #   idx.gap.pos = idx.break$beg[irow]
     
+  pokaz('Align short seqs')
   for.flag = F
   res.msa <- foreach(seqs = aln.seqs[idx.short], 
                      pos.idx = aln.pos[idx.short],
@@ -333,9 +334,11 @@ for(s.comb in pref.combinations){
                        
                      }
   
-  saveRDS(res.msa, paste(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+  saveRDS(res.msa, paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
   
   # ---- Create files for mafft ----
+  
+  pokaz('Prepare seqs for mafft')
   
   idx.long = idx.aln[idx.add.flank[idx.aln]]
   
@@ -347,7 +350,7 @@ for(s.comb in pref.combinations){
     f.pref = paste(path.mafft.in, s.aln,
                    '_flank_', n.flank,'.fasta', sep = '')
     
-    writeFastaMy(seqs, fasta.f.flank)
+    writeFastaMy(seqs, f.pref)
     
   }
   
