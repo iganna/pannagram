@@ -61,13 +61,16 @@ if (is.null(opt$ref.pref)) {
 # Path to mafft input
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
-# ---- Combinations of chromosomes query-base to create the alignments ----
+# ---- Testing ----
 
 # library(rhdf5)
 # source('../../../pannagram/utils.R')
 # path.cons = './'
 # path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
 # ref.pref = '0'
+
+
+# ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -243,7 +246,7 @@ for(s.comb in pref.combinations){
   # Names of breaks
   n.digits <- nchar(as.character(nrow(idx.break)))
   format.digits <- paste0("%0", n.digits, "d")
-  s.break = paste('Gap', 
+  s.break = paste('Gap', s.comb, 
                   sprintf(format.digits, 1:nrow(idx.break)), 
                   idx.break$beg, idx.break$end,
                   sep = '_')
