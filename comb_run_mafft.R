@@ -109,11 +109,27 @@ for(i.f in 1:length(fasta.files)){
   if(!file.exists(aln.fasta)) {
     #if(T) {
     # print(aln.fasta)
-    res <- R.utils::withTimeout({
-      # --genafpair
-      system(paste('mafft --op 5 --quiet --maxiterate 100 ', z.fasta, '>', aln.fasta,  sep = ' '))
-      # return(T)
-    }, timeout = 100, onTimeout = "warning")
+    # res <- R.utils::withTimeout({
+    #   # --genafpair
+    #   system(paste('mafft --op 5 --quiet --maxiterate 100 ', z.fasta, '>', aln.fasta,  sep = ' '))
+    #   # return(T)
+    # }, timeout = 100, onTimeout = "warning")
+    
+    
+    timeout <- 10 # 10 минут в секундах
+    cmd <- paste('mafft --op 5 --quiet --maxiterate 100', z.fasta)
+    # system2(command = cmd, stdout = aln.fasta, timeout = timeout)
+    tryCatch({
+      system2(command = cmd, stdout = aln.fasta, timeout = timeout)
+    }, error = function(e) {
+      if(grepl("reached elapsed time limit", e$message)) {
+        pokaz(z.fasta)
+        cat("Команда была прервана после 10 минут выполнения\n")
+      } else {
+        cat("Произошла другая ошибка: ", e$message, "\n")
+      }
+    })
+    
     
     if(!file.exists(aln.fasta)) {
       if(for.flag) next
