@@ -54,6 +54,13 @@ while [[ $# -gt 0 ]]; do
         shift # Skip the value of the parameter
         shift # Skip the parameter itself
         ;;
+    -path_consensus)
+        # Get the value of the pref_global parameter
+        path_consensus="$2"
+        additional_params+=" $1 $2"
+        shift # Skip the value of the parameter
+        shift # Skip the parameter itself
+        ;;
     *)
         # Add the remaining arguments as additional parameters
         additional_params+=" $1"
@@ -139,7 +146,7 @@ if [ ! -d "$pref_mafft_pos" ]; then
 fi
 
 
-Rscript comb_run_mafft.R  --cores ${cores} \
+comb_run_mafft.sh  --cores ${cores} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
-                  --path.mafft.pos ${pref_mafft_pos}
+                  
