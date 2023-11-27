@@ -91,6 +91,7 @@ n.flank = 30
 flag.for = T
 for(s.comb in pref.combinations){
   
+  pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
