@@ -105,8 +105,6 @@ echo ${path_consensus}
 
 
 
-cores=10
-
 ref0=${refs_all[0]}
 for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
