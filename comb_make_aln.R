@@ -63,9 +63,9 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-path.cons = './'
-path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-ref.pref = '0'
+# path.cons = './'
+# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+# ref.pref = '0'
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
