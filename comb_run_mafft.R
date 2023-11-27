@@ -88,7 +88,7 @@ fasta.files = list.files(path = path.fasta, pattern = paste('_flank_',n.flank,'.
 # flag.for = F
 # ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
   
-flag.for = T
+for.flag = T
 for(i.f in 1:length(fasta.files)){
   
   
@@ -118,17 +118,17 @@ for(i.f in 1:length(fasta.files)){
     
     timeout <- 10 # 10 минут в секундах
     cmd <- paste('mafft --op 5 --quiet --maxiterate 100', z.fasta)
-    # system2(command = cmd, stdout = aln.fasta, timeout = timeout)
-    tryCatch({
-      system2(command = cmd, stdout = aln.fasta, timeout = timeout)
-    }, error = function(e) {
-      if(grepl("reached elapsed time limit", e$message)) {
-        pokaz(z.fasta)
-        cat("Команда была прервана после 10 минут выполнения\n")
-      } else {
-        cat("Произошла другая ошибка: ", e$message, "\n")
-      }
-    })
+    system2(command = cmd, stdout = aln.fasta, timeout = timeout)
+    # tryCatch({
+    #   system2(command = cmd, stdout = aln.fasta, timeout = timeout)
+    # }, error = function(e) {
+    #   if(grepl("reached elapsed time limit", e$message)) {
+    #     pokaz(z.fasta)
+    #     cat("Команда была прервана после 10 минут выполнения\n")
+    #   } else {
+    #     cat("Произошла другая ошибка: ", e$message, "\n")
+    #   }
+    # })
     
     
     if(!file.exists(aln.fasta)) {
