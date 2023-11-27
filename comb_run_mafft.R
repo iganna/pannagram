@@ -6,6 +6,7 @@ library('foreach')
 library(doParallel)
 library(R.utils)
 library("optparse")
+source('utils.R')
 
 # rm -rf gaps mob no_interesting class pos solid_aln
 
