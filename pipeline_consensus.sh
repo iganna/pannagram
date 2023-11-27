@@ -146,7 +146,7 @@ if [ ! -d "$pref_mafft_pos" ]; then
 fi
 
 
-comb_run_mafft.sh  --cores ${cores} \
+./comb_run_mafft.sh  --cores ${cores} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
                   
