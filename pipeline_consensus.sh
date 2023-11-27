@@ -115,6 +115,8 @@ done
 
 path_chr_acc=$(cat ${pref_global}/tmp/path_chr_acc.log)  
 
+echo ${${pref_global}/tmp/path_chr_acc.log}
+head ${pref_global}/tmp/path_chr_acc.log
 echo ${path_chr_acc}
 
 pref_mafftin="${pref_global}mafft_in/"
