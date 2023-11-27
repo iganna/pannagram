@@ -82,6 +82,13 @@ find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | head -n 100 | while read i
     base_name=$(basename "${input_file}" .fasta)
     output_file="${path_mafft_out}/${base_name}_aligned.fasta"
 
+
+    if [ -e "$output_file" ]; then
+        continue
+    fi
+    
+    echo ${output_file}
+
     # Запускаем mafft с ограничением времени выполнения
     timeout 10 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
     exit_status=$?
