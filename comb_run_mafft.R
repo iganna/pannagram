@@ -4,7 +4,7 @@ library('seqinr')
 # library('spgs')
 library('foreach')
 library(doParallel)
-library(R.utils)
+# library(R.utils)
 library("optparse")
 
 # rm -rf gaps mob no_interesting class pos solid_aln
@@ -85,11 +85,11 @@ fasta.files = list.files(path = path.fasta, pattern = paste('_flank_',n.flank,'.
 
 # ------------------------------------
 # ------------------------------------
-flag.for = F
-ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
+# flag.for = F
+# ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings'))  %dopar% { 
   
-#flag.for = T
-#for(i.f in 1:length(fasta.files)){
+flag.for = T
+for(i.f in 1:length(fasta.files)){
   
   
   pos.file = paste(path.pos, gsub("fasta", "txt", fasta.files[i.f]), sep = '')
