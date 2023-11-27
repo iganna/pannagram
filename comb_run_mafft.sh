@@ -31,7 +31,6 @@ source utils_bash.sh
 
 # Инициализация переменных
 
-
 # Разбор аргументов командной строки
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -48,6 +47,7 @@ done
 if [ -z "$cores" ]; then
     cores=1
 fi
+echo "Number of cores ${cores}"
 
 check_missing_variable "path_mafft_in"
 check_missing_variable "path_mafft_out"
@@ -68,42 +68,45 @@ fi
 
 trap "echo 'Script interrupted'; exit" INT
 
-# Перебираем все .fasta файлы в входной директории
+declare -A running_jobs
 
-# for input_file in "${path_mafft_in}"/*.fasta; do
-find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | head -n 100 | while read input_file; do
-    # Проверяем, есть ли файлы .fasta
+# Iterating over all .fasta files in the input directory
+for input_file in "${path_mafft_in}"/*.fasta; do
+# find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | while read input_file; do
+    # Check if .fasta files exist
     if [ ! -e "$input_file" ]; then
         echo "No .fasta files found in input directory for MAFFT."
         break
     fi
 
-    # Извлекаем имя файла без расширения для использования в выходном файле
+    # Extracting the file name without extension for use in the output file
     base_name=$(basename "${input_file}" .fasta)
     output_file="${path_mafft_out}/${base_name}_aligned.fasta"
-
 
     if [ -e "$output_file" ]; then
         continue
     fi
 
-    echo ${output_file}
+    # Run MAFFT in parallel
+    timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}" &
+    job_pid=$!
 
-    (
-        # Запускаем mafft в подоболочке
-        timeout  --foreground 10 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
-        exit_status=$?
+    running_jobs[$job_pid]=1
 
-        if [ $exit_status -eq 124 ]; then
-            echo "Command 'mafft' on file ${input_file} took too long and was terminated."
-        elif [ $exit_status -ne 0 ]; then
-            echo "Command 'mafft' failed on file ${input_file} with exit status $exit_status."
-        fi
-    )
-
-    # Проверяем, был ли скрипт прерван
-    if [ "$?" -eq 130 ]; then
-        echo "Script was interrupted."
-        exit 130
-    fi
+    # Check the number of running processes
+    while (( ${#running_jobs[@]} >= $cores )); do
+        for pid in "${!running_jobs[@]}"; do
+            if ! kill -0 $pid 2>/dev/null; then
+                unset running_jobs[$pid]
+            fi
+        done
+        sleep 1
+    done
 done
+
+# Wait for all processes to finish
+for pid in "${!running_jobs[@]}"; do
+    wait $pid
+done
+
+echo "  Done!"
