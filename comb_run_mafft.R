@@ -56,9 +56,9 @@ n.flank = 30
 
 # ------------------------------------------------------------------------------
 
-accessions = readRDS(paste(path.work, 'accessions.rds', sep = ''))
-n.acc = length(accessions)
-print(accessions)
+# accessions = readRDS(paste(path.work, 'accessions.rds', sep = ''))
+# n.acc = length(accessions)
+# print(accessions)
 
 # ===========================================================================
 
