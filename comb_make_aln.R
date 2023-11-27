@@ -261,14 +261,20 @@ for(s.comb in pref.combinations){
         s.strand = '+'
         p1 = v.beg[irow, acc] + 1
         p2 = v.end[irow, acc] - 1
-        if(p2 < p1) stop('wrong direction, +')
+        if(p2 < p1) {
+          print(irow)
+          stop('wrong direction, +')
+        }
         seq = genome[p1:p2]
         pos = p1:p2
       } else {
         s.strand = '-'
         p1 = -v.end[irow, acc] + 1
         p2 = -v.beg[irow, acc] - 1
-        if(p2 < p1) stop('wrong direction, -')
+        if(p2 < p1)  {
+          print(irow)
+          stop('wrong direction, -')
+        }
         seq = genome[p1:p2]
         seq = revCompl(seq)
         pos = (-p2):(-p1)
