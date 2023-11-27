@@ -54,6 +54,13 @@ while [[ $# -gt 0 ]]; do
         shift # Skip the value of the parameter
         shift # Skip the parameter itself
         ;;
+    -cores)
+        # Get the value of the pref_global parameter
+        cores="$2"
+        additional_params+=" $1 $2"
+        shift # Skip the value of the parameter
+        shift # Skip the parameter itself
+        ;;
     -path_consensus)
         # Get the value of the pref_global parameter
         path_consensus="$2"
@@ -74,6 +81,11 @@ if [[ -z "$ref_set" ]]; then
   exit 1
 fi
 
+
+if [ -z "$cores" ]; then
+    cores=1
+fi
+echo "Number of cores ${cores}"
 
 
 # Split the value of ref_set into separate words
