@@ -346,7 +346,10 @@ for(s.comb in pref.combinations){
                        
                      }
   
-  saveRDS(res.msa, paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
+  saveRDS(list(aln = res.msa,
+               seqs = aln.seqs[idx.short], 
+               pos.idx = aln.pos[idx.short],
+               idx.gap.pos = idx.break$beg[idx.short]), paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
   
   saveRDS(list(beg = v.beg[idx.singletons,],
                end = v.end[idx.singletons,]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
