@@ -113,15 +113,13 @@ done
 # Rscript comb_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
-path_chr_acc=$(cat ${pref_global}/tmp/path_chr_acc.log)  
+path_chr_acc=$(cat "${pref_global}/tmp/path_chr_acc.log") 
 
 echo "${pref_global}/tmp/path_chr_acc.log"
-
-exit 1
-
-head ${pref_global}/tmp/path_chr_acc.log
 echo ${path_chr_acc}
 
+
+exit 1
 pref_mafftin="${pref_global}mafft_in/"
 
 Rscript comb_make_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
