@@ -149,12 +149,6 @@ if [ ! -d "$pref_mafft_out" ]; then
 fi
 
 
-pref_mafft_pos="${pref_global}mafft_pos/"
-if [ ! -d "$pref_mafft_pos" ]; then
-    mkdir -p "$pref_mafft_pos"
-fi
-
-
 ./comb_run_mafft.sh  --cores ${cores} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
@@ -163,3 +157,4 @@ fi
 Rscript comb_after_mafft.R  --cores ${cores} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
+                  --path.cons ${path_consensus} 

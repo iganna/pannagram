@@ -356,7 +356,7 @@ for(s.comb in pref.combinations){
   
   saveRDS(list(pos.beg = v.beg[idx.singletons,],
                pos.end = v.end[idx.singletons,],
-               ref.beg = idx.singletons$beg), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
+               ref.beg = idx.break$beg[idx.singletons]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
   
   # ---- Create files for mafft ----
   
