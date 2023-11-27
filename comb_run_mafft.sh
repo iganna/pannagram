@@ -66,9 +66,12 @@ fi
 #                MAIN
 # ----------------------------------------------------------------------------
 
+trap "echo 'Script interrupted'; exit" INT
 
 # Перебираем все .fasta файлы в входной директории
-for input_file in "${path_mafft_in}"/*.fasta; do
+
+# for input_file in "${path_mafft_in}"/*.fasta; do
+find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | head -n 100 | while read input_file; do
     # Проверяем, есть ли файлы .fasta
     if [ ! -e "$input_file" ]; then
         echo "No .fasta files found in input directory for MAFFT."
@@ -85,5 +88,7 @@ for input_file in "${path_mafft_in}"/*.fasta; do
 
     if [ $exit_status -eq 124 ]; then
         echo "Command 'mafft' on file ${input_file} took too long and was terminated."
+    elif [ $exit_status -ne 0 ]; then
+        echo "Command 'mafft' failed on file ${input_file} with exit status $exit_status."
     fi
 done
