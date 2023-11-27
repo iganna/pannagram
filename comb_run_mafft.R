@@ -116,9 +116,10 @@ for(i.f in 1:length(fasta.files)){
     # }, timeout = 100, onTimeout = "warning")
     
     
-    timeout <- 10 # 10 минут в секундах
-    cmd <- paste('mafft --op 5 --quiet --maxiterate 100', z.fasta)
-    system2(command = cmd, stdout = aln.fasta, timeout = timeout)
+    timeout <- 600 # 10 минут в секундах
+    timeout <- 10
+    cmd <- paste('mafft --op 5 --quiet --maxiterate 100 ', z.fasta, '>', aln.fasta,  sep = ' ')
+    system(command = cmd, timeout = timeout)
     # tryCatch({
     #   system2(command = cmd, stdout = aln.fasta, timeout = timeout)
     # }, error = function(e) {
