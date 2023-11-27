@@ -101,11 +101,11 @@ for(i.f in 1:length(fasta.files)){
   # Get sequences
   z.fasta = paste(path.fasta, fasta.files[i.f],sep='')
   
-  print('---------------------')
+  pokaz('---------------------')
   
   # Try to run the alignment
   aln.fasta = paste(path.mafft, gsub("fasta", "txt", fasta.files[i.f]), sep = '')
-  print(aln.fasta)
+  pokaz(aln.fasta)
   if(!file.exists(aln.fasta)) {
     #if(T) {
     # print(aln.fasta)
@@ -117,7 +117,7 @@ for(i.f in 1:length(fasta.files)){
     
     
     timeout <- 600 # 10 минут в секундах
-    timeout <- 10
+    timeout <- 0.5
     cmd <- paste('mafft --op 5 --quiet --maxiterate 100 ', z.fasta, '>', aln.fasta,  sep = ' ')
     system(command = cmd, timeout = timeout)
     # tryCatch({
@@ -133,6 +133,7 @@ for(i.f in 1:length(fasta.files)){
     
     
     if(!file.exists(aln.fasta)) {
+      stop()
       if(for.flag) next
       return(NULL)
     }
