@@ -140,8 +140,8 @@ if [ ! -d "$pref_mafftin" ]; then
     mkdir -p "$pref_mafftin"
 fi
 
-Rscript comb_make_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
-                  --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
+# Rscript comb_make_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+#                   --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
 pref_mafft_out="${pref_global}mafft_out/"
 if [ ! -d "$pref_mafft_out" ]; then
@@ -149,9 +149,9 @@ if [ ! -d "$pref_mafft_out" ]; then
 fi
 
 
-./comb_run_mafft.sh  --cores ${cores} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
+# ./comb_run_mafft.sh  --cores ${cores} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
 
 
 Rscript comb_after_mafft.R  --cores ${cores}  --ref.pref ${ref0} \
