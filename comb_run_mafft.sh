@@ -91,14 +91,14 @@ find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | head -n 100 | while read i
 
     (
         # Запускаем mafft в подоболочке
-        mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
-        # exit_status=$?
+        timeout  --foreground 10 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
+        exit_status=$?
 
-        # if [ $exit_status -eq 124 ]; then
-        #     echo "Command 'mafft' on file ${input_file} took too long and was terminated."
-        # elif [ $exit_status -ne 0 ]; then
-        #     echo "Command 'mafft' failed on file ${input_file} with exit status $exit_status."
-        # fi
+        if [ $exit_status -eq 124 ]; then
+            echo "Command 'mafft' on file ${input_file} took too long and was terminated."
+        elif [ $exit_status -ne 0 ]; then
+            echo "Command 'mafft' failed on file ${input_file} with exit status $exit_status."
+        fi
     )
 
     # Проверяем, был ли скрипт прерван
