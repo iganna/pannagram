@@ -155,22 +155,23 @@ acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 
 # ---- Fix paths if they don't end with /
 
-path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
-path_in=$(add_symbol_if_missing "$path_in" "/")
-path_parts=$(add_symbol_if_missing "$path_parts" "/")
-path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
-path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
-pref_global=$(add_symbol_if_missing "$pref_global" "/")
+path_in=$(add_symbol_if_missing "$path_in" "/")  # folder with all genomes
 
+pref_global=$(add_symbol_if_missing "$pref_global" "/")  # folder with results
 
 # ---- Paths
 path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
+path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+
 path_parts="${path_parts:-${pref_global}parts/}"
+path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
 path_chr_ref="${path_chr_ref:-${path_chr_acc}}"
+path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
 
 path_consensus="${path_consensus:-${pref_global}consensus/}"
+path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 if [ ! -d "$path_consensus" ]; then
     mkdir -p "$path_consensus"
 fi
@@ -180,6 +181,10 @@ path_blast_parts=${pref_global}blast_parts_${ref_pref}/
 path_alignment=${pref_global}alignments_${ref_pref}/
 path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
+
+echo "$path_chr_acc" > ${pref_global}/tmp/path_chr_acc.log
+
+exit 1
 
 # # ==============================================================================
 # Split quiery fasta into chromosomes

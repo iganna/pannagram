@@ -1,0 +1,361 @@
+# Get positiona for an extra alignment
+
+suppressMessages({
+  library(foreach)
+  library(doParallel)
+  library(optparse)
+  library(crayon)
+  library(rhdf5)
+  library(muscle)  #BiocManager::install("muscle")
+  library(Biostrings)
+})
+
+source("utils.R")
+source("synteny_funcs.R")
+
+pokazStage('Combine: alignments by chromosomes')
+
+args = commandArgs(trailingOnly=TRUE)
+
+
+option_list = list(
+  make_option(c("--path.cons"), type="character", default=NULL, 
+              help="path to consensus directory", metavar="character"),
+  make_option(c("--path.chromosomes"), type="character", default=NULL, 
+              help="path to directory with chromosomes", metavar="character"),
+  make_option(c("--path.mafft.in"), type="character", default=NULL, 
+              help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
+  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
+              help="prefix of the reference file", metavar="character"),
+  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+              help = "number of cores to use for parallel processing", metavar = "integer")
+); 
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser, args = args);
+
+# print(opt)
+
+# Set the number of cores for parallel processing
+num.cores.max = 10
+num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+myCluster <- makeCluster(num.cores, type = "PSOCK")
+registerDoParallel(myCluster)
+
+
+# Path with the consensus output
+if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+if(!dir.exists(path.cons)) stop('Consensus folder doesn???t exist')
+
+# Path to chromosomes
+if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
+
+# Reference genome
+if (is.null(opt$ref.pref)) {
+  stop("ref.pref is NULL")
+} else {
+  ref.pref <- opt$ref.pref
+}
+
+
+# Path to mafft input
+if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
+
+# ---- Combinations of chromosomes query-base to create the alignments ----
+
+path.cons = './'
+path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+ref.pref = '0'
+
+s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
+files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+pref.combinations = gsub("res_", "", files)
+pref.combinations <- sub("_ref.*$", "", pref.combinations)
+
+pokaz('Reference:', ref.pref)
+pokaz('Combinations', pref.combinations)
+
+# ----  Combine correspondence  ----
+
+gr.accs.e <- "accs/"
+gr.accs.b <- "/accs"
+gr.break.e = 'break/'
+gr.break.b = '/break'
+max.len.gap = 25000
+len.short = 50
+n.flank = 30
+
+#flag.for = F
+#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
+flag.for = T
+for(s.comb in pref.combinations){
+  
+  q.chr = strsplit(s.comb, '_')[[1]][1]
+  
+  file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  
+  # 
+  # # For testing
+  # v = c()
+  # for(acc in accessions){
+  #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+  #   if(sub('acc_', '', acc) ==ref.pref){
+  #     v = cbind(v, 1:nrow(v.acc))
+  #   } else {
+  #     v = cbind(v, v.acc)
+  #   }
+  # }
+  
+  
+  groups = h5ls(file.comb)
+  accessions = groups$name[groups$group == gr.accs.b]
+  n.acc = length(accessions)
+  
+  # ---- Merge coverages ----
+  file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
+  idx.break = readRDS(file.breaks)
+  idx.break = idx.break[idx.break$acc != paste('acc_', ref.pref, sep = ''),]  # Remove the reference correspondence
+  
+  
+  
+  # Merge full coverages 
+  idx.break = idx.break[order(-idx.break$end),]
+  idx.break = idx.break[order(idx.break$beg),]
+  
+  n = 0
+  while(n != nrow(idx.break)){
+    n = nrow(idx.break)
+    print(n)
+    idx.full.cover = which(diff(idx.break$end) <= 0) + 1
+    if(length(idx.full.cover) == 0) break
+    idx.break = idx.break[-idx.full.cover,]
+  }
+  
+  # Merge overlaps
+  n = 0
+  while(n != nrow(idx.break)){
+    n = nrow(idx.break)
+    print(n)
+    idx.over = which((idx.break$beg[-1] < idx.break$end[-n]))
+    if(length(idx.over) == 0) break
+    idx.break = idx.break[-idx.over,]
+  }
+  
+  # Length of gaps
+  idx.break$idx = paste('gap', 1:nrow(idx.break), sep = '|')
+  idx.break$len = idx.break$end - idx.break$beg + 1
+  
+  
+  ## ---- Get begin-end positions of gaps ----
+  v.beg = c()
+  v.end = c()
+  for(acc in accessions){
+    
+    if(sub('acc_', '', acc) ==ref.pref){
+      v.beg = cbind(v.beg, idx.break$beg)
+      v.end = cbind(v.end, idx.break$end)
+      next
+    }
+    x.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    
+    ### ---- Find prev and next ----
+    n = nrow(x.acc)
+    for(i.tmp in 1:2){
+      pokaz('Accession', acc, 'fill prev/next', i.tmp)
+      v.acc = x.acc
+      if(i.tmp == 2) {
+        v.acc = rev(v.acc)
+      }
+      v.rank = rank(v.acc)
+      v.rank[v.acc == 0] = 0
+      
+      v.zero.beg = which((v.acc[-1] == 0) & (v.acc[-n] != 0)) + 1
+      v.zero.end = which((v.acc[-1] != 0) & (v.acc[-n] == 0)) 
+      if(v.acc[1] == 0) v.zero.end = v.zero.end[-1]
+      if(v.acc[n] == 0) v.zero.end = c(v.zero.end, n)
+      
+      # ..... WITHIN ONE STRATCH BLOCK .....
+      idx = which(abs(v.rank[v.zero.beg-1] - v.rank[v.zero.end+1]) != 1)
+      v.zero.beg = v.zero.beg[-idx]
+      v.zero.end = v.zero.end[-idx]
+      # .....
+      
+      tmp = rep(0, n)
+      tmp[v.zero.beg] = v.acc[v.zero.beg-1]
+      tmp[v.zero.end] = -v.acc[v.zero.beg-1]
+      tmp[v.zero.end[v.zero.beg == v.zero.end]] = 0
+      tmp = cumsum(tmp)
+      tmp[v.zero.end] = v.acc[v.zero.beg-1]
+      
+      # sum((v.acc != 0) & (tmp != 0))
+      # sum(tmp != 0)
+      # sum(v.acc == 0)
+      
+      if(i.tmp == 1){
+        v.prev = x.acc + tmp
+      } else {
+        tmp = rev(tmp)
+        v.next = x.acc + tmp
+      }
+    }
+    
+    v.beg = cbind(v.beg, v.prev[idx.break$beg] * (v.prev[idx.break$beg+1] != 0))
+    v.end = cbind(v.end, v.next[idx.break$end] * (v.next[idx.break$end+1] != 0))
+    # v = cbind(v, v.acc)
+  }
+  colnames(v.beg) = accessions
+  colnames(v.end) = accessions
+  
+  ## ---- Check lengths ----
+  v.len = v.end - v.beg -1
+  v.len[v.end == 0] = 0
+  v.len[v.beg == 0] = 0
+  pokaz('Amount of long fragments', sum(v.len > max.len.gap))
+  v.len[v.len > max.len.gap] = 0
+  for(icol in 1:ncol(v.len)){
+    idx.dup = v.beg[duplicated(v.beg[,icol]),icol]
+    pokaz('Duplicated in column', icol, ', amount:', length(idx.dup))
+    v.len[v.beg[,icol] %in% idx.dup, icol] = 0
+    idx.dup = v.end[duplicated(v.end[,icol]),icol]
+    pokaz('Duplicated in column', icol, ', amount:', length(idx.dup))
+    v.len[v.end[,icol] %in% idx.dup, icol] = 0
+  }
+  v.beg[v.len == 0] = 0
+  v.end[v.len == 0] = 0
+  
+  # ---- Get sequences for the alignment, but not singletons ----
+  idx.singletons = which(rowSums(v.len != 0) == 1)  # don't have to align
+  idx.aln = which(rowSums(v.len != 0) != 1)  # have to align
+  
+  # Distinguish long (MAFFT) and short(muscle) alignments
+  max.len = apply(v.len, 1, max)
+  idx.add.flank = max.len > len.short
+  s.flank.beg = rep('A', n.flank)
+  s.flank.end = rep('T', n.flank)
+  
+  # Names of breaks
+  n.digits <- nchar(as.character(nrow(idx.break)))
+  format.digits <- paste0("%0", n.digits, "d")
+  s.break = paste('Gap', 
+                  sprintf(format.digits, 1:nrow(idx.break)), 
+                  idx.break$beg, idx.break$end,
+                  sep = '_')
+  
+  # Get sequences
+  aln.seqs <- vector("list", length = nrow(idx.break))
+  aln.pos <- vector("list", length = nrow(idx.break))
+  for(acc in accessions){
+    pokaz('Accession', acc)
+    # read the genome and chromosome
+    file.chromosome = paste(path.chromosomes, 
+                            sub("acc_", "", acc), 
+                            '_chr', q.chr, '.fasta', sep = '')
+    genome = readFastaMy(file.chromosome)
+    genome = seq2nt(genome)
+    
+    for(irow in idx.aln){
+      if(v.beg[irow, acc] == 0) next
+      
+      if(v.beg[irow, acc] > 0){
+        s.strand = '+'
+        p1 = v.beg[irow, acc] + 1
+        p2 = v.end[irow, acc] - 1
+        if(p2 < p1) stop('wrong direction, +')
+        seq = genome[p1:p2]
+        pos = p1:p2
+      } else {
+        s.strand = '-'
+        p1 = -v.end[irow, acc] + 1
+        p2 = -v.beg[irow, acc] - 1
+        if(p2 < p1) stop('wrong direction, -')
+        seq = genome[p1:p2]
+        seq = revCompl(seq)
+        pos = (-p2):(-p1)
+      }
+      
+      # Add flanking sequence, if to MAFFT
+      if(idx.add.flank[irow]){
+        seq = c(s.flank.beg, seq, s.flank.end)
+        seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')
+      } else {
+        seq.name = acc
+      }
+      
+      # seq.name = paste(s.break[irow], acc, q.chr, p1, p2, s.strand, p2 - p1 + 1, sep = '|')
+      # seq.name = acc
+      aln.seqs[[irow]][seq.name] = nt2seq(seq)
+      aln.pos[[irow]][[seq.name]] = pos
+    }
+  }
+  
+  
+  # ---- Align short ----
+  idx.short = idx.aln[!idx.add.flank[idx.aln]]
+  val.acc.pos = c()
+  
+  # for.flag = T
+  # for(irow in idx.short){
+  #   seqs = aln.seqs[[irow]]
+  #   pos.idx = aln.pos[[irow]]
+  #   idx.gap.pos = idx.break$beg[irow]
+    
+  for.flag = F
+  res.msa <- foreach(seqs = aln.seqs[idx.short], 
+                     pos.idx = aln.pos[idx.short],
+                     idx.gap.pos = idx.break$beg[idx.short],
+                     .packages=c('muscle', 'Biostrings'))  %dopar% {
+                       
+                       set = DNAStringSet(seqs)
+                       aln = muscle(set, quiet = T)
+                       
+                       
+                       set = as.character(aln)
+                       n.pos = nchar(set[1])
+                       
+                       # if(n.pos > 10){
+                       #   pokaz('Iteration', irow)
+                       #   print(aln)
+                       # } 
+                       
+                       val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
+                       colnames(val.acc.pos) = accessions
+                       for(s.acc in names(set)){
+                         s = strsplit(set[[s.acc]],'')[[1]]
+                         val.acc.pos[s != '-',s.acc] = pos.idx[[s.acc]]
+                       }
+                       
+                       if(for.flag){
+                         val.acc.pos = cbind(val.acc.pos, idx.gap.pos + (1:n.pos) / (n.pos+1))
+                       } else {
+                         return(val.acc.pos)
+                       }
+                       
+                     }
+  
+  saveRDS(res.msa, paste(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+  
+  # ---- Create files for mafft ----
+  
+  idx.long = idx.aln[idx.add.flank[idx.aln]]
+  
+  res.msa <- foreach(seqs = aln.seqs[idx.long], 
+                     pos.idx = aln.pos[idx.long], 
+                     s.aln = s.break[idx.long],
+                     .packages=c('muscle', 'Biostrings'))  %dopar% {
+    
+    f.pref = paste(path.mafft.in, s.aln,
+                   '_flank_', n.flank,'.fasta', sep = '')
+    
+    writeFastaMy(seqs, fasta.f.flank)
+    
+  }
+  
+  H5close()
+  gc()
+  
+}
+
+
+
+
+

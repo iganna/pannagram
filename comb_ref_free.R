@@ -154,7 +154,7 @@ for(s.comb in pref.combinations){
     pokaz('Length of resultant correspondence', length(v01))
     pokaz('Sum of matches', sum(v01 != 0))
     
-    # Turn into real coorsinates back
+    # Turn into real coordinates back
     v.final = rep(0, base.len)
     v.final[idx01] = v01
     

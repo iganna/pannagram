@@ -110,5 +110,13 @@ done
 
 
 
-Rscript comb_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+# Rscript comb_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+
+
+path_chr_acc=$(cat ${pref_global}/tmp/path_chr_acc.log)  
+
+pref_mafftin="${pref_global}mafft_in/"
+
+Rscript comb_make_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+                  --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 

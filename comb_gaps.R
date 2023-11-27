@@ -69,6 +69,9 @@ gr.break.e = 'break/'
 gr.break.b = '/break'
 max.len.gap = 20000
 
+gr.prev.e = 'prev/'
+gr.next.e = 'next/'
+
 #flag.for = F
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 flag.for = T
@@ -86,6 +89,8 @@ for(s.comb in pref.combinations){
     pokaz('Accession', acc, 'combination', s.comb)
   
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    
+    
     
     # ----  Find breaks  ----
     
@@ -145,8 +150,8 @@ for(s.comb in pref.combinations){
     
   }
   
-  file.comb = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
-  saveRDS(idx.break, file.comb)
+  file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
+  saveRDS(idx.break, file.breaks)
   
   rmSafe(idx.break)
   
