@@ -121,12 +121,12 @@ ref0=${refs_all[0]}
 for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
     
-    # Rscript comb_ref_free.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
+    Rscript comb_ref_free.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
 
 done
 
 
-# Rscript comb_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+Rscript comb_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
 path_chr_acc=$(cat "${pref_global}tmp/path_chr_acc.log") 
@@ -149,12 +149,12 @@ if [ ! -d "$pref_mafft_out" ]; then
 fi
 
 
-# ./comb_run_mafft.sh  --cores ${cores} \
-#                   --path.mafft.in ${pref_mafftin} \
-#                   --path.mafft.out ${pref_mafft_out} \
-
-
-Rscript comb_after_mafft.R  --cores ${cores}  --ref.pref ${ref0} \
+./comb_run_mafft.sh  --cores ${cores} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
-                  --path.cons ${path_consensus} 
+
+
+# Rscript comb_after_mafft.R  --cores ${cores}  --ref.pref ${ref0} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
+#                   --path.cons ${path_consensus} 

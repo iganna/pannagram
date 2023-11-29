@@ -1,5 +1,6 @@
 
 library(Biostrings)
+library(rhdf5)
 library('seqinr')
 library('foreach')
 library(doParallel)
@@ -57,6 +58,13 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
 n.flank = 30
 
+gr.accs.e <- "accs/"
+gr.accs.b <- "/accs"
+gr.break.e = 'break/'
+gr.break.b = '/break'
+
+max.block.elemnt = 3 * 10^ 6
+
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
@@ -81,6 +89,18 @@ for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
+  # Get accessions
+  file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  
+  groups = h5ls(file.comb)
+  accessions = groups$name[groups$group == gr.accs.b]
+  n.acc = length(accessions)
+  base.len = length(h5read(file.comb, paste(gr.accs.e, accessions[1], sep = '')))
+  
+  
+  n.rows.block = round(max.block.elemnt / n.acc)
+  seq.blocks = seq(1, base.len - n.rows.block, n.rows.block)
+  
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
   mafft.res = data.frame(file = list.files(path = path.mafft.out, 
@@ -96,98 +116,142 @@ for(s.comb in pref.combinations){
   mafft.res$end = as.numeric(z[,6])
   mafft.res$id = as.numeric(z[,3])
   
+  # ---- Get long alignment positions ----
+  mafft.aln.pos = list()
+  for(i in 1:nrow(mafft.res)){
+    aln.seq = readFastaMy(paste(path.mafft.out, mafft.res$file[i], sep = ''))
+    n.aln.seq = length(aln.seq)
+    name.aln.seq = names(aln.seq)
+    pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
+    
+    
+    len.aln.seq <- nchar(aln.seq[1])
+    # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
+    pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
+    for (i.seq in 1:length(aln.seq)) {
+      tmp = strsplit(aln.seq[i.seq], "")[[1]]
+      tmp.nongap = which(tmp != '-')
+      # tmp[tail(tmp.nongap, (n.flank) )] = '-'
+      # tmp[tmp.nongap[1:(n.flank) ]] = '-'
+      # aln.mx[i, ] <- tmp
+      
+      tmp.nongap = tmp.nongap[-(1:(n.flank))]
+      tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]
+      
+      p1 = pos.aln[1, i.seq]
+      p2 = pos.aln[2, i.seq]
+      pos.tmp = p1:p2
+      pos.mx[i.seq, tmp.nongap] = pos.tmp
+    }
+    # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
+    pos.mx = pos.mx[,colSums(pos.mx != 0) != 0]
+    
+    mafft.aln.pos[[i]] = pos.mx
+  }
+  
   
   # ---- Short alignments ----
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
-  msa.res$beg = msa.res$idx.gap.pos
+  msa.res$len = unlist(lapply(msa.res$aln, nrow))
 
-  
+  # ---- Singletons alignments ----
   single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
+  single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
+  
+  
+  # ---- Analysis of positions ----
+  
+  pos.delete = rep(0, base.len)
+  pos.delete[single.res$ref.pos$beg] = 1
+  pos.delete[single.res$ref.pos$end] = -1
+  pos.delete[ msa.res$ref.pos$beg] = 1
+  pos.delete[ msa.res$ref.pos$end] = -1
+  pos.delete[ mafft.res$beg] = 1
+  pos.delete[ mafft.res$end] = -1
+  
+  pos.delete = cumsum(pos.delete)
+  
+  pos.delete[single.res$ref.pos$beg] = 0
+  pos.delete[single.res$ref.pos$end] = 0
+  pos.delete[ msa.res$ref.pos$beg] = 0
+  pos.delete[ msa.res$ref.pos$end] = 0
+  pos.delete[ mafft.res$beg] = 0
+  pos.delete[ mafft.res$end] = 0
+  
+  pos.remain = which(pos.delete == 0)
+  
+  # ---- Define which reals positions they have ----
+  # pos.delete = rep(F, base.len)  # which are replace by alignments
+  
+  # Singletons
+  pos.single = list()
+  for(i in 1:length(single.res$len)){
+    n.pos = single.res$len[i]
+    pos.single[[i]] = single.res$ref.pos$beg[i] + (1:n.pos) / (n.pos+1)
+    # pos = single.res$ref.pos$beg[i]: single.res$ref.pos$end[i]
+    # pos = pos[-c(1, length(pos))]
+    # pos.delete[pos] = T
+  }
+  
+  
+  # Short
+  pos.short = list()
+  for(i in 1:length(msa.res$len)){
+    n.pos = msa.res$len[i]
+    pos.short[[i]] = msa.res$ref.pos$beg[i] + (1:n.pos) / (n.pos+1)
+    # pos = msa.res$ref.pos$beg[i]: msa.res$ref.pos$end[i]
+    # pos = pos[-c(1, length(pos))]
+    # pos.delete[pos] = T
+  }
+  
+  # Long
+  pos.long = list()
+  for(i in 1:length(mafft.aln.pos)){
+    n.pos = ncol(mafft.aln.pos[[i]])
+    pos.long[[i]] = mafft.res$beg[i] + (1:n.pos) / (n.pos+1)
+    # pos = mafft.res$beg[i]:mafft.res$end[i]
+    # pos = pos[-c(1, length(pos))]
+    # pos.delete[pos] = T
+  }
+  
+  pos.additional = c(unlist(pos.single), unlist(pos.short), unlist(pos.long))
+  
+  
+  # if(sum(duplicated(pos.delete)) != 0) stop('')
+  
+  # define, which positions to delete
+  
+  
+  # ---- Define blocks before the big alignments ----
+  pos.beg = mafft.res$beg
+  pos.beg.bins <- cut(pos.beg, breaks = c(seq.blocks, Inf), labels = FALSE)
+  pos.block.end = tapply(pos.beg, pos.beg.bins, max)
+  pos.block.end[length(pos.block.end)] = base.len
+  
+  for(acc in accessions){
+    v = h5read(file.comb, paste(gr.accs.e, accessions[1], sep = ''))
+    v = cbind(v, 1:nrow(v))
+    v = v[!pos.delete, ]
+    v.aln = c()
+    v.pos = c()
+    for(i in 1:length(single.res$len)){
+      
+      if(single.res$pos.beg[i, acc] == 0){
+        
+      } else {
+        
+      }
+      
+      
+    }
+    # add schort
+    
+    # add long
+      
+    for(i.bl in 1:length(pos.block.end)){
+      # add singletons
+    }
+  }
   
 }
 
-
-# 
-# for.flag = T
-# for(aln.file in 1:length(fasta.files)){
-#   
-#   pos.file = paste(path.pos, gsub("fasta", "txt", fasta.files[i.f]), sep = '')
-#   if(file.exists(pos.file)){
-#     if(for.flag) next
-#     return(NULL)
-#   }    
-#   
-#   # Get sequences
-#   z.fasta = paste(path.fasta, fasta.files[i.f],sep='')
-#   
-#     
-#     if(!file.exists(aln.fasta)) {
-#       stop()
-#       if(for.flag) next
-#       return(NULL)
-#     }
-#   
-#   
-#   # Try to read the alignment
-#   aln = NULL
-#   tryCatch(
-#     expr = {
-#       aln = ape::as.alignment(seqinr::read.fasta(aln.fasta))
-#     },
-#     error = function(e){
-#       aln = NULL
-#     }
-#   )
-#   if(is.null(aln)){
-#     if(for.flag) next
-#     return(NULL)
-#   }
-#   
-#   # ------------------------
-#   # Pipeline
-#   # ------------------------
-#   # Get sequence matrix
-#   seqs.names = aln$nam
-#   seqs.acc = sapply(seqs.names, function(s) strsplit(s, '_')[[1]][2])
-#   seqs.aln = aln$seq
-#   seqs.mx = c()
-#   seqs.n = length(seqs.aln)
-#   for(i in 1:seqs.n){
-#     seqs.mx = rbind(seqs.mx, strsplit(seqs.aln[i],'')[[1]])
-#   }
-# 
-#   # Remove flanking anchors
-#   for(i in 1:nrow(seqs.mx)){
-#     pos.non.zero = which(seqs.mx[i,] != '-')
-#     seqs.mx[i,tail(pos.non.zero, (n.flank) )] = '-'
-#     seqs.mx[i,pos.non.zero[1:(n.flank) ]] = '-'
-#   }
-#   seqs.mx = seqs.mx[,colSums(seqs.mx != '-') != 0, drop=F]
-# 
-# 
-#   # Get positions of the alignment
-#   n.pos = ncol(seqs.mx)
-#   val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
-#   colnames(val.acc.pos) = accessions
-#   for(i.acc in 1:nrow(seqs.mx)){
-# 
-#     tmp = strsplit(seqs.names[i.acc],'_')[[1]]
-#     pos = as.numeric(tmp[3]):as.numeric(tmp[4])
-#     # pos = pos[-c(1,length(pos))]
-# 
-#     s = seqs.mx[i.acc,]
-# 
-#     acc = tmp[2]
-#     val.acc.pos[s != '-', acc] = pos
-#   }
-#   tmp = as.numeric(strsplit(fasta.files[i.f], '_')[[1]][3])
-#   idx.gap.pos = tmp
-#   val.acc.pos = cbind(val.acc.pos, idx.gap.pos + (1:n.pos) / (n.pos+1))
-# 
-#   write.table(val.acc.pos, file = pos.file, quote = F, row.names = F, col.names = F)
-#   rm(val.acc.pos)
-# }
-# 
-# 
-# 
-# 
