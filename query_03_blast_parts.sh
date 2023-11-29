@@ -58,48 +58,46 @@ cores="${cores:-30}"
 mkdir -p $blastres
 
 
-declare -A running_jobs
+# BLAST-search function
+run_blast() {
+    part_file=$1
+    ref_file=$2
+    blastres=$3
+    p_ident=$4
+    penalty=$5
+    gapopen=$6
+    gapextend=$7
+    max_hsps=$8
+    all_vs_all=$9
 
-for part_file in ${parts}*.fasta; do
-    for ref_file in $tair${ref_pref}*.$ref_type; do
-        p_filename=$(basename "$part_file" .fasta)
-        p_prefix=${p_filename%_*}
-        part_chr=${p_filename##*_}
+    p_filename=$(basename "$part_file" .fasta)
+    p_prefix=${p_filename%_*}
+    part_chr=${p_filename##*_}
 
-        r_filename=$(basename "$ref_file" .fasta)
-        r_prefix=${r_filename%_*}
-        ref_chr=${r_filename##*chr}
+    r_filename=$(basename "$ref_file" .fasta)
+    r_prefix=${r_filename%_*}
+    ref_chr=${r_filename##*chr}
 
-        outfile=${blastres}${p_filename}_${ref_chr}.txt
+    outfile=${blastres}${p_filename}_${ref_chr}.txt
 
-        if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
-            continue
-        fi
+    if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
+        return
+    fi
 
-        # echo ${p_prefix} ${r_prefix} ${part_chr} ${ref_chr} ${outfile}
-        
-        blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
-               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps & 
-        job_pid=$!
+    # blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
+    #        -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+    #        -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps > /dev/null 2>> log_err.txt 
 
-        running_jobs[$job_pid]=1
+    blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
+           -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+           -max_hsps $max_hsps > /dev/null 2>> log_err.txt 
+}
 
-        # Проверка количества запущенных процессов
-        while (( ${#running_jobs[@]} >= $cores )); do
-            for pid in "${!running_jobs[@]}"; do
-                if ! kill -0 $pid 2>/dev/null; then
-                    unset running_jobs[$pid]
-                fi
-            done
-            sleep 1
-        done
-    done
-done
+export -f run_blast
 
-# Ожидание завершения всех процессов
-for pid in "${!running_jobs[@]}"; do
-    wait $pid
-done
+# Run the parallel
+echo "number of cores ${cores}"
+
+parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.$ref_type ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
 echo "  Done!"

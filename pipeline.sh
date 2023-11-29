@@ -202,7 +202,7 @@ for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
 done
 
 # Blast parts on the reference genome
-./query_03_blast_parts_par.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
+./query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
  -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
 # First round of alignments

@@ -84,9 +84,13 @@ run_blast() {
         return
     fi
 
+    # blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
+    #        -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+    #        -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps > /dev/null 2>> log_err.txt 
+
     blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-           -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps > /dev/null 2>> log_err.txt 
+           -perc_identity ${p_ident} -max_hsps $max_hsps > /dev/null 2>> log_err.txt 
 }
 
 export -f run_blast
