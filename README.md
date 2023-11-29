@@ -77,6 +77,7 @@ add "fasta" as parameter and make clever split on this parameter
 прописать дефолты
 все рабоает нормально. и работает без -path_chr_ref
 -all_clp rкак-то переделать флаг
+избежать переименования референсных геномов в - _
 
 
 
