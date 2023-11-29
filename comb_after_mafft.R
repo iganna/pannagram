@@ -277,3 +277,5 @@ for(s.comb in pref.combinations){
   
 }
 
+
+warnings()
