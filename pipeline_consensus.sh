@@ -102,7 +102,7 @@ for ref0 in "${refs_all[@]}"; do
     
     command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
     echo "Executing command: ${command}"
-    # eval "${command}"
+    eval "${command}"
 
 done
 
@@ -137,10 +137,6 @@ done
 Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
-# path_chr_acc=$(cat "${pref_global}tmp/path_chr_acc.log") 
-
-# echo "${pref_global}/tmp/path_chr_acc.log"
-# echo ${path_chr_acc}
 
 # exit 1
 pref_mafftin="${pref_global}mafft_in/"
@@ -167,7 +163,7 @@ fi
                   --path.mafft.out ${pref_mafft_out} \
 
 
-# Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
-#                   --path.mafft.in ${pref_mafftin} \
-#                   --path.mafft.out ${pref_mafft_out} \
-#                   --path.cons ${path_consensus} 
+Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
+                  --path.mafft.in ${pref_mafftin} \
+                  --path.mafft.out ${pref_mafft_out} \
+                  --path.cons ${path_consensus} 
