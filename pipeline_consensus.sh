@@ -167,3 +167,5 @@ Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
                   --path.cons ${path_consensus} 
+
+
