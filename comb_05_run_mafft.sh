@@ -50,7 +50,7 @@ done
 if [ -z "$cores" ]; then
     cores=1
 fi
-echo "Number of cores ${cores}"
+# echo "Number of cores ${cores}"
 
 check_missing_variable "path_mafft_in"
 check_missing_variable "path_mafft_out"

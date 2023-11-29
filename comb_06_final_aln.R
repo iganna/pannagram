@@ -269,11 +269,15 @@ for(s.comb in pref.combinations){
       } 
     }
     
+    # Maybe something was overlapped by accident
+    
     suppressMessages({
       h5write(v.aln, file.res, paste(gr.accs.e, 'acc_', acc, sep = ''))
     })
     
   }
+  H5close()
+  gc()
   
 }
 
