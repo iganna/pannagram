@@ -101,7 +101,7 @@ IFS=',' read -ra refs_all <<< "$ref_set"
 for ref0 in "${refs_all[@]}"; do
     
     command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
-    echo "Executing command: ${command}"
+    # echo "Executing command: ${command}"
     eval "${command}"
 
 done
