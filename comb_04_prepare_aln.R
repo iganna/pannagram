@@ -63,11 +63,11 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Testing ----
 
-# library(rhdf5)
-# source('../../../pannagram/utils.R')
-# path.cons = './'
-# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-# ref.pref = '0'
+library(rhdf5)
+source('../../../pannagram/utils.R')
+path.cons = './'
+path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+ref.pref = '0'
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -80,6 +80,8 @@ pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
 pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
+
+
 
 # ----  Combine correspondence  ----
 
@@ -105,17 +107,17 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
   
-  # For testing
-  v = c()
-  for(acc in accessions){
-    v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-    if(sub('acc_', '', acc) ==ref.pref){
-      v = cbind(v, 1:nrow(v.acc))
-    } else {
-      v = cbind(v, v.acc)
-    }
-  }
-  
+  # # For testing
+  # v = c()
+  # for(acc in accessions){
+  #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+  #   if(sub('acc_', '', acc) ==ref.pref){
+  #     v = cbind(v, 1:nrow(v.acc))
+  #   } else {
+  #     v = cbind(v, v.acc)
+  #   }
+  # }
+  # 
   
   
   # ---- Merge coverages ----

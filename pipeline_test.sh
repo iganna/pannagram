@@ -100,7 +100,8 @@ IFS=',' read -ra refs_all <<< "$ref_set"
 # Iterate over each word in ref_set
 for ref0 in "${refs_all[@]}"; do
     
-    command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
+    # command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
+    command="./work.sh -ref_pref ${ref0} ${additional_params}"
     echo "Executing command: ${command}"
     eval "${command}"
 
@@ -134,35 +135,37 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 done
 
 
-Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+# Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
-# exit 1
-pref_mafftin="${pref_global}mafft_in/"
-if [ ! -d "$pref_mafftin" ]; then
-    mkdir -p "$pref_mafftin"
-fi
+# # exit 1
+# pref_mafftin="${pref_global}mafft_in/"
+# if [ ! -d "$pref_mafftin" ]; then
+#     mkdir -p "$pref_mafftin"
+# fi
 
 
-path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
-path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+# path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
+# path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 
 
-Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
-                  --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
+# Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+#                   --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
-pref_mafft_out="${pref_global}mafft_out/"
-if [ ! -d "$pref_mafft_out" ]; then
-    mkdir -p "$pref_mafft_out"
-fi
-
-
-./comb_05_run_mafft.sh  --cores ${cores} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
+# pref_mafft_out="${pref_global}mafft_out/"
+# if [ ! -d "$pref_mafft_out" ]; then
+#     mkdir -p "$pref_mafft_out"
+# fi
 
 
-Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
-                  --path.cons ${path_consensus} 
+# ./comb_05_run_mafft.sh  --cores ${cores} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
+
+
+# Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
+#                   --path.cons ${path_consensus} 
+
+

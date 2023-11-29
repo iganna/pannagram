@@ -72,7 +72,7 @@ stringi and stringr,
 
 ## TODO:
 
-add "fasta" as parameter and make clever split on this parameter
+add "fasta" as parameter and make clever split on this parameter, может быть позволить fasta/fa/fna, но запретить fastq
 следать хромосомные файлы для референса, если он не распарсен
 прописать дефолты
 все рабоает нормально. и работает без -path_chr_ref
