@@ -182,9 +182,6 @@ path_alignment=${pref_global}alignments_${ref_pref}/
 path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
 
-echo "$path_chr_acc" > ${pref_global}/tmp/path_chr_acc.log
-
-exit 1
 
 # # ==============================================================================
 # Split quiery fasta into chromosomes
