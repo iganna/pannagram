@@ -172,7 +172,7 @@ path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
 
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
-echo "consensus${path_consensus}"
+# echo "consensus${path_consensus}"
 if [ ! -d "$path_consensus" ]; then
     mkdir -p "$path_consensus"
 fi
@@ -182,7 +182,6 @@ path_blast_parts=${pref_global}blast_parts_${ref_pref}/
 path_alignment=${pref_global}alignments_${ref_pref}/
 path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
-exit 1
 # ----------------------------------------------------------------------------
 #           MAIN PIPELINE
 # ----------------------------------------------------------------------------
