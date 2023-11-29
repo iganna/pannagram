@@ -71,6 +71,8 @@ if (is.null(opt$ref1)) {
 # ref0 = '0'
 # ref1 = '6046-v1.1'
 
+pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
+
 files.pref <- lapply(c(ref0, ref1), function(ref) {
   suff <- paste0('_ref_', ref)
   files <- list.files(path = path.cons, pattern = suff, full.names = FALSE)

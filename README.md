@@ -80,6 +80,28 @@ add "fasta" as parameter and make clever split on this parameter
 
 
 
+
+## Завивимости
+
+
+
+BiocManager::muscle
+
+foreach
+doParallel
+optparse
+BiocManager::crayon
+BiocManager::rhdf5
+msa
+dplyr
+BiocManager::Biostrings
+seqinr
+foreach
+stringr
+ggplot2
+utils.R сам устанавливает crayon.
+
+
 ## Acknowledgements
 
 Anna Glushkevich for testing

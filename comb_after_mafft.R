@@ -116,6 +116,7 @@ for(s.comb in pref.combinations){
   mafft.res$end = as.numeric(z[,6])
   mafft.res$id = as.numeric(z[,3])
   
+  
   # ---- Get long alignment positions ----
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
@@ -148,18 +149,44 @@ for(s.comb in pref.combinations){
     
     mafft.aln.pos[[i]] = pos.mx
   }
-  
+  mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
+  mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
+  if(min(mafft.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
   
   # ---- Short alignments ----
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
   msa.res$len = unlist(lapply(msa.res$aln, nrow))
+  msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
+  if(min(msa.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
 
   # ---- Singletons alignments ----
   single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
   single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
+  single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
+  if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
   
   
   # ---- Analysis of positions ----
+  # Here I wouls like fo find function of positions corresponcences between 4 things: 
+  # old coordinates, long, short and singleton coordinates
+  
+  n.shift = rep(0, base.len)
+  
+  n.shift[mafft.res$end] = mafft.res$extra  # Long extra
+  n.shift[msa.res$ref.pos$end] = msa.res$extra  # Short extra
+  n.shift[single.res$ref.pos$end] = single.res$extra # Singletons extra
+  n.shift = cumsum(n.shift)
+  
+  
+  
+  fp.main
+  
+  
+  
+  
+  
+  
+  
   
   pos.delete = rep(0, base.len)
   pos.delete[single.res$ref.pos$beg] = 1
