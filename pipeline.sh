@@ -190,7 +190,7 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 # Split quiery fasta into chromosomes
 Rscript query_01_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
 # Split quiery chromosomes into parts
-Rscript query_02_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+Rscript query_02_to_parts_par.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
 
 
 # Create a database on the reference genome
