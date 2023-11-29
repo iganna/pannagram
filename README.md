@@ -72,6 +72,7 @@ stringi and stringr,
 
 ## TODO:
 
+TE4_multifasta.fasta
 add "fasta" as parameter and make clever split on this parameter, может быть позволить fasta/fa/fna, но запретить fastq
 следать хромосомные файлы для референса, если он не распарсен
 прописать дефолты
