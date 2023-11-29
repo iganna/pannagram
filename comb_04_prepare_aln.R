@@ -13,7 +13,7 @@ suppressMessages({
 source("utils.R")
 source("synteny_funcs.R")
 
-pokazStage('Combine: alignments by chromosomes')
+pokazStage('Prepare sequences for MAFFT')
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -63,11 +63,11 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Testing ----
 
-library(rhdf5)
-source('../../../pannagram/utils.R')
-path.cons = './'
-path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-ref.pref = '0'
+# library(rhdf5)
+# source('../../../pannagram/utils.R')
+# path.cons = './'
+# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+# ref.pref = '0'
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----

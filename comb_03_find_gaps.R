@@ -11,7 +11,7 @@ suppressMessages({
 source("utils.R")
 source("synteny_funcs.R")
 
-pokazStage('Combine: alignments by chromosomes')
+pokazStage('Gind positions of common gaps in the reference-free MSA')
 
 args = commandArgs(trailingOnly=TRUE)
 

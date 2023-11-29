@@ -14,7 +14,7 @@ myCluster <- makeCluster(15, # number of cores to use
                          type = "PSOCK") # type of cluster
 registerDoParallel(myCluster)
 
-pokazStage('Combine all alignments together')
+pokazStage('Combine all alignments together into the final one')
 
 args = commandArgs(trailingOnly=TRUE)
 
