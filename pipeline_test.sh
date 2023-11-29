@@ -135,7 +135,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 done
 
 
-Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+# Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
 # exit 1
