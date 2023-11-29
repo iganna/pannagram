@@ -68,6 +68,12 @@ while [[ $# -gt 0 ]]; do
         shift # Skip the value of the parameter
         shift # Skip the parameter itself
         ;;
+    -path_chr_acc)
+        path_chr_acc="$2"
+        additional_params+=" $1 $2"
+        shift # Skip the value of the parameter
+        shift # Skip the parameter itself
+        ;;
     *)
         # Add the remaining arguments as additional parameters
         additional_params+=" $1"
@@ -129,16 +135,21 @@ done
 Rscript comb_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
-path_chr_acc=$(cat "${pref_global}tmp/path_chr_acc.log") 
+# path_chr_acc=$(cat "${pref_global}tmp/path_chr_acc.log") 
 
-echo "${pref_global}/tmp/path_chr_acc.log"
-echo ${path_chr_acc}
+# echo "${pref_global}/tmp/path_chr_acc.log"
+# echo ${path_chr_acc}
 
 # exit 1
 pref_mafftin="${pref_global}mafft_in/"
 if [ ! -d "$pref_mafftin" ]; then
     mkdir -p "$pref_mafftin"
 fi
+
+
+path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
+path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+
 
 Rscript comb_make_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
                   --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
