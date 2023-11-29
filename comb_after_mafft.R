@@ -123,6 +123,7 @@ for(s.comb in pref.combinations){
     aln.seq = readFastaMy(paste(path.mafft.out, mafft.res$file[i], sep = ''))
     n.aln.seq = length(aln.seq)
     name.aln.seq = names(aln.seq)
+    name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
     pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
     
     
@@ -146,6 +147,7 @@ for(s.comb in pref.combinations){
     }
     # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
     pos.mx = pos.mx[,colSums(pos.mx != 0) != 0]
+    row.names(pos.mx) = name.acc
     
     mafft.aln.pos[[i]] = pos.mx
   }
@@ -177,16 +179,29 @@ for(s.comb in pref.combinations){
   n.shift[single.res$ref.pos$end] = single.res$extra # Singletons extra
   n.shift = cumsum(n.shift)
   
+  fp.main = (1:base.len) + n.shift
   
+  # -- 
+  # Singletons
+  fp.single = list()
+  for(i in 1:length(single.res$len)){
+    n.pos = single.res$len[i]
+    fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
+  }
   
-  fp.main
+  # Short
+  fp.short = list()
+  for(i in 1:length(msa.res$len)){
+    n.pos = msa.res$len[i]
+    fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
+  }
   
-  
-  
-  
-  
-  
-  
+  # Long
+  fp.long = list()
+  for(i in 1:length(mafft.aln.pos)){
+    n.pos = ncol(mafft.aln.pos[[i]])
+    fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
+  }
   
   pos.delete = rep(0, base.len)
   pos.delete[single.res$ref.pos$beg] = 1
@@ -205,79 +220,59 @@ for(s.comb in pref.combinations){
   pos.delete[ mafft.res$beg] = 0
   pos.delete[ mafft.res$end] = 0
   
-  pos.remain = which(pos.delete == 0)
+  pos.remain = pos.delete == 0
   
-  # ---- Define which reals positions they have ----
-  # pos.delete = rep(F, base.len)  # which are replace by alignments
+  fp.main[pos.delete != 0] = 0
   
-  # Singletons
-  pos.single = list()
-  for(i in 1:length(single.res$len)){
-    n.pos = single.res$len[i]
-    pos.single[[i]] = single.res$ref.pos$beg[i] + (1:n.pos) / (n.pos+1)
-    # pos = single.res$ref.pos$beg[i]: single.res$ref.pos$end[i]
-    # pos = pos[-c(1, length(pos))]
-    # pos.delete[pos] = T
-  }
+  base.len.aln = max(fp.main)
   
-  
-  # Short
-  pos.short = list()
-  for(i in 1:length(msa.res$len)){
-    n.pos = msa.res$len[i]
-    pos.short[[i]] = msa.res$ref.pos$beg[i] + (1:n.pos) / (n.pos+1)
-    # pos = msa.res$ref.pos$beg[i]: msa.res$ref.pos$end[i]
-    # pos = pos[-c(1, length(pos))]
-    # pos.delete[pos] = T
-  }
-  
-  # Long
-  pos.long = list()
-  for(i in 1:length(mafft.aln.pos)){
-    n.pos = ncol(mafft.aln.pos[[i]])
-    pos.long[[i]] = mafft.res$beg[i] + (1:n.pos) / (n.pos+1)
-    # pos = mafft.res$beg[i]:mafft.res$end[i]
-    # pos = pos[-c(1, length(pos))]
-    # pos.delete[pos] = T
-  }
-  
-  pos.additional = c(unlist(pos.single), unlist(pos.short), unlist(pos.long))
-  
-  
-  # if(sum(duplicated(pos.delete)) != 0) stop('')
-  
-  # define, which positions to delete
+  # Check-points
+  fp.add = c(unlist(fp.single),unlist(fp.short),unlist(fp.long))
+  if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) stop('Something if wrotng with positions; Point A')
+  if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')
   
   
   # ---- Define blocks before the big alignments ----
-  pos.beg = mafft.res$beg
+  pos.beg = fp.main[mafft.res$beg] + 1
   pos.beg.bins <- cut(pos.beg, breaks = c(seq.blocks, Inf), labels = FALSE)
   pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   pos.block.end[length(pos.block.end)] = base.len
   
+  file.res = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  if (file.exists(file.res)) file.remove(file.res)
+  h5createFile(file.res)
+  
+  h5createGroup(file.res, gr.accs.e)
+  
   for(acc in accessions){
     v = h5read(file.comb, paste(gr.accs.e, accessions[1], sep = ''))
-    v = cbind(v, 1:nrow(v))
-    v = v[!pos.delete, ]
-    v.aln = c()
-    v.pos = c()
+    v.aln = rep(0, base.len.aln)
+    v.aln[fp.main[pos.remain]] = v[pos.remain]
+    
+    # Add singletons
     for(i in 1:length(single.res$len)){
-      
-      if(single.res$pos.beg[i, acc] == 0){
-        
-      } else {
-        
-      }
-      
-      
+      if(single.res$pos.beg[i, acc] != 0){
+        v.aln[fp.single[[i]]] = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
+      } 
     }
-    # add schort
+    # Add short
+    for(i in 1:length(msa.res$len)){
+      if(acc %in% colnames(msa.res$aln[[i]])){
+        v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
+      } 
+    }
     
     # add long
-      
-    for(i.bl in 1:length(pos.block.end)){
-      # add singletons
+    for(i in 1:length(mafft.aln.pos)){
+      if(acc %in% rownames(mafft.aln.pos[[i]])){
+        v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
+      } 
     }
+    
+    suppressMessages({
+      h5write(v.aln, file.res, paste(gr.accs, 'acc_', acc, sep = ''))
+    })
+    
   }
   
 }
