@@ -1,4 +1,3 @@
-
 library(Biostrings)
 library(rhdf5)
 library('seqinr')
