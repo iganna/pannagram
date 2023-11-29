@@ -1,10 +1,11 @@
-library(Biostrings)
+suppressMessages({ library(Biostrings)
 library(rhdf5)
 library('seqinr')
 library('foreach')
 library(doParallel)
 library("optparse")
 source('utils.R')
+})
 
 # rm -rf gaps mob no_interesting class pos solid_aln
 
@@ -269,7 +270,7 @@ for(s.comb in pref.combinations){
     }
     
     suppressMessages({
-      h5write(v.aln, file.res, paste(gr.accs, 'acc_', acc, sep = ''))
+      h5write(v.aln, file.res, paste(gr.accs.e, 'acc_', acc, sep = ''))
     })
     
   }
