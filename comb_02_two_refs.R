@@ -159,7 +159,6 @@ for(s.comb in pref.combinations){
     v01[(v0 != v01) & (v0 != 0)] = 0
     
     idx.lost = (v0 != 0) & (v01 == 0) & !(v0 %in% v01) 
-    if(sum(idx.lost) > 0) stop('Some loosing of positions')
     v01[idx.lost] = v0[idx.lost]
     
     pokaz('Length of resultant correspondence', length(v01))
