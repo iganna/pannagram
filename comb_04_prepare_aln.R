@@ -160,11 +160,11 @@ for(s.comb in pref.combinations){
   v.end = c()
   for(acc in accessions){
     
-    if(sub('acc_', '', acc) ==ref.pref){
-      v.beg = cbind(v.beg, idx.break$beg)
-      v.end = cbind(v.end, idx.break$end)
-      next
-    }
+    # if(sub('acc_', '', acc) ==ref.pref){
+    #   v.beg = cbind(v.beg, idx.break$beg)
+    #   v.end = cbind(v.end, idx.break$end)
+    #   next
+    # }
     x.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     
     ### ---- Find prev and next ----

@@ -68,9 +68,11 @@ pokazStage('Combine randomized alignments from genomes', ref0, 'and', ref1)
 
 
 # Find all fines with the prefix of both references and common suffixes
+# source('../../../pannagram/utils.R')
 # path.cons = './'
 # ref0 = '0'
 # ref1 = '6046-v1.1'
+# library(rhdf5)
 
 pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
 
@@ -89,7 +91,6 @@ pokaz('Combinations', pref.combinations)
 # ----  Combine correspondence  ----
 
 pokaz('References:', ref0, ref1)
-
 
 gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
@@ -144,11 +145,14 @@ for(s.comb in pref.combinations){
     # Data from the main reference
     v0 = h5read(file.comb0, s)
     pokaz('Vector in the ref0 file', length(v0))
+    v.final = v0
+    v.final[idx01] = 0
     v0 = v0[idx01]
     pokaz('Vector of meaningfull positions', length(v0))
     
     # Data from the second reference
     v1 = h5read(file.comb1, s)
+    v.final[v.final %in% v1] = 0
     pokaz('Vector in the ref1 file', length(v1))
     pokaz('Length of function', length(f01))
     v01 = v1[abs(f01)] * sign(f01)
@@ -162,7 +166,7 @@ for(s.comb in pref.combinations){
     pokaz('Sum of matches', sum(v01 != 0))
     
     # Turn into real coordinates back
-    v.final = rep(0, base.len)
+    # v.final = rep(0, base.len)
     v.final[idx01] = v01
     
     pokaz('Length of saved vector', length(v.final))

@@ -92,7 +92,6 @@ for(s.comb in pref.combinations){
     v = v.init
     
     
-    
     # ----  Find breaks  ----
     
     # Find blocks of additional breaks
