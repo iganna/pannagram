@@ -16,7 +16,7 @@ suppressMessages({
 source("utils.R")
 source("synteny_funcs.R")
 
-pokazStage('Combine rreference-based alignments by chromosomes')
+pokazStage('Combine reference-based alignments by chromosomes')
 
 args = commandArgs(trailingOnly=TRUE)
 

@@ -108,15 +108,15 @@ for(s.comb in pref.combinations){
   n.acc = length(accessions)
   
   # # For testing
-  # v = c()
-  # for(acc in accessions){
-  #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-  #   if(sub('acc_', '', acc) ==ref.pref){
-  #     v = cbind(v, 1:nrow(v.acc))
-  #   } else {
-  #     v = cbind(v, v.acc)
-  #   }
-  # }
+  v = c()
+  for(acc in accessions){
+    v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    if(sub('acc_', '', acc) ==ref.pref){
+      v = cbind(v, 1:nrow(v.acc))
+    } else {
+      v = cbind(v, v.acc)
+    }
+  }
 
   
   
@@ -167,50 +167,49 @@ for(s.comb in pref.combinations){
     # }
     x.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     
-    ### ---- Find prev and next ----
-    n = nrow(x.acc)
-    for(i.tmp in 1:2){
-      pokaz('Accession', acc, 'fill prev/next', i.tmp)
-      v.acc = x.acc
-      if(i.tmp == 2) {
-        v.acc = rev(v.acc)
-      }
-      v.rank = rank(v.acc)
-      v.rank[v.acc == 0] = 0
-      
-      v.zero.beg = which((v.acc[-1] == 0) & (v.acc[-n] != 0)) + 1
-      v.zero.end = which((v.acc[-1] != 0) & (v.acc[-n] == 0)) 
-      if(v.acc[1] == 0) v.zero.end = v.zero.end[-1]
-      if(v.acc[n] == 0) v.zero.end = c(v.zero.end, n)
-      
-      # ..... WITHIN ONE STRATCH BLOCK .....
-      idx = which(abs(v.rank[v.zero.beg-1] - v.rank[v.zero.end+1]) != 1)
-      v.zero.beg = v.zero.beg[-idx]
-      v.zero.end = v.zero.end[-idx]
-      # .....
-      
-      tmp = rep(0, n)
-      tmp[v.zero.beg] = v.acc[v.zero.beg-1]
-      tmp[v.zero.end] = -v.acc[v.zero.beg-1]
-      tmp[v.zero.end[v.zero.beg == v.zero.end]] = 0
-      tmp = cumsum(tmp)
-      tmp[v.zero.end] = v.acc[v.zero.beg-1]
-      
-      # sum((v.acc != 0) & (tmp != 0))
-      # sum(tmp != 0)
-      # sum(v.acc == 0)
-      
-      if(i.tmp == 1){
-        v.prev = x.acc + tmp
-      } else {
-        tmp = rev(tmp)
-        v.next = x.acc + tmp
-      }
-    }
-    
-    v.beg = cbind(v.beg, v.prev[idx.break$beg] * (v.prev[idx.break$beg+1] != 0))
-    v.end = cbind(v.end, v.next[idx.break$end] * (v.next[idx.break$end+1] != 0))
+    # ### ---- Find prev and next ----
+    # n = nrow(x.acc)
+    # for(i.tmp in 1:2){
+    #   pokaz('Accession', acc, 'fill prev/next', i.tmp)
+    #   v.acc = x.acc
+    #   if(i.tmp == 2) {
+    #     v.acc = rev(v.acc)
+    #   }
+    #   v.rank = rank(v.acc)
+    #   v.rank[v.acc == 0] = 0
+    #   
+    #   v.zero.beg = which((v.acc[-1] == 0) & (v.acc[-n] != 0)) + 1
+    #   v.zero.end = which((v.acc[-1] != 0) & (v.acc[-n] == 0)) 
+    #   if(v.acc[1] == 0) v.zero.end = v.zero.end[-1]
+    #   if(v.acc[n] == 0) v.zero.end = c(v.zero.end, n)
+    #   
+    #   # ..... WITHIN ONE STRATCH BLOCK .....
+    #   idx = which(abs(v.rank[v.zero.beg-1] - v.rank[v.zero.end+1]) != 1)
+    #   v.zero.beg = v.zero.beg[-idx]
+    #   v.zero.end = v.zero.end[-idx]
+    #   # .....
+    #   
+    #   tmp = rep(0, n)
+    #   tmp[v.zero.beg] = v.acc[v.zero.beg-1]
+    #   tmp[v.zero.end] = -v.acc[v.zero.beg-1]
+    #   tmp[v.zero.end[v.zero.beg == v.zero.end]] = 0
+    #   tmp = cumsum(tmp)
+    #   tmp[v.zero.end] = v.acc[v.zero.beg-1]
+    #   
+    #   if(i.tmp == 1){
+    #     v.prev = x.acc + tmp
+    #   } else {
+    #     tmp = rev(tmp)
+    #     v.next = x.acc + tmp
+    #   }
+    # }
+    # 
+    # v.beg = cbind(v.beg, v.prev[idx.break$beg] * (v.prev[idx.break$beg+1] != 0))
+    # v.end = cbind(v.end, v.next[idx.break$end] * (v.next[idx.break$end-1] != 0))
     # v = cbind(v, v.acc)
+    
+    v.beg = cbind(v.beg, x.acc[idx.break$beg] )
+    v.end = cbind(v.end, x.acc[idx.break$end] )
   }
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
