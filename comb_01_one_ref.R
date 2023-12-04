@@ -106,6 +106,7 @@ chromosome.pairs = unique(chromosome.pairs[,c(2,3)])
 # ---- Length of reference chromosomes ----
 
 file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
+pokaz('File with chromosomal lengths', file.chr.len)
 if(!file.exists(file.chr.len)){
   chr.len = c()
   for(i.chr in 1:n.chr.ref){
@@ -172,6 +173,8 @@ max.len.gap = 20000
     
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
+    
+    if(sum(duplicated(x.corr[x.corr != 0])) > 0) stop('DUPLICSTIONS')
     
     # Write into file
     suppressMessages({

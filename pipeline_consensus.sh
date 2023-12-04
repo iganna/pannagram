@@ -1,6 +1,10 @@
 # This escript performs all stages of the alignment of genomes, 
 # when the reference genome is already identified
 
+
+# ./pipeline_consensus.sh -pref_global '../pan_test/anna_ly' -ref_set 'NT1_220222,TE11_final' -n_chr_ref 8 -path_in '../lyrata_updated/' -n_chr_query 8 -cores 20  -all_cmp F
+# ./pipeline_consensus.sh -pref_global '../pan_test/tom' -ref_set '0,6046-v1.1,6191-v1.1' -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -cores 30 -acc_anal acc_tom.txt -all_cmp F
+
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------

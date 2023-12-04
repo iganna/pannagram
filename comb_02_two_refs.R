@@ -67,13 +67,15 @@ pokazStage('Combine randomized alignments from genomes', ref0, 'and', ref1)
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-# Find all fines with the prefix of both references and common suffixes
+# # Testing
 # source('../../../pannagram/utils.R')
 # path.cons = './'
 # ref0 = '0'
 # ref1 = '6046-v1.1'
 # library(rhdf5)
 
+
+# Find all fines with the prefix of both references and common suffixes
 pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
 
 files.pref <- lapply(c(ref0, ref1), function(ref) {
@@ -167,6 +169,8 @@ for(s.comb in pref.combinations){
     # Turn into real coordinates back
     # v.final = rep(0, base.len)
     v.final[idx01] = v01
+    
+    if(sum(duplicated(v.final[v.final != 0])) > 0) stop('DUPLICSTIONS')
     
     pokaz('Length of saved vector', length(v.final))
     

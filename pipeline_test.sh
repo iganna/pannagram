@@ -112,55 +112,55 @@ done
 # ----------------------------------------------------------------------------
 
 
-check_missing_variable "pref_global"
-pref_global=$(add_symbol_if_missing "$pref_global" "/")
+# check_missing_variable "pref_global"
+# pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
 
-path_consensus="${path_consensus:-${pref_global}consensus/}"
-path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
+# path_consensus="${path_consensus:-${pref_global}consensus/}"
+# path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
-echo ${path_consensus}
+# echo ${path_consensus}
 
 
 
-ref0=${refs_all[0]}
-ref0=${ref0//_/$'-'}
-for ((i = 1; i < ${#refs_all[@]}; i++)); do
-    ref1=${refs_all[i]}
+# ref0=${refs_all[0]}
+# ref0=${ref0//_/$'-'}
+# for ((i = 1; i < ${#refs_all[@]}; i++)); do
+#     ref1=${refs_all[i]}
 
-    ref1=${ref1//_/$'-'}
+#     ref1=${ref1//_/$'-'}
     
-    Rscript comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
+#     Rscript comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
 
-done
-
-
-Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+# done
 
 
-# exit 1
-pref_mafftin="${pref_global}mafft_in/"
-if [ ! -d "$pref_mafftin" ]; then
-    mkdir -p "$pref_mafftin"
-fi
+# Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
-path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
-path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+# # exit 1
+# pref_mafftin="${pref_global}mafft_in/"
+# if [ ! -d "$pref_mafftin" ]; then
+#     mkdir -p "$pref_mafftin"
+# fi
 
 
-Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
-                  --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
-
-pref_mafft_out="${pref_global}mafft_out/"
-if [ ! -d "$pref_mafft_out" ]; then
-    mkdir -p "$pref_mafft_out"
-fi
+# path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
+# path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 
 
-./comb_05_run_mafft.sh  --cores ${cores} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
+# Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+#                   --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
+
+# pref_mafft_out="${pref_global}mafft_out/"
+# if [ ! -d "$pref_mafft_out" ]; then
+#     mkdir -p "$pref_mafft_out"
+# fi
+
+
+# ./comb_05_run_mafft.sh  --cores ${cores} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
 
 
 Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \

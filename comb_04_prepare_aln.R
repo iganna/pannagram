@@ -117,7 +117,7 @@ for(s.comb in pref.combinations){
   #     v = cbind(v, v.acc)
   #   }
   # }
-  # 
+
   
   
   # ---- Merge coverages ----
@@ -234,6 +234,10 @@ for(s.comb in pref.combinations){
   }
   v.beg[v.len == 0] = 0
   v.end[v.len == 0] = 0
+  
+  
+  # ---- Check direction ----
+  # idx.wrong.dir = sign(v.end)
   
   # ---- Get sequences for the alignment, but not singletons ----
   idx.singletons = which(rowSums(v.len != 0) == 1)  # don't have to align
