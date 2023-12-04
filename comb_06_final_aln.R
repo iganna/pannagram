@@ -217,18 +217,27 @@ for(s.comb in pref.combinations){
     fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
   }
   
-  pos.delete = rep(0, base.len)
   
-  pos.beg = c(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
-  pos.end = c(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
   
-  pos.delete[pos.beg] = 1
-  # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
-  pos.delete[pos.end] = pos.delete[pos.end]-1
-  # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
-  pos.delete = cumsum(pos.delete)
-  pos.delete[pos.beg] = 0
-  pos.delete[pos.end] = 0
+  pos.beg.all = list(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
+  pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
+  
+  pos.delete.all = 0
+  for(i.pos in 1:3){
+    pos.beg = pos.beg.all[[i.pos]]
+    pos.end = pos.end.all[[i.pos]]
+    pos.delete = rep(0, base.len)
+    pos.delete[pos.beg] = 1
+    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+    pos.delete[pos.end] = pos.delete[pos.end]-1
+    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+    pos.delete = cumsum(pos.delete)
+    pos.delete[pos.beg] = 0
+    pos.delete[pos.end] = 0
+    
+    pos.delete.all = pos.delete.all + pos.delete
+  }
+  pos.delete = pos.delete.all
 
   if(sum(pos.end - pos.beg - 1) != sum(pos.delete)) stop('Wrong identification of positions to delete')
   
@@ -257,14 +266,15 @@ for(s.comb in pref.combinations){
   h5createGroup(file.res, gr.accs.e)
   
   for(acc in accessions){
-    v = h5read(file.comb, paste(gr.accs.e, accessions[1], sep = ''))
+    pokaz('Accession', acc)
+    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v.aln = rep(0, base.len.aln)
     v.aln[fp.main[pos.remain]] = v[pos.remain]
     
     # Add singletons
     for(i in 1:length(single.res$len)){
       if(single.res$pos.beg[i, acc] != 0){
-        # if(i == 670) stop('670')
+        # if(i == 2) stop('670')
         pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
         pos = pos[-c(1, length(pos))]
         v.aln[fp.single[[i]]] = pos
