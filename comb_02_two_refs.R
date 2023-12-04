@@ -67,12 +67,12 @@ pokazStage('Combine randomized alignments from genomes', ref0, 'and', ref1)
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-# # Testing
-# source('../../../pannagram/utils.R')
-# path.cons = './'
-# ref0 = '0'
-# ref1 = '6046-v1.1'
-# library(rhdf5)
+# Testing
+source('../../../pannagram/utils.R')
+path.cons = './'
+ref0 = '0'
+ref1 = '6046-v1.1'
+library(rhdf5)
 
 
 # Find all fines with the prefix of both references and common suffixes
@@ -152,6 +152,8 @@ for(s.comb in pref.combinations){
     v0 = v0[idx01]
     pokaz('Vector of meaningfull positions', length(v0))
     
+    if(sum(duplicated(v.final[v.final != 0])) > 0) stop('DUPLICSTIONS')
+    
     # Data from the second reference
     v1 = h5read(file.comb1, s)
     v.final[v.final %in% v1] = 0
@@ -159,6 +161,8 @@ for(s.comb in pref.combinations){
     pokaz('Length of function', length(f01))
     v01 = v1[abs(f01)] * sign(f01)
     v01[(v0 != v01) & (v0 != 0)] = 0
+    
+    if(sum(duplicated(v01[v01 != 0])) > 0) stop('DUPLICSTIONS')
     
     idx.lost = (v0 != 0) & (v01 == 0) & !(v0 %in% v01) 
     v01[idx.lost] = v0[idx.lost]
@@ -170,7 +174,11 @@ for(s.comb in pref.combinations){
     # v.final = rep(0, base.len)
     v.final[idx01] = v01
     
-    if(sum(duplicated(v.final[v.final != 0])) > 0) stop('DUPLICSTIONS')
+    dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
+    if(length(dup.value > 0)){
+      v.final[v.final %in% dup.value] == 0
+      pokaz('Number of duplicated', length(dup.value))
+    }
     
     pokaz('Length of saved vector', length(v.final))
     

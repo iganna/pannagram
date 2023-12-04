@@ -103,7 +103,7 @@ for ref0 in "${refs_all[@]}"; do
     # command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
     command="./work.sh -ref_pref ${ref0} ${additional_params}"
 
-    eval "${command}"
+    # eval "${command}"
 
 done
 
