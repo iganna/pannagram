@@ -109,8 +109,8 @@ for(s.comb in pref.combinations){
   base.len = length(h5read(file.comb, paste(gr.accs.e, accessions[1], sep = '')))
   
   
-  n.rows.block = round(max.block.elemnt / n.acc)
-  seq.blocks = seq(1, base.len - n.rows.block, n.rows.block)
+  # n.rows.block = round(max.block.elemnt / n.acc)
+  # seq.blocks = seq(1, base.len - n.rows.block, n.rows.block)
   
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
@@ -268,6 +268,7 @@ for(s.comb in pref.combinations){
         pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
         pos = pos[-c(1, length(pos))]
         v.aln[fp.single[[i]]] = pos
+        # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
       } 
     }
     if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
