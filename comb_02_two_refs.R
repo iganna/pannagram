@@ -159,18 +159,26 @@ for(s.comb in pref.combinations){
     pokaz('Vector in the ref1 file', length(v1))
     pokaz('Length of function', length(f01))
     v01 = v1[abs(f01)] * sign(f01)
-    v01[(v0 != v01) & (v0 != 0)] = 0
     
+    #v01[(v0 != v01) & (v0 != 0)] = 0
+    # idx.lost = (v0 != 0) & (v01 == 0) & !(v0 %in% v01) 
+    # v01[idx.lost] = v0[idx.lost]
+    # 
     
-    idx.lost = (v0 != 0) & (v01 == 0) & !(v0 %in% v01) 
-    v01[idx.lost] = v0[idx.lost]
+    v0[(v0 != v01) & (v01 != 0)] = 0
     
     pokaz('Length of resultant correspondence', length(v01))
     pokaz('Sum of matches', sum(v01 != 0))
     
     # Turn into real coordinates back
     # v.final = rep(0, base.len)
-    v.final[idx01] = v01
+    # v.final[idx01] = v01
+    
+    
+    v.final[idx01] = v0
+    
+    
+    
     
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
     if(length(dup.value > 0)){

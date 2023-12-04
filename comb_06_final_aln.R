@@ -168,13 +168,13 @@ for(s.comb in pref.combinations){
   pokaz('tmp')
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-  if(min(mafft.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
+  if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
   
   # ---- Short alignments ----
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
   msa.res$len = unlist(lapply(msa.res$aln, nrow))
   msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
-  if(min(msa.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
+  if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
 
   # ---- Singletons alignments ----
   single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
