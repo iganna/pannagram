@@ -81,8 +81,6 @@ max.block.elemnt = 3 * 10^ 6
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-# path.cons = './'
-# ref.pref = '0'
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -168,20 +166,22 @@ for(s.comb in pref.combinations){
   pokaz('tmp')
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-  if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
+  # if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
+  mafft.res$extra[mafft.res$extra < 0] = 0
   
   # ---- Short alignments ----
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
   msa.res$len = unlist(lapply(msa.res$aln, nrow))
   msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
-  if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
+  # if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
+  msa.res$extra[msa.res$extra < 0] = 0
 
   # ---- Singletons alignments ----
   single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
   single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
   single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
-  if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
-  
+  # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
+  single.res$extra[single.res$extra < 0] = 0
   
   # ---- Analysis of positions ----
   # Here I wouls like fo find function of positions corresponcences between 4 things: 

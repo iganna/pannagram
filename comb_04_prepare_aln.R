@@ -230,7 +230,7 @@ for(s.comb in pref.combinations){
   v.len[v.len > max.len.gap] = 0
   for(icol in 1:ncol(v.len)){
     idx.dup = v.beg[duplicated(v.beg[,icol]),icol]
-    pokaz('Duplicated in column', icol, ', amount:', length(idx.dup))
+    pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.beg[,icol] %in% idx.dup, icol] != 0))
     v.len[v.beg[,icol] %in% idx.dup, icol] = 0
     idx.dup = v.end[duplicated(v.end[,icol]),icol]
     pokaz('Duplicated in column', icol, ', amount:', length(idx.dup))
