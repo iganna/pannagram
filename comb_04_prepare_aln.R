@@ -62,7 +62,7 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Testing ----
-
+# 
 # library(rhdf5)
 # source('../../../pannagram/utils.R')
 # path.cons = './'
@@ -243,7 +243,7 @@ for(s.comb in pref.combinations){
   
   # ---- Get sequences for the alignment, but not singletons ----
   idx.singletons = which(rowSums(v.len != 0) == 1)  # don't have to align
-  idx.aln = which(rowSums(v.len != 0) != 1)  # have to align
+  idx.aln = which(rowSums(v.len != 0) > 1)  # have to align
   
   # Distinguish long (MAFFT) and short(muscle) alignments
   max.len = apply(v.len, 1, max)
@@ -317,18 +317,20 @@ for(s.comb in pref.combinations){
   idx.short = idx.aln[!idx.add.flank[idx.aln]]
   val.acc.pos = c()
   
-  # for.flag = T
-  # for(irow in idx.short){
-  #   seqs = aln.seqs[[irow]]
-  #   pos.idx = aln.pos[[irow]]
-  #   idx.gap.pos = idx.break$beg[irow]
-    
   pokaz('Align short seqs')
-  for.flag = F
-  res.msa <- foreach(seqs = aln.seqs[idx.short], 
-                     pos.idx = aln.pos[idx.short],
-                     idx.gap.pos = idx.break$beg[idx.short],
-                     .packages=c('muscle', 'Biostrings'))  %dopar% {
+  
+  for.flag = T
+  for(irow in idx.short){
+    seqs = aln.seqs[[irow]]
+    pos.idx = aln.pos[[irow]]
+    idx.gap.pos = idx.break$beg[irow]
+
+  
+  # for.flag = F
+  # res.msa <- foreach(seqs = aln.seqs[idx.short],
+  #                    pos.idx = aln.pos[idx.short],
+  #                    idx.gap.pos = idx.break$beg[idx.short],
+  #                    .packages=c('muscle', 'Biostrings'))  %dopar% {
                        
                        set = DNAStringSet(seqs)
                        aln = muscle(set, quiet = T)
@@ -337,10 +339,10 @@ for(s.comb in pref.combinations){
                        set = as.character(aln)
                        n.pos = nchar(set[1])
                        
-                       # if(n.pos > 10){
-                       #   pokaz('Iteration', irow)
-                       #   print(aln)
-                       # } 
+                       if(n.pos > 10){
+                         pokaz('Iteration', irow)
+                         print(aln)
+                       }
                        
                        val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
                        colnames(val.acc.pos) = accessions
