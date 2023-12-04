@@ -96,7 +96,7 @@ n.flank = 30
 #flag.for = F
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 flag.for = T
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[5]){
   
   pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
