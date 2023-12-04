@@ -237,7 +237,9 @@ for(s.comb in pref.combinations){
   
   
   # ---- Check direction ----
-  # idx.wrong.dir = sign(v.end)
+  idx.wrong.dir = sign(v.end - v.beg) < 0
+  v.end[idx.wrong.dir] = 0
+  v.beg[idx.wrong.dir] = 0
   
   # ---- Get sequences for the alignment, but not singletons ----
   idx.singletons = which(rowSums(v.len != 0) == 1)  # don't have to align
