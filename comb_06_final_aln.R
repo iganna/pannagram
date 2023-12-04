@@ -66,6 +66,19 @@ gr.break.b = '/break'
 max.block.elemnt = 3 * 10^ 6
 
 
+# ---- Testing ----
+# 
+# library(rhdf5)
+# source('../../../pannagram/utils.R')
+# path.cons = './'
+# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+# ref.pref = '0'
+# path.mafft.out = '../mafft_out/'
+# n.flank = 30
+
+
+
+
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 # path.cons = './'
@@ -151,6 +164,7 @@ for(s.comb in pref.combinations){
     
     mafft.aln.pos[[i]] = pos.mx
   }
+  pokaz('tmp')
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
   if(min(mafft.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
