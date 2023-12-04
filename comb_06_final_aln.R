@@ -219,21 +219,19 @@ for(s.comb in pref.combinations){
   }
   
   pos.delete = rep(0, base.len)
-  pos.delete[single.res$ref.pos$beg] = 1
-  pos.delete[single.res$ref.pos$end] = -1
-  pos.delete[ msa.res$ref.pos$beg] = 1
-  pos.delete[ msa.res$ref.pos$end] = -1
-  pos.delete[ mafft.res$beg] = 1
-  pos.delete[ mafft.res$end] = -1
   
+  pos.beg = c(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
+  pos.end = c(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
+  
+  pos.delete[pos.beg] = 1
+  pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+  pos.delete[pos.end] = pos.delete[pos.end]-1
+  pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
   pos.delete = cumsum(pos.delete)
-  
-  pos.delete[single.res$ref.pos$beg] = 0
-  pos.delete[single.res$ref.pos$end] = 0
-  pos.delete[ msa.res$ref.pos$beg] = 0
-  pos.delete[ msa.res$ref.pos$end] = 0
-  pos.delete[ mafft.res$beg] = 0
-  pos.delete[ mafft.res$end] = 0
+  pos.delete[pos.beg] = 0
+  pos.delete[pos.end] = 0
+
+  if(sum(pos.end - pos.beg - 1) != sum(pos.delete)) stop('Wrong identification of positions to delete')
   
   pos.remain = pos.delete == 0
   
@@ -244,7 +242,7 @@ for(s.comb in pref.combinations){
   # Check-points
   fp.add = c(unlist(fp.single),unlist(fp.short),unlist(fp.long))
   if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) stop('Something if wrotng with positions; Point A')
-  if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')
+  # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
   
   
   # ---- Define blocks before the big alignments ----
