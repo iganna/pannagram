@@ -330,7 +330,7 @@ for(s.comb in pref.combinations[5]){
   res.msa <- foreach(seqs = aln.seqs[idx.short],
                      pos.idx = aln.pos[idx.short],
                      idx.gap.pos = idx.break$beg[idx.short],
-                     .packages=c('muscle', 'Biostrings'))  %dopar% {
+                     .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
                        
                        set = DNAStringSet(seqs)
                        aln = muscle(set, quiet = T)
