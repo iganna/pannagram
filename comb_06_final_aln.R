@@ -163,7 +163,6 @@ for(s.comb in pref.combinations){
     mafft.aln.pos[[i]] = pos.mx
   }
   warnings()
-  pokaz('tmp')
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
   # if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
@@ -200,7 +199,7 @@ for(s.comb in pref.combinations){
   # Singletons
   fp.single = list()
   for(i in 1:length(single.res$len)){
-    n.pos = single.res$len[i]
+    n.pos = single.res$len[i] - 2
     fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
   }
   
@@ -246,10 +245,10 @@ for(s.comb in pref.combinations){
   
   
   # ---- Define blocks before the big alignments ----
-  pos.beg = fp.main[mafft.res$beg] + 1
-  pos.beg.bins <- cut(pos.beg, breaks = c(seq.blocks, Inf), labels = FALSE)
-  pos.block.end = tapply(pos.beg, pos.beg.bins, max)
-  pos.block.end[length(pos.block.end)] = base.len
+  # pos.beg = fp.main[mafft.res$beg] + 1
+  # pos.beg.bins <- cut(pos.beg, breaks = c(seq.blocks, Inf), labels = FALSE)
+  # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
+  # pos.block.end[length(pos.block.end)] = base.len
   
   file.res = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   if (file.exists(file.res)) file.remove(file.res)
@@ -265,15 +264,21 @@ for(s.comb in pref.combinations){
     # Add singletons
     for(i in 1:length(single.res$len)){
       if(single.res$pos.beg[i, acc] != 0){
-        v.aln[fp.single[[i]]] = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
+        # if(i == 670) stop('670')
+        pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
+        pos = pos[-c(1, length(pos))]
+        v.aln[fp.single[[i]]] = pos
       } 
     }
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
+    
     # Add short
     for(i in 1:length(msa.res$len)){
       if(acc %in% colnames(msa.res$aln[[i]])){
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('2')
     
     # add long
     for(i in 1:length(mafft.aln.pos)){
@@ -281,6 +286,7 @@ for(s.comb in pref.combinations){
         v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
       } 
     }
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
     
     # Maybe something was overlapped by accident
     
