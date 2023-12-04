@@ -224,9 +224,9 @@ for(s.comb in pref.combinations){
   pos.end = c(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
   
   pos.delete[pos.beg] = 1
-  pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+  # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
   pos.delete[pos.end] = pos.delete[pos.end]-1
-  pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+  # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
   pos.delete = cumsum(pos.delete)
   pos.delete[pos.beg] = 0
   pos.delete[pos.end] = 0
@@ -285,7 +285,7 @@ for(s.comb in pref.combinations){
     # Maybe something was overlapped by accident
     
     suppressMessages({
-      h5write(v.aln, file.res, paste(gr.accs.e, 'acc_', acc, sep = ''))
+      h5write(v.aln, file.res, paste(gr.accs.e, acc, sep = ''))
     })
     
   }
