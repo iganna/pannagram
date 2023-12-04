@@ -319,18 +319,18 @@ for(s.comb in pref.combinations[5]){
   
   pokaz('Align short seqs')
   
-  for.flag = T
-  for(irow in idx.short){
-    seqs = aln.seqs[[irow]]
-    pos.idx = aln.pos[[irow]]
-    idx.gap.pos = idx.break$beg[irow]
+  # for.flag = T
+  # for(irow in idx.short){
+  #   seqs = aln.seqs[[irow]]
+  #   pos.idx = aln.pos[[irow]]
+  #   idx.gap.pos = idx.break$beg[irow]
 
   
-  # for.flag = F
-  # res.msa <- foreach(seqs = aln.seqs[idx.short],
-  #                    pos.idx = aln.pos[idx.short],
-  #                    idx.gap.pos = idx.break$beg[idx.short],
-  #                    .packages=c('muscle', 'Biostrings'))  %dopar% {
+  for.flag = F
+  res.msa <- foreach(seqs = aln.seqs[idx.short],
+                     pos.idx = aln.pos[idx.short],
+                     idx.gap.pos = idx.break$beg[idx.short],
+                     .packages=c('muscle', 'Biostrings'))  %dopar% {
                        
                        set = DNAStringSet(seqs)
                        aln = muscle(set, quiet = T)
