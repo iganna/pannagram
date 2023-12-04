@@ -111,11 +111,12 @@ for(s.comb in pref.combinations){
   v = c()
   for(acc in accessions){
     v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-    if(sub('acc_', '', acc) ==ref.pref){
-      v = cbind(v, 1:nrow(v.acc))
-    } else {
-      v = cbind(v, v.acc)
-    }
+    # if(sub('acc_', '', acc) ==ref.pref){
+    #   v = cbind(v, 1:nrow(v.acc))
+    # } else {
+    #   v = cbind(v, v.acc)
+    # }
+    v = cbind(v, v.acc)
   }
 
   
@@ -123,7 +124,7 @@ for(s.comb in pref.combinations){
   # ---- Merge coverages ----
   file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
   idx.break = readRDS(file.breaks)
-  idx.break = idx.break[idx.break$acc != paste('acc_', ref.pref, sep = ''),]  # Remove the reference correspondence
+  # idx.break = idx.break[idx.break$acc != paste('acc_', ref.pref, sep = ''),]  # Remove the reference correspondence
   
   
   
@@ -146,7 +147,11 @@ for(s.comb in pref.combinations){
     n = nrow(idx.break)
     # print(n)
     idx.over = which((idx.break$beg[-1] < idx.break$end[-n]))
+    idx.over = setdiff(idx.over, idx.over+1)
+    
     if(length(idx.over) == 0) break
+    
+    idx.break$beg[idx.over + 1] = idx.break$beg[idx.over]
     idx.break = idx.break[-idx.over,]
   }
   
