@@ -152,7 +152,6 @@ for(s.comb in pref.combinations){
     v0 = v0[idx01]
     pokaz('Vector of meaningfull positions', length(v0))
     
-    if(sum(duplicated(v.final[v.final != 0])) > 0) stop('DUPLICSTIONS')
     
     # Data from the second reference
     v1 = h5read(file.comb1, s)
@@ -162,7 +161,6 @@ for(s.comb in pref.combinations){
     v01 = v1[abs(f01)] * sign(f01)
     v01[(v0 != v01) & (v0 != 0)] = 0
     
-    if(sum(duplicated(v01[v01 != 0])) > 0) stop('DUPLICSTIONS')
     
     idx.lost = (v0 != 0) & (v01 == 0) & !(v0 %in% v01) 
     v01[idx.lost] = v0[idx.lost]
