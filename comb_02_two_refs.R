@@ -67,12 +67,12 @@ pokazStage('Combine randomized alignments from genomes', ref0, 'and', ref1)
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-# Testing
-source('../../../pannagram/utils.R')
-path.cons = './'
-ref0 = '0'
-ref1 = '6046-v1.1'
-library(rhdf5)
+# # Testing
+# source('../../../pannagram/utils.R')
+# path.cons = './'
+# ref0 = '0'
+# ref1 = '6046-v1.1'
+# library(rhdf5)
 
 
 # Find all fines with the prefix of both references and common suffixes
