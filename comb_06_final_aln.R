@@ -239,7 +239,7 @@ for(s.comb in pref.combinations){
   }
   pos.delete = pos.delete.all
 
-  if(sum(pos.end - pos.beg - 1) != sum(pos.delete)) stop('Wrong identification of positions to delete')
+  if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)) stop('Wrong identification of positions to delete')
   
   pos.remain = pos.delete == 0
   
