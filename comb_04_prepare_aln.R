@@ -96,7 +96,7 @@ n.flank = 30
 #flag.for = F
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 flag.for = T
-for(s.comb in pref.combinations[5]){
+for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
@@ -319,18 +319,18 @@ for(s.comb in pref.combinations[5]){
   
   pokaz('Align short seqs')
   
-  # for.flag = T
-  # for(irow in idx.short){
-  #   seqs = aln.seqs[[irow]]
-  #   pos.idx = aln.pos[[irow]]
-  #   idx.gap.pos = idx.break$beg[irow]
+  for.flag = T
+  for(irow in idx.short){
+    seqs = aln.seqs[[irow]]
+    pos.idx = aln.pos[[irow]]
+    idx.gap.pos = idx.break$beg[irow]
 
   
-  for.flag = F
-  res.msa <- foreach(seqs = aln.seqs[idx.short],
-                     pos.idx = aln.pos[idx.short],
-                     idx.gap.pos = idx.break$beg[idx.short],
-                     .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
+  # for.flag = F
+  # res.msa <- foreach(seqs = aln.seqs[idx.short],
+  #                    pos.idx = aln.pos[idx.short],
+  #                    idx.gap.pos = idx.break$beg[idx.short],
+  #                    .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
                        
                        set = DNAStringSet(seqs)
                        aln = muscle(set, quiet = T)
