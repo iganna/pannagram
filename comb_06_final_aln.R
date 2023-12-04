@@ -164,6 +164,7 @@ for(s.comb in pref.combinations){
     
     mafft.aln.pos[[i]] = pos.mx
   }
+  warnings()
   pokaz('tmp')
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
