@@ -296,7 +296,7 @@ for(s.comb in pref.combinations){
       if(acc %in% rownames(mafft.aln.pos[[i]])){
         v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
         
-        if(7916909 %in%  mafft.aln.pos[[i]][acc,]) stop(i)
+        # if(7916909 %in%  mafft.aln.pos[[i]][acc,]) stop(i)
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
       } 
     }
