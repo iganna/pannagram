@@ -211,9 +211,18 @@ for(s.comb in pref.combinations){
     
     b.acc.beg = blocks.acc[idx.break$beg]
     b.acc.end = blocks.acc[idx.break$end]
+    idx.same.bl = (b.acc.beg == b.acc.end) * 1
     
-    v.beg = cbind(v.beg, x.acc[idx.break$beg] )
-    v.end = cbind(v.end, x.acc[idx.break$end] )
+    
+    # v.beg = cbind(v.beg, x.acc[idx.break$beg] )
+    # v.end = cbind(v.end, x.acc[idx.break$end] )
+    
+    v.beg = cbind(v.beg, x.acc[idx.break$beg] * idx.same.bl )
+    v.end = cbind(v.end, x.acc[idx.break$end] * idx.same.bl )
+    # 
+    
+    # print(cbind(v.beg[!idx.same.bl,ncol(v.beg)], v.end[!idx.same.bl,ncol(v.beg)]))
+    
   }
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
