@@ -113,7 +113,7 @@ for(s.comb in pref.combinations){
     }
     
     suppressMessages({
-      h5write(v.block, file.comb, paste(gr.blocks, 'acc_', acc, sep = ''))
+      h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
     })
     
     # v = v[order(v[,1]),]  # not necessary
