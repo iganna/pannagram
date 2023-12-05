@@ -93,6 +93,8 @@ max.len.gap = 25000
 len.short = 50
 n.flank = 30
 
+gr.blocks = 'blocks/'
+
 #flag.for = F
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 flag.for = T
@@ -108,19 +110,12 @@ for(s.comb in pref.combinations){
   n.acc = length(accessions)
   
   # # For testing
-  v = c()
-  for(acc in accessions){
-    v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-    # if(sub('acc_', '', acc) ==ref.pref){
-    #   v = cbind(v, 1:nrow(v.acc))
-    # } else {
-    #   v = cbind(v, v.acc)
-    # }
-    v = cbind(v, v.acc)
-  }
+  # v = c()
+  # for(acc in accessions){
+  #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+  #   v = cbind(v, v.acc)
+  # }
 
-  
-  
   # ---- Merge coverages ----
   file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
   idx.break = readRDS(file.breaks)
@@ -171,6 +166,7 @@ for(s.comb in pref.combinations){
     #   next
     # }
     x.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    blocks.acc = h5read(file.comb, paste(gr.blocks, acc, sep = ''))
     
     # ### ---- Find prev and next ----
     # n = nrow(x.acc)
@@ -212,6 +208,9 @@ for(s.comb in pref.combinations){
     # v.beg = cbind(v.beg, v.prev[idx.break$beg] * (v.prev[idx.break$beg+1] != 0))
     # v.end = cbind(v.end, v.next[idx.break$end] * (v.next[idx.break$end-1] != 0))
     # v = cbind(v, v.acc)
+    
+    b.acc.beg = blocks.acc[idx.break$beg]
+    b.acc.end = blocks.acc[idx.break$end]
     
     v.beg = cbind(v.beg, x.acc[idx.break$beg] )
     v.end = cbind(v.end, x.acc[idx.break$end] )

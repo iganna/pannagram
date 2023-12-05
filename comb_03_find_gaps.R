@@ -69,8 +69,7 @@ gr.break.e = 'break/'
 gr.break.b = '/break'
 max.len.gap = 20000
 
-gr.prev.e = 'prev/'
-gr.next.e = 'next/'
+gr.blocks = 'blocks/'
 
 #flag.for = F
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
@@ -82,6 +81,9 @@ for(s.comb in pref.combinations){
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
+  
+  # Create group for blocks
+  h5createGroup(file.comb, gr.blocks)
   
   idx.break = c()
   for(acc in accessions){
@@ -99,6 +101,20 @@ for(s.comb in pref.combinations){
     v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
     v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
     v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
+    
+    # Save blocks
+    idx.block.tmp = which(abs(diff(v[,4])) != 1)
+    idx.block.beg = v[c(1, which(abs(diff(v[,4])) != 1)+1), 2]
+    idx.block.end = v[c(which(abs(diff(v[,4])) != 1), nrow(v)), 2]
+    pokaz('Number of blocks', length(idx.block.beg))
+    v.block = rep(0, length(v.init))
+    for(i.bl in 1:length(idx.block.beg)){
+      v.block[idx.block.beg[i.bl]:idx.block.end[i.bl]] = i.bl
+    }
+    
+    suppressMessages({
+      h5write(v.block, file.comb, paste(gr.blocks, 'acc_', acc, sep = ''))
+    })
     
     # v = v[order(v[,1]),]  # not necessary
     
