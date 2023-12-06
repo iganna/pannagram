@@ -102,6 +102,24 @@ function process_blast {
     echo ${path_db}${base_file}
     echo ${path_gaps}${query_file}
 
+
+    # Check if the output file does not exist
+    if [[ ! -e ${path_gaps}${out_file} ]]; then
+        echo "Output file does not exist."
+    fi
+
+    # Check if the base file exists
+    if [[ -e ${path_db}${base_file} ]]; then
+        echo "Base file exists."
+    fi
+
+    # Check if the query file exists
+    if [[ -e ${path_gaps}${query_file} ]]; then
+        echo "Query file exists."
+    fi
+
+
+
     # Execute BLAST search
     if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file} ]] && [[ -e ${path_gaps}${query_file} ]]; then
         blastn -db ${path_db}${base_file} \
@@ -109,7 +127,6 @@ function process_blast {
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -max_hsps 10 > /dev/null 2>> log_err.txt 
-        echo "works"
     fi
 
     # BLAST search in "cross" mode
