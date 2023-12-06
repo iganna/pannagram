@@ -135,6 +135,12 @@ for(s.comb in pref.combinations){
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
     
     
+    if(!file.exists(file.aln)) {
+      idx.skip = c(idx.skip, i)
+      next
+    }
+    
+    
     command <- paste("wc -l", file.aln)
     result <- system(command, intern = TRUE)
     num.lines <- as.integer(strsplit(result, " ")[[1]][1])
@@ -144,7 +150,7 @@ for(s.comb in pref.combinations){
     }
     
     
-    pokaz(file.aln)
+    # pokaz(file.aln)
     aln.seq = readFastaMy(file.aln)
     n.aln.seq = length(aln.seq)
     name.aln.seq = names(aln.seq)
