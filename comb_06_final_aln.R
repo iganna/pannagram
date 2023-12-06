@@ -341,3 +341,16 @@ for(s.comb in pref.combinations){
 stopCluster(myCluster)
 
 warnings()
+# 
+# library(rhdf5)
+# gr.accs.b <- "/accs"
+# gr.accs.e <- "accs/"
+# groups = h5ls(file.comb)
+# accessions = groups$name[groups$group == gr.accs.b]
+# for(acc in accessions){
+#   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+#   print(acc)
+#   print(sum(v.acc != 0))
+# }
+# 
+# 
