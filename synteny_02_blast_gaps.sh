@@ -100,13 +100,18 @@ function process_blast {
 
 
     # Execute BLAST search
-    if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file}.nhr  ]] && [[ -e ${path_db}${base_file}.nin ]] && [[ -e ${path_db}${base_file}.nsq ]] && [[ -e ${path_gaps}${query_file} ]]; then
+    if [[ ! -e ${path_gaps}${out_file} ]] && \
+       [[ -e ${path_db}${base_file}.nhr ]] && \
+       [[ -e ${path_db}${base_file}.nin ]] && \
+       [[ -e ${path_db}${base_file}.nsq ]] && \
+       [[ -e ${path_gaps}${query_file} ]]; then
+
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -max_hsps 10 > /dev/null 2>> log_err.txt 
-        echo "works!"
+        echo "works1!"
     fi
 
     # BLAST search in "cross" mode
