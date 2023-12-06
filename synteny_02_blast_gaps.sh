@@ -105,7 +105,7 @@ function process_blast {
 
 
     # Check if the base file exists
-    if [[! -e ${path_db}${base_file} ]]; then
+    if [[ ! -e ${path_db}${base_file} ]]; then
         echo "Base file exists."
         echo ${path_db}${base_file}
     fi
