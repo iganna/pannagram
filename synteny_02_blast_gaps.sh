@@ -98,6 +98,10 @@ function process_blast {
     out_file="${query_file/query/out}"
     out_file="${out_file%.fasta}.txt"
 
+    echo  ${path_gaps}${out_file} 
+    echo ${path_db}${base_file}
+    echo ${path_gaps}${query_file}
+
     # Execute BLAST search
     if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file} ]] && [[ -e ${path_gaps}${query_file} ]]; then
         blastn -db ${path_db}${base_file} \
