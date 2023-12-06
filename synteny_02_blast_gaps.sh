@@ -105,6 +105,7 @@ function process_blast {
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -max_hsps 10 > /dev/null 2>> log_err.txt 
+        echo "works"
     fi
 
     # BLAST search in "cross" mode
