@@ -98,27 +98,15 @@ function process_blast {
     out_file="${query_file/query/out}"
     out_file="${out_file%.fasta}.txt"
 
-    echo  ${path_gaps}${out_file} 
-    echo ${path_db}${base_file}
-    echo ${path_gaps}${query_file}
-
-
-
-    # Check if the base file exists
-    if [[ ! -e ${path_db}${base_file} ]]; then
-        echo "Base file exists."
-        echo ${path_db}${base_file}
-    fi
-
-
 
     # Execute BLAST search
-    if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file} ]] && [[ -e ${path_gaps}${query_file} ]]; then
+    if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file}.nhr  ]] && [[ -e ${path_db}${base_file}.nin ]] && [[ -e ${path_db}${base_file}.nsq ]] && [[ -e ${path_gaps}${query_file} ]]; then
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -max_hsps 10 > /dev/null 2>> log_err.txt 
+        echo "works!"
     fi
 
     # BLAST search in "cross" mode
