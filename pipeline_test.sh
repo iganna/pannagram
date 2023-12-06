@@ -158,9 +158,9 @@ if [ ! -d "$pref_mafft_out" ]; then
 fi
 
 
-./comb_05_run_mafft.sh  --cores ${cores} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
+# ./comb_05_run_mafft.sh  --cores ${cores} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
 
 
 Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
