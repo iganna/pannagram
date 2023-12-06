@@ -205,7 +205,7 @@ done
 ./query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
  -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
-First round of alignments
+# First round of alignments
 Rscript synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
 --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
 --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
