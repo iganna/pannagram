@@ -129,9 +129,21 @@ for(s.comb in pref.combinations){
   
   
   # ---- Get long alignment positions ----
+  idx.skip = c()
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
+    
+    
+    command <- paste("wc -l", file.aln)
+    result <- system(command, intern = TRUE)
+    num.lines <- as.integer(strsplit(result, " ")[[1]][1])
+    if(num.lines < 2) {
+      idx.skip = c(idx.skip, i)
+      next
+    }
+    
+    
     pokaz(file.aln)
     aln.seq = readFastaMy(file.aln)
     n.aln.seq = length(aln.seq)
@@ -164,6 +176,10 @@ for(s.comb in pref.combinations){
     
     mafft.aln.pos[[i]] = pos.mx
   }
+  
+  mafft.aln.pos = mafft.aln.pos[-idx.skip]
+  mafft.res = mafft.res[-idx.skip,]
+  
   warnings()
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
