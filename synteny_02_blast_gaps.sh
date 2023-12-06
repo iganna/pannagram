@@ -103,19 +103,11 @@ function process_blast {
     echo ${path_gaps}${query_file}
 
 
-    # Check if the output file does not exist
-    if [[ ! -e ${path_gaps}${out_file} ]]; then
-        echo "Output file does not exist."
-    fi
 
     # Check if the base file exists
-    if [[ -e ${path_db}${base_file} ]]; then
+    if [[! -e ${path_db}${base_file} ]]; then
         echo "Base file exists."
-    fi
-
-    # Check if the query file exists
-    if [[ -e ${path_gaps}${query_file} ]]; then
-        echo "Query file exists."
+        echo ${path_db}${base_file}
     fi
 
 
