@@ -281,7 +281,7 @@ for(s.comb in pref.combinations){
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1: Duplicated positions in in Singletons')
     
     # Add short
     for(i in 1:length(msa.res$len)){
@@ -289,7 +289,7 @@ for(s.comb in pref.combinations){
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('2')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('2: Duplicated positions in short alignments')
     
     # add long
     for(i in 1:length(mafft.aln.pos)){
@@ -300,7 +300,7 @@ for(s.comb in pref.combinations){
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3: Duplicated positions in long alignments')
     
     # Maybe something was overlapped by accident
     

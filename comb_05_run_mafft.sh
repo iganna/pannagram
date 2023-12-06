@@ -71,45 +71,66 @@ fi
 
 trap "echo 'Script interrupted'; exit" INT
 
-declare -A running_jobs
+# declare -A running_jobs
 
-# Iterating over all .fasta files in the input directory
-for input_file in "${path_mafft_in}"/*.fasta; do
-# find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | while read input_file; do
-    # Check if .fasta files exist
-    if [ ! -e "$input_file" ]; then
-        echo "No .fasta files found in input directory for MAFFT."
-        break
-    fi
+# # Iterating over all .fasta files in the input directory
+# for input_file in "${path_mafft_in}"/*.fasta; do
+# # find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | while read input_file; do
+#     # Check if .fasta files exist
+#     if [ ! -e "$input_file" ]; then
+#         echo "No .fasta files found in input directory for MAFFT."
+#         break
+#     fi
 
-    # Extracting the file name without extension for use in the output file
+#     # Extracting the file name without extension for use in the output file
+#     base_name=$(basename "${input_file}" .fasta)
+#     output_file="${path_mafft_out}/${base_name}_aligned.fasta"
+
+#     if [ -e "$output_file" ]; then
+#         continue
+#     fi
+
+#     # Run MAFFT in parallel
+#     timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}" &
+#     job_pid=$!
+
+#     running_jobs[$job_pid]=1
+
+#     # Check the number of running processes
+#     while (( ${#running_jobs[@]} >= $cores )); do
+#         for pid in "${!running_jobs[@]}"; do
+#             if ! kill -0 $pid 2>/dev/null; then
+#                 unset running_jobs[$pid]
+#             fi
+#         done
+#         sleep 1
+#     done
+# done
+
+# # Wait for all processes to finish
+# for pid in "${!running_jobs[@]}"; do
+#     wait $pid
+# done
+
+# Defining the function to be executed in parallel
+mafft_task() {
+    input_file=$1
     base_name=$(basename "${input_file}" .fasta)
     output_file="${path_mafft_out}/${base_name}_aligned.fasta"
 
     if [ -e "$output_file" ]; then
-        continue
+        return  # Skip if output file exists
     fi
 
-    # Run MAFFT in parallel
-    timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}" &
-    job_pid=$!
+    # Run MAFFT
+    timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
+}
 
-    running_jobs[$job_pid]=1
+export -f mafft_task
+export path_mafft_out
 
-    # Check the number of running processes
-    while (( ${#running_jobs[@]} >= $cores )); do
-        for pid in "${!running_jobs[@]}"; do
-            if ! kill -0 $pid 2>/dev/null; then
-                unset running_jobs[$pid]
-            fi
-        done
-        sleep 1
-    done
-done
+# Run tasks in parallel, using a number of parallel jobs equal to the number of cores
+find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | parallel -j $cores mafft_task
 
-# Wait for all processes to finish
-for pid in "${!running_jobs[@]}"; do
-    wait $pid
-done
 
 echo "  Done!"
