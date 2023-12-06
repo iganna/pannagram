@@ -146,8 +146,6 @@ done
 Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
-
-# exit 1
 pref_mafftin="${pref_global}mafft_in/"
 if [ ! -d "$pref_mafftin" ]; then
     mkdir -p "$pref_mafftin"
