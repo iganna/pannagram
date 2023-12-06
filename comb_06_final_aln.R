@@ -183,8 +183,10 @@ for(s.comb in pref.combinations){
     mafft.aln.pos[[i]] = pos.mx
   }
   
-  mafft.aln.pos = mafft.aln.pos[-idx.skip]
-  mafft.res = mafft.res[-idx.skip,]
+  if(length(idx.skip) > 0){
+    mafft.aln.pos = mafft.aln.pos[-idx.skip]
+    mafft.res = mafft.res[-idx.skip,]
+  }
   
   warnings()
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
