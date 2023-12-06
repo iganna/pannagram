@@ -143,7 +143,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 done
 
 
-Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+# Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
 pref_mafftin="${pref_global}mafft_in/"
@@ -156,8 +156,8 @@ path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
 path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 
 
-Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
-                  --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
+# Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+#                   --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
 pref_mafft_out="${pref_global}mafft_out/"
 if [ ! -d "$pref_mafft_out" ]; then
@@ -165,9 +165,9 @@ if [ ! -d "$pref_mafft_out" ]; then
 fi
 
 
-./comb_05_run_mafft.sh  --cores ${cores} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
+# ./comb_05_run_mafft.sh  --cores ${cores} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
 
 
 Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
