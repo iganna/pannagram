@@ -131,7 +131,9 @@ for(s.comb in pref.combinations){
   # ---- Get long alignment positions ----
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
-    aln.seq = readFastaMy(paste(path.mafft.out, mafft.res$file[i], sep = ''))
+    file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
+    pokaz(file.aln)
+    aln.seq = readFastaMy(file.aln)
     n.aln.seq = length(aln.seq)
     name.aln.seq = names(aln.seq)
     name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
