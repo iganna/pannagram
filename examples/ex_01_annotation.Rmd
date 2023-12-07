@@ -1,0 +1,20 @@
+---
+title: "Testing annotation on the alignment"
+output: null_document
+---
+
+```{r}
+
+path.work = ''
+
+
+```
+
+
+
+```{r}
+
+
+
+```
+

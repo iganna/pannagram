@@ -217,7 +217,7 @@ Rscript synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_a
 # Blast regions between synteny blocks
 ./synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
 
-# # Second round of alignments
+# Second round of alignments
 Rscript synteny_03_merge_gaps.R --path.aln ${path_alignment} \
 --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
 --path.gaps ${path_gaps}  --path.query ${path_chr_acc} \

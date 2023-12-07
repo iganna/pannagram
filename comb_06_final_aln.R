@@ -7,13 +7,6 @@ library("optparse")
 source('utils.R')
 })
 
-# rm -rf gaps mob no_interesting class pos solid_aln
-
-
-myCluster <- makeCluster(15, # number of cores to use
-                         type = "PSOCK") # type of cluster
-registerDoParallel(myCluster)
-
 pokazStage('Combine all alignments together into the final one')
 
 args = commandArgs(trailingOnly=TRUE)
@@ -355,4 +348,4 @@ warnings()
 #   print(sum(v.acc != 0))
 # }
 # 
-# 
+

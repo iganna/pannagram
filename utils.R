@@ -191,6 +191,37 @@ revCompl <- function(s){
 
 
 #' ----------------------------------------------------------------------
+#' Generate the complement of a vectorized sequence
+#'
+#' @param s A character vector where each element is a single nucleotide.
+#' @return A character vector representing the reverse complement of the input.
+#' 
+#' @examples
+#' justCompl(c("A", "T", "G", "C"))
+#' 
+#' @author Anna A. Igolkina 
+#' 
+justCompl <- function(s){
+  
+  if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
+  complementary_nts <- c(
+    A='T', T='A', C='G', G='C', 
+    R='Y', Y='R', S='S', W='W', 
+    K='M', M='K', B='V', D='H', 
+    H='D', V='B', N='N', 
+    a='T', t='A', c='G', g='C', 
+    r='Y', y='R', s='S', w='W', 
+    k='M', m='K', b='V', d='H', 
+    h='D', v='B', n='N'
+  )
+  
+  seqs.c = complementary_nts[s]
+  if(sum(is.na(seqs.c)) != 0) stop('Wrong nucleotides are provided')
+  return(seqs.c)
+}
+
+
+#' ----------------------------------------------------------------------
 #' Display stylized stage messages
 #'
 #' This function displays a stylized message indicating the stage or step of a process.
