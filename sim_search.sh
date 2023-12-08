@@ -41,7 +41,7 @@ while [ "$1" != "" ]; do
                  output_file=$1
                  ;;
         -sim )   shift
-                 similarity_threshold=$1
+                 sim_threshold=$1
                  ;;
         -genome ) shift
                   genome_file=$1
@@ -77,9 +77,9 @@ if [ ! -f "$fasta_file" ]; then
 fi
 
 # Check if similarity threshold parameter is provided
-if [ -z "$similarity_threshold" ]; then
-    similarity_threshold=90
-    echo "Similarity threshold not specified, default: ${similarity_threshold}"
+if [ -z "$sim_threshold" ]; then
+    sim_threshold=85
+    echo "Similarity threshold not specified, default: ${sim_threshold}"
 fi
 
 # Your script code goes here
@@ -92,11 +92,11 @@ fi
 # Check if BLAST database exists
 if [ ! -f "${genome_file}.nhr" ]; then
     echo "BLAST database for $fasta_file not found. Creating database..."
-    makeblastdb -in "$genome_file" -dbtype nucl
+    makeblastdb -in "$genome_file" -dbtype nucl > /dev/null
 fi
 
 blast_res="${output_file}.blast.tmp"
-# blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" 
+blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid"  -perc_identity ${sim_threshold}
 
-Rscript sim_search.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${similarity_threshold}
+Rscript sim_search.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold}
 

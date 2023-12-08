@@ -40,7 +40,9 @@ rm(seqs)
 
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
 
-write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
+blastres2gff(res, output.file)
+
+# write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
 
 
 
