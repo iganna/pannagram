@@ -90,7 +90,7 @@ fi
 # Check if similarity threshold parameter is provided
 if [ -z "$sim_threshold" ]; then
     sim_threshold=85
-    echo "Similarity threshold not specified, default: ${sim_threshold}"
+    pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
 fi
 
 # Your script code goes here
