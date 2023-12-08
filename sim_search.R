@@ -34,7 +34,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
-
+pokaz(blast.file)
 v = read.table(blast.file, stringsAsFactors = F)
 
 seqs = readFastaMy(fasta.file)

@@ -97,7 +97,7 @@ if [ ! -f "${db_name}.nhr" ]; then
 fi
 
 blast_res="${output_file}.blast.tmp"
-blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "7 qseqid qstart qend sstart send pident length sseqid" 
+blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" 
 
 Rscript sim_search.R -in ${fasta_file} -res ${blast_res} -out ${output_file} -sim ${similarity_threshold}
 
