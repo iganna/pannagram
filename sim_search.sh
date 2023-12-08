@@ -30,11 +30,6 @@ catch() {
 
 #!/bin/bash
 
-# Check for exactly four arguments
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 -in <fasta-file> -out <coverage file> -sim <similarity threshold> -genome <genome file>"
-    exit 1
-fi
 
 # Read arguments
 while [ "$1" != "" ]; do
