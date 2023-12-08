@@ -335,7 +335,7 @@ rmSafe <- function(var) {
 }
 
 
-blastres2gff <- function(v.blast, f.gff){
+blastres2gff <- function(v.blast, f.gff, to.sort = T){
   v.gff = data.frame(col1 = v.blast$V8,
                      col2 = 'blast2gff',
                      col3 = 'query',
@@ -348,6 +348,13 @@ blastres2gff <- function(v.blast, f.gff){
                                   ';query=',v.blast$V1,
                                   ';len=', v.blast$len1,
                                   ';coverage=', v.blast$V7, sep = ''))
+  
+  # Sorting
+  if(to.sort){
+    v.gff = v.gff[order(v.gff$V4),]
+    v.gff = v.gff[order(v.gff$V1),]
+  }
+  
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
 

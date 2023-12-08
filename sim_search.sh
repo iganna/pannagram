@@ -128,7 +128,7 @@ pokaz_stage "Similarity search..."
 Rscript sim_search.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold}
 
 # Remove BLAST temporary file if not needed
-if [ "$keep_blast_flag" -ne 1 ]; then
+if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
     rm ${blast_res}
 fi
 
