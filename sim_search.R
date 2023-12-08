@@ -32,8 +32,20 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
+
+# ---- Testing ----
+
+blast.file = 'tmp.txt.blast.tmp'
+source('pannagram/utils.R')
+fasta.file = 'new_genes/new_genes.fasta'
+sim.cutoff = 0.85
+
+
+# ---- Main ----
+
+
 v = read.table(blast.file, stringsAsFactors = F)
-v = v[v$V6 < sim.cutoff * 100,]
+v = v[v$V6 >= sim.cutoff * 100,]
 
 seqs = readFastaMy(fasta.file)
 v$len1 = nchar(seqs)[v$V1]
