@@ -58,6 +58,10 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
   # Decide what to do with those, which are covered by pieces
   idx.non.include = !idx.include
   
+  if(sum(idx.non.include) == 0){
+    return(v.sim)
+  }
+  
   if(echo) pokaz('Work with partial genes')
   idx.strand = (v$V4 > v$V5) * 1
   for(i.strand in 0:1){
