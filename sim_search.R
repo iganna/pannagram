@@ -1,5 +1,3 @@
-#!/usr/bin/env Rscript
-
 # Load the necessary library
 library(optparse)
 source('sim_func.R')
@@ -7,7 +5,7 @@ source('utils.R')
 
 # Define options
 option_list = list(
-  make_option(c("-in", "--fasta_file"), type = "character", default = NULL,
+  make_option(c("-in_file"), type = "character", default = NULL,
               help = "Path to the fasta file with sequences", metavar = "FILE"),
   make_option(c("-res"), type = "character", default = NULL,
               help = "Path to the BLAST results", metavar = "FILE"),
@@ -25,7 +23,7 @@ opt = parse_args(opt_parser)
 print(opt)
 
 # Check for the presence of all required arguments
-fasta.file <- ifelse(!is.null(opt$fasta_file), opt$fasta_file, 
+fasta.file <- ifelse(!is.null(opt$in_file), opt$in_file, 
                      stop("FASTA file not specified", call. = FALSE))
 blast.file <- ifelse(!is.null(opt$res), opt$res, 
                      stop("BLAST file not specified", call. = FALSE))
