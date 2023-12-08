@@ -49,5 +49,5 @@ pokaz_stage() {
 pokaz_message() {
     local text="$1"
     local color_code="38;5;195"  # Very light blue color code
-    echo -e "\e[${color_code}m* ${text}\e[0m"
+    echo -e "\e[${color_code}m  ${text}\e[0m"
 }
