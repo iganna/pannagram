@@ -35,10 +35,10 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 
 # ---- Testing ----
 
-blast.file = 'tmp.txt.blast.tmp'
-source('pannagram/utils.R')
-fasta.file = 'new_genes/new_genes.fasta'
-sim.cutoff = 0.85
+# blast.file = 'tmp.txt.blast.tmp'
+# source('pannagram/utils.R')
+# fasta.file = 'new_genes/new_genes.fasta'
+# sim.cutoff = 0.85
 
 
 # ---- Main ----
