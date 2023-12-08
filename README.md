@@ -1,4 +1,4 @@
-<p align="center">
+<p align="right">
 <img src="https://github.com/iganna/pannagram/blob/main/examples/pannagram_logo.png" width="30%" height="auto">
 </p>
 
