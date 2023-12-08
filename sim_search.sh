@@ -98,5 +98,5 @@ fi
 blast_res="${output_file}.blast.tmp"
 # blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" 
 
-Rscript sim_search.R -in_file ${fasta_file} -res ${blast_res} -out ${output_file} -sim ${similarity_threshold}
+Rscript sim_search.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${similarity_threshold}
 

@@ -5,13 +5,13 @@ source('utils.R')
 
 # Define options
 option_list = list(
-  make_option(c("-in_file"), type = "character", default = NULL,
+  make_option(c("--in_file"), type = "character", default = NULL,
               help = "Path to the fasta file with sequences", metavar = "FILE"),
-  make_option(c("-res"), type = "character", default = NULL,
+  make_option(c("--res"), type = "character", default = NULL,
               help = "Path to the BLAST results", metavar = "FILE"),
-  make_option(c("-out"), type = "character", default = NULL,
+  make_option(c("--out"), type = "character", default = NULL,
               help = "Path to the output coverage file", metavar = "FILE"),
-  make_option(c("-sim"), type = "numeric", default = 90,
+  make_option(c("--sim"), type = "numeric", default = 90,
               help = "Similarity threshold", metavar = "NUMBER")
 )
 
