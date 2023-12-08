@@ -90,8 +90,7 @@ fi
 
 
 # Check if BLAST database exists
-db_name=$(basename "$genome_file" .fasta)
-if [ ! -f "${db_name}.nhr" ]; then
+if [ ! -f "${genome_file}.nhr" ]; then
     echo "BLAST database for $fasta_file not found. Creating database..."
     makeblastdb -in "$genome_file" -dbtype nucl
 fi
