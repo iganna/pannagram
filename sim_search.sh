@@ -38,6 +38,7 @@ source utils_bash.sh
 #!/bin/bash
 
 after_blast_flag=0
+keep_blast_flag=0
 
 # Read arguments
 while [ "$1" != "" ]; do
@@ -56,6 +57,9 @@ while [ "$1" != "" ]; do
                   ;;
         -afterblast ) 
                   after_blast_flag=1  # Устанавливаем флаг в 1, если флаг -afterblast присутствует
+                  ;;
+        -keepblast ) 
+                  keep_blast_flag=1  # Устанавливаем флаг в 1, если флаг -afterblast присутствует
                   ;;
         * )      echo "Invalid parameter: $1"
                  exit 1
@@ -120,8 +124,12 @@ else
 fi
 
 
-
 pokaz_stage "Similarity search..."
 Rscript sim_search.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold}
+
+# Remove BLAST temporary file if not needed
+if [ "$keep_blast_flag" -ne 1 ]; then
+    rm ${blast_res}
+fi
 
 pokaz_message "Done!"
