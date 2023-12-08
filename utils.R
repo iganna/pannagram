@@ -337,16 +337,18 @@ rmSafe <- function(var) {
 
 blastres2gff <- function(v.blast, f.gff){
   v.gff = data.frame(col1 = v.blast$V8,
-                     col2 = 'blastres2gff',
+                     col2 = 'blast2gff',
                      col3 = 'query',
                      col4 = v.blast$V4,
                      col5 = v.blast$V5,
-                     col6 = v.blast$V7/v.blast$len1,
+                     col6 = '.',
                      col7 = v.blast$strand,
                      col8 = '.',
                      col9 = paste('ID=Q', 1:nrow(v.blast),
+                                  ';query=',v.blast$V1,
                                   ';query_len=', v.blast$len1,
-                                  ';cover_len=', v.blast$V8, sep = ''))
+                                  ';cover_len=', v.blast$V7,
+                                  ';cover_perc=', v.blast$V7/v.blast$len1, sep = ''))
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
 
