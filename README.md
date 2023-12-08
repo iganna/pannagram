@@ -1,5 +1,6 @@
 # Pannagram
 
+![](https://github.com/iganna/pannagram/blob/main/examples/pannagram_logo.png)
 
 Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
 
@@ -143,6 +144,8 @@ add "fasta" as parameter and make clever split on this parameter, может б�
 ## Acknowledgements
 
 Anna Glushkevich for testing
+
+Logo was generated with the help of DALL-E
 
 To acknowledge the utilized process parallelization tool, reference:
 O. Tange (2018): GNU Parallel 2018, Mar 2018, ISBN 9781387509881,
