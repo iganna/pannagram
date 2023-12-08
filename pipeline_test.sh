@@ -103,7 +103,7 @@ for ref0 in "${refs_all[@]}"; do
     # command="./pipeline.sh -ref_pref ${ref0} ${additional_params}"
     command="./work.sh -ref_pref ${ref0} ${additional_params}"
 
-    eval "${command}"
+    # eval "${command}"
 
 done
 
@@ -131,12 +131,12 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 
     ref1=${ref1//_/$'-'}
     
-    Rscript comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
+    # Rscript comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
 
 done
 
 
-Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+# Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
 # exit 1
@@ -164,9 +164,9 @@ fi
                   --path.mafft.out ${pref_mafft_out} \
 
 
-Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
-                  --path.mafft.in ${pref_mafftin} \
-                  --path.mafft.out ${pref_mafft_out} \
-                  --path.cons ${path_consensus} 
+# Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
+#                   --path.mafft.in ${pref_mafftin} \
+#                   --path.mafft.out ${pref_mafft_out} \
+#                   --path.cons ${path_consensus} 
 
 

@@ -63,11 +63,11 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Testing ----
 # 
-# library(rhdf5)
-# source('../../../pannagram/utils.R')
-# path.cons = './'
-# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-# ref.pref = '0'
+library(rhdf5)
+source('../../../pannagram/utils.R')
+path.cons = './'
+path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
+ref.pref = '0'
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -241,7 +241,7 @@ for(s.comb in pref.combinations){
     pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.beg[,icol] %in% idx.dup, icol] != 0))
     v.len[v.beg[,icol] %in% idx.dup, icol] = 0
     idx.dup = v.end[duplicated(v.end[,icol]),icol]
-    pokaz('Duplicated in column', icol, ', amount:', length(idx.dup))
+    pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.end[,icol] %in% idx.dup, icol] != 0))
     v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
   v.beg[v.len == 0] = 0
