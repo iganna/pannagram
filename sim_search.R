@@ -44,7 +44,7 @@ res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
 # Sorst V4 and V5 positions
 idx.tmp = res$V4 > res$V5
 print(sum(idx.tmp))
-print(sum(res$dir == '-'))
+print(sum(res$strand == '-'))
 
 tmp = res$V4[idx.tmp]
 res$V4[idx.tmp] = res$V5[idx.tmp]
