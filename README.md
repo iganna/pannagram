@@ -1,6 +1,9 @@
 # Pannagram
 
-![](https://github.com/iganna/pannagram/blob/main/examples/pannagram_logo.png)
+
+<img src="https://github.com/iganna/pannagram/blob/main/examples/pannagram_logo.png" width="50%" height="auto">
+
+
 
 Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
 
