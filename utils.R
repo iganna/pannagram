@@ -341,7 +341,7 @@ blastres2gff <- function(v.blast, f.gff){
                      col3 = 'query',
                      col4 = v.blast$V4,
                      col5 = v.blast$V5,
-                     col6 = v.blast$V8/v.blast$len1,
+                     col6 = v.blast$V7/v.blast$len1,
                      col7 = v.blast$strand,
                      col8 = '.',
                      col9 = paste('ID=Q', 1:nrow(v.blast),
