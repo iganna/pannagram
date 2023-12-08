@@ -33,6 +33,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
 v = read.table(blast.file, stringsAsFactors = F)
+v = v[v$V6 < sim.cutoff * 100,]
 
 seqs = readFastaMy(fasta.file)
 v$len1 = nchar(seqs)[v$V1]

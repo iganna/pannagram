@@ -1,11 +1,47 @@
 # Pannagram
 
-Pannagram takes genomes as input, some of which it identifies as reference genomes. It then performs multiple genome alignments in several stages. First, it aligns the genomes to all specified references, identifies blocks that are identical across all alignments, and then uses multiple alignments to fill in the gaps between blocks.
 
-The pipeline for aligning genomes to the reference genome can be found in `pipeline.sh`.
+Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
+
+## Multiple genome alignment
+
+Multiple genome alignment can be performed on a single reference genome or using multiple references to create a reference-free alignment. These modes are implemented in `pipeline.sh` and `pipeline_consensus.sh`, respectively.
+
+The quickstart toy-examples are:
+```
+./pipeline.sh -pref_global 'output_folder' -ref_pref '0' \
+    -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+./pipeline_consensus.sh -pref_global 'output_folder' -ref_set '0,10024' \
+    -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+```
+
+An extended description of the parameters can be read by executing:
+```
+./pipeline.sh -help
+./pipeline_consensus.sh -help
+```
+
+## Visualisation
+Pannagram contains a number of useful methods for visualization.
+
+* Dotplot
+* MSA
 
 
-## Parameters to run `pipeline.sh`
+
+
+## Additional useful tools
+### Search sequeses in the genome
+
+Script `sim_search.sh` allows for the search of sequences (for example, genes) in a genome with a certain threshold of similarity.
+
+The quickstart toy-example is:
+```
+./sim_search.sh -in genes.fasta -genome genome.fasta -out out.txt
+```
+
+
+## Parameters to run `pipeline_consensus.sh`
 
 
 ## Script Overview
@@ -70,20 +106,8 @@ install.packages("doParallel")
 stringi and stringr,
 
 
-## TODO:
 
-TE4_multifasta.fasta
-add "fasta" as parameter and make clever split on this parameter, может быть позволить fasta/fa/fna, но запретить fastq
-следать хромосомные файлы для референса, если он не распарсен
-прописать дефолты
-все рабоает нормально. и работает без -path_chr_ref
--all_clp rкак-то переделать флаг
-избежать переименования референсных геномов в - _
-
-
-
-
-## Завивимости
+## Dependencies
 
 
 
@@ -102,6 +126,18 @@ foreach
 stringr
 ggplot2
 utils.R сам устанавливает crayon.
+
+
+## TODO:
+
+TE4_multifasta.fasta
+add "fasta" as parameter and make clever split on this parameter, может быть позволить fasta/fa/fna, но запретить fastq
+следать хромосомные файлы для референса, если он не распарсен
+прописать дефолты
+все рабоает нормально. и работает без -path_chr_ref
+-all_clp rкак-то переделать флаг
+избежать переименования референсных геномов в - _
+
 
 
 ## Acknowledgements
