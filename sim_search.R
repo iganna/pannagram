@@ -20,7 +20,6 @@ opt_parser = OptionParser(option_list = option_list)
 
 # Parse the arguments
 opt = parse_args(opt_parser)
-print(opt)
 
 # Check for the presence of all required arguments
 fasta.file <- ifelse(!is.null(opt$in_file), opt$in_file, 
@@ -33,20 +32,15 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
-pokaz(blast.file)
-# v = read.table(blast.file, stringsAsFactors = F)
-# 
-# seqs = readFastaMy(fasta.file)
-# v$len1 = nchar(seqs)
-# rm(seqs)
-# 
-# if(sum(is.na(v$len1) > 0)) {
-#   stop('Length of sequences is supposed to be')
-# }
-# 
-# res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
-# 
-# write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
+v = read.table(blast.file, stringsAsFactors = F)
+
+seqs = readFastaMy(fasta.file)
+v$len1 = nchar(seqs)
+rm(seqs)
+
+res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
+
+write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
 
 
 
