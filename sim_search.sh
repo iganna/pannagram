@@ -28,13 +28,13 @@ catch() {
 #            PARAMETERS
 # ----------------------------------------------------------------------------
 
+#!/bin/bash
 
-# Check for exactly three arguments
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 -in <fasta-file> -out <coverage file> -sim <similarity threshold>"
+# Check for exactly four arguments
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 -in <fasta-file> -out <coverage file> -sim <similarity threshold> -genome <genome file>"
     exit 1
 fi
-
 
 # Read arguments
 while [ "$1" != "" ]; do
@@ -48,6 +48,9 @@ while [ "$1" != "" ]; do
         -sim )   shift
                  similarity_threshold=$1
                  ;;
+        -genome ) shift
+                  genome_file=$1
+                  ;;
         * )      echo "Invalid parameter: $1"
                  exit 1
     esac
@@ -66,6 +69,12 @@ if [ -z "$output_file" ]; then
     exit 1
 fi
 
+# Check if genome file parameter is provided
+if [ -z "$genome_file" ]; then
+    echo "Genome file not specified"
+    exit 1
+fi
+
 # Check if the FASTA file exists
 if [ ! -f "$fasta_file" ]; then
     echo "Input FASTA file not found: $fasta_file"
@@ -74,9 +83,11 @@ fi
 
 # Check if similarity threshold parameter is provided
 if [ -z "$similarity_threshold" ]; then
-	similarity_threshold=90
+    similarity_threshold=90
     echo "Similarity threshold not specified, default: ${similarity_threshold}"
 fi
+
+# Your script code goes here
 
 # ----------------------------------------------------------------------------
 #            MAIN
@@ -84,14 +95,14 @@ fi
 
 
 # Check if BLAST database exists
-db_name=$(basename "$fasta_file" .fasta)
+db_name=$(basename "$genome_file" .fasta)
 if [ ! -f "${db_name}.nhr" ]; then
     echo "BLAST database for $fasta_file not found. Creating database..."
-    makeblastdb -in "$fasta_file" -dbtype nucl
+    makeblastdb -in "$genome_file" -dbtype nucl
 fi
 
 blast_res="${output_file}.blast.tmp"
-blastn -db ${fasta_file} -query ${fasta_file} -out ${blast_res} -outfmt "7 qseqid qstart qend sstart send pident length sseqid" 
+blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "7 qseqid qstart qend sstart send pident length sseqid" 
 
 Rscript sim_search.R -in ${fasta_file} -res ${blast_res} -out ${output_file} -sim ${similarity_threshold}
 
