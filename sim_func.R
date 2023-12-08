@@ -1,20 +1,67 @@
 # All function to find similarities
+source('../utils.R')
 
+
+#' Find Hits in Reference
+#'
+#' This function identifies hits in a reference sequence based on similarity cutoffs and strand orientation. 
+#' It handles exact matches and fragmented matches.
+#'
+#' @param v A data frame blast result data. 
+#' The structure of 'v' must include the following NON-factor columns:
+#'   - V1: Identifier for genomic elements or fragments. Used for sorting and grouping operations.
+#'   - V2 and V3: Genomic coordinates (start and end positions of a gene or fragment).
+#'   - V4 and V5: Coordinate-related columns, likely representing positions in a reference sequence.
+#'   - V6: Numerical value associated with each genomic element, used for averaging.
+#'   - V7: Used for calculating ratios, possibly related to coverage or similarity measures.
+#'   - V8: Another identifier or a specific genomic feature, used for complex groupings.
+#'   - len1: Column representing length, crucial for certain calculations in the function.
+#'   
+#' @param sim.cutoff The similarity cutoff for considering a hit. Defaults to 0.9.
+#' @param echo Logical flag to indicate if intermediate steps should be printed. Defaults to TRUE.
+#'
+#' @return A data frame with hits that meet the specified similarity criteria. The result includes additional information like strand orientation and coverage details.
+#'
+#' @examples
+#' 
+#' # First, generate the required data structure using the BLAST command:
+#' # blastn -db db.fasta -query query.fasta -out out.txt -outfmt "7 qseqid qstart qend sstart send pident length sseqid"
+#' # Then, read the output into a data frame:
+#' v <- read.table('out.txt', stringsAsFactors = FALSE)
+#' 
+#' # Next, add an additional column 'len1' to 'v', which represents the length of sequences or genomic features.
+#' # This can be done based on your specific data and requirements. For example:
+#' # v$len1 <- calculateLengths(v) # Replace 'calculateLengths' with actual calculation or data extraction
+#' 
+#' # Finally, use the function with the prepared data frame:
+#' result <- findHitsInRef(v, sim.cutoff = 0.9, echo = TRUE)
+#' 
+#' @export
 "Length (len1) should be defined before"
-findHitsInRef <- function(v, sim.cutoff = 0.9){
+findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
   
   s.tmp.comb = '___'
   
+  # ---- Exact match ----
+  # Take to the analysis those positions, which are already enough under the similaruty threshold
   idx.include = (v$V7 / v$len1 > sim.cutoff)
   v.include = v[idx.include,]
-  idx.non.include = !idx.include
   
+  # Result variable
   v.sim = v.include
   
-  message('Work with partial genes')
+  # Add Strand
+  s.strand = c('+', '-')
+  v.sim$strand = s.strand[(v.sim$V4 > v.sim$V5) * 1 + 1]
+  
+  # ---- Fragmented match ----
+  # Decide what to do with those, which are covered by pieces
+  idx.non.include = !idx.include
+  
+  if(echo) pokaz('Work with partial genes')
   idx.strand = (v$V4 > v$V5) * 1
   for(i.strand in 0:1){
-    message(paste('Strand', i.strand))
+    if(echo) pokaz(paste('Strand', i.strand))
     v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
     if(i.strand == 1){
       tmp = v.rest$V4
@@ -113,217 +160,45 @@ findHitsInRef <- function(v, sim.cutoff = 0.9){
     
     idx.include = (df.cover$V7 / df.cover$len1 > sim.cutoff) & (df.cover$V6 > sim.cutoff * 100) & 
       (df.cover$ref.cover / df.cover$len1 > sim.cutoff) & (df.cover$len1 / df.cover$ref.cover > sim.cutoff)
+    
+    # Add Strand
+    df.cover$strand = s.strand[i.strand + 1]
+    
     v.sim = rbind(v.sim, df.cover[idx.include, colnames(v.sim)])
   }
   return(v.sim)
 }
 
-findMutualSimilarity_old <- function(v, sim.cutoff = 0.9, pos.len1 = NULL, pos.len2 = NULL){
-  
-  # sim.cutoff = 0.9
-  # pos.len1 = 2
-  # pos.len2 = 5
-  
-  s.tmp.comb = '___'
-  
-  v.strand = list(v[v$V4 < v$V5,], v[v$V4 > v$V5,])
-  v.all = c()
-  gc()
-  # Remove nestedness
-  for(i.strand in 1:2){
-    message(paste('Strand', i.strand))
-    v = v.strand[[i.strand]]
-    if(i.strand == 2){
-      tmp = v$V4
-      v$V4 = v$V5
-      v$V5 = tmp
-    }
-    #Remove duplicates
-    v = v[order(-v$V5),]
-    v = v[order(v$V4),]
-    v = v[order(-v$V3),]
-    v = v[order(v$V2),]
-    v = v[order(v$V8),]
-    v = v[order(v$V1),]
-    n = 0
-    while(n != nrow(v)){  # another strand strand
-      n = nrow(v)
-      print(n)
-      idx = which((v$V1[-nrow(v)] == v$V1[-1]) & 
-                    (v$V2[-nrow(v)] <= v$V2[-1]) & 
-                    (v$V3[-nrow(v)] >= v$V3[-1]) &
-                    (v$V4[-nrow(v)] <= v$V4[-1]) & 
-                    (v$V5[-nrow(v)] >= v$V5[-1]) &
-                    (v$V8[-nrow(v)] == v$V8[-1])) + 1
-      if(length(idx) == 0) next
-      v = v[-idx,]
-    }
-    if(i.strand == 2){
-      tmp = v$V4
-      v$V4 = v$V5
-      v$V5 = tmp
-    }
-    v.all = rbind(v.all, v)
-    print(nrow(v.all))
-  }
-  v = v.all
-  # rm(v.all)
-  gc()
-  
-  
-  # Define lengths - > to a function
-  if(!('len1' %in% colnames(v)) && (is.null(pos.len1))) stop('Information about length is not provided')
-  if(!('len2' %in% colnames(v)) && (is.null(pos.len2))) stop('Information about length is not provided')
-  if(!('len1' %in% colnames(v))){
-    v$len1 = as.numeric(sapply(v$V1, function(s) strsplit(s,'\\|')[[1]][pos.len1]))
-  }
-  if(!('len2' %in% colnames(v))){
-    v$len2 = as.numeric(sapply(v$V8, function(s) strsplit(s,'\\|')[[1]][pos.len2]))
-  }
-  
-  idx.include = (v$V7 / v$len1 > sim.cutoff) & (v$V7 / v$len2 > sim.cutoff)
-  v.sim = v[idx.include,]
-  
-  # - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Similarity one direction
-  # Coverage on query
-  v.rest = v[!idx.include,]
-  
-  # if only one record - delete
-  v.rest$comb = paste(v.rest$V1, v.rest$V8, sep = s.tmp.comb)
-  v.rest = v.rest[order(-v.rest$V3),]
-  v.rest = v.rest[order(v.rest$V2),]
-  v.rest = v.rest[order(v.rest$comb),]
-  idx.one = which(v.rest$comb[-1] == v.rest$comb[-nrow(v.rest)])
-  idx.one = sort(unique(c(idx.one,idx.one+1)))
-  v.rest = v.rest[idx.one,]
-  v.rest.saved = v.rest
-  
-  for(i.mode in 1:2){
-    
-    v.rest = v.rest[v.rest$len1 * sim.cutoff < v.rest$len2]
-    # remove nestedness
-    idx.nested = 1
-    while(length(idx.nested) > 0){
-      idx.nested = which((v.rest$V2[-1] >= v.rest$V2[-nrow(v.rest)]) & 
-                           (v.rest$V3[-1] <=v.rest$V3[-nrow(v.rest)]) & 
-                           (v.rest$comb[-1] == v.rest$comb[-nrow(v.rest)])) + 1
-      # print(length(idx.nested))
-      if(length(idx.nested) == 0) next
-      v.rest = v.rest[-idx.nested,]  
-    }
-    
-    # Coverage 
-    v.rest$cover1 = v.rest$V3 - v.rest$V2 + 1
-    v.rest$overlap1 = c(v.rest$V2[-1] - v.rest$V3[-nrow(v.rest)] - 1, 0)
-    v.rest$overlap1[v.rest$overlap1 > 0] = 0
-    idx.diff = which(v.rest$comb[-1] != v.rest$comb[-nrow(v.rest)])
-    v.rest$overlap1[idx.diff] = 0
-    v.rest$cover1 = v.rest$cover1 + v.rest$overlap1
-    
-    df.cover = data.frame(V7 = tapply(v.rest$cover1, v.rest$comb, sum),  # coverage
-                          len1 = tapply(v.rest$len1, v.rest$comb, unique))
-    df.cover = df.cover[df.cover$V7 >= df.cover$len1 * sim.cutoff,]
-    
-    if(i.mode == 1){
-      comb.query = rownames(df.cover)
-    } else {
-      comb.ref = rownames(df.cover)
-      break
-    }
-    
-    # Prepare data for the next mode: oerlap on the reference
-    v.rest = v.rest.saved
-    # sort the reference coordinates
-    idx = v.rest$V4 > v.rest$V5
-    tmp = v.rest$V5[idx]
-    v.rest$V5[idx] = v.rest$V4[idx]
-    v.rest$V4[idx] = tmp
-    # put the reference coordinates to the query place
-    v.rest$V2 = v.rest$V4
-    v.rest$V3 = v.rest$V5
-    
-    v.rest$V4 = NULL
-    v.rest$V5 = NULL
-    tmp = v.rest$len1
-    v.rest$len1 = v.rest$len2
-    v.rest$len2 = tmp
-    
-    v.rest = v.rest[order(-v.rest$V3),]
-    v.rest = v.rest[order(v.rest$V2),]
-    v.rest = v.rest[order(v.rest$comb),]
-  }
-  
-  comb.mutual = intersect(comb.query, comb.ref)
-  comb.query = setdiff(comb.query, comb.mutual)
-  comb.ref = setdiff(comb.ref, comb.mutual)
-  
-  
-  comb.mutual = matrix(unlist(strsplit(comb.mutual, s.tmp.comb)), ncol = 2, byrow = TRUE)
-  comb.query = matrix(unlist(strsplit(comb.query, s.tmp.comb)), ncol = 2, byrow = TRUE)
-  comb.ref = matrix(unlist(strsplit(comb.ref, s.tmp.comb)), ncol = 2, byrow = TRUE)
-  
-  comb.ref = comb.ref[,c(2,1)]
-  
-  
-  comb.mutual = rbind(comb.mutual, as.matrix(v.sim[,c('V1', 'V8')]))
-  
-  return(list(mutual = comb.mutual, covered.query = comb.query, covered.ref = comb.ref))
-}
 
-
-
-getOneSideCoverage <- function(v.rest, side = 0){
-  # it's assumes that everything is presorted before: V4 < V5
-  
-  # print(head(v.rest))
-  if(side == 1){
-
-    
-    idx.tmp = v.rest$V4 > v.rest$V5
-    if(sum(idx.tmp) > 0){
-      tmp = v.rest$V4[idx.tmp]
-      v.rest$V4[idx.tmp] = v.rest$V5[idx.tmp]
-      v.rest$V5[idx.tmp] = tmp
-    }
-    
-    v.rest$V1 = v.rest$V8
-    v.rest$V2 = v.rest$V4
-    v.rest$V3 = v.rest$V5
-    
-  }
-  v.rest = v.rest[, 1:3]
-  # print(head(v.rest))
-  
-  # - - - - - - - - - - - - - - - - - - - - - - - - 
-
-  v.rest = v.rest[order(-v.rest$V3),]
-  v.rest = v.rest[order(v.rest$V2),]
-  v.rest$V1 = as.factor(v.rest$V1)
-  v.rest = v.rest[order(v.rest$V1),]
-  
-  # remove nestedness
-  idx.nested = 1
-  while(length(idx.nested) > 0){
-    idx.nested = which((v.rest$V2[-1] >= v.rest$V2[-nrow(v.rest)]) & 
-                         (v.rest$V3[-1] <=v.rest$V3[-nrow(v.rest)]) & 
-                         (v.rest$V1[-1] == v.rest$V1[-nrow(v.rest)])) + 1
-    print(length(idx.nested))
-    if(length(idx.nested) == 0) next
-    v.rest = v.rest[-idx.nested,]  
-  }
-    
-  v.rest$cover = v.rest$V3 - v.rest$V2 + 1
-  v.rest$overlap = c(v.rest$V2[-1] - v.rest$V3[-nrow(v.rest)] - 1, 0)
-  v.rest$overlap[v.rest$overlap > 0] = 0
-  idx.diff = which(v.rest$V1[-1] != v.rest$V1[-nrow(v.rest)])
-  v.rest$overlap[idx.diff] = 0
-  v.rest$cover = v.rest$cover + v.rest$overlap
-  
-  coverage = tapply(v.rest$cover, v.rest$V1, sum)
-  return(coverage)
-}
-
+#' Find Nestedness in Data
+#'
+#' This function computes the nestedness of given data, considering strand direction if specified.
+#' It rearranges sequence start and end positions based on strand direction, creates unique identifiers,
+#' and computes coverage for each side of the data.
+#'
+#' @param v.res A data frame that should contain the following columns:
+#'   - V1: An identifier column for sequences #1.
+#'   - V2: A numeric column representing the start position of the sequences #1.
+#'   - V3: A numeric column representing the end position of the sequences #1.
+#'   
+#'   - V8: An identifier column for sequences #2.
+#'   - V4: A numeric column representing the start position of the sequences #2.
+#'   - V5: A numeric column representing the end position of the sequences #2.
+#'   
+#' @param use.strand Logical, if TRUE, strand information is considered in the processing.
+#'
+#' @return Returns a data frame `v.cover` with the following structure:
+#'   - C1, C8: Coverage data calculated for each side.
+#'   - V1, V8:Identifiers of sequences..
+#'   - dir: A column specifying the direction of the strand ('+', '-') if `use.strand` is TRUE, or '.'.
+#'   - Additional columns might be included based on the implementation of `getOneSideCoverage` and other calculations within the function.
+#'
+#' @examples
+#' # Example usage:
+#' # result <- findNestedness(data, TRUE)
+#'
+#' @export
+#'
 
 findNestedness <- function(v.res, use.strand = T){
   
@@ -363,6 +238,79 @@ findNestedness <- function(v.res, use.strand = T){
   # v.nest = v.cover[(v.cover$p1 >= sim.cutoff) | (v.cover$p8 >= sim.cutoff),]
   
 }
+
+#' Calculate Coverage one sequence.
+#'
+#' @param v.rest A data frame that should contain the following columns:
+#'   - V1: An identifier column for sequences #1.
+#'   - V2: A numeric column representing the start position of the sequences #1.
+#'   - V3: A numeric column representing the end position of the sequences #1.
+#'   
+#'   if `side = 1` is provided, then also:
+#'   - V8: An identifier column for sequences #2.
+#'   - V4: A numeric column representing the start position of the sequences #2.
+#'   - V5: A numeric column representing the end position of the sequences #2.
+#'   
+#' @param side An integer indicating which side to consider for coverage calculation of #1 or of #2. 
+#'             Defaults to 0, so coverage of sequences "#1.
+#'
+#' @return Returns a named vector where each name corresponds to an identifier in the V1 column,
+#'         and each value is the sum of coverage values for that identifier.
+#'
+#' @export
+#'
+getOneSideCoverage <- function(v.rest, side = 0){
+  
+  # print(head(v.rest))
+  if(side == 1){
+    
+    
+    idx.tmp = v.rest$V4 > v.rest$V5
+    if(sum(idx.tmp) > 0){
+      tmp = v.rest$V4[idx.tmp]
+      v.rest$V4[idx.tmp] = v.rest$V5[idx.tmp]
+      v.rest$V5[idx.tmp] = tmp
+    }
+    
+    v.rest$V1 = v.rest$V8
+    v.rest$V2 = v.rest$V4
+    v.rest$V3 = v.rest$V5
+    
+  }
+  v.rest = v.rest[, 1:3]
+  # print(head(v.rest))
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - 
+  
+  v.rest = v.rest[order(-v.rest$V3),]
+  v.rest = v.rest[order(v.rest$V2),]
+  v.rest$V1 = as.factor(v.rest$V1)
+  v.rest = v.rest[order(v.rest$V1),]
+  
+  # remove nestedness
+  idx.nested = 1
+  while(length(idx.nested) > 0){
+    idx.nested = which((v.rest$V2[-1] >= v.rest$V2[-nrow(v.rest)]) & 
+                         (v.rest$V3[-1] <=v.rest$V3[-nrow(v.rest)]) & 
+                         (v.rest$V1[-1] == v.rest$V1[-nrow(v.rest)])) + 1
+    print(length(idx.nested))
+    if(length(idx.nested) == 0) next
+    v.rest = v.rest[-idx.nested,]  
+  }
+  
+  v.rest$cover = v.rest$V3 - v.rest$V2 + 1
+  v.rest$overlap = c(v.rest$V2[-1] - v.rest$V3[-nrow(v.rest)] - 1, 0)
+  v.rest$overlap[v.rest$overlap > 0] = 0
+  idx.diff = which(v.rest$V1[-1] != v.rest$V1[-nrow(v.rest)])
+  v.rest$overlap[idx.diff] = 0
+  v.rest$cover = v.rest$cover + v.rest$overlap
+  
+  coverage = tapply(v.rest$cover, v.rest$V1, sum)
+  return(coverage)
+}
+
+
+
 
 
 
