@@ -41,7 +41,14 @@ rm(seqs)
 
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
 
-sum(res$V4 > res$V5)
+# Sorst V4 and V5 positions
+idx.tmp = res$V4 > res$V5
+print(sum(idx.tmp))
+print(sum(res$dir == '-'))
+
+tmp = res$V4[idx.tmp]
+res$V4[idx.tmp] = res$V5[idx.tmp]
+res$V5[idx.tmp] = tmp
 
 blastres2gff(res, output.file)
 
