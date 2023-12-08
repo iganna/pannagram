@@ -35,7 +35,7 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 v = read.table(blast.file, stringsAsFactors = F)
 
 seqs = readFastaMy(fasta.file)
-v$len1 = nchar(seqs)
+v$len1 = nchar(seqs)[v$V1]
 rm(seqs)
 
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
