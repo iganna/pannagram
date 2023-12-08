@@ -346,9 +346,8 @@ blastres2gff <- function(v.blast, f.gff){
                      col8 = '.',
                      col9 = paste('ID=Q', 1:nrow(v.blast),
                                   ';query=',v.blast$V1,
-                                  ';query_len=', v.blast$len1,
-                                  ';cover_len=', v.blast$V7,
-                                  ';cover_perc=', v.blast$V7/v.blast$len1, sep = ''))
+                                  ';len=', v.blast$len1,
+                                  ';coverage=', v.blast$V7, sep = ''))
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
 
