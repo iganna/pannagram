@@ -1,6 +1,6 @@
 # Load the necessary library
 library(optparse)
-source('sim_func.R')
+source('sim/sim_func.R')
 source('../utils.R')
 
 # Define options
