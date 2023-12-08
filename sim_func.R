@@ -1,5 +1,5 @@
 # All function to find similarities
-source('../utils.R')
+source('utils.R')
 
 
 #' Find Hits in Reference
