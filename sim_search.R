@@ -41,6 +41,8 @@ rm(seqs)
 
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
 
+sum(res$V4 > res$V5)
+
 blastres2gff(res, output.file)
 
 # write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
