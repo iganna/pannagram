@@ -30,6 +30,7 @@ catch() {
 
 #!/bin/bash
 
+after_blast_flag=0
 
 # Read arguments
 while [ "$1" != "" ]; do
@@ -45,6 +46,9 @@ while [ "$1" != "" ]; do
                  ;;
         -genome ) shift
                   genome_file=$1
+                  ;;
+        -afterblast ) 
+                  after_blast_flag=1  # Устанавливаем флаг в 1, если флаг -afterblast присутствует
                   ;;
         * )      echo "Invalid parameter: $1"
                  exit 1
@@ -95,8 +99,22 @@ if [ ! -f "${genome_file}.nhr" ]; then
     makeblastdb -in "$genome_file" -dbtype nucl > /dev/null
 fi
 
-blast_res="${output_file}.blast.tmp"
-blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid"  -perc_identity ${sim_threshold}
 
+blast_res="${output_file}.blast.tmp"
+
+if [ "$after_blast_flag" -eq 1 ]; then
+    if [ ! -f "${blast_res}" ]; then
+        echo "Blast results file not found: ${fasta_file}"
+        exit 1
+    fi
+else
+    pokaz_stage "BLAST search..."
+    blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" -perc_identity ${sim_threshold}
+fi
+
+
+
+pokaz_stage "Similarity search..."
 Rscript sim_search.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold}
 
+pokaz_message "Done!"

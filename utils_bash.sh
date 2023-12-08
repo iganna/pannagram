@@ -37,3 +37,17 @@ check_missing_variable() {
         exit 1
     fi
 }
+
+# Function to display a stage message
+pokaz_stage() {
+    local text="$1"
+    local color_code="38;2;52;252;252"  
+    echo -e "\e[${color_code}m* ${text}\e[0m"
+}
+
+# Function to display a stage message
+pokaz_message() {
+    local text="$1"
+    local color_code="38;5;195"  # Very light blue color code
+    echo -e "\e[${color_code}m* ${text}\e[0m"
+}
