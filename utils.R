@@ -351,8 +351,8 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
   
   # Sorting
   if(to.sort){
-    v.gff = v.gff[order(v.gff$V4),]
-    v.gff = v.gff[order(v.gff$V1),]
+    v.gff = v.gff[order(v.gff$col4),]
+    v.gff = v.gff[order(v.gff$col1),]
   }
   
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
