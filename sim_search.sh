@@ -32,7 +32,7 @@ source utils_bash.sh
 
 show_help() {
     cat << EOF
-Usage: ${0##*/} [-h] [-in FASTA_FILE] [-genome GENOME_FILE] [-out OUTPUT_FILE] \
+Usage: ${0##*/} [-h] [-in FASTA_FILE] [-genome GENOME_FILE] [-out OUTPUT_FILE] 
                 [-sim SIMILARITY_THRESHOLD] [-afterblast] [-keepblast]
 
 This script performs a BLAST search on a given FASTA file against a specified genome 
