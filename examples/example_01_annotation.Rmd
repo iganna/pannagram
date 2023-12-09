@@ -5,29 +5,142 @@ output: null_document
 
 # Setup
 ```{r}
+library(ggplot2)
+library(cowplot)
+library(rhdf5)
 
-path.work = ''
-path.annot = ''
-path.result = ''
+path.pannagram = '../../pannagram/'
 
+source(paste(path.pannagram, 'utils.R', sep = ''))
+source(paste(path.pannagram, 'visualisation.R', sep = ''))
+
+```
+
+## Paths-Folders
+```{r}
+path.work = '../../work/004_test_pan/data_greg/'
+
+path.annot = paste(path.work, 'annotation/', sep = '')
+path.cons = paste(path.work, 'consensus/', sep = '')
+path.out = paste(path.work, 'out/', sep = '')
+path.figures = paste(path.work, 'figures/', sep = '')
+
+if (!dir.exists(path.out))  dir.create(path.out)  # Check if the directory exists
+if (!dir.exists(path.figures))  dir.create(path.figures)  # Check if the directory exists
+
+n.chr = 5
+ref.acc = '0'
+
+```
+
+## Additional variables
+```{r}
+
+
+gr.accs.e <- "accs/"
+gr.accs.b <- "/accs"
+
+```
+
+## Colors
+```{r}
+
+c.red = '#872341'
+c.grey = '#EBEBEB'
 
 ```
 
 
-# Read and prepare data
+
+
+# Show pangenome coordinates
+## Pairwise alignments
 ```{r}
+# Set chromosome index and setup the corresponding MSA file
+i.chr = 3
+file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+
+# Read group information from the MSA file and extract accession names and pangenome length
+groups = h5ls(file.msa)
+accessions = groups$name[groups$group == gr.accs.b]
+pan.len = unique(groups$dim[groups$group == gr.accs.b])
+if(length(pan.len) != 1) stop('Something is wrong in the alignment')
+
+# Create plots for each accession
+p.list = list()
+for(acc in accessions){
+  # Create ggplot object for corresponcence between pangenome coordinate and an accession
+  p.list[[acc]] = plotPanAcc(file.msa, acc)
+}
+
+# Combine all plots and display
+p.combo <- plot_grid(plotlist = p.list, ncol = 3)
+p.combo
+
+# Save the combined plot to a PDF file
+pdf(paste(path.figures, 'pairwise_pan_acc_chr_',i.chr,'.pdf', sep = ''), width = 8, height = 4)
+print(p.combo)
+dev.off()
+
+
+```
+
+## Common alignment plot (grey shades)
+```{r}
+
+
+file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.acc,'.rds', sep = '')
+wnd.size = 100000
+
+idx.blocks = readRDS(file.blocks)
+
+p.list = list()
+for(i.chr in 1:5){
+  p = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), c(1, 3, 2), wnd.size=wnd.size)
+  p.list[[i.chr]] = p
+}
+
+# Combine all plots and display
+p.combo <- plot_grid(plotlist = p.list, nrow = 5)
+p.combo
+
+
+pdf(paste(path.figures, 'msa_pangenone','.pdf', sep = ''), width = 8, height = 6)
+print(p.combo)
+dev.off()
 
 ```
 
 
 
-# Functionalities
-## Get a GFF file for one accession using a GFF file from another accession
+# Get a GFF file for one accession using a GFF file from another accession
 ```{r}
+
 acc1 = '0'
-file.gff.acc1 = 
-
+file.gff.acc1 = ''
 
 
 ```
+
+
+## Get vector of corresponding positions
+```{r}
+
+```
+
+
+
+# Get alignment from positions (beg-end) in coordinates of accession Z
+```{r}
+
+```
+
+
+## Dotplots
+```{r}
+
+```
+
+
+
 

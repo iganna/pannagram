@@ -71,3 +71,38 @@ plotDot <- function(..., alpha = 1) {
 plotSyntenyBlocks <- function(...) {
   plotSynteny(...)
 }
+
+#' ----------------------------------------------------------------------
+plotPanAcc <- function(file.msa, acc){
+  
+  # Setup
+  gr.accs.e <- "accs/"
+  axis.breaks = seq(0, 30, by = 5)
+  idx.step = 10000
+  idx = seq(1, pan.len, idx.step)
+  c.red = '#872341'
+  c.grey = '#EBEBEB'
+  
+  # Read the correpondence for one accession
+  v.acc = h5read(file.msa, paste(gr.accs.e, acc, sep = ''))
+  v.acc = data.frame(pan = idx, acc = v.acc[idx])
+  v.acc = v.acc[v.acc$acc != 0,]
+  
+  # Generate a ggplot for each accession
+  p = ggplot(v.acc, aes(x = pan, y = abs(acc), color=as.factor(sign(acc)))) + 
+    geom_abline(slope = 1, intercept = 0, color = c.grey) +
+    geom_point(size = 0.01) + 
+    theme_minimal() +
+    labs(x = "Pangenome coord, Mbp", 
+         y = paste(acc, ', Mbp', sep = ''), 
+         title = NULL) +
+    scale_color_manual(values = c("-1" = c.red, "1" = "black")) +
+    theme(legend.position = "none") + 
+    scale_y_continuous(breaks = axis.breaks * 10^6, labels = axis.breaks) + 
+    scale_x_continuous(breaks = axis.breaks * 10^6, labels = axis.breaks)
+  
+  return(p)
+  
+}
+
+
