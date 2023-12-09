@@ -3,16 +3,29 @@ title: "Testing annotation on the alignment"
 output: null_document
 ---
 
+# Setup
 ```{r}
 
 path.work = ''
+path.annot = ''
+path.result = ''
 
 
 ```
 
 
-
+# Read and prepare data
 ```{r}
+
+```
+
+
+
+# Functionalities
+## Get a GFF file for one accession using a GFF file from another accession
+```{r}
+acc1 = '0'
+file.gff.acc1 = 
 
 
 

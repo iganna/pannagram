@@ -9,13 +9,13 @@ source('utils.R')
 #'
 #' @param v A data frame blast result data. 
 #' The structure of 'v' must include the following NON-factor columns:
-#'   - V1: Identifier for genomic elements or fragments. Used for sorting and grouping operations.
+#'   - V1: Identifier for genomic elements or fragments.
 #'   - V2 and V3: Genomic coordinates (start and end positions of a gene or fragment).
-#'   - V4 and V5: Coordinate-related columns, likely representing positions in a reference sequence.
+#'   - V4 and V5: Coordinate-related columns, representing positions in a reference sequence.
 #'   - V6: Numerical value associated with each genomic element, used for averaging.
-#'   - V7: Used for calculating ratios, possibly related to coverage or similarity measures.
-#'   - V8: Another identifier or a specific genomic feature, used for complex groupings.
-#'   - len1: Column representing length, crucial for certain calculations in the function.
+#'   - V7: Similarity measure.
+#'   - V8: Another identifier of the reference sequence.
+#'   - len1: Column representing length of queries, crucial for certain calculations in the function.
 #'   
 #' @param sim.cutoff The similarity cutoff for considering a hit. Defaults to 0.9.
 #' @param echo Logical flag to indicate if intermediate steps should be printed. Defaults to TRUE.
