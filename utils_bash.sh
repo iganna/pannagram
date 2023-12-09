@@ -51,3 +51,9 @@ pokaz_message() {
     local color_code="38;5;195"  # Very light blue color code
     echo -e "\e[${color_code}m  ${text}\e[0m"
 }
+
+
+pokaz_help() {
+    pokaz_message "< Welcome to Hellp >"
+}
+

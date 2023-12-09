@@ -41,7 +41,7 @@ source utils_bash.sh
 # Function to display help message
 print_usage() {
 
-pokaz_message "< Welcome to Hellp >"
+pokaz_help
 
     cat << EOF
 Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_chr_ref PATH_CHR_REF]
