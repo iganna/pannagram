@@ -39,6 +39,9 @@ source utils_bash.sh
 
 
 print_usage() {
+
+pokaz_help
+
     cat << EOF
 Usage: ${0##*/} [OPTIONS]
 
