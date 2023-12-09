@@ -32,9 +32,11 @@ source utils_bash.sh
 
 show_help() {
     cat << EOF
-Usage: ${0##*/} [-h] [-in FASTA_FILE] [-genome GENOME_FILE] [-out OUTPUT_FILE] [-sim SIMILARITY_THRESHOLD] [-afterblast] [-keepblast]
+Usage: ${0##*/} [-h] [-in FASTA_FILE] [-genome GENOME_FILE] [-out OUTPUT_FILE] \
+                [-sim SIMILARITY_THRESHOLD] [-afterblast] [-keepblast]
 
-This script performs a BLAST search on a given FASTA file against a specified genome and processes the results based on similarity thresholds.
+This script performs a BLAST search on a given FASTA file against a specified genome 
+and processes the results based on similarity thresholds.
 
     -h, --help              Display this help and exit.
     -in FASTA_FILE          Specify the input FASTA file.
@@ -50,7 +52,7 @@ Examples:
 
     ${0##*/} -in input.fasta -genome genome.fasta -out out.txt -sim 90 -keepblast
     mv out.txt out_90.txt
-    
+
     ${0##*/} -in input.fasta -genome genome.fasta -out out.txt -sim 95 -afterblast 
     mv out.txt out_95.txt
 
