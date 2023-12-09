@@ -37,6 +37,29 @@ catch() {
 
 source utils_bash.sh
 
+
+print_usage() {
+    cat << EOF
+Usage: ${0##*/} [OPTIONS]
+
+This script performs specific tasks based on various input parameters. 
+
+Options:
+    -ref_set REF_SET        Specify the reference set to be used.
+    -pref_global PREFIX     Global prefix for the analysis.
+    -cores CORES            Number of cores for processing.
+    -path_consensus PATH    Path to the consensus directory.
+    -path_chr_acc PATH      Path to chromosome accession files.
+
+Additional parameters can be provided as needed. These will be passed on
+to subsequent processes or commands used within the script.
+
+Examples:
+    ${0##*/} -pref_global 'output_folder' -ref_set '0,10024' -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+
+EOF
+}
+
 # ----------------------------------------------------------------------------
 #             MAIN
 # ----------------------------------------------------------------------------
@@ -50,6 +73,9 @@ while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
+    -h | --help )  print_usage
+                     exit
+                     ;;
     -ref_set)
         # Get the value of the ref_set parameter
         ref_set="$2"

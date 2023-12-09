@@ -38,41 +38,57 @@ catch() {
 
 source utils_bash.sh
 
+# Function to display help message
+print_usage() {
+    cat << EOF
+Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_chr_ref PATH_CHR_REF]
+                [-n_chr_ref N_CHR_REF] [-path_in PATH_IN] [-n_chr_query N_CHR_QUERY]
+                [-path_parts PATH_PARTS] [-path_chr_acc PATH_CHR_ACC] [-path_consensus PATH_CONSENSUS]
+                [-sort_chr_len SORT_CHR_LEN] [-part_len PART_LEN] [-all_cmp ALL_CMP]
+                [-p_ident P_IDENT] [-fasta_type FASTA_TYPE] [-acc_anal ACC_ANAL] [-cores CORES]
+
+This script performs genomic analysis with several options to specify inputs, paths, and parameters.
+
+Options:
+    -pref_global PREFIX        Global prefix for the analysis.
+    -ref_pref REF_PREFIX       Reference genome prefix: REF_PREFIX.fasta
+    -path_in PATH_IN           Path to directory with genomes.
+    -n_chr_query N_CHR_QUERY   Number of chromosomes in the query genome.
+    -n_chr_ref N_CHR_REF       Number of chromosomes in the reference genome.
+    -path_chr_ref PATH_CHR_REF Path to reference chromosomes.
+    -path_parts PATH_PARTS     Path to parts directory.
+    -path_chr_acc PATH_CHR_ACC Path to chromosome accession files.
+    -path_consensus PATH_CONSENSUS
+                                Path to consensus directory.
+    -sort_chr_len SORT_CHR_LEN Flag to sort chromosomes by length.
+    -part_len PART_LEN         Length of part, which should be searched on the first step (default: 5000).
+    -all_cmp ALL_CMP           Compare all vs all (default: "T").
+    -p_ident P_IDENT           Percentage identity threshold.
+    -fasta_type FASTA_TYPE     Type of FASTA file used.
+    -acc_anal ACC_ANAL         File with accessions to analyse. 
+                               Accessions should be in rows.
+    -cores CORES               Number of cores for parallel processing.
+
+Examples:
+    ${0##*/} -pref_global 'output_folder' -ref_pref '0' -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+
+EOF
+}
+
 
 # ----------------------------------------------------------------------------
 #            PARAMETERS
 # ----------------------------------------------------------------------------
 
 
-print_usage() {
-  echo "-pref_global"
-  
-  echo "-ref_pref"
-  echo "-path_chr_ref"
-  echo "-n_chr_ref"
-
-  echo "-path_in"
-  echo "-n_chr_query"
-
-  echo "-path_parts"
-  echo "-path_chr_acc"
-
-  echo "-path_consensus"
-
-  echo "-sort_chr_len"
-  echo "-part_len"  
-
-  echo "-all_cmp"
-  echo "-p_ident"
-
-  echo "-cores"
-}
-
 unrecognized_options=()
 
 while [ $# -gt 0 ]
 do
     case $1 in
+  -h | --help )  print_usage
+                       exit
+                       ;;
     # for options with required arguments, an additional shift is required
   -pref_global) pref_global=$2; shift ;;
 	
