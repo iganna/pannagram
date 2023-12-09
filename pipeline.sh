@@ -40,6 +40,9 @@ source utils_bash.sh
 
 # Function to display help message
 print_usage() {
+
+pokaz_message "< Help >"
+
     cat << EOF
 Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_chr_ref PATH_CHR_REF]
                 [-n_chr_ref N_CHR_REF] [-path_in PATH_IN] [-n_chr_query N_CHR_QUERY]
