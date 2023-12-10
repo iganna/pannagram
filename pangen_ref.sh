@@ -36,7 +36,47 @@ catch() {
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils_bash.sh
+source utils/utils_bash.sh
+
+# Function to display help message
+print_usage() {
+
+pokaz_help
+
+    cat << EOF
+Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_chr_ref PATH_CHR_REF]
+                [-n_chr_ref N_CHR_REF] [-path_in PATH_IN] [-n_chr_query N_CHR_QUERY]
+                [-path_parts PATH_PARTS] [-path_chr_acc PATH_CHR_ACC] [-path_consensus PATH_CONSENSUS]
+                [-sort_chr_len SORT_CHR_LEN] [-part_len PART_LEN] [-all_cmp ALL_CMP]
+                [-p_ident P_IDENT] [-fasta_type FASTA_TYPE] [-acc_anal ACC_ANAL] [-cores CORES]
+
+This script performs genomic analysis with several options to specify inputs, paths, and parameters.
+
+Options:
+    -pref_global PREFIX        Global prefix for the analysis.
+    -ref_pref REF_PREFIX       Reference genome prefix: REF_PREFIX.fasta
+    -path_in PATH_IN           Path to directory with genomes.
+    -n_chr_query N_CHR_QUERY   Number of chromosomes in the query genome.
+    -n_chr_ref N_CHR_REF       Number of chromosomes in the reference genome.
+    -path_chr_ref PATH_CHR_REF Path to reference chromosomes.
+    -path_parts PATH_PARTS     Path to parts directory.
+    -path_chr_acc PATH_CHR_ACC Path to chromosome accession files.
+    -path_consensus PATH_CONSENSUS
+                                Path to consensus directory.
+    -sort_chr_len SORT_CHR_LEN Flag to sort chromosomes by length.
+    -part_len PART_LEN         Length of part, which should be searched on the first step (default: 5000).
+    -all_cmp ALL_CMP           Compare all vs all (default: "T").
+    -p_ident P_IDENT           Percentage identity threshold.
+    -fasta_type FASTA_TYPE     Type of FASTA file used.
+    -acc_anal ACC_ANAL         File with accessions to analyse. 
+                               Accessions should be in rows.
+    -cores CORES               Number of cores for parallel processing.
+
+Examples:
+    ${0##*/} -pref_global 'output_folder' -ref_pref '0' -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+
+EOF
+}
 
 
 # ----------------------------------------------------------------------------
@@ -44,35 +84,14 @@ source utils_bash.sh
 # ----------------------------------------------------------------------------
 
 
-print_usage() {
-  echo "-pref_global"
-  
-  echo "-ref_pref"
-  echo "-path_chr_ref"
-  echo "-n_chr_ref"
-
-  echo "-path_in"
-  echo "-n_chr_query"
-
-  echo "-path_parts"
-  echo "-path_chr_acc"
-
-  echo "-path_consensus"
-
-  echo "-sort_chr_len"
-  echo "-part_len"  
-
-  echo "-all_cmp"
-  echo "-p_ident"
-
-  echo "-cores"
-}
-
 unrecognized_options=()
 
 while [ $# -gt 0 ]
 do
     case $1 in
+  -h | --help )  print_usage
+                       exit
+                       ;;
     # for options with required arguments, an additional shift is required
   -pref_global) pref_global=$2; shift ;;
 	
@@ -187,10 +206,10 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 # ----------------------------------------------------------------------------
 
 
-# # Split quiery fasta into chromosomes
-# Rscript query_01_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
-# # Split quiery chromosomes into parts
-# Rscript query_02_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+# Split quiery fasta into chromosomes
+Rscript pangen/query_01_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
+# Split quiery chromosomes into parts
+Rscript pangen/query_02_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
 
 
 # Create a database on the reference genome
@@ -201,39 +220,39 @@ for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
   fi
 done
 
-# # Blast parts on the reference genome
-# ./query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
-#  -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+# Blast parts on the reference genome
+./pangen/query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
+ -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
-# # First round of alignments
-# Rscript synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-# --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-# --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
-# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# First round of alignments
+Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+--type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+--path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
+--n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-# rm -rf ${path_blast_parts}
+# # If the first round of alignment didn't have any errors - remove the blast which was needed for it
+rm -rf ${path_blast_parts}
 
-# # Blast regions between synteny blocks
-# ./synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
+# Blast regions between synteny blocks
+./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
 
-# # # Second round of alignments
-# Rscript synteny_03_merge_gaps.R --path.aln ${path_alignment} \
-# --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-# --path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
-# --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+# # Second round of alignments
+Rscript pangen/synteny_03_merge_gaps.R --path.aln ${path_alignment} \
+--type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+--path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
+--n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-# rm -rf ${path_gaps}
-# # ls ${path_alignment}*maj*
-# rm -rf ${path_alignment}*maj*
+# # If the second round of alignment didn't have any errors - remove the blast which was needed for it
+rm -rf ${path_gaps}
+# ls ${path_alignment}*maj*
+rm -rf ${path_alignment}*maj*
 
 # -----------------------------------
 # Creaete a consensus
 
 
 
-Rscript comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
+Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
 --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
 --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 

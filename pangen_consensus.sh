@@ -35,7 +35,33 @@ catch() {
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils_bash.sh
+source utils/utils_bash.sh
+
+
+print_usage() {
+
+pokaz_help
+
+    cat << EOF
+Usage: ${0##*/} [OPTIONS]
+
+This script performs specific tasks based on various input parameters. 
+
+Options:
+    -ref_set REF_SET        Specify the reference set to be used.
+    -pref_global PREFIX     Global prefix for the analysis.
+    -cores CORES            Number of cores for processing.
+    -path_consensus PATH    Path to the consensus directory.
+    -path_chr_acc PATH      Path to chromosome accession files.
+
+Additional parameters can be provided as needed. These will be passed on
+to subsequent processes or commands used within the script.
+
+Examples:
+    ${0##*/} -pref_global 'output_folder' -ref_set '0,10024' -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+
+EOF
+}
 
 # ----------------------------------------------------------------------------
 #             MAIN
@@ -50,6 +76,9 @@ while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
+    -h | --help )  print_usage
+                     exit
+                     ;;
     -ref_set)
         # Get the value of the ref_set parameter
         ref_set="$2"
@@ -109,9 +138,9 @@ IFS=',' read -ra refs_all <<< "$ref_set"
 # Iterate over each word in ref_set
 for ref0 in "${refs_all[@]}"; do
     
-    command="./pipeline_anna.sh -ref_pref ${ref0} ${additional_params}"
+    command="./pangen_ref.sh -ref_pref ${ref0} ${additional_params}"
     # echo "Executing command: ${command}"
-    # eval "${command}"
+    eval "${command}"
 
 done
 
@@ -138,14 +167,16 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 
     ref1=${ref1//_/$'-'}
     
-    # Rscript comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
+    Rscript pangen/comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
 
 done
 
 
-# Rscript comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+Rscript pangen/comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
 
+
+# exit 1
 pref_mafftin="${pref_global}mafft_in/"
 if [ ! -d "$pref_mafftin" ]; then
     mkdir -p "$pref_mafftin"
@@ -156,8 +187,8 @@ path_chr_acc="${path_chr_acc:-${pref_global}chromosomes/}"
 path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 
 
-# Rscript comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
-#                   --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
+Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+                  --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
 pref_mafft_out="${pref_global}mafft_out/"
 if [ ! -d "$pref_mafft_out" ]; then
@@ -165,12 +196,12 @@ if [ ! -d "$pref_mafft_out" ]; then
 fi
 
 
-# ./comb_05_run_mafft.sh  --cores ${cores} \
-#                   --path.mafft.in ${pref_mafftin} \
-#                   --path.mafft.out ${pref_mafft_out} \
+./pangen/comb_05_run_mafft.sh  --cores ${cores} \
+                  --path.mafft.in ${pref_mafftin} \
+                  --path.mafft.out ${pref_mafft_out} \
 
 
-Rscript comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
+Rscript pangen/comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
                   --path.mafft.in ${pref_mafftin} \
                   --path.mafft.out ${pref_mafft_out} \
                   --path.cons ${path_consensus} 
