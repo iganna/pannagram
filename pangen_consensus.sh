@@ -175,20 +175,20 @@ if [ -z "${start_step}" ]; then
         start_step=${start_step%_done}
         start_step=$((start_step + 1))
     fi
-else
-    # Looping through and deleting files of stages, which are less then the current one
-    for file_step in "$path_flags"step*_done; do
-        if [ -f "$file_step" ]; then
-            # Extracting step number from the file name
-            step_tmp=$(echo "$file_step" | sed -e 's/.*step\([0-9]*\)_done/\1/')
 
-            # Check if step number is greater or equal to start_step
-            if [ "$step_tmp" -ge "$start_step" ]; then
-                rm -f "$file_step"
-            fi
+# Looping through and deleting files of stages, which are less then the current one
+for file_step in "$path_flags"step*_done; do
+    if [ -f "$file_step" ]; then
+        # Extracting step number from the file name
+        step_tmp=$(echo "$file_step" | sed -e 's/.*step\([0-9]*\)_done/\1/')
+
+        # Check if step number is greater or equal to start_step
+        if [ "$step_tmp" -ge "$start_step" ]; then
+            rm -f "$file_step"
         fi
-    done
-fi
+    fi
+done
+
 
 if [ "$start_step" -eq 3 ]; then
     pokaz_message "Starting step: reference cycles 3-7"
