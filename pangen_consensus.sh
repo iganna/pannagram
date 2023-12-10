@@ -180,14 +180,14 @@ fi
 
 # Looping through and deleting files of stages, which are less then the current one
 for file_step in "${path_flags}"step*_done*; do
-    echo "Processing file: $file_step"
+    # echo "Processing file: $file_step"
     if [ -f "$file_step" ]; then
         # Extracting step number from the file name
         step_tmp=$(echo "$file_step" | sed -e 's/.*step\([0-9]*\)_done.*/\1/')
 
         # Check if step number is greater or equal to start_step
         if [ "$step_tmp" -ge "$start_step" ]; then
-            echo "remove ${file_step}"
+            # echo "remove ${file_step}"
             rm -f "$file_step"
         fi
     fi
