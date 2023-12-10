@@ -158,7 +158,7 @@ path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 # ----------------------------------------------------------------------------
 
 # Path with steps
-path_flags="${pref_global}flags/"
+path_flags="${pref_global}.flags/"
 path_flags=$(add_symbol_if_missing "$path_flags" "/")
 if [ ! -d "$path_flags" ]; then
     mkdir -p "$path_flags"
@@ -189,7 +189,7 @@ else
     done
 fi
 
-pokaz_message "Sterting step: ${start_step}"
+pokaz_message "Starting step: ${start_step}"
 
 
 # ----------------------------------------------------------------------------

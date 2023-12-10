@@ -206,7 +206,7 @@ path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
 
 # Path with stages
-path_flags="${pref_global}flags/"
+path_flags="${pref_global}.flags/"
 if [ ! -d "$path_flags" ]; then
     mkdir -p "$path_flags"
 fi
