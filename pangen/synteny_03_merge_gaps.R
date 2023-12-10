@@ -398,8 +398,9 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       }
     }
     
-    
-    x.bw = x.gap[abs(idx.remain),]
+    if(length(idx.remain) > 0){
+      x.bw = x.gap[abs(idx.remain),]
+    }
     rmSafe(x.gap)
     
     # Clean overlaps from both base and query sides
