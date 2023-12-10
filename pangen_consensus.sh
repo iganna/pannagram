@@ -170,6 +170,7 @@ if [ -z "${start_step}" ]; then
 
     if [ -n "${max_step_file}" ]; then
         start_step=$(echo "${max_step_file}" | sed -e 's/.*step\([0-9]*\)_done/\1/')
+        start_step=$((start_step + 1))
     else
         start_step=1
     fi

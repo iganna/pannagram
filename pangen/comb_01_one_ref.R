@@ -14,7 +14,7 @@ suppressMessages({
 })
 
 source("utils/utils.R")
-# source("pangen/synteny_funcs.R")
+source("pangen/synteny_funcs.R")
 
 pokazStage('Step 7. Combine reference-based alignments by chromosomes')
 
