@@ -398,7 +398,8 @@ for(i.chr.pair in 1:nrow(chromosome.pairs)){
       }
     }
     
-    if(length(idx.remain) == 0){
+    print(idx.remain)
+    if(length(idx.remain) != 0){
       x.bw = x.gap[abs(idx.remain),]
     } else {
       x.bw = x.gap[F,]

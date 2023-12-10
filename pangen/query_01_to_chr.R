@@ -8,7 +8,7 @@ suppressMessages({
 
 source("utils/utils.R")
 
-pokazStage('Genomes into chromosomes')
+pokazStage('Step 1. Genomes into chromosomes')
 
 # Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.out ../pb_chromosomes/
 # Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.out ../ly_chromosomes/    

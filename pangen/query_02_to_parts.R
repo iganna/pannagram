@@ -62,7 +62,7 @@ query.type <- ifelse(!is.null(opt$type), opt$type, "fasta")
 
 
 #' ----------------------------------------------------------------------
-pokazStage('Chromosomes into parts')
+pokazStage('Step 2. Chromosomes into parts')
 
 pokaz('Directory with chromosomes:', path.chr)
 files.query = list.files(path = path.chr, pattern = paste0('\\.', query.type, '$', collapse = '') )

@@ -77,7 +77,7 @@ done
 #                 MAIN
 # ----------------------------------------------------------------------------
 
-pokaz_stage "BLAST of parts on the reference genome"
+pokaz_stage "Step 3. BLAST of parts on the reference genome"
 
 # -penalty -2 -gapopen 10 -gapextend 2 -max_hsps 5
 

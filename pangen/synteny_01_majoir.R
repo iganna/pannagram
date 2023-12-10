@@ -14,7 +14,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Alignment1: after first blast of parts')
+pokazStage('Step 4. Alignment1: after first blast of parts')
 
 args = commandArgs(trailingOnly=TRUE)
 
