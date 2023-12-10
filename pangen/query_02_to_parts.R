@@ -99,11 +99,18 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
     names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
     
     file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
-    writeFastaMy(s, file.out)
+    
+    file.out.rest = paste0(path.parts, acc, '_', i.chr, '.rest', collapse = '')
+    
+    seqs.score = sapply(s, repeatScore)
+    
+    writeFastaMy(s[seqs.score <= 0.2], file.out)
+    writeFastaMy(s[seqs.score > 0.2], file.out.rest)
     
     rm(q.fasta)
     rm(s)
     rm(pos.beg)
+    rm(seqs.score)
   }
 }
 
