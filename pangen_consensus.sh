@@ -179,7 +179,7 @@ if [ -z "${start_step}" ]; then
 fi
 
 # Looping through and deleting files of stages, which are less then the current one
-for file_step in "${path_flags}step*_done*"; do
+for file_step in "${path_flags}"step*_done*; do
     echo "Processing file: $file_step"
     if [ -f "$file_step" ]; then
         # Extracting step number from the file name
