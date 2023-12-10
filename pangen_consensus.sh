@@ -176,6 +176,8 @@ if [ -z "${start_step}" ]; then
         start_step=$((start_step + 1))
     fi
 
+fi
+
 # Looping through and deleting files of stages, which are less then the current one
 for file_step in "$path_flags"step*_done; do
     if [ -f "$file_step" ]; then
