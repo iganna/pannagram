@@ -99,8 +99,7 @@ run_blast() {
 export -f run_blast
 
 # Run the parallel
-echo "number of cores ${cores}"
 
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.$ref_type ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
-echo "  Done!"
+pokaz_message "Done!"

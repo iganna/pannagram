@@ -129,7 +129,7 @@ fi
 if [ -z "$cores" ]; then
     cores=1
 fi
-echo "Number of cores ${cores}"
+pokaz_message "Number of cores ${cores}"
 
 
 # Split the value of ref_set into separate words
@@ -156,7 +156,7 @@ pref_global=$(add_symbol_if_missing "$pref_global" "/")
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
-echo ${path_consensus}
+pokaz_message "Path with consensus ${path_consensus}"
 
 
 
