@@ -4,6 +4,7 @@ suppressMessages({
   library("seqinr")       # read.fasta
   library("foreach")
   library(doParallel)
+  library(stringi)
 })
 
 source("utils/utils.R")
@@ -74,7 +75,7 @@ if(length(query.name) == 0){
 }
 
 for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
 # for.flag = T
 # for(acc in query.name){
   
