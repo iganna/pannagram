@@ -1,5 +1,4 @@
 
-echo -e "\e[38;2;52;252;252m* Run MAFFT for gaps between synteny blocks\e[0m"
 
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
@@ -32,9 +31,10 @@ source utils/utils_bash.sh
 #             PARAMETERS
 # ----------------------------------------------------------------------------
 
-# Инициализация переменных
 
-# Разбор аргументов командной строки
+pokaz_stage "Step 11. Run MAFFT for gaps between synteny blocks"
+
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --cores) cores="$2"; shift ;;
@@ -46,7 +46,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 
-# Установка значения по умолчанию для cores, если оно не было задано
+
 if [ -z "$cores" ]; then
     cores=1
 fi
@@ -59,7 +59,7 @@ path_mafft_in=$(add_symbol_if_missing "$path_mafft_in" "/")
 path_mafft_out=$(add_symbol_if_missing "$path_mafft_out" "/")
 
 
-# Проверяем, существует ли выходная директория, если нет - создаем
+
 if [ ! -d "${path_mafft_out}" ]; then
     mkdir -p "${path_mafft_out}"
 fi

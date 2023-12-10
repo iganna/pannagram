@@ -61,7 +61,9 @@ if (is.null(opt$ref1)) {
   ref1 <- opt$ref1
 }
 
-pokazStage('Combine randomized alignments from genomes', ref0, 'and', ref1)
+# ---- Step ----
+
+pokazStage('Step 8. Combine randomized alignments from genomes', ref0, 'and', ref1)
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----

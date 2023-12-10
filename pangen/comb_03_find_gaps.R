@@ -11,7 +11,7 @@ suppressMessages({
 source("utils/utils.R")
 source("synteny_funcs.R")
 
-pokazStage('Gind positions of common gaps in the reference-free MSA')
+pokazStage('Step 9. Gind positions of common gaps in the reference-free MSA')
 
 args = commandArgs(trailingOnly=TRUE)
 

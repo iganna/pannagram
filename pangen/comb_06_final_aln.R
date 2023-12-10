@@ -7,7 +7,7 @@ library("optparse")
 source('utils/utils.R')
 })
 
-pokazStage('Combine all alignments together into the final one')
+pokazStage('Step 12. Combine all alignments together into the final one')
 
 args = commandArgs(trailingOnly=TRUE)
 
