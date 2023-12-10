@@ -334,7 +334,22 @@ rmSafe <- function(var) {
   }
 }
 
-
+#' Convert BLAST results to GFF format
+#'
+#' @description
+#' `blastres2gff` converts a data frame containing BLAST results into a GFF formatted file.
+#'
+#' @param v.blast A data frame containing the BLAST results. Expected columns are V1, V4, V5, V7, V8, len1, and strand.
+#' @param f.gff The file path where the GFF output will be saved.
+#' @param to.sort Boolean value indicating whether the output should be sorted. If `TRUE` (default), 
+#' the output is sorted by column 4 and then by column 1. If `FALSE`, the output is not sorted.
+#'
+#' @return This function does not return a value. It writes the GFF formatted data to a file specified by `f.gff`.
+#'
+#' @examples
+#' # Example usage (assuming `blast_results` is your data frame with BLAST results):
+#' blastres2gff(blast_results, "output.gff")
+#'
 blastres2gff <- function(v.blast, f.gff, to.sort = T){
   v.gff = data.frame(col1 = v.blast$V8,
                      col2 = 'blast2gff',
@@ -357,6 +372,49 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
   
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
+
+#' Calculate the Repeat Score of a String
+#'
+#' @description
+#' `repeatScore` computes the repeat score for a given string based on the frequency 
+#' of repeating substrings within the string. The repeat score is the ratio of the 
+#' total count of repeating substrings (exceeding a specified cutoff) to the total 
+#' number of substrings.
+#'
+#' @param s The input string for which the repeat score is to be calculated.
+#' @param wsize Window size for substring generation (default is 11). This determines 
+#' the length of each substring extracted from the input string for analysis.
+#' @param dup.cutoff Cutoff for considering a substring as repeating (default is 2). 
+#' Substrings that appear more times than this cutoff contribute to the repeat score.
+#'
+#' @return A single numeric value representing the repeat score of the input string.
+#' This score is the ratio of the count of substrings appearing more than `dup.cutoff` 
+#' times to the total number of substrings generated.
+#'
+#' @examples
+#' library(stringi)  # Ensure the stringi package is loaded
+#' s = 'TAAACCCTAAACCCTAAACCCTAAACCCTAACCCTAAACCCTAAACCCTAAACCCTAAACCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCC'
+#' repeatScore(s)
+#'
+#' @export
+#'
+repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
+  
+  substrings <- unlist(stri_sub_all(s, 1:(stri_length(s)-wsize+1), wsize -1 + 1:(stri_length(s)-wsize+1)))
+  substrings = sort(substrings)
+  cnt <- rle(substrings)
+  cnt = cnt$lengths
+  
+  return(sum(cnt[cnt > dup.cutoff]) / length(substrings))
+}
+# SLOW VERSION:
+# old_repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
+#   substrings <- sapply(1:(nchar(s) - wsize + 1), function(i) {
+#     substring(s, i, i + wsize - 1)
+#   })
+#   cnt = table(substrings)
+#   return(sum(cnt[cnt > dup.cutoff]) / length(substrings))
+# }
 
 
 
