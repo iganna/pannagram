@@ -6,7 +6,7 @@ suppressMessages({
   library(doParallel)
 })
 
-source("../utils/utils.R")
+source("utils/utils.R")
 
 pokazStage('Genomes into chromosomes')
 
