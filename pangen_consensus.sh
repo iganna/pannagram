@@ -166,13 +166,16 @@ fi
 
 
 if [ -z "${start_step}" ]; then
-     max_step_file=$(ls ${path_flags}step*_done | sort -V | tail -n 1)
-
-    if [ -n "${max_step_file}" ]; then
+    # List files and check if the list is empty
+    file_list=$(ls ${path_flags}step*_done 2> /dev/null)
+    if [ -z "$file_list" ]; then
+        # No files found, set start_step to 1 (or any default you prefer)
+        start_step=1
+    else
+        # Files found, get the highest step number file
+        max_step_file=$(echo "$file_list" | sort -V | tail -n 1)
         start_step=$(echo "${max_step_file}" | sed -e 's/.*step\([0-9]*\)_done/\1/')
         start_step=$((start_step + 1))
-    else
-        start_step=1
     fi
 else
     # Looping through and deleting files of stages, which are less then the current one
