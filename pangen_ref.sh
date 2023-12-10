@@ -93,6 +93,8 @@ do
                        exit
                        ;;
     # for options with required arguments, an additional shift is required
+
+  -s | -stage ) start_step="$2"; shift ;;                     
   -pref_global) pref_global=$2; shift ;;
 	
 	-ref_pref) ref_pref=$2; shift ;;
@@ -156,6 +158,7 @@ check_missing_variable "n_chr_query"
 
 # Basic parameters
 
+start_step="${start_step:-1}"  # Starting step
 cores="${cores:-1}"  # Number of cores
 p_ident="${p_ident:-85}"  
 part_len="${part_len:-5000}"  
@@ -201,59 +204,103 @@ path_blast_parts=${pref_global}blast_parts_${ref_pref}/
 path_alignment=${pref_global}alignments_${ref_pref}/
 path_gaps=${pref_global}blast_gaps_${ref_pref}/
 
+
+# Path with stages
+path_flags="${pref_global}flags/"
+if [ ! -d "$path_flags" ]; then
+    mkdir -p "$path_flags"
+fi
+
+
 # ----------------------------------------------------------------------------
 #           MAIN PIPELINE
 # ----------------------------------------------------------------------------
 
 
 # Split quiery fasta into chromosomes
-Rscript pangen/query_01_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
+if [ $start_step -le 1 ] && [ ! -f "$path_flags/step1_done" ]; then
+    Rscript pangen/query_01_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
+    touch "$path_flags/step1_done"
+fi
+
+
 # Split quiery chromosomes into parts
-Rscript pangen/query_02_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+if [ $start_step -le 2 ] && [ ! -f "$path_flags/step2_done" ]; then
+    Rscript pangen/query_02_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+    touch "$path_flags/step2_done"
+fi
 
-
-# Create a database on the reference genome
-for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
-  # Check if the BLAST database files already exist
-  if [ ! -f "${file}.nin" ]; then
-      makeblastdb -in ${file} -dbtype nucl > /dev/null
-  fi
-done
 
 # Blast parts on the reference genome
-./pangen/query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
- -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done" ]; then
+
+    # Create a database on the reference genome
+    for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
+      # Check if the BLAST database files already exist
+      if [ ! -f "${file}.nin" ]; then
+          makeblastdb -in ${file} -dbtype nucl > /dev/null
+      fi
+    done
+
+    # Blast parts on the reference genome
+    ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
+     -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+
+    touch "$path_flags/step3_done"
+fi
+
 
 # First round of alignments
-Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
---type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
---path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
---n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done" ]; then
+    Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+                        --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+                        --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
+                        --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-rm -rf ${path_blast_parts}
+    touch "$path_flags/step4_done"
+
+    # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
+    rm -rf ${path_blast_parts}
+fi
+
 
 # Blast regions between synteny blocks
-./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
+if [ $start_step -le 5 ] && [ ! -f "$path_flags/step5_done" ]; then
+    ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
+    touch "$path_flags/step5_done"
+fi
 
-# # Second round of alignments
-Rscript pangen/synteny_03_merge_gaps.R --path.aln ${path_alignment} \
---type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
---path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
---n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-# # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-rm -rf ${path_gaps}
-# ls ${path_alignment}*maj*
-rm -rf ${path_alignment}*maj*
+
+
+# Second round of alignments
+if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done" ]; then
+
+    Rscript pangen/synteny_03_merge_gaps.R --path.aln ${path_alignment} \
+    --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+    --path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
+    --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
+
+    # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
+    rm -rf ${path_gaps}
+    # ls ${path_alignment}*maj*
+    rm -rf ${path_alignment}*maj*
+
+    touch "$path_flags/step6_done"
+fi
+
+
 
 # -----------------------------------
 # Creaete a consensus
+if [ $start_step -le 7 ] && [ ! -f "$path_flags/step7_done" ]; then
 
+    Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
+    --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+    --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
+    touch "$path_flags/step7_done"
+fi
 
-Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
---type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
---n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
 
