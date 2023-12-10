@@ -4,8 +4,29 @@
 #ref_pref="TAIR10_chr"
 #ref_type='fas'
 
+# ----------------------------------------------------------------------------
+#            ERROR HANDLING BLOCK
+# ----------------------------------------------------------------------------
 
-echo -e "\e[38;2;52;252;252m* BLAST of parts on the reference genome\e[0m"
+# Exit immediately if any command returns a non-zero status
+set -e
+
+# Keep track of the last executed command
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+
+# Define a trap for the EXIT signal
+trap 'catch $?' EXIT
+
+# Function to handle the exit signal
+catch() {
+    # Check if the exit code is non-zero
+    if [ $1 -ne 0 ]; then
+        echo "\"${last_command}\" command failed with exit code $1."
+    fi
+}
+
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 print_usage() {
@@ -44,6 +65,15 @@ do
     esac
     shift
 done
+
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
+echo -e "\e[38;2;52;252;252m* BLAST of parts on the reference genome\e[0m"
+
+
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 # -penalty -2 -gapopen 10 -gapextend 2 -max_hsps 5
 
