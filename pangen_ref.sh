@@ -232,7 +232,7 @@ fi
 
 
 # Blast parts on the reference genome
-if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done" ]; then
+if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
 
     # Create a database on the reference genome
     for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
@@ -246,18 +246,18 @@ if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done" ]; then
     ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
      -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
-    touch "$path_flags/step3_done"
+    touch "$path_flags/step3_done_${ref_pref}"
 fi
 
 
 # First round of alignments
-if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done" ]; then
+if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done_${ref_pref}" ]; then
     Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
                         --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
                         --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
                         --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-    touch "$path_flags/step4_done"
+    touch "$path_flags/step4_done_${ref_pref}"
 
     # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
     rm -rf ${path_blast_parts}
@@ -265,16 +265,16 @@ fi
 
 
 # Blast regions between synteny blocks
-if [ $start_step -le 5 ] && [ ! -f "$path_flags/step5_done" ]; then
+if [ $start_step -le 5 ] && [ ! -f "$path_flags/step5_done_${ref_pref}" ]; then
     ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
-    touch "$path_flags/step5_done"
+    touch "$path_flags/step5_done_${ref_pref}"
 fi
 
 
 
 
 # Second round of alignments
-if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done" ]; then
+if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
 
     Rscript pangen/synteny_03_merge_gaps.R --path.aln ${path_alignment} \
     --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
@@ -286,20 +286,19 @@ if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done" ]; then
     # ls ${path_alignment}*maj*
     rm -rf ${path_alignment}*maj*
 
-    touch "$path_flags/step6_done"
+    touch "$path_flags/step6_done_${ref_pref}"
 fi
-
 
 
 # -----------------------------------
 # Creaete a consensus
-if [ $start_step -le 7 ] && [ ! -f "$path_flags/step7_done" ]; then
+if [ $start_step -le 7 ] && [ ! -f "$path_flags/step7_done_${ref_pref}" ]; then
 
     Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
     --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
     --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
-    touch "$path_flags/step7_done"
+    touch "$path_flags/step7_done_${ref_pref}"
 fi
 
 
