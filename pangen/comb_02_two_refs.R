@@ -139,7 +139,7 @@ for(s.comb in pref.combinations){
     # if(acc == ref0) next
     # if(acc == ref1) next
     
-    print(acc)
+    # print(acc)
     s = paste('/',gr.accs.e, acc, sep = '')
     
     # Data from the main reference

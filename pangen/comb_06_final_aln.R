@@ -80,8 +80,8 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+# pokaz('Reference:', ref.pref)
+# pokaz('Combinations', pref.combinations)
 
 
 # ------------------------------------
@@ -91,7 +91,7 @@ pokaz('Combinations', pref.combinations)
 
 for(s.comb in pref.combinations){
   
-  pokaz('* Combination', s.comb)
+  # pokaz('* Combination', s.comb)
   
   # Get accessions
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
@@ -285,7 +285,7 @@ for(s.comb in pref.combinations){
   h5createGroup(file.res, gr.accs.e)
   
   for(acc in accessions){
-    pokaz('Accession', acc)
+    # pokaz('Accession', acc)
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v.aln = rep(0, base.len.aln)
     v.aln[fp.main[pos.remain]] = v[pos.remain]

@@ -58,8 +58,8 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+# pokaz('Reference:', ref.pref)
+# pokaz('Combinations', pref.combinations)
 
 # ----  Combine correspondence  ----
 
@@ -88,7 +88,7 @@ for(s.comb in pref.combinations){
   idx.break = c()
   for(acc in accessions){
     
-    pokaz('Accession', acc, 'combination', s.comb)
+    # pokaz('Accession', acc, 'combination', s.comb)
   
     v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v = v.init
@@ -106,7 +106,7 @@ for(s.comb in pref.combinations){
     idx.block.tmp = which(abs(diff(v[,4])) != 1)
     idx.block.beg = v[c(1, which(abs(diff(v[,4])) != 1)+1), 2]
     idx.block.end = v[c(which(abs(diff(v[,4])) != 1), nrow(v)), 2]
-    pokaz('Number of blocks', length(idx.block.beg))
+    # pokaz('Number of blocks', length(idx.block.beg))
     v.block = rep(0, length(v.init))
     for(i.bl in 1:length(idx.block.beg)){
       v.block[idx.block.beg[i.bl]:idx.block.end[i.bl]] = i.bl

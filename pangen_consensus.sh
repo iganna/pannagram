@@ -190,7 +190,11 @@ else
     done
 fi
 
-pokaz_message "Starting step: ${start_step}"
+if [ "$start_step" -eq 3 ]; then
+    pokaz_message "Starting step: reference cycles 3-7"
+else
+    pokaz_message "Starting step: ${start_step}"
+fi
 
 
 # ----------------------------------------------------------------------------

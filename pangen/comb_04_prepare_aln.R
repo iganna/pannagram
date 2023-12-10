@@ -78,8 +78,8 @@ pokaz('Files', files)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+# pokaz('Reference:', ref.pref)
+# pokaz('Combinations', pref.combinations)
 
 
 
