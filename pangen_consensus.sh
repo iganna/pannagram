@@ -188,7 +188,7 @@ else
     done
 fi
 
-pokaz_message "Sterting ste: ${start_step}"
+pokaz_message "Sterting step: ${start_step}"
 
 
 # ----------------------------------------------------------------------------

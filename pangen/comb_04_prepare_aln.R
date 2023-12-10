@@ -11,7 +11,7 @@ suppressMessages({
 })
 
 source("utils/utils.R")
-source("synteny_funcs.R")
+# source("synteny_funcs.R")
 
 pokazStage('Step 10. Prepare sequences for MAFFT')
 
