@@ -167,7 +167,7 @@ if [ ! -d "$path_flags" ]; then
     mkdir -p "$path_flags"
 fi
 
-# Looping through and deleting files
+# Looping through and deleting files of stages, which are less then the current one
 for file_step in "$path_flags"step*_done; do
     if [ -f "$file_step" ]; then
         # Extracting step number from the file name
@@ -175,7 +175,6 @@ for file_step in "$path_flags"step*_done; do
 
         # Check if step number is greater or equal to start_step
         if [ "$step_tmp" -ge "$start_step" ]; then
-            echo "Deleting file: $file_step"
             rm -f "$file_step"
         fi
     fi
