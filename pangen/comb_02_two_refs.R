@@ -78,7 +78,7 @@ pokazStage('Step 8. Combine randomized alignments from genomes', ref0, 'and', re
 
 
 # Find all fines with the prefix of both references and common suffixes
-pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
+# pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
 
 files.pref <- lapply(c(ref0, ref1), function(ref) {
   suff <- paste0('_ref_', ref)
@@ -123,10 +123,6 @@ for(s.comb in pref.combinations){
   # Get the corresponsing function between two references
   s = paste(gr.accs.e, 'acc_', ref1, sep = '')
   
-  pokaz('File0', file.comb0)
-  print(h5ls(file.comb0))
-  
-  
   f01 <- h5read(file.comb0, s)
   base.len = length(f01)
   idx01 = which(f01 != 0)
@@ -148,18 +144,18 @@ for(s.comb in pref.combinations){
     
     # Data from the main reference
     v0 = h5read(file.comb0, s)
-    pokaz('Vector in the ref0 file', length(v0))
+    # pokaz('Vector in the ref0 file', length(v0))
     v.final = v0
     v.final[idx01] = 0
     v0 = v0[idx01]
-    pokaz('Vector of meaningfull positions', length(v0))
+    # pokaz('Vector of meaningfull positions', length(v0))
     
     
     # Data from the second reference
     v1 = h5read(file.comb1, s)
     v.final[v.final %in% v1] = 0
-    pokaz('Vector in the ref1 file', length(v1))
-    pokaz('Length of function', length(f01))
+    # pokaz('Vector in the ref1 file', length(v1))
+    # pokaz('Length of function', length(f01))
     v01 = v1[abs(f01)] * sign(f01)
     
     #v01[(v0 != v01) & (v0 != 0)] = 0
@@ -169,8 +165,8 @@ for(s.comb in pref.combinations){
     
     v0[(v0 != v01) & (v01 != 0)] = 0
     
-    pokaz('Length of resultant correspondence', length(v01))
-    pokaz('Sum of matches', sum(v01 != 0))
+    # pokaz('Length of resultant correspondence', length(v01))
+    # pokaz('Sum of matches', sum(v01 != 0))
     
     # Turn into real coordinates back
     # v.final = rep(0, base.len)
@@ -185,10 +181,10 @@ for(s.comb in pref.combinations){
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
     if(length(dup.value > 0)){
       v.final[v.final %in% dup.value] == 0
-      pokaz('Number of duplicated', length(dup.value))
+      # pokaz('Number of duplicated', length(dup.value))
     }
     
-    pokaz('Length of saved vector', length(v.final))
+    # pokaz('Length of saved vector', length(v.final))
     
     suppressMessages({
       h5write(v.final, file.res, s)
