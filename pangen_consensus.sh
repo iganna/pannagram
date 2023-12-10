@@ -186,6 +186,7 @@ for file_step in "${path_flags}step*_done*"; do
 
         # Check if step number is greater or equal to start_step
         if [ "$step_tmp" -ge "$start_step" ]; then
+            echo "remove ${file_step}"
             rm -f "$file_step"
         fi
     fi
