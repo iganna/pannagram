@@ -79,7 +79,7 @@ if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
 
 # ---- Get accession names ----
-pokaz(path.aln)
+
 aln.suff = '_full.rds'
 aln.files <- list.files(path = path.aln, 
                         pattern = sub("\\.rds", "\\\\.rds$", aln.suff))
@@ -106,7 +106,7 @@ chromosome.pairs = unique(chromosome.pairs[,c(2,3)])
 # ---- Length of reference chromosomes ----
 
 file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
-pokaz('File with chromosomal lengths', file.chr.len)
+# pokaz('File with chromosomal lengths', file.chr.len)
 if(!file.exists(file.chr.len)){
   chr.len = c()
   for(i.chr in 1:n.chr.ref){
@@ -115,7 +115,7 @@ if(!file.exists(file.chr.len)){
     
     # Read base chromosome
     base.file = paste0(base.acc.ref, '_chr', i.chr , '.', base.suff, collapse = '')
-    pokaz('Base:', base.file)
+    # pokaz('Base:', base.file)
     base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
     base.fas.fw = seq2nt(base.fas.fw)
     chr.len = c(chr.len, length(base.fas.fw))
@@ -125,7 +125,7 @@ if(!file.exists(file.chr.len)){
   chr.len = readRDS(file.chr.len)
 }
 
-pokaz('Chromosomal lengths', chr.len)
+# pokaz('Chromosomal lengths', chr.len)
 
 # ----  Combine correspondence  ----
 
@@ -162,7 +162,7 @@ max.len.gap = 20000
   
   for(acc in accessions){
     
-    pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
+    # pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
