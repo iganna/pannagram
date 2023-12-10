@@ -162,12 +162,13 @@ path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 
 # Path with steps
 path_flags="${pref_global}flags/"
+path_flags=$(add_symbol_if_missing "$path_flags" "/")
 if [ ! -d "$path_flags" ]; then
     mkdir -p "$path_flags"
 fi
 
 # Looping through and deleting files
-for file_step in "$path_flags"/.step*_done; do
+for file_step in "$path_flags"step*_done; do
     if [ -f "$file_step" ]; then
         # Extracting step number from the file name
         step_tmp=$(echo "$file_step" | sed -e 's/.*\.step\([0-9]*\)_done/\1/')
