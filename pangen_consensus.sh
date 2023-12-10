@@ -69,7 +69,6 @@ EOF
 
 # ref_set=""
 additional_params=""
-start_step=1
 
 # Iterate through all arguments
 while [[ $# -gt 0 ]]; do
@@ -121,8 +120,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-pokaz_message "Sterting ste: ${start_step}"
-
 # ----------------------------------------------------------------------------
 #             CHECK PARAMETERS
 # ----------------------------------------------------------------------------
@@ -167,18 +164,32 @@ if [ ! -d "$path_flags" ]; then
     mkdir -p "$path_flags"
 fi
 
-# Looping through and deleting files of stages, which are less then the current one
-for file_step in "$path_flags"step*_done; do
-    if [ -f "$file_step" ]; then
-        # Extracting step number from the file name
-        step_tmp=$(echo "$file_step" | sed -e 's/.*step\([0-9]*\)_done/\1/')
 
-        # Check if step number is greater or equal to start_step
-        if [ "$step_tmp" -ge "$start_step" ]; then
-            rm -f "$file_step"
-        fi
+if [ -z "${start_step}" ]; then
+     max_step_file=$(ls ${path_flags}step*_done | sort -V | tail -n 1)
+
+    if [ -n "${max_step_file}" ]; then
+        start_step=$(echo "${max_step_file}" | sed -e 's/.*step\([0-9]*\)_done/\1/')
+    else
+        start_step=1
     fi
-done
+else
+    # Looping through and deleting files of stages, which are less then the current one
+    for file_step in "$path_flags"step*_done; do
+        if [ -f "$file_step" ]; then
+            # Extracting step number from the file name
+            step_tmp=$(echo "$file_step" | sed -e 's/.*step\([0-9]*\)_done/\1/')
+
+            # Check if step number is greater or equal to start_step
+            if [ "$step_tmp" -ge "$start_step" ]; then
+                rm -f "$file_step"
+            fi
+        fi
+    done
+fi
+
+pokaz_message "Sterting ste: ${start_step}"
+
 
 # ----------------------------------------------------------------------------
 #             ONE REFERENCE
