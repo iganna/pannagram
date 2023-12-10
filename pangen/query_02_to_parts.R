@@ -6,7 +6,7 @@ suppressMessages({
   library(doParallel)
 })
 
-source("../utils/utils.R")
+source("utils/utils.R")
 
 #Rscript query_to_parts.R -n 5 -t fasta --path.chr ../pb_chromosomes/ -b 5000 --path.parts ../pb_parts/
 # Rscript query_to_parts.R -n 8 -t fasta --path.chr ../ly_chromosomes/ -b 5000 --path.parts ../ly_parts/

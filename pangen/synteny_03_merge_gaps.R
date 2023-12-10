@@ -10,8 +10,8 @@ suppressMessages({
 })
 
 
-source("../utils/utils.R")
-source("synteny_funcs.R")
+source("utils/utils.R")
+source("pangen/synteny_funcs.R")
 
 pokazStage('Alignment2: fill the gaps between synteny blocks')
 

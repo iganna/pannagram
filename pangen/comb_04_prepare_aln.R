@@ -10,7 +10,7 @@ suppressMessages({
   library(Biostrings)
 })
 
-source("../utils/utils.R")
+source("utils/utils.R")
 source("synteny_funcs.R")
 
 pokazStage('Prepare sequences for MAFFT')

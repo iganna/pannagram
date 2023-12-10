@@ -14,7 +14,7 @@ suppressMessages({
   library(rhdf5)
 })
 
-source("../utils/utils.R")
+source("utils/utils.R")
 source("synteny_funcs.R")
 
 

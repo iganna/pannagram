@@ -4,7 +4,7 @@ library('seqinr')
 library('foreach')
 library(doParallel)
 library("optparse")
-source('../utils/utils.R')
+source('utils/utils.R')
 })
 
 pokazStage('Combine all alignments together into the final one')

@@ -12,7 +12,7 @@ suppressMessages({
 
 
 source("utils/utils.R")
-source("synteny_funcs.R")
+source("pangen/synteny_funcs.R")
 
 pokazStage('Alignment1: after first blast of parts')
 
