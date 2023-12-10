@@ -251,12 +251,12 @@ fi
 
 
 # Create sequences to run MAFFT and perform some small alignments
-if [ $start_step -le 10 ] && [ ! -f "$path_flags/step10_done" ]; then
+pref_mafftin="${pref_global}mafft_in/"
+if [ ! -d "$pref_mafftin" ]; then
+    mkdir -p "$pref_mafftin"
+fi
 
-    pref_mafftin="${pref_global}mafft_in/"
-    if [ ! -d "$pref_mafftin" ]; then
-        mkdir -p "$pref_mafftin"
-    fi
+if [ $start_step -le 10 ] && [ ! -f "$path_flags/step10_done" ]; then
 
     Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
                       --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
@@ -266,13 +266,12 @@ fi
 
 
 # Run MAFFT
+pref_mafft_out="${pref_global}mafft_out/"
+if [ ! -d "$pref_mafft_out" ]; then
+    mkdir -p "$pref_mafft_out"
+fi
+
 if [ $start_step -le 11 ] && [ ! -f "$path_flags/step11_done" ]; then
-
-    pref_mafft_out="${pref_global}mafft_out/"
-    if [ ! -d "$pref_mafft_out" ]; then
-        mkdir -p "$pref_mafft_out"
-    fi
-
 
     ./pangen/comb_05_run_mafft.sh  --cores ${cores} \
                       --path.mafft.in ${pref_mafftin} \
