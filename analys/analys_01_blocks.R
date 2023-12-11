@@ -27,7 +27,7 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-print(opt)
+# print(opt)
 
 # Set the number of cores for parallel processing
 num.cores.max = 10
@@ -52,7 +52,7 @@ if (is.null(opt$ref.pref)) {
 # path.cons = './'
 # ref.pref = '0'
 # library(rhdf5)
-# source('../../../pannagram/utils.R')
+# source('../../../pannagram/utils/utils.R')
 
 s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -88,10 +88,12 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   
   # Create group for blocks
-  h5createGroup(file.comb, gr.blocks)
+  suppressMessages({
+    h5createGroup(file.comb, gr.blocks)
+  })
+
   
-  
-  # ---- Define positions without blocks ----
+  # ---- Define coverage of blocks for every position  and put NA between blocks----
   idx.blocks = 0
   for(acc in accessions){
     
@@ -105,23 +107,27 @@ for(s.comb in pref.combinations){
     # Find blocks of additional breaks
     v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
     v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
-    v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
-    v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
     
-    # Save blocks
-    idx.block.tmp = which(abs(diff(v[,4])) != 1)
-    idx.block.beg = v[c(1, which(abs(diff(v[,4])) != 1)+1), 2]
-    idx.block.end = v[c(which(abs(diff(v[,4])) != 1), nrow(v)), 2]
+    idx.block.tmp = which(abs(diff(v[,1])) != 1)
+    idx.block.beg = v[c(1, idx.block.tmp+1), 2]
+    idx.block.end = v[c(idx.block.tmp, nrow(v)), 2]
+  
     pokaz('Number of blocks', length(idx.block.beg))
+
+    # Add NA
     v.block = rep(0, length(v.init))
     for(i.bl in 1:length(idx.block.beg)){
       v.block[idx.block.beg[i.bl]:idx.block.end[i.bl]] = i.bl
     }
+    v.init[v.block == 0] = NA
+    pokaz(sum(is.na(v.init)))
     
-    # suppressMessages({
-    #   h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
-    # })
+    # Save
+    suppressMessages({
+      h5write(v.init, file.comb, paste(gr.accs.e, acc, sep = ''))
+    })
     
+    # Remember for common breaks
     idx.blocks = idx.blocks + (v.block != 0) * 1
     
     rmSafe(v)
@@ -135,25 +141,23 @@ for(s.comb in pref.combinations){
     
     pokaz('Accession', acc, 'combination', s.comb)
     
+    # Read correspondence
     v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-    v = v.init
-    v[idx.no.blocks] = 0
     
-    # ----  Find breaks  ----
+    # Add NA as common breaks
+    v.init[idx.no.blocks] = NA
+    suppressMessages({
+      h5write(v.init, file.comb, paste(gr.accs.e, acc, sep = ''))
+    })
     
-    # Find blocks of additional breaks
-    v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
-    v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
-    v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
-    
-    # Save blocks
-    idx.block.tmp = which(abs(diff(v[,4])) != 1)
-    idx.block.beg = v[c(1, which(abs(diff(v[,4])) != 1)+1), 2]
-    idx.block.end = v[c(which(abs(diff(v[,4])) != 1), nrow(v)), 2]
+    # ----  Find blocks of non-NA  ----
+    not.na <- !is.na(v.init)
+    changes <- diff(c(FALSE, not.na, FALSE))
+    idx.block.beg <- which(changes == 1)
+    idx.block.end <- which(changes == -1) - 1
     pokaz('Number of blocks', length(idx.block.beg))
     
-    
+    # Blocks for the current accession
     df.blocks.acc = data.frame(pan.b = idx.block.beg,
                                pan.e = idx.block.end,
                                own.b = abs(v.init[idx.block.beg]),
@@ -161,16 +165,18 @@ for(s.comb in pref.combinations){
                                acc = acc,
                                chr = strsplit(s.comb, '_')[[1]][1],
                                dir = (1 - sign(v.init[idx.block.beg])) / 2)
-    
     df.blocks.acc[df.blocks.acc$dir == 1, 1:4] = df.blocks.acc[df.blocks.acc$dir == 1, c(2,1,4,3)]
     
+    # Save for the whole dataset
     df.blocks = rbind(df.blocks, df.blocks.acc)
     
+    # Define block IDs
     v.block = rep(0, length(v.init))
     for(i.bl in 1:length(idx.block.beg)){
       v.block[idx.block.beg[i.bl]:idx.block.end[i.bl]] = i.bl
     }
     
+    # Save blocks
     suppressMessages({
       h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
     })
@@ -180,7 +186,6 @@ for(s.comb in pref.combinations){
     rmSafe(v)
     rmSafe(v.init)
     rmSafe(idx.tmp.acc)
-    
   }
   
   H5close()
