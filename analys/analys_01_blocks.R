@@ -112,7 +112,7 @@ for(s.comb in pref.combinations){
     idx.block.beg = v[c(1, idx.block.tmp+1), 2]
     idx.block.end = v[c(idx.block.tmp, nrow(v)), 2]
   
-    pokaz('Number of blocks', length(idx.block.beg))
+    pokaz('Number of blocks init:', length(idx.block.beg))
 
     # Add NA
     v.block = rep(0, length(v.init))
@@ -120,7 +120,6 @@ for(s.comb in pref.combinations){
       v.block[idx.block.beg[i.bl]:idx.block.end[i.bl]] = i.bl
     }
     v.init[v.block == 0] = NA
-    pokaz(sum(is.na(v.init)))
     
     # Save
     suppressMessages({
@@ -149,6 +148,8 @@ for(s.comb in pref.combinations){
     suppressMessages({
       h5write(v.init, file.comb, paste(gr.accs.e, acc, sep = ''))
     })
+    
+    pokaz('Content NA:', sum(is.na(v.init)), 'zeros:', sum(is.na(v.init) & (v.init ==0)), 'pos:', sum(is.na(v.init) & (v.init !=0)))
     
     # ----  Find blocks of non-NA  ----
     not.na <- !is.na(v.init)
