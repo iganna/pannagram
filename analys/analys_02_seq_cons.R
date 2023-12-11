@@ -57,13 +57,13 @@ gr.break.b = '/break'
 
 # ---- Testing ----
 # 
-library(rhdf5)
-source('../../../pannagram/utils.R')
-path.cons = './'
-path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
-ref.pref = '0'
-nts = c('A', 'C', 'G', 'T', '-')
-
+# library(rhdf5)
+# source('../../../pannagram/utils.R')
+# path.cons = './'
+# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
+# ref.pref = '0'
+# nts = c('A', 'C', 'G', 'T', '-')
+# 
 
 
 
