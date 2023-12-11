@@ -47,8 +47,6 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
-n.flank = 30
-
 gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
 gr.break.e = 'break/'
@@ -58,12 +56,12 @@ gr.break.b = '/break'
 # ---- Testing ----
 # 
 # library(rhdf5)
-# source('../../../pannagram/utils.R')
+# source('../../../pannagram/utils/utils.R')
 # path.cons = './'
 # path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
 # ref.pref = '0'
 # nts = c('A', 'C', 'G', 'T', '-')
-# 
+
 
 
 
@@ -110,6 +108,8 @@ for(s.comb in pref.combinations){
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v.na = is.na(v)
+    v[v.na] = 0
     if(is.null(mx.consensus)){
       mx.consensus = matrix(0, nrow = length(v), ncol = length(nts), dimnames = list(NULL, nts))
     }
@@ -139,6 +139,14 @@ for(s.comb in pref.combinations){
     suppressMessages({
       h5write(s, file.seq, paste(gr.accs.e, acc, sep = ''))
     })
+    
+    rmSafe(v)
+    rmSafe(v.na)
+    rmSafe(genome)
+    rmSafe(s)
+    rmSafe(idx.plus)
+    rmSafe(idx.mins)
+    gc()
   }
   
   suppressMessages({
@@ -147,10 +155,11 @@ for(s.comb in pref.combinations){
   
   H5close()
   gc()
+  rmSafe(mx.consensus)
   
 }
 
-# stopCluster(myCluster)
+stopCluster(myCluster)
 
 warnings()
 
