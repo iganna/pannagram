@@ -149,7 +149,7 @@ for(s.comb in pref.combinations){
       h5write(v.init, file.comb, paste(gr.accs.e, acc, sep = ''))
     })
     
-    pokaz('Content NA:', sum(is.na(v.init)), 'zeros:', sum(is.na(v.init) & (v.init ==0)), 'pos:', sum(is.na(v.init) & (v.init !=0)))
+    pokaz('Content NA:', sum(is.na(v.init)), 'zeros:', sum(!is.na(v.init) & (v.init ==0)), 'pos:', sum(!is.na(v.init) & (v.init !=0)))
     
     # ----  Find blocks of non-NA  ----
     not.na <- !is.na(v.init)
