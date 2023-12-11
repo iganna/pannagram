@@ -4,20 +4,23 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
-  source('utils.R')
 })
 
-pokazStage('Combine all alignments together into the final one')
+source("utils/utils.R")
+
+pokazStage('Get sequence alignments and consensus sequence')
 
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
+  make_option(c("--ref.pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("--path.chromosomes"), type="character", default=NULL, 
               help="path to directory with chromosomes", metavar="character"),
   make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to directory with the consensus", metavar="character")
+              help="path to directory with the consensus", metavar="character"),
+  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+              help = "number of cores to use for parallel processing", metavar = "integer")
 ); 
 
 
@@ -81,9 +84,9 @@ nts = c('A', 'C', 'G', 'T', '-')
 
 # ------------------------------------
 # ------------------------------------
-# flag.for = F
-# ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
-
+#flag.for = F
+#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
+flag.for = T
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)

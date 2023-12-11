@@ -25,7 +25,7 @@ catch() {
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils_bash.sh
+source utils/utils_bash.sh
 
 
 print_usage() {
@@ -52,6 +52,8 @@ while [ $# -gt 0 ]; do
         -pref_global) pref_global=$2; shift 2;;
         -ref_pref) ref_pref=$2; shift 2;;
         -path_consensus) path_consensus=$2; shift 2;;
+        -path_chromosomes) path_chromosomes=$2; shift 2 ;;
+        -cores) cores=$2; shift 2 ;;
         -blocks) run_blocks=true; shift;;
         -seq)    run_seq=true; shift;;
         # -sv)     run_sv=true; shift;;
@@ -59,6 +61,11 @@ while [ $# -gt 0 ]; do
         *) print_usage; exit 1;;
     esac
 done
+
+cores="${cores:-1}"  # Number of cores
+
+check_missing_variable "pref_global"
+check_missing_variable "ref_pref"
 
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
@@ -73,7 +80,9 @@ if [ "$run_blocks" = true ]; then
 fi
 
 if [ "$run_seq" = true ]; then
-    Rscript analys_02_seq.R
+    check_missing_variable "path_chromosomes"
+
+    Rscript analys_02_seq.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}
 fi
 
 # if [ "$run_sv" = true ]; then

@@ -131,7 +131,7 @@ do
 done
 
 
-# Вывод нераспознанных параметров
+# Output of Unrecognized Parameters
 if [[ ${#unrecognized_options[@]} -gt 0 ]]
 then
   echo "Unrecognized options:"

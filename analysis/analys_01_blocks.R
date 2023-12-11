@@ -8,10 +8,9 @@ suppressMessages({
   library(rhdf5)
 })
 
-source("utils.R")
-source("synteny_funcs.R")
+source("utils/utils.R")
 
-pokazStage('Gind positions of common gaps in the reference-free MSA')
+pokazStage('Define blocks in the alignemnt')
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -20,7 +19,9 @@ option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to consensus directory", metavar="character"),
   make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character")
+              help="prefix of the reference file", metavar="character"),
+  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+              help = "number of cores to use for parallel processing", metavar = "integer")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -72,10 +73,12 @@ max.len.gap = 20000
 gr.blocks = 'blocks/'
 
 
-
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 df.blocks = c()
 
+#flag.for = F
+#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
+flag.for = T
 for(s.comb in pref.combinations){
 
   
@@ -179,7 +182,6 @@ for(s.comb in pref.combinations){
     rmSafe(idx.tmp.acc)
     
   }
-  
   
   H5close()
   gc()
