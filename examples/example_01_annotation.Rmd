@@ -9,10 +9,13 @@ library(ggplot2)
 library(cowplot)
 library(rhdf5)
 
-path.pannagram = '../../pannagram/'
+path.pannagram = '../'
 
-source(paste(path.pannagram, 'utils.R', sep = ''))
-source(paste(path.pannagram, 'visualisation.R', sep = ''))
+source(paste(path.pannagram, 'utils/utils.R', sep = ''))
+source(paste(path.pannagram, 'visualisation/visualisation.R', sep = ''))  # plotPanAcc
+source(paste(path.pannagram, 'visualisation/panplot.R', sep = ''))  # ggSynteny
+source(paste(path.pannagram, 'pangen/comb_func.R', sep = ''))  # getPrevNext
+source(paste(path.pannagram, 'analysis/analys_func.R', sep = ''))  # gffgff
 
 ```
 
@@ -36,7 +39,6 @@ ref.acc = '0'
 ## Additional variables
 ```{r}
 
-
 gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
 
@@ -57,7 +59,7 @@ c.grey = '#EBEBEB'
 ## Pairwise alignments
 ```{r}
 # Set chromosome index and setup the corresponding MSA file
-i.chr = 3
+i.chr = 1
 file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 
 # Read group information from the MSA file and extract accession names and pangenome length
@@ -88,59 +90,111 @@ dev.off()
 ## Common alignment plot (grey shades)
 ```{r}
 
-
-file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.acc,'.rds', sep = '')
+# Load MSA blocks information and set window size
+file.blocks = paste(path.cons, 'msa_blocks_ref_', ref.acc, '.rds', sep = '')
 wnd.size = 100000
 
+# Read block indices and prepare plots for each of the first 5 chromosomes
 idx.blocks = readRDS(file.blocks)
-
 p.list = list()
 for(i.chr in 1:5){
-  p = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), c(1, 3, 2), wnd.size=wnd.size)
-  p.list[[i.chr]] = p
+  p.list[[i.chr]] = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), c(1, 3, 2), wnd.size=wnd.size)
 }
 
-# Combine all plots and display
+# Combine and display all chromosome plots
 p.combo <- plot_grid(plotlist = p.list, nrow = 5)
 p.combo
 
-
-pdf(paste(path.figures, 'msa_pangenone','.pdf', sep = ''), width = 8, height = 6)
+# Save the combined plot to a PDF file
+pdf(paste(path.figures, 'msa_pangenone', '.pdf', sep = ''), width = 8, height = 6)
 print(p.combo)
 dev.off()
 
+
 ```
 
-
-
-# Get a GFF file for one accession using a GFF file from another accession
+# Table of correspondence
 ```{r}
+# Define chromosome and MSA file path
+i.chr = 3
+file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 
-acc1 = '0'
-file.gff.acc1 = ''
+# Initialize vector and load MSA data for each accession
+v = c()
+for(acc in accessions){
+  v.acc = h5read(file.msa, paste(gr.accs.e, acc, sep = ''))
+  v = cbind(v, v.acc)
+}
+colnames(v) = accessions
 
+# Show the correspondence
+v[10000000 + (-5:5),]
 
 ```
 
 
-## Get vector of corresponding positions
+## Get a GFF file for one accession using a GFF file from another accession
 ```{r}
+# Display the list of accessions
+pokaz(accessions)
+
+# Define accessions for comparison
+acc1 = 'acc_0'
+acc2 = 'acc_6046-v1.1'
+
+# Read GFF
+file.gff.acc1 = paste(path.annot, 'TAIR10_GFF3_genes_transposons.gff', sep = '')
+gff1 = read.table(file.gff.acc1, stringsAsFactors = F)
+
+# Chromosome IDs
+gff1$chr = as.numeric(gsub('Chr', '', gff1$V1))
+gff1 = gff1[!is.na(gff1$chr),]  # remove wrong names or ChrC, ChrM, etc....
+
+# Filtration 
+gff1 = gff1[!(gff1$V3 %in% c('chromosome')),]  # unnecessary attributes
+gff1 = gff1[gff1$V3 %in% c('gene', 'exon'),]  # important attributes
+
+# Convert GFF Annotations from acc1 to acc2
+gff2.res = gffgff(path.cons, acc1, acc2, ref.acc, gff1, flag.exact = T)
+
+# Results
+gff2.remain = gff2.res$gff2.remain
+gff2.loosing = gff2.res$gff2.loosing
+pokaz('Annotated before:', nrow(gff1), 'Annotated now', nrow(gff2.remain), 'Lost', nrow(gff1) - nrow(gff2.remain))
+
+# TODO: Check that all exons have genes....
+
+# Save
+write.table(gff2.remain[,1:9], paste(path.annot, acc2, '_based_on_', acc1, '.txt', sep = ''),
+            quote = F, col.names = F, row.names = F, sep = '\t')
+
 
 ```
 
 
-
-# Get alignment from positions (beg-end) in coordinates of accession Z
+## Get alignment from positions (beg-end) in coordinates of accession Z
 ```{r}
+# Define accession identifiers
+acc1 = 'acc_0'
+acc2 = 'acc_6046-v1.1'
+
+# Set the chromosome number for analysis
+i.chr = 1
+
+# Define the start and end positions for the region of interest
+pos.beg = 10000000
+pos.end = pos.beg + 500
+
+# Read multiple sequence alignment (MSA) data for both accessions from the HDF5 file
+file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
+          h5read(file.msa, paste(gr.accs.e, acc2, sep = '')))
+
+# Filter the MSA data to include only positions within the specified range
+idx.pos = (v[,1] >= pos.beg) & (v[,1] <= pos.end)
+v.corresp = v[idx.pos]
+
 
 ```
-
-
-## Dotplots
-```{r}
-
-```
-
-
 
 
