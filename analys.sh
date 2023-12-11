@@ -63,6 +63,7 @@ while [ $# -gt 0 ]; do
 done
 
 cores="${cores:-1}"  # Number of cores
+pokaz_message "Number of cores: ${cores}"
 
 check_missing_variable "ref_pref"
 
@@ -84,12 +85,12 @@ if [ "$run_blocks" = true ]; then
 
     pokaz_message ${path_consensus}
 
-    Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+    Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --cores ${cores}
 fi
 
 if [ "$run_seq" = true ]; then
 
-    Rscript analys/analys_02_seq.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}
+    Rscript analys/analys_02_seq.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
 fi
 
 # if [ "$run_sv" = true ]; then
