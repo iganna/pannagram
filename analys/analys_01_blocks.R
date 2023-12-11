@@ -136,6 +136,7 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
   }
   
   # Find all blocks
+  df.blocks.tmp = c()
   idx.no.blocks = idx.blocks <= 1
   for(acc in accessions){
     
@@ -170,7 +171,7 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
     df.blocks.acc[df.blocks.acc$dir == 1, 1:4] = df.blocks.acc[df.blocks.acc$dir == 1, c(2,1,4,3)]
     
     # Save for the whole dataset
-    if(flag.for) list.blocks[[s.comb]] = df.blocks.acc
+    df.blocks.tmp = rbind(df.blocks.tmp, df.blocks.acc)
     
     # Define block IDs
     v.block = rep(0, length(v.init))
@@ -192,6 +193,12 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
   
   H5close()
   gc()
+  
+  if(flag.for){
+    list.blocks[[s.comb]] = df.blocks.tmp
+  } else {
+    return(df.blocks.tmp)
+  }
   
 }
 
