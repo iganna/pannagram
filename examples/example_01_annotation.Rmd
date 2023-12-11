@@ -15,7 +15,7 @@ source(paste(path.pannagram, 'utils/utils.R', sep = ''))
 source(paste(path.pannagram, 'visualisation/visualisation.R', sep = ''))  # plotPanAcc
 source(paste(path.pannagram, 'visualisation/panplot.R', sep = ''))  # ggSynteny
 source(paste(path.pannagram, 'pangen/comb_func.R', sep = ''))  # getPrevNext
-source(paste(path.pannagram, 'analysis/analys_func.R', sep = ''))  # gffgff
+source(paste(path.pannagram, 'analys/analys_func.R', sep = ''))  # gffgff
 
 ```
 
@@ -96,7 +96,7 @@ wnd.size = 100000
 idx.blocks = readRDS(file.blocks)
 p.list = list()
 for(i.chr in 1:5){
-  p.list[[i.chr]] = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), c(1, 3, 2), wnd.size=wnd.size)
+  p.list[[i.chr]] = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), c(1, 2, 3), wnd.size=wnd.size)
 }
 
 # Combine and display all chromosome plots

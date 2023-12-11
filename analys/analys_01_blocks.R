@@ -154,11 +154,23 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
     pokaz('Content NA:', sum(is.na(v.init)), 'zeros:', sum(!is.na(v.init) & (v.init ==0)), 'pos:', sum(!is.na(v.init) & (v.init !=0)))
     
     # ----  Find blocks of non-NA  ----
-    not.na <- !is.na(v.init)
-    changes <- diff(c(FALSE, not.na, FALSE))
-    idx.block.beg <- which(changes == 1)
-    idx.block.end <- which(changes == -1) - 1
+    # not.na <- !is.na(v.init)
+    # changes <- diff(c(FALSE, not.na, FALSE))
+    # idx.block.beg <- which(changes == 1)
+    # idx.block.end <- which(changes == -1) - 1
+    
+    # Find blocks of additional breaks
+    v = v.init
+    v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
+    v = v[(v[,1] != 0) & !(is.na(v[,1])),]                                   # 1 - existing coordinates of accessions
+    
+    idx.block.tmp = which(abs(diff(v[,1])) != 1)
+    idx.block.beg = v[c(1, idx.block.tmp+1), 2]
+    idx.block.end = v[c(idx.block.tmp, nrow(v)), 2]
+    
+    
     pokaz('Number of blocks', length(idx.block.beg))
+    
     
     # Blocks for the current accession
     df.blocks.acc = data.frame(pan.b = idx.block.beg,

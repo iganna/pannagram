@@ -446,21 +446,20 @@ ggSynteny <- function(idx.break, i.chr, accessions, i.order=NULL, file.cen.pos=N
                              # fill = as.factor(dir1+dir2) )
                              fill = as.factor(t)), 
                  # color = 'grey',
-                 alpha=0.5) +
-    geom_segment(data = idx.break[idx.break$chr == i.chr,],
-                 aes(x=own.b, y=acc.val, xend=own.e, yend=acc.val,
-                     color=as.factor(( dir == 0) )))  + #+ 2 * trans
-    # color=pan.b)) +
-    scale_color_manual(values = c('#CE1F6A', 'black'))+
-    scale_fill_manual(values = gr.col)+
-    # scale_fill_gradientn(colors = custom_colors.cold) +
-    # scale_fill_gradientn(colors = custom_colors.cold) +
-    # scale_fill_viridis_c() +
+                 alpha=0.5) + 
+    geom_segment(data = idx.break[idx.break$chr == i.chr,], 
+                 aes(x=own.b, y=acc.val, xend=own.e, yend=acc.val, 
+                     color=as.factor(( dir == 0) ))) + #+ 2 * trans
+    # color=pan.b)) + 
+    scale_color_manual(values = c('#CE1F6A', 'black')) + 
+    scale_fill_manual(values = gr.col) + 
+    # scale_fill_gradientn(colors = custom_colors.cold) + 
+    # scale_fill_gradientn(colors = custom_colors.cold) + 
+    # scale_fill_viridis_c() + 
     theme_minimal() + ylab('') + xlab('own genome position') + 
-    theme(legend.position = "none") + theme(panel.grid.minor.x = element_blank(),
-                                            panel.grid.minor.y = element_blank(),
-                                            panel.grid.major.x = element_blank()
-    ) + 
+    theme(legend.position = "none") + theme(panel.grid.minor.x = element_blank(), 
+                                            panel.grid.minor.y = element_blank(), 
+                                            panel.grid.major.x = element_blank()) + 
     scale_y_continuous(labels =  accessions[i.order], breaks = 1:length(i.order))
   
   
