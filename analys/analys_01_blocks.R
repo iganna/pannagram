@@ -73,14 +73,13 @@ max.len.gap = 20000
 gr.blocks = 'blocks/'
 
 
-# columns:   pan.b    pan.e    own.b    own.e   acc chr dir
-df.blocks = c()
+# ---- Main ----
+flag.for = F
+list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {
 
-#flag.for = F
-#list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {
-flag.for = T
-list.blocks = list()
-for(s.comb in pref.combinations){
+# flag.for = T
+# list.blocks = list()
+# for(s.comb in pref.combinations){
 
   
   file.comb = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
@@ -170,7 +169,7 @@ for(s.comb in pref.combinations){
     df.blocks.acc[df.blocks.acc$dir == 1, 1:4] = df.blocks.acc[df.blocks.acc$dir == 1, c(2,1,4,3)]
     
     # Save for the whole dataset
-    list.blocks[[s.comb]] = df.blocks.acc
+    if(flag.for) list.blocks[[s.comb]] = df.blocks.acc
     
     # Define block IDs
     v.block = rep(0, length(v.init))
@@ -195,6 +194,8 @@ for(s.comb in pref.combinations){
   
 }
 
+
+# columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 
 df.blocks = do.call(rbind, list.blocks)
 file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.pref,'.rds', sep = '')
