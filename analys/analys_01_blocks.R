@@ -214,7 +214,7 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
   
 }
 
-print(list.blocks)
+# print(list.blocks)
 
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 

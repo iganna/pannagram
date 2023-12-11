@@ -82,13 +82,13 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # Execute scripts based on the provided keys
 if [ "$run_blocks" = true ]; then
-    
+
     Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --cores ${cores}
 fi
 
 if [ "$run_seq" = true ]; then
 
-    Rscript analys/analys_02_seq.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
+    Rscript analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
 fi
 
 # if [ "$run_sv" = true ]; then
