@@ -43,7 +43,7 @@ The quickstart toy-example is:
 ```
 ./sim_search.sh -in genes.fasta -genome genome.fasta -out out.txt
 ```
-
+<!--
 
 ## Parameters to run `pipeline_consensus.sh`
 
@@ -142,7 +142,7 @@ add "fasta" as parameter and make clever split on this parameter, может б�
 -all_clp rкак-то переделать флаг
 избежать переименования референсных геномов в - _
 
-
+-->
 
 ## Acknowledgements
 
