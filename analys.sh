@@ -79,6 +79,9 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # Execute scripts based on the provided keys
 if [ "$run_blocks" = true ]; then
+
+    pokaz_message ${path_consensus}
+
     Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
 
