@@ -3,7 +3,7 @@
 ./pangen_consensus.sh -pref_global '../pan_test/anna_50' -ref_set 'NT1_50,TE11_50' -n_chr_ref 8 -path_in '../lyrata_updated/' -n_chr_query 8 -cores 30 -all_cmp F
 ./pangen_consensus.sh -pref_global '../pan_test/anna_norm' -ref_set 'NT1_220222,TE11_final' -n_chr_ref 8 -path_in '../lyrata_updated/' -n_chr_query 8 -cores 30 -all_cmp F
 
-
+./analys.sh -pref_global '../pan_test/tom'  -ref_pref 0 
 
 ./sim_search.sh -in ../new_genes/new_genes.fasta -genome ../pb_chromosomes/0_chr1.fasta -out ../tmp.txt
 

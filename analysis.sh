@@ -70,6 +70,9 @@ check_missing_variable "ref_pref"
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
+path_chromosomes="${path_chromosomes:-${pref_global}chromosomes/}"
+path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
+
 # ----------------------------------------------------------------------------
 #             MAIN
 # ----------------------------------------------------------------------------
@@ -80,7 +83,6 @@ if [ "$run_blocks" = true ]; then
 fi
 
 if [ "$run_seq" = true ]; then
-    check_missing_variable "path_chromosomes"
 
     Rscript analys_02_seq.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}
 fi

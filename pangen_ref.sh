@@ -153,7 +153,6 @@ check_missing_variable "n_chr_ref"
 check_missing_variable "n_chr_query"
 
 
-
 # ---- if some parameters zre not given - set the default value
 
 # Basic parameters
