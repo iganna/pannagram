@@ -107,7 +107,7 @@ for(s.comb in pref.combinations){
     
     # Find blocks of additional breaks
     v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
+    v = v[(v[,1] != 0) & !(is.na(v[,1])),]                                   # 1 - existing coordinates of accessions
     
     idx.block.tmp = which(abs(diff(v[,1])) != 1)
     idx.block.beg = v[c(1, idx.block.tmp+1), 2]
