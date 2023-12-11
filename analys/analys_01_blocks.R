@@ -194,12 +194,13 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
   
 }
 
+print(list.blocks)
 
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
-
-df.blocks = do.call(rbind, list.blocks)
-file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.pref,'.rds', sep = '')
-saveRDS(df.blocks, file.blocks, compress = F)
+# 
+# df.blocks = do.call(rbind, list.blocks)
+# file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.pref,'.rds', sep = '')
+# saveRDS(df.blocks, file.blocks, compress = F)
 
 
 
