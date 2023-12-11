@@ -77,8 +77,9 @@ gr.blocks = 'blocks/'
 df.blocks = c()
 
 #flag.for = F
-#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
+#list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {
 flag.for = T
+list.blocks = list()
 for(s.comb in pref.combinations){
 
   
@@ -169,7 +170,7 @@ for(s.comb in pref.combinations){
     df.blocks.acc[df.blocks.acc$dir == 1, 1:4] = df.blocks.acc[df.blocks.acc$dir == 1, c(2,1,4,3)]
     
     # Save for the whole dataset
-    df.blocks = rbind(df.blocks, df.blocks.acc)
+    list.blocks[[s.comb]] = df.blocks.acc
     
     # Define block IDs
     v.block = rep(0, length(v.init))
@@ -194,6 +195,8 @@ for(s.comb in pref.combinations){
   
 }
 
+
+df.blocks = do.call(rbind, list.blocks)
 file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.pref,'.rds', sep = '')
 saveRDS(df.blocks, file.blocks, compress = F)
 
