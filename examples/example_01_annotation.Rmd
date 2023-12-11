@@ -9,7 +9,7 @@ library(ggplot2)
 library(cowplot)
 library(rhdf5)
 
-path.pannagram = '../'
+path.pannagram = '../'  # the folder with the cloned repo
 
 source(paste(path.pannagram, 'utils/utils.R', sep = ''))
 source(paste(path.pannagram, 'visualisation/visualisation.R', sep = ''))  # plotPanAcc
@@ -21,10 +21,10 @@ source(paste(path.pannagram, 'analysis/analys_func.R', sep = ''))  # gffgff
 
 ## Paths-Folders
 ```{r}
-path.work = '../../work/004_test_pan/data_greg/'
+path.work = '../../work/004_test_pan/data_greg/'  # change to yours
 
 path.annot = paste(path.work, 'annotation/', sep = '')
-path.cons = paste(path.work, 'consensus/', sep = '')
+path.cons = paste(path.work, 'consensus/', sep = '')  # the result of pannagram
 path.out = paste(path.work, 'out/', sep = '')
 path.figures = paste(path.work, 'figures/', sep = '')
 
@@ -53,13 +53,11 @@ c.grey = '#EBEBEB'
 ```
 
 
-
-
 # Show pangenome coordinates
 ## Pairwise alignments
 ```{r}
 # Set chromosome index and setup the corresponding MSA file
-i.chr = 1
+i.chr = 4
 file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 
 # Read group information from the MSA file and extract accession names and pangenome length
@@ -116,8 +114,10 @@ dev.off()
 # Table of correspondence
 ```{r}
 # Define chromosome and MSA file path
-i.chr = 3
+i.chr = 4
 file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+
+h5ls(file.msa)
 
 # Initialize vector and load MSA data for each accession
 v = c()
@@ -128,7 +128,9 @@ for(acc in accessions){
 colnames(v) = accessions
 
 # Show the correspondence
-v[10000000 + (-5:5),]
+# v[10000000 + (-5:50),]
+v[2500000 + (-5:50),]
+
 
 ```
 
@@ -192,7 +194,7 @@ v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
 
 # Filter the MSA data to include only positions within the specified range
 idx.pos = (v[,1] >= pos.beg) & (v[,1] <= pos.end)
-v.corresp = v[idx.pos]
+v.corresp = v[idx.pos, 2]
 
 
 ```
