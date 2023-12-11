@@ -22,7 +22,7 @@
 #' # Example of function usage:
 #' gff_data <- gffgff("path/to/consensus/", "acc1", "acc2", gff1)
 #' 
-gffgff <- function(path.cons, acc1, acc2, ref.acc, gff1, 
+gff2gff <- function(path.cons, acc1, acc2, ref.acc, gff1, 
                    n.chr = 5,
                    flag.exact=T, 
                    max.chr.len = 35 * 10^6,

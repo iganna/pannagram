@@ -32,7 +32,6 @@ print_usage() {
     echo "Usage: $0 [-blocks] [-seq] [-sv]"
     echo "  -blocks    Run analys_01_blocks.R script"
     echo "  -seq       Run analys_02_seq.R script"
-    # echo "  -sv        Run analys_03_sv.R script"
     echo "  -h, --help Display this help message"
 }
 
@@ -44,7 +43,6 @@ print_usage() {
 # Initialize variables to determine which scripts to run
 run_blocks=false
 run_seq=false
-# run_sv=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -54,7 +52,6 @@ while [ $# -gt 0 ]; do
         -path_consensus) path_consensus=$2; shift 2;;
         -blocks) run_blocks=true; shift;;
         -seq)    run_seq=true; shift;;
-        # -sv)     run_sv=true; shift;;
         -h|--help) print_usage; exit 0;;
         *) print_usage; exit 1;;
     esac
@@ -69,13 +66,9 @@ path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
 # Execute scripts based on the provided keys
 if [ "$run_blocks" = true ]; then
-    Rscript analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+    Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
 
 if [ "$run_seq" = true ]; then
-    Rscript analys_02_seq.R
+    Rscript analys/analys_02_seq.R
 fi
-
-# if [ "$run_sv" = true ]; then
-#     Rscript analys_03_sv.R
-# fi
