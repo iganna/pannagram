@@ -256,10 +256,3 @@ for(i.acc in 1:length(accessions)){
 
 
 
-# ---- Consensus sequence for the whole genome ----
-
-
-# ---- Consensus sequence for each SV ----
-
-
-

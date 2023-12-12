@@ -47,7 +47,7 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
-path.seq = paste(path.cons, 'seq/')
+path.seq = paste(path.cons, 'seq/', sep = '')
 if (!dir.exists(path.seq)) dir.create(path.seq)
 
 gr.accs.e <- "accs/"
@@ -174,6 +174,7 @@ for(s.comb in pref.combinations){
   }
   
   if(sum(s.cons == 'N') > 0) pokazAttention('Some nucleotides are missed:', sum(s.cons == 'N'))
+  s.cons = paste0(s.cons, collapse = '')
   
   pokaz('Saving consensus sequence...')
   names(s.cons) = paste('PanGen_Chr', i.chr, sep = '')
