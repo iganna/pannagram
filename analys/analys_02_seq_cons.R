@@ -170,7 +170,7 @@ for(s.comb in pref.combinations){
   for(k in 1:4){
     idx.k =  mx.consensus[,k] > n.nt
     s.cons[idx.k] = s.nts[k]
-    n.nt[idx.k] = n.nt.k[idx.k]
+    n.nt[idx.k] = mx.consensus[idx.k, k]
   }
   
   if(sum(s.cons == 'N') > 0) pokazAttention('Some nucleotides are missed:', sum(s.cons == 'N'))
