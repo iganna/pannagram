@@ -72,6 +72,7 @@ if(db.fasta.file == fasta.file){
   rm(seqs)  
 }
 
+head(db.len)
 
 res = findNestedness(v, use.strand=use.strand)
 
