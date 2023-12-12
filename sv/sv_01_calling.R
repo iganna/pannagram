@@ -288,9 +288,9 @@ for(s.coms in pref.combinations){
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len))
   for(irow in idx.small){
-    seqs.small[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = 
-      paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
-             collapse = '')
+    s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
+    if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
+    seqs.small[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
   }
   
   # Big sequence
@@ -298,9 +298,9 @@ for(s.coms in pref.combinations){
                     (sv.pos.all$len >= big.len) &
                     (sv.pos.all$len < max.len))
   for(irow in idx.big){
-    seqs.big[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = 
-      paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
-             collapse = '')
+    s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
+    if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
+    seqs.big[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
   }
 }
 
