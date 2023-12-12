@@ -1,7 +1,7 @@
 # Load the necessary library
 library(optparse)
 source('sim/sim_func.R')
-source('utils/utils.R')
+source("utils/utils.R")
 
 # Define options
 option_list = list(
