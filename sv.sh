@@ -119,7 +119,7 @@ if [ "$run_te" = true ]; then
     # fi
     
     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-    file_sv_big_on_te=${file_sv_big%.fasta}_on_te.txt
+    file_sv_big_on_te=${file_sv_big%.fasta}_on_te_blast.txt
 
     # if [ ! -f "${file_sv_big_on_te}" ]; then
         blastn -db "${te_file}" -query "${file_sv_big}" -out "${file_sv_big_on_te}" \
@@ -130,6 +130,8 @@ if [ "$run_te" = true ]; then
     file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.txt
     Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
             --out ${file_sv_big_on_te_cover} --sim ${similarity_value} --use_strand F
+
+    rm "${te_file}.nin" "${te_file}.nhr" "${te_file}.nsq"
 fi
 
 # -------------------------------------------------
@@ -145,9 +147,7 @@ if [ "$run_graph" = true ]; then
     file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
 
     # Check if BLAST database exists
-    # if [ ! -f "${file_sv_big}.nhr" ]; then
-        makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
-    # fi
+    makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
     
     # if [ ! -f "${file_sv_big_on_sv}" ]; then
         blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
@@ -158,5 +158,9 @@ if [ "$run_graph" = true ]; then
     file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
     Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
             --out ${file_sv_big_on_sv_cover} --sim ${similarity_value} --use_strand T
+
+    rm "$file_sv_big".nin
+    rm "$file_sv_big".nhr
+    rm "$file_sv_big".nsq
 
 fi
