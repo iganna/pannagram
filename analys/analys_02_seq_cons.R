@@ -24,17 +24,16 @@ option_list = list(
 ); 
 
 
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# # Set the number of cores for parallel processing
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-# myCluster <- makeCluster(num.cores, type = "PSOCK")
-# registerDoParallel(myCluster)
+# Set the number of cores for parallel processing
+num.cores.max = 10
+num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+myCluster <- makeCluster(num.cores, type = "PSOCK")
+registerDoParallel(myCluster)
 
 # Reference genome
 if (is.null(opt$ref.pref)) {
@@ -66,8 +65,6 @@ gr.break.b = '/break'
 # s.nts = c('A', 'C', 'G', 'T', '-')
 
 
-
-
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
@@ -85,10 +82,10 @@ s.nts = c('A', 'C', 'G', 'T', '-')
 
 
 # ---- Main ----
-#flag.for = F
-#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
-flag.for = T
-for(s.comb in pref.combinations){
+flag.for = F
+tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
+# flag.for = T
+# for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
@@ -156,8 +153,6 @@ for(s.comb in pref.combinations){
     h5write(mx.consensus, file.seq, 'matrix')
   })
   
-
-  
   # ---- Consensus sequence ----
   pokaz('Prepare consensus fasta-sequence')
   i.chr = strsplit(s.comb, '_')[[1]][1]
@@ -179,13 +174,11 @@ for(s.comb in pref.combinations){
   pokaz('Saving consensus sequence...')
   names(s.cons) = paste('PanGen_Chr', i.chr, sep = '')
   writeFastaMy(s.cons, file.seq.cons)
-
   
   rmSafe(mx.consensus)
   rmSafe(s.cons)
   H5close()
   gc()
-  
   
 }
 
