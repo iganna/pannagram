@@ -268,8 +268,11 @@ if (!dir.exists(path.seq)) {
 min.len = 15
 big.len = 50
 
-file.sv.small =  paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
-file.sv.big =  paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+
+file.sv.small =  paste(path.sv, 'seq_sv_small.fasta', sep = '')
+file.sv.big =  paste(path.sv, 'seq_sv_big.fasta', sep = '')
+
+pokaz(file.sv.small)
 
 seqs.small = c()
 seqs.big = c()
@@ -284,15 +287,15 @@ for(s.coms in pref.combinations){
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len))
   for(irow in idx.small){
-    seqs.small[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$beg[irow] - 1) ],
-                                     collapse = '')
+    seqs.small[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
+                                             collapse = '')
   }
   
   # Big sequence
   idx.big = which((sv.pos.all$single == 1) & 
-                      (sv.pos.all$len >= big.len))
+                    (sv.pos.all$len >= big.len))
   for(irow in idx.big){
-    seqs.big[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$beg[irow] - 1) ],
+    seqs.big[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
                                            collapse = '')
   }
 }
