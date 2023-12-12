@@ -74,10 +74,13 @@ head(res)
 
 s.touched = unique(res$V1)
 res$len1 = q.len[res$V1]
-res$len8 = q.len[res$V8]
+res$len8 = db.len[res$V8]
+head(res)
 
 res$p1 = res$C1 / red$len1
 res$p8 = res$C8 / red$len8
+
+head(res)
 
 res$cover = (res$p1 >= sim.cutoff) | (res$p8 >= sim.cutoff) * 1
 pokaz('Number of pairs after the sumilarity cutoff', sum(res$cover == 0))
