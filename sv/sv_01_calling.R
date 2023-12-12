@@ -108,7 +108,7 @@ for(s.comb in pref.combinations){
   len.sv = idx.end - idx.beg + 1
   
   sv.pos = data.frame(beg = idx.beg-1, end = idx.end+1)
-  sv.pos$len = abs(sv.pos$beg - sv.pos$end) - 1 
+  sv.pos$len = abs(sv.pos$beg - sv.pos$end) - 1 # do not change
   
   sv.beg = c()
   sv.end = c()
@@ -196,7 +196,9 @@ sv.annot = paste('ID=', sv.se$gr,
 
 sv.se.gff = data.frame(V1 = paste('PanGen_Chr', sv.se$chr, sep = ''),
                        V2 = 'pannagram',
-                       V3 = sv.se.type, V4 = sv.se$beg, V5 = sv.se$end,
+                       V3 = sv.se.type, 
+                       V4 = sv.se$beg + 1, 
+                       V5 = sv.se$end - 1,
                        V6 = '.', V7 = '+', V8 = '.', 
                        V9 = sv.annot, 
                        V10 = sv.pos.all[sv.se$gr, 'V10'])
@@ -224,15 +226,17 @@ options(scipen = 0)
 
 for(i.acc in 1:length(accessions)){
   acc = accessions[i.acc]
-  print(acc)
+  pokaz('Generate GFF for accession', acc)
   
   df = sv.gff
   df$V1 = paste(sub('acc_','',acc), '_Chr', sv.pos.all$chr, sep = '')
-  df$V4 = sv.beg.all[,acc]
-  df$V5 = sv.end.all[,acc]
+  df$V4 = sv.beg.all[,acc] + 1
+  df$V5 = sv.end.all[,acc] - 1
   df$V9 = paste('ID=', sv.me$gr, '.', sub('acc_','',acc), 
                 ';len_init=', sv.pos.all$len,
                 ';len_acc=', abs(sv.end.all[,acc]-sv.beg.all[,acc])-1, sep = '')
+  
+  df = df[sv.pos.all$len > 0,]
   
   df = df[!is.na(df$V4),]
   df = df[!is.na(df$V5),]
@@ -279,7 +283,7 @@ for(s.coms in pref.combinations){
   idx.small = which((sv.pos.all$single == 1) & 
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len))
-  for(irow in 1:nrow(sv.small)){
+  for(irow in idx.small){
     seqs.small[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$beg[irow] - 1) ],
                                      collapse = '')
   }
@@ -287,7 +291,7 @@ for(s.coms in pref.combinations){
   # Big sequence
   idx.big = which((sv.pos.all$single == 1) & 
                       (sv.pos.all$len >= big.len))
-  for(irow in 1:nrow(sv.small)){
+  for(irow in idx.big){
     seqs.big[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$beg[irow] - 1) ],
                                            collapse = '')
   }

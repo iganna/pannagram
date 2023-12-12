@@ -340,6 +340,9 @@ warnings()
 # Hidden testing
 if(F){
   
+  file.comb = 'res_1_1_ref_0.h5'
+  file.comb = 'msa_1_1_ref_0.h5'
+  
   library(rhdf5)
   gr.accs.b <- "/accs"
   gr.accs.e <- "accs/"
@@ -350,7 +353,7 @@ if(F){
     v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v = cbind(v, v.acc)
     print(acc)
-    print(sum(v.acc != 0))
+    print(sum((v.acc != 0) & (!is.na(v.acc))))
   }
   
 }
