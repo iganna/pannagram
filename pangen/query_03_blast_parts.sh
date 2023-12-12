@@ -125,8 +125,8 @@ run_blast() {
 
     blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
            -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-           -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend -max_hsps $max_hsps \
-           -word_size 50 
+           -perc_identity ${p_ident} -penalty $penalty -gapopen $gapopen -gapextend $gapextend \
+           -max_hsps $max_hsps  #-word_size 50 
 
 }
 

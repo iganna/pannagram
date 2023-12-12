@@ -70,6 +70,8 @@ while [ $# -gt 0 ]; do
         -pref_global) pref_global=$2; shift 2;;
         -ref_pref) ref_pref=$2; shift 2;;
         -path_consensus) path_consensus=$2; shift 2;;
+        -te_file) te_file=$2; shift 2;;
+        -sim) similarity_value=$2; shift 2;;
         -gff) run_gff=true; shift;;
         -te)    run_te=true; shift;;
         -graph)    run_graph=true; shift;;
@@ -101,10 +103,53 @@ if [ "$run_gff" = true ]; then
     Rscript sv/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
 
+# -------------------------------------------------
+# Compare SVs with TEs
 if [ "$run_te" = true ]; then
-    Rscript sv/sv_02_te.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+    check_missing_variable "te_file"
+
+    if [ -z "${similarity_value}" ]; then
+        pokaz_message "Simirarity value is 85% (default)"
+        similarity_value=85
+    fi
+
+    # Check if BLAST database exists
+    if [ ! -f "${te_file}.nhr" ]; then
+        makeblastdb -in "$te_file" -dbtype nucl > /dev/null
+    fi
+    
+    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+    file_sv_big_on_te=${file_sv_big%.fasta}_on_te.txt
+
+    blastn -db ${te_file} -query ${file_sv_big} -out ${file_sv_big_on_te} \
+       -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+       -perc_identity ${similarity_value}
+
+
+    # Rscript sv/sv_02_te.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
 
+# -------------------------------------------------
+# SV on SVs
 if [ "$run_graph" = true ]; then
-    Rscript sv/sv_02_graph.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+
+    if [ -z "${similarity_value}" ]; then
+        pokaz_message "Simirarity value is 85% (default)"
+        similarity_value=85
+    fi
+
+    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv.txt
+
+    # Check if BLAST database exists
+    if [ ! -f "${file_sv_big}.nhr" ]; then
+        makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
+    fi
+    
+    blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
+       -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+       -perc_identity ${similarity_value} 
+
+
+    Rscript sv/sv_03_graph.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
