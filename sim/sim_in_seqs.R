@@ -77,8 +77,8 @@ res$len1 = q.len[res$V1]
 res$len8 = db.len[res$V8]
 head(res)
 
-res$p1 = res$C1 / red$len1
-res$p8 = res$C8 / red$len8
+res$p1 = res$C1 / res$len1
+res$p8 = res$C8 / res$len8
 
 head(res)
 
