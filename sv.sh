@@ -25,15 +25,34 @@ catch() {
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils_bash.sh
+source utils/utils_bash.sh
 
 
 print_usage() {
-    echo "Usage: $0 [-blocks] [-seq] [-sv]"
-    echo "  -blocks    Run analys_01_blocks.R script"
-    echo "  -seq       Run analys_02_seq.R script"
-    echo "  -h, --help Display this help message"
+    pokaz_help
+    cat << EOF
+Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_consensus PATH_CONSENSUS]
+                [-gff] [-te] [-graph] [-h|--help]
+
+This script provides various functionalities depending on the options provided.
+
+Options:
+    -pref_global PREFIX        Set a global preference or configuration.
+    -ref_pref REF_PREFIX       Specify a reference preference or parameter.
+    -path_consensus PATH_CONSENSUS
+                               Define the path to the consensus data.
+    -gff                       Run the script in GFF mode, processing data in Generic Feature Format.
+    -te                        Enable processing in Transposable Element mode.
+    -graph                     Activate graph mode for graphical data processing or visualization.
+    -h, --help                 Display this help message and exit.
+
+Examples:
+    ${0##*/} -pref_global 'global_config' -ref_pref 'ref1' -path_consensus '/path/to/data'
+    ${0##*/} -gff -path_consensus '/path/to/gff_data'
+
+EOF
 }
+
 
 # ----------------------------------------------------------------------------
 #             PARAMETERS
@@ -41,8 +60,9 @@ print_usage() {
 
 
 # Initialize variables to determine which scripts to run
-run_blocks=false
-run_seq=false
+run_gff=false
+run_te=false
+run_graph=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -50,8 +70,9 @@ while [ $# -gt 0 ]; do
         -pref_global) pref_global=$2; shift 2;;
         -ref_pref) ref_pref=$2; shift 2;;
         -path_consensus) path_consensus=$2; shift 2;;
-        -blocks) run_blocks=true; shift;;
-        -seq)    run_seq=true; shift;;
+        -gff) run_gff=true; shift;;
+        -te)    run_te=true; shift;;
+        -graph)    run_graph=true; shift;;
         -h|--help) print_usage; exit 0;;
         *) print_usage; exit 1;;
     esac
@@ -65,10 +86,14 @@ path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 # ----------------------------------------------------------------------------
 
 # Execute scripts based on the provided keys
-if [ "$run_blocks" = true ]; then
-    Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+if [ "$run_gff" = true ]; then
+    Rscript sv/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
 
-if [ "$run_seq" = true ]; then
-    Rscript analys/analys_02_seq.R
+if [ "$run_te" = true ]; then
+    Rscript sv/sv_02_te.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+fi
+
+if [ "$run_graph" = true ]; then
+    Rscript sv/sv_02_graph.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
