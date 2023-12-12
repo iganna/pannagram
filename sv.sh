@@ -121,10 +121,11 @@ if [ "$run_te" = true ]; then
     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
     file_sv_big_on_te=${file_sv_big%.fasta}_on_te.txt
 
-    blastn -db ${te_file} -query ${file_sv_big} -out ${file_sv_big_on_te} \
-       -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
-       -perc_identity ${similarity_value}
-
+    if [ ! -f "${file_sv_big_on_te}" ]; then
+        blastn -db "${te_file}" -query "${file_sv_big}" -out "${file_sv_big_on_te}" \
+           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -perc_identity "${similarity_value}"
+    fi
 
     file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.txt
     Rscript sim/sim_search.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
@@ -148,13 +149,13 @@ if [ "$run_graph" = true ]; then
         makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
     fi
     
-    blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-       -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
-       -perc_identity ${similarity_value} 
+    if [ ! -f "${file_sv_big_on_sv}" ]; then
+        blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
+           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -perc_identity ${similarity_value} 
+    fi
 
     file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.txt
     Rscript sim/sim_search.R --in_file ${file_sv_big} --res ${file_sv_big_on_sv} --out ${file_sv_big_on_sv_cover} --sim ${similarity_value}
-
-
-    Rscript sv/sv_03_graph.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+    
 fi
