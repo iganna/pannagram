@@ -287,14 +287,15 @@ for(s.coms in pref.combinations){
   idx.small = which((sv.pos.all$single == 1) & 
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len) & (sv.pos.all$chr == i.chr))
+  head(idx.small)
   for(irow in idx.small){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
-    print('---')
-    print(s.tmp)
-    print((sv.pos.all$beg[irow] + 1))
-    print(sv.pos.all$end[irow] - 1)
-    print(sum(s.tmp == 'N'))
-    print((0.5 * length(s.tmp)))
+    # print('---')
+    # print(s.tmp)
+    # print((sv.pos.all$beg[irow] + 1))
+    # print(sv.pos.all$end[irow] - 1)
+    # print(sum(s.tmp == 'N'))
+    # print((0.5 * length(s.tmp)))
     if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
     seqs.small[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
   }
@@ -303,6 +304,7 @@ for(s.coms in pref.combinations){
   idx.big = which((sv.pos.all$single == 1) & 
                     (sv.pos.all$len >= big.len) &
                     (sv.pos.all$len < max.len) & (sv.pos.all$chr == i.chr))
+  head(idx.big)
   for(irow in idx.big){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     print(sum(s.tmp == 'N'))
