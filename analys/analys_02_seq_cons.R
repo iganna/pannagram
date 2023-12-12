@@ -155,7 +155,7 @@ tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopa
   
   # ---- Consensus sequence ----
   pokaz('Prepare consensus fasta-sequence')
-  i.chr = strsplit(s.comb, '_')[[1]][1]
+  i.chr = comb2ref(s.comb)
   file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
   
   

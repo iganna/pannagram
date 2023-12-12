@@ -11,6 +11,7 @@ suppressMessages({ library(Biostrings)
 source("utils/utils.R")
 
 pokazStage('Get SV positions, GFF files, dencity files and consensys sequences')
+pokazAttention('Be sure, that consensus sequence for the pangenome chromosomes have been generated')
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -250,6 +251,49 @@ for(i.acc in 1:length(accessions)){
   write.table(df[,1:9], file.sv.gff, quote = F, row.names = F, col.names = F, sep = '\t')
   options(scipen = 0)
 }
+
+# ---- FASTA of seSVs ----
+path.seq = paste(path.cons, 'seq/', sep = '')
+if (!dir.exists(path.seq)) {
+  pokazAttention('Consensus sequence doesn’t exist')
+  stop('Please generate the pangenome consensus sequence first')
+}
+
+min.len = 15
+big.len = 50
+
+file.sv.small =  paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+file.sv.big =  paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+
+seqs.small = c()
+seqs.big = c()
+for(s.coms in pref.combinations){
+  i.chr = comb2ref(s.comb)
+  file.chr = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  s.chr = readFastaMy(file.chr)
+  s.chr = seq2nt(s.chr)
+  
+  # Small sequences  
+  idx.small = which((sv.pos.all$single == 1) & 
+                      (sv.pos.all$len >= min.len) & 
+                      (sv.pos.all$len < big.len))
+  for(irow in 1:nrow(sv.small)){
+    seqs.small[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$beg[irow] - 1) ],
+                                     collapse = '')
+  }
+  
+  # Big sequence
+  idx.big = which((sv.pos.all$single == 1) & 
+                      (sv.pos.all$len >= big.len))
+  for(irow in 1:nrow(sv.small)){
+    seqs.big[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$beg[irow] - 1) ],
+                                           collapse = '')
+  }
+}
+
+writeFastaMy(seqs.small, file.sv.small)
+writeFastaMy(seqs.big, file.sv.big)
+
 
 # ---- GFF densities ----
 

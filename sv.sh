@@ -92,6 +92,12 @@ path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
 # Execute scripts based on the provided keys
 if [ "$run_gff" = true ]; then
+
+    # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
+    # So, sonsensus should be run before GFF
+    # Therefore, sequences of seSVs could also be produced together with GFFs.
+
+
     Rscript sv/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
 fi
 

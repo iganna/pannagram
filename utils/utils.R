@@ -334,6 +334,7 @@ rmSafe <- function(var) {
   }
 }
 
+#' ----------------------------------------------------------------------
 #' Convert BLAST results to GFF format
 #'
 #' @description
@@ -373,6 +374,7 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
 
+#' ----------------------------------------------------------------------
 #' Calculate the Repeat Score of a String
 #'
 #' @description
@@ -415,6 +417,29 @@ repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
 #   cnt = table(substrings)
 #   return(sum(cnt[cnt > dup.cutoff]) / length(substrings))
 # }
+
+
+#' ----------------------------------------------------------------------
+#' Convert Combination String to Reference Chromosome Number
+#'
+#' This function parses a combination string of the format 'X_Y' where X and Y are numbers.
+#' It extracts the second number (Y) from the combination and returns it as a numeric value.
+#' The function is designed to work with chromosome combinations.
+#'
+#' @param s.comb A string representing a chromosome combination in the format 'X_Y'.
+#'               Both X and Y must be numeric values.
+#'
+#' @return An integer representing the second part (Y) of the combination.
+#'
+#' @examples
+#' comb2ref("3_5") # returns 5
+#' 
+comb2ref <- function(s.comb){
+  pattern <- "^\\d+_\\d+$"
+  if(!grepl(pattern, s.comb)) stop('Something is wrong with the bombinations of chromosomes')
+  ref.chr = as.numeric(strsplit(s.comb, '_')[[1]][2])
+  return(ref.chr)
+}
 
 
 
