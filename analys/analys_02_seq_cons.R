@@ -72,6 +72,7 @@ s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("msa_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
+pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
 pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
