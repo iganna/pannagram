@@ -155,7 +155,7 @@ if [ "$run_graph" = true ]; then
            -perc_identity ${similarity_value} 
     fi
 
-    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.txt
+    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
     Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --res ${file_sv_big_on_sv} --out ${file_sv_big_on_sv_cover} --sim ${similarity_value}
 
 fi

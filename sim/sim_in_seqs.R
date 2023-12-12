@@ -69,9 +69,21 @@ rm(seqs)
 
 res = findNestedness(v, use.strand=use.strand)
 
+pokaz('Number of pairs before the sumilarity cutoff', nrow(res))
 head(res)
 
+s.touched = unique(res$V1)
+res$len1 = q.len[res$V1]
+res$len8 = q.len[res$V8]
 
+res$p1 = res$C1 / red$len1
+res$p8 = res$C8 / red$len8
+
+res$cover = (res$p1 >= sim.cutoff) | (res$p8 >= sim.cutoff) * 1
+pokaz('Number of pairs after the sumilarity cutoff', sum(res$cover == 0))
+head(res)
+
+saveRDS(res, output.file)
 
 
 # # Sort V4 and V5 positions
