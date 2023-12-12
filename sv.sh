@@ -78,6 +78,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+check_missing_variable "ref_pref"
+
+check_missing_variable "pref_global"
+pref_global=$(add_symbol_if_missing "$pref_global" "/")
+
 path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
