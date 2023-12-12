@@ -122,7 +122,7 @@ if [ "$run_te" = true ]; then
     file_sv_big_on_te=${file_sv_big%.fasta}_on_te.txt
 
     blastn -db ${te_file} -query ${file_sv_big} -out ${file_sv_big_on_te} \
-       -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+       -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
        -perc_identity ${similarity_value}
 
 
@@ -147,7 +147,7 @@ if [ "$run_graph" = true ]; then
     fi
     
     blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-       -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+       -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
        -perc_identity ${similarity_value} 
 
 
