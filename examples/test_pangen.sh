@@ -5,6 +5,8 @@
 
 ./analys.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -blocks
 
+./sv.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -gff
+
 ./sim_search.sh -in ../new_genes/new_genes.fasta -genome ../pb_chromosomes/0_chr1.fasta -out ../tmp.txt
 
 ./pipeline_test.sh -pref_global '../pan_test/tom2' -ref_set '0,6046-v1.1,6191-v1.1' -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -cores 30 -acc_anal acc_tom.txt -all_cmp F

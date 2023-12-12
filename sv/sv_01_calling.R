@@ -90,6 +90,7 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
   
+  pokaz('Combine SV info from accessions...')
   sv.cover = 0
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
@@ -98,6 +99,7 @@ for(s.comb in pref.combinations){
   }
   
   # SV groups
+  pokaz('Create SV groups...')
   pos.non.sv = (sv.cover == 0)
   idx.beg = which((pos.non.sv[-length(pos.non.sv)] == 1) & (pos.non.sv[-1] == 0))+ 1
   idx.end = which((pos.non.sv[-length(pos.non.sv)] == 0) & (pos.non.sv[-1] == 1)) 
@@ -211,7 +213,7 @@ sv.me.gff = data.frame(V1 = paste('PanGen_Chr', sv.me$chr, sep = ''),
                        V10 = sv.pos.all[sv.me$gr, 'V10'])
 
 sv.gff = rbind(sv.se.gff, sv.me.gff)
-sv.gff = sv.gff[order(sv.gff$V10)]
+sv.gff = sv.gff[order(sv.gff$V10),]
 
 options(scipen = 999)
 write.table(sv.gff[,1:9], file.sv.gff, quote = F, row.names = F, col.names = F, sep = '\t')
