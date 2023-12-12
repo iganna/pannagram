@@ -310,6 +310,8 @@ for(s.coms in pref.combinations){
     if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
     seqs.big[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
   }
+  pokaz('Number of big sequences', length(seqs.big))
+  pokaz('Number of small sequences', length(seqs.small))
 }
 
 writeFastaMy(seqs.small, file.sv.small)
