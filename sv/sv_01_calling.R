@@ -279,6 +279,7 @@ seqs.small = c()
 seqs.big = c()
 for(s.coms in pref.combinations){
   i.chr = comb2ref(s.comb)
+  pokaz('Chromosome', i.chr)
   file.chr = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
   s.chr = readFastaMy(file.chr)
   s.chr = seq2nt(s.chr)
@@ -287,7 +288,7 @@ for(s.coms in pref.combinations){
   idx.small = which((sv.pos.all$single == 1) & 
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len) & (sv.pos.all$chr == i.chr))
-  head(idx.small)
+  print(head(idx.small))
   for(irow in idx.small){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     # print('---')
@@ -304,7 +305,7 @@ for(s.coms in pref.combinations){
   idx.big = which((sv.pos.all$single == 1) & 
                     (sv.pos.all$len >= big.len) &
                     (sv.pos.all$len < max.len) & (sv.pos.all$chr == i.chr))
-  head(idx.big)
+  print(head(idx.big))
   for(irow in idx.big){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     # print(sum(s.tmp == 'N'))
