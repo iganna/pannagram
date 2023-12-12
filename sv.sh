@@ -128,7 +128,7 @@ if [ "$run_te" = true ]; then
     fi
 
     file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.txt
-    Rscript sim/sim_search.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
+    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
             --out ${file_sv_big_on_te_cover} --sim ${similarity_value} --use_strand F
 fi
 
@@ -156,6 +156,6 @@ if [ "$run_graph" = true ]; then
     fi
 
     file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.txt
-    Rscript sim/sim_search.R --in_file ${file_sv_big} --res ${file_sv_big_on_sv} --out ${file_sv_big_on_sv_cover} --sim ${similarity_value}
-    
+    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --res ${file_sv_big_on_sv} --out ${file_sv_big_on_sv_cover} --sim ${similarity_value}
+
 fi

@@ -4,8 +4,9 @@
 ./pangen_consensus.sh -pref_global '../pan_test/anna_norm' -ref_set 'NT1_220222,TE11_final' -n_chr_ref 8 -path_in '../lyrata_updated/' -n_chr_query 8 -cores 30 -all_cmp F
 
 ./analys.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -blocks
-
 ./sv.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -gff
+ ./sv.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -te -te_file ../new_genes/new_te.fasta
+
 
 ./sim_search.sh -in ../new_genes/new_genes.fasta -genome ../pb_chromosomes/0_chr1.fasta -out ../tmp.txt
 
