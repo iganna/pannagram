@@ -277,7 +277,7 @@ pokaz(file.sv.small)
 
 seqs.small = c()
 seqs.big = c()
-for(s.coms in pref.combinations){
+for(s.comb in pref.combinations){
   i.chr = comb2ref(s.comb)
   pokaz('Chromosome', i.chr)
   file.chr = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
