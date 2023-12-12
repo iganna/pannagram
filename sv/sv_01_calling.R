@@ -10,7 +10,7 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 
-pokazStage('Get sequence alignments and consensus sequence')
+pokazStage('Get SV positions, GFF files, dencity files and consensys sequences')
 
 args = commandArgs(trailingOnly=TRUE)
 

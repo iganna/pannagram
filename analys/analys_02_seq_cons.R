@@ -47,6 +47,9 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
+path.seq = paste(path.cons, 'seq/')
+if (!dir.exists(path.seq)) dir.create(path.seq)
+
 gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
 gr.break.e = 'break/'
@@ -60,7 +63,7 @@ gr.break.b = '/break'
 # path.cons = './'
 # path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
 # ref.pref = '0'
-# nts = c('A', 'C', 'G', 'T', '-')
+# s.nts = c('A', 'C', 'G', 'T', '-')
 
 
 
@@ -78,11 +81,10 @@ pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
 
 
-nts = c('A', 'C', 'G', 'T', '-')
+s.nts = c('A', 'C', 'G', 'T', '-')
 
 
-# ------------------------------------
-# ------------------------------------
+# ---- Main ----
 #flag.for = F
 #tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
 flag.for = T
@@ -98,7 +100,7 @@ for(s.comb in pref.combinations){
   n.acc = length(accessions)
   
   # File with sequences
-  file.seq = paste(path.cons, 'seq_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.seq = paste(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   if (file.exists(file.seq)) file.remove(file.seq)
   h5createFile(file.seq)
   h5createGroup(file.seq, gr.accs.e)
@@ -112,7 +114,7 @@ for(s.comb in pref.combinations){
     v.na = is.na(v)
     v[v.na] = 0
     if(is.null(mx.consensus)){
-      mx.consensus = matrix(0, nrow = length(v), ncol = length(nts), dimnames = list(NULL, nts))
+      mx.consensus = matrix(0, nrow = length(v), ncol = length(s.nts), dimnames = list(NULL, s.nts))
     }
     
     acc.name = gsub('acc_', '', acc)
@@ -133,7 +135,7 @@ for(s.comb in pref.combinations){
     
     idx.negative = c(idx.negative, which(idx.mins))
     
-    for(s.nt in nts){
+    for(s.nt in s.nts){
       mx.consensus[,s.nt] = mx.consensus[,s.nt] + (s == s.nt)
     }
     
@@ -154,9 +156,35 @@ for(s.comb in pref.combinations){
     h5write(mx.consensus, file.seq, 'matrix')
   })
   
+
+  
+  # ---- Consensus sequence ----
+  pokaz('Prepare consensus fasta-sequence')
+  i.chr = strsplit(s.comb, '_')[[1]][1]
+  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  
+  
+  n = nrow(mx.consensus)
+  s.cons = rep('N', n)
+  n.nt = rep(0, n)
+  for(k in 1:4){
+    idx.k =  mx.consensus[,k] > n.nt
+    s.cons[idx.k] = s.nts[k]
+    n.nt[idx.k] = n.nt.k[idx.k]
+  }
+  
+  if(sum(s.cons == 'N') > 0) pokazAttention('Some nucleotides are missed:', sum(s.cons == 'N'))
+  
+  pokaz('Saving consensus sequence...')
+  names(s.cons) = paste('PanGen_Chr', i.chr, sep = '')
+  writeFastaMy(s.cons, file.seq.cons)
+
+  
+  rmSafe(mx.consensus)
+  rmSafe(s.cons)
   H5close()
   gc()
-  rmSafe(mx.consensus)
+  
   
 }
 
