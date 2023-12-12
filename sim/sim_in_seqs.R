@@ -86,7 +86,7 @@ res$p8 = res$C8 / res$len8
 
 res$cover = ((res$p1 >= sim.cutoff) | (res$p8 >= sim.cutoff)) * 1
 pokaz('Number of pairs after the sumilarity cutoff', sum(res$cover == 0))
-# head(res)
+head(res)
 
 saveRDS(res, output.file)
 
