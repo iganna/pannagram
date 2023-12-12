@@ -131,7 +131,7 @@ if [ "$run_te" = true ]; then
     Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
             --out ${file_sv_big_on_te_cover} --sim ${similarity_value} --use_strand F
 
-    rm "${te_file}.nin" "${te_file}.nhr" "${te_file}.nsq"
+    # rm "${te_file}.nin" "${te_file}.nhr" "${te_file}.nsq"
 fi
 
 # -------------------------------------------------
