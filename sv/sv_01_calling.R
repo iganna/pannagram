@@ -178,7 +178,7 @@ saveRDS(sv.end.all, file.sv.pos.end)
 # ---- GFF files ----
 
 sv.version = 6
-file.sv.gff = paste(path.gff, 'svs_v',sprintf("%02d", sv.version),'.gff', sep = '')
+file.sv.gff = paste(path.gff, 'svs_pangen_v',sprintf("%02d", sv.version),'.gff', sep = '')
 
 sv.pos.all$V10 = 1:nrow(sv.pos.all)
 rownames(sv.pos.all) = sv.pos.all$gr
@@ -267,6 +267,7 @@ if (!dir.exists(path.seq)) {
 
 min.len = 15
 big.len = 50
+max.len = 30000
 
 
 file.sv.small =  paste(path.sv, 'seq_sv_small.fasta', sep = '')
@@ -287,16 +288,19 @@ for(s.coms in pref.combinations){
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len))
   for(irow in idx.small){
-    seqs.small[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
-                                             collapse = '')
+    seqs.small[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = 
+      paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
+             collapse = '')
   }
   
   # Big sequence
   idx.big = which((sv.pos.all$single == 1) & 
-                    (sv.pos.all$len >= big.len))
+                    (sv.pos.all$len >= big.len) &
+                    (sv.pos.all$len < max.len))
   for(irow in idx.big){
-    seqs.big[sv.pos.all$gr[irow]] = paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
-                                           collapse = '')
+    seqs.big[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = 
+      paste0(s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ],
+             collapse = '')
   }
 }
 
