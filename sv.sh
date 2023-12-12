@@ -126,7 +126,8 @@ if [ "$run_te" = true ]; then
        -perc_identity ${similarity_value}
 
 
-    # Rscript sv/sv_02_te.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+    file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.txt
+    Rscript sim/sim_search.R --in_file ${file_sv_big} --res ${file_sv_big_on_te} --out ${file_sv_big_on_te_cover} --sim ${similarity_value}
 fi
 
 # -------------------------------------------------
@@ -139,7 +140,7 @@ if [ "$run_graph" = true ]; then
     fi
 
     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv.txt
+    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
 
     # Check if BLAST database exists
     if [ ! -f "${file_sv_big}.nhr" ]; then
@@ -149,6 +150,9 @@ if [ "$run_graph" = true ]; then
     blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
        -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
        -perc_identity ${similarity_value} 
+
+    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.txt
+    Rscript sim/sim_search.R --in_file ${file_sv_big} --res ${file_sv_big_on_sv} --out ${file_sv_big_on_sv_cover} --sim ${similarity_value}
 
 
     Rscript sv/sv_03_graph.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
