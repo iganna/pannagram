@@ -286,7 +286,7 @@ for(s.coms in pref.combinations){
   # Small sequences  
   idx.small = which((sv.pos.all$single == 1) & 
                       (sv.pos.all$len >= min.len) & 
-                      (sv.pos.all$len < big.len))
+                      (sv.pos.all$len < big.len) & (sv.pos.all$chr == i.chr))
   for(irow in idx.small){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     print('---')
@@ -302,7 +302,7 @@ for(s.coms in pref.combinations){
   # Big sequence
   idx.big = which((sv.pos.all$single == 1) & 
                     (sv.pos.all$len >= big.len) &
-                    (sv.pos.all$len < max.len))
+                    (sv.pos.all$len < max.len) & (sv.pos.all$chr == i.chr))
   for(irow in idx.big){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     print(sum(s.tmp == 'N'))
