@@ -63,9 +63,15 @@ q.len = nchar(seqs)
 rm(seqs)
 
 # Lengths of database sequences
-seqs = readFastaMy(db.fasta.file)
-db.len = nchar(seqs)
-rm(seqs)
+if(db.fasta.file == fasta.file){
+  pokaz('Search seqeunces on themselvs')
+  db.len = q.len
+} else {
+  seqs = readFastaMy(db.fasta.file)
+  db.len = nchar(seqs)
+  rm(seqs)  
+}
+
 
 res = findNestedness(v, use.strand=use.strand)
 
