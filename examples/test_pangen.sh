@@ -6,6 +6,7 @@
 ./analys.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -blocks
 ./sv.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -gff
  ./sv.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -te -te_file ../new_genes/new_te.fasta
+ ./sv.sh -pref_global '../pan_test/tom2'  -ref_pref 0 -graph
 
 
 ./sim_search.sh -in ../new_genes/new_genes.fasta -genome ../pb_chromosomes/0_chr1.fasta -out ../tmp.txt

@@ -9,20 +9,20 @@ Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annot
 
 ## Multiple genome alignment
 
-Multiple genome alignment can be performed on a single reference genome or using multiple references to create a reference-free alignment. These modes are implemented in `pipeline.sh` and `pipeline_consensus.sh`, respectively.
+Multiple genome alignment can be performed on a single reference genome or using multiple references to create a reference-free alignment. These modes are implemented in `pangen_ref.sh` and `pangen_consensus.sh`, respectively.
 
 The quickstart toy-examples are:
 ```
-./pipeline.sh -pref_global 'output_folder' -ref_pref '0' \
+./pangen_ref.sh -pref_global 'output_folder' -ref_pref '0' \
     -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
-./pipeline_consensus.sh -pref_global 'output_folder' -ref_set '0,10024' \
+./pangen_consensus.sh -pref_global 'output_folder' -ref_set '0,10024' \
     -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
 ```
 
 An extended description of the parameters can be read by executing:
 ```
-./pipeline.sh -help
-./pipeline_consensus.sh -help
+./pangen_ref.sh -help
+./pangen_consensus.sh -help
 ```
 
 ## Visualisation
@@ -32,17 +32,32 @@ Pannagram contains a number of useful methods for visualization.
 * MSA
 
 
-
-
 ## Additional useful tools
-### Search sequeses in the genome
+### Search for similar sequences...
 
-Script `sim_search.sh` allows for the search of sequences (for example, genes) in a genome with a certain threshold of similarity.
+There are two distinct approaches available for searching for similarities for a **set of sequences** (a fasta file with genes or structural variants). 
+The first approach involves searching against entire genomes or individual chromosomes. 
+The second approach, in contrast, is designed to search for similarities against another set of sequences. 
 
+#### ...in the genome
 The quickstart toy-example is:
 ```
-./sim_search.sh -in genes.fasta -genome genome.fasta -out out.txt
+./sim_in_genome.sh -in genes.fasta -genome genome.fasta -out out.txt
 ```
+The result is a GFF file with hits matching the similarity threshold.
+
+
+#### ...in another set
+The quickstart toy-example is:
+```
+sim_in_seqs.sh -in genes.fasta -set genome.fasta -out out.txt
+```
+The result is an RDS (R Data Structure) table. 
+This table shows the coverage of one sequence over another and 
+includes a flag column that indicates whether the sequences meet the similarity threshold. 
+Additionally, the second script takes into account the coverage strand, 
+determining not just if a sequence is covered, but also if it's covered in a specific orientation.
+
 <!--
 
 ## Parameters to run `pipeline_consensus.sh`
