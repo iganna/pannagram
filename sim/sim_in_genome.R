@@ -66,6 +66,8 @@ blastres2gff(res, output.file)
 
 write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
+cnt = tapply(res$V8, res$V1, length)
+pokaz('Mean, min, max number of hits per sequence:', mean(cnt),  min(cnt),  max(cnt))
 pokaz('Number of hits found:', nrow(res))
 
 
