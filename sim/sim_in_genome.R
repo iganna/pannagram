@@ -64,7 +64,7 @@ res$V5[idx.tmp] = tmp
 
 blastres2gff(res, output.file)
 
-# write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
+write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
 
 
