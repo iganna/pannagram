@@ -66,7 +66,7 @@ blastres2gff(res, output.file)
 
 write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
-
+pokaz('Number of hits found:', nrow(res))
 
 
 
