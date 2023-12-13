@@ -28,7 +28,7 @@ catch() {
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils_bash.sh
+source utils/utils_bash.sh
 
 show_help() {
     cat << EOF
