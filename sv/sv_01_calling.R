@@ -186,8 +186,13 @@ rownames(sv.pos.all) = sv.pos.all$gr
 ## ---- Single-event ----
 sv.se = sv.pos.all[sv.pos.all$single == 1,]
 sv.se.type = rep('indel', nrow(sv.se))
-sv.se.type[sv.se$freq.max %in% c(1, 2, 3)] = 'insertion'
-sv.se.type[sv.se$freq.max %in% c(25, 26, 27)] = 'deletion'
+
+n.acc = length(accessions)
+val.insert = c(1:n.acc)[(1:n.acc) <= (0.11 * n.acc)]
+val.delet = c(1:n.acc)[(1:n.acc) >= (1 - 0.11 * n.acc)]
+
+sv.se.type[sv.se$freq.max %in% val.insert] = 'insertion'
+sv.se.type[sv.se$freq.max %in% val.delet] = 'deletion'
 
 sv.annot = paste('ID=', sv.se$gr,  
                  # ';te=', sv.se$te, 

@@ -32,7 +32,7 @@ source utils/utils_bash.sh
 # ----------------------------------------------------------------------------
 
 
-pokaz_stage "Step 11. Run MAFFT for gaps between synteny blocks"
+pokaz_stage "Step 11. Run MAFFT"
 
 
 while [[ "$#" -gt 0 ]]; do

@@ -14,7 +14,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 4. Alignment1: after first blast of parts')
+pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
 
 args = commandArgs(trailingOnly=TRUE)
 

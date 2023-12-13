@@ -13,7 +13,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 6. Alignment2: fill the gaps between synteny blocks')
+pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 
 args = commandArgs(trailingOnly=TRUE)
 

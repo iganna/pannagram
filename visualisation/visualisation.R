@@ -37,6 +37,8 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
   if(!is.null(base.len)){
     x = getBase(x, base.len)
   }
+  
+  seq.lab =  seq(0, 40, by = 5 )
   p <- ggplot(x, aes(x = V2, y=V4, xend = V3, yend = V5, color = as.factor(V4 < V5))) + 
     # geom_point(show.legend = FALSE, size = 0.1) + 
     geom_segment(show.legend = FALSE) + 
@@ -44,7 +46,9 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
     xlab('query') + 
     ylab('base') +
     scale_color_manual(values = c("FALSE" = col.rc, "TRUE" = col.fw)) +
-    coord_fixed(ratio = 1) 
+    coord_fixed(ratio = 1) +
+    scale_y_continuous(breaks = seq.lab* 1e6, labels = seq.lab ) +
+    scale_x_continuous(breaks = seq.lab* 1e6, labels = seq.lab )
   
   if(!is.null(hlines)){
     p <- p + geom_hline(yintercept=hlines, color= col.line)

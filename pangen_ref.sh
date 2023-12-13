@@ -28,8 +28,10 @@ catch() {
 # ----------------------------------------------------------------------------
 
 
-#./work.sh -pref_global '../pan_test/tom/' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
-#./work.sh -pref_global '../pan_test/tom/' -ref_pref '6046-v1.1'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
+#./pangen_ref.sh -pref_global '../pan_test/tom/' -ref_pref '0'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
+#./pangen_ref.sh -pref_global '../pan_test/tom/' -ref_pref '6046-v1.1'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
+
+#./pangen_ref.sh -pref_global ../pan_test/ly_th/ -ref_pref 0 -path_chr_ref ../pan_test/p27/chromosomes/ -n_chr_ref 5 -path_in ../lyrata/ -n_chr_query 8 -all_cmp T -cores 30
 
 
 # ----------------------------------------------------------------------------
@@ -53,9 +55,9 @@ Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_chr_ref PATH
 This script performs genomic analysis with several options to specify inputs, paths, and parameters.
 
 Options:
-    -pref_global PREFIX        Global prefix for the analysis.
+    -pref_global PREFIX        Global prefix for folde, where all results and intermediate files will appear.
     -ref_pref REF_PREFIX       Reference genome prefix: REF_PREFIX.fasta
-    -path_in PATH_IN           Path to directory with genomes.
+    -path_in PATH_IN           Path to directory with genomes to analyse.
     -n_chr_query N_CHR_QUERY   Number of chromosomes in the query genome.
     -n_chr_ref N_CHR_REF       Number of chromosomes in the reference genome.
     -path_chr_ref PATH_CHR_REF Path to reference chromosomes.
