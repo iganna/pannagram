@@ -24,7 +24,6 @@ registerDoParallel(myCluster)
 
 args = commandArgs(trailingOnly=TRUE)
 
-keeprepeats
 
 option_list <- list(
   make_option(c("-b", "--part.len"), type = "character", default = NULL, 
