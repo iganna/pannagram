@@ -241,7 +241,7 @@ pokazStage <- function(...) {
     }
   }
   
-  arguments <- paste('*', paste(arguments_list, collapse = " "), sep = '')
+  arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
   
   text.color <- make_style("#34FCFC")
   # bg <- make_style("grey5", bg = TRUE)
@@ -271,7 +271,7 @@ pokazAttention <- function(...) {
     }
   }
   
-  arguments <- paste('  Attention:', paste(arguments_list, collapse = " "), sep = '')
+  arguments <- paste('  Attention: ', paste(arguments_list, collapse = " "), sep = '')
   
   text.color <- make_style("#FC345C")
   # bg <- make_style("grey5", bg = TRUE)
