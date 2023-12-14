@@ -1,7 +1,7 @@
 suppressMessages({
   library("optparse")
   library(Biostrings)
-  library("seqinr")       # read.fasta
+  # library("seqinr")       # read.fasta
   library("foreach")
   library(doParallel)
 })
