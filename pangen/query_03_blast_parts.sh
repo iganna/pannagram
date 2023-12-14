@@ -103,7 +103,7 @@ run_blast() {
 
     p_filename=$(basename "$part_file" .fasta)
     p_prefix=${p_filename%_*}
-    part_chr=${p_filename##*_}
+    part_chr=${p_filename##*chr}
 
     r_filename=$(basename "$ref_file" .fasta)
     r_prefix=${r_filename%_*}

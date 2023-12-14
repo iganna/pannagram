@@ -78,7 +78,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   for(i.chr in 1:n.chr){
     file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
     
-    file.out = paste0(path.parts, acc, '_chr', i.chr, '_p.fasta', collapse = '')
+    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     if( file.exists(file.out)) {
       if(for.flag) next
       return(NULL)
