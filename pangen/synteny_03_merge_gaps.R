@@ -22,8 +22,6 @@ option_list = list(
               help="path to query chomosome fasta files", metavar="character"),  
   make_option(c("-o", "--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("-t", "--type"), type="character", default=NULL, 
-              help="type of fasta files", metavar="character"),
   make_option(c("-p", "--pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("-g", "--path.gaps"), type="character", default=NULL, 
@@ -54,7 +52,6 @@ registerDoParallel(myCluster)
 if (!is.null(opt$path.query)) path.query <- opt$path.query
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
 if (!is.null(opt$path.ref)) path.base <- opt$path.ref
-if (!is.null(opt$type)) base.suff <- opt$type
 if (!is.null(opt$pref)) base.acc <- opt$pref
 if (!is.null(opt$path.gaps)) path.gaps <- opt$path.gaps
 
@@ -137,7 +134,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   # # ---- Read genomes ----
   # 
   # # Read reference sequences
-  # base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
+  # base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
   # pokaz('Base:', base.file)
   # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
   # base.fas.fw = seq2nt(base.fas.fw)

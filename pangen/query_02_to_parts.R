@@ -19,7 +19,6 @@ registerDoParallel(myCluster)
 
 # len.parts = 5000  # lengths of parts
 # n.chr = 5  # number of chromosomes
-# query.type = 'fasta'
 # path.chr = '../pb_databases/'
 # path.parts = '../pb_parts/'
 
@@ -30,8 +29,6 @@ option_list <- list(
               help = "number of base pairs in the part file", metavar = "character"),
   make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
-  make_option(c("-t", "--type"), type = "character", default = NULL, 
-              help = "type of fasta files", metavar = "character"),
   make_option(c("-i", "--path.chr"), type = "character", default = NULL, 
               help = "pathway to the chromosome directory", metavar = "character"),
   make_option(c("-o", "--path.parts"), type = "character", default = NULL, 
@@ -59,14 +56,13 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 
 # Common attributes
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
-query.type <- ifelse(!is.null(opt$type), opt$type, "fasta")
 
 
 #' ----------------------------------------------------------------------
 pokazStage('Step 2. Chromosomes into parts')
 
 pokaz('Directory with chromosomes:', path.chr)
-files.query = list.files(path = path.chr, pattern = paste0('\\.', query.type, '$', collapse = '') )
+files.query = list.files(path = path.chr, pattern = paste0('\\.', 'fasta', '$', collapse = '') )
 query.name = unique(sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]))
 pokaz('Names of genomes:', query.name)
 

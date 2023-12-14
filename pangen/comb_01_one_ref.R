@@ -66,7 +66,6 @@ path.chr.len = paste(path.cons, path.chr.len, sep = '')
 if(!dir.exists(path.chr.len)) system(paste('mkdir ', path.chr.len, sep = ''))
 
 if (!is.null(opt$path.ref)) path.base <- opt$path.ref  # to know the chromosomal lengths
-if (!is.null(opt$type)) base.suff <- opt$type  # to read fasta file
 if (!is.null(opt$pref)) base.acc.ref <- opt$pref
 
 # Path with alignments
@@ -114,7 +113,7 @@ if(!file.exists(file.chr.len)){
     # print(c(i.chr, acc))
     
     # Read base chromosome
-    base.file = paste0(base.acc.ref, '_chr', i.chr , '.', base.suff, collapse = '')
+    base.file = paste0(base.acc.ref, '_chr', i.chr , '.fasta', collapse = '')
     # pokaz('Base:', base.file)
     base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
     base.fas.fw = seq2nt(base.fas.fw)

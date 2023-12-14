@@ -50,7 +50,7 @@ Usage: ${0##*/} [-pref_global PREFIX] [-ref_pref REF_PREFIX] [-path_chr_ref PATH
                 [-n_chr_ref N_CHR_REF] [-path_in PATH_IN] [-n_chr_query N_CHR_QUERY]
                 [-path_parts PATH_PARTS] [-path_chr_acc PATH_CHR_ACC] [-path_consensus PATH_CONSENSUS]
                 [-sort_chr_len SORT_CHR_LEN] [-part_len PART_LEN] [-all_cmp ALL_CMP]
-                [-p_ident P_IDENT] [-fasta_type FASTA_TYPE] [-acc_anal ACC_ANAL] [-cores CORES]
+                [-p_ident P_IDENT] [-acc_anal ACC_ANAL] [-cores CORES]
 
 This script performs genomic analysis with several options to specify inputs, paths, and parameters.
 
@@ -69,7 +69,6 @@ Options:
     -part_len PART_LEN         Length of part, which should be searched on the first step (default: 5000).
     -all_cmp ALL_CMP           Compare all vs all (default: "T").
     -p_ident P_IDENT           Percentage identity threshold.
-    -fasta_type FASTA_TYPE     Type of FASTA file used.
     -acc_anal ACC_ANAL         File with accessions to analyse. 
                                Accessions should be in rows.
     -cores CORES               Number of cores for parallel processing.
@@ -117,7 +116,6 @@ do
 	-all_cmp) all_cmp=$2; shift ;;   # has a defaul value "T": compare all vs all
 	-p_ident) p_ident=$2; shift ;;
 
-  -fasta_type) fasta_type=$2; shift ;;
 
   -acc_anal) acc_anal=$2; shift ;;  # accessions to analyse
 
@@ -165,15 +163,14 @@ p_ident="${p_ident:-85}"
 part_len="${part_len:-5000}"  
 all_cmp="${all_cmp:-T}"
 sort_chr_len="${sort_chr_len:-F}"
-fasta_type="${fasta_type:-fasta}"
 
 
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 
 # Rename the reference genome prefix
 # Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
-ref_pref_true=${ref_pref}
-ref_pref=${ref_pref//_/$'-'}
+# ref_pref_true=${ref_pref}
+# ref_pref=${ref_pref//_/$'-'}
 
 
 #---- Paths
@@ -220,23 +217,22 @@ fi
 
 # Split quiery fasta into chromosomes
 if [ $start_step -le 1 ] && [ ! -f "$path_flags/step1_done" ]; then
-    Rscript pangen/query_01_to_chr.R -n ${n_chr_query} -t ${fasta_type} --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
+    Rscript pangen/query_01_to_chr.R -n ${n_chr_query}  --path.in ${path_in} --path.out ${path_chr_acc} -s ${sort_chr_len} -c ${cores} --acc.anal ${acc_anal}
     touch "$path_flags/step1_done"
 fi
 
 
 # Split quiery chromosomes into parts
 if [ $start_step -le 2 ] && [ ! -f "$path_flags/step2_done" ]; then
-    Rscript pangen/query_02_to_parts.R -n ${n_chr_query} -t ${fasta_type} --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+    Rscript pangen/query_02_to_parts.R -n ${n_chr_query}  --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
     touch "$path_flags/step2_done"
 fi
-
 
 # Blast parts on the reference genome
 if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
 
     # Create a database on the reference genome
-    for file in ${path_chr_ref}${ref_pref}_chr*${fasta_type} ; do
+    for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do
       # Check if the BLAST database files already exist
       if [ ! -f "${file}.nin" ]; then
           makeblastdb -in ${file} -dbtype nucl > /dev/null
@@ -245,7 +241,7 @@ if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
 
     # Blast parts on the reference genome
     ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
-     -ref_pref ${ref_pref}_chr -ref_type ${fasta_type} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+     -ref_pref ${ref_pref}_chr -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
     touch "$path_flags/step3_done_${ref_pref}"
 fi
@@ -254,7 +250,7 @@ fi
 # First round of alignments
 if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done_${ref_pref}" ]; then
     Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-                        --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+                        --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
                         --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
                         --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
@@ -278,7 +274,7 @@ fi
 if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
 
     Rscript pangen/synteny_03_merge_gaps.R --path.aln ${path_alignment} \
-    --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+    --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
     --path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
     --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
@@ -296,7 +292,7 @@ fi
 if [ $start_step -le 7 ] && [ ! -f "$path_flags/step7_done_${ref_pref}" ]; then
 
     Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
-    --type ${fasta_type} --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
+    --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
     --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
     touch "$path_flags/step7_done_${ref_pref}"

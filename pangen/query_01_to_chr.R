@@ -19,8 +19,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list <- list(
   make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
-  make_option(c("-t", "--type"), type = "character", default = NULL, 
-              help = "type of fasta files", metavar = "character"),
   make_option(c("-i", "--path.in"), type = "character", default = NULL, 
               help = "pathway to the input directory", metavar = "character"),
   make_option(c("-o", "--path.out"), type = "character", default = NULL, 
@@ -66,7 +64,6 @@ if(!dir.exists(path.chr)) dir.create(path.chr)
 
 # Common attributes
 len.parts  <- ifelse(!is.null(opt$bp), as.numeric(opt$bp), 5000)
-query.type <- ifelse(!is.null(opt$type), opt$type, ".fasta")
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
@@ -74,7 +71,6 @@ pokaz('sort_chr_by_length', sort.by.lengths)
 
 
 #' ----------------------------------------------------------------------
-
 
 if(!sort.by.lengths){
   msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
@@ -84,31 +80,45 @@ if(!sort.by.lengths){
   pokazAttention(msg)
 }
 
+#' ----------------------------------------------------------------------
+# Processor of input genome files
+pokaz('Path with genomes:', path.query)
+
+# Set accepted genome file types
+query.types = c('fasta', 'fna', 'fa', 'fas') #  'ffn', 'faa', 'frn'
+pokazAttention('Required type of gonome-files', query.types, '. Others will not be considered.')
+
+# List and filter genome files in the specified path based on the accepted file types
+search.pattern <- paste0(".*\\.(?:", paste(query.types, collapse="|"), ")$")
+query.name <- basename(list.files(path.query, pattern = search.pattern, full.names = TRUE))
+if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
+query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name))
+
+# Optional: Filter based on a list of accession numbers, if provided
+if(!is.null(acc.anal)){
+  acc.anal = gsub("(\\.[^.]+)$", "", basename(acc.anal))
+  pokaz('Accessions in the folder', query.name)
+  pokaz('Accessions in the filtration file', acc.anal)
+  query.name = query.name[query.name$acc %in% acc.anal]
+}
+
+# Final check and display of genome names for analysis
+if(nrow(query.name) == 0) stop('No accessions is provided for the analysys.')
+pokaz('Names of genomes for the analysis:', query.name$acc)
 
 #' ----------------------------------------------------------------------
 
-pokaz('Path with genomes:', path.query)
-files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
-pokaz('Files with genomes', files.query)
-pokaz('Required type of files', query.type)
-query.name = gsub(paste0('*.', query.type, collapse = ''), "" ,files.query)
-if(!is.null(acc.anal)){
-  query.name = intersect(query.name, acc.anal)
-}
-if(length(query.name) == 0) stop('No accessions for the analysys.')
-pokaz('Names of genomes:', query.name)
-
 for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
 # for.flag = T
-# for(acc in query.name[1:length(query.name)]){
+# for(i.acc in 1:nrow(query.name)){
   
-  
+  acc = query.name$acc[i.acc]
   #' --- --- --- --- --- --- --- --- --- --- ---
   # Don't run if the chromosomes exist
   n.exist = 0
   for(i.chr in 1:n.chr){
-    acc.s = gsub('_', '-', acc)
+    # acc.s = gsub('_', '-', acc)
     file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
     if(file.exists(file.out)){
       n.exist = n.exist + 1
@@ -122,7 +132,7 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
   
   pokaz('Number of existing ')
   pokaz('Accession', acc)
-  q.fasta = readFastaMy(paste0(path.query, acc, '.', query.type, collapse = ''))
+  q.fasta = readFastaMy(paste0(path.query, query.name$file[i.acc], collapse = ''))
   
   if(length(q.fasta) < n.chr){
     if(for.flag) next

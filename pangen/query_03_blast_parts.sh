@@ -2,7 +2,6 @@
 #parts="../parts/"
 #blastres="../blast_res_tair/"
 #ref_pref="TAIR10_chr"
-#ref_type='fas'
 
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
@@ -36,7 +35,6 @@ print_usage() {
   echo "-path_parts"
   echo "-path_result"
   echo "-ref_pref"
-  echo "-ref_type"
   echo "-all_vs_all"
   echo "-p_ident"
   echo "-cores"
@@ -59,7 +57,6 @@ do
     -path_parts) parts=$2; shift ;;
     -path_result) blastres=$2; shift ;;
     -ref_pref) ref_pref=$2; shift ;;
-    -ref_type) ref_type=$2; shift ;;
     -all_vs_all) all_vs_all=$2; shift ;;
     -p_ident) p_ident=$2; shift ;;
     -cores) cores=$2; shift ;;
@@ -134,6 +131,6 @@ export -f run_blast
 
 # Run the parallel
 
-parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.$ref_type ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
+parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
 pokaz_message "Done!"

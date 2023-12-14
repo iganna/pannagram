@@ -25,8 +25,6 @@ option_list = list(
               help="path to blast results", metavar="character"),
   make_option(c("-o", "--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("-t", "--type"), type="character", default=NULL, 
-              help="type of fasta files", metavar="character"),
   make_option(c("-p", "--pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("-g", "--path.gaps"), type="character", default=NULL, 
@@ -57,7 +55,6 @@ path.query    <- ifelse(!is.null(opt$path.query), opt$path.query, path.query)
 path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, path.blast.res)
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, path.aln)
 path.base     <- ifelse(!is.null(opt$path.ref), opt$path.ref, path.base)
-base.suff     <- ifelse(!is.null(opt$type), opt$type, base.suff)
 base.acc      <- ifelse(!is.null(opt$pref), opt$pref, base.acc)
 path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, path.gaps)
 
@@ -140,7 +137,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   }  
   
   # Read reference sequences
-  base.file = paste0(base.acc, '_chr', base.chr , '.', base.suff, collapse = '')
+  base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   pokaz('Base:', base.file)
   base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
