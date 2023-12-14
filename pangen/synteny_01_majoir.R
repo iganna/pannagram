@@ -76,7 +76,7 @@ len.blast = 50
 files.query = list.files(path = path.query, pattern = "\\.fasta$")
 query.name = gsub("*.fasta","",files.query)
 
-query.name = unique(sapply(query.name, function(s){ strsplit(s, '_')[[1]][1] }))
+query.name = unique(sapply(query.name, function(s){ strsplit(s, '_chr')[[1]][1] }))
 names(query.name) <- NULL
 
 pokaz('Accessions:', query.name)
