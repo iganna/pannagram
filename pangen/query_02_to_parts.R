@@ -61,6 +61,8 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
 
+pokaz('Filter', filter_rep)
+
 
 #' ----------------------------------------------------------------------
 pokazStage('Step 2. Chromosomes into parts')
