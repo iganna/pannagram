@@ -1,9 +1,9 @@
 #' How the output files look like:
 #'     group           name       otype   dclass      dim
 #'         /           accs   H5I_GROUP                  
-#'     /accs          acc_0 H5I_DATASET    FLOAT 28940631
-#'     /accs      acc_10002 H5I_DATASET    FLOAT 28940631
-#'     /accs      acc_10015 H5I_DATASET    FLOAT 28940631
+#'     /accs              0 H5I_DATASET    FLOAT 28940631
+#'     /accs          10002 H5I_DATASET    FLOAT 28940631
+#'     /accs          10015 H5I_DATASET    FLOAT 28940631
 
 
 suppressMessages({
@@ -121,7 +121,7 @@ for(s.comb in pref.combinations){
   }
   
   # Get the corresponsing function between two references
-  s = paste(gr.accs.e, 'acc_', ref1, sep = '')
+  s = paste(gr.accs.e, '', ref1, sep = '')
   
   f01 <- h5read(file.comb0, s)
   base.len = length(f01)

@@ -1,9 +1,9 @@
 #' How the output files look like:
 #'     group           name       otype   dclass      dim
 #'         /           accs   H5I_GROUP                  
-#'     /accs          acc_0 H5I_DATASET    FLOAT 28940631
-#'     /accs      acc_10002 H5I_DATASET    FLOAT 28940631
-#'     /accs      acc_10015 H5I_DATASET    FLOAT 28940631
+#'     /accs              0 H5I_DATASET    FLOAT 28940631
+#'     /accs          10002 H5I_DATASET    FLOAT 28940631
+#'     /accs          10015 H5I_DATASET    FLOAT 28940631
 
 suppressMessages({
   library(foreach)
@@ -179,7 +179,7 @@ max.len.gap = 20000
     
     # Write into file
     suppressMessages({
-      h5write(x.corr, file.comb, paste(gr.accs, 'acc_', acc, sep = ''))
+      h5write(x.corr, file.comb, paste(gr.accs, '', acc, sep = ''))
     })
     
     # # ----  Find gaps  ----
@@ -236,7 +236,7 @@ max.len.gap = 20000
     # 
     # # Write into file
     # suppressMessages({
-    #   h5write(idx.tmp.acc, file.comb, paste(gr.break, 'acc_', acc, sep = ''))
+    #   h5write(idx.tmp.acc, file.comb, paste(gr.break, '', acc, sep = ''))
     # })
     # 
     # 
@@ -263,7 +263,7 @@ max.len.gap = 20000
     # h5write(idx.gaps, file.comb, 'gaps_all')
     h5write(base.acc.ref, file.comb, 'ref')
     
-    h5write(1:base.len, file.comb, paste(gr.accs, 'acc_', base.acc.ref, sep = ''))
+    h5write(1:base.len, file.comb, paste(gr.accs, '', base.acc.ref, sep = ''))
     # h5write(NULL, file.comb, paste(gr.break, base.acc.ref, sep = ''))
   })
   
