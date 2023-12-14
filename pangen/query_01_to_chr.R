@@ -90,6 +90,7 @@ if(!sort.by.lengths){
 pokaz('Path with genomes:', path.query)
 files.query = list.files(path = path.query, pattern = paste0('\\.', query.type, '$', collapse = '') )
 pokaz('Files with genomes', files.query)
+pokaz('Required type of files', query.type)
 query.name = gsub(paste0('*.', query.type, collapse = ''), "" ,files.query)
 if(!is.null(acc.anal)){
   query.name = intersect(query.name, acc.anal)
