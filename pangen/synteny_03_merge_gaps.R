@@ -69,7 +69,7 @@ if(!dir.exists(path.gaps)) dir.create(path.gaps)
 files.query = list.files(path = path.query, pattern = "\\.fasta$")
 query.name = gsub("*.fasta","",files.query)
 
-query.name = unique(sapply(query.name, function(s){ strsplit(s, '_')[[1]][1] }))
+query.name = unique(sapply(query.name, function(s){ strsplit(s, '_chr')[[1]][1] }))
 names(query.name) <- NULL
 
 #query.name = c('0')
