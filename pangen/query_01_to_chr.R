@@ -86,7 +86,7 @@ pokaz('Path with genomes:', path.query)
 
 # Set accepted genome file types
 query.types = c('fasta', 'fna', 'fa', 'fas') #  'ffn', 'faa', 'frn'
-pokazAttention('Required type of gonome-files', query.types, '. Others will not be considered.')
+pokazAttention('Required type of gonome-files (Others will not be considered):', query.types)
 
 # List and filter genome files in the specified path based on the accepted file types
 search.pattern <- paste0(".*\\.(?:", paste(query.types, collapse="|"), ")$")
