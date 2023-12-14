@@ -233,7 +233,6 @@ justCompl <- function(s){
 #' @author Anna A. Igolkina 
 #' 
 pokazStage <- function(...) {
-  
   arguments_list <- list(...)
   # Check if any arguments are vectors
   for (i in seq_along(arguments_list)) {
@@ -241,7 +240,8 @@ pokazStage <- function(...) {
       arguments_list[[i]] <- paste(arguments_list[[i]], collapse = " ")
     }
   }
-  arguments <- paste('*', paste(..., sep = " "), sep = ' ')
+  
+  arguments <- paste('*', paste(arguments_list, collapse = " "), sep = '')
   
   text.color <- make_style("#34FCFC")
   # bg <- make_style("grey5", bg = TRUE)
@@ -263,7 +263,6 @@ pokazStage <- function(...) {
 #' @author Anna A. Igolkina 
 #' 
 pokazAttention <- function(...) {
-  
   arguments_list <- list(...)
   # Check if any arguments are vectors
   for (i in seq_along(arguments_list)) {
@@ -272,7 +271,7 @@ pokazAttention <- function(...) {
     }
   }
   
-  arguments <- paste('  Attention:', paste(..., sep = " "), sep = ' ')
+  arguments <- paste('  Attention:', paste(arguments_list, collapse = " "), sep = '')
   
   text.color <- make_style("#FC345C")
   # bg <- make_style("grey5", bg = TRUE)
