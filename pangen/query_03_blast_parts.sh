@@ -130,7 +130,6 @@ run_blast() {
 export -f run_blast
 
 # Run the parallel
-echo ${ref_pref}
 
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
