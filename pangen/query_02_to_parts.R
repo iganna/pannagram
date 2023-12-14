@@ -24,6 +24,8 @@ registerDoParallel(myCluster)
 
 args = commandArgs(trailingOnly=TRUE)
 
+keeprepeats
+
 option_list <- list(
   make_option(c("-b", "--part.len"), type = "character", default = NULL, 
               help = "number of base pairs in the part file", metavar = "character"),
@@ -33,6 +35,8 @@ option_list <- list(
               help = "pathway to the chromosome directory", metavar = "character"),
   make_option(c("-o", "--path.parts"), type = "character", default = NULL, 
               help = "pathway to the parts directory", metavar = "character"),
+  make_option(c("--filter_rep"), type = "character", default = NULL, 
+              help = "flag to keep or not repeats", metavar = "character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
 )
@@ -56,6 +60,7 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 
 # Common attributes
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
+filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
 
 
 #' ----------------------------------------------------------------------
@@ -95,14 +100,23 @@ tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'c
     if(length(s) != length(pos.beg)) stop('Problem with chunks')
     names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
     
-    file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
     
-    file.out.rest = paste0(path.parts, acc, '_', i.chr, '.rest', collapse = '')
-    
-    seqs.score = sapply(s, repeatScore)
-    
-    writeFastaMy(s[seqs.score <= 0.2], file.out)
-    writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+    if(filter_rep == 0){
+      file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
+      writeFastaMy(s, file.out)
+    } else {
+      
+      file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
+      
+      file.out.rest = paste0(path.parts, acc, '_', i.chr, '.rest', collapse = '')
+      
+      seqs.score = sapply(s, repeatScore)
+      
+      writeFastaMy(s[seqs.score <= 0.2], file.out)
+      writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+      
+      
+    }
     
     rm(q.fasta)
     rm(s)

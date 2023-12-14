@@ -87,6 +87,7 @@ EOF
 
 unrecognized_options=()
 
+filter_rep=0
 while [ $# -gt 0 ]
 do
     case $1 in
@@ -94,6 +95,8 @@ do
                        exit
                        ;;
     # for options with required arguments, an additional shift is required
+
+  -filter_rep ) filter_rep=1 ;;
 
   -s | -stage ) start_step="$2"; shift ;;                     
   -pref_global) pref_global=$2; shift ;;
@@ -224,7 +227,9 @@ fi
 
 # Split quiery chromosomes into parts
 if [ $start_step -le 2 ] && [ ! -f "$path_flags/step2_done" ]; then
-    Rscript pangen/query_02_to_parts.R -n ${n_chr_query}  --path.chr  ${path_chr_acc} --path.parts ${path_parts} --part.len $part_len -c ${cores}
+    Rscript pangen/query_02_to_parts.R -n ${n_chr_query}  --path.chr  ${path_chr_acc}  \
+    --path.parts ${path_parts} --part.len $part_len -c ${cores} \
+    --filter_rep ${filter_rep}
     touch "$path_flags/step2_done"
 fi
 
