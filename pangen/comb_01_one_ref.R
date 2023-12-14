@@ -102,7 +102,7 @@ chromosome.pairs <- do.call(rbind, lapply(aln.files, function(filename){
   return(s.comb)}))
 
 pokaz('Combinations:')
-print(s.comb)
+print(chromosome.pairs)
 
 # ---- Length of reference chromosomes ----
 
