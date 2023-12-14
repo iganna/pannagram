@@ -79,28 +79,32 @@ if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
 # ---- Get accession names ----
 
-aln.suff = '_full.rds'
-aln.files <- list.files(path = path.aln, 
-                        pattern = sub("\\.rds", "\\\\.rds$", aln.suff))
-accessions <- sort(unique(sub("_(.*)", "", aln.files)))
+aln.suff <- "_full.rds"
+aln.files <- list.files(path.aln)
+aln.files <- files[grep(paste0(aln.suff, "$"), aln.files)]
+
+accessions <- sapply(aln.files, function(filename){
+  parts <- unlist(strsplit(filename, "_", fixed = TRUE))
+  name <- paste(parts[1:(length(parts) - 3)], collapse = "_")
+  return(name)})
+names(accessions) = NULL
+
+accessions <- sort(unique(accessions))
 
 pokaz('Accessions:', accessions)
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
-chromosome.pairs = c()
-for(i.query in 1:length(accessions)){
-  for(query.chr in 1:n.chr.acc){
-    if(!all.vs.all){
-      if(query.chr > n.chr.ref) next
-      chromosome.pairs = rbind(chromosome.pairs, c(i.query, query.chr, query.chr))
-      next
-    }
-    for(base.chr in 1:n.chr.ref){
-      chromosome.pairs = rbind(chromosome.pairs, c(i.query, query.chr, base.chr))
-    }
-  }
-}
-chromosome.pairs = unique(chromosome.pairs[,c(2,3)])
+
+
+
+chromosome.pairs <- do.call(rbind, lapply(files, function(filename){
+  parts <- unlist(strsplit(filename, "_", fixed = TRUE))
+  s.comb <- c(as.numeric(parts[length(parts) - 2]),
+              as.numeric(parts[length(parts) - 1]))
+  return(s.comb)}))
+
+pokaz('Combinations:')
+print(s.comb)
 
 # ---- Length of reference chromosomes ----
 
