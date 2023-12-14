@@ -127,7 +127,7 @@ if [ "$run_te" = true ]; then
            -perc_identity "${similarity_value}"
     # fi
 
-    file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.txt
+    file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.rds
     Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
             --out ${file_sv_big_on_te_cover} --sim ${similarity_value} --use_strand F
 
