@@ -119,6 +119,7 @@ tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 's
   n.exist = 0
   for(i.chr in 1:n.chr){
     # acc.s = gsub('_', '-', acc)
+    acc.s = acc
     file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
     if(file.exists(file.out)){
       n.exist = n.exist + 1
