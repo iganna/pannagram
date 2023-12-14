@@ -95,11 +95,11 @@ pokaz('Accessions:', accessions)
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-chromosome.pairs <- do.call(rbind, lapply(aln.files, function(filename){
+chromosome.pairs <- unique(do.call(rbind, lapply(aln.files, function(filename){
   parts <- unlist(strsplit(filename, "_", fixed = TRUE))
   s.comb <- c(as.numeric(parts[length(parts) - 2]),
               as.numeric(parts[length(parts) - 1]))
-  return(s.comb)}))
+  return(s.comb)})))
 
 pokaz('Combinations:')
 print(chromosome.pairs)
