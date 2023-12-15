@@ -169,7 +169,8 @@ gff1 = gff1[!(gff1$V3 %in% c('chromosome')),]  # unnecessary attributes
 gff1 = gff1[gff1$V3 %in% c('gene', 'exon'),]  # important attributes
 
 # Convert GFF Annotations from acc1 to acc2
-gff2.res = gff2gff(path.cons, acc1, acc2, ref.acc, gff1, flag.exact = T)
+gff2.res = gff2gff(path.cons, acc1, acc2, ref.acc, gff1, flag.exact = T, 
+                   aln.type = aln.type)
 
 # Results
 gff2.remain = gff2.res$gff2.remain

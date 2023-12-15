@@ -27,6 +27,7 @@ gff2gff <- function(path.cons, acc1, acc2, ref.acc, gff1,
                    flag.exact=T, 
                    max.chr.len = 35 * 10^6,
                    gr.accs.e = "accs/",
+                   aln.type = 'msa_',  # please provide correct prefix. In case of reference-free, it's 'comb_'
                    echo=T){
   
   # Prepare new annotation
@@ -39,7 +40,7 @@ gff2gff <- function(path.cons, acc1, acc2, ref.acc, gff1,
   
   for(i.chr in 1:n.chr){
     if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_', ref.acc,'.h5', sep = '')
+    file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5', sep = '')
     
     v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
               h5read(file.msa, paste(gr.accs.e, acc2, sep = '')))
