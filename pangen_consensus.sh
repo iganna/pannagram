@@ -231,11 +231,11 @@ done
 if [ $start_step -le 8 ] && [ ! -f "$path_flags/step8_done" ]; then
 
     ref0=${refs_all[0]}
-    ref0=${ref0//_/$'-'}
+    # ref0=${ref0//_/$'-'}
     for ((i = 1; i < ${#refs_all[@]}; i++)); do
         ref1=${refs_all[i]}
 
-        ref1=${ref1//_/$'-'}
+        # ref1=${ref1//_/$'-'}
         
         Rscript pangen/comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
 
