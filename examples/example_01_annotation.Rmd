@@ -34,6 +34,12 @@ if (!dir.exists(path.figures))  dir.create(path.figures)  # Check if the directo
 n.chr = 5
 ref.acc = '0'
 
+# If reference-free:
+aln.type = 'msa_'
+
+# If reference-based:
+# aln.type = 'comb_'
+
 ```
 
 ## Additional variables
@@ -58,7 +64,7 @@ c.grey = '#EBEBEB'
 ```{r}
 # Set chromosome index and setup the corresponding MSA file
 i.chr = 4
-file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 
 # Read group information from the MSA file and extract accession names and pangenome length
 groups = h5ls(file.msa)
@@ -89,7 +95,7 @@ dev.off()
 ```{r}
 
 # Load MSA blocks information and set window size
-file.blocks = paste(path.cons, 'msa_blocks_ref_', ref.acc, '.rds', sep = '')
+file.blocks = paste(path.cons, aln.type, 'blocks_ref_', ref.acc, '.rds', sep = '')
 wnd.size = 100000
 
 # Read block indices and prepare plots for each of the first 5 chromosomes
@@ -104,7 +110,7 @@ p.combo <- plot_grid(plotlist = p.list, nrow = 5)
 p.combo
 
 # Save the combined plot to a PDF file
-pdf(paste(path.figures, 'msa_pangenone', '.pdf', sep = ''), width = 8, height = 6)
+pdf(paste(path.figures, aln.type, 'pangenone', '.pdf', sep = ''), width = 8, height = 6)
 print(p.combo)
 dev.off()
 
@@ -116,9 +122,14 @@ dev.off()
 ```{r}
 # Define chromosome and MSA file path
 i.chr = 4
-file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 
+# Show file content
 h5ls(file.msa)
+
+# Get accession names
+groups = h5ls(file.msa)
+accessions = groups$name[groups$group == gr.accs.b]
 
 # Initialize vector and load MSA data for each accession
 v = c()
@@ -189,7 +200,7 @@ pos.beg = 10000000
 pos.end = pos.beg + 500
 
 # Read multiple sequence alignment (MSA) data for both accessions from the HDF5 file
-file.msa = paste(path.cons, 'msa_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
           h5read(file.msa, paste(gr.accs.e, acc2, sep = '')))
 
