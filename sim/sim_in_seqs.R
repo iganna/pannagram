@@ -39,7 +39,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
 use.strand <- ifelse(!is.null(opt$use_strand), as.logical(opt$use_strand), 
-                     stop("Similarity threshold not specified", call. = FALSE))
+                     stop("Strand should be provided", call. = FALSE))
 
 
 # ---- Testing ----

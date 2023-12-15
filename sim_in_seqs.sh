@@ -67,6 +67,7 @@ EOF
 
 after_blast_flag=0
 keep_blast_flag=0
+use_strand=T
 
 # Read arguments
 while [ "$1" != "" ]; do
@@ -91,6 +92,9 @@ while [ "$1" != "" ]; do
                   ;;
         -keepblast ) 
                   keep_blast_flag=1  
+                  ;;
+        -strandfree ) 
+                  use_strand=F
                   ;;
         * )      echo "Invalid parameter: $1"
                  exit 1
@@ -156,7 +160,7 @@ fi
 
 
 pokaz_stage "Similarity search..."
-Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold}
+Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold} --use_strand ${use_strand} --db_file ${genome_file}
 
 # Remove BLAST temporary file if not needed
 if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
