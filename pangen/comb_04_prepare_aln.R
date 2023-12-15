@@ -119,7 +119,7 @@ for(s.comb in pref.combinations){
   # ---- Merge coverages ----
   file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
   idx.break = readRDS(file.breaks)
-  # idx.break = idx.break[idx.break$acc != paste('acc_', ref.pref, sep = ''),]  # Remove the reference correspondence
+  # idx.break = idx.break[idx.break$acc != paste('', ref.pref, sep = ''),]  # Remove the reference correspondence
   
   
   
@@ -160,7 +160,7 @@ for(s.comb in pref.combinations){
   v.end = c()
   for(acc in accessions){
     
-    # if(sub('acc_', '', acc) ==ref.pref){
+    # if(sub('', '', acc) ==ref.pref){
     #   v.beg = cbind(v.beg, idx.break$beg)
     #   v.end = cbind(v.end, idx.break$end)
     #   next
@@ -278,7 +278,7 @@ for(s.comb in pref.combinations){
     pokaz('Accession', acc)
     # read the genome and chromosome
     file.chromosome = paste(path.chromosomes, 
-                            sub("acc_", "", acc), 
+                            acc, 
                             '_chr', q.chr, '.fasta', sep = '')
     genome = readFastaMy(file.chromosome)
     genome = seq2nt(genome)

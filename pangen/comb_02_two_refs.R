@@ -77,18 +77,40 @@ pokazStage('Step 8. Randomisation of alignments. Combine two references:', ref0,
 # library(rhdf5)
 
 
-# Find all fines with the prefix of both references and common suffixes
+# Find all files with the prefix of both references and common suffixes
 # pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
 
-files.pref <- lapply(c(ref0, ref1), function(ref) {
-  suff <- paste0('_ref_', ref)
-  files <- list.files(path = path.cons, pattern = suff, full.names = FALSE)
-  sapply(files, function(s) strsplit(s, suff)[[1]][1])
-})
 
-pref.combinations <- Reduce(intersect, files.pref)
-pref.combinations <- gsub("comb_", "", pref.combinations)
+pattern <- "^comb_[0-9]+_[0-9]+_ref_.*\\.h5$"
+combo_files <- list.files(path = path.cons, pattern = pattern, full.names = F)
+
+extract_xy <- function(filename) {
+  parts <- strsplit(filename, "_")[[1]]
+  x <- parts[2]
+  y <- parts[3]
+  return(paste(x, y, sep = '_'))
+}
+pref.combinations <- unique(sapply(combo_files, extract_xy))
 pokaz('Combinations', pref.combinations)
+# 
+# extract_name <- function(filename) {
+#   parts <- strsplit(filename, "_")[[1]]
+#   name <- paste(parts[5:length(parts)], collapse = "_")
+#   return(name)
+# }
+
+
+# 
+# 
+# files.pref <- lapply(c(ref0, ref1), function(ref) {
+#   suff <- paste0('_ref_', ref)
+#   files <- list.files(path = path.cons, pattern = suff, full.names = FALSE)
+#   sapply(files, function(s) strsplit(s, suff)[[1]][1])
+# })
+# 
+# pref.combinations <- Reduce(intersect, files.pref)
+# pref.combinations <- gsub("comb_", "", pref.combinations)
+# pokaz('Combinations', pref.combinations)
 
 
 
