@@ -164,7 +164,10 @@ add "fasta" as parameter and make clever split on this parameter, может б�
 
 ## Acknowledgements
 
-Anna Glushkevich for testing
+Thanks for the testing:
+Anna Glushkevich
+Elizaveta Grigoreva
+Jilong Ma
 
 Logo was generated with the help of DALL-E
 
