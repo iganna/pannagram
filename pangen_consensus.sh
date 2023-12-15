@@ -297,7 +297,7 @@ if [ $start_step -le 12 ] && [ ! -f "$path_flags/step12_done" ]; then
 fi
 
 
-if [ $start_step -eq 0 ]; then
-    rm -f "$FLAG_DIR"/.*
-    echo "Скрипт успешно завершен"
-fi
+# if [ $start_step -eq 0 ]; then
+#     rm -f "$FLAG_DIR"/.*
+#     echo "Script completed successfully"
+# fi

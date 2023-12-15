@@ -101,8 +101,7 @@ chromosome.pairs <- unique(do.call(rbind, lapply(aln.files, function(filename){
               as.numeric(parts[length(parts) - 1]))
   return(s.comb)})))
 
-pokaz('Combinations:')
-print(chromosome.pairs)
+pokaz('Combinations:', paste(chromosome.pairs[,1], chromosome.pairs[,2], sep = '_'))
 
 # ---- Length of reference chromosomes ----
 
