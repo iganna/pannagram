@@ -27,7 +27,7 @@ catch() {
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils_bash.sh
+source utils/utils_bash.sh
 
 show_help() {
     cat << EOF
@@ -58,113 +58,113 @@ Examples:
 EOF
 }
 
-# # ----------------------------------------------------------------------------
-# #            PARAMETERS
-# # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+#            PARAMETERS
+# ----------------------------------------------------------------------------
 
-# #!/bin/bash
+#!/bin/bash
 
-# after_blast_flag=0
-# keep_blast_flag=0
-# use_strand=T
+after_blast_flag=0
+keep_blast_flag=0
+use_strand=T
 
-# # Read arguments
-# while [ "$1" != "" ]; do
-#     case $1 in
-#       -h | --help )  show_help
-#                        exit
-#                        ;;
-#         -in )    shift
-#                  fasta_file=$1
-#                  ;;
-#         -out )   shift
-#                  output_file=$1
-#                  ;;
-#         -sim )   shift
-#                  sim_threshold=$1
-#                  ;;
-#         -set ) shift
-#                   set_file=$1
-#                   ;;
-#         -afterblast ) 
-#                   after_blast_flag=1 
-#                   ;;
-#         -keepblast ) 
-#                   keep_blast_flag=1  
-#                   ;;
-#         -strandfree ) 
-#                   use_strand=F
-#                   ;;
-#         * )      echo "Invalid parameter: $1"
-#                  exit 1
-#     esac
-#     shift
-# done
+# Read arguments
+while [ "$1" != "" ]; do
+    case $1 in
+      -h | --help )  show_help
+                       exit
+                       ;;
+        -in )    shift
+                 fasta_file=$1
+                 ;;
+        -out )   shift
+                 output_file=$1
+                 ;;
+        -sim )   shift
+                 sim_threshold=$1
+                 ;;
+        -set ) shift
+                  set_file=$1
+                  ;;
+        -afterblast ) 
+                  after_blast_flag=1 
+                  ;;
+        -keepblast ) 
+                  keep_blast_flag=1  
+                  ;;
+        -strandfree ) 
+                  use_strand=F
+                  ;;
+        * )      echo "Invalid parameter: $1"
+                 exit 1
+    esac
+    shift
+done
 
-# # Check if FASTA file parameter is provided
-# if [ -z "$fasta_file" ]; then
-#     echo "FASTA file not specified"
-#     exit 1
-# fi
+# Check if FASTA file parameter is provided
+if [ -z "$fasta_file" ]; then
+    echo "FASTA file not specified"
+    exit 1
+fi
 
-# # Check if output file parameter is provided
-# if [ -z "$output_file" ]; then
-#     echo "Output file not specified"
-#     exit 1
-# fi
+# Check if output file parameter is provided
+if [ -z "$output_file" ]; then
+    echo "Output file not specified"
+    exit 1
+fi
 
-# # Check if set_file file parameter is provided
-# if [ -z "$set_file" ]; then
-#     echo "File with the set is not specified"
-#     exit 1
-# fi
+# Check if set_file file parameter is provided
+if [ -z "$set_file" ]; then
+    echo "File with the set is not specified"
+    exit 1
+fi
 
-# # Check if the FASTA file exists
-# if [ ! -f "$fasta_file" ]; then
-#     echo "Input FASTA file not found: $fasta_file"
-#     exit 1
-# fi
+# Check if the FASTA file exists
+if [ ! -f "$fasta_file" ]; then
+    echo "Input FASTA file not found: $fasta_file"
+    exit 1
+fi
 
-# # Check if similarity threshold parameter is provided
-# if [ -z "$sim_threshold" ]; then
-#     sim_threshold=85
-#     pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
-# fi
+# Check if similarity threshold parameter is provided
+if [ -z "$sim_threshold" ]; then
+    sim_threshold=85
+    pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
+fi
 
-# # Your script code goes here
+# Your script code goes here
 
-# # ----------------------------------------------------------------------------
-# #            MAIN
-# # ----------------------------------------------------------------------------
-
-
-# # Check if BLAST database exists
-# if [ ! -f "${set_file}.nhr" ]; then
-#     echo "BLAST database for $fasta_file not found. Creating database..."
-#     makeblastdb -in "$set_file" -dbtype nucl > /dev/null
-# fi
+# ----------------------------------------------------------------------------
+#            MAIN
+# ----------------------------------------------------------------------------
 
 
-# blast_res="${output_file}.blast.tmp"
-
-# if [ "$after_blast_flag" -eq 1 ]; then
-#     if [ ! -f "${blast_res}" ]; then
-#         echo "Blast results file not found: ${fasta_file}"
-#         exit 1
-#     fi
-# else
-#     pokaz_stage "BLAST search..."
-#     blastn -db ${set_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" -perc_identity ${sim_threshold}
-# fi
+# Check if BLAST database exists
+if [ ! -f "${set_file}.nhr" ]; then
+    echo "BLAST database for $fasta_file not found. Creating database..."
+    makeblastdb -in "$set_file" -dbtype nucl > /dev/null
+fi
 
 
-# pokaz_stage "Similarity search..."
-# Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} \
-# --sim ${sim_threshold} --use_strand ${use_strand} --db_file ${set_file}
+blast_res="${output_file}.blast.tmp"
 
-# # Remove BLAST temporary file if not needed
-# if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
-#     rm ${blast_res}
-# fi
+if [ "$after_blast_flag" -eq 1 ]; then
+    if [ ! -f "${blast_res}" ]; then
+        echo "Blast results file not found: ${fasta_file}"
+        exit 1
+    fi
+else
+    pokaz_stage "BLAST search..."
+    blastn -db ${set_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" -perc_identity ${sim_threshold}
+fi
 
-# pokaz_message "Done!"
+
+pokaz_stage "Similarity search..."
+Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} \
+--sim ${sim_threshold} --use_strand ${use_strand} --db_file ${set_file}
+
+# Remove BLAST temporary file if not needed
+if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
+    rm ${blast_res}
+fi
+
+pokaz_message "Done!"
