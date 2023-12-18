@@ -60,16 +60,18 @@ max.block.elemnt = 3 * 10^ 6
 
 
 # ---- Testing ----
-# 
-# library(rhdf5)
-# source('../../../pannagram/utils.R')
-# path.cons = './'
-# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-# ref.pref = '0'
-# path.mafft.out = '../mafft_out/'
-# n.flank = 30
 
+if(F){
 
+  library(rhdf5)
+  source('../../../pannagram/utils.R')
+  path.cons = './'
+  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+  ref.pref = '0'
+  path.mafft.out = '../mafft_out/'
+  n.flank = 30
+  
+}
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -80,8 +82,8 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-# pokaz('Reference:', ref.pref)
-# pokaz('Combinations', pref.combinations)
+pokaz('Reference:', ref.pref)
+pokaz('Combinations', pref.combinations)
 
 
 # ------------------------------------
@@ -91,7 +93,7 @@ pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
 for(s.comb in pref.combinations){
   
-  # pokaz('* Combination', s.comb)
+  pokaz('* Combination', s.comb)
   
   # Get accessions
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
@@ -235,7 +237,6 @@ for(s.comb in pref.combinations){
     n.pos = ncol(mafft.aln.pos[[i]])
     fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
   }
-  
   
   
   pos.beg.all = list(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
