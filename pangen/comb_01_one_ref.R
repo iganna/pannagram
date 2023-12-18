@@ -82,7 +82,7 @@ if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 aln.suff <- "_full.rds"
 aln.files <- list.files(path.aln)
 
-pokaz('Paths', path.aln)
+pokaz('Paths with alignments', path.aln)
 
 aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
 
