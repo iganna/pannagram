@@ -23,40 +23,40 @@ catch() {
 }
 
 
-# # ----------------------------------------------------------------------------
-# #             FUNCTIONS
-# # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+#             FUNCTIONS
+# ----------------------------------------------------------------------------
 
-# source utils_bash.sh
+source utils_bash.sh
 
-# show_help() {
-#     cat << EOF
-# Usage: ${0##*/} [-h] [-in FASTA_FILE] [-genome GENOME_FILE] [-out OUTPUT_FILE] 
-#                 [-sim SIMILARITY_THRESHOLD] [-afterblast] [-keepblast]
+show_help() {
+    cat << EOF
+Usage: ${0##*/} [-h] [-in FASTA_FILE] [-genome GENOME_FILE] [-out OUTPUT_FILE] 
+                [-sim SIMILARITY_THRESHOLD] [-afterblast] [-keepblast]
 
-# This script performs a BLAST search on a given FASTA file against a specified genome 
-# and processes the results based on similarity thresholds.
+This script performs a BLAST search on a given FASTA file against a specified genome 
+and processes the results based on similarity thresholds.
 
-#     -h, --help              Display this help and exit.
-#     -in FASTA_FILE          Specify the input FASTA file.
-#     -out OUTPUT_FILE        Specify the output file for results.
-#     -set GENOME_FILE     Specify the genome file to create BLAST database.    
-#     -sim SIMILARITY_THRESHOLD 
-#                             Set the similarity threshold for BLAST (default: 85).
-#     -afterblast             Use this flag to process existing BLAST results.
-#     -keepblast              Use this flag to keep the BLAST temporary files.
+    -h, --help              Display this help and exit.
+    -in FASTA_FILE          Specify the input FASTA file.
+    -out OUTPUT_FILE        Specify the output file for results.
+    -set GENOME_FILE     Specify the genome file to create BLAST database.    
+    -sim SIMILARITY_THRESHOLD 
+                            Set the similarity threshold for BLAST (default: 85).
+    -afterblast             Use this flag to process existing BLAST results.
+    -keepblast              Use this flag to keep the BLAST temporary files.
 
-# Examples:
-#     ${0##*/} -in input.fasta -set_file genome.fasta -out out_85.txt
+Examples:
+    ${0##*/} -in input.fasta -set_file genome.fasta -out out_85.txt
 
-#     ${0##*/} -in input.fasta -set_file genome.fasta -out out.txt -sim 90 -keepblast
-#     mv out.txt out_90.txt
+    ${0##*/} -in input.fasta -set_file genome.fasta -out out.txt -sim 90 -keepblast
+    mv out.txt out_90.txt
 
-#     ${0##*/} -in input.fasta -set_file genome.fasta -out out.txt -sim 95 -afterblast 
-#     mv out.txt out_95.txt
+    ${0##*/} -in input.fasta -set_file genome.fasta -out out.txt -sim 95 -afterblast 
+    mv out.txt out_95.txt
 
-# EOF
-# }
+EOF
+}
 
 # # ----------------------------------------------------------------------------
 # #            PARAMETERS
