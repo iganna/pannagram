@@ -228,9 +228,10 @@ done
 
 
 # Run consensus for a pair of files
-if [ $start_step -le 8 ] && [ ! -f "$path_flags/step8_done" ]; then
+ref0=${refs_all[0]}
 
-    ref0=${refs_all[0]}
+if [ $start_step -le 8 ] && [ ! -f "$path_flags/step8_done" ]; then
+    
     # ref0=${ref0//_/$'-'}
     for ((i = 1; i < ${#refs_all[@]}; i++)); do
         ref1=${refs_all[i]}
