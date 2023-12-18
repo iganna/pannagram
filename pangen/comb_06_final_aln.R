@@ -278,7 +278,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.res = paste(path.cons, 'msa2_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
@@ -288,7 +288,8 @@ for(s.comb in pref.combinations){
     # pokaz('Accession', acc)
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v.aln = rep(0, base.len.aln)
-    v.aln[fp.main[pos.remain]] = v[pos.remain]
+    v.aln[fp.main] = v
+    # v.aln[fp.main[pos.remain]] = v[pos.remain]
     
     # Add singletons
     for(i in 1:length(single.res$len)){
