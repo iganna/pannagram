@@ -79,9 +79,13 @@ if(F){
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+pokaz('Path', path.cons)
 pokaz('Files', files)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
+
+
+
 
 pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
