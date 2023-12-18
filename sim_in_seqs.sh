@@ -41,19 +41,19 @@ and processes the results based on similarity thresholds.
     -h, --help              Display this help and exit.
     -in FASTA_FILE          Specify the input FASTA file.
     -out OUTPUT_FILE        Specify the output file for results.
-    -genome GENOME_FILE     Specify the genome file to create BLAST database.    
+    -set GENOME_FILE     Specify the genome file to create BLAST database.    
     -sim SIMILARITY_THRESHOLD 
                             Set the similarity threshold for BLAST (default: 85).
     -afterblast             Use this flag to process existing BLAST results.
     -keepblast              Use this flag to keep the BLAST temporary files.
 
 Examples:
-    ${0##*/} -in input.fasta -genome genome.fasta -out out_85.txt
+    ${0##*/} -in input.fasta -set_file genome.fasta -out out_85.txt
 
-    ${0##*/} -in input.fasta -genome genome.fasta -out out.txt -sim 90 -keepblast
+    ${0##*/} -in input.fasta -set_file genome.fasta -out out.txt -sim 90 -keepblast
     mv out.txt out_90.txt
 
-    ${0##*/} -in input.fasta -genome genome.fasta -out out.txt -sim 95 -afterblast 
+    ${0##*/} -in input.fasta -set_file genome.fasta -out out.txt -sim 95 -afterblast 
     mv out.txt out_95.txt
 
 EOF
@@ -84,8 +84,8 @@ while [ "$1" != "" ]; do
         -sim )   shift
                  sim_threshold=$1
                  ;;
-        -genome ) shift
-                  genome_file=$1
+        -set ) shift
+                  set_file=$1
                   ;;
         -afterblast ) 
                   after_blast_flag=1 
@@ -114,9 +114,9 @@ if [ -z "$output_file" ]; then
     exit 1
 fi
 
-# Check if genome file parameter is provided
-if [ -z "$genome_file" ]; then
-    echo "Genome file not specified"
+# Check if set_file file parameter is provided
+if [ -z "$set_file" ]; then
+    echo "File with the set is not specified"
     exit 1
 fi
 
@@ -140,9 +140,9 @@ fi
 
 
 # Check if BLAST database exists
-if [ ! -f "${genome_file}.nhr" ]; then
+if [ ! -f "${set_file}.nhr" ]; then
     echo "BLAST database for $fasta_file not found. Creating database..."
-    makeblastdb -in "$genome_file" -dbtype nucl > /dev/null
+    makeblastdb -in "$set_file" -dbtype nucl > /dev/null
 fi
 
 
@@ -155,12 +155,13 @@ if [ "$after_blast_flag" -eq 1 ]; then
     fi
 else
     pokaz_stage "BLAST search..."
-    blastn -db ${genome_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" -perc_identity ${sim_threshold}
+    blastn -db ${set_file} -query ${fasta_file} -out ${blast_res} -outfmt "6 qseqid qstart qend sstart send pident length sseqid" -perc_identity ${sim_threshold}
 fi
 
 
 pokaz_stage "Similarity search..."
-Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} --sim ${sim_threshold} --use_strand ${use_strand} --db_file ${genome_file}
+Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} \
+--sim ${sim_threshold} --use_strand ${use_strand} --db_file ${set_file}
 
 # Remove BLAST temporary file if not needed
 if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
