@@ -158,13 +158,19 @@ else
 fi
 
 
-pokaz_stage "Similarity search..."
-Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} \
---sim ${sim_threshold} --use_strand ${use_strand} --db_file ${set_file}
+if [ ! -s /path/to/your/file ]; then
+    pokaz_stage "Blast result is empty"
+else
+    
+    pokaz_stage "Similarity search..."
+    Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} \
+    --sim ${sim_threshold} --use_strand ${use_strand} --db_file ${set_file}
 
-# Remove BLAST temporary file if not needed
-if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
-    rm ${blast_res}
+    # Remove BLAST temporary file if not needed
+    if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
+        rm ${blast_res}
+    fi
+
+    pokaz_message "Done!"
 fi
 
-pokaz_message "Done!"
