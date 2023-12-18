@@ -52,6 +52,7 @@ use.strand <- ifelse(!is.null(opt$use_strand), as.logical(opt$use_strand),
 
 # ---- Main ----
 
+pokaz(blast.file)
 
 v = read.table(blast.file, stringsAsFactors = F)
 v = v[v$V6 >= sim.cutoff * 100,]
