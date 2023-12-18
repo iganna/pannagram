@@ -50,8 +50,14 @@ if (is.null(opt$ref.pref)) {
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-# path.cons = './'
-# ref.pref = '0'
+# Testing
+if(F){
+  library(rhdf5)
+  path.cons = './'
+  ref.pref = '0'
+  options("width"=200, digits=10)
+}
+
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -83,7 +89,7 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   
   # Create group for blocks
-  h5createGroup(file.comb, gr.blocks)
+  suppressMessages({ h5createGroup(file.comb, gr.blocks) })
   
   idx.break = c()
   for(acc in accessions){
@@ -104,12 +110,12 @@ for(s.comb in pref.combinations){
     
     # Save blocks
     idx.block.tmp = which(abs(diff(v[,4])) != 1)
-    idx.block.beg = v[c(1, which(abs(diff(v[,4])) != 1)+1), 2]
-    idx.block.end = v[c(which(abs(diff(v[,4])) != 1), nrow(v)), 2]
+    idx.block.df = data.frame(beg = v[c(1,idx.block.tmp+1), 2], end = v[c(idx.block.tmp, nrow(v)), 2])
+    
     # pokaz('Number of blocks', length(idx.block.beg))
     v.block = rep(0, length(v.init))
-    for(i.bl in 1:length(idx.block.beg)){
-      v.block[idx.block.beg[i.bl]:idx.block.end[i.bl]] = i.bl
+    for(i.bl in 1:nrow(idx.block.df)){
+      v.block[idx.block.df$beg[i.bl]:idx.block.df$end[i.bl]] = i.bl
     }
     
     suppressMessages({

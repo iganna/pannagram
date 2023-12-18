@@ -62,12 +62,15 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 # ---- Testing ----
-# 
-# library(rhdf5)
-# source('../../../pannagram/utils.R')
-# path.cons = './'
-# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
-# ref.pref = '0'
+
+if(F){
+  library(rhdf5)
+  source('../../../pannagram/utils/utils.R')
+  path.cons = './'
+  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
+  ref.pref = '0'
+}
+
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----

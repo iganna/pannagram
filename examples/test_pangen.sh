@@ -14,3 +14,4 @@
 ./pipeline_test.sh -pref_global '../pan_test/tom2' -ref_set '0,6046-v1.1,6191-v1.1' -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -cores 30 -acc_anal acc_tom.txt -all_cmp F
 
 ./pangen_consensus.sh -pref_global '../pan_test/p27/' -ref_set '0,10024' -n_chr_ref 5 -path_in '../pb_27/' -n_chr_query 5 -cores 30  -all_cmp F
+./analys.sh -pref_global '../pan_test/p27/'  -ref_pref 0 -blocks -seq

@@ -114,9 +114,8 @@ tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopa
       mx.consensus = matrix(0, nrow = length(v), ncol = length(s.nts), dimnames = list(NULL, s.nts))
     }
     
-    acc.name = gsub('acc_', '', acc)
     q.chr = strsplit(s.comb, '_')[[1]][1]
-    genome = readFastaMy(paste(path.chromosomes, acc.name, '_chr', q.chr, '.fasta', sep = ''))
+    genome = readFastaMy(paste(path.chromosomes, acc, '_chr', q.chr, '.fasta', sep = ''))
     genome = seq2nt(genome)
     genome = toupper(genome)
   

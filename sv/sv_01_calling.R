@@ -234,10 +234,10 @@ for(i.acc in 1:length(accessions)){
   pokaz('Generate GFF for accession', acc)
   
   df = sv.gff
-  df$V1 = paste(sub('acc_','',acc), '_Chr', sv.pos.all$chr, sep = '')
+  df$V1 = paste(acc, '_Chr', sv.pos.all$chr, sep = '')
   df$V4 = sv.beg.all[,acc] + 1
   df$V5 = sv.end.all[,acc] - 1
-  df$V9 = paste('ID=', sv.me$gr, '.', sub('acc_','',acc), 
+  df$V9 = paste('ID=', sv.me$gr, '.', acc, 
                 ';len_init=', sv.pos.all$len,
                 ';len_acc=', abs(sv.end.all[,acc]-sv.beg.all[,acc])-1, sep = '')
   
@@ -256,7 +256,7 @@ for(i.acc in 1:length(accessions)){
   df$V4[idx.strand] = abs(df$V5[idx.strand])
   df$V5[idx.strand] = tmp
   
-  file.sv.gff = paste(path.gff, 'svs_acc_', sub('acc_','',acc), '_v',sprintf("%02d", sv.version),'.gff', sep = '')
+  file.sv.gff = paste(path.gff, 'svs_acc_', acc, '_v',sprintf("%02d", sv.version),'.gff', sep = '')
   
   options(scipen = 999)
   write.table(df[,1:9], file.sv.gff, quote = F, row.names = F, col.names = F, sep = '\t')
