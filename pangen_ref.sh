@@ -292,7 +292,7 @@ if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
 fi
 
 
-exit 1
+# exit 1
 
 # -----------------------------------
 # Creaete a consensus
