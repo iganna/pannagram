@@ -126,7 +126,7 @@ for(f.blast in files.blast){
     pokaz('Alignment:', acc, query.chr, base.chr)
     
     # ---- Read blast results ----
-    x = read.table(f.blast, stringsAsFactors = F, header = F)
+    x = read.table(paste(path.blast.res, f.blast, sep = ''), stringsAsFactors = F, header = F)
     
     
     pokaz('Read blast results finished, numer of rows is', nrow(x))
