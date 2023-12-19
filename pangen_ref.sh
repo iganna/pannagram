@@ -251,6 +251,7 @@ if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
     touch "$path_flags/step3_done_${ref_pref}"
 fi
 
+exit 1
 
 # First round of alignments
 if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done_${ref_pref}" ]; then
