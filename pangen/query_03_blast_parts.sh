@@ -101,8 +101,8 @@ run_blast() {
     max_hsps=$8
     all_vs_all=$9
 
-    # echo "${ref_file} and ${part_file}"
-    # echo ${all_vs_all}
+    echo "${ref_file} and ${part_file}"
+    echo ${all_vs_all}
 
     p_filename=$(basename "$part_file" .fasta)
     p_prefix=${p_filename%_*}
@@ -112,11 +112,15 @@ run_blast() {
     r_prefix=${r_filename%_*}
     ref_chr=${r_filename##*chr}
 
+    echo "${part_chr} ${ref_chr}"
+
     outfile=${blastres}${p_filename}_${ref_chr}.txt
 
     if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
         return
     fi
+
+    exit 1
 
     # blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
     #        -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
