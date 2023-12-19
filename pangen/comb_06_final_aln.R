@@ -141,7 +141,7 @@ for(s.comb in pref.combinations){
   idx.skip = c()
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
-    if((i %% 100) == 0) pokaz('Aln', i)
+    # if((i %% 100) == 0) pokaz('Aln', i)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
     
     if(!file.exists(file.aln)) {
