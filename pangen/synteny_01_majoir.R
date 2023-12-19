@@ -75,22 +75,6 @@ len.blast = 50
 
 files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 
-
-pattern <- "(.+)_(\\d+)_(\\d+)\\.txt"
-
-# Применение регулярного выражения
-extracted_data <- lapply(files.blast, function(file) {
-  matches <- regmatches(file, regexpr(pattern, file))
-  if (length(matches) > 0) {
-    parts <- strsplit(matches, "_")[[1]]
-    return(list(NAME = parts[1], X = as.numeric(parts[2]), Y = as.numeric(parts[3])))
-  } else {
-    return(NULL)
-  }
-})
-
-
-
 # for.flag = F
 # tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
 for.flag = T
