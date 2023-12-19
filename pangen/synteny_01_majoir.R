@@ -75,6 +75,9 @@ len.blast = 50
 
 files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 
+pokaz('Number of BLAST-result files:', length(files.blast))
+if(length(files.blast) == 0) stop('No BLAST files provided')
+
 for.flag = F
 tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
 # for.flag = T

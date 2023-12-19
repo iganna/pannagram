@@ -66,54 +66,32 @@ if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
 #' ============================================================================
 
-files.query = list.files(path = path.query, pattern = "\\.fasta$")
-query.name = gsub("*.fasta","",files.query)
 
-query.name = unique(sapply(query.name, function(s){ strsplit(s, '_chr')[[1]][1] }))
-names(query.name) <- NULL
+files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
+pokaz('Number of alignment files:', length(files.maj))
+if(length(files.maj) == 0) stop('No alignment files provided')
 
-#query.name = c('0')
+# for.flag = F
+# tmp = foreach(f.maj = files.maj, .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
 
-pokaz('Accessions:', query.name)
-pokaz('Base accession:', base.acc)
-
-
-# Combinations of chromosomes query-base to chreate the alignments
-chromosome.pairs = c()
-for(i.query in 1:length(query.name)){
-  for(query.chr in 1:n.chr.acc){
-    if(!all.vs.all){
-      if(query.chr > n.chr.ref) next
-      chromosome.pairs = rbind(chromosome.pairs, c(i.query, query.chr, query.chr))
-      next
-    }
-    for(base.chr in 1:n.chr.ref){
-      chromosome.pairs = rbind(chromosome.pairs, c(i.query, query.chr, base.chr))
-    }
-  }
-}
-
-
-
-for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
-
-# for.flag = T
-# for(i.chr.pair in 1:nrow(chromosome.pairs)){
+for.flag = T
+for(f.maj in files.maj){
   
-  pokaz('A pair number', i.chr.pair, chromosome.pairs[i.chr.pair], ':')
+  # Remove extensions
+  pref.comb <- sub("\\maj.rds$", "", f.maj)
   
-  i.query = chromosome.pairs[i.chr.pair, 1]
+  # Parser for BLAST-resulr file
+  parts <- strsplit(pref.comb, "_")[[1]]
   
-  if(query.name[i.query] == base.acc){
-    if(for.flag) next
-    return(NULL)
-  }
+  base.chr <- parts[length(parts) - 1]
+  query.chr <- parts[length(parts)]
+  parts = parts[-c(length(parts) - 1, length(parts))]
+  acc <- paste0(parts, collapse = '_')
   
-  query.chr = chromosome.pairs[i.chr.pair, 2]
-  base.chr = chromosome.pairs[i.chr.pair, 3]
+  pokaz(acc, query.chr, base.chr)
   
-  pref.comb = paste0(query.name[i.query], '_', query.chr, '_', base.chr, collapse = '')
+  
+  pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
   
   # If the previous file was not created - next
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
@@ -129,7 +107,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
     return(NULL)
   }
   
-  pokaz('Alignment:', query.name[i.query], query.chr, base.chr)
+  pokaz('Alignment:', acc, query.chr, base.chr)
 
   # # ---- Read genomes ----
   # 
@@ -142,7 +120,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   # base.len = length(base.fas.bw)
   # 
   # # Read query sequences
-  # query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
+  # query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
   # pokaz('Query:', query.file)
   # 
   # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
@@ -161,7 +139,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   pos.beg.info = 2  # Position in sequence's name, where the genome's begin is started
   
   file.gaps.out = paste0(path.gaps,
-                         'acc_', query.name[i.query], 
+                         'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_out.txt', collapse = '')
   
   pokaz('gap file', file.gaps.out)
@@ -249,7 +227,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   # ---- Read additional alignments ----
   
   file.gaps.out = paste0(path.gaps,
-                         'acc_', query.name[i.query], 
+                         'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
   
   if(file.exists(file.gaps.out)) {
