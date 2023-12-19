@@ -262,7 +262,7 @@ if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done_${ref_pref}" ]; then
     touch "$path_flags/step4_done_${ref_pref}"
 
     # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-    rm -rf ${path_blast_parts}
+    # rm -rf ${path_blast_parts}
 fi
 
 
@@ -272,7 +272,7 @@ if [ $start_step -le 5 ] && [ ! -f "$path_flags/step5_done_${ref_pref}" ]; then
     touch "$path_flags/step5_done_${ref_pref}"
 fi
 
-
+exit 1
 
 
 # Second round of alignments
