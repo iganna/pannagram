@@ -94,7 +94,8 @@ accessions <- sapply(aln.files, function(filename){
   return(name)})
 names(accessions) = NULL
 
-
+accessions <- unique(accessions)
+pokaz('Accessions:', accessions)
 
 accessions <- sort(unique(accessions))
 
