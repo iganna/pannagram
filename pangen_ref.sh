@@ -272,7 +272,7 @@ if [ $start_step -le 5 ] && [ ! -f "$path_flags/step5_done_${ref_pref}" ]; then
     touch "$path_flags/step5_done_${ref_pref}"
 fi
 
-exit 1
+
 
 
 # Second round of alignments
@@ -284,13 +284,15 @@ if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
     --n.chr.ref ${n_chr_ref} --n.chr.acc ${n_chr_query}  --all.vs.all ${all_cmp} -c ${cores}
 
     # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-    rm -rf ${path_gaps}
+    # rm -rf ${path_gaps}
     # ls ${path_alignment}*maj*
     # rm -rf ${path_alignment}*maj*
 
     touch "$path_flags/step6_done_${ref_pref}"
 fi
 
+
+exit 1
 
 # -----------------------------------
 # Creaete a consensus
