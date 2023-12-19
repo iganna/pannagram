@@ -76,6 +76,10 @@ if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')
 }
 
+
+combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)
+pokaz(combinations)
+
 for.flag = F
 tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
 # for.flag = T

@@ -64,12 +64,19 @@ max.block.elemnt = 3 * 10^ 6
 if(F){
 
   library(rhdf5)
-  source('../../../pannagram/utils.R')
+  source('../../../pannagram/utils/utils.R')
   path.cons = './'
   path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
   ref.pref = '0'
   path.mafft.out = '../mafft_out/'
   n.flank = 30
+  
+  gr.accs.e <- "accs/"
+  gr.accs.b <- "/accs"
+  gr.break.e = 'break/'
+  gr.break.b = '/break'
+  
+  max.block.elemnt = 3 * 10^ 6
   
 }
 
@@ -308,7 +315,7 @@ for(s.comb in pref.combinations){
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1: Duplicated positions in in Singletons')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1: Duplicated positions in Singletons')
     
     # Add short
     for(i in 1:length(msa.res$len)){
