@@ -137,26 +137,26 @@ for(s.comb in pref.combinations){
   
   
   # ---- Get long alignment positions ----
+  pokaz('Read Long alignments..')
   idx.skip = c()
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
+    if((i %% 100) == 0) pokaz('Aln', i)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
-    
     
     if(!file.exists(file.aln)) {
       idx.skip = c(idx.skip, i)
       next
     }
-    
-    
-    command <- paste("wc -l", file.aln)
-    result <- system(command, intern = TRUE)
-    num.lines <- as.integer(strsplit(result, " ")[[1]][1])
-    if(num.lines < 2) {
-      idx.skip = c(idx.skip, i)
-      next
-    }
-    
+
+    # command <- paste("wc -l", file.aln)
+    # result <- system(command, intern = TRUE)
+    # num.lines <- as.integer(strsplit(result, " ")[[1]][1])
+    # if(num.lines < 2) {
+    #   idx.skip = c(idx.skip, i)
+    #   next
+    # }
+
     
     # pokaz(file.aln)
     aln.seq = readFastaMy(file.aln)
@@ -175,10 +175,10 @@ for(s.comb in pref.combinations){
       # tmp[tail(tmp.nongap, (n.flank) )] = '-'
       # tmp[tmp.nongap[1:(n.flank) ]] = '-'
       # aln.mx[i, ] <- tmp
-      
+
       tmp.nongap = tmp.nongap[-(1:(n.flank))]
       tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]
-      
+
       p1 = pos.aln[1, i.seq]
       p2 = pos.aln[2, i.seq]
       pos.tmp = p1:p2
@@ -187,7 +187,7 @@ for(s.comb in pref.combinations){
     # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
     pos.mx = pos.mx[,colSums(pos.mx != 0) != 0]
     row.names(pos.mx) = name.acc
-    
+
     mafft.aln.pos[[i]] = pos.mx
   }
   
@@ -196,13 +196,14 @@ for(s.comb in pref.combinations){
     mafft.res = mafft.res[-idx.skip,]
   }
   
-  warnings()
+  # warnings()
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
   # if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
   mafft.res$extra[mafft.res$extra < 0] = 0
   
   # ---- Short alignments ----
+  pokaz('Read Short alignments..')
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
   msa.res$len = unlist(lapply(msa.res$aln, nrow))
   msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
@@ -210,6 +211,7 @@ for(s.comb in pref.combinations){
   msa.res$extra[msa.res$extra < 0] = 0
 
   # ---- Singletons alignments ----
+  pokaz('Read Singletons..')
   single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
   single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
   single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
@@ -296,13 +298,16 @@ for(s.comb in pref.combinations){
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
-  h5createGroup(file.res, gr.accs.e)
+  suppressMessages({
+    h5createGroup(file.res, gr.accs.e)
+  })
   
+  pos.nonzero = fp.main != 0
   for(acc in accessions){
     pokaz('Accession', acc)
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v.aln = rep(0, base.len.aln)
-    v.aln[fp.main] = v
+    v.aln[fp.main[pos.nonzero]] = v[pos.nonzero]
     # v.aln[fp.main[pos.remain]] = v[pos.remain]
     
     # Add singletons
@@ -372,5 +377,6 @@ if(F){
   }
   
 }
+
 
 

@@ -78,57 +78,59 @@ if(length(query.name) == 0){
 
 
 combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)
-pokaz(combinations)
+
 
 for.flag = F
-tmp = foreach(acc = query.name, .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
+tmp = foreach(i.comb = 1:nrow(combinations), .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
 # for.flag = T
-# for(acc in query.name){
+# for(i.comb in 1:nrow(combinations)){
   
-  for(i.chr in 1:n.chr){
-    file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
-    
-    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
-    if( file.exists(file.out)) {
-      if(for.flag) next
-      return(NULL)
-    }
-    
-    
-    q.fasta = readFastaMy(file.in)[1]
-    q.fasta = toupper(q.fasta)
-    
-    s = splitSeq(q.fasta, n=len.parts)
-    len.chr = nchar(q.fasta)
-    pos.beg = seq(1, len.chr, len.parts)
-    
-    if(length(s) != length(pos.beg)) stop('Problem with chunks')
-    names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
-    
-    
-    if(filter_rep == 0){
-      file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
-      writeFastaMy(s, file.out)
-    } else {
-      
-      file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
-      
-      file.out.rest = paste0(path.parts, acc, '_', i.chr, '.rest', collapse = '')
-      
-      seqs.score = sapply(s, repeatScore)
-      
-      writeFastaMy(s[seqs.score <= 0.2], file.out)
-      writeFastaMy(s[seqs.score > 0.2], file.out.rest)
-      
-      
-    }
-    
-    rm(q.fasta)
-    rm(s)
-    rm(pos.beg)
-    rm(seqs.score)
+  acc <- combinations$acc[i.comb]
+  i.chr <- combinations$i.chr[i.comb]
+  
+  file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
+  
+  file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
+  if( file.exists(file.out)) {
+    if(for.flag) next
+    return(NULL)
   }
+  
+  
+  q.fasta = readFastaMy(file.in)[1]
+  q.fasta = toupper(q.fasta)
+  
+  s = splitSeq(q.fasta, n=len.parts)
+  len.chr = nchar(q.fasta)
+  pos.beg = seq(1, len.chr, len.parts)
+  
+  if(length(s) != length(pos.beg)) stop('Problem with chunks')
+  names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
+  
+  
+  if(filter_rep == 0){
+    file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
+    writeFastaMy(s, file.out)
+  } else {
+    
+    file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
+    
+    file.out.rest = paste0(path.parts, acc, '_', i.chr, '.rest', collapse = '')
+    
+    seqs.score = sapply(s, repeatScore)
+    
+    writeFastaMy(s[seqs.score <= 0.2], file.out)
+    writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+    
+    
+  }
+  
+  rm(q.fasta)
+  rm(s)
+  rm(pos.beg)
+  rm(seqs.score)
 }
+
 
 
 
