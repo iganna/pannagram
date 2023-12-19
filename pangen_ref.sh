@@ -286,7 +286,7 @@ if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
     # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
     rm -rf ${path_gaps}
     # ls ${path_alignment}*maj*
-    rm -rf ${path_alignment}*maj*
+    # rm -rf ${path_alignment}*maj*
 
     touch "$path_flags/step6_done_${ref_pref}"
 fi
