@@ -113,9 +113,9 @@ tmp = foreach(i.comb = 1:nrow(combinations), .packages=c('stringr','Biostrings',
     writeFastaMy(s, file.out)
   } else {
     
-    file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
+    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
-    file.out.rest = paste0(path.parts, acc, '_', i.chr, '.rest', collapse = '')
+    file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
     
     seqs.score = sapply(s, repeatScore)
     
