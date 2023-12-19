@@ -73,68 +73,47 @@ if(!dir.exists(path.gaps)) dir.create(path.gaps)
 max.len = 10^6
 len.blast = 50
 
-files.query = list.files(path = path.query, pattern = "\\.fasta$")
-query.name = gsub("*.fasta","",files.query)
-
-query.name = unique(sapply(query.name, function(s){ strsplit(s, '_chr')[[1]][1] }))
-names(query.name) <- NULL
-
-pokaz('Accessions:', query.name)
-pokaz('Base accession:', base.acc)
+files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 
 
-# Combinations of chromosomes query-base to cheate the alignments
-chromosome.pairs = c()
-for(i.query in 1:length(query.name)){
-  for(query.chr in 1:n.chr.acc){
-    if(!all.vs.all){
-      if(query.chr > n.chr.ref) next
-      chromosome.pairs = rbind(chromosome.pairs, c(i.query, query.chr, query.chr))
-      next
-    }
-    for(base.chr in 1:n.chr.ref){
-      chromosome.pairs = rbind(chromosome.pairs, c(i.query, query.chr, base.chr))
-    }
+pattern <- "(.+)_(\\d+)_(\\d+)\\.txt"
+
+# Применение регулярного выражения
+extracted_data <- lapply(files.blast, function(file) {
+  matches <- regmatches(file, regexpr(pattern, file))
+  if (length(matches) > 0) {
+    parts <- strsplit(matches, "_")[[1]]
+    return(list(NAME = parts[1], X = as.numeric(parts[2]), Y = as.numeric(parts[3])))
+  } else {
+    return(NULL)
   }
-}
-# print(chromosome.pairs)
+})
 
-for.flag = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
-# for.flag = T
-# for(i.chr.pair in 1:nrow(chromosome.pairs)){
+
+
+# for.flag = F
+# tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
+for.flag = T
+for(f.blast in files.blast){
   
+  # Remove the '.txt' extension
+  pref.comb <- sub("\\.txt$", "", f.blast)
   
-  i.query = chromosome.pairs[i.chr.pair, 1]
-  if(query.name[i.query] == base.acc){
-    if(for.flag) next
-    return(NULL)
-  }  
+  # Parser for BLAST-resulr file
+  parts <- strsplit(pref.comb, "_")[[1]]
   
-  query.chr = chromosome.pairs[i.chr.pair, 2]
-  base.chr = chromosome.pairs[i.chr.pair, 3]
+  base.chr <- parts[length(parts) - 1]
+  query.chr <- parts[length(parts)]
+  parts = parts[-c(length(parts) - 1, length(parts))]
+  acc <- paste0(parts, collapse = '_')
   
-  
-  pref.comb = paste0(query.name[i.query], '_', query.chr, '_', base.chr, collapse = '')
-  
-  # if(query.chr != 4) next
-  # if(base.chr != 4) next
-  # if(query.name[i.query] != '10024') next
-  # 
-  
-  # If the blast-result is not there -> next
-  t.file <- paste(path.blast.res, pref.comb, '.txt', sep = '')
-  # message(t.file)
-  if(!file.exists(t.file)) {
-    if(for.flag) next
-    return(NULL)
-  }  
-  
-  file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
-  if(file.exists(file.aln.postgap3)) {
-    if(for.flag) next
-    return(NULL)
-  }  
+  pokaz(acc, query.chr, base.chr)
+
+  # file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
+  # if(file.exists(file.aln.postgap3)) {
+  #   if(for.flag) next
+  #   return(NULL)
+  # }  
   
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
@@ -145,7 +124,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   base.len = length(base.fas.bw)
 
   # Read query sequences
-  query.file = paste(query.name[i.query], '_chr',query.chr, '.fasta', sep = '')
+  query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
   pokaz('Query:', query.file)
 
   query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
@@ -160,7 +139,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   # if(T){   
   if(!file.exists(file.aln.pre)){
     
-    pokaz('Alignment:', query.name[i.query], query.chr, base.chr)
+    pokaz('Alignment:', acc, query.chr, base.chr)
     
     # ---- Read blast results ----
     x = read.table(t.file, stringsAsFactors = F, header = F)
@@ -351,7 +330,7 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('crayon','strin
   # ---- Write gaps ----
   # Within non-occupied positions find those, which can be
 
-  pref.comarisson = paste('acc_', query.name[i.query], '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
+  pref.comarisson = paste('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
   # Query-file
   file.gap.query = paste0(path.gaps, pref.comarisson, 'query.fasta', collapse = '')
   # Base file
