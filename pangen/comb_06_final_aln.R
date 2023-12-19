@@ -294,7 +294,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste(path.cons, 'msa2_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.res = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
