@@ -71,11 +71,11 @@ files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 pokaz('Number of alignment files:', length(files.maj))
 if(length(files.maj) == 0) stop('No alignment files provided')
 
-# for.flag = F
-# tmp = foreach(f.maj = files.maj, .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
+for.flag = F
+tmp = foreach(f.maj = files.maj, .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
 
-for.flag = T
-for(f.maj in files.maj){
+# for.flag = T
+# for(f.maj in files.maj){
   
   # Remove extensions
   pref.comb <- sub("\\maj.rds$", "", f.maj)
