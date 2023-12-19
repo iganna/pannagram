@@ -75,10 +75,10 @@ len.blast = 50
 
 files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 
-# for.flag = F
-# tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
-for.flag = T
-for(f.blast in files.blast){
+for.flag = F
+tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
+# for.flag = T
+# for(f.blast in files.blast){
   
   # Remove the '.txt' extension
   pref.comb <- sub("\\.txt$", "", f.blast)
