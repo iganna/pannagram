@@ -101,6 +101,8 @@ run_blast() {
     max_hsps=$8
     all_vs_all=$9
 
+    echo "${ref_file} and ${part_file}"
+
     p_filename=$(basename "$part_file" .fasta)
     p_prefix=${p_filename%_*}
     part_chr=${p_filename##*chr}
