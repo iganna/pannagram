@@ -87,6 +87,7 @@ aln.files <- list.files(path.aln)
 
 aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
 
+pokaz(aln.files)
 
 accessions <- sapply(aln.files, function(filename){
   parts <- unlist(strsplit(filename, "_", fixed = TRUE))
