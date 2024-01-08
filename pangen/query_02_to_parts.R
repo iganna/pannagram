@@ -109,7 +109,7 @@ tmp = foreach(i.comb = 1:nrow(combinations), .packages=c('stringr','Biostrings',
   
   
   if(filter_rep == 0){
-    file.out = paste0(path.parts, acc, '_', i.chr, '.fasta', collapse = '')
+    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     writeFastaMy(s, file.out)
   } else {
     
