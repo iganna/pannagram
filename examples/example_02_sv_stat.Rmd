@@ -1,0 +1,882 @@
+---
+title: "Figures for SVs"
+output: html_notebook
+---
+
+# Setup
+```{r, message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+
+source('../utils/utils.R')
+source('../sv/graph_refinement.R')
+
+path.base = '../../work/008_sv_p27/'
+path.work = paste(path.base, 'data/', sep = '')
+path.figures = paste(path.base, 'figures/', sep = '')
+
+if (!dir.exists(path.figures)) dir.create(path.figures, recursive = TRUE)
+
+
+file.sv.all = 'sv_pangen_pos.rds'
+file.sv.beg = 'sv_pangen_beg.rds'
+file.sv.end = 'sv_pangen_end.rds'
+
+```
+
+
+## Functions
+```{r}
+
+```
+
+# Reading
+```{r}
+sv.all = readRDS(paste(path.work, file.sv.all, sep = ''))
+sv.se = sv.all[sv.all$single == 1,]
+
+# Binning of lengths
+breaks <- c(1, 10, 15, 50, 100, 200, 500, 1000, 2000, 5000, 10000, Inf)
+sv.se$len.gr <- cut(sv.se$len, breaks, right = FALSE, include.lowest = TRUE)
+
+# Rename bins
+s.levels = levels(sv.se$len.gr)
+s.levels = gsub("e\\+03", "k", s.levels)
+s.levels = gsub("e\\+04", "0k", s.levels)
+  
+sv.se$len.gr <- as.character(sv.se$len.gr)
+sv.se$len.gr = gsub("e\\+03", "k", sv.se$len.gr)
+sv.se$len.gr = gsub("e\\+04", "0k", sv.se$len.gr)
+sv.se$len.gr = factor(sv.se$len.gr, levels = s.levels)
+
+
+# sv.pos.beg = read.table(paste(path.work, file.sv.beg, sep = ''), stringsAsFactors = F, check.names = F)
+# sv.pos.end = read.table(paste(path.work, file.sv.end, sep = ''), stringsAsFactors = F, check.names = F)
+
+```
+
+
+## Stat
+```{r}
+pokaz('Number of all SVs', nrow(sv.all))
+pokaz('Number of SVs len >= 15', sum(sv.all$len >= 15))
+pokaz('me-se', paste0(c(table(sv.all$single[sv.all$len >= 15])), collapse = ' '))
+```
+
+
+
+### se-me: pie chart
+```{r}
+# Print stat
+res.len = c()
+
+thresholds = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13)
+thresholds = c(0,15,50,100, 1000)
+for(thresh in thresholds){
+  cnt = c(table(sv.all$single[sv.all$len >=thresh]))
+  tmp = c(sum(sv.all$len >=thresh), cnt, as.numeric(sprintf("%.2f",cnt[2]/cnt[1])))
+  res.len = rbind(res.len, tmp)
+}
+colnames(res.len) = c('all', 'me', 'se', 'ratio')
+rownames(res.len) = paste('len >=', thresholds, 'bp', sep = '')
+rownames(res.len)[1] = 'all SVs'
+
+print(res.len)
+
+
+df = reshape2::melt(t(apply(res.len[,2:3], 1, function(x) x/sum(x))))
+df$group = factor(rep(rownames(res.len), 2), levels = rev(rownames(res.len)))
+
+ 
+# create nested pie chart using ggplot
+p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
+          geom_col() +
+          scale_x_discrete(limits = rev(unique(df$group))) +
+          coord_polar("y")  + labs(fill = "") +
+  scale_fill_manual(values = c('#F48484', '#B5D5C5'),
+                    labels = c("meSV", "seSV")) +
+  theme_minimal() + 
+  geom_text(data = df[1:length(thresholds),], aes(x = factor(group), y = 0, 
+                                 # label = gsub(">=", "≥ ",group)), 
+                                 label = group), 
+            size = 3, hjust = -0.05, color = '#454545') +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = c(0.95, 0.95),
+            legend.justification = c(1, 1),
+            legend.background = element_blank(),
+            legend.box.background = element_blank()) +
+  geom_text(aes(label = round(value, 2)), position = position_stack(vjust = 0.5)) +
+  ylab('')+ xlab('')
+
+p
+
+p = p + theme(plot.margin = unit(c(-1, -1, -1, -1), "cm"))
+
+
+pdf(paste(path.figures, 'sv_pie_chart.pdf', sep = ''), width = 4.5, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+  
+  
+```
+
+
+
+# ME vs SE
+```{r}
+
+len.min = 15
+g <- ggplot(sv.all[sv.all$len > len.min,], aes(x=beg, fill = as.factor(single))) + 
+  geom_histogram(bins = 50, color='grey20') + theme_minimal() + 
+  facet_grid(rows = vars(chr)) + 
+  theme(panel.border = element_rect(colour = "black", fill=NA),
+        # legend.position='none',
+        strip.text.y = element_text(angle = 0)) +
+  labs( x = "Pangenome coordinate", y = "Count") +
+  scale_fill_manual(values = c('#F48484', '#B5D5C5'),name = "", labels = c('meSV', 'seSV'))
+  
+g
+
+pdf(paste(path.figures, 'sv_all_chromosome_pangen_coord_len_',len.min,'bp.pdf', sep = ''), width = 6, height = 4)
+print(g)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+```
+
+
+
+
+
+# Length distribution
+
+## Hist all
+```{r}
+
+# hist(sv.se$freq.max)
+len.min = 15 
+
+cnt = as.matrix(table(sv.se$freq.max[sv.se$len>=len.min], sv.se$len.gr[sv.se$len>=len.min]))
+# cnt = cnt[-1,]
+# cnt = apply(cnt, 2, function(x) x / sum(x))
+
+cnt = rowSums(cnt)
+df = data.frame(Var1 = 1:length(cnt), value = cnt)
+g <- ggplot(df, aes(Var1, value)) +
+  annotate(geom = "rect",xmin = -Inf, xmax = 3, ymin = -Inf, ymax = Inf,
+           fill = 'grey60', alpha = 0.5) +
+    annotate(geom = "rect",xmin = 25, xmax = Inf, ymin = -Inf, ymax = Inf,
+           fill = 'grey60', alpha = 0.5) +
+    geom_line(size = 2) + theme_minimal() + 
+  theme(legend.position='none',
+        strip.text.y = element_text(angle = 0)) + 
+  geom_segment(aes(x = 1, y = 15000, xend = 27, yend = 15000), 
+               arrow = arrow(type = "closed", length = unit(0.2, "cm"), ends = "both"), 
+               color = "grey20") +
+  annotate("text", x = 2.5, y = 14000, label = "Singleton\ninsertions", hjust = "left", vjust = 1, color = "grey20", 
+           size = 2.5) +
+  annotate("text", x = 25.5, y = 14000, label = "Singleton\ndeletions", hjust = "right", vjust = 1, color = "grey20",
+           size = 2.5)+
+  viridis::scale_color_viridis() +
+  xlab('Frequency of presence') + 
+  ylab('Absolute number') +
+  theme(
+    panel.background = element_rect(fill = "white", color = 'white'),
+    plot.background = element_rect(fill = "white", color = 'white')
+  ) 
+g
+
+
+pdf(paste(path.figures, 'sv_freq_hist.pdf', sep = ''), width = 2.6, height = 1.7)
+print(g)     # Plot 1 --> in the first page of PDF
+dev.off()
+```
+## Hist by len-groups
+```{r}
+
+len.min = 15
+cols = colorRampPalette(colors = c('#82CD47','#66bb6a', '#3e8c4c', '#cca64e', 
+                                   '#b07046', '#dd925f', '#a6719d', '#e198d4', 'pink'),
+                        )(length(levels(sv.se$len.gr)))
+names(cols) <- levels(sv.se$len.gr)
+
+tbl = table(sv.se[(sv.se$len > len.min), c('len.gr', 'freq.max')])
+tbl = tbl[rowSums(tbl) != 0,]
+# tbl = apply(tbl, 2, function(x) x / sum(x))
+p <- ggplot(data=reshape2::melt(tbl), aes(x=freq.max, y = value, color=len.gr)) +
+  geom_line(size = 2) +
+  # facet_grid(cols = vars(len.gr)) + 
+  facet_wrap(vars(len.gr), strip.position = "bottom", nrow = 1) + 
+ theme_minimal() + xlab('Frequency of presence') + ylab('Absolute number') + 
+  scale_color_manual(values=cols[names(cols) %in% rownames(tbl)],  
+                     name ='Indel Length (bp)') +
+  guides(color = FALSE) 
+p
+# 
+pdf(paste(path.figures, 'sv_freq_hist_length.pdf', sep = ''), width = 7, height = 3)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+tbl = table(sv.se[(sv.se$len < 100), c('len.gr', 'freq.max')])
+tbl = tbl[rowSums(tbl) != 0,]
+tbl.melt = reshape2::melt(tbl)
+p0 <- ggplot(data=tbl.melt[seq(1, nrow(tbl.melt),3),], aes(x=freq.max, y = value, color=len.gr)) +
+  geom_line(size = 2) +
+  facet_wrap(vars(len.gr), strip.position = "bottom", nrow = 1) + 
+ theme_minimal() + xlab('') + 
+  ylab('Absolute number') +  #width = 1.5
+  # ylab(NULL) +  #width = 1.5
+  scale_color_manual(values=cols[names(cols) %in% rownames(tbl)],  
+                     name ='Indel Length (bp)') +
+  # + theme(aspect.ratio=2/1)
+  guides(color = FALSE) + theme(
+    panel.background = element_rect(fill = "white", color = 'white'),
+    plot.background = element_rect(fill = "white")
+  )  
+
+p0
+
+
+
+pp = ggarrange(p0 + annotate(geom = "rect",ymin = -Inf, ymax = 11000, xmin = -Inf, xmax = Inf,
+           fill = 'grey60', alpha = 0.5),
+               p + ylab(NULL), 
+          ncol=2, widths = c(0.1, 1))
+
+pp
+
+
+pdf(paste(path.figures, 'sv_freq_hist_length_ext.pdf', sep = ''), width = 7, height = 3)
+print(pp)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+
+```
+
+## Bar-plots
+```{r}
+len.min = 15
+
+# tbl = table(sv.se[, c('len.gr', 'freq.max')])
+tbl = table(sv.se[(sv.se$len > len.min), c('len.gr', 'freq.max')])
+tbl = tbl[rowSums(tbl) != 0,]
+tbl = apply(tbl, 2, function(x) x / sum(x))
+p <- ggplot(data=reshape2::melt(tbl), aes(x=freq.max, y = value, fill=len.gr)) +
+  geom_bar(stat="identity") + theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') + scale_fill_manual(values=cols[names(cols) %in% rownames(tbl)],  name ='seSV len (bp)') +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_discrete(expand = c(0, 0))  +
+  theme(legend.key.size = unit(0.3, "cm"),
+        legend.position=c(1,1),legend.justification=c(1,1),
+        legend.direction="vertical",
+        legend.box="horizontal",
+        legend.box.just = c("top"), 
+        legend.background = element_rect(fill=alpha('white', 0.75)),
+        legend.margin = margin(2, 2, 2, 2))
+p
+
+pdf(paste(path.figures, 'sv_freq_length_composit.pdf', sep = ''), width = 3.5, height = 2.7)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+```
+
+
+```{r}
+# Without normalisation
+tbl = table(sv.se[(sv.se$len > len.min), c('len.gr', 'freq.max')])
+tbl = tbl[rowSums(tbl) != 0,]
+# tbl = apply(tbl, 2, function(x) x / sum(x))
+p <- ggplot(data=reshape2::melt(tbl), aes(x=freq.max, y = value, fill=len.gr)) +
+  geom_bar(stat="identity") + theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') + scale_fill_manual(values=cols[names(cols) %in% rownames(tbl)],  name ='Indel Length (bp)')
+p
+# 
+# pdf(paste(path.figures, 'sv_freq_length_absolut.pdf', sep = ''), width = 6, height = 4)
+# print(p)     # Plot 1 --> in the first page of PDF
+# dev.off()
+
+
+```
+
+## Relative plots
+```{r}
+
+tbl = table(sv.se[, c('len.gr', 'freq.max')])
+tbl.ratio = tbl[-1,] / tbl[-nrow(tbl),]
+
+
+p <- ggplot(data=reshape2::melt(tbl.ratio), aes(x=freq.max, y = value, color=len.gr)) +
+  # geom_point() +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_smooth(se = FALSE, linetype = "dashed")+
+  theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') + 
+  scale_color_manual(values=cols[names(cols) %in% rownames(tbl)],  name ='Ratio in abundances',
+                     labels = paste(rownames(tbl[-1,]), rownames( tbl[-nrow(tbl),]), sep = '/'))
+p
+
+# pdf(paste(path.figures, 'sv_freq_ratio.pdf', sep = ''), width = 6, height = 4)
+# print(p)     # Plot 1 --> in the first page of PDF
+# dev.off()
+
+```
+
+
+# TE
+
+## Rad TE
+```{r}
+sim.cutoff = 0.85
+v.sim = readRDS(paste(path.work, 'seq_sv_big_on_te_cover.rds', sep = ''))
+sv.se$te = 'noTE'
+
+
+sv.se$name = paste(sv.se$gr, sv.se$len, sep = '|')
+
+
+
+# Assign categories
+v.sim.have.te.part = v.sim[(v.sim$p1 < sim.cutoff),]
+v.sim.have.te = v.sim[(v.sim$p1 < sim.cutoff) & (v.sim$p8 >= sim.cutoff) & (v.sim$len1/v.sim$len8 >= sim.cutoff),]   # to prevent copies
+v.sim.is.te.part = v.sim[(v.sim$p1 >= sim.cutoff) & (v.sim$p8 < sim.cutoff),]
+v.sim.is.te = v.sim[(v.sim$p1 >= sim.cutoff) & (v.sim$p8 >= sim.cutoff),]
+
+# Define the following categories
+# noTE, isTE, isTEpart, hasTE, hasTEpart
+sv.se$name = paste(sv.se$gr, sv.se$len, sep = '|')
+sv.se$te = 'noTE'
+sv.se$te[sv.se$name %in% v.sim.have.te.part$V1] = 'hasTEpart'
+sv.se$te[sv.se$name %in% v.sim.have.te$V1] = 'hasTE'
+sv.se$te[sv.se$name %in% v.sim.is.te.part$V1] = 'isTEpart'
+sv.se$te[sv.se$name %in% v.sim.is.te$V1] = 'isTE'
+  
+
+
+
+```
+
+## TE distribution
+```{r}
+min.te.len = 100
+te.content.names = c("noTE", "isTE", "hasTE", "hasTEpart", "isTEpart")
+cols = c('#D8D9CF', '#EB455F', '#7B6079', '#3C8DAD', '#79B773')
+names(cols) <- te.content.names
+col.labels = c('none', 'is complete', 'is fragment', 'contains complete', 'contains fragment')
+
+sv.se$te = factor(sv.se$te, levels = c('noTE', 'isTE', 'isTEpart', 'hasTE', 'hasTEpart'))
+
+
+tbl = table(sv.se[(sv.se$len > min.te.len), c('te', 'freq.max')])
+tbl = apply(tbl, 2, function(x) x / sum(x))
+
+df = reshape2::melt(tbl)
+# df$te = factor(df$te, levels=c("noTE", 'hasTEpart', 'isTEpart', 'isTE', 'hasTE'))
+p <- ggplot() +
+  geom_bar(data=df, aes(x=freq.max, y = value, fill=te),stat="identity") + 
+  theme_minimal() + 
+  scale_fill_manual(values=cols, name ='TE content', 
+                    labels = col.labels) +
+  xlab('Frequency of presence') + ylab('')  +
+   theme(legend.justification = c(1, 0))
+p
+
+pdf(paste(path.figures, 'mob_freq_TE.pdf', sep = ''), width = 5, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+# Without noTE
+
+tbl = table(sv.se[(sv.se$len > min.te.len), c('te', 'freq.max')])
+tbl = tbl[row.names(tbl) != 'noTE',]
+tbl = apply(tbl, 2, function(x) x / sum(x))
+df = reshape2::melt(tbl)
+p <- ggplot() +
+  geom_bar(data=df, aes(x=freq.max, y = value, fill=te),stat="identity") + 
+  theme_minimal() + 
+    scale_fill_manual(values=cols, name ='TE content', 
+                    labels = col.labels) +
+  xlab('Frequency of presence') + ylab('') +
+   theme(legend.justification = c(1, 0))
+p
+
+pdf(paste(path.figures, 'mob_freq_TE_only.pdf', sep = ''), width = 5, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+# normalisation to the number of TE-containing sequences
+tbl = table(sv.se[(sv.se$len > min.te.len), c('te', 'freq.max')])
+tbl.norm = colSums(tbl[row.names(tbl) != 'noTE',])
+tbl = apply(tbl, 1, function(x) x / tbl.norm)
+df = reshape2::melt(tbl)
+# df$te = factor(df$te, levels=c("noTE", 'hasTEpart', 'isTEpart', 'isTE', 'hasTE'))
+p <- ggplot() +
+  geom_bar(data=df, aes(x=freq.max, y = value, fill=te),stat="identity") + 
+  theme_minimal() + 
+    scale_fill_manual(values=cols, name ='TE content', 
+                    labels = c('none', 'is complete', 'is fragment', 
+                               'contains complete', 'contains fragment')) +
+  xlab('Frequency of presence') + ylab('') +
+   theme(legend.justification = c(1, 0))
+p
+
+p = p +   geom_segment(aes(x = 1, y = 3, xend = 27, yend = 3), 
+               arrow = arrow(type = "closed", length = unit(0.2, "cm"), ends = "both"), 
+               color = "black") +
+  annotate("text", x = 1, y = 2.9, label = "Singleton\ninsertions", hjust = "left", vjust = 1, color = "black") +
+  annotate("text", x = 27, y = 2.9, label = "Singleton\ndeletions", hjust = "right", vjust = 1, color = "black")
+
+pdf(paste(path.figures, 'mob_freq_TE_norm.pdf', sep = ''), width = 5, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+# Absolute values
+tbl = table(sv.se[(sv.se$len > min.te.len), c('te', 'freq.max')])
+# tbl = apply(tbl, 2, function(x) x / sum(x))
+
+df = reshape2::melt(tbl)
+# df$te = factor(df$te, levels=c("noTE", 'hasTEpart', 'isTEpart', 'isTE', 'hasTE'))
+p <- ggplot() +
+  geom_bar(data=df, aes(x=freq.max, y = value, fill=te),stat="identity") + 
+  theme_minimal() + 
+    scale_fill_manual(values=cols, name ='TE content', 
+                    labels = c('none', 'is complete', 'is fragment', 
+                               'contains complete', 'contains fragment')) +
+  xlab('Frequency of presence') + ylab('') +
+   theme(legend.justification = c(1, 0))
+p
+
+pdf(paste(path.figures, 'mob_freq_TE_absolute.pdf', sep = ''), width = 5, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+```
+
+## Pie distribution
+```{r}
+
+tbl = table(sv.se[(sv.se$len > min.te.len), c('te', 'freq.max')])
+tbl = rowSums(tbl)
+
+tbl
+
+df <- data.frame(category = names(tbl), value = tbl)
+df$p = paste(round(df$value / sum(df$value), 2) * 100, '%', sep = '')
+df$p = paste(df$value, '(', df$p, ')', sep = '')
+df$category = factor(df$category, levels = c('noTE', 'isTE', 'isTEpart', 'hasTE', 'hasTEpart'))
+p = ggplot(df, aes(x = "", y = value, fill = category)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y", start = tbl[1] / sum(tbl) * pi) +
+  theme_void() +
+  geom_text(aes(y = sum(value) - cumsum(value) + value/2, label = value), color = "black") +
+  scale_fill_manual(values=cols, name ='TE content') +
+  theme(legend.position = "none")
+
+p
+
+pdf(paste(path.figures, 'mob_pie_TE_absolute.pdf', sep = ''), width = 2, height = 2)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+```
+
+
+
+## Violine length distribution in categories
+```{r}
+
+g = ggplot(sv.se[sv.se$len > 100,], aes(x = te, y = len, fill = te)) +
+  geom_violin() +
+  ylim(0, 25000) +
+    scale_fill_manual(values=cols, name ='TE content', 
+                    labels = c('none', 'is complete', 'is fragment', 
+                               'contains complete', 'contains fragment')) +
+  
+  xlab('TE content') + ylab('Length, log10') +
+  scale_y_log10() + 
+  geom_jitter(width = 0.2, size = 1, alpha = 0.05,stroke = 0) +
+  theme_minimal() +
+  guides(fill = FALSE) + theme(legend.position = "none") +
+  scale_x_discrete(labels = c('none', 'is complete', 'is fragment', 
+                               'contains complete', 'contains fragment'))
+
+g
+
+
+pdf(paste(path.figures, 'mob_te_length.pdf', sep = ''), width = 4, height = 4)
+print(g)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+```
+
+# TE families
+
+## Read
+```{r}
+v.list = list(isTE=v.sim.is.te,
+                hasTEpart=v.sim.have.te.part,
+                isTEpart=v.sim.is.te.part,
+                hasTE=v.sim.have.te)
+  
+  sv.se$fam = ''
+  
+  sv.fam = c()
+  for(t.name in names(v.list)){
+    
+    idx = which(sv.se$te == t.name)
+    v.tmp = v.list[[t.name]]
+    v.tmp = v.tmp[v.tmp$V1 %in% sv.se$name[idx],]
+    v.tmp$fam = sapply(v.tmp$V8, function(s) strsplit(s, '\\|')[[1]][9])
+    
+    v.tmp$fam[v.tmp$fam %in% c('DNA/Pogo', 'DNA/Tc1', 'DNA/Harbinger', 'DNA/En-Spm',
+                                     'DNA', 'DNA/Mariner')] = 'DNA+'
+    v.tmp$fam[v.tmp$fam %in% c('RathE1_cons', 'RathE2_cons', 'RathE3_cons')] = 'RathE1/2/3_cons'
+    v.tmp$fam[v.tmp$fam %in% c('LINE/L1', 'LINE?')] = 'LINE'
+    # v.tmp$fam[v.tmp$fam %in% c('Unassigned')] = 'Mix'
+    v.tmp$fam[v.tmp$fam %in% c('RC/Helitron')] = 'Helitron'
+    
+    
+    family.stat = tapply(v.tmp$fam, v.tmp$V1, function(s){
+      s0 = s
+      s = unique(s)
+      if(length(s) == 1) return(s)
+      s = setdiff(s, 'TEG')
+      if(length(s) == 1) return(s)
+      s = setdiff(s, 'Unassigned')
+      if(length(s) == 1) return(s)
+      
+      
+      s0 = s0[s0 != 'TEG']
+      s0 = s0[s0 != 'Unassigned']
+      cnt0 = table(s0)
+      if( (4 * max(cnt0)) >= (3 * length(s0))){
+        # return(paste(names(cnt0)[cnt0 == max(cnt0)], 'm', sep = '_'))
+        return(names(cnt0)[cnt0 == max(cnt0)])
+      }
+      
+      if(length(s) == 2) {
+        # if(sum(s == 'Helitron') == 1){
+        #   return(paste('Helitron', setdiff(s, 'Helitron'), sep = '/'))
+        # }
+      }
+      
+      return('Mix')
+    } )
+    
+    sv.se$fam[idx] = family.stat[sv.se$name[idx]]
+  }
+```
+
+
+## Plot
+```{r}
+head(sv.se)
+
+cnt = table(sv.se$fam[sv.se$fam!='']) 
+cnt = round(cnt / sum(cnt) * 100)
+te.of.interest = names(cnt)[cnt > 2]
+
+tbl = table(sv.se[sv.se$fam %in% te.of.interest, c('fam', 'freq.max')])
+
+# tbl = table(sv.se[(sv.se$type %in% te.of.interest) & (sv.se$te.content == 'isTE'), c('type', 'freq.max')])
+
+tbl = apply(tbl, 2, function(x) x / sum(x))
+# tbl = tbl[,-1]
+p <- ggplot(data=reshape2::melt(tbl), aes(x=freq.max, y = value, fill=fam)) +
+  geom_bar(stat="identity", alpha = 0.9) + theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') +
+  viridis::scale_fill_viridis(discrete = T, name = 'TE family')
+p
+
+pdf(paste(path.figures, 'mob_fam_freq_TE.pdf', sep = ''), width = 5, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+te.strategy = unique(sv.se$te)
+te.strategy = setdiff(te.strategy, 'noTE')
+for(i.strat in 1:length(te.strategy)){
+  tbl = table(sv.se[(sv.se$fam %in% te.of.interest) & (sv.se$te == te.strategy[i.strat]), c('fam', 'freq.max')])
+  tbl = apply(tbl, 2, function(x) x / sum(x))
+  # tbl = tbl[,-1]
+  p <- ggplot(data=reshape2::melt(tbl), aes(x=freq.max, y = value, fill=fam)) +
+    geom_bar(stat="identity", alpha = 0.9) + theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') +
+    viridis::scale_fill_viridis(discrete = T, name = 'TE family') + ggtitle(te.strategy[i.strat])
+  p
+  
+  pdf(paste(path.figures, 'mob_fam_freq_TE_',te.strategy[i.strat],'.pdf', sep = ''), width = 5, height = 4)
+  print(p)     # Plot 1 --> in the first page of PDF
+  dev.off()
+
+}
+
+
+te.strategy = unique(sv.se$te)
+te.strategy = setdiff(te.strategy, 'noTE')
+tbl.all = c()
+for(i.strat in 1:length(te.strategy)){
+  # tbl = table(sv.se[(sv.se$fam %in% te.of.interest) & (sv.se$te.content == te.strategy[i.strat]), c('fam', 'freq.max')])
+  
+  tbl = table(sv.se[(sv.se$te %in% te.strategy[i.strat]), c('fam', 'freq.max')])
+  
+  tbl[tbl == 0] = 0.5
+  tbl = as.data.frame(t(apply(tbl, 2, function(x) x / sum(x))))
+  tbl$freq = 1:nrow(tbl)
+  tbl$strat = te.strategy[i.strat]
+  tbl[,setdiff(colnames(tbl.all), colnames(tbl))] = 0
+  # tbl.all = rbind(tbl.all, tbl)
+  if(is.null(tbl.all)){
+    tbl.all = tbl
+  } else {
+    tbl.all = full_join(tbl.all, tbl, by = intersect(colnames(tbl.all), colnames(tbl)))
+  }
+}
+tbl.all[is.na(tbl.all)] = 1
+tbl.all[tbl.all == 0] = 1
+
+
+library(coda.base)
+ilr = coordinates(tbl.all[,te.of.interest], basis = 'ilr')
+
+pc <- prcomp(ilr,
+             center = TRUE,
+            scale. = TRUE)
+
+explained.variance <- pc$sdev^2 / sum(pc$sdev^2) * 100
+
+df = as.data.frame(pc$x)
+df$freq = tbl.all$freq
+df$strat = tbl.all$strat
+
+p <- ggplot(data=df, aes(x=PC1, y = PC2, color=strat, fill=strat)) +
+  stat_density_2d(geom = "polygon", aes(alpha = ..level.., fill = strat), show.legend = F, bins=6) +
+  geom_point(color='black', shape=21, size=2) + theme_minimal()  + 
+  xlab(sprintf("PC1 (%.2f%%)", explained.variance[1])) + 
+  ylab(sprintf("PC2 (%.2f%%)", explained.variance[2])) +
+  theme(legend.position = "none") +
+  # viridis::scale_fill_viridis(discrete = T) +
+  scale_fill_manual(values=cols, name ='TE content') +
+  scale_color_manual(values=cols, name ='TE content') + ylim(-3.5, 3.5)
+  # viridis::scale_color_viridis(discrete = T)
+p
+
+pdf(paste(path.figures, 'mob_fam_freq_TE_pca.pdf', sep = ''), width = 4, height = 4)
+print(p)     # Plot 1 --> in the first page of PDF
+dev.off()
+```
+
+
+
+# Graph
+# Reading and constructing
+```{r}
+
+res.cover.file = 'seq_sv_big_on_sv_cover.rds'
+res.nest = readRDS(paste(path.work, res.cover.file, sep = ''))
+g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, collapse = T)
+
+```
+
+# Plot simple graph
+```{r}
+
+
+g.part <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+b.graph.names = network.vertex.names(g.part)
+set.seed(239)
+p.refined <- ggnet2(g.part, label = F, edge.color = "black",
+            # node.size = g.nodes.cnt[b.graph.names],
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            # color = g.nodes.fam[b.graph.names],
+            # palette = fam.palette,
+            # mode = "kamadakawai"
+            )
+```
+
+
+## Traits
+### Counts
+```{r}
+p.cnt <- ggnet2(g.part, label = F, edge.color = "black",
+            node.size = g.content$nodes.traits[b.graph.names,]$cnt,
+            color = '#468B97'
+            # color = g.nodes.fam[b.graph.names],
+            # palette = fam.palette,
+            # mode = "kamadakawai"
+            )
+p.cnt
+```
+
+### TE
+```{r}
+
+
+# Define new traits
+te.content <- setNames(sv.se$te, sv.se$name)
+new.trait = traitsSeqToNode(g.content$nodes, te.content)
+g.content$nodes.traits$te = new.trait[g.content$nodes.traits$node]
+
+
+# Define colors
+colors.trait = cols
+
+p.te <- ggnet2(g.part, label = F, edge.color = "black",
+            node.size = g.content$nodes.traits[b.graph.names,]$cnt,
+            # node.size = 0.1,
+            # color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            color = g.content$nodes.traits[b.graph.names,]$te,
+            palette = colors.trait,
+            # mode = "kamadakawai"
+            )
+
+p.te
+
+```
+
+### TE-fam
+```{r}
+
+
+# Define new traits
+te.fam <- setNames(sv.se$fam, sv.se$name)
+new.trait = traitsSeqToNode(g.content$nodes, te.fam, mode = 'unique')
+g.content$nodes.traits$te.fam = new.trait[g.content$nodes.traits$node]
+
+
+# Define colors
+fam.palette = discrete_rainbow(length(unique(new.trait)))
+names(fam.palette) = unique(new.trait)
+
+
+fam.palette['Unassigned'] = 'grey'
+fam.palette['Mix'] = 'grey20'
+fam.palette['Mix with Helitron'] = '#266D98'
+fam.palette['Helitron'] = '#BCACDE'
+fam.palette["LTR/Copia"] = '#BFDB38'
+fam.palette["LTR/Gypsy"] = '#54B435'
+fam.palette["DNA/HAT"] = '#F9B5D0'
+fam.palette["DNA+"] = '#C8658C'
+fam.palette["DNA"] = '#C8658C'
+fam.palette["DNA/MuDR"] = '#971549'
+
+
+fam.palette["LINE"] = '#FFC26F'
+fam.palette["RathE1/2/3_cons"] = '#C38154'
+fam.palette["SINE"] = '#884A39'
+fam.palette["TEG"] = '#4E3636'
+
+
+names.fam = g.content$nodes.traits$node[!(g.content$nodes.traits$te.fam %in% c('Mix', 'Unassigned', ''))]
+g.part.fam <- network(g.content$edges[(g.content$edges[,1] %in% names.fam) &
+                                        (g.content$edges[,2] %in% names.fam),], matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names.fam = network.vertex.names(g.part.fam)
+
+p.te.fam <- ggnet2(g.part.fam, label = F, edge.color = "black",
+            node.size = g.content$nodes.traits[g.names.fam,]$cnt,
+            # node.size = 0.1,
+            # color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            color = g.content$nodes.traits[g.names.fam,]$te.fam,
+            palette = fam.palette,
+            # mode = "kamadakawai"
+            ) + guides(size = FALSE)
+
+p.te.fam 
+
+
+pdf(paste(path.figures, 'graph_mob_te_fam.pdf', sep = ''), width = 10, height = 10)
+print(p.te.fam)     # Plot 1 --> in the first page of PDF
+dev.off()
+
+
+```
+
+
+
+
+
+### Separately visualise connected components
+```{r}
+
+# Get components
+g.comp <- getGraphComponents(g.content$edges)
+
+g.comp.cnt = table(g.comp$membership)
+g.comp.cnt = -sort(-g.comp.cnt)
+head(g.comp.cnt)
+
+# ------------------------------------
+# The biggest component
+# ------------------------------------
+k = 1
+comp.id = as.numeric(names(g.comp.cnt)[k])
+
+
+comp.names = names(g.comp$membership)[g.comp$membership == comp.id]
+sv.graph.sub = g.content$edges[(g.content$edges[,1] %in% comp.names) & 
+                               (g.content$edges[,2] %in% comp.names),]
+
+# Construct the graph object
+g.part.sub.big <- network(sv.graph.sub, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.part.sub.big.names = network.vertex.names(g.part.sub.big)
+
+# Visualise
+set.seed(20)
+p <- ggnet2(g.part.sub.big, label = F, edge.color = "black", 
+            node.size = g.content$nodes.traits[g.part.sub.big.names,]$cnt, 
+            color = g.content$nodes.traits[g.part.sub.big.names,]$te,
+            mode = 'kamadakawai',
+            palette = te.cols) + guides(size = F)
+p.big.type = p + theme(legend.position = "none")
+
+set.seed(20)
+p <- ggnet2(g.part.sub.big, label = F, edge.color = "black", 
+            node.size = g.content$nodes.traits[g.part.sub.big.names,]$cnt, 
+            color = g.content$nodes.traits[g.part.sub.big.names,]$te.fam,
+            mode = 'kamadakawai',
+            palette = fam.palette) + guides(size = F)
+p.big.color = p + theme(legend.position = "none")
+
+# ------------------------------------
+# Small components
+# ------------------------------------
+
+# Construct the graph object
+comp.names = names(g.comp$membership)[g.comp$membership != comp.id]
+sv.graph.sub = sv.graph$edges[(sv.graph$edges[,1] %in% comp.names) & 
+                               (sv.graph$edges[,2] %in% comp.names),]
+
+# Construct the graph object
+g.part.sub.big <- network(sv.graph.sub, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.part.sub.big.names = network.vertex.names(g.part.sub.big)
+
+# Visualise
+set.seed(20)
+p <- ggnet2(g.part.sub.big, label = F, edge.color = "black", 
+            node.size = sv.graph$nodes.traits[g.part.sub.big.names,]$cnt, 
+            color = sv.graph$nodes.traits[g.part.sub.big.names,]$type,
+            # mode = 'kamadakawai',
+            palette = te.cols) + guides(size = F)
+p.small.type = p + theme(legend.position = "none")
+
+set.seed(20)
+p <- ggnet2(g.part.sub.big, label = F, edge.color = "black", 
+            node.size = sv.graph$nodes.traits[g.part.sub.big.names,]$cnt, 
+            color = sv.graph$nodes.traits[g.part.sub.big.names,]$fam,
+            # mode = 'kamadakawai',
+            palette = fam.palette) + guides(size = F)
+p.small.color = p + theme(legend.position = "none")
+
+
+
+```
+
+
