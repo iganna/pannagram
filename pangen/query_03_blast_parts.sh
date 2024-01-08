@@ -109,21 +109,21 @@ run_blast() {
     r_prefix=${r_filename%_*}
     ref_chr=${r_filename##*chr}
 
-    echo "${part_chr} ${ref_chr}"
+    
 
-	# p_filename=${p_filename/_chr/_}
-
-	p_filename=$(echo "$p_filename" | sed 's/_chr\(.*\)$/_\1/')
-
-
-    outfile=${blastres}${p_filename}_${ref_chr}.txt
-
-
-	echo ${outfile}
 
     if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
         return
     fi
+
+    echo "${part_chr} ${ref_chr}"
+
+  	p_filename=$(echo "$p_filename" | sed 's/_chr\(.*\)$/_\1/')
+
+    outfile=${blastres}${p_filename}_${ref_chr}.txt
+
+  	echo ${outfile}
+
 
     # blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
     #        -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
