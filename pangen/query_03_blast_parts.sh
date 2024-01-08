@@ -109,14 +109,14 @@ run_blast() {
     r_prefix=${r_filename%_*}
     ref_chr=${r_filename##*chr}
 
-    
+    echo "${part_chr} ${ref_chr}"
 
 
     if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
         return
     fi
 
-    echo "${part_chr} ${ref_chr}"
+    
 
   	p_filename=$(echo "$p_filename" | sed 's/_chr\(.*\)$/_\1/')
 
