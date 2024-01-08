@@ -224,7 +224,6 @@ if [ $start_step -le 1 ] && [ ! -f "$path_flags/step1_done" ]; then
     touch "$path_flags/step1_done"
 fi
 
-
 # Split quiery chromosomes into parts
 if [ $start_step -le 2 ] && [ ! -f "$path_flags/step2_done" ]; then
     Rscript pangen/query_02_to_parts.R -n ${n_chr_query}  --path.chr  ${path_chr_acc}  \
@@ -232,6 +231,13 @@ if [ $start_step -le 2 ] && [ ! -f "$path_flags/step2_done" ]; then
     --filter_rep ${filter_rep}
     touch "$path_flags/step2_done"
 fi
+
+# Check that the reference exists
+if ! ls ${path_chr_ref}${ref_pref}_chr* 1> /dev/null 2>&1; then
+    echo "Reference genome ${ref_pref} doesn't exist"
+    exit 1
+fi
+
 
 # Blast parts on the reference genome
 if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
