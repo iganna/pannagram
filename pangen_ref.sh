@@ -234,7 +234,7 @@ fi
 
 # Check that the reference exists
 if ! ls ${path_chr_ref}${ref_pref}_chr* 1> /dev/null 2>&1; then
-    echo "Reference genome ${ref_pref} doesn't exist"
+    echo "EFFOR: Reference genome ${ref_pref} doesn't exist"
     exit 1
 fi
 
