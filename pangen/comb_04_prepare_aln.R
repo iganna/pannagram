@@ -330,49 +330,61 @@ for(s.comb in pref.combinations){
   
   # ---- Align short ----
   idx.short = idx.aln[!idx.add.flank[idx.aln]]
-  val.acc.pos = c()
+  
   
   pokaz('Align short seqs')
   
-  # for.flag = T
-  # for(irow in idx.short){
-  #   seqs = aln.seqs[[irow]]
-  #   pos.idx = aln.pos[[irow]]
-  #   idx.gap.pos = idx.break$beg[irow]
-
   
-  for.flag = F
-  res.msa <- foreach(seqs = aln.seqs[idx.short],
-                     pos.idx = aln.pos[idx.short],
-                     idx.gap.pos = idx.break$beg[idx.short],
-                     .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
-
-                       set = DNAStringSet(seqs)
-                       aln = muscle(set, quiet = T)
-                       
-                       
-                       set = as.character(aln)
-                       n.pos = nchar(set[1])
-                       
-                       if(n.pos > 10){
-                         pokaz('Iteration', irow)
-                         print(aln)
-                       }
-                       
-                       val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
-                       colnames(val.acc.pos) = accessions
-                       for(s.acc in names(set)){
-                         s = strsplit(set[[s.acc]],'')[[1]]
-                         val.acc.pos[s != '-',s.acc] = pos.idx[[s.acc]]
-                       }
-                       
-                       if(for.flag){
-                         val.acc.pos = cbind(val.acc.pos, idx.gap.pos + (1:n.pos) / (n.pos+1))
-                       } else {
+  # ---- CODE_ALN_SHORT ----
+  CODE_ALN_SHORT <- {
+    set = DNAStringSet(seqs)
+    aln = muscle(set, quiet = T)
+    
+    set = as.character(aln)
+    n.pos = nchar(set[1])
+    
+    if(n.pos > 10){
+      pokaz('Iteration', irow)
+      print(aln)
+    }
+    
+    val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
+    colnames(val.acc.pos) = accessions
+    for(s.acc in names(set)){
+      s = strsplit(set[[s.acc]],'')[[1]]
+      val.acc.pos[s != '-',s.acc] = pos.idx[[s.acc]]
+    }
+    
+    rm(aln)
+    rm(set)
+    gc()
+  }
+  
+  # Two possible loops depending on the number of cores
+  if(num.cores == 1){
+    # One core
+    res.msa = list()
+    for(irow in idx.short){
+      seqs = aln.seqs[[irow]]
+      pos.idx = aln.pos[[irow]]
+      idx.gap.pos = idx.break$beg[irow]
+      
+      CODE_ALN_SHORT # --- COMMON CODE, one core ----
+      
+      res.msa[[irow]] = val.acc.pos
+    }
+  } else {
+    # Many cores
+    res.msa <- foreach(seqs = aln.seqs[idx.short],
+                       pos.idx = aln.pos[idx.short],
+                       idx.gap.pos = idx.break$beg[idx.short],
+                       .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
+                         
+                         CODE_ALN_SHORT  # --- COMMON CODE, many cores ----
+                         
                          return(val.acc.pos)
                        }
-                       
-                     }
+  }
   
   saveRDS(list(aln = res.msa,
                seqs = aln.seqs[idx.short], 
@@ -382,6 +394,8 @@ for(s.comb in pref.combinations){
   saveRDS(list(pos.beg = v.beg[idx.singletons,],
                pos.end = v.end[idx.singletons,],
                ref.pos = idx.break[idx.singletons, c('beg', 'end')]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
+  
+  stop()
   
   # ---- Create files for mafft ----
   
