@@ -360,6 +360,7 @@ for(s.comb in pref.combinations){
     rm(aln)
     rm(set)
     gc()
+    return(val.acc.pos)
   }
   
   # Two possible loops depending on the number of cores
@@ -371,9 +372,8 @@ for(s.comb in pref.combinations){
       pos.idx = aln.pos[[irow]]
       idx.gap.pos = idx.break$beg[irow]
       
-      CODE_ALN_SHORT() # --- COMMON CODE, one core ----
+      res.msa[[irow]] = CODE_ALN_SHORT() # --- COMMON CODE, one core ----
       
-      res.msa[[irow]] = val.acc.pos
     }
   } else {
     # Many cores
@@ -382,9 +382,8 @@ for(s.comb in pref.combinations){
                        idx.gap.pos = idx.break$beg[idx.short],
                        .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
                          
-                         CODE_ALN_SHORT()  # --- COMMON CODE, many cores ----
+                         return(CODE_ALN_SHORT()) # --- COMMON CODE, many cores ----
                          
-                         return(val.acc.pos)
                        }
   }
   
