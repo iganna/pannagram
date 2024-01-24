@@ -337,6 +337,7 @@ for(s.comb in pref.combinations){
   
   # ---- CODE_ALN_SHORT ----
   CODE_ALN_SHORT <- {
+    pokaz('Here')
     set = DNAStringSet(seqs)
     aln = muscle(set, quiet = T)
     
