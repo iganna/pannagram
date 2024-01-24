@@ -335,8 +335,9 @@ for(s.comb in pref.combinations){
   pokaz('Align short seqs')
   
   
+  
   # ---- CODE_ALN_SHORT ----
-  CODE_ALN_SHORT <- {
+  CODE_ALN_SHORT <- function(){
     pokaz('Here')
     set = DNAStringSet(seqs)
     aln = muscle(set, quiet = T)
@@ -370,7 +371,7 @@ for(s.comb in pref.combinations){
       pos.idx = aln.pos[[irow]]
       idx.gap.pos = idx.break$beg[irow]
       
-      CODE_ALN_SHORT # --- COMMON CODE, one core ----
+      CODE_ALN_SHORT() # --- COMMON CODE, one core ----
       
       res.msa[[irow]] = val.acc.pos
     }
@@ -381,7 +382,7 @@ for(s.comb in pref.combinations){
                        idx.gap.pos = idx.break$beg[idx.short],
                        .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
                          
-                         CODE_ALN_SHORT  # --- COMMON CODE, many cores ----
+                         CODE_ALN_SHORT()  # --- COMMON CODE, many cores ----
                          
                          return(val.acc.pos)
                        }
