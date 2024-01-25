@@ -361,7 +361,6 @@ for(s.comb in pref.combinations){
     rm(set)
     gc()
     
-    if(is.null(val.acc.pos)) stop('NULL')
     return(val.acc.pos)
   }
   
@@ -369,13 +368,13 @@ for(s.comb in pref.combinations){
   if(num.cores == 1){
     # One core
     res.msa = list()
-    for(irow in idx.short){
+    for(i.tmp in 1:length(idx.short)){
+      irow = idx.short[i.tmp]
       seqs = aln.seqs[[irow]]
       pos.idx = aln.pos[[irow]]
       idx.gap.pos = idx.break$beg[irow]
       
       res.msa[[irow]] = CODE_ALN_SHORT() # --- COMMON CODE, one core ----
-      
     }
   } else {
     # Many cores
