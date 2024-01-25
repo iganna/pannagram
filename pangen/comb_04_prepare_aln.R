@@ -338,7 +338,7 @@ for(s.comb in pref.combinations){
   
   # Core core for the short alignmgnets
   CODE_ALN_SHORT <- function(echo=F){
-    pokaz('Here')
+    
     set = DNAStringSet(seqs)
     aln = muscle(set, quiet = T)
     
