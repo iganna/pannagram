@@ -336,8 +336,8 @@ for(s.comb in pref.combinations){
   
   
   
-  # ---- CODE_ALN_SHORT ----
-  CODE_ALN_SHORT <- function(){
+  # Core core for the short alignmgnets
+  CODE_ALN_SHORT <- function(echo=F){
     pokaz('Here')
     set = DNAStringSet(seqs)
     aln = muscle(set, quiet = T)
@@ -345,7 +345,7 @@ for(s.comb in pref.combinations){
     set = as.character(aln)
     n.pos = nchar(set[1])
     
-    if(n.pos > 10){
+    if(echo & (n.pos > 10)){
       pokaz('Iteration', irow)
       print(aln)
     }
@@ -360,6 +360,8 @@ for(s.comb in pref.combinations){
     rm(aln)
     rm(set)
     gc()
+    
+    if(is.null(val.acc.pos)) stop('NULL')
     return(val.acc.pos)
   }
   
@@ -395,8 +397,6 @@ for(s.comb in pref.combinations){
   saveRDS(list(pos.beg = v.beg[idx.singletons,],
                pos.end = v.end[idx.singletons,],
                ref.pos = idx.break[idx.singletons, c('beg', 'end')]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
-  
-  stop()
   
   # ---- Create files for mafft ----
   
