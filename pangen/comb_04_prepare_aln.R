@@ -330,49 +330,63 @@ for(s.comb in pref.combinations){
   
   # ---- Align short ----
   idx.short = idx.aln[!idx.add.flank[idx.aln]]
-  val.acc.pos = c()
+  
   
   pokaz('Align short seqs')
   
-  # for.flag = T
-  # for(irow in idx.short){
-  #   seqs = aln.seqs[[irow]]
-  #   pos.idx = aln.pos[[irow]]
-  #   idx.gap.pos = idx.break$beg[irow]
-
   
-  for.flag = F
-  res.msa <- foreach(seqs = aln.seqs[idx.short],
-                     pos.idx = aln.pos[idx.short],
-                     idx.gap.pos = idx.break$beg[idx.short],
-                     .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
-
-                       set = DNAStringSet(seqs)
-                       aln = muscle(set, quiet = T)
-                       
-                       
-                       set = as.character(aln)
-                       n.pos = nchar(set[1])
-                       
-                       if(n.pos > 10){
-                         pokaz('Iteration', irow)
-                         print(aln)
+  
+  # Core core for the short alignmgnets
+  CODE_ALN_SHORT <- function(echo=F){
+    
+    set = DNAStringSet(seqs)
+    aln = muscle(set, quiet = T)
+    
+    set = as.character(aln)
+    n.pos = nchar(set[1])
+    
+    if(echo & (n.pos > 10)){
+      pokaz('Iteration', irow)
+      print(aln)
+    }
+    
+    val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
+    colnames(val.acc.pos) = accessions
+    for(s.acc in names(set)){
+      s = strsplit(set[[s.acc]],'')[[1]]
+      val.acc.pos[s != '-',s.acc] = pos.idx[[s.acc]]
+    }
+    
+    rm(aln)
+    rm(set)
+    gc()
+    
+    return(val.acc.pos)
+  }
+  
+  # Two possible loops depending on the number of cores
+  if(num.cores == 1){
+    # One core
+    res.msa = list()
+    for(i.tmp in 1:length(idx.short)){
+      irow = idx.short[i.tmp]
+      seqs = aln.seqs[[irow]]
+      pos.idx = aln.pos[[irow]]
+      idx.gap.pos = idx.break$beg[irow]
+      
+      res.msa[[irow]] = CODE_ALN_SHORT() # --- COMMON CODE, one core ----
+    }
+  } else {
+    # Many cores
+    res.msa <- foreach(seqs = aln.seqs[idx.short],
+                       pos.idx = aln.pos[idx.short],
+                       idx.gap.pos = idx.break$beg[idx.short],
+                       .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
+                         
+                         return(CODE_ALN_SHORT()) # --- COMMON CODE, many cores ----
+                         
                        }
-                       
-                       val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
-                       colnames(val.acc.pos) = accessions
-                       for(s.acc in names(set)){
-                         s = strsplit(set[[s.acc]],'')[[1]]
-                         val.acc.pos[s != '-',s.acc] = pos.idx[[s.acc]]
-                       }
-                       
-                       if(for.flag){
-                         val.acc.pos = cbind(val.acc.pos, idx.gap.pos + (1:n.pos) / (n.pos+1))
-                       } else {
-                         return(val.acc.pos)
-                       }
-                       
-                     }
+  }
   
   saveRDS(list(aln = res.msa,
                seqs = aln.seqs[idx.short], 
