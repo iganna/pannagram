@@ -425,32 +425,37 @@ for(f.blast in files.blast){
   diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
-  for(irow in 1:length(begs)){
-    if((ends[irow] - begs[irow]) < len.blast) next
-    if((ends[irow] - begs[irow]) > max.len) next
-    pos.gap.q = begs[irow]:ends[irow]
+  
     
-    # Define Chunks
-    s.q = query.fas.chr[pos.gap.q]
-    s.q = nt2seq(s.q)
-    n.bl = 500
-    len.s.q = nchar(s.q)
-    if(len.s.q > n.bl){
-      p.beg = seq(1, len.s.q, n.bl)
-      p.end = seq(n.bl, len.s.q, n.bl)
-    } else {
-      p.beg = 1
-      p.end = len.s.q
+  if(length(begs) > 0){
+    for(irow in 1:length(begs)){
+      
+      if((ends[irow] - begs[irow]) < len.blast) next
+      if((ends[irow] - begs[irow]) > max.len) next
+      pos.gap.q = begs[irow]:ends[irow]
+      
+      # Define Chunks
+      s.q = query.fas.chr[pos.gap.q]
+      s.q = nt2seq(s.q)
+      n.bl = 500
+      len.s.q = nchar(s.q)
+      if(len.s.q > n.bl){
+        p.beg = seq(1, len.s.q, n.bl)
+        p.end = seq(n.bl, len.s.q, n.bl)
+      } else {
+        p.beg = 1
+        p.end = len.s.q
+      }
+      s.q = splitSeq(s.q, n = n.bl)
+      
+      # Standard naming (as before)
+      pref.q = paste(pref.comarisson,
+                     'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+      
+      if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
+      names(s.q) = pref.q
+      writeFastaMy(s.q, file.gap.query, append = T)
     }
-    s.q = splitSeq(s.q, n = n.bl)
-    
-    # Standard naming (as before)
-    pref.q = paste(pref.comarisson,
-                   'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
-    
-    if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
-    names(s.q) = pref.q
-    writeFastaMy(s.q, file.gap.query, append = T)
   }
   
   
