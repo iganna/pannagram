@@ -144,7 +144,7 @@ for(f.maj in files.maj){
   
   pokaz('gap file', file.gaps.out)
   
-  if.table = T
+  if.table <- T
   if(file.exists(file.gaps.out)){
     
     pokaz('Read blast of good gaps..')
@@ -152,10 +152,10 @@ for(f.maj in files.maj){
     tryCatch({
       x.gap = read.table(file.gaps.out, stringsAsFactors = F)
     }, error = function(e) {
-      if.table = F
+      if.table <<- F
     })
   } else {
-    if.table = F
+    if.table <<- F
   }
   
   if(if.table){
