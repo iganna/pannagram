@@ -80,10 +80,10 @@ if(length(query.name) == 0){
 combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)
 
 
-for.flag = F
-tmp = foreach(i.comb = 1:nrow(combinations), .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
-# for.flag = T
-# for(i.comb in 1:nrow(combinations)){
+# for.flag = F
+# tmp = foreach(i.comb = 1:nrow(combinations), .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
+for.flag = T
+for(i.comb in 1:nrow(combinations)){
   
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]
