@@ -108,10 +108,10 @@ pokaz('Names of genomes for the analysis:', query.name$acc)
 
 #' ----------------------------------------------------------------------
 
-for.flag = F
-tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
-# for.flag = T
-# for(i.acc in 1:nrow(query.name)){
+# for.flag = F
+# tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
+for.flag = T
+for(i.acc in 1:nrow(query.name)){
   
   acc = query.name$acc[i.acc]
   #' --- --- --- --- --- --- --- --- --- --- ---
@@ -125,6 +125,7 @@ tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 's
       n.exist = n.exist + 1
     }
   }
+  pokaz(n.exist, n.chr)
   if(n.exist == n.chr){
     if(for.flag) next
     return(NULL)
