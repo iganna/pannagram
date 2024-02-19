@@ -44,6 +44,7 @@ print_usage() {
 # Initialize variables to determine which scripts to run
 run_blocks=false
 run_seq=false
+run_aln=false
 # run_sv=false
 
 # Parse command line arguments
@@ -56,6 +57,7 @@ while [ $# -gt 0 ]; do
         -cores) cores=$2; shift 2 ;;
         -blocks) run_blocks=true; shift;;
         -seq)    run_seq=true; shift;;
+        -aln)    run_aln=true; shift;;
         # -sv)     run_sv=true; shift;;
         -h|--help) print_usage; exit 0;;
         *) print_usage; exit 1;;
@@ -89,6 +91,11 @@ fi
 if [ "$run_seq" = true ]; then
 
     Rscript analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
+fi
+
+if [ "$run_aln" = true ]; then
+
+    Rscript analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
 fi
 
 # if [ "$run_sv" = true ]; then
