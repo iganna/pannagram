@@ -159,7 +159,7 @@ loop.function <- function(f.maj, echo = T){
       if.table <<- F
     })
   } else {
-    if.table <<- F
+    if.table <- F
   }
   
   pokaz('HERE')
