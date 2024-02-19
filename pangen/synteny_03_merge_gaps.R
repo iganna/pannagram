@@ -73,7 +73,7 @@ if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
 files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 pokaz('Number of alignment files:', length(files.maj))
-if(length(files.maj) == 0) stop('No alignment files provided')
+# if(length(files.maj) == 0) stop('No alignment files provided')
 
 
 
@@ -161,10 +161,6 @@ loop.function <- function(f.maj, echo = T){
   } else {
     if.table <- F
   }
-  
-  pokaz('HERE')
-  print(if.table)
-  print(file.exists(file.gaps.out))
   
   if(if.table){
     pokaz('Number of gaps', nrow(x.gap))
