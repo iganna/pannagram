@@ -130,7 +130,7 @@ for(s.comb in pref.combinations){
                    '+', ' ',
               len.pangen, ' ', 
               # substr(s.pangen,1,len.pangen),
-              s.pangen
+              s.pangen,
                    # '\n',
               sep = ''), 
              file.aln, append = TRUE)
@@ -147,7 +147,7 @@ for(s.comb in pref.combinations){
                      '+', ' ',
                 len.pangen, ' ', 
                 # substr(v,1,len.pangen),
-                v
+                v,
                      # '\n',
                 sep = ''), 
                file.aln, append=T)
