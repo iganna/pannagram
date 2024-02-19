@@ -115,6 +115,8 @@ for(s.comb in pref.combinations){
     gc()
   }
   
+  print(dim(snp.matrix))
+  print(length(c(s.pangen.name, acc)))
   colnames(snp.matrix) = c(s.pangen.name, acc)
   snp.matrix = cbind(pos, snp.matrix)
 
