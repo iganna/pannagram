@@ -107,7 +107,7 @@ for(s.comb in pref.combinations){
   len.pangen = nchar(s.pangen)
   
   
-  len.pangen = 20
+  # len.pangen = 20
   
   
   # Write initial info
@@ -117,10 +117,10 @@ for(s.comb in pref.combinations){
                    '\n', sep = ''), 
              file.aln)
   
-  # write(paste('a score=0.99', 
-  #             # '\n', 
-  #             sep = ''), 
-  #       file.aln, append = TRUE)
+  write(paste('a score=666',
+              # '\n',
+              sep = ''),
+        file.aln, append = TRUE)
   
   
   write(paste('s ',
@@ -129,7 +129,8 @@ for(s.comb in pref.combinations){
               len.pangen, ' ', 
                    '+', ' ',
               len.pangen, ' ', 
-              substr(s.pangen,1,len.pangen),
+              # substr(s.pangen,1,len.pangen),
+              s.pangen
                    # '\n',
               sep = ''), 
              file.aln, append = TRUE)
@@ -145,7 +146,8 @@ for(s.comb in pref.combinations){
                      len.pangen, ' ', 
                      '+', ' ',
                 len.pangen, ' ', 
-                substr(v,1,len.pangen),
+                # substr(v,1,len.pangen),
+                v
                      # '\n',
                 sep = ''), 
                file.aln, append=T)
