@@ -17,7 +17,6 @@ suppressMessages({
 source("utils/utils.R")
 # source("pangen/synteny_funcs.R")
 
-pokazStage('Step 8. Randomisation of alignments. Combine two references:', ref0, 'and', ref1)
 
 
 # ***********************************************************************
@@ -65,6 +64,10 @@ if (is.null(opt$ref1)) {
 } else {
   ref1 <- opt$ref1
 }
+
+# ***********************************************************************
+# ---- Stage ----
+pokazStage('Step 8. Randomisation of alignments. Combine two references:', ref0, 'and', ref1)
 
 
 # ***********************************************************************
