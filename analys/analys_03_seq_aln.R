@@ -95,6 +95,51 @@ for(s.comb in pref.combinations){
     gc()
   }
   
+  
+  # ---- MAF file ----
+  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.maf', sep = '')
+
+  
+  # Ddd pangen line
+  i.chr = comb2ref(s.comb)
+  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  s.pangen = readFastaMy(file.seq.cons)
+  len.pangen = length(s.pangen)
+  
+  
+  # Write initial info
+  writeLines(paste('track name=pangen',
+                   '_ref_', ref.pref, 
+                   '_chr_', i.chr, 
+                   '\n', sep = ''), 
+             file.aln)
+  
+  
+  writeLines(paste(names(s.pangen)[1], ' ',  # track id
+                   1, ' ',
+                   len.pangen, ' ', 
+                   '+', ' ',
+                   s.pangen,
+                   '\n', sep = ''), 
+             file.aln, append=T)
+  
+  for(acc in accessions){
+    pokaz('Sequence of accession', acc)
+    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+    v = paste0(v, collapse='')
+    
+    writeLines(paste(acc, ' ',  # track id
+                     1, ' ',
+                     len.pangen, ' ', 
+                     '+', ' ',
+                     v,
+                     '\n', sep = ''), 
+               file.aln, append=T)
+    
+    rmSafe(v)
+    gc()
+  }
+  
 }
 
 stopCluster(myCluster)
