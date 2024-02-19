@@ -114,8 +114,13 @@ for(s.comb in pref.combinations){
                    '\n', sep = ''), 
              file.aln)
   
+  write(paste('a score=0.99', 
+              '\n', sep = ''), 
+        file.aln, append = TRUE)
   
-  write(paste(names(s.pangen)[1], ' ',  # track id
+  
+  write(paste('s ',
+              names(s.pangen)[1], ' ',  # track id
                    1, ' ',
                    len.pangen, ' ', 
                    '+', ' ',
@@ -128,7 +133,8 @@ for(s.comb in pref.combinations){
     v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
     v = paste0(v, collapse='')
     
-    write(paste(acc, ' ',  # track id
+    write(paste('s ',
+                acc, ' ',  # track id
                      1, ' ',
                      len.pangen, ' ', 
                      '+', ' ',
