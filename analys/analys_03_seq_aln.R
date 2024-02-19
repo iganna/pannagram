@@ -104,7 +104,7 @@ for(s.comb in pref.combinations){
   i.chr = comb2ref(s.comb)
   file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
   s.pangen = readFastaMy(file.seq.cons)
-  len.pangen = length(s.pangen)
+  len.pangen = nchar(s.pangen)
   
   
   # Write initial info
