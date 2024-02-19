@@ -117,9 +117,10 @@ for(s.comb in pref.combinations){
                    '\n', sep = ''), 
              file.aln)
   
-  write(paste('a score=0.99', 
-              '\n', sep = ''), 
-        file.aln, append = TRUE)
+  # write(paste('a score=0.99', 
+  #             # '\n', 
+  #             sep = ''), 
+  #       file.aln, append = TRUE)
   
   
   write(paste('s ',
@@ -127,8 +128,10 @@ for(s.comb in pref.combinations){
                    1, ' ',
               len.pangen, ' ', 
                    '+', ' ',
+              len.pangen, ' ', 
               substr(s.pangen,1,len.pangen),
-                   '\n', sep = ''), 
+                   # '\n',
+              sep = ''), 
              file.aln, append = TRUE)
   
   for(acc in accessions){
@@ -141,8 +144,10 @@ for(s.comb in pref.combinations){
                      1, ' ',
                      len.pangen, ' ', 
                      '+', ' ',
+                len.pangen, ' ', 
                 substr(v,1,len.pangen),
-                     '\n', sep = ''), 
+                     # '\n',
+                sep = ''), 
                file.aln, append=T)
     
     rmSafe(v)
