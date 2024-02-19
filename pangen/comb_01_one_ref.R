@@ -88,7 +88,7 @@ aln.suff <- "_full.rds"
 aln.files <- list.files(path.aln)
 
 pokaz('Paths with alignments', path.aln)
-pokaz('Files', aln.files)
+# pokaz('Files', aln.files)
 
 aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
 
@@ -100,11 +100,7 @@ accessions <- sapply(aln.files, function(filename){
   return(name)})
 names(accessions) = NULL
 
-accessions <- unique(accessions)
-pokaz('Accessions:', accessions)
-
 accessions <- sort(unique(accessions))
-
 pokaz('Accessions:', accessions)
 
 # ---- Combinations of chromosomes query-base to create the alignments ----

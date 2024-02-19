@@ -425,7 +425,7 @@ if(num.cores == 1){
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
-  
+  pokaz('combinations', pref.combinations)
   tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  
                               loop.function(s.comb)
                             }
