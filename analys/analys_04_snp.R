@@ -104,12 +104,12 @@ for(s.comb in pref.combinations){
   # Common positions
   pos = sort(unique(pos.diff))
   
-  snp.matrix = s.pangen[pos.diff]
+  snp.matrix = s.pangen[pos]
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
     
-    snp.matrix = cbind(snp.matrix, v[pos.diff])
+    snp.matrix = cbind(snp.matrix, v[pos] != s.pangen[pos])
     
     rmSafe(v)
     gc()
@@ -121,7 +121,7 @@ for(s.comb in pref.combinations){
   snp.matrix = cbind(pos, snp.matrix)
 
   file.snps = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt', sep = '')
-  write.table(snp.matrix, file.snps, row.names = F, col.names = F, quote = F, sep = '\t')
+  write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
   
 }
 
