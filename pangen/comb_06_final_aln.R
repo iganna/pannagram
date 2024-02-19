@@ -232,8 +232,6 @@ for(s.comb in pref.combinations){
     if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])) stop(i)
   }
   
-  msa.res$aln[[i]]
-  
   
   # Long
   fp.long = list()
@@ -315,7 +313,6 @@ for(s.comb in pref.combinations){
     # Add short
     for(i in 1:length(msa.res$len)){
       if(acc %in% colnames(msa.res$aln[[i]])){
-        if(sum(fp.short[[i]] == 106531) !=0 ) stop('here')
         
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
