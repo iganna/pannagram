@@ -70,7 +70,6 @@ max.block.elemnt = 3 * 10^ 6
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pokaz('Path', path.cons)
-pokaz('Path', path.cons)
 pokaz('Files', files)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -227,6 +226,15 @@ for(s.comb in pref.combinations){
     fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
   }
   
+  # Check short
+  for(i in 1:length(msa.res$len)){
+    if(is.null(msa.res$aln[[i]])) next
+    if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])) stop(i)
+  }
+  
+  msa.res$aln[[i]]
+  
+  
   # Long
   fp.long = list()
   for(i in 1:length(mafft.aln.pos)){
@@ -297,6 +305,7 @@ for(s.comb in pref.combinations){
         # if(i == 2) stop('670')
         pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
         pos = pos[-c(1, length(pos))]
+          
         v.aln[fp.single[[i]]] = pos
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
       } 
@@ -306,6 +315,8 @@ for(s.comb in pref.combinations){
     # Add short
     for(i in 1:length(msa.res$len)){
       if(acc %in% colnames(msa.res$aln[[i]])){
+        if(sum(fp.short[[i]] == 106531) !=0 ) stop('here')
+        
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
@@ -364,7 +375,10 @@ if(F){
 # ---- Manual testing ----
 
 if(F){
+
   
+  # ********************
+  # Tom-Greg
   library(rhdf5)
   source('../../../pannagram/utils/utils.R')
   path.cons = './'
@@ -379,5 +393,23 @@ if(F){
   gr.break.b = '/break'
   
   max.block.elemnt = 3 * 10^ 6
+  
+  # ********************
+  # Rhizobia
+  library(rhdf5)
+  source('../../../arabidopsis/pacbio/pannagram/utils/utils.R')
+  path.cons = './'
+  path.chromosomes = '../chromosomes/'
+  ref.pref = 'GR3013_prokka'
+  path.mafft.out = '../mafft_out/'
+  n.flank = 30
+  
+  gr.accs.e <- "accs/"
+  gr.accs.b <- "/accs"
+  gr.break.e = 'break/'
+  gr.break.b = '/break'
+  
+  max.block.elemnt = 3 * 10^ 6
+  
   
 }

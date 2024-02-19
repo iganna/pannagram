@@ -329,7 +329,6 @@ loop.function <- function(s.comb, echo = T){
   if(echo) pokaz('Align short seqs')
   
   
-  
   # Core core for the short alignmgnets
   CODE_ALN_SHORT <- function(echo=F){
     
@@ -370,6 +369,7 @@ loop.function <- function(s.comb, echo = T){
       
       res.msa[[irow]] = CODE_ALN_SHORT() # --- COMMON CODE, one core ----
     }
+    res.msa = res.msa[idx.short]
   } else {
     # Many cores
     res.msa <- foreach(seqs = aln.seqs[idx.short],
