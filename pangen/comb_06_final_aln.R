@@ -9,6 +9,9 @@ source('utils/utils.R')
 
 pokazStage('Step 12. Combine all alignments together into the final one')
 
+# ***********************************************************************
+# ---- Command line arguments ----
+
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -24,18 +27,17 @@ option_list = list(
               help = "number of cores to use for parallel processing", metavar = "integer")
 ); 
 
-
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# Set the number of cores for parallel processing
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
 
 # Reference genome
 if (is.null(opt$ref.pref)) {
@@ -44,10 +46,13 @@ if (is.null(opt$ref.pref)) {
   ref.pref <- opt$ref.pref
 }
 
-
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+
+
+# ***********************************************************************
+# ---- Preparation ----
 
 n.flank = 30
 
@@ -57,28 +62,6 @@ gr.break.e = 'break/'
 gr.break.b = '/break'
 
 max.block.elemnt = 3 * 10^ 6
-
-
-# ---- Testing ----
-
-if(F){
-
-  library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
-  path.cons = './'
-  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-  ref.pref = '0'
-  path.mafft.out = '../mafft_out/'
-  n.flank = 30
-  
-  gr.accs.e <- "accs/"
-  gr.accs.b <- "/accs"
-  gr.break.e = 'break/'
-  gr.break.b = '/break'
-  
-  max.block.elemnt = 3 * 10^ 6
-  
-}
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -92,15 +75,13 @@ pokaz('Files', files)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-
-
-
 pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
 
 
-# ------------------------------------
-# ------------------------------------
+# ***********************************************************************
+# ---- MAIN program body ----
+
 # flag.for = F
 # ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
 
@@ -379,4 +360,24 @@ if(F){
 }
 
 
+# ***********************************************************************
+# ---- Manual testing ----
 
+if(F){
+  
+  library(rhdf5)
+  source('../../../pannagram/utils/utils.R')
+  path.cons = './'
+  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+  ref.pref = '0'
+  path.mafft.out = '../mafft_out/'
+  n.flank = 30
+  
+  gr.accs.e <- "accs/"
+  gr.accs.b <- "/accs"
+  gr.break.e = 'break/'
+  gr.break.b = '/break'
+  
+  max.block.elemnt = 3 * 10^ 6
+  
+}

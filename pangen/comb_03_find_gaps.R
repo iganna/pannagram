@@ -13,8 +13,10 @@ source("utils/utils.R")
 
 pokazStage('Step 9. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment')
 
-args = commandArgs(trailingOnly=TRUE)
+# ***********************************************************************
+# ---- Command line arguments ----
 
+args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
@@ -30,11 +32,12 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
+# ***********************************************************************
+# ---- Values of parameters ----
+
 # Set the number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
 
 
 # Path with the consensus output
@@ -48,6 +51,7 @@ if (is.null(opt$ref.pref)) {
   ref.pref <- opt$ref.pref
 }
 
+# ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 # Testing
@@ -77,11 +81,11 @@ max.len.gap = 20000
 
 gr.blocks = 'blocks/'
 
-#flag.for = F
-#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
-flag.for = T
-for(s.comb in pref.combinations){
 
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(s.comb, echo = T){
   
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
@@ -95,7 +99,7 @@ for(s.comb in pref.combinations){
   for(acc in accessions){
     
     # pokaz('Accession', acc, 'combination', s.comb)
-  
+    
     v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v = v.init
     
@@ -160,7 +164,7 @@ for(s.comb in pref.combinations){
       idx.tmp.acc = idx.tmp.acc[-(idx.overlap+1),]
     }
     
-
+    
     # Save breaks
     idx.break = rbind(idx.break, idx.tmp.acc)
     
@@ -180,8 +184,28 @@ for(s.comb in pref.combinations){
   
   H5close()
   gc()
-  
 }
+
+
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  for(s.comb in pref.combinations){
+    loop.function(s.comb)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                              loop.function(s.comb)
+                            }
+  stopCluster(myCluster)
+}
+
 
 
 

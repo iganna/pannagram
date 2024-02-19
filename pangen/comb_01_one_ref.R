@@ -18,8 +18,10 @@ source("pangen/synteny_funcs.R")
 
 pokazStage('Step 7. Combine reference-based alignments by chromosomes')
 
-args = commandArgs(trailingOnly=TRUE)
+# ***********************************************************************
+# ---- Command line arguments ----
 
+args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--path.chr.len"), type="character", default=NULL, 
@@ -48,13 +50,15 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+
+# ***********************************************************************
+# ---- Values of parameters ----
+
 # print(opt)
 
-# Set the number of cores for parallel processing
+# Number of cores
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -76,6 +80,7 @@ if (!is.null(opt$n.chr.ref)) n.chr.ref <- as.numeric(opt$n.chr.ref)
 if (!is.null(opt$n.chr.acc)) n.chr.acc <- as.numeric(opt$n.chr.acc)
 if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
+# ***********************************************************************
 
 # ---- Get accession names ----
 
@@ -139,14 +144,13 @@ if(!file.exists(file.chr.len)){
 # ----  Combine correspondence  ----
 
 pokaz('Reference:', base.acc.ref)
-
-
 max.len.gap = 20000
 
-flag.for = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
- # flag.for = T
- # for(i.chr.pair in 1:nrow(chromosome.pairs)){
+
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(i.chr.pair, echo = T){
   
   query.chr = chromosome.pairs[i.chr.pair, 1]
   base.chr = chromosome.pairs[i.chr.pair, 2]
@@ -213,9 +217,27 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayo
   
   H5close()
   gc()
-  
 }
 
+
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  for(i.chr.pair in 1:nrow(chromosome.pairs)){
+    loop.function(i.chr.pair)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                              loop.function(i.chr.pair)
+                            }
+  stopCluster(myCluster)
+}
 
 
 
