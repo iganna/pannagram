@@ -81,20 +81,20 @@ for(s.comb in pref.combinations){
   groups = h5ls(file.seq)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
-  
-  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.fasta', sep = '')
-  
-  for(acc in accessions){
-    pokaz('Sequence of accession', acc)
-    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
-    v = paste0(v, collapse='')
-    names(v) = acc
-    writeFastaMy(v, file.aln, append = T)
-    
-    rmSafe(v)
-    gc()
-  }
-  
+  # 
+  # file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.fasta', sep = '')
+  # 
+  # for(acc in accessions){
+  #   pokaz('Sequence of accession', acc)
+  #   v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+  #   v = paste0(v, collapse='')
+  #   names(v) = acc
+  #   writeFastaMy(v, file.aln, append = T)
+  #   
+  #   rmSafe(v)
+  #   gc()
+  # }
+  # 
   
   # ---- MAF file ----
   file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.maf', sep = '')
@@ -108,27 +108,27 @@ for(s.comb in pref.combinations){
   
   
   # Write initial info
-  writeLines(paste('track name=pangen',
+  write(paste('track name=pangen',
                    '_ref_', ref.pref, 
                    '_chr_', i.chr, 
                    '\n', sep = ''), 
              file.aln)
   
   
-  writeLines(paste(names(s.pangen)[1], ' ',  # track id
+  write(paste(names(s.pangen)[1], ' ',  # track id
                    1, ' ',
                    len.pangen, ' ', 
                    '+', ' ',
                    s.pangen,
                    '\n', sep = ''), 
-             file.aln, append=T)
+             file.aln, append = TRUE)
   
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
     v = paste0(v, collapse='')
     
-    writeLines(paste(acc, ' ',  # track id
+    write(paste(acc, ' ',  # track id
                      1, ' ',
                      len.pangen, ' ', 
                      '+', ' ',
