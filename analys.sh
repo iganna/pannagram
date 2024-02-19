@@ -45,6 +45,7 @@ print_usage() {
 run_blocks=false
 run_seq=false
 run_aln=false
+run_snp=false
 # run_sv=false
 
 # Parse command line arguments
@@ -58,6 +59,7 @@ while [ $# -gt 0 ]; do
         -blocks) run_blocks=true; shift;;
         -seq)    run_seq=true; shift;;
         -aln)    run_aln=true; shift;;
+        -snp)    run_snp=true; shift;;
         # -sv)     run_sv=true; shift;;
         -h|--help) print_usage; exit 0;;
         *) print_usage; exit 1;;
@@ -97,6 +99,13 @@ if [ "$run_aln" = true ]; then
 
     Rscript analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
 fi
+
+
+if [ "$run_snp" = true ]; then
+
+    Rscript analys/analys_04_snp.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
+fi
+
 
 # if [ "$run_sv" = true ]; then
 #     Rscript analys_03_sv.R

@@ -47,8 +47,8 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
 path.seq = paste(path.cons, 'seq/', sep = '')
 
-path.aln = paste(path.cons, 'aln_pangen/', sep = '')
-if (!dir.exists(path.aln)) dir.create(path.aln)
+path.snp = paste(path.cons, 'aln_pangen/', sep = '')
+if (!dir.exists(path.snp)) dir.create(path.snp)
 
 gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
@@ -75,6 +75,13 @@ for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
+  # Get Consensus
+  i.chr = comb2ref(s.comb)
+  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  s.pangen = readFastaMy(file.seq.cons)
+  s.pangen.name = names(s.pangen)[1]
+  s.pangen = seq2nt(s.pangen)
+  
   # Get accessions
   file.seq = paste(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
@@ -82,78 +89,37 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
 
-  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.fasta', sep = '')
-
+  pos.diff = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
-    v = paste0(v, collapse='')
-    names(v) = acc
-    writeFastaMy(v, file.aln, append = T)
-
-    rmSafe(v)
-    gc()
-  }
-
-  
-  # ---- MAF file ----
-  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.maf', sep = '')
-
-  # Add pangen line
-  i.chr = comb2ref(s.comb)
-  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
-  s.pangen = readFastaMy(file.seq.cons)
-  len.pangen = nchar(s.pangen)
-  
-  
-  # len.pangen = 20
-  
-  
-  # Write initial info
-  write(paste('track name=pangen',
-                   '_ref_', ref.pref, 
-                   '_chr_', i.chr, 
-                   '\n', sep = ''), 
-             file.aln)
-  
-  write(paste('a score=666',
-              # '\n',
-              sep = ''),
-        file.aln, append = TRUE)
-  
-  
-  write(paste('s ',
-              names(s.pangen)[1], ' ',  # track id
-                   1, ' ',
-              len.pangen, ' ', 
-                   '+', ' ',
-              len.pangen, ' ', 
-              # substr(s.pangen,1,len.pangen),
-              s.pangen,
-                   # '\n',
-              sep = ''), 
-             file.aln, append = TRUE)
-  
-  for(acc in accessions){
-    pokaz('Sequence of accession', acc)
-    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
-    v = paste0(v, collapse='')
     
-    write(paste('s ',
-                acc, ' ',  # track id
-                     1, ' ',
-                     len.pangen, ' ', 
-                     '+', ' ',
-                len.pangen, ' ', 
-                # substr(v,1,len.pangen),
-                v,
-                     # '\n',
-                sep = ''), 
-               file.aln, append=T)
+    pos = which((v != s.pangen) & (v != '-'))
+    pos.diff = c(pos.diff, pos)
     
     rmSafe(v)
     gc()
   }
+  
+  # Common positions
+  pos = sort(unique(pos.diff))
+  
+  snp.matrix = s.pangen[pos.diff]
+  for(acc in accessions){
+    pokaz('Sequence of accession', acc)
+    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+    
+    snp.matrix = cbind(snp.matrix, v[pos.diff])
+    
+    rmSafe(v)
+    gc()
+  }
+  
+  colnames(snp.matrix) = c(s.pangen.name, acc)
+  snp.matrix = cbind(pos, snp.matrix)
+
+  file.snps = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt', sep = '')
+  write.table(snp.matrix, file.snps, row.names = F, col.names = F, quote = F, sep = '\t')
   
 }
 
