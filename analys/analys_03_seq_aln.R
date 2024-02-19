@@ -107,6 +107,9 @@ for(s.comb in pref.combinations){
   len.pangen = nchar(s.pangen)
   
   
+  len.pangen = 20
+  
+  
   # Write initial info
   write(paste('track name=pangen',
                    '_ref_', ref.pref, 
@@ -122,9 +125,9 @@ for(s.comb in pref.combinations){
   write(paste('s ',
               names(s.pangen)[1], ' ',  # track id
                    1, ' ',
-                   len.pangen, ' ', 
+              len.pangen, ' ', 
                    '+', ' ',
-                   s.pangen,
+              substr(s.pangen,1,len.pangen),
                    '\n', sep = ''), 
              file.aln, append = TRUE)
   
@@ -138,7 +141,7 @@ for(s.comb in pref.combinations){
                      1, ' ',
                      len.pangen, ' ', 
                      '+', ' ',
-                     v,
+                substr(v,1,len.pangen),
                      '\n', sep = ''), 
                file.aln, append=T)
     
