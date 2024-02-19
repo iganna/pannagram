@@ -116,8 +116,8 @@ for(s.comb in pref.combinations){
   }
   
   print(dim(snp.matrix))
-  print(length(c(s.pangen.name, acc)))
-  colnames(snp.matrix) = c(s.pangen.name, acc)
+  print(length(c(s.pangen.name, accessions)))
+  colnames(snp.matrix) = c(s.pangen.name, accessions)
   snp.matrix = cbind(pos, snp.matrix)
 
   file.snps = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt', sep = '')
