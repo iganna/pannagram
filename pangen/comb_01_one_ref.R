@@ -91,8 +91,7 @@ pokaz('Paths with alignments', path.aln)
 # pokaz('Files', aln.files)
 
 aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
-
-pokaz(aln.files)
+# pokaz(aln.files)
 
 accessions <- sapply(aln.files, function(filename){
   parts <- unlist(strsplit(filename, "_", fixed = TRUE))

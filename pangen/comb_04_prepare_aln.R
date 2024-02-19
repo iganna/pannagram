@@ -98,7 +98,7 @@ gr.blocks = 'blocks/'
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = T
+echo = F
 for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)

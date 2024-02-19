@@ -81,8 +81,9 @@ pokaz('Combinations', pref.combinations)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-# flag.for = F
-# ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
+stat.comb <- data.frame(comb = character(),
+                        coverage = numeric(),
+                        stringsAsFactors = FALSE)
 
 for(s.comb in pref.combinations){
   
@@ -334,6 +335,10 @@ for(s.comb in pref.combinations){
     
     suppressMessages({
       h5write(v.aln, file.res, paste(gr.accs.e, acc, sep = ''))
+      
+      stat.comb <- rbind(stat.comb, 
+                         data.frame(comb = acc, coverage = sum(v.aln != 0)))
+      
     })
     
   }
@@ -345,9 +350,18 @@ for(s.comb in pref.combinations){
 warnings()
 
 
-# Hidden testing
+saveRDS(stat.comb, paste(path.cons, 'stat', s.comb, '_', ref.pref,'.rds', sep = ''))
+
+
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+
 if(F){
-  
+
+  # ********************
+  # Help testing
   file.comb = 'res_1_1_ref_0.h5'
   file.comb = 'msa_1_1_ref_0.h5'
   
@@ -363,15 +377,6 @@ if(F){
     print(acc)
     print(sum((v.acc != 0) & (!is.na(v.acc))))
   }
-  
-}
-
-
-# ***********************************************************************
-# ---- Manual testing ----
-
-if(F){
-
   
   # ********************
   # Tom-Greg
