@@ -101,7 +101,7 @@ loop.function <- function(f.blast, echo = T){
   parts = parts[-c(length(parts) - 1, length(parts))]
   acc <- paste0(parts, collapse = '_')
   
-  pokaz(acc, query.chr, base.chr)
+  if(echo) pokaz(acc, query.chr, base.chr)
   
   # file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
   # if(file.exists(file.aln.postgap3)) {
@@ -110,7 +110,7 @@ loop.function <- function(f.blast, echo = T){
   
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
-  pokaz('Base:', base.file)
+  if(echo) pokaz('Base:', base.file)
   base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
@@ -118,7 +118,7 @@ loop.function <- function(f.blast, echo = T){
   
   # Read query sequences
   query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
-  pokaz('Query:', query.file)
+  if(echo) pokaz('Query:', query.file)
   
   query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
   query.fas.chr = seq2nt(query.fas.chr)
@@ -132,13 +132,13 @@ loop.function <- function(f.blast, echo = T){
   # if(T){   
   if(!file.exists(file.aln.pre)){
     
-    pokaz('Alignment:', acc, query.chr, base.chr)
+    if(echo) pokaz('Alignment:', acc, query.chr, base.chr)
     
     # ---- Read blast results ----
     x = read.table(paste(path.blast.res, f.blast, sep = ''), stringsAsFactors = F, header = F)
     
     
-    pokaz('Read blast results finished, numer of rows is', nrow(x))
+    if(echo) pokaz('Read blast results finished, numer of rows is', nrow(x))
     
     ## ---- Pre-processing ----
     # Save true base coordinate
@@ -215,7 +215,7 @@ loop.function <- function(f.blast, echo = T){
       if(length(idx) == 0) break
       if(min(x.block$len[idx]) > 20000) break
       idx.remove = idx[x.block$len[idx] == min(x.block$len[idx])][1]
-      pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove])
+      if(echo) pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove])
       x.block = x.block[-idx.remove,]
       # rownames(x.block) = NULL
     }
@@ -237,7 +237,7 @@ loop.function <- function(f.blast, echo = T){
     
     if(length(unique((x.major$dir))) > 1){  # different dirertions exist
       cnt = table(x.major$block.id, x.major$dir)
-      print(cnt)
+      if(echo) print(cnt)
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     }
     
@@ -272,19 +272,19 @@ loop.function <- function(f.blast, echo = T){
       pos.q.occup[x$V4[irow]:x$V5[irow]] = pos.q.occup[x$V4[irow]:x$V5[irow]] + 1
     }
     if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')
-    pokaz('Occupancy of base', sum(pos.q.occup))
+    if(echo) pokaz('Occupancy of base', sum(pos.q.occup))
     
     # Save
     saveRDS(x, file.aln.pre, compress = F)
     # saveRDS(x.major, file.maj.idx, compress = F)
     
   } else {
-    pokaz('Reading instead of analysis', file.aln.pre)
+    if(echo) pokaz('Reading instead of analysis', file.aln.pre)
     x = readRDS(file.aln.pre)
   } # if blast alignment exists
   
   if((nrow(x) <= 1) || (is.null(x))) {
-    pokaz('No gaps')
+    if(echo) pokaz('No gaps')
     
     rmSafe(x)
     rmSafe(x.major)
@@ -298,7 +298,7 @@ loop.function <- function(f.blast, echo = T){
   
   
   # ---- Get gaps ----
-  pokaz('Get gaps')
+  if(echo) pokaz('Get gaps')
   
   x.dir = setDir(x, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
@@ -327,8 +327,8 @@ loop.function <- function(f.blast, echo = T){
   file.gap.query = paste0(path.gaps, pref.comarisson, 'query.fasta', collapse = '')
   # Base file
   file.gap.base = paste0(path.gaps, pref.comarisson, 'base.fasta', collapse = '')
-  pokaz('Create gaps for', file.gap.query)
-  pokaz('Create gaps for', file.gap.base)
+  if(echo) pokaz('Create gaps for', file.gap.query)
+  if(echo) pokaz('Create gaps for', file.gap.base)
   
   for(irow in 1:(nrow(x)-1)){
     
@@ -417,12 +417,12 @@ loop.function <- function(f.blast, echo = T){
   }  # irow search for gaps
   
   # ---- Write remained blocks ----
-  pokaz('Create fasta for the remained sequences')
+  if(echo) pokaz('Create fasta for the remained sequences')
   file.gap.query = paste0(path.gaps, pref.comarisson, 'residual_query.fasta', collapse = '')
   # Base file
   file.gap.base = paste0(path.gaps, pref.comarisson, 'residual_base.fasta', collapse = '')
-  pokaz('Create gaps for', file.gap.query)
-  pokaz('Create gaps for', file.gap.base)
+  if(echo) pokaz('Create gaps for', file.gap.query)
+  if(echo) pokaz('Create gaps for', file.gap.base)
   
   
   ## ---- Write query ----

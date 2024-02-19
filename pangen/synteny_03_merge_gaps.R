@@ -162,6 +162,10 @@ loop.function <- function(f.maj, echo = T){
     if.table <<- F
   }
   
+  pokaz('HERE')
+  print(if.table)
+  print(file.exists(file.gaps.out))
+  
   if(if.table){
     pokaz('Number of gaps', nrow(x.gap))
     
