@@ -82,7 +82,7 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
   
-  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.h5', sep = '')
+  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.fasta', sep = '')
   
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
