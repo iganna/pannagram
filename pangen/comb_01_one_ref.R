@@ -18,8 +18,10 @@ source("pangen/synteny_funcs.R")
 
 pokazStage('Step 7. Combine reference-based alignments by chromosomes')
 
-args = commandArgs(trailingOnly=TRUE)
+# ***********************************************************************
+# ---- Command line arguments ----
 
+args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--path.chr.len"), type="character", default=NULL, 
@@ -48,13 +50,15 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+
+# ***********************************************************************
+# ---- Values of parameters ----
+
 # print(opt)
 
-# Set the number of cores for parallel processing
+# Number of cores
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -76,6 +80,7 @@ if (!is.null(opt$n.chr.ref)) n.chr.ref <- as.numeric(opt$n.chr.ref)
 if (!is.null(opt$n.chr.acc)) n.chr.acc <- as.numeric(opt$n.chr.acc)
 if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
+# ***********************************************************************
 
 # ---- Get accession names ----
 
@@ -83,11 +88,10 @@ aln.suff <- "_full.rds"
 aln.files <- list.files(path.aln)
 
 pokaz('Paths with alignments', path.aln)
-pokaz('Files', aln.files)
+# pokaz('Files', aln.files)
 
 aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
-
-pokaz(aln.files)
+# pokaz(aln.files)
 
 accessions <- sapply(aln.files, function(filename){
   parts <- unlist(strsplit(filename, "_", fixed = TRUE))
@@ -95,11 +99,7 @@ accessions <- sapply(aln.files, function(filename){
   return(name)})
 names(accessions) = NULL
 
-accessions <- unique(accessions)
-pokaz('Accessions:', accessions)
-
 accessions <- sort(unique(accessions))
-
 pokaz('Accessions:', accessions)
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -139,14 +139,13 @@ if(!file.exists(file.chr.len)){
 # ----  Combine correspondence  ----
 
 pokaz('Reference:', base.acc.ref)
-
-
 max.len.gap = 20000
 
-flag.for = F
-tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
- # flag.for = T
- # for(i.chr.pair in 1:nrow(chromosome.pairs)){
+
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(i.chr.pair, echo = T){
   
   query.chr = chromosome.pairs[i.chr.pair, 1]
   base.chr = chromosome.pairs[i.chr.pair, 2]
@@ -190,73 +189,6 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayo
       h5write(x.corr, file.comb, paste(gr.accs, '', acc, sep = ''))
     })
     
-    # # ----  Find gaps  ----
-    # 
-    # idx.gaps[x.corr == 0] = idx.gaps[x.corr == 0] + 1
-    # 
-    # # ----  Find breaks  ----
-    # v = x.corr
-    # 
-    # # Find blocks of additional breaks
-    # v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    # v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
-    # v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
-    # v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
-    # 
-    # # v = v[order(v[,1]),]  # not necessary
-    # 
-    # # with the absence, but neighbouring
-    # idx.tmp = which( (abs(diff(v[,4])) == 1) &  # Neighbouring in accession-based order
-    #                    (abs(diff(abs(v[,3])) == 1)) &  # Neighbouring in ref-based order
-    #                    (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
-    #                    (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
-    #                    (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
-    # 
-    # # Fix (beg < end) order
-    # idx.tmp.acc = data.frame(beg = v[idx.tmp,2], end = v[idx.tmp+1,2], acc = acc)
-    # idx.ord = which(idx.tmp.acc$beg > idx.tmp.acc$end)
-    # if(length(idx.ord) > 0){
-    #   tmp = idx.tmp.acc$beg[idx.ord]
-    #   idx.tmp.acc$beg[idx.ord] = idx.tmp.acc$end[idx.ord]
-    #   idx.tmp.acc$end[idx.ord] = tmp
-    # }
-    # # idx.tmp.acc = idx.tmp.acc[order(idx.tmp.acc$beg),]  # order ONLY if ordered before
-    # 
-    # # Remove overlaps
-    # idx.overlap = which( (idx.tmp.acc$beg[-1] - idx.tmp.acc$end[-nrow(idx.tmp.acc)]) <= 3)
-    # 
-    # i.cnt = 0
-    # if(length(idx.overlap) > 0){
-    #   j.ov = 0
-    #   for(i.ov in idx.overlap){
-    #     if(i.ov <= j.ov) next
-    #     j.ov = i.ov + 1
-    #     while(j.ov %in% idx.overlap){
-    #       j.ov = j.ov + 1
-    #     }
-    #     # print(c(i.ov, j.ov))
-    #     i.cnt = i.cnt + 1
-    #     idx.tmp.acc$end[i.ov] = idx.tmp.acc$end[j.ov]
-    #   }
-    #   idx.tmp.acc = idx.tmp.acc[-(idx.overlap+1),]
-    # }
-    # 
-    # 
-    # # Write into file
-    # suppressMessages({
-    #   h5write(idx.tmp.acc, file.comb, paste(gr.break, '', acc, sep = ''))
-    # })
-    # 
-    # 
-    # # Fill up positions with breaks
-    # idx.break.acc = rep(0, base.len)
-    # idx.break.acc[idx.tmp.acc$beg] = 1
-    # idx.break.acc[idx.tmp.acc$end] = -1
-    # idx.break.acc = cumsum(idx.break.acc)
-    # idx.break.acc[idx.tmp.acc$end] = 1
-    # 
-    # # Save breaks
-    # idx.break = idx.break + idx.break.acc
     
     rmSafe(x.corr)
     rmSafe(x)
@@ -280,9 +212,27 @@ tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayo
   
   H5close()
   gc()
-  
 }
 
+
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  for(i.chr.pair in 1:nrow(chromosome.pairs)){
+    loop.function(i.chr.pair)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                              loop.function(i.chr.pair)
+                            }
+  stopCluster(myCluster)
+}
 
 
 

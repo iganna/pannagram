@@ -9,6 +9,9 @@ source('utils/utils.R')
 
 pokazStage('Step 12. Combine all alignments together into the final one')
 
+# ***********************************************************************
+# ---- Command line arguments ----
+
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -24,18 +27,17 @@ option_list = list(
               help = "number of cores to use for parallel processing", metavar = "integer")
 ); 
 
-
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# Set the number of cores for parallel processing
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
 
 # Reference genome
 if (is.null(opt$ref.pref)) {
@@ -44,10 +46,13 @@ if (is.null(opt$ref.pref)) {
   ref.pref <- opt$ref.pref
 }
 
-
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+
+
+# ***********************************************************************
+# ---- Preparation ----
 
 n.flank = 30
 
@@ -59,50 +64,26 @@ gr.break.b = '/break'
 max.block.elemnt = 3 * 10^ 6
 
 
-# ---- Testing ----
-
-if(F){
-
-  library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
-  path.cons = './'
-  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-  ref.pref = '0'
-  path.mafft.out = '../mafft_out/'
-  n.flank = 30
-  
-  gr.accs.e <- "accs/"
-  gr.accs.b <- "/accs"
-  gr.break.e = 'break/'
-  gr.break.b = '/break'
-  
-  max.block.elemnt = 3 * 10^ 6
-  
-}
-
-
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pokaz('Path', path.cons)
-pokaz('Path', path.cons)
 pokaz('Files', files)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
-
-
-
 
 pokaz('Reference:', ref.pref)
 pokaz('Combinations', pref.combinations)
 
 
-# ------------------------------------
-# ------------------------------------
-# flag.for = F
-# ref = foreach(i.f = 1:length(fasta.files), .packages=c('stringr','Biostrings', 'R.utils'))  %dopar% { 
+# ***********************************************************************
+# ---- MAIN program body ----
+
+stat.comb <- data.frame(comb = character(),
+                        coverage = numeric(),
+                        stringsAsFactors = FALSE)
 
 for(s.comb in pref.combinations){
   
@@ -246,6 +227,13 @@ for(s.comb in pref.combinations){
     fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
   }
   
+  # Check short
+  for(i in 1:length(msa.res$len)){
+    if(is.null(msa.res$aln[[i]])) next
+    if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])) stop(i)
+  }
+  
+  
   # Long
   fp.long = list()
   for(i in 1:length(mafft.aln.pos)){
@@ -316,6 +304,7 @@ for(s.comb in pref.combinations){
         # if(i == 2) stop('670')
         pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
         pos = pos[-c(1, length(pos))]
+          
         v.aln[fp.single[[i]]] = pos
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
       } 
@@ -325,6 +314,7 @@ for(s.comb in pref.combinations){
     # Add short
     for(i in 1:length(msa.res$len)){
       if(acc %in% colnames(msa.res$aln[[i]])){
+        
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
@@ -345,6 +335,10 @@ for(s.comb in pref.combinations){
     
     suppressMessages({
       h5write(v.aln, file.res, paste(gr.accs.e, acc, sep = ''))
+      
+      stat.comb <- rbind(stat.comb, 
+                         data.frame(comb = acc, coverage = sum(v.aln != 0)))
+      
     })
     
   }
@@ -353,13 +347,21 @@ for(s.comb in pref.combinations){
   
 }
 
-stopCluster(myCluster)
 warnings()
 
 
-# Hidden testing
+saveRDS(stat.comb, paste(path.cons, 'stat', s.comb, '_', ref.pref,'.rds', sep = ''))
+
+
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+
 if(F){
-  
+
+  # ********************
+  # Help testing
   file.comb = 'res_1_1_ref_0.h5'
   file.comb = 'msa_1_1_ref_0.h5'
   
@@ -376,7 +378,39 @@ if(F){
     print(sum((v.acc != 0) & (!is.na(v.acc))))
   }
   
+  # ********************
+  # Tom-Greg
+  library(rhdf5)
+  source('../../../pannagram/utils/utils.R')
+  path.cons = './'
+  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
+  ref.pref = '0'
+  path.mafft.out = '../mafft_out/'
+  n.flank = 30
+  
+  gr.accs.e <- "accs/"
+  gr.accs.b <- "/accs"
+  gr.break.e = 'break/'
+  gr.break.b = '/break'
+  
+  max.block.elemnt = 3 * 10^ 6
+  
+  # ********************
+  # Rhizobia
+  library(rhdf5)
+  source('../../../arabidopsis/pacbio/pannagram/utils/utils.R')
+  path.cons = './'
+  path.chromosomes = '../chromosomes/'
+  ref.pref = 'GR3013_prokka'
+  path.mafft.out = '../mafft_out/'
+  n.flank = 30
+  
+  gr.accs.e <- "accs/"
+  gr.accs.b <- "/accs"
+  gr.break.e = 'break/'
+  gr.break.b = '/break'
+  
+  max.block.elemnt = 3 * 10^ 6
+  
+  
 }
-
-
-

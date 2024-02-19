@@ -16,6 +16,10 @@ source("pangen/synteny_funcs.R")
 
 pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
 
+
+# ***********************************************************************
+# ---- Command line arguments ----
+
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -46,10 +50,11 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# Set the number of cores for parallel processing
-num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
-myCluster <- makeCluster(num_cores, type = "PSOCK")
-registerDoParallel(myCluster)
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores
+num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 path.query    <- ifelse(!is.null(opt$path.query), opt$path.query, path.query)
 path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, path.blast.res)
@@ -68,7 +73,8 @@ if(!dir.exists(path.aln)) dir.create(path.aln)
 if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
 
-#' ============================================================================
+# ***********************************************************************
+# ---- Preparation ----
 
 max.len = 10^6
 len.blast = 50
@@ -78,10 +84,11 @@ files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 pokaz('Number of BLAST-result files:', length(files.blast))
 if(length(files.blast) == 0) stop('No BLAST files provided')
 
-for.flag = F
-tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% {  # which accession to use
-# for.flag = T
-# for(f.blast in files.blast){
+
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(f.blast, echo = T){
   
   # Remove the '.txt' extension
   pref.comb <- sub("\\.txt$", "", f.blast)
@@ -94,26 +101,25 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
   parts = parts[-c(length(parts) - 1, length(parts))]
   acc <- paste0(parts, collapse = '_')
   
-  pokaz(acc, query.chr, base.chr)
-
+  if(echo) pokaz(acc, query.chr, base.chr)
+  
   # file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
   # if(file.exists(file.aln.postgap3)) {
-  #   if(for.flag) next
   #   return(NULL)
   # }  
   
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
-  pokaz('Base:', base.file)
+  if(echo) pokaz('Base:', base.file)
   base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
-
+  
   # Read query sequences
   query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
-  pokaz('Query:', query.file)
-
+  if(echo) pokaz('Query:', query.file)
+  
   query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
@@ -126,13 +132,13 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
   # if(T){   
   if(!file.exists(file.aln.pre)){
     
-    pokaz('Alignment:', acc, query.chr, base.chr)
+    if(echo) pokaz('Alignment:', acc, query.chr, base.chr)
     
     # ---- Read blast results ----
     x = read.table(paste(path.blast.res, f.blast, sep = ''), stringsAsFactors = F, header = F)
     
     
-    pokaz('Read blast results finished, numer of rows is', nrow(x))
+    if(echo) pokaz('Read blast results finished, numer of rows is', nrow(x))
     
     ## ---- Pre-processing ----
     # Save true base coordinate
@@ -209,7 +215,7 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
       if(length(idx) == 0) break
       if(min(x.block$len[idx]) > 20000) break
       idx.remove = idx[x.block$len[idx] == min(x.block$len[idx])][1]
-      pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove])
+      if(echo) pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove])
       x.block = x.block[-idx.remove,]
       # rownames(x.block) = NULL
     }
@@ -231,7 +237,7 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
     
     if(length(unique((x.major$dir))) > 1){  # different dirertions exist
       cnt = table(x.major$block.id, x.major$dir)
-      print(cnt)
+      if(echo) print(cnt)
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     }
     
@@ -266,19 +272,19 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
       pos.q.occup[x$V4[irow]:x$V5[irow]] = pos.q.occup[x$V4[irow]:x$V5[irow]] + 1
     }
     if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')
-    pokaz('Occupancy of base', sum(pos.q.occup))
+    if(echo) pokaz('Occupancy of base', sum(pos.q.occup))
     
     # Save
     saveRDS(x, file.aln.pre, compress = F)
     # saveRDS(x.major, file.maj.idx, compress = F)
     
   } else {
-    pokaz('Reading instead of analysis', file.aln.pre)
+    if(echo) pokaz('Reading instead of analysis', file.aln.pre)
     x = readRDS(file.aln.pre)
   } # if blast alignment exists
-
+  
   if((nrow(x) <= 1) || (is.null(x))) {
-    pokaz('No gaps')
+    if(echo) pokaz('No gaps')
     
     rmSafe(x)
     rmSafe(x.major)
@@ -287,14 +293,13 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
     rmSafe(query.fas.chr)
     gc()
     
-    if(for.flag) next
     return(NULL)
   }
   
   
   # ---- Get gaps ----
-  pokaz('Get gaps')
-
+  if(echo) pokaz('Get gaps')
+  
   x.dir = setDir(x, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
                        base.fas.fw = base.fas.fw, 
@@ -316,14 +321,14 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
   
   # ---- Write gaps ----
   # Within non-occupied positions find those, which can be
-
+  
   pref.comarisson = paste('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
   # Query-file
   file.gap.query = paste0(path.gaps, pref.comarisson, 'query.fasta', collapse = '')
   # Base file
   file.gap.base = paste0(path.gaps, pref.comarisson, 'base.fasta', collapse = '')
-  pokaz('Create gaps for', file.gap.query)
-  pokaz('Create gaps for', file.gap.base)
+  if(echo) pokaz('Create gaps for', file.gap.query)
+  if(echo) pokaz('Create gaps for', file.gap.base)
   
   for(irow in 1:(nrow(x)-1)){
     
@@ -392,7 +397,7 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
     
     # Standsrd naming (as before)
     pref.q = paste(pref.comarisson, pref.gap,
-                    'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+                   'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
     
     if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
     names(s.q) = pref.q
@@ -406,18 +411,18 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
                          'base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
     
     names(s.b) = s.base.names
-      
+    
     writeFastaMy(s.b, file.gap.base, append = T)
     
   }  # irow search for gaps
   
   # ---- Write remained blocks ----
-  pokaz('Create fasta for the remained sequences')
+  if(echo) pokaz('Create fasta for the remained sequences')
   file.gap.query = paste0(path.gaps, pref.comarisson, 'residual_query.fasta', collapse = '')
   # Base file
   file.gap.base = paste0(path.gaps, pref.comarisson, 'residual_base.fasta', collapse = '')
-  pokaz('Create gaps for', file.gap.query)
-  pokaz('Create gaps for', file.gap.base)
+  if(echo) pokaz('Create gaps for', file.gap.query)
+  if(echo) pokaz('Create gaps for', file.gap.base)
   
   
   ## ---- Write query ----
@@ -425,32 +430,37 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
   diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
-  for(irow in 1:length(begs)){
-    if((ends[irow] - begs[irow]) < len.blast) next
-    if((ends[irow] - begs[irow]) > max.len) next
-    pos.gap.q = begs[irow]:ends[irow]
-    
-    # Define Chunks
-    s.q = query.fas.chr[pos.gap.q]
-    s.q = nt2seq(s.q)
-    n.bl = 500
-    len.s.q = nchar(s.q)
-    if(len.s.q > n.bl){
-      p.beg = seq(1, len.s.q, n.bl)
-      p.end = seq(n.bl, len.s.q, n.bl)
-    } else {
-      p.beg = 1
-      p.end = len.s.q
+  
+  
+  if(length(begs) > 0){
+    for(irow in 1:length(begs)){
+      
+      if((ends[irow] - begs[irow]) < len.blast) next
+      if((ends[irow] - begs[irow]) > max.len) next
+      pos.gap.q = begs[irow]:ends[irow]
+      
+      # Define Chunks
+      s.q = query.fas.chr[pos.gap.q]
+      s.q = nt2seq(s.q)
+      n.bl = 500
+      len.s.q = nchar(s.q)
+      if(len.s.q > n.bl){
+        p.beg = seq(1, len.s.q, n.bl)
+        p.end = seq(n.bl, len.s.q, n.bl)
+      } else {
+        p.beg = 1
+        p.end = len.s.q
+      }
+      s.q = splitSeq(s.q, n = n.bl)
+      
+      # Standard naming (as before)
+      pref.q = paste(pref.comarisson,
+                     'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+      
+      if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
+      names(s.q) = pref.q
+      writeFastaMy(s.q, file.gap.query, append = T)
     }
-    s.q = splitSeq(s.q, n = n.bl)
-    
-    # Standard naming (as before)
-    pref.q = paste(pref.comarisson,
-                   'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
-    
-    if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
-    names(s.q) = pref.q
-    writeFastaMy(s.q, file.gap.query, append = T)
   }
   
   
@@ -480,16 +490,36 @@ tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings'
   }
   
   
-  
   rmSafe(x)
   rmSafe(x.major)
   rmSafe(base.fas.bw)
   rmSafe(base.fas.fw)
   rmSafe(query.fas.chr)
   gc()
-  
-}  # combinations
+}
 
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  for(f.blast in files.blast){
+    loop.function(f.blast)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% { 
+                              loop.function(f.blast)
+                            }
+  stopCluster(myCluster)
+}
+
+
+# ***********************************************************************
+# ---- Manual testing ----
 
 
 

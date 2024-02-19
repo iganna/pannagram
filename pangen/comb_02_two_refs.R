@@ -19,8 +19,10 @@ source("utils/utils.R")
 
 
 
-args = commandArgs(trailingOnly=TRUE)
+# ***********************************************************************
+# ---- Command line arguments ----
 
+args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
@@ -39,11 +41,13 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# Set the number of cores for parallel processing
+
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -61,21 +65,13 @@ if (is.null(opt$ref1)) {
   ref1 <- opt$ref1
 }
 
-# ---- Step ----
-
+# ***********************************************************************
+# ---- Stage ----
 pokazStage('Step 8. Randomisation of alignments. Combine two references:', ref0, 'and', ref1)
 
 
+# ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
-
-
-# # Testing
-# source('../../../pannagram/utils.R')
-# path.cons = './'
-# ref0 = '0'
-# ref1 = '6046-v1.1'
-# library(rhdf5)
-
 
 # Find all files with the prefix of both references and common suffixes
 # pokazAttention('Searching in the path', path.cons, 'files with the pattern', '_ref_X', ', where X is the name of a reference genome')
@@ -92,27 +88,6 @@ extract_xy <- function(filename) {
 }
 pref.combinations <- unique(sapply(combo_files, extract_xy))
 pokaz('Combinations', pref.combinations)
-# 
-# extract_name <- function(filename) {
-#   parts <- strsplit(filename, "_")[[1]]
-#   name <- paste(parts[5:length(parts)], collapse = "_")
-#   return(name)
-# }
-
-
-# 
-# 
-# files.pref <- lapply(c(ref0, ref1), function(ref) {
-#   suff <- paste0('_ref_', ref)
-#   files <- list.files(path = path.cons, pattern = suff, full.names = FALSE)
-#   sapply(files, function(s) strsplit(s, suff)[[1]][1])
-# })
-# 
-# pref.combinations <- Reduce(intersect, files.pref)
-# pref.combinations <- gsub("comb_", "", pref.combinations)
-# pokaz('Combinations', pref.combinations)
-
-
 
 # ----  Combine correspondence  ----
 
@@ -124,11 +99,13 @@ gr.break.e = 'break/'
 gr.break.b = '/break'
 max.len.gap = 20000
 
-#flag.for = F
-#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
-flag.for = T
-for(s.comb in pref.combinations){
 
+
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(s.comb, echo = T){
+  
   file.comb0 = paste(path.cons, 'comb_',s.comb,'_ref_',ref0,'.h5', sep = '')
   file.comb1 = paste(path.cons, 'comb_',s.comb,'_ref_',ref1,'.h5', sep = '')
   
@@ -161,7 +138,7 @@ for(s.comb in pref.combinations){
     # if(acc == ref0) next
     # if(acc == ref1) next
     
-    # print(acc)
+    if(echo) pokaz('Accession', acc)
     s = paste('/',gr.accs.e, acc, sep = '')
     
     # Data from the main reference
@@ -170,14 +147,14 @@ for(s.comb in pref.combinations){
     v.final = v0
     v.final[idx01] = 0
     v0 = v0[idx01]
-    # pokaz('Vector of meaningfull positions', length(v0))
+    if(echo) pokaz('Vector of meaningfull positions', length(v0))
     
     
     # Data from the second reference
     v1 = h5read(file.comb1, s)
     v.final[v.final %in% v1] = 0
-    # pokaz('Vector in the ref1 file', length(v1))
-    # pokaz('Length of function', length(f01))
+    if(echo) pokaz('Vector in the ref1 file', length(v1))
+    if(echo) pokaz('Length of function', length(f01))
     v01 = v1[abs(f01)] * sign(f01)
     
     #v01[(v0 != v01) & (v0 != 0)] = 0
@@ -187,8 +164,8 @@ for(s.comb in pref.combinations){
     
     v0[(v0 != v01) & (v01 != 0)] = 0
     
-    # pokaz('Length of resultant correspondence', length(v01))
-    # pokaz('Sum of matches', sum(v01 != 0))
+    if(echo) pokaz('Length of resultant correspondence', length(v01))
+    if(echo) pokaz('Sum of matches', sum(v01 != 0))
     
     # Turn into real coordinates back
     # v.final = rep(0, base.len)
@@ -197,16 +174,13 @@ for(s.comb in pref.combinations){
     
     v.final[idx01] = v0
     
-    
-    
-    
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
     if(length(dup.value > 0)){
       v.final[v.final %in% dup.value] == 0
-      # pokaz('Number of duplicated', length(dup.value))
+      if(echo) pokaz('Number of duplicated', length(dup.value))
     }
     
-    # pokaz('Length of saved vector', length(v.final))
+    if(echo) pokaz('Length of saved vector', length(v.final))
     
     suppressMessages({
       h5write(v.final, file.res, s)
@@ -215,10 +189,40 @@ for(s.comb in pref.combinations){
   
   H5close()
   gc()
-  
 }
 
 
+
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  for(s.comb in pref.combinations){
+    loop.function(s.comb)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                              loop.function(s.comb)
+                            }
+  stopCluster(myCluster)
+}
+
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+if(F){
+  source('../../../pannagram/utils.R')
+  path.cons = './'
+  ref0 = '0'
+  ref1 = '6046-v1.1'
+  library(rhdf5)
+}
 
 
 

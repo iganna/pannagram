@@ -66,6 +66,12 @@ blastres2gff(res, output.file)
 
 write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
+# Copy-number information
+res.cnt =as.data.frame.matrix(table(res$V1, res$V8))
+res.cnt$total = rowSums(res.cnt)
+res.cnt = res.cnt[order(-res.cnt$total),]
+write.table(res.cnt, paste(output.file, '.cnt', sep = ''), quote = F, row.names = T, col.names = T, sep = '\t')
+
 cnt = tapply(res$V8, res$V1, length)
 pokaz('Mean, min, max number of hits per sequence:', mean(cnt),  min(cnt),  max(cnt))
 pokaz('Number of hits found:', nrow(res))

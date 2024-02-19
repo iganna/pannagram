@@ -15,8 +15,10 @@ source("utils/utils.R")
 
 pokazStage('Step 10. Prepare sequences for MAFFT')
 
-args = commandArgs(trailingOnly=TRUE)
+# ***********************************************************************
+# ---- Command line arguments ----
 
+args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
@@ -36,12 +38,16 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# Set the number of cores for parallel processing
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
-
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster)
+}
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -61,18 +67,7 @@ if (is.null(opt$ref.pref)) {
 # Path to mafft input
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
-# ---- Testing ----
-
-if(F){
-  library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
-  path.cons = './'
-  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
-  ref.pref = '0'
-}
-
-
-
+# **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
@@ -98,12 +93,15 @@ n.flank = 30
 
 gr.blocks = 'blocks/'
 
-#flag.for = F
-#tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
-flag.for = T
+
+
+# ***********************************************************************
+# ---- MAIN program body ----
+
+echo = F
 for(s.comb in pref.combinations){
   
-  pokaz('* Combination', s.comb)
+  if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
@@ -118,7 +116,7 @@ for(s.comb in pref.combinations){
   #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
   #   v = cbind(v, v.acc)
   # }
-
+  
   # ---- Merge coverages ----
   file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
   idx.break = readRDS(file.breaks)
@@ -174,7 +172,7 @@ for(s.comb in pref.combinations){
     # ### ---- Find prev and next ----
     # n = nrow(x.acc)
     # for(i.tmp in 1:2){
-    #   pokaz('Accession', acc, 'fill prev/next', i.tmp)
+    #   if(echo) pokaz('Accession', acc, 'fill prev/next', i.tmp)
     #   v.acc = x.acc
     #   if(i.tmp == 2) {
     #     v.acc = rev(v.acc)
@@ -237,14 +235,14 @@ for(s.comb in pref.combinations){
   
   v.len[sign(v.beg * v.end) < 0] = 0
   
-  pokaz('Amount of long fragments', sum(v.len > max.len.gap))
+  if(echo) pokaz('Amount of long fragments', sum(v.len > max.len.gap))
   v.len[v.len > max.len.gap] = 0
   for(icol in 1:ncol(v.len)){
     idx.dup = v.beg[duplicated(v.beg[,icol]),icol]
-    pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.beg[,icol] %in% idx.dup, icol] != 0))
+    if(echo) pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.beg[,icol] %in% idx.dup, icol] != 0))
     v.len[v.beg[,icol] %in% idx.dup, icol] = 0
     idx.dup = v.end[duplicated(v.end[,icol]),icol]
-    pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.end[,icol] %in% idx.dup, icol] != 0))
+    if(echo) pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.end[,icol] %in% idx.dup, icol] != 0))
     v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
   v.beg[v.len == 0] = 0
@@ -278,7 +276,7 @@ for(s.comb in pref.combinations){
   aln.seqs <- vector("list", length = nrow(idx.break))
   aln.pos <- vector("list", length = nrow(idx.break))
   for(acc in accessions){
-    pokaz('Accession', acc)
+    if(echo) pokaz('Accession', acc)
     # read the genome and chromosome
     file.chromosome = paste(path.chromosomes, 
                             acc, 
@@ -332,8 +330,7 @@ for(s.comb in pref.combinations){
   idx.short = idx.aln[!idx.add.flank[idx.aln]]
   
   
-  pokaz('Align short seqs')
-  
+  if(echo) pokaz('Align short seqs')
   
   
   # Core core for the short alignmgnets
@@ -346,7 +343,7 @@ for(s.comb in pref.combinations){
     n.pos = nchar(set[1])
     
     if(echo & (n.pos > 10)){
-      pokaz('Iteration', irow)
+      if(echo) pokaz('Iteration', irow)
       print(aln)
     }
     
@@ -366,6 +363,7 @@ for(s.comb in pref.combinations){
   
   # Two possible loops depending on the number of cores
   if(num.cores == 1){
+    pokaz('No parallel computing')
     # One core
     res.msa = list()
     for(i.tmp in 1:length(idx.short)){
@@ -376,8 +374,10 @@ for(s.comb in pref.combinations){
       
       res.msa[[irow]] = CODE_ALN_SHORT() # --- COMMON CODE, one core ----
     }
+    res.msa = res.msa[idx.short]
   } else {
     # Many cores
+    pokaz('Parallel computing')
     res.msa <- foreach(seqs = aln.seqs[idx.short],
                        pos.idx = aln.pos[idx.short],
                        idx.gap.pos = idx.break$beg[idx.short],
@@ -399,27 +399,57 @@ for(s.comb in pref.combinations){
   
   # ---- Create files for mafft ----
   
-  pokaz('Prepare seqs for mafft')
+  if(echo) pokaz('Prepare seqs for mafft')
   
   idx.long = idx.aln[idx.add.flank[idx.aln]]
   
-  res.msa <- foreach(seqs = aln.seqs[idx.long], 
-                     pos.idx = aln.pos[idx.long], 
-                     s.aln = s.break[idx.long],
-                     .packages=c('muscle', 'Biostrings'))  %dopar% {
-    
-    f.pref = paste(path.mafft.in, s.aln,
-                   '_flank_', n.flank,'.fasta', sep = '')
-    
-    writeFastaMy(seqs, f.pref)
-    
-  }
   
+  
+  if(num.cores == 1){
+    pokaz('No parallel computing')
+    for (i.tmp in idx.long) {
+      seqs <- aln.seqs[[i.tmp]]
+      pos.idx <- aln.pos[[i.tmp]]
+      s.aln <- s.break[[i.tmp]]
+      
+      f.pref <- paste(path.mafft.in, s.aln, '_flank_', n.flank, '.fasta', sep = '')
+      
+      writeFastaMy(seqs, f.pref)
+    }
+    
+  } else {
+    pokaz('Parallel computing')
+    tmp <- foreach(seqs = aln.seqs[idx.long], 
+                       pos.idx = aln.pos[idx.long], 
+                       s.aln = s.break[idx.long],
+                       .packages=c('muscle', 'Biostrings'))  %dopar% {
+                         
+                         f.pref = paste(path.mafft.in, s.aln,
+                                        '_flank_', n.flank,'.fasta', sep = '')
+                         writeFastaMy(seqs, f.pref)
+                       }
+  }
   H5close()
   gc()
-  
 }
 
+
+if(num.cores > 1){
+  stopCluster(myCluster)
+}
+
+
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+if(F){
+  library(rhdf5)
+  source('../../../pannagram/utils/utils.R')
+  path.cons = './'
+  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
+  ref.pref = '0'
+}
 
 
 

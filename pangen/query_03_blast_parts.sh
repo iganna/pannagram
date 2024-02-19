@@ -75,6 +75,7 @@ done
 # ----------------------------------------------------------------------------
 
 pokaz_stage "Step 3. BLAST of parts against the reference genome"
+pokaz_message "NOTE: if this stage takes relatively long, use -filter_rep -s 2 to mask highly repetative regions"
 
 # -penalty -2 -gapopen 10 -gapextend 2 -max_hsps 5
 
@@ -114,14 +115,12 @@ run_blast() {
         return
     fi
 
-    echo "${part_chr} ${ref_chr}"
+    # echo "${part_chr} ${ref_chr}"
 
   	p_filename=$(echo "$p_filename" | sed 's/_chr\(.*\)$/_\1/')
-
     outfile=${blastres}${p_filename}_${ref_chr}.txt
 
-  	echo ${outfile}
-
+  	# echo ${outfile}
 
     # blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
     #        -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
@@ -139,7 +138,8 @@ export -f run_blast
 
 # Run the parallel
 
-echo ${ref_pref}
+pokaz_message "Reference genome ${ref_pref}"
+
 
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 

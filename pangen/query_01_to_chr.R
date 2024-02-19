@@ -10,9 +10,8 @@ source("utils/utils.R")
 
 pokazStage('Step 1. Genomes into chromosomes')
 
-# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.out ../pb_chromosomes/
-# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.out ../ly_chromosomes/    
-# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.out ../rhiz_chromosomes/ -s T
+# ***********************************************************************
+# ---- Command line arguments ----
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -36,12 +35,11 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-#' ----------------------------------------------------------------------
+# ***********************************************************************
+# ---- Values of parameters ----
 
-# Set the number of cores for parallel processing
-num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
-myCluster <- makeCluster(num_cores, type = "PSOCK") 
-registerDoParallel(myCluster) 
+# Number of cores
+num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 # Ensure the number of chromosomes is specified and set it
 n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
@@ -70,7 +68,8 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
 pokaz('sort_chr_by_length', sort.by.lengths)
 
 
-#' ----------------------------------------------------------------------
+# ***********************************************************************
+# ---- Sort chromosomal lengths ----
 
 if(!sort.by.lengths){
   msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
@@ -80,7 +79,9 @@ if(!sort.by.lengths){
   pokazAttention(msg)
 }
 
-#' ----------------------------------------------------------------------
+# ***********************************************************************
+# ---- Preparation ----
+
 # Processor of input genome files
 pokaz('Path with genomes:', path.query)
 
@@ -106,12 +107,11 @@ if(!is.null(acc.anal)){
 if(nrow(query.name) == 0) stop('No accessions is provided for the analysys.')
 pokaz('Names of genomes for the analysis:', query.name$acc)
 
-#' ----------------------------------------------------------------------
 
-for.flag = F
-tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 'seqinr', 'crayon')) %dopar% {
-# for.flag = T
-# for(i.acc in 1:nrow(query.name)){
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(i.acc, echo = T){
   
   acc = query.name$acc[i.acc]
   #' --- --- --- --- --- --- --- --- --- --- ---
@@ -125,31 +125,31 @@ tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 's
       n.exist = n.exist + 1
     }
   }
+  if(echo) pokaz(n.exist, n.chr)
   if(n.exist == n.chr){
-    if(for.flag) next
+    # if(for.flag) next
     return(NULL)
   }
-  #' --- --- --- --- --- --- --- --- --- --- ---
+  # ***********************************
   
-  pokaz('Number of existing ')
-  pokaz('Accession', acc)
+  if(echo) pokaz('Accession', acc)
   q.fasta = readFastaMy(paste0(path.query, query.name$file[i.acc], collapse = ''))
   
   if(length(q.fasta) < n.chr){
-    if(for.flag) next
+    # if(for.flag) next
     return(NULL)
   }
   
   if(sort.by.lengths){
     q.len = sapply(q.fasta, nchar)
-    pokaz('Lengths', q.len)
+    if(echo) pokaz('Lengths', q.len)
     q.fasta = q.fasta[order(-q.len)]
   }
   
-  pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed')
+  if(echo) pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed')
   
   if(length(q.fasta) > n.chr){
-    pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed')
+    if(echo) pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed')
   }
   
   for(i.chr in 1:n.chr){
@@ -157,10 +157,10 @@ tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 's
     acc.s = acc
     file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
     if(file.exists(file.out)){
-      if(for.flag) next
+      # if(for.flag) next
       return(NULL)
     }
-    pokaz('File out', file.out)
+    if(echo) pokaz('File out', file.out)
     
     s = toupper(q.fasta[i.chr])
     writeFastaMy(s, file=file.out, append=F, seq.names = paste(acc.s, '_Chr', i.chr , sep=''))
@@ -172,10 +172,38 @@ tmp = foreach(i.acc = 1:nrow(query.name), .packages=c('stringr','Biostrings', 's
   
   rm(q.fasta)
 }
+  
+# ***********************************************************************
+# ---- Loop  ----
+  
 
-stopCluster(myCluster)
+if(num.cores == 1){
+  for(i.acc in 1:nrow(query.name)){
+    loop.function(i.acc)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(i.acc = 1:nrow(query.name), 
+                .packages=c('stringr',
+                            'Biostrings', 
+                            'seqinr', 
+                            'crayon')) %dopar% {
+                                     loop.function(i.acc)
+                                   }
+  stopCluster(myCluster)
+}
 
 
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.out ../pb_chromosomes/
+# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.out ../ly_chromosomes/    
+# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.out ../rhiz_chromosomes/ -s T
 
 
 
