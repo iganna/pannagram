@@ -47,7 +47,7 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
 path.seq = paste(path.cons, 'seq/', sep = '')
 
-path.snp = paste(path.cons, 'aln_pangen/', sep = '')
+path.snp = paste(path.cons, 'snps/', sep = '')
 if (!dir.exists(path.snp)) dir.create(path.snp)
 
 gr.accs.e <- "accs/"
