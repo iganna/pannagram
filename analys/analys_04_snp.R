@@ -109,7 +109,9 @@ for(s.comb in pref.combinations){
     pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
     
-    snp.matrix = cbind(snp.matrix, v[pos] != s.pangen[pos])
+    tmp = (v[pos] != s.pangen[pos]) * 1
+    tmp[v[pos] == '-'] = -1
+    snp.matrix = cbind(snp.matrix, tmp)
     
     rmSafe(v)
     gc()
