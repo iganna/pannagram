@@ -15,6 +15,9 @@ source("pangen/synteny_funcs.R")
 
 pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 
+# ***********************************************************************
+# ---- Command line arguments ----
+
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -43,10 +46,11 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# Set the number of cores for parallel processing
-num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
-myCluster <- makeCluster(num_cores, type = "PSOCK")
-registerDoParallel(myCluster)
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores
+num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 
 if (!is.null(opt$path.query)) path.query <- opt$path.query
@@ -64,18 +68,20 @@ if(!dir.exists(path.aln)) dir.create(path.aln)
 if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
 
-#' ============================================================================
-
+# ***********************************************************************
+# ---- Preparation ----
 
 files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 pokaz('Number of alignment files:', length(files.maj))
 if(length(files.maj) == 0) stop('No alignment files provided')
 
-# for.flag = F
-# tmp = foreach(f.maj = files.maj, .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% {  # which accession to use
 
-for.flag = T
-for(f.maj in files.maj){
+
+# ***********************************************************************
+# ---- MAIN program body ----
+
+
+loop.function <- function(f.maj, echo = T){
   
   # Remove extensions
   pref.comb <- sub("\\maj.rds$", "", f.maj)
@@ -96,19 +102,17 @@ for(f.maj in files.maj){
   # If the previous file was not created - next
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
   if(!file.exists(file.aln.pre)) {
-    if(for.flag) next
     return(NULL)
   }
   
   # If the full file has beed already created - next
   file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
   if(file.exists(file.aln.full)) {
-    if(for.flag) next
     return(NULL)
   }
   
   pokaz('Alignment:', acc, query.chr, base.chr)
-
+  
   # # ---- Read genomes ----
   # 
   # # Read reference sequences
@@ -232,7 +236,7 @@ for(f.maj in files.maj){
   } else {
     # Create empty
     x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
-                              dimnames = list(NULL, colnames(x.sk))))
+                               dimnames = list(NULL, colnames(x.sk))))
   }
   
   # ---- Read additional alignments ----
@@ -393,7 +397,7 @@ for(f.maj in files.maj){
     }
     
     rmSafe(x.gap)
-
+    
   } else {
     
     # Create empty
@@ -435,9 +439,27 @@ for(f.maj in files.maj){
   
   suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
   gc()
+}
+  
 
-}  # accessions
+# ***********************************************************************
+# ---- Loop  ----
 
+
+if(num.cores == 1){
+  for(f.maj in files.maj){
+    loop.function(f.maj)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(f.maj = files.maj, .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% { 
+                              loop.function(f.maj)
+                            }
+  stopCluster(myCluster)
+}
 
 
 

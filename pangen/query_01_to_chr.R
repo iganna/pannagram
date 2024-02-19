@@ -70,6 +70,7 @@ pokaz('sort_chr_by_length', sort.by.lengths)
 
 # ***********************************************************************
 # ---- Sort chromosomal lengths ----
+
 if(!sort.by.lengths){
   msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
   pokazAttention(msg)
@@ -80,6 +81,7 @@ if(!sort.by.lengths){
 
 # ***********************************************************************
 # ---- Preparation ----
+
 # Processor of input genome files
 pokaz('Path with genomes:', path.query)
 
@@ -108,6 +110,7 @@ pokaz('Names of genomes for the analysis:', query.name$acc)
 
 # ***********************************************************************
 # ---- MAIN program body ----
+
 loop.function <- function(i.acc, echo = T){
   
   acc = query.name$acc[i.acc]
