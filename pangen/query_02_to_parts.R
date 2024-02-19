@@ -9,21 +9,11 @@ suppressMessages({
 
 source("utils/utils.R")
 
-#Rscript query_to_parts.R -n 5 -t fasta --path.chr ../pb_chromosomes/ -b 5000 --path.parts ../pb_parts/
-# Rscript query_to_parts.R -n 8 -t fasta --path.chr ../ly_chromosomes/ -b 5000 --path.parts ../ly_parts/
-# Rscript query_to_parts.R -n 1 -t fasta --path.chr ../rhiz_chromosomes/ -b 5000 --path.parts ../rhiz_parts/ 
+pokazStage('Step 2. Chromosomes into parts')
 
-myCluster <- makeCluster(30, # number of cores to use
-                         type = "PSOCK") # type of cluster
-registerDoParallel(myCluster)
-
-# len.parts = 5000  # lengths of parts
-# n.chr = 5  # number of chromosomes
-# path.chr = '../pb_databases/'
-# path.parts = '../pb_parts/'
-
+# ***********************************************************************
+# ---- Command line arguments ----
 args = commandArgs(trailingOnly=TRUE)
-
 
 option_list <- list(
   make_option(c("-b", "--part.len"), type = "character", default = NULL, 
@@ -44,10 +34,11 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# Set the number of cores for parallel processing
-num_cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
-myCluster <- makeCluster(num_cores, type = "PSOCK")
-registerDoParallel(myCluster)
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Number of cores
+num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 # Ensure the number of chromosomes is specified and set it
 n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
@@ -63,9 +54,8 @@ filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_
 
 pokaz('Filter', filter_rep)
 
-
-#' ----------------------------------------------------------------------
-pokazStage('Step 2. Chromosomes into parts')
+# ***********************************************************************
+# ---- Preparation ----
 
 pokaz('Directory with chromosomes:', path.chr)
 files.query = list.files(path = path.chr, pattern = paste0('\\.', 'fasta', '$', collapse = '') )
@@ -76,14 +66,12 @@ if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')
 }
 
-
 combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)
 
 
-# for.flag = F
-# tmp = foreach(i.comb = 1:nrow(combinations), .packages=c('stringr','Biostrings', 'seqinr', 'crayon', 'stringi')) %dopar% {
-for.flag = T
-for(i.comb in 1:nrow(combinations)){
+# ***********************************************************************
+# ---- MAIN program body ----
+loop.function <- function(i.comb){
   
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]
@@ -92,10 +80,8 @@ for(i.comb in 1:nrow(combinations)){
   
   file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
   if( file.exists(file.out)) {
-    if(for.flag) next
     return(NULL)
   }
-  
   
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
@@ -122,7 +108,6 @@ for(i.comb in 1:nrow(combinations)){
     writeFastaMy(s[seqs.score <= 0.2], file.out)
     writeFastaMy(s[seqs.score > 0.2], file.out.rest)
     
-    
   }
   
   rm(q.fasta)
@@ -130,6 +115,46 @@ for(i.comb in 1:nrow(combinations)){
   rm(pos.beg)
   rm(seqs.score)
 }
+
+# ***********************************************************************
+# ---- Loop  ----
+
+if(num.cores == 1){
+  for(i.comb in 1:nrow(combinations)){
+    loop.function(i.comb)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+  
+  tmp.output = foreach(i.comb = 1:nrow(combinations), 
+                       .packages=c('stringr',
+                                   'Biostrings', 
+                                   'seqinr', 
+                                   'crayon', 
+                                   'stringi')) %dopar% {
+    loop.function(i.comb)
+  }
+  stopCluster(myCluster)
+}
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+if(F){
+  len.parts = 5000  # lengths of parts
+  n.chr = 5  # number of chromosomes
+  path.chr = '../pb_databases/'
+  path.parts = '../pb_parts/'
+}
+
+#Rscript query_to_parts.R -n 5 -t fasta --path.chr ../pb_chromosomes/ -b 5000 --path.parts ../pb_parts/
+# Rscript query_to_parts.R -n 8 -t fasta --path.chr ../ly_chromosomes/ -b 5000 --path.parts ../ly_parts/
+# Rscript query_to_parts.R -n 1 -t fasta --path.chr ../rhiz_chromosomes/ -b 5000 --path.parts ../rhiz_parts/ 
+
+
+
 
 
 
