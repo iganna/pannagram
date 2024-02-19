@@ -71,7 +71,7 @@ combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)
 
 # ***********************************************************************
 # ---- MAIN program body ----
-loop.function <- function(i.comb){
+loop.function <- function(i.comb, echo = T){
   
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]

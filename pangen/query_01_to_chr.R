@@ -108,7 +108,7 @@ pokaz('Names of genomes for the analysis:', query.name$acc)
 
 # ***********************************************************************
 # ---- MAIN program body ----
-loop.function <- function(i.acc){
+loop.function <- function(i.acc, echo = T){
   
   acc = query.name$acc[i.acc]
   #' --- --- --- --- --- --- --- --- --- --- ---
@@ -122,15 +122,14 @@ loop.function <- function(i.acc){
       n.exist = n.exist + 1
     }
   }
-  pokaz(n.exist, n.chr)
+  if(echo) pokaz(n.exist, n.chr)
   if(n.exist == n.chr){
     # if(for.flag) next
     return(NULL)
   }
   # ***********************************
   
-  pokaz('Number of existing ')
-  pokaz('Accession', acc)
+  if(echo) pokaz('Accession', acc)
   q.fasta = readFastaMy(paste0(path.query, query.name$file[i.acc], collapse = ''))
   
   if(length(q.fasta) < n.chr){
@@ -140,14 +139,14 @@ loop.function <- function(i.acc){
   
   if(sort.by.lengths){
     q.len = sapply(q.fasta, nchar)
-    pokaz('Lengths', q.len)
+    if(echo) pokaz('Lengths', q.len)
     q.fasta = q.fasta[order(-q.len)]
   }
   
-  pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed')
+  if(echo) pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed')
   
   if(length(q.fasta) > n.chr){
-    pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed')
+    if(echo) pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed')
   }
   
   for(i.chr in 1:n.chr){
@@ -158,7 +157,7 @@ loop.function <- function(i.acc){
       # if(for.flag) next
       return(NULL)
     }
-    pokaz('File out', file.out)
+    if(echo) pokaz('File out', file.out)
     
     s = toupper(q.fasta[i.chr])
     writeFastaMy(s, file=file.out, append=F, seq.names = paste(acc.s, '_Chr', i.chr , sep=''))
