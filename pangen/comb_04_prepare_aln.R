@@ -44,7 +44,10 @@ opt = parse_args(opt_parser, args = args);
 # Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster)
+}
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -95,7 +98,8 @@ gr.blocks = 'blocks/'
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(s.comb, echo = T){
+echo = T
+for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
@@ -397,40 +401,39 @@ loop.function <- function(s.comb, echo = T){
   
   idx.long = idx.aln[idx.add.flank[idx.aln]]
   
-  res.msa <- foreach(seqs = aln.seqs[idx.long], 
-                     pos.idx = aln.pos[idx.long], 
-                     s.aln = s.break[idx.long],
-                     .packages=c('muscle', 'Biostrings'))  %dopar% {
-                       
-                       f.pref = paste(path.mafft.in, s.aln,
-                                      '_flank_', n.flank,'.fasta', sep = '')
-                       
-                       writeFastaMy(seqs, f.pref)
-                       
-                     }
   
+  
+  if(num.cores == 1){
+    for (i.tmp in idx.long) {
+      seqs <- aln.seqs[[i.tmp]]
+      pos.idx <- aln.pos[[i.tmp]]
+      s.aln <- s.break[[i.tmp]]
+      
+      f.pref <- paste(path.mafft.in, s.aln, '_flank_', n.flank, '.fasta', sep = '')
+      
+      writeFastaMy(seqs, f.pref)
+    }
+    
+  } else {
+    tmp <- foreach(seqs = aln.seqs[idx.long], 
+                       pos.idx = aln.pos[idx.long], 
+                       s.aln = s.break[idx.long],
+                       .packages=c('muscle', 'Biostrings'))  %dopar% {
+                         
+                         f.pref = paste(path.mafft.in, s.aln,
+                                        '_flank_', n.flank,'.fasta', sep = '')
+                         writeFastaMy(seqs, f.pref)
+                       }
+  }
   H5close()
   gc()
 }
 
 
-# ***********************************************************************
-# ---- Loop  ----
-
-if(num.cores == 1){
-  for(s.comb in pref.combinations){
-    loop.function(s.comb)
-  }
-} else {
-  # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  pokaz('combinations', pref.combinations)
-  tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  
-                              loop.function(s.comb)
-                            }
+if(num.cores > 1){
   stopCluster(myCluster)
 }
+
 
 
 # ***********************************************************************
