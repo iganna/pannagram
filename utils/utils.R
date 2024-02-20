@@ -369,6 +369,10 @@ orfFinder <- function(seq.init, orf.min.len = 25){
     seq = revComplSeq(seq.init)
   }
   
+  if(is.null(pos)){
+    return(list(pos = NULL, orf = NULL))
+  }
+  
   # Calculate additional position info and order by ORF length
   pos$len = abs(pos[,2] - pos[,1]) + 1
   pos$aalen = pos$len / 3
