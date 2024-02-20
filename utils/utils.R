@@ -235,8 +235,8 @@ translateSeq <- function(seq) {
   aa.seq = genetic.code[codons]
   
   # Replace NA values with '-', indicating unknown codons
-  aa.seq[is.na(aa.seq)] = '-'
-  # aa.seq = aa.seq[!is.na(aa.seq)]
+  # aa.seq[is.na(aa.seq)] = '-'
+  aa.seq = aa.seq[!is.na(aa.seq)]
   
   # Remove names for a clean output
   names(aa.seq) = NULL
