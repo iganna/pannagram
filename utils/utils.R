@@ -160,6 +160,231 @@ nt2seq <- function(s){
 
 
 #' ----------------------------------------------------------------------
+#' Convert Aligned Sequences to Nucleotide Matrix
+#'
+#' This function takes a vector of aligned sequences and converts them into a matrix,
+#' where each row represents one sequence converted into nucleotides.
+#'
+#' @param s.aln A list of aligned sequences.
+#' @return A matrix where each row represents a sequence from `s.aln` converted into nucleotides.
+#' Each sequence is represented as a row.
+#' @examples
+#' 
+#' s.aln <- c("ACGTACTTACGGACGT", "ACGCACGTACGTACAT", "ACGTGCGTACGTTCGT")
+#' seqs.mx <- aln2mx(s.aln)
+#' msaplot(seqs.mx)
+#' 
+aln2mx <- function(s.aln) {
+  aln.len = unique(nchar(s.aln))
+  if(length(aln.len) != 1) stop('Aligned sequences have different lengths')
+  if(is.null(names(s.aln))){
+    seq.names = paste('s', 1:length(s.aln), sep = '')
+  } else {
+    seq.names = names(s.aln)
+  }
+  seqs.mx = matrix('-', length(s.aln), aln.len, dimnames = list(seq.names, NULL))
+  for(i.s in 1:length(s.aln)){
+    seqs.mx[i.s,] = seq2nt(s.aln[i.s])
+  }
+  return(seqs.mx)
+}
+
+#' ----------------------------------------------------------------------
+#' Translate Nucleotide Sequence to Amino Acid Sequence
+#'
+#' This function translates a given nucleotide sequence into its corresponding
+#' amino acid sequence based on the standard genetic code. Non-standard codons are
+#' represented by a '-'.
+#'
+#' @param seq A character string representing the nucleotide sequence to be translated.
+#' @return A character vector representing the translated amino acid sequence.
+#' @examples
+#' translateSeq('atgctctgccagtgccacggcggaagcgacaaagccBBB')
+#' 
+translateSeq <- function(seq) {
+  # Define the genetic code as a named vector
+  genetic.code <- c(
+    "TTT" = "F", "TTC" = "F", "TTA" = "L", "TTG" = "L",
+    "CTT" = "L", "CTC" = "L", "CTA" = "L", "CTG" = "L",
+    "ATT" = "I", "ATC" = "I", "ATA" = "I", "ATG" = "M",
+    "GTT" = "V", "GTC" = "V", "GTA" = "V", "GTG" = "V",
+    "TCT" = "S", "TCC" = "S", "TCA" = "S", "TCG" = "S",
+    "CCT" = "P", "CCC" = "P", "CCA" = "P", "CCG" = "P",
+    "ACT" = "T", "ACC" = "T", "ACA" = "T", "ACG" = "T",
+    "GCT" = "A", "GCC" = "A", "GCA" = "A", "GCG" = "A",
+    "TAT" = "Y", "TAC" = "Y", "TAA" = "*", "TAG" = "*",
+    "CAT" = "H", "CAC" = "H", "CAA" = "Q", "CAG" = "Q",
+    "AAT" = "N", "AAC" = "N", "AAA" = "K", "AAG" = "K",
+    "GAT" = "D", "GAC" = "D", "GAA" = "E", "GAG" = "E",
+    "TGT" = "C", "TGC" = "C", "TGA" = "*", "TGG" = "W",
+    "CGT" = "R", "CGC" = "R", "CGA" = "R", "CGG" = "R",
+    "AGT" = "S", "AGC" = "S", "AGA" = "R", "AGG" = "R",
+    "GGT" = "G", "GGC" = "G", "GGA" = "G", "GGG" = "G"
+  )
+  
+  # Convert sequence to uppercase to ensure matching
+  seq <- toupper(seq)
+  seq.len = nchar(seq) - 2
+  
+  # Extract codons from the sequence
+  codons <- sapply(seq(1, seq.len, by = 3), function(i) {
+    substr(seq, i, i+2)
+  })
+  
+  # Translate codons to amino acids
+  aa.seq = genetic.code[codons]
+  
+  # Replace NA values with '-', indicating unknown codons
+  aa.seq[is.na(aa.seq)] = '-'
+  # aa.seq = aa.seq[!is.na(aa.seq)]
+  
+  # Remove names for a clean output
+  names(aa.seq) = NULL
+  
+  return(aa.seq)
+}
+
+#' ----------------------------------------------------------------------
+#' Identify and Extract Open Reading Frames (ORFs) from a Nucleotide Sequence
+#'
+#' This function identifies open reading frames (ORFs) within a nucleotide sequence by translating it
+#' to an amino acid sequence and finding sequences between stop codons that meet a minimum length criterion.
+#' The sequence name, if available, is preserved and appended with ORF identification and positional information.
+#'
+#' @param seq A character string or named character string representing the nucleotide sequence.
+#' @param orf.min.len An integer value specifying the minimum length for an ORF to be considered valid. Default is 25.
+#'
+#' @return A list with two components:
+#' \itemize{
+#'   \item{\code{pos}:}{A matrix with two columns indicating the start and end positions of each ORF within the amino acid sequence.}
+#'   \item{\code{orf}:}{A named character vector where each element is an ORF sequence, and names provide the original sequence name (if available), ORF, start and end positions, and ORF length.}
+#' }
+#'
+#' @examples
+#' seq <- "ATGGCCATGGCCCCCGCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTAG"
+#' result <- seq2orf(seq)
+#' print(result$pos)
+#' print(result$orf)
+#'
+#' @export
+#' @importFrom stringr str_detect
+seq2orf <- function(seq, orf.min.len = 25){
+  # Handle sequence naming
+  if(is.null(names(seq))){
+    seq.name = 'seq' 
+  } else {
+    seq.name = names(seq)[1]
+  }
+  
+  # Translate the nucleotide sequence to amino acids
+  aa.seq = translateSeq(seq)
+  seq.len = length(aa.seq)
+  
+  # Identify stop codon positions and calculate ORF lengths
+  idx.stop = c(0, which(aa.seq == '*'), seq.len + 1)
+  block.len = diff(idx.stop) - 1
+  
+  # Filter ORFs based on minimum length
+  idx.remain = which(block.len >= orf.min.len)
+  if(length(idx.remain) == 0){
+    return(list(pos = NULL, orf = NULL))  
+  }
+  
+  pos.orf = cbind(idx.stop[idx.remain]+1, idx.stop[idx.remain+1]-1)
+  
+  # Convert ORF positions from amino acids to nucleotides
+  pos.orf.nt = data.frame(cbind((pos.orf[,1]-1)*3+1, pos.orf[,2]*3))
+  colnames(pos.orf.nt) = c('beg', 'end')
+  
+  # Extract ORF sequences
+  aa.orf = c()
+  for(i in 1:nrow(pos.orf)){
+    pos1 = pos.orf[i, 1]
+    pos2 = pos.orf[i, 2]
+    seq.tmp = paste0(aa.seq[pos1: pos2], collapse = '')
+    # seq.tmp.name = paste(seq.name, 
+    #                      # 'ORF', pos.orf.nt[i, 1], pos.orf.nt[i, 2], 
+    #                      'aaLEN', pos2 - pos1 + 1, sep = '|')
+    aa.orf[i] = seq.tmp
+  }
+  
+  # Return ORF positions and sequences
+  return(list(pos = pos.orf.nt, orf = aa.orf))  
+}
+
+
+#' ----------------------------------------------------------------------
+#' Identify Open Reading Frames (ORFs) in Both DNA Strands
+#'
+#' This function searches for open reading frames (ORFs) in both the forward and reverse complement
+#' of the given DNA sequence. It detects ORFs in all three possible reading frames for each strand,
+#' calculates their positions, lengths, and on which strand they are located.
+#'
+#' @param seq.init A character string representing the DNA sequence.
+#' @param seq A character string or named character string representing the nucleotide sequence.
+#' @return A list with two elements:
+#'   \item{pos}{A data frame of ORF positions including columns for start (`beg`), end (`end`), length in nucleotides (`len`), 
+#'   length in amino acids (`aalen`), and strand (`strand`).}
+#'   \item{orf}{A character vector of the amino acid sequences for each ORF, named with their positions, strand, and length.}
+#'
+#' @examples
+#' seq <- "ATGGCCATGGCCCCCGCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTAG"
+#' orfFinderResult <- orfFinder(seq)
+#' print(orfFinderResult$pos)
+#' print(orfFinderResult$orf)
+#'
+#' @export
+orfFinder <- function(seq.init, orf.min.len = 25){
+  seq.len = nchar(seq.init) # Calculate the length of the initial sequence
+  seq = seq.init
+  
+  orfs = c() # Initialize vector to store ORFs
+  pos = c() # Initialize vector to store positions
+  
+  # Iterate over both strands
+  for(i.strand in 1:2){
+    # Iterate over the three possible reading frames
+    for(i.orf in 0:2){
+      # Adjust sequence for reading frames 2 and 3
+      if(i.orf != 0){
+        seq <- substr(seq, 2, nchar(seq))  
+      }
+      
+      # Find ORFs in the current frame and strand
+      orf.res = seq2orf(seq, orf.min.len = orf.min.len)
+      if(is.null(orf.res$pos)) next
+      
+      # Adjust positions based on the reading frame and strand
+      pos.tmp = orf.res$pos + i.orf
+      if(i.strand == 2){
+        pos.tmp = seq.len - pos.tmp + 1
+      }
+      
+      # Store ORFs and their positions
+      orfs = c(orfs, orf.res$orf)
+      pos = rbind(pos, pos.tmp)
+      
+    }
+    # Reverse and complement the sequence for the second strand
+    seq = revComplSeq(seq.init)
+  }
+  
+  # Calculate additional position info and order by ORF length
+  pos$len = abs(pos[,2] - pos[,1]) + 1
+  pos$aalen = pos$len / 3
+  pos$strand = c('+', '-')[(pos[,1] > pos[,2]) + 1]
+  idx.order = order(-pos$len)
+  pos = pos[idx.order,]
+  orfs = orfs[idx.order]
+  
+  # Name ORFs with position, strand, and length info
+  names(orfs) = paste('ORF', pos[,1], pos[,2], pos$strand, 'aaLEN', pos$aalen, sep = '|')
+  
+  # Return positions and ORFs
+  return(list(pos = pos, orf = orfs))
+}
+
+#' ----------------------------------------------------------------------
 #' Generate the reverse complement of a vectorized sequence
 #'
 #' @param s A character vector where each element is a single nucleotide.
@@ -187,6 +412,28 @@ revCompl <- function(s){
   seqs.rc = rev(complementary_nts[s])
   if(sum(is.na(seqs.rc)) != 0) stop('Wrong nucleotides are provided')
   return(seqs.rc)
+}
+
+#' ----------------------------------------------------------------------
+#' Convert a Nucleotide Sequence to its Reverse Complement
+#'
+#' This function takes a nucleotide sequence, converts it into its reverse complement,
+#' and returns the result as a single string.
+#'
+#' @param seq A character string representing the nucleotide sequence.
+#' @return A character string representing the reverse complement of the input sequence.
+#'
+#' @examples
+#' revComplSeq("ATGC")
+#'
+#' @author Anna A. Igolkina
+revComplSeq <- function(seq){
+  
+  seq = seq2nt(seq)
+  seq.rc = revCompl(seq)
+  seq.rc = nt2seq(seq.rc)
+  
+  return(seq.rc)
 }
 
 
@@ -438,6 +685,44 @@ comb2ref <- function(s.comb){
   if(!grepl(pattern, s.comb)) stop('Something is wrong with the bombinations of chromosomes')
   ref.chr = as.numeric(strsplit(s.comb, '_')[[1]][2])
   return(ref.chr)
+}
+
+
+#' Load or Install and Load an R Package
+#'
+#' This function attempts to load an R package. If the package is not already installed,
+#' it tries to install the package from CRAN and then loads it. This is useful for ensuring
+#' that scripts or analyses have access to required packages with minimal manual intervention.
+#'
+#' @param package The name of the package to load. This should be a character string.
+#'
+#' @return Invisible NULL. This function is called for its side effect of loading a package
+#' or displaying a message if the package cannot be installed.
+#'
+#' @examples
+#' load.library("ggplot2") # Attempts to load ggplot2, installing it first if necessary
+#' 
+#' @author Anna Igolkina
+load.library <- function(package) {
+  # Attempt to load the package
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    # If the package is not installed, attempt to install it
+    install_result <- tryCatch({
+      install.packages(package, quiet = TRUE)
+      TRUE  # Return TRUE if the installation is successful
+    }, error = function(e) {
+      FALSE  # Return FALSE if an error occurs during installation
+    })
+    
+    # Check if the installation was successful
+    if (!install_result) {
+      message(paste("Failed to install package '", package, 
+                    "'. Check if it is available for your version of R and if the package name is correct.", sep=""))
+    } else {
+      # Attempt to load the package after installation
+      library(package, character.only = TRUE)
+    }
+  }
 }
 
 
