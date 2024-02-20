@@ -235,9 +235,9 @@ translateSeq <- function(seq) {
   aa.seq = genetic.code[codons]
   
   # Replace NA values with '-', indicating unknown codons
-  # aa.seq[is.na(aa.seq)] = '-'
-  aa.seq = aa.seq[!is.na(aa.seq)]
-  if(length(aa.seq) == 0) return(NULL)
+  aa.seq[is.na(aa.seq)] = '-'
+  # aa.seq = aa.seq[!is.na(aa.seq)]
+  # if(length(aa.seq) == 0) return(NULL)
   
   # Remove names for a clean output
   names(aa.seq) = NULL
@@ -303,14 +303,28 @@ seq2orf <- function(seq, orf.min.len = 25){
   
   # Extract ORF sequences
   aa.orf = c()
+  idx.remove = c()
   for(i in 1:nrow(pos.orf)){
     pos1 = pos.orf[i, 1]
     pos2 = pos.orf[i, 2]
-    seq.tmp = paste0(aa.seq[pos1: pos2], collapse = '')
-    # seq.tmp.name = paste(seq.name, 
-    #                      # 'ORF', pos.orf.nt[i, 1], pos.orf.nt[i, 2], 
-    #                      'aaLEN', pos2 - pos1 + 1, sep = '|')
+    seq.aa = aa.seq[pos1:pos2]
+    seq.aa = seq.aa[seq.aa != '-']
+    if(length(seq.aa) < orf.min.len) {
+      seq.tmp = ''
+      idx.remove = c(idx.remove, i)
+    } else {
+      seq.tmp = paste0(seq.aa, collapse = '')
+    }
     aa.orf[i] = seq.tmp
+  }
+  
+  if(length(idx.remove) > 0){
+    aa.orf = aa.orf[-idx.remove]
+    pos.orf = pos.orf[-idx.remove,,drop=F]
+  }
+  
+  if(length(aa.orf) == 0){
+    return(list(pos = NULL, orf = NULL))  
   }
   
   # Return ORF positions and sequences
