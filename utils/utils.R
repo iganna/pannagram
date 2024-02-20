@@ -237,6 +237,7 @@ translateSeq <- function(seq) {
   # Replace NA values with '-', indicating unknown codons
   # aa.seq[is.na(aa.seq)] = '-'
   aa.seq = aa.seq[!is.na(aa.seq)]
+  if(length(aa.seq) == 0) return(NULL)
   
   # Remove names for a clean output
   names(aa.seq) = NULL
@@ -278,6 +279,10 @@ seq2orf <- function(seq, orf.min.len = 25){
   
   # Translate the nucleotide sequence to amino acids
   aa.seq = translateSeq(seq)
+  if(is.null(aa.seq)){
+    return(list(pos = NULL, orf = NULL))  
+  }
+  
   seq.len = length(aa.seq)
   
   # Identify stop codon positions and calculate ORF lengths
