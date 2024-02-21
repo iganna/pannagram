@@ -321,6 +321,7 @@ seq2orf <- function(seq, orf.min.len = 25){
   if(length(idx.remove) > 0){
     aa.orf = aa.orf[-idx.remove]
     pos.orf = pos.orf[-idx.remove,,drop=F]
+    pos.orf.nt = pos.orf.nt[-idx.remove,,drop=F]
   }
   
   if(length(aa.orf) == 0){
@@ -378,10 +379,13 @@ orfFinder <- function(seq.init, orf.min.len = 25){
       if(i.strand == 2){
         pos.tmp = seq.len - pos.tmp + 1
       }
+      pos.tmp$shift = i.orf
       
       # Store ORFs and their positions
       orfs = c(orfs, orf.res$orf)
       pos = rbind(pos, pos.tmp)
+      
+      if(nrow(pos) != length(orfs)) stop('Something went wrong')
       
     }
     # Reverse and complement the sequence for the second strand
@@ -394,7 +398,7 @@ orfFinder <- function(seq.init, orf.min.len = 25){
   
   # Calculate additional position info and order by ORF length
   pos$len = abs(pos[,2] - pos[,1]) + 1
-  pos$aalen = pos$len / 3
+  pos$aalen = nchar(orfs)
   pos$strand = c('+', '-')[(pos[,1] > pos[,2]) + 1]
   idx.order = order(-pos$len)
   pos = pos[idx.order,]
