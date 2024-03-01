@@ -20,7 +20,9 @@ option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to directory with the consensus", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--aln.type"), type="character", default="default", 
+              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
 ); 
 
 
@@ -49,6 +51,15 @@ path.seq = paste(path.cons, 'seq/', sep = '')
 
 path.aln = paste(path.cons, 'aln_pangen/', sep = '')
 if (!dir.exists(path.aln)) dir.create(path.aln)
+
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
+} else {
+  aln.type = 'msa_'
+}
+
+# ---- Variables ----
 
 gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
