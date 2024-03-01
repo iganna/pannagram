@@ -320,7 +320,7 @@ getGeneBlocks <- function(g.tmp, len.pan, v.acc){
 
 saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   
-  if(length(snp.pos) != snp.val) stop('Dimentions of the SNP matrix and the vectop of positions should match')
+  if(length(snp.pos) != nrow(snp.val)) stop('Dimentions of the SNP matrix and the vectop of positions should match')
   
   if(!append){
     # Open a connection to the output file
