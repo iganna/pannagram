@@ -327,7 +327,7 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
     file.vcf.conn <- file(file.vcf, "w")
     # Print the VCF header
     cat("##fileformat=VCFv4.2\n", file = file.vcf.conn)
-    sample_names <- colnames(snp.val)[-1] # Exclude the first column (reference)
+    sample_names <- colnames(snp.val) # Exclude the first column (reference)
     cat("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT", paste(sample_names, collapse="\t"), "\n", sep="\t", file = file.vcf.conn)
   } else {
     file.vcf.conn <- file(file.vcf, "a")
@@ -335,7 +335,11 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   
   for (i in 1:nrow(snp.val)) {
     ref <- snp.val[i, 1] # Reference nucleotide
-    alts <- unique(snp.val[i, -1]) # Unique alternative nucleotides, excluding reference
+    if(ref == '-'){
+      alts.cnt = table(snp.val[i,snp.val[i,] != '-'])
+      ref = names(alts.cnt[alts.cnt == max(alts.cnt)])[1]
+    }
+    alts <- unique(snp.val[i,]) # Unique alternative nucleotides, excluding reference
     alts <- alts[alts != "-" & alts != ref] # Exclude dashes and reference nucleotides
     alt <- paste(alts, collapse = ",") # Concatenate alternative nucleotides
     
