@@ -120,6 +120,7 @@ for(s.comb in pref.combinations){
     rmSafe(v)
     gc()
   }
+  colnames(snp.val) = accessions
   
   print(dim(snp.matrix))
   print(length(c(s.pangen.name, accessions)))
