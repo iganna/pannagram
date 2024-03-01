@@ -347,7 +347,7 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
     if (length(alts) == 0) next
     
     # Prepare genotypes for each accession
-    genotypes <- sapply(2:ncol(snp.val), function(j) {
+    genotypes <- sapply(1:ncol(snp.val), function(j) {
       allele <- snp.val[i, j]
       if (allele == ref) {
         return("0/0") # Homozygous reference
