@@ -38,7 +38,7 @@ This script provides various functionalities depending on the options provided.
 
 Options:
     -pref_global PREFIX        Set a global preference or configuration.
-    -ref_pref REF_PREFIX       Specify a reference preference or parameter.
+    -ref_pref REF_PREFIX       Specify a reference prefix
     -path_consensus PATH_CONSENSUS
                                Define the path to the consensus data.
     -gff                       Run the script in GFF mode, processing data in Generic Feature Format.
@@ -63,6 +63,7 @@ EOF
 run_gff=false
 run_te=false
 run_graph=false
+aln_type='msa_'
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -70,6 +71,7 @@ while [ $# -gt 0 ]; do
         -pref_global) pref_global=$2; shift 2;;
         -ref_pref) ref_pref=$2; shift 2;;
         -path_consensus) path_consensus=$2; shift 2;;
+        -aln_type) aln_type=$2; shift 2;;
         -te_file) te_file=$2; shift 2;;
         -sim) similarity_value=$2; shift 2;;
         -gff) run_gff=true; shift;;
@@ -100,7 +102,7 @@ if [ "$run_gff" = true ]; then
     # Therefore, sequences of seSVs could also be produced together with GFFs.
 
 
-    Rscript sv/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref}
+    Rscript sv/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}
 fi
 
 # -------------------------------------------------

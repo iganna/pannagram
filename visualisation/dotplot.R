@@ -29,7 +29,8 @@
 #' @export
 #'
 dotplot <- function(seq1, seq2, wsize, nmatch) {
-  seq2.rc = rev(seqinr::comp(seq2))
+  # seq2.rc = rev(seqinr::comp(seq2))
+  seq2.rc = revCompl(seq2)
   
   mx1 = toupper(seq2mx(seq1, wsize))
   mx2 = toupper(seq2mx(seq2, wsize))
@@ -60,6 +61,11 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   p
   return(p )
 }
+
+dotplot.s <- function(seq1, seq2, wsize, nmatch) {
+  return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch))
+}
+
 
 #' Convert a Nucleotide Sequence to a Matrix
 #'
@@ -151,3 +157,22 @@ seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
   
   return(n.match)
 }
+
+
+dotScore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
+  
+  mx1 = toupper(seq2mx(seq1, wsize))
+  mx2 = toupper(seq2mx(seq2, wsize))
+  result = mxComp(mx1, mx2, wsize, nmatch)
+  n.forward = nrow(result)
+  
+  seq2.rc = revCompl(seq2)
+  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
+  
+  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  n.backward = nrow(result.rc)
+  
+  n = (length(seq1) + length(seq2)) / 2
+  return(c(n.forward, n.backward) / n)
+}
+

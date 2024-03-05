@@ -647,6 +647,7 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
 
+
 #' ----------------------------------------------------------------------
 #' Calculate the Repeat Score of a String
 #'
@@ -715,6 +716,7 @@ comb2ref <- function(s.comb){
 }
 
 
+#' ----------------------------------------------------------------------
 #' Load or Install and Load an R Package
 #'
 #' This function attempts to load an R package. If the package is not already installed,
@@ -751,6 +753,71 @@ load.library <- function(package) {
     }
   }
 }
+
+
+#' ----------------------------------------------------------------------
+#' Find Sequences of Ones in Binary Vector
+#'
+#' Identifies and returns the start and end indices of consecutive sequences of ones in a binary vector.
+#'
+#' @param g.bin A vector containing zeros and ones.
+#' 
+#' @return A data frame with columns `beg` and `end`.
+#' 
+#' @examples
+#' g.bin <- c(0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0)
+#' findOnes(g.bin)
+#' 
+#'     beg end
+#'   1   2   3
+#'   2   5   5
+#'   3   8  10
+#'   
+#' @export
+findOnes <- function(g.bin) {
+  changes <- diff(c(0, g.bin, 0))
+  beg <- which(changes == 1)
+  end <- which(changes == -1) - 1
+  return(data.frame(beg = beg, end = end))
+}
+
+#' ----------------------------------------------------------------------
+#' Finds Duplicates and return unique values
+#'
+#' @param x Vector to search for duplicates.
+#' @return Vector of unique duplicated values from `x`.
+#' @examples
+#' uniqueDuplicates(c(1, 2, 2, 3, 4, 4, 5))
+#' @export
+uniqueDuplicates <- function(x){
+  return(unique(x[duplicated(x)]))
+}
+
+
+#' ----------------------------------------------------------------------
+#' Finds indexes of all non-unique values
+#'
+#' @param x Vector to search for duplicates.
+#' @return Indexes of duplicated values from `x`.
+#' @export
+idxDuplicates <- function(x){
+  y = unique(x[duplicated(x)])
+  return(which(x %in% y))
+}
+
+#' ----------------------------------------------------------------------
+#' Write GFF Data to File
+#'
+#' Writes first 9 columns of the table to the gff file.
+#'
+#' @param gff A data frame representing GFF data.
+#' @param file The path to the file where the GFF data should be written.
+#' @export
+#' @examples
+writeGFF <- function(gff, file){
+  write.table(gff[,1:9], file, quote = F, row.names = F, col.names = F, sep = '\t')
+}
+
 
 
 

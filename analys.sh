@@ -94,18 +94,18 @@ fi
 
 if [ "$run_seq" = true ]; then
 
-    Rscript analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
+    Rscript analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
 fi
 
 if [ "$run_aln" = true ]; then
 
-    Rscript analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
+    Rscript analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --aln.type ${aln_type} --cores ${cores}
 fi
 
 
 if [ "$run_snp" = true ]; then
 
-    Rscript analys/analys_04_snp.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --cores ${cores}
+    Rscript analys/analys_04_snp.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
 fi
 
 
