@@ -82,7 +82,7 @@ gr.break.b = '/break'
 
 s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub("msa_", "", files)
+pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
@@ -102,7 +102,7 @@ tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopa
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
