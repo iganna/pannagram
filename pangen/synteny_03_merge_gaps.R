@@ -245,7 +245,11 @@ loop.function <- function(f.maj, echo = T){
                          'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
   
-  if(file.exists(file.gaps.out)) {
+  # TODO
+  lines <- readLines(file.gaps.out)
+  lines.content <- !grepl("^#", lines)
+  
+  if(file.exists(file.gaps.out) & (sum(lines.content) > 0)) {
     # Fill up and down
     ## ----  Prepare ----
     x.sk = x.sk[order(x.sk$V2),]  # because all alignment will be according to the sorted "query"
@@ -259,10 +263,10 @@ loop.function <- function(f.maj, echo = T){
     y.bots = x.sk$p.end  # bottom positions
     
     # Read blast results on "between blocks"
-    pokaz('Read blast of "bad" gaps..', file.gaps.out)
-    pokaz('File:', file.gaps.out)
+    pokaz('Read blast of "bad" gaps..')
     x.gap = read.table(file.gaps.out, stringsAsFactors = F)
     
+
     # Get real positions of fragments
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][2])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][2])) - 1
