@@ -260,6 +260,7 @@ loop.function <- function(f.maj, echo = T){
     
     # Read blast results on "between blocks"
     pokaz('Read blast of "bad" gaps..', file.gaps.out)
+    pokaz('File:', file.gaps.out)
     x.gap = read.table(file.gaps.out, stringsAsFactors = F)
     
     # Get real positions of fragments
