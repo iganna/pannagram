@@ -166,6 +166,8 @@ loop.function <- function(f.blast, echo = T){
     idx.maj = which(!c(F, x$V1[-1] == x$V1[-nrow(x)]))
     x.major = cbind(x[idx.maj,setdiff(colnames(x), c('V8', 'V9'))], idx.maj)
     
+    if(nrow(x.major) == 0) return(NULL)
+    
     # Sort to set the id
     x.major = x.major[order(x.major$V2),]  # not needed
     x.major$id = 1:nrow(x.major)
@@ -188,6 +190,8 @@ loop.function <- function(f.blast, echo = T){
     if(length(idx) > 0){
       x.major = x.major[-idx,]
     }
+    
+    if(nrow(x.major) == 0) return(NULL)
     
     # ----  Define blocks  in the skeleton ----
     
