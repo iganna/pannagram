@@ -196,6 +196,11 @@ loop.function <- function(f.blast, echo = T){
     
     if(nrow(x.major) == 0) return(NULL)
     
+    checkCorrespToGenome(x.major, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+    saveRDS(x.major, 'tmp.rds')
+    
     # ----  Define blocks  in the skeleton ----
     
     # re-arrange IDs
