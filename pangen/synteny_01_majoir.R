@@ -145,6 +145,7 @@ loop.function <- function(f.blast, echo = T){
     x$p.beg <- ifelse(x$V4 < x$V5, x$V4, x$V5)
     x$p.end <- ifelse(x$V4 < x$V5, x$V5, x$V4)
     
+    
     # Set correct position
     start.pos = as.numeric(sapply(strsplit(x[,1], "\\|"), "[", 4)) - 1
     x[,2:3] = x[,2:3] + start.pos
@@ -166,6 +167,8 @@ loop.function <- function(f.blast, echo = T){
     idx.maj = which(!c(F, x$V1[-1] == x$V1[-nrow(x)]))
     x.major = cbind(x[idx.maj,setdiff(colnames(x), c('V8', 'V9'))], idx.maj)
     
+    
+    pokaz('Number of rows in the synteny', nrow(x.major))
     if(nrow(x.major) == 0) return(NULL)
     
     # Sort to set the id
