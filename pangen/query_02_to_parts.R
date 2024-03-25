@@ -9,7 +9,7 @@ suppressMessages({
 
 source("utils/utils.R")
 
-pokazStage('Step 2. Chromosomes into parts')
+# pokazStage('Step 2. Chromosomes into parts')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -45,7 +45,7 @@ num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 # Ensure the number of chromosomes is specified and set it
 all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
 if(all.chr){
-  n.chr = NULL
+  n.chr <- NULL
 } else {
   n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
 }
@@ -141,13 +141,8 @@ if(num.cores == 1){
   registerDoParallel(myCluster)
   
   tmp.output = foreach(i.comb = 1:nrow(combinations), 
-                       .packages=c(
-                                   # 'stringr',
-                                   # 'Biostrings', 
-                                   # 'seqinr', 
-                                   # 'stringi',
-                                  'crayon'
-                                   )) %dopar% {
+                       .packages=c('crayon'),
+                       .export = c('n.chr')) %dopar% {
     loop.function(i.comb)
   }
   stopCluster(myCluster)

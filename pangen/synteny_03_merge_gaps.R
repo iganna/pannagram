@@ -9,7 +9,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
+# pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -17,16 +17,14 @@ pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.query"), type="character", default=NULL, 
+  make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to query chomosome fasta files", metavar="character"),  
   make_option(c("--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--pref"), type="character", default=NULL, 
+  make_option(c("--ref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("--path.gaps"), type="character", default=NULL, 
               help="prefix of the directory with gaps", metavar="character"),
-  make_option(c("--path.ref"), type="character", default=NULL, 
-              help="path to the reference file", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
 )
@@ -43,10 +41,9 @@ opt = parse_args(opt_parser, args = args);
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 
-if (!is.null(opt$path.query)) path.query <- opt$path.query
+if (!is.null(opt$path.chr)) path.chr <- opt$path.chr
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
-if (!is.null(opt$path.ref)) path.base <- opt$path.ref
-if (!is.null(opt$pref)) base.acc <- opt$pref
+if (!is.null(opt$ref)) base.acc <- opt$ref
 if (!is.null(opt$path.gaps)) path.gaps <- opt$path.gaps
 
 
@@ -104,7 +101,7 @@ loop.function <- function(f.maj, echo = T){
   # # Read reference sequences
   # base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
   # pokaz('Base:', base.file)
-  # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  # base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
   # base.fas.fw = seq2nt(base.fas.fw)
   # base.fas.bw = revCompl(base.fas.fw)
   # base.len = length(base.fas.bw)
@@ -113,7 +110,7 @@ loop.function <- function(f.maj, echo = T){
   # query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
   # pokaz('Query:', query.file)
   # 
-  # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  # query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
   # query.fas.chr = seq2nt(query.fas.chr)
   # query.len = length(query.fas.chr)
   

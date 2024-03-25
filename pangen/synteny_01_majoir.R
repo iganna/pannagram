@@ -14,7 +14,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
+# pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
 
 
 # ***********************************************************************
@@ -23,18 +23,16 @@ pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.query"), type="character", default=NULL, 
+  make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to query chomosome fasta files", metavar="character"),  
   make_option(c("--path.blast"), type="character", default=NULL, 
               help="path to blast results", metavar="character"),
   make_option(c("--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
+  make_option(c("--ref"), type="character", default=NULL, 
+              help="name of the reference genome", metavar="character"),
   make_option(c("--path.gaps"), type="character", default=NULL, 
               help="prefix of the directory with gaps", metavar="character"),
-  make_option(c("--path.ref"), type="character", default=NULL, 
-              help="path to the reference file", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
 )
@@ -51,12 +49,11 @@ opt = parse_args(opt_parser, args = args);
 # Number of cores
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
-path.query    <- ifelse(!is.null(opt$path.query), opt$path.query, path.query)
-path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, path.blast.res)
-path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, path.aln)
-path.base     <- ifelse(!is.null(opt$path.ref), opt$path.ref, path.base)
-base.acc      <- ifelse(!is.null(opt$pref), opt$pref, base.acc)
-path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, path.gaps)
+path.chr      <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop('Folder with chromosomes is not specified'))
+path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
+path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
+base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
+path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, stop('Folder with Gaps is not specified'))
 
 
 # Create folders for the alignment results
@@ -102,7 +99,7 @@ loop.function <- function(f.blast, echo = T){
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   if(echo) pokaz('Base:', base.file)
-  base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
@@ -112,7 +109,7 @@ loop.function <- function(f.blast, echo = T){
   query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
   if(echo) pokaz('Query:', query.file)
   
-  query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
   if(echo) pokaz('Length of query:', query.len)

@@ -16,7 +16,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 7. Combine reference-based alignments by chromosomes')
+# pokazStage('Step 7. Combine reference-based alignments by chromosomes')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -28,23 +28,24 @@ option_list = list(
               help="file with lengths of chromosomes", metavar="character"),
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to consensus directory", metavar="character"),
-  make_option(c("-o", "--path.aln"), type="character", default=NULL, 
+  make_option(c("--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("-p", "--pref"), type="character", default=NULL, 
+  make_option(c("--pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
-  make_option(c("-n", "--n.chr.ref"), type="character", default=NULL, 
+  make_option(c("--n.chr.ref"), type="character", default=NULL, 
               help="number of chromosomes in the reference genome", metavar="character"),
-  make_option(c("-m", "--n.chr.acc"), type="character", default=NULL, 
+  make_option(c("--n.chr.acc"), type="character", default=NULL, 
               help="number of chromosomes in the accessions", metavar="character"),
-  make_option(c("-a", "--all.vs.all"), type="character", default=NULL, 
+  make_option(c("--all.vs.all"), type="character", default=NULL, 
               help="alignment of all chromosomes vs all or not: T/F", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+  make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("-r", "--path.ref"), type="character", default=NULL, 
+  make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to the reference file", metavar="character"),
-  make_option(c("-t", "--type"), type="character", default=NULL, 
+  make_option(c("--type"), type="character", default=NULL, 
               help="type of fasta files", metavar="character")
-); 
+)
+
 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -69,7 +70,7 @@ path.chr.len = ifelse(!is.null(opt$path.chr.len), opt$path.chr.len, 'chr_len/')
 path.chr.len = paste(path.cons, path.chr.len, sep = '')
 if(!dir.exists(path.chr.len)) system(paste('mkdir ', path.chr.len, sep = ''))
 
-if (!is.null(opt$path.ref)) path.base <- opt$path.ref  # to know the chromosomal lengths
+if (!is.null(opt$path.ref)) path.chr <- opt$path.chr  # to know the chromosomal lengths
 if (!is.null(opt$pref)) base.acc.ref <- opt$pref
 
 # Path with alignments
@@ -125,7 +126,7 @@ if(!file.exists(file.chr.len)){
     # Read base chromosome
     base.file = paste0(base.acc.ref, '_chr', i.chr , '.fasta', collapse = '')
     # pokaz('Base:', base.file)
-    base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+    base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
     base.fas.fw = seq2nt(base.fas.fw)
     chr.len = c(chr.len, length(base.fas.fw))
   }

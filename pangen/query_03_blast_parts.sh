@@ -74,7 +74,7 @@ done
 #                 MAIN
 # ----------------------------------------------------------------------------
 
-pokaz_stage "Step 3. BLAST of parts against the reference genome"
+# pokaz_stage "Step 3. BLAST of parts against the reference genome"
 pokaz_message "NOTE: if this stage takes relatively long, use -filter_rep -s 2 to mask highly repetative regions"
 
 # -penalty -2 -gapopen 10 -gapextend 2 -max_hsps 5

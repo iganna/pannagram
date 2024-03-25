@@ -1,1 +1,0 @@
-Warning: [blastn] Query is Empty!

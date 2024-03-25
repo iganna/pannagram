@@ -62,7 +62,7 @@ fi
 #                 CREATE BLAST DATABASES
 # ----------------------------------------------------------------------------
 
-pokaz_stage "Step 5. BLAST of gaps between syntenic matches"
+# pokaz_stage "Step 5. BLAST of gaps between syntenic matches"
 
 
 function process_db {

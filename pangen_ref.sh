@@ -232,37 +232,69 @@ fi
 #           MAIN PIPELINE
 # ----------------------------------------------------------------------------
 
-
+step_num=1
 # ----------------------------------------------
 # Split quiery fasta into chromosomes
-if [ $start_step -le 1 ] && [ ! -f "$path_flags/step1_done" ]; then
+
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+
+    pokaz_stage "Step ${step_num}. Genomes into chromosomes."
+
     Rscript pangen/query_01_to_chr.R --n.chr ${n_chr_query}  \
     --path.in ${path_in} --path.out ${path_chr_acc} --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}
-    touch "$path_flags/step1_done"
+    
+    touch "$path_flags/step${step_num}_done"
 fi
+
+((step_num = step_num + 1))
 
 # ----------------------------------------------
 # Split quiery chromosomes into parts
-if [ $start_step -le 2 ] && [ ! -f "$path_flags/step2_done" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+
+    pokaz_stage "Step ${step_num}. Chromosomes into parts."
+
     Rscript pangen/query_02_to_parts.R --n.chr ${n_chr_query}  --path.chr  ${path_chr_acc}  \
     --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
     --filter_rep ${filter_rep}
-    touch "$path_flags/step2_done"
+    touch "$path_flags/step${step_num}_done"
 fi
 
+((step_num = step_num + 1))
+
+
 # ----------------------------------------------
-# Check that the reference exists
-if ! ls ${path_chr_ref}${ref_pref}_chr* 1> /dev/null 2>&1; then
-    echo "ERROR: Reference genome ${ref_pref} doesn't exist"
-    exit 1
+# Split reference fasta into chromosomes if additionally needed
+if [[ "${path_in}" != "$path_chr_ref" ]]; then
+
+    if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+        pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
+
+        file_acc_ref=${path_chr_acc}ref_acc.txt
+        echo "${ref_pref}" > ${file_acc_ref}
+        Rscript pangen/query_01_to_chr.R --n.chr ${n_chr_ref}  \
+                --path.in ${path_chr_ref} --path.out ${path_chr_acc}   \
+                --cores ${cores} --acc.anal ${file_acc_ref}
+
+        rm ${file_acc_ref}
+
+    fi
+
+
+    ((step_num = step_num + 1))
+
 fi
+
+
 
 # ----------------------------------------------
 # Blast parts on the reference genome
-if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+
+    pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
 
     # Create a database on the reference genome
-    for file in ${path_chr_ref}${ref_pref}_chr*fasta ; do
+    for file in ${path_chr_acc}${ref_pref}_chr*fasta ; do
       # echo ${file}
       # Check if the BLAST database files already exist
       if [ ! -f "${file}.nin" ]; then
@@ -271,42 +303,54 @@ if [ $start_step -le 3 ] && [ ! -f "$path_flags/step3_done_${ref_pref}" ]; then
     done
 
     # Blast parts on the reference genome
-    ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_ref} -path_parts ${path_parts} -path_result ${path_blast_parts} \
+    ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_acc} -path_parts ${path_parts} -path_result ${path_blast_parts} \
      -ref_pref ${ref_pref}_chr -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
-    touch "$path_flags/step3_done_${ref_pref}"
+    touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
 
+((step_num = step_num + 1))
 
 # ----------------------------------------------
 # First round of alignments
-if [ $start_step -le 4 ] && [ ! -f "$path_flags/step4_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+
+    pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
+
     Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-                        --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-                        --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
+                        --ref ${ref_pref}   \
+                        --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
                         --cores ${cores}
 
-    touch "$path_flags/step4_done_${ref_pref}"
+    touch "$path_flags/step${step_num}_done_${ref_pref}"
 
     # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
     # rm -rf ${path_blast_parts}
 fi
 
+((step_num = step_num + 1))
 
+# ----------------------------------------------
 # Blast regions between synteny blocks
-if [ $start_step -le 5 ] && [ ! -f "$path_flags/step5_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+
+    pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
+
     ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
-    touch "$path_flags/step5_done_${ref_pref}"
+    touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
 
+((step_num = step_num + 1))
 
 # ----------------------------------------------
 # Second round of alignments
-if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
-    Rscript pangen/synteny_03_merge_gaps.R --path.aln ${path_alignment} \
-    --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-    --path.gaps ${path_gaps}  --path.query ${path_chr_acc} \
+    pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
+
+    Rscript pangen/synteny_03_merge_gaps.R --ref ${ref_pref} \
+    --path.aln ${path_alignment}  --path.chr ${path_chr_acc}\
+    --path.gaps ${path_gaps}   \
     --cores ${cores}
 
     # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
@@ -314,21 +358,25 @@ if [ $start_step -le 6 ] && [ ! -f "$path_flags/step6_done_${ref_pref}" ]; then
     # ls ${path_alignment}*maj*
     # rm -rf ${path_alignment}*maj*
 
-    touch "$path_flags/step6_done_${ref_pref}"
+    touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
 
+((step_num = step_num + 1))
 
 # exit 1
 
 # ----------------------------------------------
 # Creaete a consensus
-if [ $start_step -le 7 ] && [ ! -f "$path_flags/step7_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+
+    pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
     Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
-    --pref ${ref_pref} --path.ref  ${path_chr_ref}  --cores ${cores}
+    --pref ${ref_pref}  --cores ${cores} --path.chr 
 
-    touch "$path_flags/step7_done_${ref_pref}"
+    touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
 
+((step_num = step_num + 1))
 
 

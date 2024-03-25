@@ -8,7 +8,7 @@ suppressMessages({
 
 source("utils/utils.R")
 
-pokazStage('Step 1. Genomes into chromosomes')
+# pokazStage('Step 1. Genomes into chromosomes')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -63,6 +63,8 @@ if(!is.null(acc.anal)){
   }
 }
 
+pokaz('Number of chromosomes:', n.chr)
+
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))
 path.chr   <- ifelse(!is.null(opt$path.out), opt$path.out, stop("The chromosome-out path 'path.out' must be specified!"))
@@ -71,8 +73,6 @@ if(!dir.exists(path.chr)) dir.create(path.chr)
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
-pokaz('sort_chr_by_length', sort.by.lengths)
-
 
 # ***********************************************************************
 # ---- Sort chromosomal lengths ----
@@ -110,7 +110,7 @@ if(!is.null(acc.anal)){
 }
 
 # Final check and display of genome names for analysis
-if(nrow(query.name) == 0) stop('No accessions is provided for the analysys.')
+if((nrow(query.name) == 0) || (length(query.name) == 0)) stop('No accessions is provided for the analysys.')
 pokaz('Names of genomes for the analysis:', query.name$acc)
 
 
@@ -198,11 +198,8 @@ if(num.cores == 1){
   registerDoParallel(myCluster) 
   
   tmp = foreach(i.acc = 1:nrow(query.name), 
-                .packages=c(
-                            # 'stringr',
-                            # 'Biostrings', 
-                            # 'seqinr', 
-                            'crayon')) %dopar% {
+                .packages=c('crayon'),
+                .export = c('n.chr')) %dopar% {
                                      loop.function(i.acc)
                                    }
   stopCluster(myCluster)
