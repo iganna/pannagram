@@ -1,6 +1,6 @@
 suppressMessages({
   library("optparse")
-  library(Biostrings)
+  # library(Biostrings)
   # library("seqinr")       # read.fasta
   library("foreach")
   library(doParallel)
@@ -16,21 +16,22 @@ pokazStage('Step 1. Genomes into chromosomes')
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
+  make_option(c("--all.chr"), type = "character", default = NULL, 
+              help = "Flag to use all chromosomes, not only the provided number", metavar = "character"),
+  make_option(c("--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
-  make_option(c("-i", "--path.in"), type = "character", default = NULL, 
+  make_option(c("--path.in"), type = "character", default = NULL, 
               help = "pathway to the input directory", metavar = "character"),
-  make_option(c("-o", "--path.out"), type = "character", default = NULL, 
+  make_option(c("--path.out"), type = "character", default = NULL, 
               help = "pathway to the output directory", metavar = "character"),
-  make_option(c("-s", "--sort"), type = "character", default = NULL, 
+  make_option(c("--sort"), type = "character", default = NULL, 
               help = "sort chromosomes by lengths or not", metavar = "character"),
-  make_option(c("-b", "--bp"), type = "character", default = NULL, 
-              help = "number of base pairs in the part file", metavar = "character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+  make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("-a", "--acc.anal"), type = "character", default = NULL,
+  make_option(c("--acc.anal"), type = "character", default = NULL,
               help = "what axes to analyze", metavar = "character")
 )
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -42,7 +43,14 @@ opt = parse_args(opt_parser);
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 # Ensure the number of chromosomes is specified and set it
-n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
+all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
+if(all.chr){
+  n.chr = NULL
+} else {
+  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
+}
+
+# Accessions to analyse
 acc.anal <- ifelse(!is.null(opt$acc.anal), (opt$acc.anal), NULL)
 if(acc.anal == 'NULL') acc.anal = NULL
 if(!is.null(acc.anal)){
@@ -60,8 +68,6 @@ path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'p
 path.chr   <- ifelse(!is.null(opt$path.out), opt$path.out, stop("The chromosome-out path 'path.out' must be specified!"))
 if(!dir.exists(path.chr)) dir.create(path.chr)
 
-# Common attributes
-len.parts  <- ifelse(!is.null(opt$bp), as.numeric(opt$bp), 5000)
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
@@ -72,7 +78,7 @@ pokaz('sort_chr_by_length', sort.by.lengths)
 # ---- Sort chromosomal lengths ----
 
 if(!sort.by.lengths){
-  msg = 'Please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
+  msg = 'If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
   pokazAttention(msg)
 } else {
   msg = 'Chromosomes will be sorted by their length'
@@ -115,28 +121,33 @@ loop.function <- function(i.acc, echo = T){
   
   acc = query.name$acc[i.acc]
   #' --- --- --- --- --- --- --- --- --- --- ---
-  # Don't run if the chromosomes exist
-  n.exist = 0
-  for(i.chr in 1:n.chr){
-    # acc.s = gsub('_', '-', acc)
-    acc.s = acc
-    file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
-    if(file.exists(file.out)){
-      n.exist = n.exist + 1
+  # Don't run if the chromosomal files exist
+  if(!all.chr){  # if the chromosome number is an important parameter, not ALL_CHROMOSOMES
+    n.exist = 0
+    for(i.chr in 1:n.chr){
+      file.out = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
+      if(file.exists(file.out)){
+        n.exist = n.exist + 1
+      }
+    }
+    if(echo) pokaz(n.exist, n.chr)
+    if(n.exist == n.chr){  # If chromosomal files are already formed
+      # if(for.flag) next
+      return(NULL)
     }
   }
-  if(echo) pokaz(n.exist, n.chr)
-  if(n.exist == n.chr){
-    # if(for.flag) next
-    return(NULL)
-  }
+ 
   # ***********************************
   
   if(echo) pokaz('Accession', acc)
   q.fasta = readFastaMy(paste0(path.query, query.name$file[i.acc], collapse = ''))
   
+  if(all.chr){ # if to analyse all chromosomes
+    n.chr = length(q.fasta)
+  }
   if(length(q.fasta) < n.chr){
-    # if(for.flag) next
+    pokazAttention('Accession', acc, 'was not analysed, not enough chromosomes in the genome.\n
+                   Exist:', length(q.fasta), 'Requeired:', n.chr)
     return(NULL)
   }
   
@@ -187,16 +198,17 @@ if(num.cores == 1){
   registerDoParallel(myCluster) 
   
   tmp = foreach(i.acc = 1:nrow(query.name), 
-                .packages=c('stringr',
-                            'Biostrings', 
-                            'seqinr', 
+                .packages=c(
+                            # 'stringr',
+                            # 'Biostrings', 
+                            # 'seqinr', 
                             'crayon')) %dopar% {
                                      loop.function(i.acc)
                                    }
   stopCluster(myCluster)
 }
 
-
+warnings()
 
 # ***********************************************************************
 # ---- Manual testing ----

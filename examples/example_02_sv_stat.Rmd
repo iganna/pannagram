@@ -1,6 +1,6 @@
 ---
 title: "Figures for SVs"
-output: html_notebook
+output: md_document
 ---
 
 # Setup

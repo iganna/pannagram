@@ -212,6 +212,8 @@ if(num.cores == 1){
   stopCluster(myCluster)
 }
 
+warnings()
+
 
 # ***********************************************************************
 # ---- Manual testing ----

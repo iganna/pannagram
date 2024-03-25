@@ -819,5 +819,48 @@ writeGFF <- function(gff, file){
 }
 
 
+#' ----------------------------------------------------------------------
+#' Calculate Moving Window Mean
+#'
+#' This function calculates the moving window mean for a given numeric vector.
+#' The window size is adjustable, allowing for flexibility in how the mean is calculated over the vector.
+#'
+#' @param v A numeric vector
+#' @param wnd.size The size of the window over which the mean is calculated. Default is 10000.
+#'
+#' @return A numeric vector containing the moving window mean values.
+#' @examples
+#' v <- 1:100000
+#' wndMean(v, wnd.size = 10000)
+#' @export
+wndMean <- function(v, wnd.size = 10000){
+  
+  # Calculate the length of the input vector
+  len.v <- length(v)
+  # Determine the number of full parts within the window size
+  num.parts <- len.v %/% wnd.size
+  # Initialize a vector for storing the mean values
+  wnd.mean <- numeric(num.parts + ifelse(len.v %% wnd.size > 0, 1, 0))
+  
+  # Calculate the mean for each full part
+  for(i in 1:num.parts) {
+    wnd.mean[i] <- mean(v[((i-1) * wnd.size + 1) : (i * wnd.size)])
+  }
+  
+  # Calculate the mean for the last part if it is smaller than the window size
+  if(len.v %% wnd.size > 0) {
+    wnd.mean[num.parts + 1] <- mean(v[(num.parts*wnd.size + 1):len.v])
+  }
+  
+  return(wnd.mean)
+}
+
+readTableMy <- function(file) {
+  if (any(grepl("^[^#]", readLines(file)))) {
+    return(read.table(file, stringsAsFactors = F,  header = F))
+  } else {
+    return(NULL)
+  }
+}
 
 

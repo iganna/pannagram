@@ -1,10 +1,10 @@
 suppressMessages({
   library("optparse")
-  library(Biostrings)
-  library("seqinr")       # read.fasta
+  # library(Biostrings)
+  # library("seqinr")       # read.fasta
   library("foreach")
   library(doParallel)
-  library(stringi)
+  # library(stringi)
 })
 
 source("utils/utils.R")
@@ -15,21 +15,23 @@ pokazStage('Step 2. Chromosomes into parts')
 # ---- Command line arguments ----
 args = commandArgs(trailingOnly=TRUE)
 
+
 option_list <- list(
-  make_option(c("-b", "--part.len"), type = "character", default = NULL, 
-              help = "number of base pairs in the part file", metavar = "character"),
-  make_option(c("-n", "--n.chr"), type = "character", default = NULL, 
+  make_option(c("--all.chr"), type = "character", default = NULL, 
+              help = "Flag to use all chromosomes, not only the provided number", metavar = "character"),
+  make_option(c("--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
-  make_option(c("-i", "--path.chr"), type = "character", default = NULL, 
+  make_option(c("--part.len"), type = "character", default = NULL, 
+              help = "number of base pairs in the part file", metavar = "character"),
+  make_option(c("--path.chr"), type = "character", default = NULL, 
               help = "pathway to the chromosome directory", metavar = "character"),
-  make_option(c("-o", "--path.parts"), type = "character", default = NULL, 
+  make_option(c("--path.parts"), type = "character", default = NULL, 
               help = "pathway to the parts directory", metavar = "character"),
   make_option(c("--filter_rep"), type = "character", default = NULL, 
               help = "flag to keep or not repeats", metavar = "character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+  make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
 )
-
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -41,7 +43,12 @@ opt = parse_args(opt_parser);
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 # Ensure the number of chromosomes is specified and set it
-n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))
+all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
+if(all.chr){
+  n.chr = NULL
+} else {
+  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
+}
 
 # Set chromosome and parts paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
@@ -52,13 +59,12 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
 
-pokaz('Filter', filter_rep)
-
 # ***********************************************************************
 # ---- Preparation ----
 
 pokaz('Directory with chromosomes:', path.chr)
 files.query = list.files(path = path.chr, pattern = paste0('\\.', 'fasta', '$', collapse = '') )
+files.query <- sub("\\.fasta$", "", files.query)
 query.name = unique(sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]))
 pokaz('Names of genomes:', query.name)
 
@@ -66,7 +72,13 @@ if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')
 }
 
-combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)
+if(all.chr){
+  combinations = data.frame(acc = sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]),
+                            i.chr = sapply(files.query, function(s) strsplit(s, '_chr')[[1]][2]))
+} else {
+  combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)  
+}
+
 
 
 # ***********************************************************************
@@ -110,10 +122,10 @@ loop.function <- function(i.comb, echo = T){
     
   }
   
-  rm(q.fasta)
-  rm(s)
-  rm(pos.beg)
-  rm(seqs.score)
+  rmSafe(q.fasta)
+  rmSafe(s)
+  rmSafe(pos.beg)
+  rmSafe(seqs.score)
 }
 
 # ***********************************************************************
@@ -129,15 +141,19 @@ if(num.cores == 1){
   registerDoParallel(myCluster)
   
   tmp.output = foreach(i.comb = 1:nrow(combinations), 
-                       .packages=c('stringr',
-                                   'Biostrings', 
-                                   'seqinr', 
-                                   'crayon', 
-                                   'stringi')) %dopar% {
+                       .packages=c(
+                                   # 'stringr',
+                                   # 'Biostrings', 
+                                   # 'seqinr', 
+                                   # 'stringi',
+                                  'crayon'
+                                   )) %dopar% {
     loop.function(i.comb)
   }
   stopCluster(myCluster)
 }
+
+warnings()
 
 # ***********************************************************************
 # ---- Manual testing ----

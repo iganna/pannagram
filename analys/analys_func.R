@@ -163,33 +163,21 @@ gff2gff <- function(path.cons,
 
 
 
-gff2gff <- function(path.cons, 
+bed2bed <- function(path.cons, 
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
                     ref.acc, 
                     n.chr = 5,
-                    exact.match=T,
-                    
+                    exact.match=T, 
+                    gr.accs.e = "accs/",
                     aln.type = 'msa_',  # please provide correct prefix. In case of reference-based, it's 'comb_'
-                    pangenome.name='PanGen',
-                    s.chr = '_Chr', # in this case the pattern is "*_ChrX", where X is the number
-                    echo=T
+                    echo=T,
+                    pangenome.name='Pangen',
+                    s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
 ){
-  # Variables
-  gr.accs.e = "accs/"
-  pangen.names = c('pangen', 'pangenome', 'pan-genome')
-  
-  
-  
-  # Check-up
-  if(tolower(acc1) %in% pangen.names) acc1 = pangenome.name
-  if(tolower(acc2) %in% pangen.names) acc2 = pangenome.name
   
   if(acc1 == acc2) stop('Accessions provided are identical')
-
   
-  # Preparation
-  n.cols = ncol(gff1)
   gff1$idx = 1:nrow(gff1)
   # Get chromosome number from the first column of the gff file
   if(!('chr' %in% gff1)){
@@ -206,7 +194,7 @@ gff2gff <- function(path.cons,
   gff2$V2 = 'panConvertor'
   gff2$V4 = -1
   gff2$V5 = -1
-  gff2$V1 = paste(acc2, s.chr, gff2$chr, sep = '')
+  gff2$V1 = gsub(acc1, acc2, gff2$V1)
   
   
   for(i.chr in 1:n.chr){
@@ -279,6 +267,9 @@ gff2gff <- function(path.cons,
   colnames(gff2.remain)[1:9] = colnames.1.to.9
   return(gff2.remain = gff2.remain)
 }
+
+
+
 
 
 #' ----------------------------------------------------------------------

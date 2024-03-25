@@ -79,7 +79,12 @@ pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
 pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+if(length(pref.combinations == 0)){
+  pokazAttention('No Combinations found.')
+} else {
+  pokaz('Combinations', pref.combinations)  
+}
+
 
 
 # ---- Positions of SVs ----
