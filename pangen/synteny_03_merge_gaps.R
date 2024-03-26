@@ -277,6 +277,7 @@ loop.function <- function(f.maj, echo = T){
     x.gap$bl.beg = -1
     x.gap$bl.end = -1
     
+    if(max(x.gap$V2) > 7311334) stop('max-31')
     
     # Combine new core skeleton and new gaps
     comb.names = intersect(colnames(x.sk), colnames(x.gap))
@@ -390,6 +391,8 @@ loop.function <- function(f.maj, echo = T){
         idx.remain = c(idx.remain, x.tmp$idx[idx.visit])
       }
     }
+    
+    if(max(x.gap$V2) > 7311334) stop('max-32')
     
     if(length(idx.remain) != 0){
       x.bw = x.gap[abs(idx.remain),]
