@@ -450,7 +450,9 @@ loop.function <- function(f.blast, echo = T){
       # Standard naming (as before)
       pref.q = paste(pref.comarisson,
                      'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
-      
+      pokaz('pos.gap.q', pos.gap.q)
+      pokaz('p.beg', p.beg)
+      pokaz('p.end', p.end)
       if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks')
       
       if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
