@@ -38,53 +38,66 @@ catch() {
 source utils/utils_bash.sh
 
 
-
+# Function to display help message
 print_usage() {
     pokaz_help
 
     cat << EOF
-Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] 
-                [-path_out OUTPUT_FOLDER] [-path_in INPUT_FOLDER] [-ref_set REF_NAMES] 
+Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] [-echo]
+                [-path_in INPUT_FOLDER] [-path_out OUTPUT_FOLDER]
+                [-refs REF_NAME] 
                 [-nchr_ref N_CHR_REF] [-nchr_query N_CHR_QUERY] 
-                [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
-                [-sort_len] [-one2one] [-accessions ACC_ANAL] 
+                [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] 
+                [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
+                [-sort_len] [-one2one] [-accessions ACC_FILE] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
                 
 This script performs alignment of query genomes to the reference genome.
 
 Options:
     -h, --help                  Display this help message and exit.
-    -s, -stage STAGE            Specify the stage from which to run. If not provided, the last interrupted stage will be re-run.
+    -s, -stage STAGE            Specify the stage from which to run: a number from 1 to 12.
+                                If not provided, the last interrupted stage will be re-run.
     -cores CORES                Number of cores for parallel processing. Default is 1.
+    -echo                       Set up this flag to see the progress when number of cores is 1.
 
-    # Required parameters:
-    -path_out OUTPUT_FOLDER     Folder where all results and intermediate files will appear.
-    -path_in INPUT_FOLDER       Folder to the directory with query genomes. Possible file types: fasta, fna, fa, fas.
-    -ref_set REF_NAMES          Names of the reference genomes.
+        
+    * Required parameters:
+        -refs REF_NAMES          Names of the reference genomes.
+                                    Names should NOT contain "_chr" as a substring.
+        -path_in INPUT_FOLDER       Folder to the directory with query genomes. 
+                                    Possible file types: fasta, fna, fa, fas.
+        -path_out OUTPUT_FOLDER     Folder where all results and intermediate files will appear.
+        
+        
 
-    # Numbers of chromosomes:
-    -nchr_ref N_CHR_REF         Number of chromosomes in the reference genome.
-    -nchr_query N_CHR_QUERY     Number of chromosomes in the query genome.
+    * Numbers of chromosomes:
+        -nchr_ref N_CHR_REF         Number of chromosomes in the reference genome.
+        -nchr_query N_CHR_QUERY     Number of chromosomes in the query genome.
 
-    # Optional paths:
-    -path_ref PATH_CHR_REF      Path where the reference genome is stored. Do not provide if it's the same folder as the path with query genomes.
-    -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
-    -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
-    -path_cons PATH_CONSENSUS   Path to the consensus folder.
+    * Optional paths:
+        -path_ref PATH_CHR_REF      Path where the reference genome is stored. 
+                                    Do not provide if it's the same folder as the path with query genomes.
+        -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
+        -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
+        -path_cons PATH_CONSENSUS   Path to the consensus folder.
 
-    # Optional Input Design Handling:
-    -sort_len                   Flag to sort chromosomes by length.
-    -one2one                    Flag for straightforward pairwise alignment of chromosomes, matching each chromosome sequentially with its corresponding one (NOT all vs all, as by default).
-    -accessions ACC_ANAL        File with accessions to analyze. Accessions should be in rows.
+    * Input Design Handling:
+        -sort_len                   Flag to sort chromosomes by length.
+        -one2one                    Flag for straightforward pairwise alignment of chromosomes,
+                                    matching each chromosome sequentially with its corresponding one 
+                                    (NOT all vs all, as by default).
+        -accessions ACC_FILE        File with accessions to analyze. Accessions should be in rows.
+        -combinations COMB_FILE     File with combinations to analyze.
 
-    # Optional Tuning parameters:
-    -p_ident P_IDENT            Percentage identity threshold (default: 85).
-    -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 5000).
-    -purge_repeats              Enable filtration of repeats (default: disabled).
+    * Tuning parameters: 
+        -p_ident P_IDENT            Percentage identity threshold (default: 85).
+        -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 5000).
+        -purge_repeats              Enable filtration of repeats (default: disabled).
 
     
 Examples:
-    ${0##*/} -path_out 'output_folder' -path_in 'input_genomes' -ref_set '0,10024' -nchr_query 5 -nchr_ref 5
+    ${0##*/} -ref '0,10024' -path_in 'input_genomes' -path_out 'output_folder' -nchr_query 5 -nchr_ref 5 -one2one
 
 EOF
 }
@@ -337,7 +350,7 @@ fi
 if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
     pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
-    
+
     Rscript pangen/comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
                       --path.mafft.in ${pref_mafftin} \
                       --path.mafft.out ${pref_mafft_out} \

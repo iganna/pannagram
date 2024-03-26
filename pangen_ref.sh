@@ -46,7 +46,7 @@ print_usage() {
 
     cat << EOF
 Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] [-echo]
-                [-path_out OUTPUT_FOLDER] [-path_in INPUT_FOLDER] [-ref REF_NAME] 
+                [-ref REF_NAME] [-path_in INPUT_FOLDER] [-path_out OUTPUT_FOLDER] 
                 [-nchr_ref N_CHR_REF] [-nchr_query N_CHR_QUERY] 
                 [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] 
                 [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
