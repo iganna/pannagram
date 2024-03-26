@@ -126,24 +126,20 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;                     
     -refs)
-        # Get the value of the ref_set parameter
         ref_set="$2"
         shift 2
         ;;
     -path_out)
-        # Get the value of the pref_global parameter
         pref_global="$2"
         additional_params+=" $1 $2"
         shift 2
         ;;
     -cores)
-        # Get the value of the pref_global parameter
         cores="$2"
         additional_params+=" $1 $2"
         shift 2
         ;;
     -path_cons)
-        # Get the value of the pref_global parameter
         path_consensus="$2"
         additional_params+=" $1 $2"
         shift 2
