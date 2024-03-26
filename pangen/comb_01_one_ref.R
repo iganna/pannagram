@@ -144,9 +144,12 @@ max.len.gap = 20000
 
 loop.function <- function(i.chr.pair, echo = T){
   
-  if(echo) pokaz('Combination', i.chr.pair)
+  
   query.chr = chromosome.pairs[i.chr.pair, 1]
   base.chr = chromosome.pairs[i.chr.pair, 2]
+  
+  
+  if(echo) pokaz('Combination', query.chr, base.chr)
   
   base.len = chr.len[base.chr]
   
