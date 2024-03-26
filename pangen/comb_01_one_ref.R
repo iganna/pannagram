@@ -185,7 +185,11 @@ loop.function <- function(i.chr.pair, echo = T){
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
     
-    if(sum(duplicated(x.corr[x.corr != 0])) > 0) stop('DUPLICSTIONS')
+    tmp = x.corr[duplicated[x.corr]]
+    tmp = tmp[tmp != 0]
+    print(tmp)
+    
+    if(sum(duplicated(x.corr[x.corr != 0])) > 0) stop('DUPLICSTIONS', sum(duplicated(x.corr[x.corr != 0])))
     
     # Write into file
     suppressMessages({
