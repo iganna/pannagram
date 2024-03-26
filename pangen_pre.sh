@@ -43,7 +43,7 @@ print_usage() {
 
     cat << EOF
 Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] 
-                [-path_out OUTPUT_FOLDER] [-path_in INPUT_FOLDER] [-ref REF_NAME] 
+                [-ref REF_NAME] [-path_in INPUT_FOLDER] [-path_out OUTPUT_FOLDER] 
                 [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
                 [-sort_len] [-one2one] [-accessions ACC_ANAL] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
@@ -51,16 +51,15 @@ Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES]
 This script performs alignment of query genomes to the reference genome.
 
 Options:
-    -h, --help                  Display this help message and exit.
+    -h, -help                  Display this help message and exit.
     -s, -stage STAGE            Specify the stage from which to run. If not provided, the last interrupted stage will be re-run.
     -cores CORES                Number of cores for parallel processing. Default is 1.
 
     # Required parameters
-    -path_out OUTPUT_FOLDER     Folder where all results and intermediate files will appear.
-    -path_in INPUT_FOLDER       Folder to the directory with query genomes. Possible file types: fasta, fna, fa, fas
     -ref REF_NAME               Name of the reference genome: REF_NAME.fasta.
-
-
+    -path_in INPUT_FOLDER       Folder to the directory with query genomes. Possible file types: fasta, fna, fa, fas
+    -path_out OUTPUT_FOLDER     Folder where all results and intermediate files will appear.
+    
     # Optional paths
     -path_ref PATH_CHR_REF      Path where the reference genome is stored. Do not provide if it's the same folder as the path with query genomes.
     -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
@@ -79,7 +78,7 @@ Options:
 
     
 Examples:
-    ${0##*/} -path_out 'output_folder' -path_in 'input_genomes' -ref '0'
+    ${0##*/} -ref '0' -path_in 'input_genomes' -path_out 'output_folder'
 
 EOF
 }
@@ -96,7 +95,7 @@ unrecognized_options=()
 while [ $# -gt 0 ]
 do
     case $1 in
-        -h | --help ) print_usage; exit ;;
+        -h | -help ) print_usage; exit ;;
         -s | -stage ) start_step="$2"; shift ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
 
         -path_out) pref_global=$2; shift ;;  # path to the output
