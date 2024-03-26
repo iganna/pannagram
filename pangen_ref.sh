@@ -236,7 +236,7 @@ step_num=1
 # ----------------------------------------------
 # Split quiery fasta into chromosomes
 
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
     pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
@@ -250,7 +250,7 @@ fi
 
 # ----------------------------------------------
 # Split quiery chromosomes into parts
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
     pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
@@ -267,7 +267,7 @@ fi
 # Split reference fasta into chromosomes if additionally needed
 if [[ "${path_in}" != "$path_chr_ref" ]]; then
 
-    if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
         pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
         file_acc_ref=${path_chr_acc}ref_acc.txt
@@ -288,7 +288,7 @@ fi
 
 # ----------------------------------------------
 # Blast parts on the reference genome
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
 
@@ -312,7 +312,7 @@ fi
 
 # ----------------------------------------------
 # First round of alignments
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
@@ -331,7 +331,7 @@ fi
 
 # ----------------------------------------------
 # Blast regions between synteny blocks
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 
@@ -343,7 +343,7 @@ fi
 
 # ----------------------------------------------
 # Second round of alignments
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
@@ -366,7 +366,7 @@ fi
 
 # ----------------------------------------------
 # Creaete a consensus
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
