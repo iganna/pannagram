@@ -50,7 +50,7 @@ Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] [-echo]
                 [-nchr_ref N_CHR_REF] [-nchr_query N_CHR_QUERY] 
                 [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] 
                 [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
-                [-sort_len] [-one2one] [-accessions ACC_ANAL] 
+                [-sort_len] [-one2one] [-accessions ACC_FILE] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
                 
 This script performs alignment of query genomes to the reference genome.
@@ -88,7 +88,8 @@ Options:
         -one2one                    Flag for straightforward pairwise alignment of chromosomes,
                                     matching each chromosome sequentially with its corresponding one 
                                     (NOT all vs all, as by default).
-        -accessions ACC_ANAL        File with accessions to analyze. Accessions should be in rows.
+        -accessions ACC_FILE        File with accessions to analyze. Accessions should be in rows.
+        -combinations COMB_FILE     File with combinations to analyze.
 
     * Tuning parameters: 
         -p_ident P_IDENT            Percentage identity threshold (default: 85).
@@ -268,7 +269,8 @@ fi
 
 # ----------------------------------------------
 # Split reference fasta into chromosomes if additionally needed
-if [[ "${path_in}" != "$path_chr_ref" ]]; then
+
+if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
 
     if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
         pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
