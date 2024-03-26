@@ -146,6 +146,10 @@ loop.function <- function(f.maj, echo = T){
     x.gap$pref2 = sapply(x.gap$V10, function(s) strsplit(s, '_base')[[1]][1])
     x.gap = x.gap[x.gap$pref1 == x.gap$pref2,]
     pokaz('nrow', nrow(x.gap))
+    if(nrow(x.gap) == 0) x.gap = NULL
+  }  # KOLTYL
+  
+  if(!is.null(x.gap)){  # KOLTYL
     
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
