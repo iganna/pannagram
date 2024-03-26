@@ -134,8 +134,8 @@ do
 
         -part_len) part_len=$2; shift ;;  # fragments to which each chromosome should be cut, has a default value 5000
 
-        -sort_by_len) sort_chr_len="T"; shift ;;  # flag whether to sort chromosomes by length or not
-        -one2one) all_cmp="F"; shift ;;  # compare all to all or not
+        -sort_by_len) sort_chr_len="T" ;;  # flag whether to sort chromosomes by length or not
+        -one2one) all_cmp="F" ;;  # compare all to all or not
 
         -p_ident) p_ident=$2; shift ;;  # percent of identity
         -purge_repeats ) filter_rep=1 ;;  # filtration of repeats, default - not
