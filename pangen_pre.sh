@@ -254,6 +254,8 @@ if [[ "${path_in}" != "$path_chr_ref" ]]; then
 
         rm ${file_acc_ref}
 
+        touch "$path_flags/step${step_num}_done_${ref_pref}"
+
     fi
 
     ((step_num = step_num + 1))
