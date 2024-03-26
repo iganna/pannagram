@@ -142,6 +142,4 @@ export -f process_blast
 find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast {} $path_gaps $path_db
 
 
-pokaz_message "Done!"
-
-
+# pokaz_message "Done!"

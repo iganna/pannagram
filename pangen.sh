@@ -271,6 +271,7 @@ if [ $start_step -le 8 ] && [ ! -f "$path_flags/step8_done" ]; then
     done
 
     touch "$path_flags/step8_done"
+    pokaz_message "Done!"
 fi
 
 
@@ -280,6 +281,7 @@ if [ $start_step -le 9 ] && [ ! -f "$path_flags/step9_done" ]; then
     Rscript pangen/comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
     touch "$path_flags/step9_done"
+    pokaz_message "Done!"
 fi
 
 
@@ -295,6 +297,7 @@ if [ $start_step -le 10 ] && [ ! -f "$path_flags/step10_done" ]; then
                       --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
     touch "$path_flags/step10_done"
+    pokaz_message "Done!"
 fi
 
 
@@ -311,6 +314,7 @@ if [ $start_step -le 11 ] && [ ! -f "$path_flags/step11_done" ]; then
                       --path.mafft.out ${pref_mafft_out}
 
     touch "$path_flags/step11_done"
+    pokaz_message "Done!"
 fi
 
 
@@ -323,6 +327,7 @@ if [ $start_step -le 12 ] && [ ! -f "$path_flags/step12_done" ]; then
                       --path.cons ${path_consensus} 
 
     touch "$path_flags/step12_done"
+    pokaz_message "Done!"
 fi
 
 

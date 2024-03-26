@@ -262,6 +262,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
     --path.in ${path_in} --path.out ${path_chr_acc} --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}
     
     touch "$path_flags/step${step_num}_done"
+    pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))
@@ -275,7 +276,9 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
     Rscript pangen/query_02_to_parts.R --n.chr ${n_chr_query}  --path.chr  ${path_chr_acc}  \
     --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
     --filter_rep ${filter_rep}
+
     touch "$path_flags/step${step_num}_done"
+    pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))
@@ -298,7 +301,7 @@ if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
         rm ${file_acc_ref}
 
         touch "$path_flags/step${step_num}_done_${ref_pref}"
-
+        pokaz_message "Done!"
     fi
 
     ((step_num = step_num + 1))
@@ -325,6 +328,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
      -ref_pref ${ref_pref} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
+    pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))
@@ -341,6 +345,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
                         --cores ${cores}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
+    pokaz_message "Done!"
 
     # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
     # rm -rf ${path_blast_parts}
@@ -356,6 +361,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
 
     ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
     touch "$path_flags/step${step_num}_done_${ref_pref}"
+    pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))
@@ -377,6 +383,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
     # rm -rf ${path_alignment}*maj*
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
+    pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))
@@ -393,6 +400,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
     --pref ${ref_pref}  --cores ${cores} --path.chr ${path_chr_acc}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
+    pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))

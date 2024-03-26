@@ -138,4 +138,4 @@ pokaz_message "Reference genome ${ref_pref}"
 
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_ref${ref_pref}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
-pokaz_message "Done!"
+# pokaz_message "Done!"
