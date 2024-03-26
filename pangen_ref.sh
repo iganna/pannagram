@@ -56,7 +56,7 @@ Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] [-echo]
 This script performs alignment of query genomes to the reference genome.
 
 Options:
-    -h, --help                  Display this help message and exit.
+    -h, -help                  Display this help message and exit.
     -s, -stage STAGE            Specify the stage from which to run: a number from 1 to 12.
                                 If not provided, the last interrupted stage will be re-run.
     -cores CORES                Number of cores for parallel processing. Default is 1.
@@ -113,7 +113,7 @@ unrecognized_options=()
 while [ $# -gt 0 ]
 do
     case $1 in
-        -h | --help ) print_usage; exit ;;
+        -h | -help ) print_usage; exit ;;
         -s | -stage ) start_step="$2"; shift ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -echo ) echo_flag="T" ;;  # filtration of repeats, default - not
 
