@@ -7,7 +7,7 @@ library("optparse")
 source('utils/utils.R')
 })
 
-pokazStage('Step 12. Combine all alignments together into the final one')
+# pokazStage('Step 12. Combine all alignments together into the final one')
 
 # ***********************************************************************
 # ---- Command line arguments ----

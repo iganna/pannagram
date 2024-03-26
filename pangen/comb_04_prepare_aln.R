@@ -13,7 +13,7 @@ suppressMessages({
 source("utils/utils.R")
 # source("synteny_funcs.R")
 
-pokazStage('Step 10. Prepare sequences for MAFFT')
+# pokazStage('Step 10. Prepare sequences for MAFFT')
 
 # ***********************************************************************
 # ---- Command line arguments ----

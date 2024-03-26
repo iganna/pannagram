@@ -67,7 +67,7 @@ if (is.null(opt$ref1)) {
 
 # ***********************************************************************
 # ---- Stage ----
-pokazStage('Step 8. Randomisation of alignments. Combine two references:', ref0, 'and', ref1)
+# pokazStage('Step 8. Randomisation of alignments. Combine two references:', ref0, 'and', ref1)
 
 
 # ***********************************************************************

@@ -11,7 +11,7 @@ suppressMessages({
 source("utils/utils.R")
 # source("pangen/synteny_funcs.R")
 
-pokazStage('Step 9. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment')
+# pokazStage('Step 9. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment')
 
 # ***********************************************************************
 # ---- Command line arguments ----

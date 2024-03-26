@@ -254,82 +254,100 @@ done
 #             COMMON CONSENSUS
 # ----------------------------------------------------------------------------
 
+step_num=9
 
+# ----------------------------------------------
 # Run consensus for a pair of files
 ref0=${refs_all[0]}
 
-if [ $start_step -le 8 ] && [ ! -f "$path_flags/step8_done" ]; then
-    
-    # ref0=${ref0//_/$'-'}
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+
     for ((i = 1; i < ${#refs_all[@]}; i++)); do
         ref1=${refs_all[i]}
 
+        pokaz_stage "Step ${step_num}. Randomisation of alignments. Combine two references: ${ref0} and ${ref1}."
         # ref1=${ref1//_/$'-'}
         
         Rscript pangen/comb_02_two_refs.R --path.cons ${path_consensus} --ref0 ${ref0} --ref1 ${ref1} --cores ${cores}
 
     done
 
-    touch "$path_flags/step8_done"
+    touch "$path_flags/step${step_num}_done"
     pokaz_message "Done!"
 fi
 
+((step_num = step_num + 1))
 
+# ----------------------------------------------
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-if [ $start_step -le 9 ] && [ ! -f "$path_flags/step9_done" ]; then
+    pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
 
     Rscript pangen/comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
-    touch "$path_flags/step9_done"
+    touch "$path_flags/step${step_num}_done"
     pokaz_message "Done!"
 fi
 
+((step_num = step_num + 1))
 
+# ----------------------------------------------
 # Create sequences to run MAFFT and perform some small alignments
 pref_mafftin="${pref_global}mafft_in/"
 if [ ! -d "$pref_mafftin" ]; then
     mkdir -p "$pref_mafftin"
 fi
 
-if [ $start_step -le 10 ] && [ ! -f "$path_flags/step10_done" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+
+    pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
 
     Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
                       --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
-    touch "$path_flags/step10_done"
+    touch "$path_flags/step${step_num}_done"
     pokaz_message "Done!"
 fi
 
+((step_num = step_num + 1))
 
+# ----------------------------------------------
 # Run MAFFT
 pref_mafft_out="${pref_global}mafft_out/"
 if [ ! -d "$pref_mafft_out" ]; then
     mkdir -p "$pref_mafft_out"
 fi
 
-if [ $start_step -le 11 ] && [ ! -f "$path_flags/step11_done" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+
+    pokaz_stage "Step ${step_num}. Run MAFFT."
 
     ./pangen/comb_05_run_mafft.sh  --cores ${cores} \
                       --path.mafft.in ${pref_mafftin} \
                       --path.mafft.out ${pref_mafft_out}
 
-    touch "$path_flags/step11_done"
+    touch "$path_flags/step${step_num}_done"
     pokaz_message "Done!"
 fi
 
+((step_num = step_num + 1))
 
+# ----------------------------------------------
 # Combine all together
-if [ $start_step -le 12 ] && [ ! -f "$path_flags/step12_done" ]; then
+if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
+    pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
+    
     Rscript pangen/comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
                       --path.mafft.in ${pref_mafftin} \
                       --path.mafft.out ${pref_mafft_out} \
                       --path.cons ${path_consensus} 
 
-    touch "$path_flags/step12_done"
+    touch "$path_flags/step${step_num}_done"
     pokaz_message "Done!"
 fi
 
+((step_num = step_num + 1))
 
 # if [ $start_step -eq 0 ]; then
 #     rm -f "$FLAG_DIR"/.*
