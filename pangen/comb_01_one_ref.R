@@ -105,7 +105,7 @@ pokaz('Combinations:', paste(chromosome.pairs[,1], chromosome.pairs[,2], sep = '
 # ---- Length of reference chromosomes ----
 
 file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
-# pokaz('File with chromosomal lengths', file.chr.len)
+pokaz('File with chromosomal lengths', file.chr.len)
 if(!file.exists(file.chr.len)){
   chr.len = c()
   
@@ -131,7 +131,7 @@ if(!file.exists(file.chr.len)){
   chr.len = readRDS(file.chr.len)
 }
 
-# pokaz('Chromosomal lengths', chr.len)
+pokaz('Chromosomal lengths', chr.len)
 
 # ----  Combine correspondence  ----
 

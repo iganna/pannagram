@@ -147,18 +147,25 @@ loop.function <- function(f.maj, echo = T){
     x.gap = x.gap[x.gap$pref1 == x.gap$pref2,]
     pokaz('nrow', nrow(x.gap))
     if(nrow(x.gap) == 0) x.gap = NULL
-  }  # KOLTYL
+  }  # KOSTYL
   
-  if(!is.null(x.gap)){  # KOLTYL
+  if(!is.null(x.gap)){  # KOSTYL
     
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    
+    x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1])) - 1
+    x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1])) - 1
+    
     x.gap$V2 = x.gap$V2 + x.gap$q.beg
     x.gap$V3 = x.gap$V3 + x.gap$q.beg
     x.gap$V4 = x.gap$V4 + x.gap$b.beg
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
     x.gap$idx = 1:nrow(x.gap)
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    
+    if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
+    if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('query')
     
     cnt = table(x.gap$pref1)
     
