@@ -77,13 +77,13 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
 # ***********************************************************************
 # ---- Sort chromosomal lengths ----
 
-if(!sort.by.lengths){
-  msg = 'If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
-  pokazAttention(msg)
-} else {
-  msg = 'Chromosomes will be sorted by their length'
-  pokazAttention(msg)
-}
+# if(!sort.by.lengths){
+#   msg = 'If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
+#   pokazAttention(msg)
+# } else {
+#   msg = 'Chromosomes will be sorted by their length'
+#   pokazAttention(msg)
+# }
 
 # ***********************************************************************
 # ---- Preparation ----

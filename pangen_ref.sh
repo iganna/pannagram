@@ -239,6 +239,14 @@ fi
 
 # Attention: If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order
 
+# if(!sort.by.lengths){
+#   msg = 'If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
+#   pokazAttention(msg)
+# } else {
+#   msg = 'Chromosomes will be sorted by their length'
+#   pokazAttention(msg)
+# }
+
 
 # ----------------------------------------------------------------------------
 #           MAIN PIPELINE
@@ -316,7 +324,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
 
     # Blast parts on the reference genome
     ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_acc} -path_parts ${path_parts} -path_result ${path_blast_parts} \
-     -ref_pref ${ref_pref}_chr -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+     -ref_pref ${ref_pref} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
