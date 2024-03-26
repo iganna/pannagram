@@ -171,11 +171,13 @@ loop.function <- function(i.chr.pair, echo = T){
   
   for(acc in accessions){
     
-    # pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
+    if(echo) pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
     if(!file.exists(file.aln.full)) next
+    
+    if(echo) pokaz('Alignment file:', file.aln.full)
     
     # Reading the alignment
     x = readRDS(file.aln.full)
