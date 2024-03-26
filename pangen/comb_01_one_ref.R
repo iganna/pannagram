@@ -32,12 +32,6 @@ option_list = list(
               help="path to the output directory with alignments", metavar="character"),
   make_option(c("--pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
-  make_option(c("--n.chr.ref"), type="character", default=NULL, 
-              help="number of chromosomes in the reference genome", metavar="character"),
-  make_option(c("--n.chr.acc"), type="character", default=NULL, 
-              help="number of chromosomes in the accessions", metavar="character"),
-  make_option(c("--all.vs.all"), type="character", default=NULL, 
-              help="alignment of all chromosomes vs all or not: T/F", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.chr"), type="character", default=NULL, 
@@ -75,11 +69,6 @@ if (!is.null(opt$pref)) base.acc.ref <- opt$pref
 
 # Path with alignments
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
-
-# To create combinations
-if (!is.null(opt$n.chr.ref)) n.chr.ref <- as.numeric(opt$n.chr.ref)
-if (!is.null(opt$n.chr.acc)) n.chr.acc <- as.numeric(opt$n.chr.acc)
-if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
 # ***********************************************************************
 
@@ -119,6 +108,13 @@ file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
 # pokaz('File with chromosomal lengths', file.chr.len)
 if(!file.exists(file.chr.len)){
   chr.len = c()
+  
+  # Define the number of chromosomes in the reference genome by the number of files in the folder, 
+  # which match the reference genome name.
+  pattern <- paste0("^", base.acc.ref, "_chr(\\d+)\\.fasta$")
+  files.ref.chr <- list.files(path = path.chr, pattern = pattern)
+  n.chr.ref = length(files.ref.chr)
+  
   for(i.chr in 1:n.chr.ref){
     acc = base.acc.ref
     # print(c(i.chr, acc))

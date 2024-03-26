@@ -374,7 +374,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
     pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
     Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
-    --pref ${ref_pref}  --cores ${cores} --path.chr 
+    --pref ${ref_pref}  --cores ${cores} --path.chr ${path_chr_acc}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
