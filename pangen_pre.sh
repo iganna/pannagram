@@ -212,7 +212,7 @@ step_num=1
 # ----------------------------------------------
 # Split query fasta into chromosomes
 
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
     pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
@@ -227,7 +227,7 @@ fi
 
 # ----------------------------------------------
 # Split query chromosomes into parts
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
     pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
@@ -243,7 +243,7 @@ fi
 # ----------------------------------------------
 # Split reference fasta into chromosomes if additionally needed
 if [[ "${path_in}" != "$path_chr_ref" ]]; then
-    if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
         pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
         file_acc_ref=${path_chr_acc}ref_acc.txt
@@ -263,7 +263,7 @@ fi
 # Blast parts on the reference genome
 
 # Blast parts on the reference genome
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
 
@@ -289,7 +289,7 @@ fi
 
 # ----------------------------------------------
 # First round of alignments
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
     pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
