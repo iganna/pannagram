@@ -294,8 +294,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
     pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
         Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-                        --pref ${ref_pref} --path.ref  ${path_chr_ref}  \
-                        --path.gaps  ${path_gaps} --path.query ${path_chr_acc} \
+                        --ref ${ref_pref} \
+                        --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
                         --cores ${cores}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
