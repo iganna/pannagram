@@ -175,7 +175,7 @@ check_missing_variable "n_chr_query"
 
 # Basic parameters
 
-start_step="${start_step:-1}"  # Starting step
+start_step="${start_step:-100}"  # Starting step
 cores="${cores:-1}"  # Number of cores
 p_ident="${p_ident:-85}"  
 part_len="${part_len:-5000}"  
