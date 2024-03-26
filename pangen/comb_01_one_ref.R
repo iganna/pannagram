@@ -182,6 +182,9 @@ loop.function <- function(i.chr.pair, echo = T){
     # Reading the alignment
     x = readRDS(file.aln.full)
     
+    print(base.len)
+    saveRDS(x, 'tmp.rds')
+    
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
     
