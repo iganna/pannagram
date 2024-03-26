@@ -243,7 +243,7 @@ loop.function <- function(f.maj, echo = T){
   file.gaps.out = paste0(path.gaps,
                          'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
-  pokaz('File gap', file.gaps.out)
+  pokaz('File gap 2', file.gaps.out)
   if(file.exists(file.gaps.out)){
     # Read blast results on "between blocks"
     pokaz('Read blast of "bad" gaps..')
