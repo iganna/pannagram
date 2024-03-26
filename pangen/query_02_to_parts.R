@@ -94,7 +94,7 @@ loop.function <- function(i.comb, echo = T){
   if( file.exists(file.out)) {
     return(NULL)
   }
-  
+  pokaz('File', file.in)
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
   
