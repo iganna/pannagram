@@ -185,7 +185,7 @@ loop.function <- function(i.chr.pair, echo = T){
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
     
-    tmp = x.corr[duplicated[x.corr]]
+    tmp = x.corr[duplicated(x.corr)]
     tmp = tmp[tmp != 0]
     print(tmp)
     
