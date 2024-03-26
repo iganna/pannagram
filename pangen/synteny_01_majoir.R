@@ -441,7 +441,7 @@ loop.function <- function(f.blast, echo = T){
       if(len.s.q > n.bl){
         p.beg = seq(1, len.s.q, n.bl)
         p.end = seq(n.bl, len.s.q, n.bl)
-        if(p.end[length(p.end)] != p.end) p.end = c(p.end, len.s.q)
+        if(p.end[length(p.end)] != len.s.q) p.end = c(p.end, len.s.q)
         if(length(p.end) != length(p.beg)) stop('Wrong lengths of p.beg and p.end')
       } else {
         p.beg = 1
@@ -452,7 +452,9 @@ loop.function <- function(f.blast, echo = T){
       # Standard naming (as before)
       pref.q = paste(pref.comarisson,
                      'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
-
+      pokaz('pos.gap.q', pos.gap.q)
+      pokaz('p.beg', p.beg)
+      pokaz('p.end', p.end)
       if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks')
       
       if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
