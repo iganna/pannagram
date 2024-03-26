@@ -64,7 +64,7 @@ path.chr.len = ifelse(!is.null(opt$path.chr.len), opt$path.chr.len, 'chr_len/')
 path.chr.len = paste(path.cons, path.chr.len, sep = '')
 if(!dir.exists(path.chr.len)) system(paste('mkdir ', path.chr.len, sep = ''))
 
-if (!is.null(opt$path.ref)) path.chr <- opt$path.chr  # to know the chromosomal lengths
+if (!is.null(opt$path.chr)) path.chr <- opt$path.chr  # to know the chromosomal lengths
 if (!is.null(opt$pref)) base.acc.ref <- opt$pref
 
 # Path with alignments
