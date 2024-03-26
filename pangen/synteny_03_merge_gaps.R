@@ -165,7 +165,7 @@ loop.function <- function(f.maj, echo = T){
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
     if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
-    if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('query')
+    if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
     
     cnt = table(x.gap$pref1)
     

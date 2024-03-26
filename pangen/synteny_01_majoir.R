@@ -451,6 +451,8 @@ loop.function <- function(f.blast, echo = T){
       pref.q = paste(pref.comarisson,
                      'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
       
+      if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks')
+      
       if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
       names(s.q) = pref.q
       writeFastaMy(s.q, file.gap.query, append = T)
