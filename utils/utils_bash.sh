@@ -2,7 +2,7 @@
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-# Function to add a symbol to the end of a string if it's missing
+# Add a symbol to the end of a string if it's missing
 add_symbol_if_missing() {
     local input_string="$1"  # Receive the string as an argument
     local symbol="$2"       # Receive the symbol to add
@@ -19,7 +19,7 @@ add_symbol_if_missing() {
 }
 
 
-# Function to remove a file if it exists
+# Remove a file if it exists
 remove_file_if_exists() {
     local file="$1"
     if [ -f "${file}" ]; then
@@ -27,7 +27,8 @@ remove_file_if_exists() {
     fi
 }
 
-# Function to check if a variable is set
+
+# Check if a variable is set
 check_missing_variable() {
     local var_name="$1"  # Name of the variable to check
 
@@ -38,14 +39,24 @@ check_missing_variable() {
     fi
 }
 
-# Function to display a stage message
+
+# Display a stage message
 pokaz_stage() {
     local text="$1"
     local color_code="38;2;52;252;252"  
     echo -e "\e[${color_code}m* ${text}\e[0m"
 }
 
-# Function to display a stage message
+
+# Display an attention message
+pokaz_attention() {
+    local text="$1"
+    local color_code="38;2;52;252;252"  
+    echo -e "\e[${color_code}m* ${text}\e[0m"
+}
+
+
+# Display a stage message
 pokaz_message() {
     local text="$1"
     local color_code="38;5;195"  # Very light blue color code
@@ -53,6 +64,7 @@ pokaz_message() {
 }
 
 
+# Display the help message
 pokaz_help() {
     pokaz_message "< Welcome to Hellp >"
 }

@@ -112,7 +112,7 @@ while [[ $# -gt 0 ]]; do
         additional_params+=" $1 $2"
         shift 2
         ;;                     
-    -ref_set)
+    -refs)
         # Get the value of the ref_set parameter
         ref_set="$2"
         shift 2
