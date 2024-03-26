@@ -32,7 +32,7 @@ option_list <- list(
   make_option(c("--ref"), type="character", default=NULL, 
               help="name of the reference genome", metavar="character"),
   make_option(c("--path.gaps"), type="character", default=NULL, 
-              help="prefix of the directory with gaps", metavar="character"),
+              help="path tothe directory with gaps", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
 )

@@ -104,9 +104,9 @@ query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name
 # Optional: Filter based on a list of accession numbers, if provided
 if(!is.null(acc.anal)){
   acc.anal = gsub("(\\.[^.]+)$", "", basename(acc.anal))
-  pokaz('Accessions in the folder', query.name)
-  pokaz('Accessions in the filtration file', acc.anal)
-  query.name = query.name[query.name$acc %in% acc.anal]
+  # pokaz('Accessions in the folder', query.name)
+  # pokaz('Accessions in the filtration file', acc.anal)
+  query.name = query.name[query.name$acc %in% acc.anal,,drop=F]
 }
 
 # Final check and display of genome names for analysis
