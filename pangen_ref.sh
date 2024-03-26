@@ -267,7 +267,7 @@ fi
 # Split reference fasta into chromosomes if additionally needed
 if [[ "${path_in}" != "$path_chr_ref" ]]; then
 
-    if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+    if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
         pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
         file_acc_ref=${path_chr_acc}ref_acc.txt
@@ -278,14 +278,13 @@ if [[ "${path_in}" != "$path_chr_ref" ]]; then
 
         rm ${file_acc_ref}
 
-    fi
+        touch "$path_flags/step${step_num}_done_${ref_pref}"
 
+    fi
 
     ((step_num = step_num + 1))
 
 fi
-
-
 
 # ----------------------------------------------
 # Blast parts on the reference genome
