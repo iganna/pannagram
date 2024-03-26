@@ -169,6 +169,8 @@ loop.function <- function(f.maj, echo = T){
     pokaz(which(x.gap$V5 > x.gap$b.end))
     if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
     
+    if(max(x.gap$V2) > 7311334) stop('max-0')
+    
     cnt = table(x.gap$pref1)
     
     idx.good = c()
@@ -186,6 +188,8 @@ loop.function <- function(f.maj, echo = T){
       
       # Add two extra "nodes", for the begin and end
       x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx')]
+      
+      if(max(x.tmp$V2) > 7311334) stop('max-1')
       
       if(nrow(x.tmp) > complexity.threshold) next
       
@@ -221,6 +225,8 @@ loop.function <- function(f.maj, echo = T){
     x.res = x.gap[idx.good,]
     rmSafe(x.gap)
     
+    if(max(x.res$V2) > 7311334) stop('max-2')
+    
     # Clean overlaps from both (base and query) sides
     x.res = cleanOverlaps(x.res)
     
@@ -229,6 +235,8 @@ loop.function <- function(f.maj, echo = T){
     x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
                                dimnames = list(NULL, colnames(x.sk))))
   }
+  
+  
   
   # ---- Read additional alignments ----
   
@@ -401,6 +409,11 @@ loop.function <- function(f.maj, echo = T){
     
   }
   
+  if(max(x.bw$V2) > 7311334) stop('max-3')
+  if(max(x.sk$V2) > 7311334) stop('max-4')
+  if(max(x.res$V2) > 7311334) stop('max-5')
+  
+  
   
   # ---- Combine all together ----
   
@@ -423,6 +436,7 @@ loop.function <- function(f.maj, echo = T){
   sum(pos.q.occup > 1)
   sum(pos.q.occup)
   
+  if(max(x.comb$V2) > 7311334) stop('max-6')
   
   # ---- Check genomes ---- 
   # x.dir = setDir(x.comb, base.len = base.len)
