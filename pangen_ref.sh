@@ -45,7 +45,7 @@ print_usage() {
     pokaz_help
 
     cat << EOF
-Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] 
+Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] [-echo]
                 [-path_out OUTPUT_FOLDER] [-path_in INPUT_FOLDER] [-ref REF_NAME] 
                 [-nchr_ref N_CHR_REF] [-nchr_query N_CHR_QUERY] 
                 [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] 
@@ -60,6 +60,7 @@ Options:
     -s, -stage STAGE            Specify the stage from which to run: a number from 1 to 12.
                                 If not provided, the last interrupted stage will be re-run.
     -cores CORES                Number of cores for parallel processing. Default is 1.
+    -echo                       Set up this flag to see the progress when number of cores is 1.
 
         
     * Required parameters:
@@ -115,6 +116,7 @@ do
     case $1 in
         -h | --help ) print_usage; exit ;;
         -s | -stage ) start_step="$2"; shift ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
+        -echo ) echo_flag="T" ;;  # filtration of repeats, default - not
 
         -path_out) pref_global=$2; shift ;;  # path to the output
         -path_in) path_in=$2; shift ;;  # path with all genomes in fasta format
@@ -182,6 +184,7 @@ part_len="${part_len:-5000}"
 all_cmp="${all_cmp:-T}"
 sort_chr_len="${sort_chr_len:-F}"
 filter_rep="${filter_rep:-0}"
+echo_flag="${echo_flag:-T}"  
 
 
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
