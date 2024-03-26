@@ -164,12 +164,8 @@ loop.function <- function(f.maj, echo = T){
     x.gap$idx = 1:nrow(x.gap)
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
-    pokaz(which(x.gap$V3 > x.gap$q.end))
     if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
-    pokaz(which(x.gap$V5 > x.gap$b.end))
     if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
-    
-    if(max(x.gap$V2) > 7311334) stop('max-0')
     
     cnt = table(x.gap$pref1)
     
@@ -188,8 +184,6 @@ loop.function <- function(f.maj, echo = T){
       
       # Add two extra "nodes", for the begin and end
       x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx')]
-      
-      if(max(x.tmp$V2) > 7311334) stop('max-1')
       
       if(nrow(x.tmp) > complexity.threshold) next
       
@@ -225,8 +219,6 @@ loop.function <- function(f.maj, echo = T){
     x.res = x.gap[idx.good,]
     rmSafe(x.gap)
     
-    if(max(x.res$V2) > 7311334) stop('max-2')
-    
     # Clean overlaps from both (base and query) sides
     x.res = cleanOverlaps(x.res)
     
@@ -243,11 +235,10 @@ loop.function <- function(f.maj, echo = T){
   file.gaps.out = paste0(path.gaps,
                          'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
-  pokaz('File gap 2', file.gaps.out)
   x.gap = NULL
   if(file.exists(file.gaps.out)){
     # Read blast results on "between blocks"
-    pokaz('Read blast of "bad" gaps..')
+    pokaz('Read blast of "bad" gaps..', file.gaps.out)
     x.gap = readTableMy(file.gaps.out)    
   }
 
@@ -277,8 +268,6 @@ loop.function <- function(f.maj, echo = T){
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1  # BUT DON'T change the order of V4 and V5
     x.gap$bl.beg = -1
     x.gap$bl.end = -1
-    
-    if(max(x.gap$V2) > 7311334) stop('max-31')
     
     # Combine new core skeleton and new gaps
     comb.names = intersect(colnames(x.sk), colnames(x.gap))
@@ -393,8 +382,6 @@ loop.function <- function(f.maj, echo = T){
       }
     }
     
-    if(max(x.gap$V2) > 7311334) stop('max-32')
-    
     if(length(idx.remain) != 0){
       x.bw = x.gap[abs(idx.remain),]
       # Clean overlaps from both base and query sides
@@ -412,12 +399,6 @@ loop.function <- function(f.maj, echo = T){
                               dimnames = list(NULL, colnames(x.sk))))
     
   }
-  
-  if(max(x.bw$V2) > 7311334) stop('max-3')
-  if(max(x.sk$V2) > 7311334) stop('max-4')
-  if(max(x.res$V2) > 7311334) stop('max-5')
-  
-  
   
   # ---- Combine all together ----
   
@@ -439,8 +420,6 @@ loop.function <- function(f.maj, echo = T){
   }
   sum(pos.q.occup > 1)
   sum(pos.q.occup)
-  
-  if(max(x.comb$V2) > 7311334) stop('max-6')
   
   # ---- Check genomes ---- 
   # x.dir = setDir(x.comb, base.len = base.len)
