@@ -7,6 +7,16 @@
 
 Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
 
+
+## Recreating working environment
+
+Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
+```sh
+conda env create -f pannagram_conda_env.yml
+conda activate pannagram_conda_env
+```
+
+
 ## Multiple genome alignment
 
 Multiple genome alignment can be performed on a single reference genome or using multiple references to create a reference-free alignment. These modes are implemented in `pangen_ref.sh` and `pangen_consensus.sh`, respectively.
