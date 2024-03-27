@@ -1,8 +1,3 @@
-#tair="../ref/"
-#parts="../parts/"
-#blastres="../blast_res_tair/"
-#ref_pref="TAIR10_chr"
-
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
@@ -53,7 +48,7 @@ while [ $# -gt 0 ]
 do
     case $1 in
     # for options with required arguments, an additional shift is required
-    -path_ref) tair=$2; shift ;;
+    -path_ref) path_ref=$2; shift ;;
     -path_parts) parts=$2; shift ;;
     -path_result) blastres=$2; shift ;;
     -ref_pref) ref_pref=$2; shift ;;
@@ -74,7 +69,7 @@ done
 #                 MAIN
 # ----------------------------------------------------------------------------
 
-pokaz_stage "Step 3. BLAST of parts against the reference genome"
+# pokaz_stage "Step 3. BLAST of parts against the reference genome"
 pokaz_message "NOTE: if this stage takes relatively long, use -filter_rep -s 2 to mask highly repetative regions"
 
 # -penalty -2 -gapopen 10 -gapextend 2 -max_hsps 5
@@ -141,6 +136,6 @@ export -f run_blast
 pokaz_message "Reference genome ${ref_pref}"
 
 
-parallel -j $cores run_blast ::: ${parts}*.fasta ::: $tair${ref_pref}*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
+parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_ref${ref_pref}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
-pokaz_message "Done!"
+# pokaz_message "Done!"

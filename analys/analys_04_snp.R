@@ -7,6 +7,7 @@ suppressMessages({ library(Biostrings)
 })
 
 source("utils/utils.R")
+source("analys/analys_func.R")
 
 pokazStage('Create and Alignment in Pangenome coordinates')
 
@@ -105,6 +106,7 @@ for(s.comb in pref.combinations){
   pos = sort(unique(pos.diff))
   
   snp.matrix = s.pangen[pos]
+  snp.val = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
@@ -113,9 +115,12 @@ for(s.comb in pref.combinations){
     tmp[v[pos] == '-'] = -1
     snp.matrix = cbind(snp.matrix, tmp)
     
+    snp.val = cbind(snp.val, v[pos])
+    
     rmSafe(v)
     gc()
   }
+  colnames(snp.val) = accessions
   
   print(dim(snp.matrix))
   print(length(c(s.pangen.name, accessions)))
@@ -124,6 +129,13 @@ for(s.comb in pref.combinations){
 
   file.snps = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt', sep = '')
   write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
+  
+  
+  #Save VCF-file
+  
+  file.vcf = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.vcf', sep = '')
+  saveVCF(snp.val, pos, chr.name=paste('PanGen_Chr', i.chr, sep = ''), file.vcf = file.vcf)
+  
   
 }
 

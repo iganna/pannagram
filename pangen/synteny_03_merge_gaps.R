@@ -1,10 +1,6 @@
 suppressMessages({
-  library(Biostrings)
-  library(seqinr)
-  #library(spgs)  # reverseComplement("actg")
   library(foreach)
   library(doParallel)
-  library(stringr)
   library(optparse)
   library(crayon)
 })
@@ -13,33 +9,25 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
+# pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 
 # ***********************************************************************
 # ---- Command line arguments ----
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("-q", "--path.query"), type="character", default=NULL, 
+option_list <- list(
+  make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("-o", "--path.aln"), type="character", default=NULL, 
+  make_option(c("--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("-p", "--pref"), type="character", default=NULL, 
+  make_option(c("--ref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
-  make_option(c("-g", "--path.gaps"), type="character", default=NULL, 
+  make_option(c("--path.gaps"), type="character", default=NULL, 
               help="prefix of the directory with gaps", metavar="character"),
-  make_option(c("-r", "--path.ref"), type="character", default=NULL, 
-              help="path to the reference file", metavar="character"),
-  make_option(c("-n", "--n.chr.ref"), type="character", default=NULL, 
-              help="number of chromosomes in the reference genome", metavar="character"),
-  make_option(c("-m", "--n.chr.acc"), type="character", default=NULL, 
-              help="number of chromosomes in the accessions", metavar="character"),
-  make_option(c("-a", "--all.vs.all"), type="character", default=NULL, 
-              help="alignment of all chromosomes vs all or not: T/F", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+  make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
-); 
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -53,15 +41,10 @@ opt = parse_args(opt_parser, args = args);
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 
-if (!is.null(opt$path.query)) path.query <- opt$path.query
+if (!is.null(opt$path.chr)) path.chr <- opt$path.chr
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
-if (!is.null(opt$path.ref)) path.base <- opt$path.ref
-if (!is.null(opt$pref)) base.acc <- opt$pref
+if (!is.null(opt$ref)) base.acc <- opt$ref
 if (!is.null(opt$path.gaps)) path.gaps <- opt$path.gaps
-
-if (!is.null(opt$n.chr.ref)) n.chr.ref <- opt$n.chr.ref
-if (!is.null(opt$n.chr.acc)) n.chr.acc <- opt$n.chr.acc
-if (!is.null(opt$all.vs.all)) all.vs.all <- as.logical(opt$all.vs.all)
 
 
 if(!dir.exists(path.aln)) dir.create(path.aln)
@@ -118,7 +101,7 @@ loop.function <- function(f.maj, echo = T){
   # # Read reference sequences
   # base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
   # pokaz('Base:', base.file)
-  # base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  # base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
   # base.fas.fw = seq2nt(base.fas.fw)
   # base.fas.bw = revCompl(base.fas.fw)
   # base.len = length(base.fas.bw)
@@ -127,7 +110,7 @@ loop.function <- function(f.maj, echo = T){
   # query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
   # pokaz('Query:', query.file)
   # 
-  # query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  # query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
   # query.fas.chr = seq2nt(query.fas.chr)
   # query.len = length(query.fas.chr)
   
@@ -148,35 +131,41 @@ loop.function <- function(f.maj, echo = T){
   
   pokaz('gap file', file.gaps.out)
   
-  if.table <- T
+
   if(file.exists(file.gaps.out)){
-    
     pokaz('Read blast of good gaps..')
-    
-    tryCatch({
-      x.gap = read.table(file.gaps.out, stringsAsFactors = F)
-    }, error = function(e) {
-      if.table <<- F
-    })
+    x.gap = readTableMy(file.gaps.out)
   } else {
-    if.table <- F
+    x.gap = NULL
   }
   
-  if(if.table){
+  if(!is.null(x.gap)){
     pokaz('Number of gaps', nrow(x.gap))
     
     x.gap$pref1 = sapply(x.gap$V1, function(s) strsplit(s, '_query')[[1]][1])
     x.gap$pref2 = sapply(x.gap$V10, function(s) strsplit(s, '_base')[[1]][1])
     x.gap = x.gap[x.gap$pref1 == x.gap$pref2,]
+    pokaz('nrow', nrow(x.gap))
+    if(nrow(x.gap) == 0) x.gap = NULL
+  }  # KOSTYL
+  
+  if(!is.null(x.gap)){  # KOSTYL
     
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    
+    x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    
     x.gap$V2 = x.gap$V2 + x.gap$q.beg
     x.gap$V3 = x.gap$V3 + x.gap$q.beg
     x.gap$V4 = x.gap$V4 + x.gap$b.beg
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
     x.gap$idx = 1:nrow(x.gap)
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    
+    if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
+    if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
     
     cnt = table(x.gap$pref1)
     
@@ -239,13 +228,21 @@ loop.function <- function(f.maj, echo = T){
                                dimnames = list(NULL, colnames(x.sk))))
   }
   
+  
+  
   # ---- Read additional alignments ----
   
   file.gaps.out = paste0(path.gaps,
                          'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
-  
-  if(file.exists(file.gaps.out)) {
+  x.gap = NULL
+  if(file.exists(file.gaps.out)){
+    # Read blast results on "between blocks"
+    pokaz('Read blast of "bad" gaps..', file.gaps.out)
+    x.gap = readTableMy(file.gaps.out)    
+  }
+
+  if(!is.null(x.gap)) {
     # Fill up and down
     ## ----  Prepare ----
     x.sk = x.sk[order(x.sk$V2),]  # because all alignment will be according to the sorted "query"
@@ -258,10 +255,8 @@ loop.function <- function(f.maj, echo = T){
     y.tops = x.sk$p.beg  # top positions
     y.bots = x.sk$p.end  # bottom positions
     
-    # Read blast results on "between blocks"
-    pokaz('Read blast of "bad" gaps..')
-    x.gap = read.table(file.gaps.out, stringsAsFactors = F)
-    
+    # Here was the previous place of "read.table"
+
     # Get real positions of fragments
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][2])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][2])) - 1
@@ -273,7 +268,6 @@ loop.function <- function(f.maj, echo = T){
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1  # BUT DON'T change the order of V4 and V5
     x.gap$bl.beg = -1
     x.gap$bl.end = -1
-    
     
     # Combine new core skeleton and new gaps
     comb.names = intersect(colnames(x.sk), colnames(x.gap))
@@ -406,7 +400,6 @@ loop.function <- function(f.maj, echo = T){
     
   }
   
-  
   # ---- Combine all together ----
   
   comb.names = intersect(intersect(colnames(x.sk), colnames(x.bw)), colnames(x.res))
@@ -427,7 +420,6 @@ loop.function <- function(f.maj, echo = T){
   }
   sum(pos.q.occup > 1)
   sum(pos.q.occup)
-  
   
   # ---- Check genomes ---- 
   # x.dir = setDir(x.comb, base.len = base.len)
@@ -455,11 +447,13 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(f.maj = files.maj, .packages=c('crayon','stringr','Biostrings', 'seqinr'))  %dopar% { 
+  tmp = foreach(f.maj = files.maj, .packages=c('crayon'))  %dopar% { 
                               loop.function(f.maj)
                             }
   stopCluster(myCluster)
 }
+
+warnings()
 
 
 

@@ -21,7 +21,9 @@ option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to directory with the consensus", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--aln.type"), type="character", default="default", 
+              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
 ); 
 
 
@@ -30,6 +32,14 @@ opt = parse_args(opt_parser, args = args);
 
 
 # Reference genome
+
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
+} else {
+  aln.type = 'msa_'
+}
+
 if (is.null(opt$ref.pref)) {
   stop("ref.pref is NULL")
 } else {
@@ -62,14 +72,19 @@ if(F){
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub("msa_", "", files)
+pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
 pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+if(length(pref.combinations == 0)){
+  pokazAttention('No Combinations found.')
+} else {
+  pokaz('Combinations', pref.combinations)  
+}
+
 
 
 # ---- Positions of SVs ----
@@ -84,7 +99,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]

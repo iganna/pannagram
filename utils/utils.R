@@ -160,6 +160,258 @@ nt2seq <- function(s){
 
 
 #' ----------------------------------------------------------------------
+#' Convert Aligned Sequences to Nucleotide Matrix
+#'
+#' This function takes a vector of aligned sequences and converts them into a matrix,
+#' where each row represents one sequence converted into nucleotides.
+#'
+#' @param s.aln A list of aligned sequences.
+#' @return A matrix where each row represents a sequence from `s.aln` converted into nucleotides.
+#' Each sequence is represented as a row.
+#' @examples
+#' 
+#' s.aln <- c("ACGTACTTACGGACGT", "ACGCACGTACGTACAT", "ACGTGCGTACGTTCGT")
+#' seqs.mx <- aln2mx(s.aln)
+#' msaplot(seqs.mx)
+#' 
+aln2mx <- function(s.aln) {
+  aln.len = unique(nchar(s.aln))
+  if(length(aln.len) != 1) stop('Aligned sequences have different lengths')
+  if(is.null(names(s.aln))){
+    seq.names = paste('s', 1:length(s.aln), sep = '')
+  } else {
+    seq.names = names(s.aln)
+  }
+  seqs.mx = matrix('-', length(s.aln), aln.len, dimnames = list(seq.names, NULL))
+  for(i.s in 1:length(s.aln)){
+    seqs.mx[i.s,] = seq2nt(s.aln[i.s])
+  }
+  return(seqs.mx)
+}
+
+#' ----------------------------------------------------------------------
+#' Translate Nucleotide Sequence to Amino Acid Sequence
+#'
+#' This function translates a given nucleotide sequence into its corresponding
+#' amino acid sequence based on the standard genetic code. Non-standard codons are
+#' represented by a '-'.
+#'
+#' @param seq A character string representing the nucleotide sequence to be translated.
+#' @return A character vector representing the translated amino acid sequence.
+#' @examples
+#' translateSeq('atgctctgccagtgccacggcggaagcgacaaagccBBB')
+#' 
+translateSeq <- function(seq) {
+  # Define the genetic code as a named vector
+  genetic.code <- c(
+    "TTT" = "F", "TTC" = "F", "TTA" = "L", "TTG" = "L",
+    "CTT" = "L", "CTC" = "L", "CTA" = "L", "CTG" = "L",
+    "ATT" = "I", "ATC" = "I", "ATA" = "I", "ATG" = "M",
+    "GTT" = "V", "GTC" = "V", "GTA" = "V", "GTG" = "V",
+    "TCT" = "S", "TCC" = "S", "TCA" = "S", "TCG" = "S",
+    "CCT" = "P", "CCC" = "P", "CCA" = "P", "CCG" = "P",
+    "ACT" = "T", "ACC" = "T", "ACA" = "T", "ACG" = "T",
+    "GCT" = "A", "GCC" = "A", "GCA" = "A", "GCG" = "A",
+    "TAT" = "Y", "TAC" = "Y", "TAA" = "*", "TAG" = "*",
+    "CAT" = "H", "CAC" = "H", "CAA" = "Q", "CAG" = "Q",
+    "AAT" = "N", "AAC" = "N", "AAA" = "K", "AAG" = "K",
+    "GAT" = "D", "GAC" = "D", "GAA" = "E", "GAG" = "E",
+    "TGT" = "C", "TGC" = "C", "TGA" = "*", "TGG" = "W",
+    "CGT" = "R", "CGC" = "R", "CGA" = "R", "CGG" = "R",
+    "AGT" = "S", "AGC" = "S", "AGA" = "R", "AGG" = "R",
+    "GGT" = "G", "GGC" = "G", "GGA" = "G", "GGG" = "G"
+  )
+  
+  # Convert sequence to uppercase to ensure matching
+  seq <- toupper(seq)
+  seq.len = nchar(seq) - 2
+  
+  # Extract codons from the sequence
+  codons <- sapply(seq(1, seq.len, by = 3), function(i) {
+    substr(seq, i, i+2)
+  })
+  
+  # Translate codons to amino acids
+  aa.seq = genetic.code[codons]
+  
+  # Replace NA values with '-', indicating unknown codons
+  aa.seq[is.na(aa.seq)] = '-'
+  # aa.seq = aa.seq[!is.na(aa.seq)]
+  # if(length(aa.seq) == 0) return(NULL)
+  
+  # Remove names for a clean output
+  names(aa.seq) = NULL
+  
+  return(aa.seq)
+}
+
+#' ----------------------------------------------------------------------
+#' Identify and Extract Open Reading Frames (ORFs) from a Nucleotide Sequence
+#'
+#' This function identifies open reading frames (ORFs) within a nucleotide sequence by translating it
+#' to an amino acid sequence and finding sequences between stop codons that meet a minimum length criterion.
+#' The sequence name, if available, is preserved and appended with ORF identification and positional information.
+#'
+#' @param seq A character string or named character string representing the nucleotide sequence.
+#' @param orf.min.len An integer value specifying the minimum length for an ORF to be considered valid. Default is 25.
+#'
+#' @return A list with two components:
+#' \itemize{
+#'   \item{\code{pos}:}{A matrix with two columns indicating the start and end positions of each ORF within the amino acid sequence.}
+#'   \item{\code{orf}:}{A named character vector where each element is an ORF sequence, and names provide the original sequence name (if available), ORF, start and end positions, and ORF length.}
+#' }
+#'
+#' @examples
+#' seq <- "ATGGCCATGGCCCCCGCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTAG"
+#' result <- seq2orf(seq)
+#' print(result$pos)
+#' print(result$orf)
+#'
+#' @export
+#' @importFrom stringr str_detect
+seq2orf <- function(seq, orf.min.len = 25){
+  # Handle sequence naming
+  if(is.null(names(seq))){
+    seq.name = 'seq' 
+  } else {
+    seq.name = names(seq)[1]
+  }
+  
+  # Translate the nucleotide sequence to amino acids
+  aa.seq = translateSeq(seq)
+  if(is.null(aa.seq)){
+    return(list(pos = NULL, orf = NULL))  
+  }
+  
+  seq.len = length(aa.seq)
+  
+  # Identify stop codon positions and calculate ORF lengths
+  idx.stop = c(0, which(aa.seq == '*'), seq.len + 1)
+  block.len = diff(idx.stop) - 1
+  
+  # Filter ORFs based on minimum length
+  idx.remain = which(block.len >= orf.min.len)
+  if(length(idx.remain) == 0){
+    return(list(pos = NULL, orf = NULL))  
+  }
+  
+  pos.orf = cbind(idx.stop[idx.remain]+1, idx.stop[idx.remain+1]-1)
+  
+  # Convert ORF positions from amino acids to nucleotides
+  pos.orf.nt = data.frame(cbind((pos.orf[,1]-1)*3+1, pos.orf[,2]*3))
+  colnames(pos.orf.nt) = c('beg', 'end')
+  
+  # Extract ORF sequences
+  aa.orf = c()
+  idx.remove = c()
+  for(i in 1:nrow(pos.orf)){
+    pos1 = pos.orf[i, 1]
+    pos2 = pos.orf[i, 2]
+    seq.aa = aa.seq[pos1:pos2]
+    seq.aa = seq.aa[seq.aa != '-']
+    if(length(seq.aa) < orf.min.len) {
+      seq.tmp = ''
+      idx.remove = c(idx.remove, i)
+    } else {
+      seq.tmp = paste0(seq.aa, collapse = '')
+    }
+    aa.orf[i] = seq.tmp
+  }
+  
+  if(length(idx.remove) > 0){
+    aa.orf = aa.orf[-idx.remove]
+    pos.orf = pos.orf[-idx.remove,,drop=F]
+    pos.orf.nt = pos.orf.nt[-idx.remove,,drop=F]
+  }
+  
+  if(length(aa.orf) == 0){
+    return(list(pos = NULL, orf = NULL))  
+  }
+  
+  # Return ORF positions and sequences
+  return(list(pos = pos.orf.nt, orf = aa.orf))  
+}
+
+
+#' ----------------------------------------------------------------------
+#' Identify Open Reading Frames (ORFs) in Both DNA Strands
+#'
+#' This function searches for open reading frames (ORFs) in both the forward and reverse complement
+#' of the given DNA sequence. It detects ORFs in all three possible reading frames for each strand,
+#' calculates their positions, lengths, and on which strand they are located.
+#'
+#' @param seq.init A character string representing the DNA sequence.
+#' @param seq A character string or named character string representing the nucleotide sequence.
+#' @return A list with two elements:
+#'   \item{pos}{A data frame of ORF positions including columns for start (`beg`), end (`end`), length in nucleotides (`len`), 
+#'   length in amino acids (`aalen`), and strand (`strand`).}
+#'   \item{orf}{A character vector of the amino acid sequences for each ORF, named with their positions, strand, and length.}
+#'
+#' @examples
+#' seq <- "ATGGCCATGGCCCCCGCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTAG"
+#' orfFinderResult <- orfFinder(seq)
+#' print(orfFinderResult$pos)
+#' print(orfFinderResult$orf)
+#'
+#' @export
+orfFinder <- function(seq.init, orf.min.len = 25){
+  seq.len = nchar(seq.init) # Calculate the length of the initial sequence
+  seq = seq.init
+  
+  orfs = c() # Initialize vector to store ORFs
+  pos = c() # Initialize vector to store positions
+  
+  # Iterate over both strands
+  for(i.strand in 1:2){
+    # Iterate over the three possible reading frames
+    for(i.orf in 0:2){
+      # Adjust sequence for reading frames 2 and 3
+      if(i.orf != 0){
+        seq <- substr(seq, 2, nchar(seq))  
+      }
+      
+      # Find ORFs in the current frame and strand
+      orf.res = seq2orf(seq, orf.min.len = orf.min.len)
+      if(is.null(orf.res$pos)) next
+      
+      # Adjust positions based on the reading frame and strand
+      pos.tmp = orf.res$pos + i.orf
+      if(i.strand == 2){
+        pos.tmp = seq.len - pos.tmp + 1
+      }
+      pos.tmp$shift = i.orf
+      
+      # Store ORFs and their positions
+      orfs = c(orfs, orf.res$orf)
+      pos = rbind(pos, pos.tmp)
+      
+      if(nrow(pos) != length(orfs)) stop('Something went wrong')
+      
+    }
+    # Reverse and complement the sequence for the second strand
+    seq = revComplSeq(seq.init)
+  }
+  
+  if(is.null(pos)){
+    return(list(pos = NULL, orf = NULL))
+  }
+  
+  # Calculate additional position info and order by ORF length
+  pos$len = abs(pos[,2] - pos[,1]) + 1
+  pos$aalen = nchar(orfs)
+  pos$strand = c('+', '-')[(pos[,1] > pos[,2]) + 1]
+  idx.order = order(-pos$len)
+  pos = pos[idx.order,]
+  orfs = orfs[idx.order]
+  
+  # Name ORFs with position, strand, and length info
+  names(orfs) = paste('ORF', pos[,1], pos[,2], pos$strand, 'aaLEN', pos$aalen, sep = '|')
+  
+  # Return positions and ORFs
+  return(list(pos = pos, orf = orfs))
+}
+
+#' ----------------------------------------------------------------------
 #' Generate the reverse complement of a vectorized sequence
 #'
 #' @param s A character vector where each element is a single nucleotide.
@@ -187,6 +439,28 @@ revCompl <- function(s){
   seqs.rc = rev(complementary_nts[s])
   if(sum(is.na(seqs.rc)) != 0) stop('Wrong nucleotides are provided')
   return(seqs.rc)
+}
+
+#' ----------------------------------------------------------------------
+#' Convert a Nucleotide Sequence to its Reverse Complement
+#'
+#' This function takes a nucleotide sequence, converts it into its reverse complement,
+#' and returns the result as a single string.
+#'
+#' @param seq A character string representing the nucleotide sequence.
+#' @return A character string representing the reverse complement of the input sequence.
+#'
+#' @examples
+#' revComplSeq("ATGC")
+#'
+#' @author Anna A. Igolkina
+revComplSeq <- function(seq){
+  
+  seq = seq2nt(seq)
+  seq.rc = revCompl(seq)
+  seq.rc = nt2seq(seq.rc)
+  
+  return(seq.rc)
 }
 
 
@@ -373,6 +647,7 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
   write.table(v.gff, f.gff, sep = '\t', quote = F, row.names=F, col.names = F)
 }
 
+
 #' ----------------------------------------------------------------------
 #' Calculate the Repeat Score of a String
 #'
@@ -440,5 +715,152 @@ comb2ref <- function(s.comb){
   return(ref.chr)
 }
 
+
+#' ----------------------------------------------------------------------
+#' Load or Install and Load an R Package
+#'
+#' This function attempts to load an R package. If the package is not already installed,
+#' it tries to install the package from CRAN and then loads it. This is useful for ensuring
+#' that scripts or analyses have access to required packages with minimal manual intervention.
+#'
+#' @param package The name of the package to load. This should be a character string.
+#'
+#' @return Invisible NULL. This function is called for its side effect of loading a package
+#' or displaying a message if the package cannot be installed.
+#'
+#' @examples
+#' load.library("ggplot2") # Attempts to load ggplot2, installing it first if necessary
+#' 
+#' @author Anna Igolkina
+load.library <- function(package) {
+  # Attempt to load the package
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    # If the package is not installed, attempt to install it
+    install_result <- tryCatch({
+      install.packages(package, quiet = TRUE)
+      TRUE  # Return TRUE if the installation is successful
+    }, error = function(e) {
+      FALSE  # Return FALSE if an error occurs during installation
+    })
+    
+    # Check if the installation was successful
+    if (!install_result) {
+      message(paste("Failed to install package '", package, 
+                    "'. Check if it is available for your version of R and if the package name is correct.", sep=""))
+    } else {
+      # Attempt to load the package after installation
+      library(package, character.only = TRUE)
+    }
+  }
+}
+
+
+#' ----------------------------------------------------------------------
+#' Find Sequences of Ones in Binary Vector
+#'
+#' Identifies and returns the start and end indices of consecutive sequences of ones in a binary vector.
+#'
+#' @param g.bin A vector containing zeros and ones.
+#' 
+#' @return A data frame with columns `beg` and `end`.
+#' 
+#' @examples
+#' g.bin <- c(0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0)
+#' findOnes(g.bin)
+#' 
+#'     beg end
+#'   1   2   3
+#'   2   5   5
+#'   3   8  10
+#'   
+#' @export
+findOnes <- function(g.bin) {
+  changes <- diff(c(0, g.bin, 0))
+  beg <- which(changes == 1)
+  end <- which(changes == -1) - 1
+  return(data.frame(beg = beg, end = end))
+}
+
+#' ----------------------------------------------------------------------
+#' Finds Duplicates and return unique values
+#'
+#' @param x Vector to search for duplicates.
+#' @return Vector of unique duplicated values from `x`.
+#' @examples
+#' uniqueDuplicates(c(1, 2, 2, 3, 4, 4, 5))
+#' @export
+uniqueDuplicates <- function(x){
+  return(unique(x[duplicated(x)]))
+}
+
+
+#' ----------------------------------------------------------------------
+#' Finds indexes of all non-unique values
+#'
+#' @param x Vector to search for duplicates.
+#' @return Indexes of duplicated values from `x`.
+#' @export
+idxDuplicates <- function(x){
+  y = unique(x[duplicated(x)])
+  return(which(x %in% y))
+}
+
+#' ----------------------------------------------------------------------
+#' Write GFF Data to File
+#'
+#' Writes first 9 columns of the table to the gff file.
+#'
+#' @param gff A data frame representing GFF data.
+#' @param file The path to the file where the GFF data should be written.
+#' @export
+#' @examples
+writeGFF <- function(gff, file){
+  write.table(gff[,1:9], file, quote = F, row.names = F, col.names = F, sep = '\t')
+}
+
+
+#' ----------------------------------------------------------------------
+#' Calculate Moving Window Mean
+#'
+#' This function calculates the moving window mean for a given numeric vector.
+#' The window size is adjustable, allowing for flexibility in how the mean is calculated over the vector.
+#'
+#' @param v A numeric vector
+#' @param wnd.size The size of the window over which the mean is calculated. Default is 10000.
+#'
+#' @return A numeric vector containing the moving window mean values.
+#' @examples
+#' v <- 1:100000
+#' wndMean(v, wnd.size = 10000)
+#' @export
+wndMean <- function(v, wnd.size = 10000){
+  
+  # Calculate the length of the input vector
+  len.v <- length(v)
+  # Determine the number of full parts within the window size
+  num.parts <- len.v %/% wnd.size
+  # Initialize a vector for storing the mean values
+  wnd.mean <- numeric(num.parts + ifelse(len.v %% wnd.size > 0, 1, 0))
+  
+  # Calculate the mean for each full part
+  for(i in 1:num.parts) {
+    wnd.mean[i] <- mean(v[((i-1) * wnd.size + 1) : (i * wnd.size)])
+  }
+  
+  # Calculate the mean for the last part if it is smaller than the window size
+  if(len.v %% wnd.size > 0) {
+    wnd.mean[num.parts + 1] <- mean(v[(num.parts*wnd.size + 1):len.v])
+  }
+  
+  return(wnd.mean)
+}
+
+readTableMy <- function(file) {
+  if (any(grepl("^[^#]", readLines(file)))) {
+    return(read.table(file, stringsAsFactors = F,  header = F))
+  } else {
+    return(NULL)
+  }
+}
 
 

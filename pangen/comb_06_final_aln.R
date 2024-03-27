@@ -1,4 +1,4 @@
-suppressMessages({ library(Biostrings)
+suppressMessages({
 library(rhdf5)
 library('seqinr')
 library('foreach')
@@ -7,7 +7,7 @@ library("optparse")
 source('utils/utils.R')
 })
 
-pokazStage('Step 12. Combine all alignments together into the final one')
+# pokazStage('Step 12. Combine all alignments together into the final one')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -349,9 +349,7 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-
 saveRDS(stat.comb, paste(path.cons, 'stat', s.comb, '_', ref.pref,'.rds', sep = ''))
-
 
 
 # ***********************************************************************

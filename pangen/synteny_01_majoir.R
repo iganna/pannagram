@@ -1,12 +1,12 @@
 #library(ggplot2)
 
 suppressMessages({
-  library(Biostrings)
-  library(seqinr)
+  # library(Biostrings)
+  # library(seqinr)
   #library(spgs)  # reverseComplement("actg")
   library(foreach)
   library(doParallel)
-  library(stringr)
+  # library(stringr)
   library(optparse)
 })
 
@@ -14,7 +14,7 @@ suppressMessages({
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
 
-pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
+# pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
 
 
 # ***********************************************************************
@@ -22,28 +22,21 @@ pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("-q", "--path.query"), type="character", default=NULL, 
+option_list <- list(
+  make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("-i", "--path.blast"), type="character", default=NULL, 
+  make_option(c("--path.blast"), type="character", default=NULL, 
               help="path to blast results", metavar="character"),
-  make_option(c("-o", "--path.aln"), type="character", default=NULL, 
+  make_option(c("--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("-p", "--pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
-  make_option(c("-g", "--path.gaps"), type="character", default=NULL, 
-              help="prefix of the directory with gaps", metavar="character"),
-  make_option(c("-r", "--path.ref"), type="character", default=NULL, 
-              help="path to the reference file", metavar="character"),
-  make_option(c("-n", "--n.chr.ref"), type="character", default=NULL, 
-              help="number of chromosomes in the reference genome", metavar="character"),
-  make_option(c("-m", "--n.chr.acc"), type="character", default=NULL, 
-              help="number of chromosomes in the accessions", metavar="character"),
-  make_option(c("-a", "--all.vs.all"), type="character", default=NULL, 
-              help="alignment of all chromosomes vs all or not: T/F", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
+  make_option(c("--ref"), type="character", default=NULL, 
+              help="name of the reference genome", metavar="character"),
+  make_option(c("--path.gaps"), type="character", default=NULL, 
+              help="path tothe directory with gaps", metavar="character"),
+  make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
-); 
+)
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -56,16 +49,11 @@ opt = parse_args(opt_parser, args = args);
 # Number of cores
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
-path.query    <- ifelse(!is.null(opt$path.query), opt$path.query, path.query)
-path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, path.blast.res)
-path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, path.aln)
-path.base     <- ifelse(!is.null(opt$path.ref), opt$path.ref, path.base)
-base.acc      <- ifelse(!is.null(opt$pref), opt$pref, base.acc)
-path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, path.gaps)
-
-n.chr.ref     <- ifelse(!is.null(opt$n.chr.ref), opt$n.chr.ref, n.chr.ref)
-n.chr.acc     <- ifelse(!is.null(opt$n.chr.acc), opt$n.chr.acc, n.chr.acc)
-all.vs.all    <- ifelse(!is.null(opt$all.vs.all), as.logical(opt$all.vs.all), all.vs.all)
+path.chr      <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop('Folder with chromosomes is not specified'))
+path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
+path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
+base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
+path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, stop('Folder with Gaps is not specified'))
 
 
 # Create folders for the alignment results
@@ -93,11 +81,11 @@ loop.function <- function(f.blast, echo = T){
   # Remove the '.txt' extension
   pref.comb <- sub("\\.txt$", "", f.blast)
   
-  # Parser for BLAST-resulr file
+  # Parser for BLAST-result file
   parts <- strsplit(pref.comb, "_")[[1]]
   
-  base.chr <- parts[length(parts) - 1]
-  query.chr <- parts[length(parts)]
+  base.chr <- parts[length(parts)]
+  query.chr <- parts[length(parts) - 1]
   parts = parts[-c(length(parts) - 1, length(parts))]
   acc <- paste0(parts, collapse = '_')
   
@@ -111,23 +99,23 @@ loop.function <- function(f.blast, echo = T){
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   if(echo) pokaz('Base:', base.file)
-  base.fas.fw = readFastaMy(paste(path.base, base.file, sep = ''))
+  base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
+  if(echo) pokaz('Length of base:', base.len)
   
   # Read query sequences
   query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
   if(echo) pokaz('Query:', query.file)
   
-  query.fas.chr = readFastaMy(paste(path.query, query.file, sep = ''))
+  query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
+  if(echo) pokaz('Length of query:', query.len)
   
   # Output files
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
-  # file.maj.idx <- paste(path.aln, paste0(pref.comb, '_maj_idx.rds', collapse = ''), sep = '')
-  # file.raw.idx <- paste(path.aln, paste0(pref.comb, '_raw_idx.rds', collapse = ''), sep = '')
   
   # if(T){   
   if(!file.exists(file.aln.pre)){
@@ -135,8 +123,10 @@ loop.function <- function(f.blast, echo = T){
     if(echo) pokaz('Alignment:', acc, query.chr, base.chr)
     
     # ---- Read blast results ----
-    x = read.table(paste(path.blast.res, f.blast, sep = ''), stringsAsFactors = F, header = F)
-    
+    pokaz(paste(path.blast.res, f.blast, sep = ''))
+    # x = read.table(paste(path.blast.res, f.blast, sep = ''), stringsAsFactors = F, header = F)
+    x = readTableMy(paste(path.blast.res, f.blast, sep = ''))
+    if(is.null(x)) return(NULL)
     
     if(echo) pokaz('Read blast results finished, numer of rows is', nrow(x))
     
@@ -145,15 +135,16 @@ loop.function <- function(f.blast, echo = T){
     x$p.beg <- ifelse(x$V4 < x$V5, x$V4, x$V5)
     x$p.end <- ifelse(x$V4 < x$V5, x$V5, x$V4)
     
+    
     # Set correct position
     start.pos = as.numeric(sapply(strsplit(x[,1], "\\|"), "[", 4)) - 1
     x[,2:3] = x[,2:3] + start.pos
     
-    
-    # x.dir = setDir(x, base.len = base.len)
-    # checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-    #                      base.fas.fw = base.fas.fw,
-    #                      base.fas.bw = base.fas.bw)
+    # Chech - could be removed:
+    x.dir = setDir(x, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
     
     # Set direction
     x$dir = (x$V4 > x$V5) * 1
@@ -165,6 +156,10 @@ loop.function <- function(f.blast, echo = T){
     
     idx.maj = which(!c(F, x$V1[-1] == x$V1[-nrow(x)]))
     x.major = cbind(x[idx.maj,setdiff(colnames(x), c('V8', 'V9'))], idx.maj)
+    
+    
+    pokaz('Number of rows in the synteny', nrow(x.major))
+    if(nrow(x.major) == 0) return(NULL)
     
     # Sort to set the id
     x.major = x.major[order(x.major$V2),]  # not needed
@@ -186,7 +181,8 @@ loop.function <- function(f.blast, echo = T){
     idx = intersect(idx, idx + 1)
     
     if(length(idx) > 0){
-      x.major = x.major[-idx,]
+      x.major = x.major[-idx,,drop=F]
+      if(nrow(x.major) == 0) return(NULL)
     }
     
     # ----  Define blocks  in the skeleton ----
@@ -219,12 +215,13 @@ loop.function <- function(f.blast, echo = T){
       x.block = x.block[-idx.remove,]
       # rownames(x.block) = NULL
     }
-    if(!isSorted(x.major$p.beg)) pokazAttention('1!!')
+    if(is.unsorted(x.major$p.beg)) pokazAttention('1!!')
     
     # Remove wrong blocks completely
     remain.block = x.block$block.id
     if(length(remain.block) > 0){
-      x.major = x.major[x.major$block.id %in% remain.block,]
+      x.major = x.major[x.major$block.id %in% remain.block, , drop=F]
+      if(nrow(x.major) == 0) return(NULL)
     }
     
     # Check remained blocks
@@ -241,11 +238,9 @@ loop.function <- function(f.blast, echo = T){
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     }
     
-    # Save - Raw without sequences
-    # saveRDS(x[, !(colnames(x) %in% c('V8', 'V9'))], file.raw.idx, compress = F)
-    
     # ---- Filtration ----
     x = x[x.major$idx.maj,]
+    
     x$block.id = x.major$block.id
     # saveRDS(x, file.aln.pre, compress = F)
     
@@ -262,7 +257,7 @@ loop.function <- function(f.blast, echo = T){
                          base.fas.fw = base.fas.fw,
                          base.fas.bw = base.fas.bw)
     
-    if(!isSorted(x$p.beg)) pokazAttention('6!!')
+    if(is.unsorted(x$p.beg)) pokazAttention('6!!')
     
     # ---- Check uniquness of occupancy ----
     pos.q.occup = rep(0, base.len)
@@ -276,7 +271,6 @@ loop.function <- function(f.blast, echo = T){
     
     # Save
     saveRDS(x, file.aln.pre, compress = F)
-    # saveRDS(x.major, file.maj.idx, compress = F)
     
   } else {
     if(echo) pokaz('Reading instead of analysis', file.aln.pre)
@@ -389,6 +383,8 @@ loop.function <- function(f.blast, echo = T){
     if(len.s.q > n.bl){
       p.beg = seq(1, len.s.q, n.bl)
       p.end = seq(n.bl, len.s.q, n.bl)
+      if(p.end[length(p.end)] != len.s.q) p.end = c(p.end, len.s.q)
+      if(length(p.end) != length(p.beg)) stop('Wrong lengths of p.beg and p.end')
     } else {
       p.beg = 1
       p.end = len.s.q
@@ -398,6 +394,8 @@ loop.function <- function(f.blast, echo = T){
     # Standsrd naming (as before)
     pref.q = paste(pref.comarisson, pref.gap,
                    'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+    
+    if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks - 2')
     
     if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
     names(s.q) = pref.q
@@ -447,6 +445,8 @@ loop.function <- function(f.blast, echo = T){
       if(len.s.q > n.bl){
         p.beg = seq(1, len.s.q, n.bl)
         p.end = seq(n.bl, len.s.q, n.bl)
+        if(p.end[length(p.end)] != len.s.q) p.end = c(p.end, len.s.q)
+        if(length(p.end) != length(p.beg)) stop('Wrong lengths of p.beg and p.end')
       } else {
         p.beg = 1
         p.end = len.s.q
@@ -456,6 +456,10 @@ loop.function <- function(f.blast, echo = T){
       # Standard naming (as before)
       pref.q = paste(pref.comarisson,
                      'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
+      # pokaz('pos.gap.q', pos.gap.q)
+      # pokaz('p.beg', p.beg)
+      # pokaz('p.end', p.end)
+      if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks - 2')
       
       if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
       names(s.q) = pref.q
@@ -511,15 +515,26 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(f.blast = files.blast, .packages=c('crayon','stringr','Biostrings', 'seqinr'), .verbose = F)  %dopar% { 
+  tmp = foreach(f.blast = files.blast, .packages=c(
+                                              # 'stringr',
+                                              # 'Biostrings', 
+                                              # 'seqinr',
+                                              'crayon'), .verbose = F)  %dopar% { 
                               loop.function(f.blast)
                             }
   stopCluster(myCluster)
 }
 
+warnings()
+
 
 # ***********************************************************************
 # ---- Manual testing ----
 
+if(F){
+  source('synteny_funcs.R')
+  source('../utils/utils.R')
+  
+}
 
 

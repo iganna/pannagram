@@ -21,7 +21,9 @@ option_list = list(
   make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--aln.type"), type="character", default="default", 
+              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -47,6 +49,14 @@ if (is.null(opt$ref.pref)) {
   ref.pref <- opt$ref.pref
 }
 
+
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
+} else {
+  aln.type = 'msa_'
+}
+
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 # path.cons = './'
@@ -54,14 +64,19 @@ if (is.null(opt$ref.pref)) {
 # library(rhdf5)
 # source('../../../pannagram/utils/utils.R')
 
-s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
+
+s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub("msa_", "", files)
+pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
 pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+if(length(pref.combinations == 0)){
+  pokazAttention('No Combinations found.')
+} else {
+  pokaz('Combinations', pref.combinations)  
+}
 
 # ----  Combine correspondence  ----
 
@@ -83,7 +98,7 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
 # for(s.comb in pref.combinations){
 
   
-  file.comb = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -219,7 +234,7 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 
 df.blocks = do.call(rbind, list.blocks)
-file.blocks = paste(path.cons, 'msa_blocks_ref_',ref.pref,'.rds', sep = '')
+file.blocks = paste(path.cons, aln.type,'blocks_ref_',ref.pref,'.rds', sep = '')
 saveRDS(df.blocks, file.blocks, compress = F)
 
 

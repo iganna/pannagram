@@ -7,13 +7,13 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(muscle)  #BiocManager::install("muscle")
-  library(Biostrings)
+  # library(Biostrings)
 })
 
 source("utils/utils.R")
 # source("synteny_funcs.R")
 
-pokazStage('Step 10. Prepare sequences for MAFFT')
+# pokazStage('Step 10. Prepare sequences for MAFFT')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -422,7 +422,7 @@ for(s.comb in pref.combinations){
     tmp <- foreach(seqs = aln.seqs[idx.long], 
                        pos.idx = aln.pos[idx.long], 
                        s.aln = s.break[idx.long],
-                       .packages=c('muscle', 'Biostrings'))  %dopar% {
+                       .packages=c('muscle'))  %dopar% {
                          
                          f.pref = paste(path.mafft.in, s.aln,
                                         '_flank_', n.flank,'.fasta', sep = '')
@@ -438,6 +438,7 @@ if(num.cores > 1){
   stopCluster(myCluster)
 }
 
+warnings()
 
 
 # ***********************************************************************

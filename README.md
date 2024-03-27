@@ -5,24 +5,42 @@
 # Pannagram
 
 
-Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
+Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. 
+Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
 
-## Multiple genome alignment
 
-Multiple genome alignment can be performed on a single reference genome or using multiple references to create a reference-free alignment. These modes are implemented in `pangen_ref.sh` and `pangen_consensus.sh`, respectively.
+## Recreating working environment
 
-The quickstart toy-examples are:
+Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
+```sh
+conda env create -f pannagram_conda_env.yml
+conda activate pannagram_conda_env
 ```
-./pangen_ref.sh -pref_global 'output_folder' -ref_pref '0' \
-    -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
-./pangen_consensus.sh -pref_global 'output_folder' -ref_set '0,10024' \
-    -path_in 'thaliana_genomes' -n_chr_query 5 -n_chr_ref 5
+
+
+## Pangenome linear genome alignment
+
+Pangenome alignment can be built in two modes:
+1. **reference-free**:
 ```
+./pangen.sh -path_in 'input_folder_with_all_genomes'  \
+			-path_out 'output_folder' \
+			-nchr_query 5 -nchr_ref 5 
+```
+
+2. **reference-based**:
+```
+./pangen_ref.sh  -ref 'tari10'  
+                 -path_in 'input_folder_with_all_genomes'  \
+			     -path_out 'output_folder' \
+			     -nchr_query 5 -nchr_ref 5 
+```
+
 
 An extended description of the parameters can be read by executing:
 ```
+./pangen.sh -help
 ./pangen_ref.sh -help
-./pangen_consensus.sh -help
 ```
 
 ## Visualisation
@@ -60,74 +78,8 @@ determining not just if a sequence is covered, but also if it's covered in a spe
 
 <!--
 
-## Parameters to run `pipeline_consensus.sh`
-
-
-## Script Overview
-
-
-- `-pref_global <value>`
-   The global prefix for folders that will be created during the pipeline.
-
-- `-ref_pref <value>`
-   The basename of the reference genome file (without extension), that the pipeline will use as a reference for alignment.
-
-- `-path_chr_ref <value>`
-   (Optional) 
-   The directory containing **chromosomes** of the reference genome.
-   можно -path_chr_ref ваще не указывать, если референс находится там же, где и остальные
-
-- `-n_chr_ref <value>`
-   The number of chromosomes in the reference genome.
-
-- `-path_in <value>`
-   The directory containing query genomes that must be aligned to the reference.
-
-- `-n_chr_query <value>`
-   The number of chromosomes in the query genomes.
-
-- `-path_parts <value>`
-   (Optional) The directory containing chunked chromosomes.
-
-- `-path_chr_acc <value>`
-   (Optional) The directory containing separate chromosomes.
-
-- `-path_consensus <value>`
-   The directory where the common consensus results will be stored.
-
-- `-sort_chr_len <value>`
-   (Optional) Flag to sort chromosomes in the genomes by length.
-
-- `-part_len <value>`
-   (Optional) The length of chunks used in the analysis.
-   Default = 500bp
-
-- `-all_cmp <value>`
-   Flag to align all chromosomes to each other, not just the corresponding ones.
-
-- `-p_ident <value>`
-   The identity value used for the internal BLAST comparisons.
-
-- `-acc_anal <value>`
-   The file containing the set of accessions to analyze.
-
-- `-cores <value>`
-   The number of CPU cores to use for running the pipeline.
-
 
 ## Dependencies
-
-install.packages("optparse")
-install.packages("seqinr")
-install.packages("foreach")
-install.packages("doParallel")
-
-stringi and stringr,
-
-
-
-## Dependencies
-
 
 
 BiocManager::muscle
@@ -139,7 +91,6 @@ BiocManager::crayon
 BiocManager::rhdf5
 msa
 dplyr
-BiocManager::Biostrings
 seqinr
 foreach
 stringr
@@ -147,24 +98,16 @@ ggplot2
 utils.R сам устанавливает crayon.
 
 
-## TODO:
-
-следать хромосомные файлы для референса, если он не распарсен
-прописать дефолты
-все рабоает нормально. и работает без -path_chr_ref
--all_clp rкак-то переделать флаг
-
-поменять фон
-
-
 -->
 
 ## Acknowledgements
 
-Thanks for the testing:
-Anna Glushkevich
-Elizaveta Grigoreva
-Jilong Ma
+
+Thanks for the testing:  
+* Anna Glushkevich  
+* Elizaveta Grigoreva  
+* Jilong Ma  
+* Alexandr
 
 Logo was generated with the help of DALL-E
 
