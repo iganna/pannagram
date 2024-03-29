@@ -48,6 +48,8 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   p = ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
     geom_tile(width = 1, height = 1, linewidth = 0.5) +
     xlab(NULL) + ylab(NULL) +
+    xlim(c(0, length(seq1))) +
+    ylim(c(0, length(seq2))) +
     theme_minimal() + coord_fixed() +
     scale_x_continuous(expand = c(0, 0), limits = c(0, length(seq1))) + 
     scale_y_continuous(expand = c(0, 0), limits = c(0, length(seq2))) +
@@ -57,6 +59,7 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
                           breaks = c(-wsize, 0, wsize)) +
     theme(panel.border = element_rect(colour = "grey", fill = NA, size = 1)) +
     guides(fill = FALSE, color = FALSE)
+    
   
   p
   return(p )
