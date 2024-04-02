@@ -855,7 +855,16 @@ wndMean <- function(v, wnd.size = 10000){
   return(wnd.mean)
 }
 
-readTableMy <- function(file) {
+
+#' Read BLAST Output File
+#'
+#' Reads a BLAST output file and returns its contents as a data frame. If the file contains
+#' no data (only comments or empty), `NULL` is returned. It assumes that the file does not
+#' have a header and all strings should not be converted to factors.
+#'
+#' @param file The BLAST output file to be read.
+#' @return A data frame containing the contents of the BLAST file if it contains data; otherwise, `NULL`.
+readBlast <- function(file) {
   if (any(grepl("^[^#]", readLines(file)))) {
     return(read.table(file, stringsAsFactors = F,  header = F))
   } else {
@@ -863,4 +872,8 @@ readTableMy <- function(file) {
   }
 }
 
+readTableMy <- function(file){
+  pokaz('Replace function readTableMy to readBlast')
+  return(readBlast(file))
+}
 
