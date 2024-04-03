@@ -23,6 +23,8 @@ option_list <- list(
               help = "number of chromosomes", metavar = "character"),
   make_option(c("--part.len"), type = "character", default = NULL, 
               help = "number of base pairs in the part file", metavar = "character"),
+  make_option(c("--part.step"), type = "character", default = NULL, 
+              help = "number of base pairs as a step", metavar = "character"),
   make_option(c("--path.chr"), type = "character", default = NULL, 
               help = "pathway to the chromosome directory", metavar = "character"),
   make_option(c("--path.parts"), type = "character", default = NULL, 
@@ -57,6 +59,7 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 
 # Common attributes
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
+len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
 
 # ***********************************************************************
@@ -101,6 +104,20 @@ loop.function <- function(i.comb, echo = T){
   s = splitSeq(q.fasta, n=len.parts)
   len.chr = nchar(q.fasta)
   pos.beg = seq(1, len.chr, len.parts)
+  
+  
+  if(!is.null(len.step)){
+    q.fasta = q.fasta[-(1:len.step)]
+    
+    s = c(s, 
+          splitSeq(q.fasta, n=len.parts))
+    pos.beg = c(pos.beg, 
+                seq(1 + len.step, len.chr, len.parts))
+    
+    idx.order = order(pos.beg)
+    s = s[idx.order]
+    pos.beg = pos.beg[idx.order]
+  }
   
   if(length(s) != length(pos.beg)) stop('Problem with chunks')
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
