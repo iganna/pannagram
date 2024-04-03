@@ -107,10 +107,8 @@ loop.function <- function(i.comb, echo = T){
   
   
   if(!is.null(len.step)){
-    q.fasta = q.fasta[-(1:len.step)]
-    
     s = c(s, 
-          splitSeq(q.fasta, n=len.parts))
+          splitSeq(q.fasta, n=len.parts, step = len.step))
     pos.beg = c(pos.beg, 
                 seq(1 + len.step, len.chr, len.parts))
     
