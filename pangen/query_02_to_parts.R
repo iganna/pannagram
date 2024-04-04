@@ -117,9 +117,9 @@ loop.function <- function(i.comb, echo = T){
   q.fasta = toupper(q.fasta)
   
   if(flag.rev == 1){
-    # q.fasta = nt2seq(rev(seq2nt(q.fasta)))
+    q.fasta = nt2seq(rev(seq2nt(q.fasta)))
     
-    q.fasta = nt2seq(seq2nt(q.fasta)[seq(1, nchar(q.fasta), 2)])
+    # q.fasta = nt2seq(seq2nt(q.fasta)[seq(1, nchar(q.fasta), 2)])
     
   }
   
