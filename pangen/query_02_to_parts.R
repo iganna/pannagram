@@ -56,7 +56,7 @@ if(all.chr){
   n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
 }
 
-print('Y')
+
 
 # Set chromosome and parts paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
@@ -65,10 +65,12 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 
 # Common attributes
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
+print('Y')
 len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
+print('X')
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
 
-print('X')
+
 flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
 
 # ***********************************************************************
