@@ -77,6 +77,10 @@ filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_
 
 flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
 
+if(flag.rev == 1){
+  pokaz("Mirror universe")
+}
+
 # ***********************************************************************
 # ---- Preparation ----
 
