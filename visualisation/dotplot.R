@@ -70,8 +70,58 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   return(p )
 }
 
+
+#'  Create a Dotplot for Two Nucleotide Sequences
+#'
+#' @description
+#' The same as `dotplot` but the sequences can be provided as strings
+#' 
 dotplot.s <- function(seq1, seq2, wsize, nmatch) {
   return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch))
+}
+
+#' Dotplot for Sequences and Their Reverse Complements
+#'
+#' @description
+#' This function generates two dotplots: one comparing a nucleotide sequence to itself,
+#' and another comparing the sequence to its reverse. 
+#' 
+#' @param seq A character vector representing the nucleotide sequence.
+#' @param wsize Window size for the comparison (an integer).
+#' @param nmatch Minimum number of matches within the window (an integer).
+#'
+#' @return A combined ggplot object displaying both dotplots side by side.
+#'
+#' @examples
+#' # Example usage:
+#' seq <- c("A", "C", "G", "T", "A", "C", "G", "T", "A", "C", "G", "T")
+#' dotspigel(seq, wsize = 3, nmatch = 2)
+#'
+#' @export
+dotspigel <- function(seq, wsize, nmatch) {
+  
+  p.fw = dotplot(seq, seq, wsize, nmatch) + ggtitle('seq vs seq')
+  p.rev = dotplot(seq, rev(seq), wsize, nmatch) + ggtitle('seq vs rev(seq)')
+  
+  pp = invisible(grid.arrange(p.fw, p.rev, nrow = 1))
+  
+  return(pp)
+}
+
+#' Dotplot for Sequences and Their Reverse Complements
+#'
+#' @description
+#' The same as `dotspigel` but the sequence can be provided as a string
+#'
+#' @param seq Sequence as a string.
+#' @param wsize Comparison window size.
+#' @param nmatch Minimum matches in window.
+#'
+#' @return ggplot of sequence self and reverse comparison.
+#' 
+#' @export
+dotspigel.s <- function(seq, wsize, nmatch) {
+  return(dotspigel(seq2nt(seq), wsize, nmatch))
 }
 
 
