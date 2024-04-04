@@ -72,7 +72,6 @@ if(!is.null(opt$part.step)){
   len.step = NULL
 }
 # len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
-print('X')
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
 
 
