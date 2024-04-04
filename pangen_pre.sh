@@ -241,7 +241,7 @@ fi
 
 # ----------------------------------------------
 # Split reference fasta into chromosomes if additionally needed
-if [[ "${path_in}" != "$path_chr_ref" ]]; then
+if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
     if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
         pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
