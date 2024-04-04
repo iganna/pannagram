@@ -270,7 +270,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
 
     # Create a database on the reference genome
     for file in ${path_chr_acc}${ref_pref}_chr*fasta ; do
-      # echo ${file}
+      echo ${file}
       # Check if the BLAST database files already exist
       if [ ! -f "${file}.nin" ]; then
           makeblastdb -in ${file} -dbtype nucl > /dev/null
