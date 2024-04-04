@@ -95,10 +95,10 @@ dotplot.s <- function(seq1, seq2, wsize, nmatch) {
 #' @examples
 #' # Example usage:
 #' seq <- c("A", "C", "G", "T", "A", "C", "G", "T", "A", "C", "G", "T")
-#' dotspigel(seq, wsize = 3, nmatch = 2)
+#' dotspiegel(seq, wsize = 3, nmatch = 2)
 #'
 #' @export
-dotspigel <- function(seq, wsize, nmatch) {
+dotspiegel <- function(seq, wsize, nmatch) {
   
   p.fw = dotplot(seq, seq, wsize, nmatch) + ggtitle('seq vs seq')
   p.rev = dotplot(seq, rev(seq), wsize, nmatch) + ggtitle('seq vs rev(seq)')
@@ -111,7 +111,7 @@ dotspigel <- function(seq, wsize, nmatch) {
 #' Dotplot for Sequences and Their Reverse Complements
 #'
 #' @description
-#' The same as `dotspigel` but the sequence can be provided as a string
+#' The same as `dotspiegel` but the sequence can be provided as a string
 #'
 #' @param seq Sequence as a string.
 #' @param wsize Comparison window size.
@@ -120,8 +120,8 @@ dotspigel <- function(seq, wsize, nmatch) {
 #' @return ggplot of sequence self and reverse comparison.
 #' 
 #' @export
-dotspigel.s <- function(seq, wsize, nmatch) {
-  return(dotspigel(seq2nt(seq), wsize, nmatch))
+dotspiegel.s <- function(seq, wsize, nmatch) {
+  return(dotspiegel(seq2nt(seq), wsize, nmatch))
 }
 
 

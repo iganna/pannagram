@@ -138,6 +138,8 @@ do
         -p_ident) p_ident=$2; shift ;;  # percent of identity
         -purge_repeats ) filter_rep=1 ;;  # filtration of repeats, default - not
 
+        -rev ) flag_rev=1 ;;  # filtration of repeats, default - not
+
         -accessions) acc_anal=$2; shift ;;  # file with accessions to analyse
         -combinations) acc_anal=$2; shift ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
 
@@ -183,6 +185,10 @@ part_len="${part_len:-5000}"
 all_cmp="${all_cmp:-T}"
 sort_chr_len="${sort_chr_len:-F}"
 filter_rep="${filter_rep:-0}"
+flag_rev="${flag_rev:-0}"
+
+
+
 echo_flag="${echo_flag:-T}"  
 
 
@@ -275,7 +281,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
 
     Rscript pangen/query_02_to_parts.R --n.chr ${n_chr_query}  --path.chr  ${path_chr_acc}  \
     --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
-    --filter_rep ${filter_rep}
+    --filter_rep ${filter_rep} --rev ${flag_rev}
 
     touch "$path_flags/step${step_num}_done"
     pokaz_message "Done!"

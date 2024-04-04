@@ -31,6 +31,8 @@ option_list <- list(
               help = "pathway to the parts directory", metavar = "character"),
   make_option(c("--filter_rep"), type = "character", default = NULL, 
               help = "flag to keep or not repeats", metavar = "character"),
+  make_option(c("--rev"), type = "character", default = NULL, 
+              help = "flag make the reverce sequences", metavar = "character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer")
 )
@@ -61,6 +63,7 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
 len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
+flag.rev <- as.numeric(ifelse(!is.null(opt$rev), as.numeric(opt$rev), 0))
 
 # ***********************************************************************
 # ---- Preparation ----
@@ -100,6 +103,10 @@ loop.function <- function(i.comb, echo = T){
   pokaz('File', file.in)
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
+  
+  if(flag.rev == 1){
+    q.fasta = nt2seq(rev(seq2nt(q.fasta)))
+  }
   
   s = splitSeq(q.fasta, n=len.parts)
   len.chr = nchar(q.fasta)
