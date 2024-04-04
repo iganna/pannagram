@@ -84,6 +84,8 @@ cores="${cores:-30}"
 #echo $blastres
 mkdir -p $blastres
 
+echo "Identity ${p_ident}"
+
 
 # BLAST-search function
 run_blast() {
