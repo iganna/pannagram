@@ -66,6 +66,7 @@ if(!dir.exists(path.parts)) dir.create(path.parts)
 # Common attributes
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
 print('Y')
+print(opt$part.step)
 len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
 print('X')
 filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
