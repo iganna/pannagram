@@ -107,19 +107,17 @@ run_blast() {
     r_prefix=${r_filename%_*}
     ref_chr=${r_filename##*chr}
 
-    echo "${part_chr} ${ref_chr}"
-    echo "${p_prefix} ${r_prefix}"
 
     if [[ "$p_prefix" == "$r_prefix" ]] || { [[ "$part_chr" != "$ref_chr" ]] && [[ ${all_vs_all} == "F" ]]; } || [[ -f "$outfile" ]]; then
         return
     fi
 
-    echo "${part_chr} ${ref_chr}"
+    # echo "${part_chr} ${ref_chr}"
 
   	p_filename=$(echo "$p_filename" | sed 's/_chr\(.*\)$/_\1/')
     outfile=${blastres}${p_filename}_${ref_chr}.txt
 
-  	echo ${outfile}
+  	# echo ${outfile}
 
     # blastn -db ${ref_file} -query ${part_file} -out ${outfile} \
     #        -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
@@ -140,13 +138,13 @@ export -f run_blast
 pokaz_message "Reference genome ${ref_pref}"
 
 
-# parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_ref${ref_pref}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
+parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_ref${ref_pref}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
 
-for part in ${parts}*.fasta; do
-  for ref in ${path_ref}${ref_pref}_chr*.fasta; do
-    run_blast "$part" "$ref" "$blastres" "$p_ident" "$penalty" "$gapopen" "$gapextend" "$max_hsps" "$all_vs_all"
-  done
-done
+# for part in ${parts}*.fasta; do
+#   for ref in ${path_ref}${ref_pref}_chr*.fasta; do
+#     run_blast "$part" "$ref" "$blastres" "$p_ident" "$penalty" "$gapopen" "$gapextend" "$max_hsps" "$all_vs_all"
+#   done
+# done
 
 
 
