@@ -18,6 +18,7 @@ library(ggplot2)
 #' @param col.fw Color for forward-oriented synteny blocks. Default is '#27374D'.
 #' @param col.rc Color for reverse-complement synteny blocks. Default is '#CE1F6A'.
 #' @param col.line Color for the optional horizontal and vertical lines. Default is '#362FD9'.
+#' @param show.point Flag to show the plot thicker with the help of dots in the beginning of synteny segments.
 #'
 #' @return A `ggplot2` plot object.
 #'
@@ -32,7 +33,8 @@ library(ggplot2)
 plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
                         col.fw = '#27374D',
                         col.rc = '#CE1F6A',
-                        col.line = '#362FD9'){
+                        col.line = '#362FD9',
+                        show.point = F){
   
   if(!is.null(base.len)){
     x = getBase(x, base.len)
@@ -50,6 +52,9 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
     scale_y_continuous(breaks = seq.lab* 1e6, labels = seq.lab ) +
     scale_x_continuous(breaks = seq.lab* 1e6, labels = seq.lab )
   
+  
+  
+  
   if(!is.null(hlines)){
     p <- p + geom_hline(yintercept=hlines, color= col.line)
   }
@@ -57,11 +62,17 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
   if(!is.null(vlines)){
     p <- p + geom_vline(xintercept=vlines, color = col.line)
   }
+  
+  if(show.point){
+    p <- p + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
+  }
+  
   return(p)
 }
 
 
-plotDot <- function(..., alpha = 1) {
+ploDot <- function(..., alpha = 1) {
+  pokazAttention('Please use plotSynteny(..., show.dot=T)')
   p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
   return(p)
 }
