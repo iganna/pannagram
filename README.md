@@ -107,7 +107,7 @@ Thanks for the testing:
 * Anna Glushkevich  
 * Elizaveta Grigoreva  
 * Jilong Ma  
-* Alexandr
+* Alexander Bezlepsky
 
 Logo was generated with the help of DALL-E
 
