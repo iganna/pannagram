@@ -164,7 +164,7 @@ done
 
 # Check if ref_set is set
 if [[ -z "$ref_set" ]]; then
-  echo "Error: -ref_set parameter is not set" >&2
+  echo "Error: -refs parameter is not set" >&2
   exit 1
 fi
 
