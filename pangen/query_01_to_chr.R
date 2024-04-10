@@ -36,6 +36,8 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
+# print(opt)
+
 # ***********************************************************************
 # ---- Values of parameters ----
 
@@ -51,8 +53,8 @@ if(all.chr){
 }
 
 # Accessions to analyse
-acc.anal <- ifelse(!is.null(opt$acc.anal), (opt$acc.anal), NULL)
-if(acc.anal == 'NULL') acc.anal = NULL
+acc.anal <- opt$acc.anal
+
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
     acc.anal = NULL

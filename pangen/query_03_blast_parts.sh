@@ -84,6 +84,8 @@ cores="${cores:-30}"
 #echo $blastres
 mkdir -p $blastres
 
+# echo "Identity ${p_ident}"
+
 
 # BLAST-search function
 run_blast() {
@@ -137,5 +139,13 @@ pokaz_message "Reference genome ${ref_pref}"
 
 
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_ref${ref_pref}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all
+
+# for part in ${parts}*.fasta; do
+#   for ref in ${path_ref}${ref_pref}_chr*.fasta; do
+#     run_blast "$part" "$ref" "$blastres" "$p_ident" "$penalty" "$gapopen" "$gapextend" "$max_hsps" "$all_vs_all"
+#   done
+# done
+
+
 
 # pokaz_message "Done!"

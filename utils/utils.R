@@ -113,10 +113,13 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
 #'
 #' @author Anna A. Igolkina 
 #' 
-splitSeq <- function(sequence, n = 5000) {
+splitSeq <- function(sequence, n = 5000, step = 0) {
   
   # Split the sequence into individual characters
-  sst <- strsplit(sequence, '')[[1]]
+  sst <- seq2nt(sequence)
+  if(step != 0){
+    sst = sst[-(1:step)]
+  }
   n.add <- ceiling(length(sst) / n) * n - length(sst)
   sst <- c(sst, rep('', n.add))
   
@@ -676,7 +679,7 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
 #'
 repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
   
-  substrings <- unlist(stri_sub_all(s, 1:(stri_length(s)-wsize+1), wsize -1 + 1:(stri_length(s)-wsize+1)))
+  substrings <- unlist(stringi::stri_sub_all(s, 1:(nchar(s)-wsize+1), wsize -1 + 1:(nchar(s)-wsize+1)))
   substrings = sort(substrings)
   cnt <- rle(substrings)
   cnt = cnt$lengths
@@ -855,7 +858,16 @@ wndMean <- function(v, wnd.size = 10000){
   return(wnd.mean)
 }
 
-readTableMy <- function(file) {
+
+#' Read BLAST Output File
+#'
+#' Reads a BLAST output file and returns its contents as a data frame. If the file contains
+#' no data (only comments or empty), `NULL` is returned. It assumes that the file does not
+#' have a header and all strings should not be converted to factors.
+#'
+#' @param file The BLAST output file to be read.
+#' @return A data frame containing the contents of the BLAST file if it contains data; otherwise, `NULL`.
+readBlast <- function(file) {
   if (any(grepl("^[^#]", readLines(file)))) {
     return(read.table(file, stringsAsFactors = F,  header = F))
   } else {
@@ -863,4 +875,8 @@ readTableMy <- function(file) {
   }
 }
 
+readTableMy <- function(file){
+  pokaz('Replace function readTableMy to readBlast')
+  return(readBlast(file))
+}
 
