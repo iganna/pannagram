@@ -176,8 +176,8 @@ bed2bed <- function(path.cons,
                     s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
 ){
   
-  colnames.bed = colnames(bed1)
-  colnames(bed) = c('chrom',
+  colnames.bed1 = colnames(bed1)
+  colnames(bed1) = c('chrom',
                     'beg',
                     'end',
                     'name',
@@ -189,9 +189,9 @@ bed2bed <- function(path.cons,
                     V4 = bed1$beg,
                     V5 = bed1$end,
                     V6 = bed1$score,
-                    V7 = bed$strand,
+                    V7 = bed1$strand,
                     V8 = '.',
-                    V9 = bed$name
+                    V9 = bed1$name
                     )
   gff2 = gff2gff(path.cons=path.cons, 
                   acc1=acc1, 
@@ -207,7 +207,7 @@ bed2bed <- function(path.cons,
                   s.chr = s.chr) # in this case the pattern is "*_ChrX", where X is the number
   
   bed2 = gff2[,c(1, 4, 5, 9, 6, 7)]
-  colnames(bed2) = colnames.bed
+  colnames(bed2) = colnames.bed1
   
   return(bed2)
 
