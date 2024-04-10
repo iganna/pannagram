@@ -63,7 +63,7 @@ gff2gff <- function(path.cons,
                     n.chr = 5,
                     exact.match=T, 
                     gr.accs.e = "accs/",
-                    aln.type = 'msa_',  # please provide correct prefix. In case of reference-based, it's 'comb_'
+                    aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                     echo=T,
                     pangenome.name='Pangen',
                     s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
@@ -165,7 +165,7 @@ gff2gff <- function(path.cons,
 
 bed2bed <- function(path.cons, 
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
-                    gff1, 
+                    bed1, 
                     ref.acc, 
                     n.chr = 5,
                     exact.match=T, 
@@ -176,97 +176,44 @@ bed2bed <- function(path.cons,
                     s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
 ){
   
-  if(acc1 == acc2) stop('Accessions provided are identical')
+  colnames.bed = colnames(bed1)
+  colnames(bed) = c('chrom',
+                    'beg',
+                    'end',
+                    'name',
+                    'score',
+                    'strand')
+  gff1 = data.frame(V1 = bed1$chrom,
+                    V2 = 'tmp',
+                    V3 = 'type',
+                    V4 = bed1$beg,
+                    V5 = bed1$end,
+                    V6 = bed1$score,
+                    V7 = bed$strand,
+                    V8 = '.',
+                    V9 = bed$name
+                    )
+  gff2 = gff2gff(path.cons=path.cons, 
+                  acc1=acc1, 
+                  acc2=acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
+                  gff1, 
+                  ref.acc=ref.acc, 
+                  n.chr = n.chr,
+                  exact.match=exact.match, 
+                  gr.accs.e = gr.accs.e,
+                  aln.type = aln.type,  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                  echo=echo,
+                  pangenome.name=pangenome.name,
+                  s.chr = s.chr) # in this case the pattern is "*_ChrX", where X is the number
   
-  gff1$idx = 1:nrow(gff1)
-  # Get chromosome number from the first column of the gff file
-  if(!('chr' %in% gff1)){
-    gff1 =  extractChrByFormat(gff1, s.chr)
-    gff1 = gff1[order(gff1$chr),]
-  }
+  bed2 = gff2[,c(1, 4, 5, 9, 6, 7)]
+  colnames(bed2) = colnames.bed
   
-  colnames.1.to.9 = colnames(gff1)[1:9]
-  colnames(gff1)[1:9] = paste('V', 1:9, sep = '')
-  # Prepare new annotation
-  gff2 = gff1
-  gff2$len.init = gff2$V5 - gff2$V4 + 1
-  gff2$V9 = paste(gff2$V9, ';len_init=', gff2$len.init, sep='')
-  gff2$V2 = 'panConvertor'
-  gff2$V4 = -1
-  gff2$V5 = -1
-  gff2$V1 = gsub(acc1, acc2, gff2$V1)
-  
-  
-  for(i.chr in 1:n.chr){
-    if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5', sep = '')
-    
-    if(acc1 == pangenome.name){
-      v = h5read(file.msa, paste(gr.accs.e, acc2, sep = ''))
-      v = cbind(1:length(v), v)
-    } else if (acc2 == pangenome.name){
-      v = h5read(file.msa, paste(gr.accs.e, acc1, sep = ''))
-      v = cbind(v, 1:length(v))
-    } else {  # Two different accessions
-      v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
-                h5read(file.msa, paste(gr.accs.e, acc2, sep = '')))  
-    }
-    
-    max.chr.len = max(nrow(v), max(abs(v[!is.na(v)])))
-    
-    v = v[v[,1]!=0,]
-    v = v[!is.na(v[,1]),]
-    v = v[!is.na(v[,2]),]
-    idx.v.neg = which(v[,1] < 0)
-    if(length(idx.v.neg) > 0){
-      v[idx.v.neg,] = v[idx.v.neg,] * (-1)
-    }
-    # v = v[order(v[,1]),]  # Not necessarily 
-    
-    # Get correspondence between two accessions
-    v.corr = rep(0, max.chr.len)
-    v.corr[v[,1]] = v[,2]
-    
-    idx.chr = which(gff2$chr == i.chr)
-    if(echo) pokaz('Number of annotations:', length(idx.chr))
-    
-    if(exact.match){
-      # Exact match of positions
-      gff2$V4[idx.chr] = v.corr[gff1$V4[idx.chr]]
-      gff2$V5[idx.chr] = v.corr[gff1$V5[idx.chr]]
-    } else {
-      w = getPrevNext(v.corr)
-      gff2$V4[idx.chr] = w$v.next[gff1$V4[idx.chr]]
-      gff2$V5[idx.chr] = w$v.prev[gff1$V5[idx.chr]]
-    }
-    
-    # TODO: add information about blocks
-    
-  }
-  
-  idx.wrong.blocks = sign(gff2$V4 * gff2$V5) != 1
-  # gff2[idx.wrong.blocks, c('V4', 'V5')] = 0
-  gff2.loosing = gff2[idx.wrong.blocks,]
-  gff2.remain = gff2[!idx.wrong.blocks,]
-  
-  # Fix direction
-  s.strand = c('+'='-', '-'='+')
-  idx.neg = gff2.remain$V4 < 0
-  tmp = abs(gff2.remain$V4[idx.neg])
-  # print(head(gff2.remain[idx.neg,]))
-  gff2.remain$V4[idx.neg] = abs(gff2.remain$V5[idx.neg])
-  gff2.remain$V5[idx.neg] = tmp
-  gff2.remain$V7[idx.neg] = s.strand[gff2.remain$V7[idx.neg]]
-  
-  gff2.remain$len.new = gff2.remain$V5 - gff2.remain$V4 + 1
-  gff2.remain$V9 = paste(gff2.remain$V9, ';len_new=', gff2.remain$len.new, sep='')  # add new length
-  gff2.remain$V9 = paste(gff2.remain$V9, ';len_ratio=', 
-                         round(gff2.remain$len.new / gff2.remain$len.init, 2), sep='')  # add new length
-  
-  colnames(gff2.loosing)[1:9] = colnames.1.to.9
-  colnames(gff2.remain)[1:9] = colnames.1.to.9
-  return(gff2.remain = gff2.remain)
+  return(bed2)
+
 }
+
+
 
 
 
