@@ -207,7 +207,7 @@ bed2bed <- function(path.cons,
                   s.chr = s.chr) # in this case the pattern is "*_ChrX", where X is the number
   
   bed2 = gff2[,c(1, 4, 5, 9, 6, 7)]
-  colnames(bed2) = colnames.bed1
+  colnames(bed2) = colnames.bed1[1:6]
   
   return(bed2)
 
