@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+ref_path = "/home/anna/storage/rhizobia/lawn/out_pre_01/"
+getwd()
+```
+```{r}
+source("visualisation/visualisation.R")
+```
+
+
+```{r}
+data_i<- readRDS("DATA/PRJNA1048330/pangen_pre/alignments_SM52/ml2_5_2_maj.rds")
+plotSynteny(data_i[1, , drop=F])
+```
+
+
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+
+syntenyGrid <- function(directory, prefix) {
+  # List all files that match the prefix and end with ".rds"
+  file_list <- list.files(path = directory, pattern = paste0("^", prefix, "_[0-9]+_[0-9]+_.*\\.rds$"), full.names = TRUE)
+  
+  if (length(file_list) == 0) {
+    print("No files found matching the prefix.")
+    return(NULL)
+  }
+  
+  # Initialize lists to hold plots and their indices
+  plots <- list()
+  indices <- matrix(ncol = 2, nrow = length(file_list))
+  
+  # Loop through files, load data, and create plots
+  for (i in seq_along(file_list)) {
+    filename <- file_list[i]
+    data <- readRDS(filename)
+    
+    # Extract i and j from filename using a robust regular expression
+    matches <- regmatches(filename, regexec(paste0(prefix, "_([0-9]+)_([0-9]+)"), filename))
+    if (length(matches[[1]]) < 3) {
+      next # Skip if the filename does not match expected format
+    }
+    ij <- as.integer(matches[[1]][2:3])
+    indices[i, ] <- ij
+    
+    # Generate the plot
+    p <- plotSynteny(data) +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank()
+      ) +
+      ggtitle(paste(ij[1], ",", ij[2])) + 
+      theme(
+        plot.title = element_text(size = 5, hjust = 0.5),
+        plot.title.position = "plot"
+      )
+    
+    
+    plots[[i]] <- p
+  }
+  
+  # Determine the grid dimensions
+  max_i <- max(indices[, 1], na.rm = TRUE)
+  max_j <- max(indices[, 2], na.rm = TRUE)
+  
+  if (is.na(max_i) || is.na(max_j)) {
+    print("Error in indices extraction.")
+    return(NULL)
+  }
+  
+  # Arrange plots in a grid
+  grid_list <- vector("list", max_i * max_j)
+  for (idx in seq_along(plots)) {
+    pos <- (indices[idx, 1] - 1) * max_j + indices[idx, 2]
+    grid_list[[pos]] <- plots[[idx]]
+  }
+
+  # Replace NULL elements with blank plots
+  blank_plot <- ggplot() + theme_void()
+  grid_list[sapply(grid_list, is.null)] <- list(blank_plot)
+  
+  # Use grid.arrange to arrange plots
+  do.call(grid.arrange, c(grid_list, ncol = max_j))
+}
+
+p = syntenyGrid("DATA/PRJNA1048330/pangen_pre/alignments_ml59/", "ml2")
+ggsave("plot_grid.png", p)
+```
+
