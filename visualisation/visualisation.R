@@ -34,7 +34,8 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
                         col.fw = '#27374D',
                         col.rc = '#CE1F6A',
                         col.line = '#362FD9',
-                        show.point = F){
+                        show.point = F,
+                        dot.alpha = 1.0){
   
   if(!is.null(base.len)){
     x = getBase(x, base.len)
@@ -64,7 +65,7 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
   }
   
   if(show.point){
-    p <- p + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
+    p <- p + geom_point(show.legend = FALSE, size = 1, alpha = dot.alpha)
   }
   
   return(p)
