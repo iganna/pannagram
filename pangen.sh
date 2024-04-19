@@ -250,7 +250,7 @@ IFS=',' read -ra refs_all <<< "$ref_set"
 for ref0 in "${refs_all[@]}"; do
     
     command="./pangen_ref.sh -ref ${ref0} ${additional_params}"
-    echo "Executing command: ${command}"
+    # echo "Executing command: ${command}"
     eval "${command}"
 
 done

@@ -880,3 +880,22 @@ readTableMy <- function(file){
   return(readBlast(file))
 }
 
+
+showt <- function(t, irow=NULL, chr=F, add = c()){
+  idx = c(1:5,7, add)
+  idx = intersect(idx, 1:ncol(t))
+  irow = irow[irow <= nrow(t)]
+  
+  if(chr) idx = c(idx, 10)
+  if(is.null(irow)){
+    print(t[1:min(100, nrow(t)),idx])
+  } else {
+    print(t[irow,idx])
+  }
+}
+
+
+
+
+
+

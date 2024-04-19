@@ -47,6 +47,10 @@ extractChrByFormat <- function(gff, s.chr){
 #' @param max.chr.len Maximum chromosome length (default is 35 * 10^6).
 #' @param gr.accs.e Path to access data in the HDF5 file (default is "accs/").
 #' @param echo Logical flag for messages during execution (default is TRUE).
+#' @param ref.acc String identifier for the accession, which was used to sort the MSA position order.
+#' @param aln.type String specifying the prefix or type of alignment data being used; this might include prefixes such as 'msa_' for generic MSA or 'comb_' for combined reference-based alignments.
+#' @param pangenome.name String specifying a name to represent the pangenomic coordinate system if one of the accessions is named 'pangen', enabling transfers with pangenome coordinates.
+#' @param s.chr String used to split the chromosomal name and extract the chromosome number, following a specific pattern such as '*_ChrX' where 'X' denotes a chromosome number.
 #' 
 #' @return A list with three elements: gff2.loosing (lost annotations),
 #' gff2.remain (remaining annotations), idx.remain (indexes of remaining annotations).
@@ -68,6 +72,9 @@ gff2gff <- function(path.cons,
                     pangenome.name='Pangen',
                     s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
                     ){
+  
+  # Set of names of accettions, which can be used to specify pangenomes coordinates
+  pangenome.names = unique(c(pangenome.name, 'Pangen', 'Pangenome', 'Pannagram'))
   
   if(acc1 == acc2) stop('Accessions provided are identical')
   
@@ -94,10 +101,10 @@ gff2gff <- function(path.cons,
     if(echo) pokaz('Chromosome', i.chr)
     file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5', sep = '')
     
-    if(acc1 == pangenome.name){
+    if(tolower(acc1) %in% tolower(pangenome.names)){
       v = h5read(file.msa, paste(gr.accs.e, acc2, sep = ''))
       v = cbind(1:length(v), v)
-    } else if (acc2 == pangenome.name){
+    } else if (tolower(acc2) %in% tolower(pangenome.names)){
       v = h5read(file.msa, paste(gr.accs.e, acc1, sep = ''))
       v = cbind(v, 1:length(v))
     } else {  # Two different accessions
@@ -162,27 +169,44 @@ gff2gff <- function(path.cons,
 }
 
 
-
+#' ----------------------------------------------------------------------
+#' Convert BED Annotations Using MSA Data
+#'
+#' This function utilizes Multiple Sequence Alignment (MSA) data to convert BED annotations
+#' from one genomic accession to another. It processes annotations and modifies them based
+#' on the MSA mappings.
+#'
+#' @param path.cons String specifying the path to the directory containing MSA files.
+#' @param acc1 String identifier for the first accession, which contains the original annotations.
+#' @param acc2 String identifier for the second accession, to which annotations are being transferred.
+#' @param bed1 DataFrame containing the BED annotations of the first accession.
+#' @param ... Additional parameters passed to the gff2gff function, such as:
+#'   - ref.acc: String identifier for the accession used in to sort the positions in MSA.
+#'   - n.chr: Integer specifying the number of chromosomes to process.
+#'   - exact.match: Logical flag indicating whether exact position matching should be used.
+#'   - gr.accs.e: String specifying the path within the HDF5 file to access data.
+#'   - aln.type: String specifying the prefix of alignment files being used.
+#'   - echo: Logical flag to enable or disable messages during the function's execution.
+#'   - pangenome.name: String specifying a name to represent the pangenomic coordinate system.
+#'   - s.chr: String used to split chromosomal names and extract the chromosome number.
+#'
+#' @return A DataFrame in BED format containing the converted annotations.
+#'
+#' @examples
+#' library(rhdf5) # hypothetical example, adjust according to actual usage
+#' bed_data <- read.table("path/to/data.bed", header = TRUE, sep = "\t")
+#' converted_bed <- bed2bed("path/to/consensus/", "acc1", "acc2", bed_data)
+#'
+#' @export
 bed2bed <- function(path.cons, 
-                    acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
+                    acc1, acc2,
                     bed1, 
-                    ref.acc, 
-                    n.chr = 5,
-                    exact.match=T, 
-                    gr.accs.e = "accs/",
-                    aln.type = 'msa_',  # please provide correct prefix. In case of reference-based, it's 'comb_'
-                    echo=T,
-                    pangenome.name='Pangen',
-                    s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
-){
+                    ... # Use '...' to capture all other arguments
+) {
   
+  # Convert BED to GFF-like format
   colnames.bed1 = colnames(bed1)
-  colnames(bed1) = c('chrom',
-                    'beg',
-                    'end',
-                    'name',
-                    'score',
-                    'strand')
+  colnames(bed1) = c('chrom', 'beg', 'end', 'name', 'score', 'strand')
   gff1 = data.frame(V1 = bed1$chrom,
                     V2 = 'tmp',
                     V3 = 'type',
@@ -192,30 +216,21 @@ bed2bed <- function(path.cons,
                     V7 = bed1$strand,
                     V8 = '.',
                     V9 = bed1$name
-                    )
-  gff2 = gff2gff(path.cons=path.cons, 
-                  acc1=acc1, 
-                  acc2=acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
-                  gff1, 
-                  ref.acc=ref.acc, 
-                  n.chr = n.chr,
-                  exact.match=exact.match, 
-                  gr.accs.e = gr.accs.e,
-                  aln.type = aln.type,  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
-                  echo=echo,
-                  pangenome.name=pangenome.name,
-                  s.chr = s.chr) # in this case the pattern is "*_ChrX", where X is the number
+  )
   
+  # Call gff2gff function, passing all additional parameters through '...'
+  gff2 = gff2gff(path.cons = path.cons, 
+                 acc1 = acc1, 
+                 acc2 = acc2,
+                 gff1 = gff1, 
+                 ...)
+  
+  # Convert the output back to BED format
   bed2 = gff2[,c(1, 4, 5, 9, 6, 7)]
-  colnames(bed2) = colnames.bed1
+  colnames(bed2) = colnames.bed1[1:6]
   
   return(bed2)
-
 }
-
-
-
-
 
 
 

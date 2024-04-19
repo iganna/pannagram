@@ -40,7 +40,25 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
     x = getBase(x, base.len)
   }
   
-  seq.lab =  seq(0, 40, by = 5 )
+  range.x = max(c(x$V2,x$V3)) - min(c(x$V2,x$V3))
+  range.y = max(c(x$V4,x$V5)) - min(c(x$V4,x$V5))
+  range.m = max(range.x, range.y)
+  max.lim = max(c(x$V4,x$V5,x$V2,x$V3))
+  
+  n.scale.step = 5
+  for(i.scale in 6:2){
+    n.scale = 10^i.scale 
+    if((range.m > n.scale* n.scale.step) || (i.scale == 2)){
+      seq.lab.n = round(max.lim / n.scale) + 2
+      seq.lab =  seq(0, seq.lab.n, by = n.scale.step)
+      v.ticks = seq.lab * n.scale
+      s.ticks = paste(seq.lab, 'e', i.scale ,sep = '' )
+      break
+    }
+  }
+  # pokaz(v.ticks)
+  # pokaz(s.ticks)
+  
   p <- ggplot(x, aes(x = V2, y=V4, xend = V3, yend = V5, color = as.factor(V4 < V5))) + 
     # geom_point(show.legend = FALSE, size = 0.1) + 
     geom_segment(show.legend = FALSE) + 
@@ -49,9 +67,8 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
     ylab('base') +
     scale_color_manual(values = c("FALSE" = col.rc, "TRUE" = col.fw)) +
     coord_fixed(ratio = 1) +
-    scale_y_continuous(breaks = seq.lab* 1e6, labels = seq.lab ) +
-    scale_x_continuous(breaks = seq.lab* 1e6, labels = seq.lab )
-  
+    scale_y_continuous(breaks = v.ticks, labels = s.ticks) +
+    scale_x_continuous(breaks = v.ticks, labels = s.ticks)
   
   
   
