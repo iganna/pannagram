@@ -1,25 +1,26 @@
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/examples/pannagram_logo.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/pannagram_logo.png" width="30%" height="auto">
 </p>
 
 # Pannagram
 
 
-Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. 
-Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
+Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
+Additionally, Pannagram contains useful functions for visualization.
 
 
-## Recreating working environment
+### Recreating working environment
 
 Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
 ```sh
 conda env create -f pannagram_conda_env.yml
 conda activate pannagram_conda_env
 ```
+The environment downloads required R libraries, [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/) and [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html).
 
+## Pangenome linear alignment
 
-## Pangenome linear genome alignment
-
+### Building the alignment
 Pangenome alignment can be built in two modes:
 1. **reference-free**:
 ```
@@ -37,17 +38,62 @@ Pangenome alignment can be built in two modes:
 ```
 
 
-An extended description of the parameters can be read by executing:
+An extended description of the parameters can be read by executing scripts with the flag `-help`.
+
+### Extract information from the pangenome alignment
+
 ```
-./pangen.sh -help
-./pangen_ref.sh -help
+./analys.sh -path_out 'output_folder' 
+			-blocks  \	# Synteny block inforamtion for visualisation
+			-seq  \		# Consensus sequence of the pangenome
+			-snp		# SNP calling
 ```
+
+### Calling structural variants
+
+When the pangenome linear alignment is built, SVs can be called with the following:
+```
+./sv.sh -path_out 'output_folder' \
+        -gff  \ 					# Output Gff files
+        -te -te_file te.fasta  \ 	# Compare with known TE sequences
+        -graph  					# Construct the graph of SVs
+```
+
 
 ## Visualisation
 Pannagram contains a number of useful methods for visualization.
 
-* Dotplot
-* MSA
+### Visualisation of the pangenome alignment
+All genomes together:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/main/images/pangenome_alignment.png" width="50%" height="auto">
+</p>
+
+A dotplot for a pair of genomes:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/main/images/syntenyplot.png" width="50%" height="auto">
+</p>
+
+### Seuqnce plot for a fragment of the alignment
+In the ACTG-model:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot.png" width="50%" height="auto">
+</p>
+
+In the Polymorphism mode:
+
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot_diff.png" width="50%" height="auto">
+</p>
+
+### Dotplots of sequences
+Simultaneously in forward (dark color) and reverce comlement (pink color) strands:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/main/images/dotplot.png" width="50%" height="auto">
+</p>
+
+
+### ORF-finder and visualisation
 
 
 ## Additional useful tools
@@ -78,9 +124,7 @@ determining not just if a sequence is covered, but also if it's covered in a spe
 
 <!--
 
-
 ## Dependencies
-
 
 BiocManager::muscle
 
@@ -96,7 +140,6 @@ foreach
 stringr
 ggplot2
 utils.R сам устанавливает crayon.
-
 
 -->
 

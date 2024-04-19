@@ -363,7 +363,7 @@ for(s.comb in pref.combinations){
   
   # Two possible loops depending on the number of cores
   if(num.cores == 1){
-    pokaz('No parallel computing')
+    pokaz('No parallel computing: short sequences')
     # One core
     res.msa = list()
     for(i.tmp in 1:length(idx.short)){
@@ -377,7 +377,7 @@ for(s.comb in pref.combinations){
     res.msa = res.msa[idx.short]
   } else {
     # Many cores
-    pokaz('Parallel computing')
+    pokaz('Parallel computing: short sequences')
     res.msa <- foreach(seqs = aln.seqs[idx.short],
                        pos.idx = aln.pos[idx.short],
                        idx.gap.pos = idx.break$beg[idx.short],
@@ -406,7 +406,7 @@ for(s.comb in pref.combinations){
   
   
   if(num.cores == 1){
-    pokaz('No parallel computing')
+    pokaz('No parallel computing: long sequences')
     for (i.tmp in idx.long) {
       seqs <- aln.seqs[[i.tmp]]
       pos.idx <- aln.pos[[i.tmp]]
@@ -418,7 +418,7 @@ for(s.comb in pref.combinations){
     }
     
   } else {
-    pokaz('Parallel computing')
+    pokaz('Parallel computing: long sequences')
     tmp <- foreach(seqs = aln.seqs[idx.long], 
                        pos.idx = aln.pos[idx.long], 
                        s.aln = s.break[idx.long],
