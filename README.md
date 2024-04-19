@@ -79,12 +79,12 @@ A dotplot for a pair of genomes:
 
 Every node is an SV:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs.png" width="40%" height="auto">
 </p>
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="60%" height="auto">
 </p>
 
 
