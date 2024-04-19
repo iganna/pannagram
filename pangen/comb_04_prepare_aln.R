@@ -450,6 +450,15 @@ if(F){
   path.cons = './'
   path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
   ref.pref = '0'
+  
+  
+  library(rhdf5)
+  source('/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/pannagram/utils/utils.R')
+  path.cons = '/Volumes/Samsung_T5/vienn/alignment/new/consensus/'
+  path.chromosomes = '/Volumes/Samsung_T5/vienn/pb_chromosomes/'
+  ref.pref = '0'
+  
+  
 }
 
 
