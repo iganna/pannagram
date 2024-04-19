@@ -1,5 +1,5 @@
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/pannagram_logo.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/pannagram_logo.png" width="30%" height="auto">
 </p>
 
 # Pannagram
@@ -66,30 +66,30 @@ Pannagram contains a number of useful methods for visualization.
 ### Visualisation of the pangenome alignment
 All genomes together:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/pangenome_alignment.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/pangenome_alignment.png" width="50%" height="auto">
 </p>
 
 A dotplot for a pair of genomes:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/syntenyplot.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="50%" height="auto">
 </p>
 
 ### Seuqnce plot for a fragment of the alignment
 In the ACTG-model:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/msaplot.png" width="50%" height="auto">
 </p>
 
 In the Polymorphism mode:
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot_diff.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/msaplot_diff.png" width="50%" height="auto">
 </p>
 
 ### Dotplots of sequences
 Simultaneously in forward (dark color) and reverce comlement (pink color) strands:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/dotplot.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/dotplot.png" width="50%" height="auto">
 </p>
 
 
