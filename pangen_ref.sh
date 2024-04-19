@@ -160,6 +160,7 @@ then
   do
     echo "$option"
   done
+  exit 1
 fi
 
 
