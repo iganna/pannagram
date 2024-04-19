@@ -6,9 +6,7 @@
 
 
 Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
-Additionally, Pannagram contains useful functions for visualization.
-
-The manual is available in the [examples](./examples) folder.
+Additionally, Pannagram contains useful functions for visualization. The manual is available in the [examples](./examples) folder.
 
 
 ### Recreating working environment
@@ -22,7 +20,7 @@ The environment downloads required R libraries, [BLAST](https://www.ncbi.nlm.nih
 
 ## 1. Pangenome linear alignment
 
-### Building the alignment
+### 1.1 Building the alignment
 Pangenome alignment can be built in two modes:
  1. **reference-free**:
 ```
@@ -44,7 +42,7 @@ If there is no information on genomes and corresponding chromosomes available, o
  
 An extended description of the parameters for all three scripts are avaliable by executing scripts with the flag `-help`.
 
-### Extract information from the pangenome alignment
+### 1.2 Extract information from the pangenome alignment
 Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
 ```
 ./analys.sh -path_out 'output_folder' 
@@ -53,7 +51,7 @@ Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.
 			-snp		# SNP calling
 ```
 
-### Calling structural variants
+### 1.3 Calling structural variants
 
 When the pangenome linear alignment is built, SVs can be called using the following script:
 ```
@@ -66,7 +64,7 @@ When the pangenome linear alignment is built, SVs can be called using the follow
 ## 2. Visualisation
 Pannagram contains a number of useful methods for visualization in R.
 
-### Visualisation of the pangenome alignment
+### 2.1 Visualisation of the pangenome alignment
 All genomes together:
 <p align="left">
 <img src="https://github.com/iganna/pannagram/blob/dev/images/pangenome_alignment.png" width="50%" height="auto">
@@ -77,7 +75,7 @@ A dotplot for a pair of genomes:
 <img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="30%" height="auto">
 </p>
 
-### Nucleotide plot for a fragment of the alignment
+### 2.2 Nucleotide plot for a fragment of the alignment
 
  - In the ACTG-mode:
 
@@ -105,7 +103,7 @@ msaplot(aln.mx)						# ggplot object
 # --- Quick start code ---
 msadiff(aln.mx)						# ggplot object
 ```
-### Dotplots of Sequences
+### 2.3 Dotplots of Sequences
 
 Simultaneously on forward (dark color) and reverse complement (pink color) strands:
 <p align="left">
@@ -121,7 +119,7 @@ s = sample(c("A","C","G","T"), 100, replace = T)
 dotplot(s, s, 15, 9)				# ggplot object
 ```
 
-### ORF-finder and visualisation
+### 2.4 ORF-finder and visualisation
 
 <p align="left">
 <img src="https://github.com/iganna/pannagram/blob/dev/images/orfplot.png" width="30%" height="auto">
@@ -138,7 +136,7 @@ orfplot(orfs$pos)					# ggplot object
 
 
 ## 3. Additional useful tools
-### Search for similar sequences
+### 3.1 Search for similar sequences
 
 #### ...in the genome
 The first approach involves searching against entire genomes or individual chromosomes. 
