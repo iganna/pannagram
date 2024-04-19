@@ -75,7 +75,20 @@ A dotplot for a pair of genomes:
 <img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="30%" height="auto">
 </p>
 
-### 2.2 Nucleotide plot for a fragment of the alignment
+### 2.2 Graph of Nestedness on Structural variants
+
+Every node is an SV:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs.png" width="50%" height="auto">
+</p>
+
+Every node is a unique sequence, size - the amount of this sequence in SVs:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="50%" height="auto">
+</p>
+
+
+### 2.3 Nucleotide plot for a fragment of the alignment
 
  - In the ACTG-mode:
 
@@ -103,7 +116,7 @@ msaplot(aln.mx)						# ggplot object
 # --- Quick start code ---
 msadiff(aln.mx)						# ggplot object
 ```
-### 2.3 Dotplots of Sequences
+### 2.4 Dotplots of Sequences
 
 Simultaneously on forward (dark color) and reverse complement (pink color) strands:
 <p align="left">
@@ -119,7 +132,7 @@ s = sample(c("A","C","G","T"), 100, replace = T)
 dotplot(s, s, 15, 9)				# ggplot object
 ```
 
-### 2.4 ORF-finder and visualisation
+### 2.5 ORF-finder and visualisation
 
 <p align="left">
 <img src="https://github.com/iganna/pannagram/blob/dev/images/orfplot.png" width="30%" height="auto">
