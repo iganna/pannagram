@@ -22,14 +22,14 @@ The environment downloads required R libraries, [BLAST](https://www.ncbi.nlm.nih
 
 ### 1.1 Building the alignment
 Pangenome alignment can be built in two modes:
- 1. **reference-free**:
+ - **reference-free**:
 ```
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
 			-path_out 'output_folder' \
 			-nchr_query 5 -nchr_ref 5 
 ```
 
- 2. **reference-based**:
+ - **reference-based**:
 ```
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
@@ -37,7 +37,7 @@ Pangenome alignment can be built in two modes:
 			     -nchr_query 5 -nchr_ref 5 
 ```
 
- 3. **quick look**:
+ - **quick look**:
 If there is no information on genomes and corresponding chromosomes available, one can run preparation steps using `./pangen_pre.sh`.
  
 An extended description of the parameters for all three scripts are avaliable by executing scripts with the flag `-help`.
