@@ -140,7 +140,7 @@ for(s.comb in pref.combinations){
     # }
 
     
-    pokaz(file.aln)
+    # pokaz(file.aln)
     aln.seq = readFastaMy(file.aln)
     
     # ---  
