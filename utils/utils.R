@@ -4,7 +4,7 @@ if (!require(crayon)) {
 }
 
 library(crayon)
-  
+
 })
 
 #' ----------------------------------------------------------------------
@@ -191,6 +191,71 @@ aln2mx <- function(s.aln) {
   }
   return(seqs.mx)
 }
+
+
+#' ----------------------------------------------------------------------
+#' Convert Nucleotide Matrix to Sequences of the alignment
+#'
+#' This function takes a matrix of nucleotides representing the alignment,
+#' and converts the matrix back into a vector of aligned sequences.
+#'
+#' @param mx A matrix where each row represents a sequence converted into nucleotides.
+#' @return A vector of sequences, where each element is a sequence from `mx`.
+#' Each sequence is represented as an element in the vector.
+#' @examples
+#'
+#' mx <- matrix(c('A', 'C', 'G', 'T', 'A', 'C', 'T', 'T', 'A', 'C', 'G', 'G', 'A', 'C', 'G', 'T',
+#'                'A', 'C', 'G', 'C', 'A', 'C', 'G', 'T', 'A', 'C', 'G', 'T', 'A', 'C', 'A', 'T',
+#'                'A', 'C', 'G', 'T', 'G', 'C', 'G', 'T', 'A', 'C', 'G', 'T', 'T', 'C', 'G', 'T'),
+#'              nrow = 3, byrow = TRUE, dimnames = list(c('s1', 's2', 's3'), NULL))
+#' seqs <- mx2seq(mx)
+#' print(seqs)
+#'
+mx2aln <- function(mx) {
+  seqs = c()
+  for(irow in 1:nrow(mx)){
+    seqs = c(seqs, paste0(mx[irow,], collapse = ''))
+  }
+  
+  if(is.null(rownames(mx))){
+    seq.names = paste('s', 1:nrow(mx), sep = '')
+  } else {
+    seq.names = rownames(mx)
+  }
+  names(seqs) = seq.names
+  
+  return(seqs)
+}
+
+#' ----------------------------------------------------------------------
+#' Convert Nucleotide Matrix to Sequences without gaps (unaligned)
+#'
+#' This function takes a matrix of nucleotides representing the alignment,
+#' and converts the matrix back into a vector of sequences.
+#'
+#' @param mx A matrix with nucleotides and gaps '-'.
+#' @return A vector of sequences.
+#' Each sequence is represented as an element in the vector.
+#' 
+mx2seq <- function(mx) {
+  seqs = c()
+  for(irow in 1:nrow(mx)){
+    s = mx[irow,]
+    s = s[s != '-']
+    seqs = c(seqs, paste0(s, collapse = ''))
+  }
+  
+  if(is.null(rownames(mx))){
+    seq.names = paste('s', 1:nrow(mx), sep = '')
+  } else {
+    seq.names = rownames(mx)
+  }
+  names(seqs) = seq.names
+  
+  return(seqs)
+}
+
+
 
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
