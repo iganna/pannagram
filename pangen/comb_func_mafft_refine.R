@@ -5,9 +5,6 @@ refineMafft <- function(mx, n.flank = 30){
   sim.cutoff = 0.3
   s.nt.fake = '!'
   
-  # # Read the alignemnt
-  # aln = readFastaMy(file.path)
-  # mx = toupper(aln2mx(aln))
   
   # Create the mayrix with posisionts
   mx.pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
@@ -296,6 +293,15 @@ refineMafft <- function(mx, n.flank = 30){
   # # p4 = msaplot(mx)
   # # p4
   
-  return(list(mx = mx, pos = mx.pos))
+  
+  
+  mx.pos.real = mx.pos * 0
+  for(irow in 1:nrow(mx.pos)){
+    tmp = as.numeric(strsplit(rownames(mx.pos)[irow], '\\|')[[1]][3:4])
+    idx.nogap = which(mx.pos[irow] != 0)
+    mx.pos.real[irow, idx.nogap] = tmp[mx.pos[irow, idx.nogap]]
+  }
+  
+  return(list(mx = mx, pos = mx.pos.real))
   
 }
