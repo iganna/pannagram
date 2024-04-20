@@ -146,8 +146,13 @@ for(s.comb in pref.combinations){
     # ---  
     # REFINEMENT:
     mx.aln = aln2mx(aln.seq)
-    res = refineMafft(mx.aln)
-    aln.seq = mx2aln(res$mx)
+    res = refineMafft(mx.aln, n.flank = n.flank)
+    res.mx = res$mx
+    for(xxx in 1:n.flank){
+      res.mx = cbind('A', res.mx)
+      res.mx = cbind(res.mx, 'T')
+    }
+    aln.seq = mx2aln(res.mx)
     # ---
     
     n.aln.seq = length(aln.seq)
