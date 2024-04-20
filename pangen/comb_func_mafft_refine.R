@@ -50,7 +50,7 @@ refineMafft <- function(mx, n.flank = 30){
   mx.pos.rest = mx.pos.init
   
   for(n.round in 1:5){
-    pokaz('Disentangle Round', n.round)
+    # pokaz('Disentangle Round', n.round)
     
     mx = mx.rest           # The matrix you work with and change values
     mx.pos = mx.pos.rest   # The matrix you work with and change values
@@ -84,7 +84,7 @@ refineMafft <- function(mx, n.flank = 30){
       blocks.all = rbind(blocks.all, blocks)
     }
     if(nrow(blocks) == 0){
-      pokaz('Exit 1')
+      # pokaz('Exit 1')
       mx.ok = cbind(mx.ok, mx)
       mx.pos.ok = cbind(mx.pos.ok, mx.pos)
       break
@@ -96,7 +96,7 @@ refineMafft <- function(mx, n.flank = 30){
     blocks = blocks[order(-blocks$pi),,drop = F]
     
     if(nrow(blocks) == 0){
-      pokaz('Exit 2')
+      # pokaz('Exit 2')
       mx.ok = cbind(mx.ok, mx)
       mx.pos.ok = cbind(mx.pos.ok, mx.pos)
       break
@@ -161,14 +161,14 @@ refineMafft <- function(mx, n.flank = 30){
     mx.pos.rest = mx.pos.rest[, cols.rest, drop = F]
     
     if(ncol(mx.rest) == 0){
-      pokaz('Exit 3')
+      # pokaz('Exit 3')
       break
     }
     
   }
   if(sum(rowSums(mx.pos.ok != 0) != rowSums(mx.pos.init != 0)) != 0) {
     pokazAttention('Not enough rounds') 
-    return(mx = mx.init, pos = mx.pos.init)
+    return(list(mx = mx.init, pos = mx.pos.init))
   }
   if(sum(dim(mx.ok) != dim(mx.pos.ok)) != 0) stop('Sizes of matrices are different')
   
