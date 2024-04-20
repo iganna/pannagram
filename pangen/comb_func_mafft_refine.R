@@ -176,122 +176,122 @@ refineMafft <- function(mx, n.flank = 30){
   # ---- Ordering ----
   mx = mx.ok
   mx.pos = mx.pos.ok
-  
-  # Remove total gaps
-  idx.remain = colSums(mx != '-') > 0
-  mx = mx[,idx.remain]
-  mx.pos = mx.pos[,idx.remain]
-  mx.len = ncol(mx)
-  
-  
-  # blocks of connetedness
-  b.beg = 1
-  b.end = c()
-  mx.beg = c()
-  mx.end = c()
-  
-  val.beg = mx.pos[,b.beg]
-  val.end = mx.pos[,b.beg]
-  for(icol in 2:mx.len){
-    val.nex = mx.pos[,icol]
-    
-    d = val.nex - val.end
-    d = d[(val.end != 0) & (val.nex != 0)]
-    if(length(d) == 0) d = 0
-    
-    if(sum(d != 1) == 0){
-      val.beg[val.beg == 0] = val.nex[val.beg == 0]
-      val.end[val.nex != 0] = val.nex[val.nex != 0]
-    } else {
-      # stop()
-      b.end = c(b.end, icol-1)
-      b.beg = c(b.beg, icol)
-      
-      mx.beg = cbind(mx.beg, val.beg)
-      mx.end = cbind(mx.end, val.end)
-      
-      if(sum(val.beg == 0) != sum(val.beg * val.end == 0)) stop()
-      
-      val.beg = val.nex
-      val.end = val.nex
-    }
-  }
-  b.end = c(b.end, mx.len)  # last ending
-  mx.beg = cbind(mx.beg, val.beg)
-  mx.end = cbind(mx.end, val.end)
-  
-  # Common data.frame
-  blocks = data.frame(beg = b.beg, end = b.end)
-  blocks$len = blocks$end - blocks$beg + 1
-  
-  # Sorting
-  n = nrow(blocks)
-  index <- 1:n 
-  i <- 2
-  while (i <= n) {
-    
-    beg.i <- mx.beg[,index[i]]
-    end.i <- mx.end[,index[i]]
-    
-    key.i <- index[i]
-    k <- 0  # position which fit the
-    for (j in (i - 1):1) {
-      beg.j = mx.beg[,index[j]]
-      end.j = mx.end[,index[j]]
-      
-      idx.common = (beg.j * beg.i) != 0
-      
-      if(sum(idx.common) == 0){
-        next
-      } else if(max(abs(beg.j[idx.common] - end.i[idx.common])) == 1) {
-        k = j
-        break
-      } else if(max(abs(beg.i[idx.common] - end.j[idx.common])) == 1) {
-        k = j+1
-        break
-      }else if(sum(beg.i[idx.common] > end.j[idx.common])) {
-        break  
-      }
-    }
-    # stop()
-    if(k == 0){
-      # stop('skip')
-      tmp = index[i]
-      index[i:(n-1)] = index[(i+1):n]
-      index[n] = tmp
-      next # not to increase the i index
-    } else if (k != i) {
-      # stop('middle fit')
-      tmp = index[i]
-      index[(k+1):i] = index[k:(i-1)]
-      index[k] = tmp
-      
-    } else {
-      # stop('stay')
-    }
-    i <- i + 1  
-    
-  }
-  
-  pos = c()
-  for(i in index){
-    pos = c(pos, blocks$beg[i]:blocks$end[i])
-  }
-  
-  mx = mx[,pos]
-  mx.pos = mx.pos[,pos]
-  
-  # Check that every sequence is sorted
-  for(irow in 1:nrow(mx.pos)){
-    p = mx.pos[irow,]
-    p = p[p != 0]
-    if(is.unsorted(p)) print(irow)
-    
-    # which( mx.pos[irow,] %in% which(diff(p) !=1))
-  }
-  
-  # p4 = msaplot(mx)
-  # p4
+  # 
+  # # Remove total gaps
+  # idx.remain = colSums(mx != '-') > 0
+  # mx = mx[,idx.remain]
+  # mx.pos = mx.pos[,idx.remain]
+  # mx.len = ncol(mx)
+  # 
+  # 
+  # # blocks of connetedness
+  # b.beg = 1
+  # b.end = c()
+  # mx.beg = c()
+  # mx.end = c()
+  # 
+  # val.beg = mx.pos[,b.beg]
+  # val.end = mx.pos[,b.beg]
+  # for(icol in 2:mx.len){
+  #   val.nex = mx.pos[,icol]
+  #   
+  #   d = val.nex - val.end
+  #   d = d[(val.end != 0) & (val.nex != 0)]
+  #   if(length(d) == 0) d = 0
+  #   
+  #   if(sum(d != 1) == 0){
+  #     val.beg[val.beg == 0] = val.nex[val.beg == 0]
+  #     val.end[val.nex != 0] = val.nex[val.nex != 0]
+  #   } else {
+  #     # stop()
+  #     b.end = c(b.end, icol-1)
+  #     b.beg = c(b.beg, icol)
+  #     
+  #     mx.beg = cbind(mx.beg, val.beg)
+  #     mx.end = cbind(mx.end, val.end)
+  #     
+  #     if(sum(val.beg == 0) != sum(val.beg * val.end == 0)) stop()
+  #     
+  #     val.beg = val.nex
+  #     val.end = val.nex
+  #   }
+  # }
+  # b.end = c(b.end, mx.len)  # last ending
+  # mx.beg = cbind(mx.beg, val.beg)
+  # mx.end = cbind(mx.end, val.end)
+  # 
+  # # Common data.frame
+  # blocks = data.frame(beg = b.beg, end = b.end)
+  # blocks$len = blocks$end - blocks$beg + 1
+  # 
+  # # Sorting
+  # n = nrow(blocks)
+  # index <- 1:n 
+  # i <- 2
+  # while (i <= n) {
+  #   
+  #   beg.i <- mx.beg[,index[i]]
+  #   end.i <- mx.end[,index[i]]
+  #   
+  #   key.i <- index[i]
+  #   k <- 0  # position which fit the
+  #   for (j in (i - 1):1) {
+  #     beg.j = mx.beg[,index[j]]
+  #     end.j = mx.end[,index[j]]
+  #     
+  #     idx.common = (beg.j * beg.i) != 0
+  #     
+  #     if(sum(idx.common) == 0){
+  #       next
+  #     } else if(max(abs(beg.j[idx.common] - end.i[idx.common])) == 1) {
+  #       k = j
+  #       break
+  #     } else if(max(abs(beg.i[idx.common] - end.j[idx.common])) == 1) {
+  #       k = j+1
+  #       break
+  #     }else if(sum(beg.i[idx.common] > end.j[idx.common])) {
+  #       break  
+  #     }
+  #   }
+  #   # stop()
+  #   if(k == 0){
+  #     # stop('skip')
+  #     tmp = index[i]
+  #     index[i:(n-1)] = index[(i+1):n]
+  #     index[n] = tmp
+  #     next # not to increase the i index
+  #   } else if (k != i) {
+  #     # stop('middle fit')
+  #     tmp = index[i]
+  #     index[(k+1):i] = index[k:(i-1)]
+  #     index[k] = tmp
+  #     
+  #   } else {
+  #     # stop('stay')
+  #   }
+  #   i <- i + 1  
+  #   
+  # }
+  # 
+  # pos = c()
+  # for(i in index){
+  #   pos = c(pos, blocks$beg[i]:blocks$end[i])
+  # }
+  # 
+  # mx = mx[,pos]
+  # mx.pos = mx.pos[,pos]
+  # 
+  # # Check that every sequence is sorted
+  # for(irow in 1:nrow(mx.pos)){
+  #   p = mx.pos[irow,]
+  #   p = p[p != 0]
+  #   if(is.unsorted(p)) print(irow)
+  #   
+  #   # which( mx.pos[irow,] %in% which(diff(p) !=1))
+  # }
+  # 
+  # # p4 = msaplot(mx)
+  # # p4
   
   return(list(mx = mx, pos = mx.pos))
   
