@@ -5,9 +5,9 @@ refineMafft <- function(mx){
   sim.cutoff = 0.3
   s.nt.fake = '!'
   
-  # Read the alignemnt
-  aln = readFastaMy(file.path)
-  mx = toupper(aln2mx(aln))
+  # # Read the alignemnt
+  # aln = readFastaMy(file.path)
+  # mx = toupper(aln2mx(aln))
   
   # Create the mayrix with posisionts
   mx.pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
