@@ -293,6 +293,6 @@ refineMafft <- function(mx){
   # p4 = msaplot(mx)
   # p4
   
-  return(list(mx = mx, pos = ma.pos))
+  return(list(mx = mx, pos = mx.pos))
   
 }
