@@ -166,7 +166,10 @@ refineMafft <- function(mx, n.flank = 30){
     }
     
   }
-  if(sum(rowSums(mx.pos.ok != 0) != rowSums(mx.pos.init != 0)) != 0) stop('Not enough rounds')
+  if(sum(rowSums(mx.pos.ok != 0) != rowSums(mx.pos.init != 0)) != 0) {
+    pokazAttention('Not enough rounds') 
+    return(mx = mx.init, pos = mx.pos.init)
+  }
   if(sum(dim(mx.ok) != dim(mx.pos.ok)) != 0) stop('Sizes of matrices are different')
   
   # p2 = msaplot(mx.ok)
