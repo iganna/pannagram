@@ -52,8 +52,8 @@ aln_type='msa_'
 # Parse command line arguments
 while [ $# -gt 0 ]; do
     case $1 in
-        -pref_global) pref_global=$2; shift 2;;
-        -ref_pref) ref_pref=$2; shift 2;;
+        -path_msa) pref_global=$2; shift 2;;
+        -ref) ref_pref=$2; shift 2;;
         -aln_type) aln_type=$2; shift 2;;
         -path_consensus) path_consensus=$2; shift 2;;
         -path_chromosomes) path_chromosomes=$2; shift 2 ;;
