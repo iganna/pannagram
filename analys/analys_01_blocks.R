@@ -70,6 +70,7 @@ pokaz(path.cons)
 pokaz(s.pattern)
 pokaz(aln.type)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+pokaz(files)
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
