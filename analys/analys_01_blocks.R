@@ -73,7 +73,7 @@ pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations
 
 pokaz('Reference:', ref.pref)
 if(length(pref.combinations) == 0){
-  pokazAttention('No Combinations found.')
+  stop('No Combinations found.')
 } else {
   pokaz('Combinations', pref.combinations)  
 }

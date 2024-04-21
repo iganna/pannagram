@@ -29,11 +29,35 @@ source utils/utils_bash.sh
 
 
 print_usage() {
-    echo "Usage: $0 [-blocks] [-seq] [-sv]"
-    echo "  -blocks    Run analys_01_blocks.R script"
-    echo "  -seq       Run analys_02_seq.R script"
-    # echo "  -sv        Run analys_03_sv.R script"
-    echo "  -h, --help Display this help message"
+    cat << EOF
+Usage: ${0##*/}  -path_msa PATH_MSA  -ref REF -path_chr PATH_CHR 
+                [-h] [-cores NUM_CORES]  
+                [-blocks] [-seq] [-aln] [-snp] 
+                [-aln_type ALN_TYPE] [-path_cons PATH_CONS]
+
+
+This script manages various genomic analyses and alignments.
+
+Options:
+    -h, --help                  Display this help message and exit.
+    -cores NUM_CORES            Specify the number of cores for parallel processing (default is 1).
+
+    -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. The same as -path_out in pangen.sh
+    -ref REF                    Specify the prefix for the gaccession, which was used to sort the alignment.
+    -path_chr PATH_CHR          Specify the path to chromosome files.
+
+    -blocks                     RGet positions of synteny blocks between accessions.
+    -seq                        Obtain consensus sequence for the pangenome alignment.
+    -aln                        Produce a FASTA file with the pangenome alignment.
+    -snp                        Get VCF file with SNPs.
+    
+    -aln_type ALN_TYPE          Set the type of alignment (default: 'msa_').
+    -path_cons PATH_CONS        Specify the path to the consensus folder (has the default value).
+
+Examples:
+    ${0##*/}  -path_msa /data/genomes -ref genome_ref -path_chr /data/chromosomes  -blocks -seq -snp
+
+EOF
 }
 
 # ----------------------------------------------------------------------------
@@ -52,18 +76,21 @@ aln_type='msa_'
 # Parse command line arguments
 while [ $# -gt 0 ]; do
     case $1 in
+        -h|-help) print_usage; exit 0;;
+        -cores) cores=$2; shift 2 ;;
+
         -path_msa) pref_global=$2; shift 2;;
         -ref) ref_pref=$2; shift 2;;
-        -aln_type) aln_type=$2; shift 2;;
-        -path_consensus) path_consensus=$2; shift 2;;
-        -path_chromosomes) path_chromosomes=$2; shift 2 ;;
-        -cores) cores=$2; shift 2 ;;
-        -blocks) run_blocks=true; shift;;
-        -seq)    run_seq=true; shift;;
-        -aln)    run_aln=true; shift;;
-        -snp)    run_snp=true; shift;;
+        -path_chr) path_chromosomes=$2; shift 2 ;;
+        
+        -blocks) run_blocks=true; shift;;  # Get position sof synteny blocks between accessions
+        -seq)    run_seq=true; shift;;  # Get consencuc seqeunce
+        -aln)    run_aln=true; shift;;  # Produce fasta file with the pangenome alignment
+        -snp)    run_snp=true; shift;;  # Get VSF file with SNPs
         # -sv)     run_sv=true; shift;;
-        -h|--help) print_usage; exit 0;;
+
+        -aln_type) aln_type=$2; shift 2;;
+        -path_cons) path_consensus=$2; shift 2;;
         *) print_usage; exit 1;;
     esac
 done
