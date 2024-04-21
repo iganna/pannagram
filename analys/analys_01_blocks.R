@@ -66,6 +66,7 @@ if (!is.null(opt$aln.type)) {
 
 
 s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
+pokaz(path.cons)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
