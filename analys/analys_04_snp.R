@@ -48,6 +48,7 @@ if (is.null(opt$ref.pref)) {
 # Alignment prefix
 if (!is.null(opt$aln.type)) {
   aln.type = opt$aln.type
+  pokaz('Alignment type:', aln.type)
 } else {
   aln.type = 'msa_'
 }
