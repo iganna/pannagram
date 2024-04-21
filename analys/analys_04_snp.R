@@ -9,7 +9,7 @@ suppressMessages({ library(Biostrings)
 source("utils/utils.R")
 source("analys/analys_func.R")
 
-pokazStage('Create and Alignment in Pangenome coordinates')
+pokazStage('SNP calling')
 
 args = commandArgs(trailingOnly=TRUE)
 
