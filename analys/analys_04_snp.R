@@ -21,7 +21,9 @@ option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to directory with the consensus", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--aln.type"), type="character", default="default", 
+              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
 ); 
 
 
@@ -43,6 +45,13 @@ if (is.null(opt$ref.pref)) {
   ref.pref <- opt$ref.pref
 }
 
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
+} else {
+  aln.type = 'msa_'
+}
+
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
@@ -60,9 +69,9 @@ gr.break.b = '/break'
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub("msa_", "", files)
+pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
