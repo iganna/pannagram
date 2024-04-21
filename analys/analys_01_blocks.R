@@ -66,20 +66,13 @@ if (!is.null(opt$aln.type)) {
 
 
 s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
-pokaz(path.cons)
-pokaz(s.pattern)
-pokaz(aln.type)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pokaz(files)
 pref.combinations = gsub(aln.type, "", files)
-pokaz(pref.combinations)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
-pokaz(pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
-pokaz(pref.combinations)
 
 pokaz('Reference:', ref.pref)
-if(length(pref.combinations == 0)){
+if(length(pref.combinations) == 0){
   pokazAttention('No Combinations found.')
 } else {
   pokaz('Combinations', pref.combinations)  
