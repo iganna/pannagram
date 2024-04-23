@@ -256,6 +256,51 @@ mx2seq <- function(mx) {
 }
 
 
+#' ----------------------------------------------------------------------
+#' Calculate Distance Matrix Based on Row Differences
+#'
+#' Computes a symmetric distance matrix for a given matrix `mx`, where the distance
+#' between rows is defined as the count of differing columns between them.
+#'
+#' @param mx A numeric or logical matrix. Each row is compared with every other row.
+#'
+mx2dist <- function(mx, ratio = F){
+  ratio = T
+  n = nrow(mx)
+  mx.dist <- matrix(0, nrow = n, ncol = n, 
+                    dimnames = list(rownames(mx), rownames(mx)))
+  for(i in 1:n){
+    for(j in i:n){
+      if(j <= i) next
+      idx.nongap = (mx[i,] != '-') & (mx[j,] != '-')
+      d = sum(mx[i,idx.nongap] == mx[j,idx.nongap])
+      if(ratio){
+        d = 1 - d /  min(sum(mx[i,] != '-'), sum(mx[j,] != '-'))
+      }
+      mx.dist[i,j] = d
+      mx.dist[j,i] = d
+    }
+  }
+  return(mx.dist)
+}
+
+
+mx2cons <- function(mx,
+                    s.val = c('A', 'C', 'G', 'T')){
+  s.val = toupper(s.val)
+  if(length(s.val) <= 1) stop('Wrong values are provided')
+  n = ncol(mx)
+  s.cons = rep(s.val[1], n)
+  n.cons = colSums(toupper(mx) == s.val[1])
+  for(i in 2:length(s.val)){
+    val.cnt = colSums(toupper(mx) == s.val[i])
+    idx.more = val.cnt > n.cons
+    s.cons[idx.more] = s.val[i]
+    n.cons[idx.more] = val.cnt[idx.more]
+  }
+  return(s.cons)
+}
+
 
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
@@ -945,18 +990,74 @@ readTableMy <- function(file){
   return(readBlast(file))
 }
 
-
-showt <- function(t, irow=NULL, chr=F, add = c()){
-  idx = c(1:5,7, add)
-  idx = intersect(idx, 1:ncol(t))
-  irow = irow[irow <= nrow(t)]
+#' Show BLAST Results Without Sequences
+#'
+#' This function displays a subset of BLAST results, focusing on specific columns and optionally, specific rows.
+#'
+#' @param x A data frame containing BLAST results.
+#' @param irow Optional vector of row indices to display. If NULL, it displays the first 100 rows or less if the data frame is smaller.
+#' @param add Optional vector of additional column indices to include in the display.
+#'
+#' @return Prints the specified subset of the BLAST data frame. This function does not return any value.
+showt <- function(x, irow=NULL, add = c()){
+  idx = c(1:5, 7, add)
+  idx = intersect(idx, 1:ncol(x))
+  irow = irow[irow <= nrow(x)]
   
-  if(chr) idx = c(idx, 10)
   if(is.null(irow)){
-    print(t[1:min(100, nrow(t)),idx])
+    print(x[1:min(100, nrow(x)), idx])
   } else {
-    print(t[irow,idx])
+    print(x[irow, idx])
   }
+}
+
+
+#' Max value in each row
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the maximum values of each row
+rowMax <- function(mx) {
+  res = rep(NA, nrow(mx))
+  idx.not.na = rowSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[idx.not.na,,drop=F], 1, max, na.rm = TRUE)
+  names(res) = rownames(mx)
+  return(res)
+}
+
+#' Max value in each column
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the maximum values of each column
+colMax <- function(mx) {
+  res = rep(NA, ncol(mx))
+  idx.not.na = colSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[, idx.not.na, drop=F], 2, max, na.rm = TRUE)
+  names(res) = colnames(mx)
+  return(res)
+}
+
+#' Min value in each row
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the minimum values of each row
+rowMin <- function(mx) {
+  res = rep(NA, nrow(mx))
+  idx.not.na = rowSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[idx.not.na, , drop=F], 1, min, na.rm = TRUE)
+  names(res) = rownames(mx)
+  return(res)
+}
+
+#' Min value in each column
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the minimum values of each column
+colMin <- function(mx) {
+  res = rep(NA, ncol(mx))
+  idx.not.na = colSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[, idx.not.na, drop=F], 2, min, na.rm = TRUE)
+  names(res) = colnames(mx)
+  return(res)
 }
 
 

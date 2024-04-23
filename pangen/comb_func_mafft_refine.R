@@ -2,7 +2,7 @@
 refineMafft <- function(mx, n.flank = 30){
   
   
-  sim.cutoff = 0.3
+  sim.cutoff = 0.2
   s.nt.fake = '!'
   
   
