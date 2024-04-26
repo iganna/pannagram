@@ -27,8 +27,6 @@ library(crayon)
 #' @author Anna A. Igolkina 
 #' 
 readFastaMy <- function(file.fasta){
-  
-  start_time <- Sys.time()
   file.content <- readLines(file.fasta)
   header.idx <- c(which(substr(file.content, 1, 1) == ">"), length(file.content) + 1)
   n.seq = length(header.idx) - 1
