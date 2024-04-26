@@ -108,7 +108,7 @@ loop.function <- function(s.comb, echo = T){
     
     # Find blocks of additional breaks
     v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    v = v[v[,1] != 0,]                                   # 1 - existing coordinates of accessions
+    v = v[v[,1] != 0,]                              # 1 - existing coordinates of accessions
     v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
     v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
     

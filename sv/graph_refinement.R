@@ -98,6 +98,10 @@ traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F,
     nodes.trait <- tapply(seqs.trait, nodes$node, function(x) {
       return(min(x))
     })
+  } else if (mode == "cnt") {
+    nodes.trait <- tapply(seqs.trait, nodes$node, function(x) {
+      return(sum(x))
+    })
   } 
   else {
     stop(paste("Invalid mode selected:", mode))

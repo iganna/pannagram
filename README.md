@@ -1,34 +1,35 @@
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/examples/pannagram_logo.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/pannagram_logo.png" width="30%" height="auto">
 </p>
 
 # Pannagram
 
 
-Pannagram is a toolkit for analyzing pan-genomes, structural variants, and annotations. 
-Additionally, Pannagram contains useful functions for visualizing sequences and alignments.
+Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
+Additionally, Pannagram contains useful functions for visualization. The manual is available in the [examples](./examples) folder.
 
 
-## Recreating working environment
+### Recreating working environment
 
 Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
 ```sh
 conda env create -f pannagram_conda_env.yml
 conda activate pannagram_conda_env
 ```
+The environment downloads required R libraries, [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/) and [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html).
 
+## 1. Pangenome linear alignment
 
-## Pangenome linear genome alignment
-
+### 1.1 Building the alignment
 Pangenome alignment can be built in two modes:
-1. **reference-free**:
+ - **reference-free**:
 ```
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
 			-path_out 'output_folder' \
 			-nchr_query 5 -nchr_ref 5 
 ```
 
-2. **reference-based**:
+ - **reference-based**:
 ```
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
@@ -36,36 +37,130 @@ Pangenome alignment can be built in two modes:
 			     -nchr_query 5 -nchr_ref 5 
 ```
 
+ - **quick look**:
+If there is no information on genomes and corresponding chromosomes available, one can run preparation steps using `./pangen_pre.sh`.
+ 
+An extended description of the parameters for all three scripts are avaliable by executing scripts with the flag `-help`.
 
-An extended description of the parameters can be read by executing:
+### 1.2 Extract information from the pangenome alignment
+Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
 ```
-./pangen.sh -help
-./pangen_ref.sh -help
+./analys.sh -path_out 'output_folder' 
+			-blocks  \	# Synteny block inforamtion for visualisation
+			-seq  \		# Consensus sequence of the pangenome
+			-snp		# SNP calling
 ```
 
-## Visualisation
-Pannagram contains a number of useful methods for visualization.
+### 1.3 Calling structural variants
 
-* Dotplot
-* MSA
+When the pangenome linear alignment is built, SVs can be called using the following script:
+```
+./sv.sh -path_out 'output_folder' \
+        -gff  \ 					# Output Gff files
+        -te -te_file te.fasta  \ 	# Compare with known TE sequences
+        -graph  					# Construct the graph of SVs
+```
+
+## 2. Visualisation
+Pannagram contains a number of useful methods for visualization in R.
+
+### 2.1 Visualisation of the pangenome alignment
+All genomes together:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/pangenome_alignment.png" width="50%" height="auto">
+</p>
+
+A dotplot for a pair of genomes:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="30%" height="auto">
+</p>
+
+### 2.2 Graph of Nestedness on Structural variants
+
+Every node is an SV:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs.png" width="40%" height="auto">
+</p>
+
+Every node is a unique sequence, size - the amount of this sequence in SVs:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="60%" height="auto">
+</p>
 
 
-## Additional useful tools
-### Search for similar sequences...
+### 2.3 Nucleotide plot for a fragment of the alignment
 
-There are two distinct approaches available for searching for similarities for a **set of sequences** (a fasta file with genes or structural variants). 
-The first approach involves searching against entire genomes or individual chromosomes. 
-The second approach, in contrast, is designed to search for similarities against another set of sequences. 
+ - In the ACTG-mode:
+
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/msaplot.png" width="50%" height="auto">
+</p>
+
+```
+# --- Quick start code ---
+source('utils/utils.R')  			# Functions to work with sequences
+source('visualisation/msaplot.R')	# Visualisation
+aln.seq = readFastaMy('aln.fasta')	# Vector of strings
+aln.mx = aln2mx(aln.seq)			# Transfom into the matrix
+msaplot(aln.mx)						# ggplot object
+```
+
+- In the Polymorphism mode:
+
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/msaplot_diff.png" width="50%" height="auto">
+</p>
+
+
+```
+# --- Quick start code ---
+msadiff(aln.mx)						# ggplot object
+```
+### 2.4 Dotplots of Sequences
+
+Simultaneously on forward (dark color) and reverse complement (pink color) strands:
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/dotplot.png" width="30%" height="auto">
+</p>
+
+
+```
+# --- Quick start code ---
+source('utils/utils.R')  			# Functions to work with sequences
+source('visualisation/dotplot.R')	# Visualisation
+s = sample(c("A","C","G","T"), 100, replace = T)
+dotplot(s, s, 15, 9)				# ggplot object
+```
+
+### 2.5 ORF-finder and visualisation
+
+<p align="left">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/orfplot.png" width="30%" height="auto">
+</p>
+
+```
+# --- Quick start code ---
+source('utils/utils.R')  			# Functions to work with sequences
+source('visualisation/orfplot.R')	# Visualisation
+str = nt2seq(s)
+orfs = orfFinder(str)
+orfplot(orfs$pos)					# ggplot object
+```
+
+
+## 3. Additional useful tools
+### 3.1 Search for similar sequences
 
 #### ...in the genome
+The first approach involves searching against entire genomes or individual chromosomes. 
 The quickstart toy-example is:
 ```
 ./sim_in_genome.sh -in genes.fasta -genome genome.fasta -out out.txt
 ```
 The result is a GFF file with hits matching the similarity threshold.
 
-
 #### ...in another set
+The second approach, in contrast, is designed to search for similarities against another set of sequences. 
 The quickstart toy-example is:
 ```
 sim_in_seqs.sh -in genes.fasta -set genome.fasta -out out.txt
@@ -78,9 +173,7 @@ determining not just if a sequence is covered, but also if it's covered in a spe
 
 <!--
 
-
 ## Dependencies
-
 
 BiocManager::muscle
 
@@ -96,7 +189,6 @@ foreach
 stringr
 ggplot2
 utils.R сам устанавливает crayon.
-
 
 -->
 

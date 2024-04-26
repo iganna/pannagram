@@ -43,14 +43,14 @@ print_usage() {
     pokaz_help
 
     cat << EOF
-Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] [-echo]
-                [-path_in INPUT_FOLDER] [-path_out OUTPUT_FOLDER]
-                [-refs REF_NAME] 
-                [-nchr_ref N_CHR_REF] [-nchr_query N_CHR_QUERY] 
+Usage: ${0##*/}  -path_in INPUT_FOLDER  -path_out OUTPUT_FOLDER
+                 -refs REF_NAME
+                 -nchr_ref N_CHR_REF -nchr_query N_CHR_QUERY
                 [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] 
                 [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
                 [-sort_len] [-one2one] [-accessions ACC_FILE] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
+                [-h] [-s STAGE] [-cores CORES] [-echo]
                 
 This script performs alignment of query genomes to the reference genome.
 
@@ -250,7 +250,7 @@ IFS=',' read -ra refs_all <<< "$ref_set"
 for ref0 in "${refs_all[@]}"; do
     
     command="./pangen_ref.sh -ref ${ref0} ${additional_params}"
-    echo "Executing command: ${command}"
+    # echo "Executing command: ${command}"
     eval "${command}"
 
 done
