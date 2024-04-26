@@ -20,9 +20,11 @@ library(ggplot2)
 #' @param col.line Color for the optional horizontal and vertical lines. Default is '#362FD9'.
 #' @param show.point Flag to show the plot thicker with the help of dots in the beginning of synteny segments.
 #' @param point.alpha Float value for points alpha channel if `show.point` is `TRUE`. Default is `1.0`.
-#' @param x.label String to label x axis of the plot
-#' @param y.label String to label y axis of the plot
+#' @param query.label String to label x axis of the plot
+#' @param ref.label String to label y axis of the plot
 #' @param axis.ticks Numeric vector for axis ticks to denote Mbases of sequence lengths. Default is `seq(0, 10, by = 5)`
+#' @param expand.axis A vector of range expansion constants used to add axis padding. Defaults to `waiver()`. See docs for `scale_x_continuous` or `scale_y_continuous` for more details
+#'
 #'
 #' @return A `ggplot2` plot object.
 #'
@@ -40,23 +42,24 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
                         col.line = '#362FD9',
                         show.point = F,
                         point.alpha = 1.0,
-                        x.label = NULL,
-                        y.label = NULL,
-                        axis.ticks = seq(0, 10, by = 5)
+                        query.label = NULL,
+                        ref.label = NULL,
+                        axis.ticks = seq(0, 10, by = 5),
+                        expand.axis = waiver()
 ){
   if(!is.null(base.len)) x = getBase(x, base.len)
-  if (is.null(x.label)) x.label = 'query'
-  if (is.null(y.label)) y.label = 'base'
+  if (is.null(query.label)) query.label = 'query'
+  if (is.null(ref.label)) ref.label = 'base'
   
   p <- ggplot(x, aes(x=V2, y=V4, xend=V3, yend=V5, color=as.factor(V4 < V5))) + 
     geom_segment(show.legend = FALSE) + 
     theme_bw() + 
-    xlab(x.label) + 
-    ylab(y.label) +
+    xlab(query.label) + 
+    ylab(ref.label) +
     scale_color_manual(values = c("FALSE"=col.rc, "TRUE"=col.fw)) +
     coord_fixed(ratio=1) +
-    scale_y_continuous(breaks=axis.ticks*1e6, labels=axis.ticks ) +
-    scale_x_continuous(breaks=axis.ticks*1e6, labels=axis.ticks )
+    scale_y_continuous(breaks=axis.ticks*1e6, labels=axis.ticks, expand=expand.axis) +
+    scale_x_continuous(breaks=axis.ticks*1e6, labels=axis.ticks, expand=expand.axis)
   
   if(!is.null(hlines)) p <- p + geom_hline(yintercept=hlines, color= col.line)
   if(!is.null(vlines)) p <- p + geom_vline(xintercept=vlines, color= col.line)
