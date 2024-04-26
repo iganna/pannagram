@@ -3,43 +3,205 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+# sources
 
 ```{r}
-ref_path = "/home/anna/storage/rhizobia/lawn/out_pre_01/"
-getwd()
-```
-```{r}
-source("visualisation/visualisation.R")
-```
+source("../visualisation/visualisation.R")
+source("../utils/utils.R")
 
-
-```{r}
-data_i<- readRDS("DATA/PRJNA1048330/pangen_pre/alignments_SM52/ml2_5_2_maj.rds")
-plotSynteny(data_i[1, , drop=F])
-```
-
-
-
-```{r}
 library(ggplot2)
 library(gridExtra)
+```
 
-syntenyGrid <- function(directory, prefix) {
-  # List all files that match the prefix and end with ".rds"
-  file_list <- list.files(path = directory, pattern = paste0("^", prefix, "_[0-9]+_[0-9]+_.*\\.rds$"), full.names = TRUE)
+# savePDF
+
+```{r}
+savePDF <- function(geom, path = '.', name='some', width=10, height=10){
+  pdf(file.path(path, paste0(name, ".pdf")), width=width, height=width)
+  print(geom)
+  dev.off()
+}
+
+# savePDF <- function(geoms, path = '.', names = 'some', width = 10, height = 10) {
+#   if (length(names) == 1) {
+#     names <- rep(names, length(geoms))
+#   } else if (length(names) != length(geoms)) {
+#     stop("Length of 'names' should be 1 or match the length of 'geoms'")
+#   }
+#   pdf(file.path(path, paste0(names, ".pdf")), width = width, height = height)
+#   for (i in seq_along(geoms)) {
+#     print(geoms[[i]])
+#   }
+#   dev.off()
+# }
+
+```
+
+# plotGenomesAgainstRef
+```{r}
+# New cool flex drop
+plotGenomesAgainstRef <- function(alignments_path, query_name, ref_name,
+                                  sort.descending=T,
+                                  x.label = NULL,
+                                  y.label = NULL) {
+  # if none given, deducing axis labels straight from filenames
+  if (is.null(x.label)) x.label = tools::file_path_sans_ext(basename(query_name))
+  if (is.null(y.label)) y.label = tools::file_path_sans_ext(basename(ref_name))
   
-  if (length(file_list) == 0) {
+  # Read FASTA files
+  fasta_query <- readFastaMy(query_name)
+  fasta_ref <- readFastaMy(ref_name)
+  
+  # =============== reordering ===================
+  if (sort.descending){
+    order_query <- order(-nchar(fasta_query))
+    order_ref <- order(-nchar(fasta_ref))
+    fasta_query <- fasta_query[order_query]
+    fasta_ref <- fasta_ref[order_ref]
+  } else {
+    order_query <- seq(1, length(nchar(fasta_query)))
+    order_ref <- seq(1, length(nchar(fasta_ref)))
+  }
+
+  # lengths and cumsums
+  len_query = nchar(fasta_query)
+  len_ref = nchar(fasta_ref)
+  cum_query = c(0, cumsum(len_query))
+  cum_ref = c(0, cumsum(len_ref))
+
+  
+  #=========== Filling the new dataframe =====================
+  df <- data.frame()
+  query_prefix <- tools::file_path_sans_ext(basename(query_name))
+  for (i in seq_along(fasta_query)) {
+    for (j in seq_along(fasta_ref)) {
+      
+      file_name = paste(query_prefix, "_", order_query[i], "_", order_ref[j], "_maj.rds", sep='')
+      file_path = file.path(alignments_path, file_name)
+      if (file.exists(file_path)) {
+        data_ij <- readRDS(file_path)
+        
+        # Adjust coordinates based on cumulative lengths
+        data_ij[, c(2, 3)] = data_ij[, c(2, 3)] + cum_query[i]
+        data_ij[, c(4, 5)] = data_ij[, c(4, 5)] + cum_ref[j]
+        df = rbind(df, data_ij)
+      }
+    }
+  }
+  
+  # these will be fed straight to plotSynteny
+  v.plasmid.divisors = cum_query[-length(cum_query)]
+  h.plasmid.divisors = cum_ref[-length(cum_ref)]
+  
+  # these will be added as separate geoms
+  v.border = cum_query[c(1, length(cum_query))]
+  h.border = cum_ref[c(1, length(cum_ref))]
+  query_labels = sub("^[^ ]+ ", "",names(fasta_query))
+  ref_labels = sub("^[^ ]+ ", "",names(fasta_ref))
+  
+  pS = plotSynteny(df,
+                   x.label=x.label,
+                   y.label=y.label,
+                   axis.ticks=seq(0, 10, by = 2),
+                   hlines=h.plasmid.divisors,
+                   vlines=v.plasmid.divisors,
+                   col.line = "#3530D966",
+                   show.point = T,
+                   expand = c(0,0)
+    ) +
+    annotate("text", x = cum_query[-1], y = rep(0, length(cum_query) - 1),
+             label = query_labels,
+             vjust = -0.3, hjust = -0.1,
+             size = 2.5, angle=90,
+             alpha=0.6) +
+    annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1], 
+             label = ref_labels,
+             vjust = 1.2, hjust = -0.1,
+             size = 2.5,
+             alpha=0.6)
+  return(pS)
+}
+```
+
+## arguments
+
+```{r}
+query_path <- "~/projects/rhizobium-spring24/data/assembly/PRJNA1048330/repack/"
+ref_path <- query_path
+
+query_id <- "ml66"
+ref_id <- "ml2"
+
+query_name <- paste0(query_path, query_id, ".fna")
+ref_name <- paste0(ref_path, ref_id, ".fna")
+
+alignments_path <- paste0("../DATA/PRJNA1048330/pangen_pre/alignments_", ref_id)
+```
+
+## call
+
+```{r}
+p = plotGenomesAgainstRef(alignments_path, query_name, ref_name)
+p
+# savePDF(p)
+```
+
+# Pairwise plots
+```{r}
+ids <- c("ml2", "ml4", "ml45", "ml56")
+query_path <- "~/projects/rhizobium-spring24/data/assembly/PRJNA1048330/repack/"
+
+process_pair <- function(pair) {
+  query_id <- pair[1]
+  ref_id <- pair[2]
+  query_name <- paste0(query_path, query_id, ".fna")
+  ref_name <- paste0(query_path, ref_id, ".fna")
+  alignments_path <- paste0("../DATA/PRJNA1048330/pangen_pre/alignments_", ref_id)
+  
+  p <- plotGenomesAgainstRef(alignments_path, query_name, ref_name)
+  savePDF(p, name=paste0(ref_id, "_", query_id))
+}
+
+combn(ids, 2, function(pair) process_pair(pair))
+```
+
+```{r}
+ids = c("ml18",  "ml20",  "ml21",  "ml28",  "ml29",  "ml2",  "ml42",  "ml45",  "ml46",  "ml47",  "ml49",  "ml4",  "ml56", "ml59",  "ml60",  "ml66")
+ids2 = c("TP13",  "TP15",  "TP16",  "TP23",  "TP24",  "TP25",  "TP33",  "TP37",  "TP42",  "TP49",  "TP53",  "TP5",  "TP60",  "TP66",  "TP6")
+ref_id <- "SM52"
+for (query_id in ids2) {
+  query_path <- "~/projects/rhizobium-spring24/data/assembly/PRJNA1049504/repack/"
+  ref_path <- "~/projects/rhizobium-spring24/data/ass_new/GCF_004306555.1/repack/"
+  query_name <- paste0(query_path, query_id, ".fna")
+  ref_name <- paste0(ref_path, ref_id, ".fna")
+  alignments_path <- paste0("../DATA/PRJNA1049504/pangen_pre/alignments_", ref_id)
+  print(paste0("algn:", alignments_path))
+  print(paste0("query: ", query_name))
+  p <- plotGenomesAgainstRef(alignments_path, query_name, ref_name)
+  break
+  savePDF(p, name=paste0(ref_id, "_", query_id))
+}
+```
+
+# syntenyGrid
+
+```{r}
+syntenyGrid <- function(directory, prefix, no.borders=F) {
+  # List all files that match the prefix and end with ".rds"
+  file.list <- list.files(path = directory, pattern = paste0("^", prefix, "_[0-9]+_[0-9]+_.*\\.rds$"), full.names = TRUE)
+  
+  if (length(file.list) == 0) {
     print("No files found matching the prefix.")
     return(NULL)
   }
   
   # Initialize lists to hold plots and their indices
   plots <- list()
-  indices <- matrix(ncol = 2, nrow = length(file_list))
+  indices <- matrix(ncol = 2, nrow = length(file.list))
   
   # Loop through files, load data, and create plots
-  for (i in seq_along(file_list)) {
-    filename <- file_list[i]
+  for (i in seq_along(file.list)) {
+    filename <- file.list[i]
     data <- readRDS(filename)
     
     # Extract i and j from filename using a robust regular expression
@@ -50,51 +212,55 @@ syntenyGrid <- function(directory, prefix) {
     ij <- as.integer(matches[[1]][2:3])
     indices[i, ] <- ij
     
+    
     # Generate the plot
-    p <- plotSynteny(data) +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank()
-      ) +
-      ggtitle(paste(ij[1], ",", ij[2])) + 
-      theme(
-        plot.title = element_text(size = 5, hjust = 0.5),
-        plot.title.position = "plot"
-      )
-    
-    
+      if(no.borders) {
+        p <- plotSynteny(data) +
+          theme_void()
+      } else {
+        p <- plotSynteny(data) +
+          theme(
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.ticks.y = element_blank()
+          ) +
+          ggtitle(paste(ij[1], ",", ij[2])) + 
+          theme(
+            plot.title = element_text(size = 5, hjust = 0.5),
+            plot.title.position = "plot"
+          )
+      }
     plots[[i]] <- p
   }
   
   # Determine the grid dimensions
-  max_i <- max(indices[, 1], na.rm = TRUE)
-  max_j <- max(indices[, 2], na.rm = TRUE)
+  max.i <- max(indices[, 1], na.rm = TRUE)
+  max.j <- max(indices[, 2], na.rm = TRUE)
   
-  if (is.na(max_i) || is.na(max_j)) {
+  if (is.na(max.i) || is.na(max.j)) {
     print("Error in indices extraction.")
     return(NULL)
   }
   
   # Arrange plots in a grid
-  grid_list <- vector("list", max_i * max_j)
+  grid.list <- vector("list", max.i * max.j)
   for (idx in seq_along(plots)) {
-    pos <- (indices[idx, 1] - 1) * max_j + indices[idx, 2]
-    grid_list[[pos]] <- plots[[idx]]
+    pos <- (indices[idx, 1] - 1) * max.j + indices[idx, 2]
+    grid.list[[pos]] <- plots[[idx]]
   }
 
   # Replace NULL elements with blank plots
-  blank_plot <- ggplot() + theme_void()
-  grid_list[sapply(grid_list, is.null)] <- list(blank_plot)
+  blank.plot <- ggplot() + theme_void()
+  grid.list[sapply(grid.list, is.null)] <- list(blank.plot)
   
   # Use grid.arrange to arrange plots
-  do.call(grid.arrange, c(grid_list, ncol = max_j))
+  do.call(grid.arrange, c(grid.list, ncol = max.j))
 }
 
-p = syntenyGrid("DATA/PRJNA1048330/pangen_pre/alignments_ml59/", "ml2")
+p = syntenyGrid("../DATA/PRJNA1048330/pangen_pre/alignments_ml59/", "ml2")
 ggsave("plot_grid.png", p)
+browseURL("plot_grid.png")
 ```
-
