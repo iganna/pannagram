@@ -19,6 +19,10 @@ library(ggplot2)
 #' @param col.rc Color for reverse-complement synteny blocks. Default is '#CE1F6A'.
 #' @param col.line Color for the optional horizontal and vertical lines. Default is '#362FD9'.
 #' @param show.point Flag to show the plot thicker with the help of dots in the beginning of synteny segments.
+#' @param point.alpha Float value for points alpha channel if `show.point` is `TRUE`. Default is `1.0`.
+#' @param x.label String to label x axis of the plot
+#' @param y.label String to label y axis of the plot
+#' @param axis.ticks Numeric vector for axis ticks to denote Mbases of sequence lengths. Default is `seq(0, 10, by = 5)`
 #'
 #' @return A `ggplot2` plot object.
 #'
@@ -35,38 +39,28 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
                         col.rc = '#CE1F6A',
                         col.line = '#362FD9',
                         show.point = F,
-                        dot.alpha = 1.0){
+                        point.alpha = 1.0,
+                        x.label = NULL,
+                        y.label = NULL,
+                        axis.ticks = seq(0, 10, by = 5)
+){
+  if(!is.null(base.len)) x = getBase(x, base.len)
+  if (is.null(x.label)) x.label = 'query'
+  if (is.null(y.label)) y.label = 'base'
   
-  if(!is.null(base.len)){
-    x = getBase(x, base.len)
-  }
-  
-  seq.lab =  seq(0, 40, by = 5 )
-  p <- ggplot(x, aes(x = V2, y=V4, xend = V3, yend = V5, color = as.factor(V4 < V5))) + 
-    # geom_point(show.legend = FALSE, size = 0.1) + 
+  p <- ggplot(x, aes(x=V2, y=V4, xend=V3, yend=V5, color=as.factor(V4 < V5))) + 
     geom_segment(show.legend = FALSE) + 
     theme_bw() + 
-    xlab('query') + 
-    ylab('base') +
-    scale_color_manual(values = c("FALSE" = col.rc, "TRUE" = col.fw)) +
-    coord_fixed(ratio = 1) +
-    scale_y_continuous(breaks = seq.lab* 1e6, labels = seq.lab ) +
-    scale_x_continuous(breaks = seq.lab* 1e6, labels = seq.lab )
+    xlab(x.label) + 
+    ylab(y.label) +
+    scale_color_manual(values = c("FALSE"=col.rc, "TRUE"=col.fw)) +
+    coord_fixed(ratio=1) +
+    scale_y_continuous(breaks=axis.ticks*1e6, labels=axis.ticks ) +
+    scale_x_continuous(breaks=axis.ticks*1e6, labels=axis.ticks )
   
-  
-  
-  
-  if(!is.null(hlines)){
-    p <- p + geom_hline(yintercept=hlines, color= col.line)
-  }
-  
-  if(!is.null(vlines)){
-    p <- p + geom_vline(xintercept=vlines, color = col.line)
-  }
-  
-  if(show.point){
-    p <- p + geom_point(show.legend = FALSE, size = 1, alpha = dot.alpha)
-  }
+  if(!is.null(hlines)) p <- p + geom_hline(yintercept=hlines, color= col.line)
+  if(!is.null(vlines)) p <- p + geom_vline(xintercept=vlines, color= col.line)
+  if(show.point)       p <- p + geom_point(show.legend = FALSE, size = 0.8, alpha = point.alpha)
   
   return(p)
 }
