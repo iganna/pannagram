@@ -40,7 +40,7 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 # plotGenomesAgainstRef
 ```{r}
 # New cool flex drop
-plotGenomesAgainstRef <- function(alignments_path, query_name, ref_name,
+plotGenomeAgainstRef <- function(alignments_path, query_name, ref_name,
                                   sort.descending=T,
                                   x.label = NULL,
                                   y.label = NULL) {
@@ -94,11 +94,9 @@ plotGenomesAgainstRef <- function(alignments_path, query_name, ref_name,
   h.plasmid.divisors = cum_ref[-length(cum_ref)]
   
   # these will be added as separate geoms
-  v.border = cum_query[c(1, length(cum_query))]
-  h.border = cum_ref[c(1, length(cum_ref))]
-  query_labels = sub("^[^ ]+ ", "",names(fasta_query))
-  ref_labels = sub("^[^ ]+ ", "",names(fasta_ref))
-  
+  query_labels = sub("^[^ ]+ ", "", names(fasta_query))
+  ref_labels = sub("^[^ ]+ ", "", names(fasta_ref))
+      
   pS = plotSynteny(df,
                    x.label=x.label,
                    y.label=y.label,
@@ -111,14 +109,18 @@ plotGenomesAgainstRef <- function(alignments_path, query_name, ref_name,
     ) +
     annotate("text", x = cum_query[-1], y = rep(0, length(cum_query) - 1),
              label = query_labels,
-             vjust = -0.3, hjust = -0.1,
-             size = 2.5, angle=90,
-             alpha=0.6) +
+             vjust = -0.3, hjust = -0.02,
+             size = 2.7, angle=90,
+             # alpha=0.9,
+             color="#7D7D7D") +
     annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1], 
              label = ref_labels,
-             vjust = 1.2, hjust = -0.1,
-             size = 2.5,
-             alpha=0.6)
+             vjust = 1.2, hjust = -0.02,
+             size = 2.7,
+             # alpha=0.9,
+             color="#7D7D7D")
+  
+  pS
   return(pS)
 }
 ```
