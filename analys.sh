@@ -91,7 +91,7 @@ while [ $# -gt 0 ]; do
         -h|-help) print_usage; exit 0;;
         -cores) cores=$2; shift 2 ;;
 
-        -path_msa) pref_global=$2; shift 2;;
+        -path_msa) path_consensus=$2; shift 2;;
         -ref) ref_pref=$2; shift 2;;
         -path_chr) path_chromosomes=$2; shift 2 ;;
         
@@ -118,13 +118,13 @@ pokaz_message "Number of cores: ${cores}"
 
 check_missing_variable "ref_pref"
 
-check_missing_variable "pref_global"
-pref_global=$(add_symbol_if_missing "$pref_global" "/")
+# check_missing_variable "pref_global"
+# pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
-path_consensus="${path_consensus:-${pref_global}consensus/}"
+# path_consensus="${path_consensus:-${pref_global}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
-path_chromosomes="${path_chromosomes:-${pref_global}chromosomes/}"
+# path_chromosomes="${path_chromosomes:-${pref_global}chromosomes/}"
 path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # ----------------------------------------------------------------------------
