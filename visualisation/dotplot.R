@@ -29,6 +29,8 @@
 #' @export
 #'
 dotplot <- function(seq1, seq2, wsize, nmatch) {
+  
+  if(wsize < nmatch) stop('wsize must be larger than nmatch')
   # seq2.rc = rev(seqinr::comp(seq2))
   seq2.rc = revCompl(seq2)
   
@@ -46,6 +48,8 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   
   len1 = length(seq1)
   len2 = length(seq2)
+  
+  print(head(result))
   
   p = invisible(
         ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
@@ -68,7 +72,7 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
     )
     
   
-  p
+  # p
   return(p )
 }
 
