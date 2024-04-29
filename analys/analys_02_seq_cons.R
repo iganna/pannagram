@@ -97,11 +97,12 @@ if(length(pref.combinations) == 0){
 s.nts = c('A', 'C', 'G', 'T', '-')
 
 
-# ---- Main ----
-flag.for = F
-tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
-# flag.for = T
-# for(s.comb in pref.combinations){
+# ***********************************************************************
+# ---- MAIN program body ----
+
+loop.function <- function(s.comb, echo = T){
+# tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {  # which accession to use
+# # for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
@@ -197,7 +198,27 @@ tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopa
   
 }
 
-stopCluster(myCluster)
+
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  list.blocks = list()
+  for(s.comb in pref.combinations){
+    list.blocks[[s.comb]] = loop.function(s.comb)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+    tmp = loop.function(s.comb)
+    return(tmp)
+  }
+  stopCluster(myCluster)
+}
 
 warnings()
 
