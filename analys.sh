@@ -102,9 +102,11 @@ while [ $# -gt 0 ]; do
         # -sv)     run_sv=true; shift;;
 
         -sv_call)   run_sv_call=true; shift;;               # SV calling from the alignment
-        -sv_sim) run_sv_sim=true; te_file="$2"; shift 2;;   # File to compare SVs againts
+        -sv_sim) run_sv_sim=true; set_file="$2"; shift 2;;   # File to compare SVs againts set of seequences
         -sv_graph)  run_sv_graph=true; shift;;              # Construction of a graph on SVs
         -sim) similarity_value=$2; shift 2;;                # Similarity value
+
+        -sv_acc) sv_acc=$2; shift ;;  # file with accessions to analyse
 
         -aln_type) aln_type=$2; shift 2;;
         -path_cons) path_consensus=$2; shift 2;;
@@ -113,6 +115,8 @@ while [ $# -gt 0 ]; do
 done
 
 cores="${cores:-1}"  # Number of cores
+acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
+
 pokaz_message "Number of cores: ${cores}"
 
 check_missing_variable "ref_pref"
@@ -176,7 +180,7 @@ fi
 # -------------------------------------------------
 # Compare SVs with TEs
 if [ "$run_sv_sim" = true ]; then
-    check_missing_variable "te_file"
+    check_missing_variable "set_file"
 
     if [ -z "${similarity_value}" ]; then
         pokaz_message "Simirarity value is 85% (default)"
@@ -184,24 +188,24 @@ if [ "$run_sv_sim" = true ]; then
     fi
 
     # Check if BLAST database exists
-    # if [ ! -f "${te_file}.nhr" ]; then
-        makeblastdb -in "$te_file" -dbtype nucl > /dev/null
+    # if [ ! -f "${set_file}.nhr" ]; then
+        makeblastdb -in "$set_file" -dbtype nucl > /dev/null
     # fi
     
     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-    file_sv_big_on_te=${file_sv_big%.fasta}_on_te_blast.txt
+    file_sv_big_on_set=${file_sv_big%.fasta}_on_set_blast.txt
 
-    # if [ ! -f "${file_sv_big_on_te}" ]; then
-        blastn -db "${te_file}" -query "${file_sv_big}" -out "${file_sv_big_on_te}" \
+    # if [ ! -f "${file_sv_big_on_set}" ]; then
+        blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
            -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
            -perc_identity "${similarity_value}"
     # fi
 
-    file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.rds
-    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
-            --out ${file_sv_big_on_te_cover} --sim ${similarity_value} --use_strand F
+    file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
+    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
+            --out ${file_sv_big_on_set_cover} --sim ${similarity_value} --use_strand F
 
-    # rm "${te_file}.nin" "${te_file}.nhr" "${te_file}.nsq"
+    rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
 fi
 
 # -------------------------------------------------
