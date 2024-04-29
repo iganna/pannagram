@@ -1,5 +1,5 @@
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/pannagram_logo.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/pannagram_logo.png" width="30%" height="auto">
 </p>
 
 # Pannagram
@@ -25,16 +25,16 @@ Pangenome alignment can be built in two modes:
  - **reference-free**:
 ```
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
-			-path_out 'output_folder' \
-			-nchr_query 5 -nchr_ref 5 
+      -path_out 'output_folder' \
+      -nchr_query 5 -nchr_ref 5 
 ```
 
  - **reference-based**:
 ```
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
-			     -path_out 'output_folder' \
-			     -nchr_query 5 -nchr_ref 5 
+                 -path_out 'output_folder' \
+                 -nchr_query 5 -nchr_ref 5 
 ```
 
  - **quick look**:
@@ -67,24 +67,24 @@ Pannagram contains a number of useful methods for visualization in R.
 ### 2.1 Visualisation of the pangenome alignment
 All genomes together:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/pangenome_alignment.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/pangenome_alignment.png" width="50%" height="auto">
 </p>
 
 A dotplot for a pair of genomes:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="40%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/syntenyplot.png" width="40%" height="auto">
 </p>
 
 ### 2.2 Graph of Nestedness on Structural variants
 
 Every node is an SV:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs.png" width="40%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/graph_of_svs.png" width="40%" height="auto">
 </p>
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/graph_of_svs_te.png" width="50%" height="auto">
 </p>
 
 
@@ -93,7 +93,7 @@ Every node is a unique sequence, size - the amount of this sequence in SVs:
  - In the ACTG-mode:
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/msaplot.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot.png" width="50%" height="auto">
 </p>
 
 ```
@@ -108,7 +108,7 @@ msaplot(aln.mx)						# ggplot object
 - In the Polymorphism mode:
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/msaplot_diff.png" width="50%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot_diff.png" width="50%" height="auto">
 </p>
 
 
@@ -120,7 +120,7 @@ msadiff(aln.mx)						# ggplot object
 
 Simultaneously on forward (dark color) and reverse complement (pink color) strands:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/dotplot.png" width="40%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/dotplot.png" width="40%" height="auto">
 </p>
 
 
@@ -135,7 +135,7 @@ dotplot(s, s, 15, 9)				# ggplot object
 ### 2.5 ORF-finder and visualisation
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/orfplot.png" width="40%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/main/images/orfplot.png" width="40%" height="auto">
 </p>
 
 ```
@@ -198,9 +198,11 @@ utils.R сам устанавливает crayon.
 - Alexander Bezlepsky - Assistant
 
 **Testing:**
-- Anna Glushkevich - Testing on _A. lyrata_ genomes
-- Elizaveta Grigoreva - Testing on _A. thaliana_ and _A. lyrata_ genomes
-- Jilong Ma - Testing on spider genomes
+- Anna Igolkina: Lead Tester
+- Anna Glushkevich: Testing the alignment on _A. lyrata_ genomes
+- Elizaveta Grigoreva: Testing the alignment on _A. thaliana_ and _A. lyrata_ genomes
+- Jilong Ma: Testing the SV-graph on spider genomes
+- Alexander Bezlepsky: Testing the Pannagram's functionality on Rhizobial genomes
 
 **Resources:**
 - Logo was generated with the help of DALL-E
