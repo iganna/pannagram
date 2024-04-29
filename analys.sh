@@ -51,6 +51,12 @@ Options:
     -aln                        Produce a FASTA file with the pangenome alignment.
     -snp                        Get VCF file with SNPs.
     
+
+    -sv_call                    SV calling
+    -sv_sim                     Compare SVs with a dataset of sequences
+    -sv_graph                   Create the Graph of SVs
+
+
     -aln_type ALN_TYPE          Set the type of alignment (default: 'msa_').
     -path_cons PATH_CONS        Specify the path to the consensus folder (has the default value).
 
@@ -66,12 +72,18 @@ EOF
 
 
 # Initialize variables to determine which scripts to run
+aln_type='msa_'
+
+# Simple analysis
 run_blocks=false
 run_seq=false
 run_aln=false
 run_snp=false
-aln_type='msa_'
-# run_sv=false
+
+# analysis of SVs
+run_sv_call=false
+run_sv_sim=false
+run_sv_graph=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -88,6 +100,12 @@ while [ $# -gt 0 ]; do
         -aln)    run_aln=true; shift;;  # Produce fasta file with the pangenome alignment
         -snp)    run_snp=true; shift;;  # Get VSF file with SNPs
         # -sv)     run_sv=true; shift;;
+
+        -sv_call)   run_sv_call=true; shift;;   # SV calling from the alignment
+        -sv_sim)    run_sv_sim=true; shift;;    # Similarity of SVs to a dataset of sequences
+        -sv_sim_seq)  te_file=$2; shift 2;;     # File to compare SVs againts
+        -sv_graph)  run_sv_graph=true; shift;;  # Construction of a graph on SVs
+        -sim) similarity_value=$2; shift 2;;    # Similarity value
 
         -aln_type) aln_type=$2; shift 2;;
         -path_cons) path_consensus=$2; shift 2;;
@@ -110,10 +128,13 @@ path_chromosomes="${path_chromosomes:-${pref_global}chromosomes/}"
 path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # ----------------------------------------------------------------------------
-#             MAIN
+#                                   MAIN
 # ----------------------------------------------------------------------------
 
-# Execute scripts based on the provided keys
+
+# ******************  General work with the alignment   **********************
+
+# -------------------------------------------------
 if [ "$run_blocks" = true ]; then
 
     Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --cores ${cores} --aln.type ${aln_type}
@@ -136,6 +157,81 @@ if [ "$run_snp" = true ]; then
 fi
 
 
-# if [ "$run_sv" = true ]; then
-#     Rscript analys_03_sv.R
-# fi
+# ********************************   SVs   ***********************************
+
+
+
+# -------------------------------------------------
+# Sv calling
+if [ "$run_sv_call" = true ]; then
+
+    # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
+    # So, sonsensus should be run before GFF
+    # Therefore, sequences of seSVs could also be produced together with GFFs.
+
+    Rscript analys/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}
+fi
+
+
+
+# -------------------------------------------------
+# Compare SVs with TEs
+if [ "$run_sv_sim" = true ]; then
+    check_missing_variable "te_file"
+
+    if [ -z "${similarity_value}" ]; then
+        pokaz_message "Simirarity value is 85% (default)"
+        similarity_value=85
+    fi
+
+    # Check if BLAST database exists
+    # if [ ! -f "${te_file}.nhr" ]; then
+        makeblastdb -in "$te_file" -dbtype nucl > /dev/null
+    # fi
+    
+    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+    file_sv_big_on_te=${file_sv_big%.fasta}_on_te_blast.txt
+
+    # if [ ! -f "${file_sv_big_on_te}" ]; then
+        blastn -db "${te_file}" -query "${file_sv_big}" -out "${file_sv_big_on_te}" \
+           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -perc_identity "${similarity_value}"
+    # fi
+
+    file_sv_big_on_te_cover=${file_sv_big%.fasta}_on_te_cover.rds
+    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${te_file} --res ${file_sv_big_on_te} \
+            --out ${file_sv_big_on_te_cover} --sim ${similarity_value} --use_strand F
+
+    # rm "${te_file}.nin" "${te_file}.nhr" "${te_file}.nsq"
+fi
+
+# -------------------------------------------------
+# SV on SVs
+if [ "$sv_graph" = true ]; then
+
+    if [ -z "${similarity_value}" ]; then
+        pokaz_message "Simirarity value is 85% (default)"
+        similarity_value=85
+    fi
+
+    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
+
+    # Check if BLAST database exists
+    makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
+    
+    # if [ ! -f "${file_sv_big_on_sv}" ]; then
+        blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
+           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -perc_identity ${similarity_value} 
+    # fi
+
+    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
+    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
+            --out ${file_sv_big_on_sv_cover} --sim ${similarity_value} --use_strand T
+
+    rm "$file_sv_big".nin
+    rm "$file_sv_big".nhr
+    rm "$file_sv_big".nsq
+
+fi
