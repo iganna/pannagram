@@ -45,20 +45,20 @@ An extended description of the parameters for all three scripts are avaliable by
 ### 1.2 Extract information from the pangenome alignment
 Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
 ```
-./analys.sh -path_out 'output_folder' 
-			-blocks  \	# Synteny block inforamtion for visualisation
-			-seq  \		# Consensus sequence of the pangenome
+./analys.sh -path_msa 'msa_folder' \
+			-path_chr 'chr_folder' \
+			-blocks  \	# Find Synteny block inforamtion for visualisation
+			-seq  \		# Create consensus sequence of the pangenome
 			-snp		# SNP calling
 ```
 
 ### 1.3 Calling structural variants
-
 When the pangenome linear alignment is built, SVs can be called using the following script:
 ```
-./sv.sh -path_out 'output_folder' \
-        -gff  \ 					# Output Gff files
-        -te -te_file te.fasta  \ 	# Compare with known TE sequences
-        -graph  					# Construct the graph of SVs
+./analys.sh -path_msa 'msa_folder' \
+        -sv_call  \ 				# Create output .gff and .fasta files with SVs
+        -sv_sim te.fasta \ 	# Compare with a set of sequences (e.g., TEs)
+        -sv_graph						# Construct the graph of SVs
 ```
 
 ## 2. Visualisation

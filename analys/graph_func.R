@@ -1,3 +1,5 @@
+# The script that was previously called as graph_refinement.Rg
+
 #' Create and visualize a network graph from an igraph object
 #'
 #' @param g An igraph object representing the graph.

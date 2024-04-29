@@ -101,11 +101,10 @@ while [ $# -gt 0 ]; do
         -snp)    run_snp=true; shift;;  # Get VSF file with SNPs
         # -sv)     run_sv=true; shift;;
 
-        -sv_call)   run_sv_call=true; shift;;   # SV calling from the alignment
-        -sv_sim)    run_sv_sim=true; shift;;    # Similarity of SVs to a dataset of sequences
-        -sv_sim_seq)  te_file=$2; shift 2;;     # File to compare SVs againts
-        -sv_graph)  run_sv_graph=true; shift;;  # Construction of a graph on SVs
-        -sim) similarity_value=$2; shift 2;;    # Similarity value
+        -sv_call)   run_sv_call=true; shift;;               # SV calling from the alignment
+        -sv_sim) run_sv_sim=true; te_file="$2"; shift 2;;   # File to compare SVs againts
+        -sv_graph)  run_sv_graph=true; shift;;              # Construction of a graph on SVs
+        -sim) similarity_value=$2; shift 2;;                # Similarity value
 
         -aln_type) aln_type=$2; shift 2;;
         -path_cons) path_consensus=$2; shift 2;;
