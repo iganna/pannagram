@@ -46,19 +46,19 @@ An extended description of the parameters for all three scripts are avaliable by
 Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
 ```
 ./analys.sh -path_msa 'msa_folder' \
-			-path_chr 'chr_folder' \
-			-blocks  \	# Find Synteny block inforamtion for visualisation
-			-seq  \		# Create consensus sequence of the pangenome
-			-snp		# SNP calling
+      -path_chr 'chr_folder' \
+      -blocks  \  # Find Synteny block inforamtion for visualisation
+      -seq  \     # Create consensus sequence of the pangenome
+      -snp        # SNP calling
 ```
 
 ### 1.3 Calling structural variants
 When the pangenome linear alignment is built, SVs can be called using the following script:
 ```
 ./analys.sh -path_msa 'msa_folder' \
-        -sv_call  \ 				# Create output .gff and .fasta files with SVs
-        -sv_sim te.fasta \ 	# Compare with a set of sequences (e.g., TEs)
-        -sv_graph						# Construct the graph of SVs
+      -sv_call  \         # Create output .gff and .fasta files with SVs
+      -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
+      -sv_graph           # Construct the graph of SVs
 ```
 
 ## 2. Visualisation
@@ -72,7 +72,7 @@ All genomes together:
 
 A dotplot for a pair of genomes:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/syntenyplot.png" width="40%" height="auto">
 </p>
 
 ### 2.2 Graph of Nestedness on Structural variants
@@ -84,7 +84,7 @@ Every node is an SV:
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="60%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/graph_of_svs_te.png" width="50%" height="auto">
 </p>
 
 
@@ -120,7 +120,7 @@ msadiff(aln.mx)						# ggplot object
 
 Simultaneously on forward (dark color) and reverse complement (pink color) strands:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/dotplot.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/dotplot.png" width="40%" height="auto">
 </p>
 
 
@@ -135,7 +135,7 @@ dotplot(s, s, 15, 9)				# ggplot object
 ### 2.5 ORF-finder and visualisation
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/dev/images/orfplot.png" width="30%" height="auto">
+<img src="https://github.com/iganna/pannagram/blob/dev/images/orfplot.png" width="40%" height="auto">
 </p>
 
 ```
@@ -191,18 +191,18 @@ ggplot2
 utils.R сам устанавливает crayon.
 
 -->
-
 ## Acknowledgements
 
+**Development:**
+- Anna Igolkina - Lead Developer and Project Initiator
+- Alexander Bezlepsky - Assistant
 
-Thanks for the testing:  
-* Anna Glushkevich  
-* Elizaveta Grigoreva  
-* Jilong Ma  
-* Alexander Bezlepsky
+**Testing:**
+- Anna Glushkevich - Testing on _A. lyrata_ genomes
+- Elizaveta Grigoreva - Testing on _A. thaliana_ and _A. lyrata_ genomes
+- Jilong Ma - Testing on spider genomes
 
-Logo was generated with the help of DALL-E
+**Resources:**
+- Logo was generated with the help of DALL-E
+- Parallel Processing Tool: O. Tange (2018): GNU Parallel 2018, ISBN 9781387509881, DOI [https://doi.org/10.5281/zenodo.1146014](https://doi.org/10.5281/zenodo.1146014).
 
-To acknowledge the utilized process parallelization tool, reference:
-O. Tange (2018): GNU Parallel 2018, Mar 2018, ISBN 9781387509881,
-  DOI https://doi.org/10.5281/zenodo.1146014
