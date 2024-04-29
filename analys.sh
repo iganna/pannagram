@@ -106,7 +106,7 @@ while [ $# -gt 0 ]; do
         -sv_graph)  run_sv_graph=true; shift;;              # Construction of a graph on SVs
         -sim) similarity_value=$2; shift 2;;                # Similarity value
 
-        -sv_acc) sv_acc=$2; shift ;;  # file with accessions to analyse
+        -sv_acc) acc_anal=$2; shift ;;  # file with accessions to analyse
 
         -aln_type) aln_type=$2; shift 2;;
         -path_cons) path_consensus=$2; shift 2;;
@@ -172,7 +172,7 @@ if [ "$run_sv_call" = true ]; then
     # So, sonsensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
 
-    Rscript analys/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}
+    Rscript analys/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}  --acc.anal ${acc_anal}
 fi
 
 

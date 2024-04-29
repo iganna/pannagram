@@ -23,7 +23,9 @@ option_list = list(
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--aln.type"), type="character", default="default", 
-              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
+              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character"),
+  make_option(c("--acc.anal"), type = "character", default = NULL,
+              help = "files with accessions to analyze", metavar = "character")
 ); 
 
 
@@ -31,7 +33,18 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 
-# Reference genome
+# Accessions to analyse
+acc.anal <- opt$acc.anal
+
+if(!is.null(acc.anal)){
+  if (!file.exists(acc.anal)) {
+    acc.anal = NULL
+    pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.')
+  } else {
+    tmp = read.table(acc.anal, stringsAsFactors = F)
+    acc.anal = tmp[,1]
+  }
+}
 
 # Alignment prefix
 if (!is.null(opt$aln.type)) {
@@ -40,6 +53,7 @@ if (!is.null(opt$aln.type)) {
   aln.type = 'msa_'
 }
 
+# Reference genome
 if (is.null(opt$ref.pref)) {
   stop("ref.pref is NULL")
 } else {
@@ -60,14 +74,6 @@ gr.break.b = '/break'
 
 cutoff = 0.90
 
-# ---- Testing ----
-
-if(F){
-  library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
-  path.cons = './'
-  ref.pref = '0'  
-} 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
@@ -103,6 +109,15 @@ for(s.comb in pref.combinations){
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
+  
+  # If the set of accessions to analyze has been provided, then focus only on them.
+  if(!is.null(acc.anal)){
+    accessions = intersect(accessions, acc.anal)
+    if(length(setdiff(acc.anal, accessions)) > 0) {
+      pokazAttention('Not all the accessions of interest are in the Alignment.') 
+    }
+  }
+  
   n.acc = length(accessions)
   
   pokaz('Combine SV info from accessions...')
@@ -343,6 +358,14 @@ writeFastaMy(seqs.big, file.sv.big)
 
 # ---- GFF densities ----
 
+# ***********************************************************************
+# ---- Manual testing ----
 
+if(F){
+  library(rhdf5)
+  source('../../../pannagram/utils/utils.R')
+  path.cons = './'
+  ref.pref = '0'  
+} 
 
 
