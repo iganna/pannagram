@@ -305,3 +305,19 @@ refineMafft <- function(mx, n.flank = 30){
   return(list(mx = mx, pos = mx.pos.real))
   
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -300,6 +300,22 @@ mx2cons <- function(mx,
 }
 
 
+mx2pos <- function(mx, n.flank = 0){
+  pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
+               dimnames = list(rownames(mx), NULL))
+  
+  for(irow in 1:nrow(mx)){
+    idx = which(mx[irow,] != '-')
+    if(n.flank != 0){
+      idx = idx[-(1:n.flank)]
+      idx <- idx[-((length(idx) - n.flank + 1):length(idx))]
+    }
+    pos[irow, idx] = 1:length(idx)
+  }
+  return(pos)
+  
+}
+
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
 #'
