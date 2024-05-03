@@ -98,6 +98,13 @@ gff2gff <- function(path.cons,
   
   
   for(i.chr in 1:n.chr){
+    
+    # ---
+    # If there some regions to annotate from the chromosome i.chr
+    idx.chr = which(gff2$chr == i.chr)
+    if(length(idx.chr) == 0) next
+    # ---
+    
     if(echo) pokaz('Chromosome', i.chr)
     file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5', sep = '')
     
@@ -127,7 +134,7 @@ gff2gff <- function(path.cons,
     v.corr = rep(0, max.chr.len)
     v.corr[v[,1]] = v[,2]
     
-    idx.chr = which(gff2$chr == i.chr)
+    
     if(echo) pokaz('Number of annotations:', length(idx.chr))
     
     if(exact.match){
@@ -232,7 +239,113 @@ bed2bed <- function(path.cons,
   return(bed2)
 }
 
+#' ----------------------------------------------------------------------
+pos2pos <- function(path.cons, 
+                    acc1, acc2,
+                    pos1, 
+                    ... # Use '...' to capture all other arguments
+) {
+  
+  # Convert Positions to GFF-like format
+  colnames.pos1 = colnames(pos1)
+  colnames(pos1) = c('chrom', 'beg', 'end')
+  gff1 = data.frame(V1 = pos1$chrom,
+                    V2 = 'tmp',
+                    V3 = 'type',
+                    V4 = pos1$beg,
+                    V5 = pos1$end,
+                    V6 = 0,
+                    V7 = '+',
+                    V8 = '.',
+                    V9 = 'pos'
+  )
+  
+  # Call gff2gff function, passing all additional parameters through '...'
+  gff2 = gff2gff(path.cons = path.cons, 
+                 acc1 = acc1, 
+                 acc2 = acc2,
+                 gff1 = gff1, 
+                 ...)
+  
+  # Convert the output back to Positions format
+  pos2 = gff2[,c(1, 4, 5)]
+  colnames(pos2) = colnames.pos1[1:3]
+  
+  return(pos2)
+}
 
+#' ----------------------------------------------------------------------
+plotMsaFragment <- function(path.cons, 
+                       acc,
+                       chr,
+                       beg,
+                       end,
+                       diff.mode=F,
+                       ref.acc = '0', 
+                       exact.match=T,
+                       gr.accs.e = "accs/",
+                       aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                       echo=T,
+                       pangenome.name='Pangen',
+                       s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
+                       ){
+
+  i.chr = chr
+  pos1 = beg
+  pos2 = end
+  
+  if(pos1 > pos2){
+    pokazAttention('Positions were sorted')
+    tmp = pos1
+    pos1 = pos2
+    pos2 = tmp
+  }
+  # Get positions in the pangenome coordinates
+  file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+  v.acc = h5read(file.msa, paste(gr.accs.e, acc, sep = ''))
+  pos1.acc = which(v.acc == pos1)
+  pos2.acc = which(v.acc == pos2)
+  
+  if(length(pos1.acc) == 0) stop('First position doesn’t exist')
+  if(length(pos2.acc) == 0) stop('Second position doesn’t exist')
+  
+  # Get Alignment
+  file.seq.msa = paste(path.cons, 'seq_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+  
+  h5ls(file.seq.msa)
+  
+  # Get accession names
+  groups = h5ls(file.seq.msa)
+  accessions = groups$name[groups$group == gr.accs.b]
+  
+  # Initialize vector and load MSA data for each accession
+  seq.mx = matrix('-', nrow = length(accessions), ncol = pos2.acc - pos1.acc + 1)
+  
+  s.verbose = c('|', rep('-', length(accessions)), '|\n')
+  cat(paste0(s.verbose, collapse = ''))
+  cat('|')
+  for(i.acc in 1:length(accessions)){
+    # pokaz(accessions[i.acc])
+    cat('.')
+    s.acc = h5read(file.seq.msa, paste(gr.accs.e, accessions[i.acc], sep = ''))
+    
+    if(length(s.acc) != length(v.acc))  stop('MSA and seq do not match')
+    seq.mx[i.acc,] = s.acc[pos1.acc:pos2.acc]
+  }
+  rownames(seq.mx) = accessions
+  
+  
+  if(diff.mode){
+    p3 = msadiff(seq.mx)
+    s.diff = '_diff'
+  } else {
+    p3 = msaplot(seq.mx)
+    s.diff = ''
+  }  
+  
+  cat('|\n')
+  return(p3)
+}
 
 #' ----------------------------------------------------------------------
 #' Fill a vector with 1 corresponding to Begin and End positions in GFF Annotations
@@ -448,6 +561,8 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   # Close the file connection
   close(file.vcf.conn)
 }
+
+
 
 
 
