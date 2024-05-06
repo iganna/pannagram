@@ -55,7 +55,8 @@ if (!is.null(opt$aln.type)) {
 
 # Reference genome
 if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
+  ref.pref = NULL
+  # stop("ref.pref is NULL")
 } else {
   ref.pref <- opt$ref.pref
 }
@@ -77,20 +78,45 @@ cutoff = 0.90
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
+if(is.null(ref.pref)){
+  
+  pokaz('Reference genome:', ref.pref)
+  
+  s.pattern <- paste("^",aln.type,"\\d+_\\d+[^.]*\\.h5$", sep = '')
+  files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+  
+  # Extract reference names
+  files.suff <- sapply(files, function(filename) {
+    matches <- regmatches(filename, regexec(paste(aln.type, "\\d+_\\d+([^.]*)\\.h5", sep =""), filename))
+    return(matches[[1]][2])  
+  })
+  if(length(unique(files.suff)) != 1){
+    stop('Specify the genome, which was used for sorting')
+  }
 
-s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type, "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
-pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
+  pref.combinations <- sapply(files, function(filename) {
+    matches <- regmatches(filename, regexec("v_(\\d+)_(\\d+)[^.]*\\.h5", filename))
+    return(paste(matches[[1]][2], matches[[1]][3], sep = "_"))
+  })
+  names(pref.combinations) = NULL
+  
+} else {
+  pokaz('Genome for sorting:', ref.pref)
+  # Old working version
+  s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
+  files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+  pref.combinations = gsub(aln.type, "", files)
+  pref.combinations <- sub("_ref.*$", "", pref.combinations)
+  pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
+  
+}
 
-pokaz('Reference:', ref.pref)
+
 if(length(pref.combinations == 0)){
   pokazAttention('No Combinations found.')
 } else {
   pokaz('Combinations', pref.combinations)  
 }
-
 
 
 # ---- Positions of SVs ----

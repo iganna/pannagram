@@ -30,7 +30,8 @@ source utils/utils_bash.sh
 
 print_usage() {
     cat << EOF
-Usage: ${0##*/}  -path_msa PATH_MSA  -ref REF -path_chr PATH_CHR 
+Usage: ${0##*/}  -path_msa PATH_MSA  -path_chr PATH_CHR 
+                [-ref REF]
                 [-h] [-cores NUM_CORES]  
                 [-blocks] [-seq] [-aln] [-snp] 
                 [-aln_type ALN_TYPE] [-path_cons PATH_CONS]
@@ -43,15 +44,14 @@ Options:
     -cores NUM_CORES            Specify the number of cores for parallel processing (default is 1).
 
     -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. The same as -path_out in pangen.sh
-    -ref REF                    Specify the prefix for the gaccession, which was used to sort the alignment.
     -path_chr PATH_CHR          Specify the path to chromosome files.
 
+    -ref REF                    Specify the prefix for the gaccession, which was used to sort the alignment.
     -blocks                     RGet positions of synteny blocks between accessions.
     -seq                        Obtain consensus sequence for the pangenome alignment.
     -aln                        Produce a FASTA file with the pangenome alignment.
     -snp                        Get VCF file with SNPs.
     
-
     -sv_call                    SV calling
     -sv_sim                     Compare SVs with a dataset of sequences
     -sv_graph                   Create the Graph of SVs
@@ -116,10 +116,11 @@ done
 
 cores="${cores:-1}"  # Number of cores
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
+ref_pref="${ref_pref:-NULL}"   # Set of accessions to analyse
 
 pokaz_message "Number of cores: ${cores}"
 
-check_missing_variable "ref_pref"
+# check_missing_variable "ref_pref"
 
 # check_missing_variable "pref_global"
 # pref_global=$(add_symbol_if_missing "$pref_global" "/")
