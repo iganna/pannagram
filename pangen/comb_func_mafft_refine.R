@@ -306,7 +306,125 @@ refineMafft <- function(mx, n.flank = 30){
   
 }
 
+#' ---------------------------------------------------------------------
+#' Mask Unaligned Blocks in The Alignment Matrix
+#'
+#' This function identifies a masks unaligned or poorly aligned blocks in
+#' a matrix of nucleotides. It evaluates the diversity at each position and
+#' masks blocks based on a diversity cutoff.
+#'
+#' @param mx A character matrix where rows represent sequences and columns
+#' represent aligned positions. Sequences should contain only 'A', 'C', 'G',
+#' 'T', and '-' for gaps.
+#' @param sim.cutoff A numeric threshold for masking blocks based on diversity.
+#' Blocks with diversity below this cutoff are considered poorly aligned and masked.
+#'
+#' @return A logical matrix of the same dimensions as `mx`, where `TRUE` indicates
+#' that the position is well aligned and `FALSE` indicates it should be masked.
+#'
+#' @export
+maskUnaligned <- function(mx, sim.cutoff = 0.2){
+  
+  s.nts = c('A', 'C', 'G', 'T')
+  
+  # Diversity by each position
+  pos.profile = getProfile(mx)
+  pos.variation = (colSums(pos.profile == 0) != 3) * 1
+  
+  # Define blocks, were the alignment non well
+  blocks.all = c()
+  for(i.seq in 1:nrow(mx)){
+    s = mx[i.seq,]
+    blocks = findOnes((s != '-') *1)
+    blocks$len = blocks$end - blocks$beg + 1
+    if(nrow(blocks) == 0) next
+    
+    # Estimate diversity within each block
+    blocks$pi = 0
+    blocks$acc = rownames(mx)[i.seq]
+    for(irow in 1:nrow(blocks)){
+      idx.block = blocks$beg[irow]:blocks$end[irow]
+      blocks$pi[irow] = sum(pos.variation[idx.block]) / blocks$len[irow]
+    }
+    
+    blocks.all = rbind(blocks.all, blocks)
+  }
+  
+  
+  if(nrow(blocks) == 0){
+    pokaz('Exit 1')
+    return(NULL)
+  } 
+  
+  blocks = blocks.all
+  rm(blocks.all)
+  blocks = blocks[blocks$pi>sim.cutoff,,drop = F]
+  blocks = blocks[order(-blocks$pi),,drop = F]
+  
+  if(nrow(blocks) == 0){
+    pokaz('Exit 2')
+    return(NULL)
+  }
+  
+  blocks$remove = 0
+  for(irow in 1:nrow(blocks)){
+    idx.block = blocks$beg[irow]:blocks$end[irow]
+    blocks$pi[irow] = sum(pos.variation[idx.block]) / blocks$len[irow]
+    if(blocks$pi[irow] <= sim.cutoff){
+      # stop()
+      # pokaz(irow)
+      next
+    } 
+    
+    seq.tmp = mx[blocks$acc[irow], idx.block]  
+    for(s.nt in s.nts){
+      pos.profile[s.nt,idx.block] = pos.profile[s.nt,idx.block] - 1 * (seq.tmp == s.nt)
+    }
+    
+    blocks$remove[irow] = 1
+    pos.variation[idx.block] = (colSums(pos.profile[,idx.block,drop = F] == 0) != 3) * 1
+  }
+  
+  # Create a mask for blocks with very high diversity
+  mask.ok = !(mx == 'X')  # a way to make a matrix with all True
+  for(irow in 1:nrow(blocks)){
+    if(blocks$remove[irow] == 0) next
+    idx.block =  blocks$beg[irow]:blocks$end[irow]
+    mask.ok[blocks$acc[irow],idx.block] = F
+  }
+  
+  return(mask.ok)
+}
 
+
+#' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
+#'
+#' This function computes a profile matrix showing the count of each nucleotide
+#' ('A', 'C', 'G', 'T') at every position in a given matrix of DNA sequences.
+#'
+#' @param mx Alignment matrix where each row represents a sequence and each
+#' column represents a nucleotide position in alignment.
+#'
+#' @return A numeric matrix with 4 rows, each representing one of the nucleotides
+#' ('A', 'C', 'G', 'T'). The columns correspond to the positions in the input alignment,
+#' and the values represent the count of each nucleotide at each position.
+#'
+#' @export
+getProfile <- function(mx, gap.flag = F){
+  s.nts = c('A', 'C', 'G', 'T')
+  if(gap.flag){
+    s.nts = c(s.nts, '-') 
+  }
+  
+  # Diversity by each position
+  aln.len = ncol(mx)
+  mx = toupper(mx)
+  pos.profile = matrix(0, nrow = length(s.nts), ncol = aln.len, dimnames = list(c(s.nts, NULL)))
+  for(s.nt in s.nts){
+    pos.profile[s.nt,] = colSums(mx == s.nt)
+  }
+  return(pos.profile)
+}
 
 
 
