@@ -25,12 +25,22 @@ option_list = list(
   make_option(c("--aln.type"), type="character", default="default", 
               help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character"),
   make_option(c("--acc.anal"), type = "character", default = NULL,
+              help = "files with accessions to analyze", metavar = "character"),
+  make_option(c("--stat.only"), type = "character", default = NULL,
               help = "files with accessions to analyze", metavar = "character")
 ); 
 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
+
+
+# If only the statistics is needed
+if (!is.null(opt$stat.only)) {
+  flag.stat = F
+} else {
+  flag.stat = T
+}
 
 
 # Accessions to analyse
@@ -222,11 +232,15 @@ for(s.comb in pref.combinations){
 
 pokaz('Saving....')
 
+
 file.sv.pos = paste(path.sv, 'sv_pangen_pos.rds', sep='')
+saveRDS(sv.pos.all, file.sv.pos)
+
+if(flag.stat) quit(save="no")
+## ---- Stop for Stat ----
+
 file.sv.pos.beg = paste(path.sv, 'sv_pangen_beg.rds', sep='')
 file.sv.pos.end = paste(path.sv, 'sv_pangen_end.rds', sep='')
-
-saveRDS(sv.pos.all, file.sv.pos)
 saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
 
