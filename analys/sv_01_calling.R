@@ -141,7 +141,14 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  if(!is.null(ref.pref)){
+    file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  } else {
+    s.pattern.comb <- paste("^",aln.type,"s.comb[^.]*\\.h5$", sep = '')
+    file.comb <- list.files(path = path.cons, pattern = s.pattern.comb, full.names = FALSE)
+    pokaz(file.comb)
+  }
+  
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
