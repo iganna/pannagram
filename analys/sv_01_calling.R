@@ -144,7 +144,7 @@ for(s.comb in pref.combinations){
   if(!is.null(ref.pref)){
     file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
   } else {
-    s.pattern.comb <- paste("^",aln.type,"s.comb[^.]*\\.h5$", sep = '')
+    s.pattern.comb <- paste("^",aln.type,s.comb,"[^.]*\\.h5$", sep = '')
     file.comb <- list.files(path = path.cons, pattern = s.pattern.comb, full.names = FALSE)
     pokaz(file.comb)
   }
