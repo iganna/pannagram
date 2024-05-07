@@ -45,7 +45,7 @@ if (!is.null(opt$stat.only)) {
 
 # Accessions to analyse
 acc.anal <- opt$acc.anal
-
+if(acc.anal == 'NULL') acc.anal = NULL
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
     acc.anal = NULL
@@ -64,7 +64,7 @@ if (!is.null(opt$aln.type)) {
 }
 
 # Reference genome
-if (is.null(opt$ref.pref)) {
+if (is.null(opt$ref.pref) || (opt$ref.pref == 'NULL')) {
   ref.pref = NULL
   # stop("ref.pref is NULL")
 } else {
@@ -140,7 +140,7 @@ for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
-  # Get accessions
+  # Get file for the combination
   if(!is.null(ref.pref)){
     file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
   } else {
@@ -150,7 +150,7 @@ for(s.comb in pref.combinations){
     pokaz(file.comb)
   }
   
-  
+  # Get accessions
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   
@@ -244,7 +244,10 @@ pokaz('Saving....')
 file.sv.pos = paste(path.sv, 'sv_pangen_pos.rds', sep='')
 saveRDS(sv.pos.all, file.sv.pos)
 
-if(flag.stat) quit(save="no")
+if(flag.stat){
+  pokaz('Stat was generated')
+  quit(save="no")
+} 
 ## ---- Stop for Stat ----
 
 file.sv.pos.beg = paste(path.sv, 'sv_pangen_beg.rds', sep='')
