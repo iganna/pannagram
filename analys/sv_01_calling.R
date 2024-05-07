@@ -121,6 +121,7 @@ if(is.null(ref.pref)){
   
 }
 
+print(pref.combinations)
 
 if(length(pref.combinations == 0)){
   pokazAttention('No Combinations found.')
