@@ -134,7 +134,6 @@ sv.pos.all = c()
 sv.beg.all = c()
 sv.end.all = c()
 
-flag.for = T
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
