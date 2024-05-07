@@ -105,7 +105,7 @@ if(is.null(ref.pref)){
   }
 
   pref.combinations <- sapply(files, function(filename) {
-    matches <- regmatches(filename, regexec("v_(\\d+)_(\\d+)[^.]*\\.h5", filename))
+    matches <- regmatches(filename, regexec(paste(aln.type, "(\\d+)_(\\d+)[^.]*\\.h5", sep = ''), filename))
     return(paste(matches[[1]][2], matches[[1]][3], sep = "_"))
   })
   names(pref.combinations) = NULL
