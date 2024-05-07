@@ -37,9 +37,9 @@ opt = parse_args(opt_parser, args = args);
 
 # If only the statistics is needed
 if (!is.null(opt$stat.only)) {
-  flag.stat = F
+  flag.stat.only = T
 } else {
-  flag.stat = T
+  flag.stat.only = F
 }
 
 
@@ -90,7 +90,7 @@ cutoff = 0.90
 
 if(is.null(ref.pref)){
   
-  pokaz('Reference genome:', ref.pref)
+  # pokaz('Reference genome:', ref.pref)
   
   s.pattern <- paste("^",aln.type,"\\d+_\\d+[^.]*\\.h5$", sep = '')
   files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -243,7 +243,7 @@ pokaz('Saving....')
 file.sv.pos = paste(path.sv, 'sv_pangen_pos.rds', sep='')
 saveRDS(sv.pos.all, file.sv.pos)
 
-if(flag.stat){
+if(flag.stat.only){
   pokaz('Stat was generated')
   quit(save="no")
 } 
