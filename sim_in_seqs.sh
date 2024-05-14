@@ -138,9 +138,9 @@ fi
 # ----------------------------------------------------------------------------
 
 # Fix the ourput redults
-if [[ "$output_pref" != */ ]]; then
-    if [ ! -d "$output_pref" ]; then
-      mkdir -p "$output_pref"
+if [[ "${output_pref}" == */ ]]; then
+    if [ ! -d "${output_pref}" ]; then
+      mkdir -p "${output_pref}"
     fi
 
     output_pref="${output_pref}result"
