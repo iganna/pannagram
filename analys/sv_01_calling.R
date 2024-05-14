@@ -124,7 +124,7 @@ if(is.null(ref.pref)){
 if(length(pref.combinations) == 0){
   stop('No Combinations found.')
 } else {
-  pokaz('Combinations', pref.combinations)  
+  pokaz('Combinations:', pref.combinations)  
 }
 
 
