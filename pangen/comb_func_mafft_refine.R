@@ -397,6 +397,7 @@ maskUnaligned <- function(mx, sim.cutoff = 0.2){
 }
 
 
+#' ---------------------------------------------------------------------
 #' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
 #'
 #' This function computes a profile matrix showing the count of each nucleotide
@@ -410,21 +411,12 @@ maskUnaligned <- function(mx, sim.cutoff = 0.2){
 #' and the values represent the count of each nucleotide at each position.
 #'
 #' @export
-getProfile <- function(mx, gap.flag = F){
-  s.nts = c('A', 'C', 'G', 'T')
-  if(gap.flag){
-    s.nts = c(s.nts, '-') 
-  }
-  
-  # Diversity by each position
-  aln.len = ncol(mx)
-  mx = toupper(mx)
-  pos.profile = matrix(0, nrow = length(s.nts), ncol = aln.len, dimnames = list(c(s.nts, NULL)))
-  for(s.nt in s.nts){
-    pos.profile[s.nt,] = colSums(mx == s.nt)
-  }
-  return(pos.profile)
+getProfile <- function(...) {
+  pokazAttention('Please replace `getProfile` with `mx2profile`')
+  result <- mx2profile(...)
+  return(result)
 }
+
 
 
 

@@ -283,6 +283,52 @@ mx2dist <- function(mx, ratio = F){
 }
 
 
+#' ----------------------------------------------------------------------
+#' Convert matrix of the sequence alignment to the position matrix
+#'
+#' This function takes a matrix of sequences and converts it into a position matrix,
+#' where each non-gap character ('-') is assigned a position number, ignoring specified
+#' flanking regions.
+#'
+#' @param mx A character matrix where each row represents an aligned sequence.
+#' @param n.flank Integer, number of flank positions to ignore at both the beginning
+#'        and end of each sequence. Defaults to 0, which means no flanking positions are ignored.
+#'
+#' @return A matrix of the same dimensions as `mx`, where each non-gap position
+#'         in the original matrix is replaced by its position number, adjusted
+#'         for flanking positions. Gap positions remain zero.
+#'
+#' @export
+mx2pos <- function(mx, n.flank = 0){
+  pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
+               dimnames = list(rownames(mx), NULL))
+  
+  for(irow in 1:nrow(mx)){
+    idx = which(mx[irow,] != '-')
+    if(n.flank != 0){
+      idx = idx[-(1:n.flank)]
+      idx <- idx[-((length(idx) - n.flank + 1):length(idx))]
+    }
+    pos[irow, idx] = 1:length(idx)
+  }
+  return(pos)
+  
+}
+
+#' ----------------------------------------------------------------------
+#' Calculate consensus sequence for each column in the alignment matrix
+#'
+#' This function computes the consensus sequence for each column of a character matrix `mx`.
+#' The function allows for specification of valid sequence characters in `s.val`.
+#' The most frequent character in each column is chosen as the consensus for that column.
+#'
+#' @param mx A character matrix where each row represents a aligned sequence and each column represents a position.
+#' @param s.val Character vector specifying valid sequence characters, defaults to c('A', 'C', 'G', 'T').
+#'        Values are case-insensitive.
+#'
+#' @return A character vector of length equal to the number of columns in `mx`, containing the consensus sequence.
+#'
+#' @export
 mx2cons <- function(mx,
                     s.val = c('A', 'C', 'G', 'T')){
   s.val = toupper(s.val)
@@ -299,22 +345,36 @@ mx2cons <- function(mx,
   return(s.cons)
 }
 
-
-mx2pos <- function(mx, n.flank = 0){
-  pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
-               dimnames = list(rownames(mx), NULL))
-  
-  for(irow in 1:nrow(mx)){
-    idx = which(mx[irow,] != '-')
-    if(n.flank != 0){
-      idx = idx[-(1:n.flank)]
-      idx <- idx[-((length(idx) - n.flank + 1):length(idx))]
-    }
-    pos[irow, idx] = 1:length(idx)
+#' ----------------------------------------------------------------------
+#' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
+#'
+#' This function computes a profile matrix showing the count of each nucleotide
+#' ('A', 'C', 'G', 'T') at every position in a given matrix of DNA sequences.
+#'
+#' @param mx Alignment matrix where each row represents a sequence and each
+#' column represents a nucleotide position in alignment.
+#'
+#' @return A numeric matrix with 4 rows, each representing one of the nucleotides
+#' ('A', 'C', 'G', 'T'). The columns correspond to the positions in the input alignment,
+#' and the values represent the count of each nucleotide at each position.
+#'
+#' @export
+mx2profile <- function(mx, gap.flag = F){
+  s.nts = c('A', 'C', 'G', 'T')
+  if(gap.flag){
+    s.nts = c(s.nts, '-') 
   }
-  return(pos)
   
+  # Diversity by each position
+  aln.len = ncol(mx)
+  mx = toupper(mx)
+  pos.profile = matrix(0, nrow = length(s.nts), ncol = aln.len, dimnames = list(c(s.nts, NULL)))
+  for(s.nt in s.nts){
+    pos.profile[s.nt,] = colSums(mx == s.nt)
+  }
+  return(pos.profile)
 }
+
 
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
@@ -981,6 +1041,22 @@ wndMean <- function(v, wnd.size = 10000){
   
   return(wnd.mean)
 }
+
+
+wndSum <- function(d, wnd.len, echo=T){
+  d.len = length(d)
+  d.sum <- d
+  if(echo) cat('\n')
+  for (i in 1:(wnd.len - 1)) {
+    if(echo) cat('.')
+    d.sum <- d.sum + c(tail(d, d.len - i), rep(0, i))
+  }
+  if(echo) cat('\n')
+  if(echo) pokazAttention('Please fix this function: remove flanking results')
+  return(d.sum)
+}
+
+
 
 
 #' Read BLAST Output File
