@@ -170,7 +170,7 @@ else
 fi
 
 
-if [ ! -s /path/to/your/file ]; then
+if [ ! -s "${blast_res}" ]; then
     pokaz_stage "Blast result is empty"
 else
     
