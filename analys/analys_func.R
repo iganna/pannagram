@@ -28,6 +28,10 @@ extractChrByFormat <- function(gff, s.chr){
   gff$chr <- sub(paste(".*",s.chr,"(\\d+)", sep = ''), "\\1", gff$V1)
   if(sum(is.na(gff$chr)) > 0) stop('Check the chromosome formats (#3)')
   
+  if(nrow(gff) != n.gff){
+    pokazAttention('Not all the gff records were recognized, only',nrow(gff), 'out of', n.gff)
+  }
+  
   return(gff)
 }
 
@@ -80,10 +84,10 @@ gff2gff <- function(path.cons,
   
   gff1$idx = 1:nrow(gff1)
   # Get chromosome number from the first column of the gff file
-  if(!('chr' %in% gff1)){
+  # if(!('chr' %in% colnames(gff1))){
     gff1 =  extractChrByFormat(gff1, s.chr)
     gff1 = gff1[order(gff1$chr),]
-  }
+  # }
   
   colnames.1.to.9 = colnames(gff1)[1:9]
   colnames(gff1)[1:9] = paste('V', 1:9, sep = '')
@@ -91,7 +95,7 @@ gff2gff <- function(path.cons,
   gff2 = gff1
   gff2$len.init = gff2$V5 - gff2$V4 + 1
   gff2$V9 = paste(gff2$V9, ';len_init=', gff2$len.init, sep='')
-  gff2$V2 = 'panConvertor'
+  gff2$V2 = 'pannagram'
   gff2$V4 = -1
   gff2$V5 = -1
   gff2$V1 = gsub(acc1, acc2, gff2$V1)
@@ -172,7 +176,7 @@ gff2gff <- function(path.cons,
   
   colnames(gff2.loosing)[1:9] = colnames.1.to.9
   colnames(gff2.remain)[1:9] = colnames.1.to.9
-  return(gff2.remain = gff2.remain)
+  return(gff2.remain = gff2.remain[,1:9])
 }
 
 

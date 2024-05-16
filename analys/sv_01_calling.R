@@ -316,7 +316,7 @@ for(i.acc in 1:length(accessions)){
   df$V1 = paste(acc, '_Chr', sv.pos.all$chr, sep = '')
   df$V4 = sv.beg.all[,acc] + 1
   df$V5 = sv.end.all[,acc] - 1
-  df$V9 = paste('ID=', sv.me$gr, '.', acc, 
+  df$V9 = paste('ID=', sv.pos.all$gr, '.', acc, 
                 ';len_init=', sv.pos.all$len,
                 ';len_acc=', abs(sv.end.all[,acc]-sv.beg.all[,acc])-1, sep = '')
   
