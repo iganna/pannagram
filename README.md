@@ -203,6 +203,7 @@ utils.R сам устанавливает crayon.
 - Elizaveta Grigoreva: Testing the alignment on _A. thaliana_ and _A. lyrata_ genomes
 - Jilong Ma: Testing the SV-graph on spider genomes
 - Alexander Bezlepsky: Testing the Pannagram's functionality on Rhizobial genomes
+- Gregoire Bohl-Viallefond: Testing the annotation converter on _A. thaliana_ alignment
 
 **Resources:**
 - Logo was generated with the help of DALL-E
