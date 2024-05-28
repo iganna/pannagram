@@ -795,6 +795,21 @@ rmSafe <- function(var) {
 }
 
 #' ----------------------------------------------------------------------
+#' Save All Local Objects in the current workspace to a File
+#'
+#' @param file.ws the name of the file where the workspace will be saved.
+#'
+#' @return None.
+#'
+#' @export
+saveWorkspace <- function(file.ws){
+  all.local.objects <- ls()
+  save(list = all.local.objects, file = file.ws)
+  pokaz('Workspace is saved in', file.ws)
+}
+
+
+#' ----------------------------------------------------------------------
 #' Convert BLAST results to GFF format
 #'
 #' @description
