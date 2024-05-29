@@ -232,7 +232,6 @@ loop.function <- function(f.maj, echo = T){
   }
   
   
-  
   # ---- Read additional alignments ----
   
   file.gaps.out = paste0(path.gaps,
@@ -246,9 +245,12 @@ loop.function <- function(f.maj, echo = T){
   }
 
   # To catch possible bugs
-  # file.ws = "tmp_workspace.RData"
-  # saveWorkspace(file.ws)
-  # stop('Enough..')
+  # if(file.gaps.out == 'your_filename.txt'){
+  #   file.ws = "tmp_workspace.RData"
+  #   saveWorkspace(file.ws)
+  #   stop('Enough..')
+  # }
+  
   
   if(!is.null(x.gap)) {
     # Fill up and down
