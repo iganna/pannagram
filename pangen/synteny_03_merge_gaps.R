@@ -142,6 +142,18 @@ loop.function <- function(f.maj, echo = T){
     x.gap = NULL
   }
   
+  # To catch possible bugs
+  # if(file.gaps.out == 'your_filename.txt'){
+  #   file.ws = "tmp_workspace.RData"
+  #   
+  #   all.local.objects <- ls()
+  #   save(list = all.local.objects, file = file.ws)
+  #   
+  #   pokaz('Workspace is saved in', file.ws)
+  #   stop('Enough..')
+  # }
+  
+  
   if(!is.null(x.gap)){
     pokaz('Number of gaps', nrow(x.gap))
     
