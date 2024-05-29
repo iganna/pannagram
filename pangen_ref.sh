@@ -141,7 +141,7 @@ do
         -rev ) flag_rev=1 ;;  # filtration of repeats, default - not
 
         -accessions) acc_anal=$2; shift ;;  # file with accessions to analyse
-        -combinations) acc_anal=$2; shift ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
+        -combinations) comb_anal=$2; shift ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
 
         -cores) cores=$2; shift ;;
     
@@ -194,6 +194,7 @@ echo_flag="${echo_flag:-T}"
 
 
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
+comb_anal="${comb_anal:-NULL}"   # Set of combinations to analyse
 
 # Rename the reference genome prefix
 # Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting

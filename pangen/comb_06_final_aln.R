@@ -5,6 +5,7 @@ library('foreach')
 library(doParallel)
 library("optparse")
 source('utils/utils.R')
+source('pangen/comb_func_mafft_refine.R')
 })
 
 # pokazStage('Step 12. Combine all alignments together into the final one')
@@ -141,12 +142,30 @@ for(s.comb in pref.combinations){
     
     # pokaz(file.aln)
     aln.seq = readFastaMy(file.aln)
+    
+    # # ---  
+    # # REFINEMENT:
+    # mx.aln = aln2mx(aln.seq)
+    # res = refineMafft(mx.aln, n.flank = n.flank)
+    # # res.mx = res$mx
+    # # for(xxx in 1:n.flank){
+    # #   res.mx = cbind('A', res.mx)
+    # #   res.mx = cbind(res.mx, 'T')
+    # # }
+    # # aln.seq = mx2aln(res.mx)
+    # 
+    # mafft.aln.pos[[i]] = res$pos
+    # # ---
+    
+    
+    # ---
+    # WITHOUT REFINEMENT
     n.aln.seq = length(aln.seq)
     name.aln.seq = names(aln.seq)
     name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
     pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
-    
-    
+
+
     len.aln.seq <- nchar(aln.seq[1])
     # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
     pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
@@ -169,7 +188,11 @@ for(s.comb in pref.combinations){
     pos.mx = pos.mx[,colSums(pos.mx != 0) != 0]
     row.names(pos.mx) = name.acc
 
+
     mafft.aln.pos[[i]] = pos.mx
+    # ---
+
+    
   }
   
   if(length(idx.skip) > 0){

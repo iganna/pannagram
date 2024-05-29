@@ -72,8 +72,8 @@ pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
 pokaz('Reference:', ref.pref)
-if(length(pref.combinations == 0)){
-  pokazAttention('No Combinations found.')
+if(length(pref.combinations) == 0){
+  stop('No Combinations found.')
 } else {
   pokaz('Combinations', pref.combinations)  
 }
@@ -89,14 +89,10 @@ max.len.gap = 20000
 gr.blocks = 'blocks/'
 
 
-# ---- Main ----
-flag.for = F
-list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% {
+# ***********************************************************************
+# ---- MAIN program body ----
 
-# flag.for = T
-# list.blocks = list()
-# for(s.comb in pref.combinations){
-
+loop.function <- function(s.comb, echo = T){
   
   file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
@@ -121,8 +117,8 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
     # ----  Find breaks  ----
     
     # Find blocks of additional breaks
-    v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    v = v[(v[,1] != 0) & !(is.na(v[,1])),]                                   # 1 - existing coordinates of accessions
+    v = cbind(v, 1:length(v))                 # 2 - in ref-based coordinates
+    v = v[(v[,1] != 0) & !(is.na(v[,1])),]    # 1 - existing coordinates of accessions
     
     idx.block.tmp = which(abs(diff(v[,1])) != 1)
     idx.block.beg = v[c(1, idx.block.tmp+1), 2]
@@ -221,21 +217,44 @@ list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon')
   H5close()
   gc()
   
-  if(flag.for){
-    list.blocks[[s.comb]] = df.blocks.tmp
-  } else {
-    return(df.blocks.tmp)
-  }
-  
+  return(df.blocks.tmp)
+
 }
 
-# print(list.blocks)
+
+
+
+# ***********************************************************************
+# ---- Loop  ----
+
+
+if(num.cores == 1){
+  list.blocks = list()
+  for(s.comb in pref.combinations){
+    list.blocks[[s.comb]] = loop.function(s.comb)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+    tmp = loop.function(s.comb)
+    return(tmp)
+  }
+  stopCluster(myCluster)
+}
+
 
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 
 df.blocks = do.call(rbind, list.blocks)
 file.blocks = paste(path.cons, aln.type,'blocks_ref_',ref.pref,'.rds', sep = '')
 saveRDS(df.blocks, file.blocks, compress = F)
+
+
+
+warnings()
 
 
 

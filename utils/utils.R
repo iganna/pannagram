@@ -4,7 +4,7 @@ if (!require(crayon)) {
 }
 
 library(crayon)
-  
+
 })
 
 #' ----------------------------------------------------------------------
@@ -27,8 +27,6 @@ library(crayon)
 #' @author Anna A. Igolkina 
 #' 
 readFastaMy <- function(file.fasta){
-  
-  start_time <- Sys.time()
   file.content <- readLines(file.fasta)
   header.idx <- c(which(substr(file.content, 1, 1) == ">"), length(file.content) + 1)
   n.seq = length(header.idx) - 1
@@ -191,6 +189,192 @@ aln2mx <- function(s.aln) {
   }
   return(seqs.mx)
 }
+
+
+#' ----------------------------------------------------------------------
+#' Convert Nucleotide Matrix to Sequences of the alignment
+#'
+#' This function takes a matrix of nucleotides representing the alignment,
+#' and converts the matrix back into a vector of aligned sequences.
+#'
+#' @param mx A matrix where each row represents a sequence converted into nucleotides.
+#' @return A vector of sequences, where each element is a sequence from `mx`.
+#' Each sequence is represented as an element in the vector.
+#' @examples
+#'
+#' mx <- matrix(c('A', 'C', 'G', 'T', 'A', 'C', 'T', 'T', 'A', 'C', 'G', 'G', 'A', 'C', 'G', 'T',
+#'                'A', 'C', 'G', 'C', 'A', 'C', 'G', 'T', 'A', 'C', 'G', 'T', 'A', 'C', 'A', 'T',
+#'                'A', 'C', 'G', 'T', 'G', 'C', 'G', 'T', 'A', 'C', 'G', 'T', 'T', 'C', 'G', 'T'),
+#'              nrow = 3, byrow = TRUE, dimnames = list(c('s1', 's2', 's3'), NULL))
+#' seqs <- mx2seq(mx)
+#' print(seqs)
+#'
+mx2aln <- function(mx) {
+  seqs = c()
+  for(irow in 1:nrow(mx)){
+    seqs = c(seqs, paste0(mx[irow,], collapse = ''))
+  }
+  
+  if(is.null(rownames(mx))){
+    seq.names = paste('s', 1:nrow(mx), sep = '')
+  } else {
+    seq.names = rownames(mx)
+  }
+  names(seqs) = seq.names
+  
+  return(seqs)
+}
+
+#' ----------------------------------------------------------------------
+#' Convert Nucleotide Matrix to Sequences without gaps (unaligned)
+#'
+#' This function takes a matrix of nucleotides representing the alignment,
+#' and converts the matrix back into a vector of sequences.
+#'
+#' @param mx A matrix with nucleotides and gaps '-'.
+#' @return A vector of sequences.
+#' Each sequence is represented as an element in the vector.
+#' 
+mx2seq <- function(mx) {
+  seqs = c()
+  for(irow in 1:nrow(mx)){
+    s = mx[irow,]
+    s = s[s != '-']
+    seqs = c(seqs, paste0(s, collapse = ''))
+  }
+  
+  if(is.null(rownames(mx))){
+    seq.names = paste('s', 1:nrow(mx), sep = '')
+  } else {
+    seq.names = rownames(mx)
+  }
+  names(seqs) = seq.names
+  
+  return(seqs)
+}
+
+
+#' ----------------------------------------------------------------------
+#' Calculate Distance Matrix Based on Row Differences
+#'
+#' Computes a symmetric distance matrix for a given matrix `mx`, where the distance
+#' between rows is defined as the count of differing columns between them.
+#'
+#' @param mx A numeric or logical matrix. Each row is compared with every other row.
+#'
+mx2dist <- function(mx, ratio = F){
+  ratio = T
+  n = nrow(mx)
+  mx.dist <- matrix(0, nrow = n, ncol = n, 
+                    dimnames = list(rownames(mx), rownames(mx)))
+  for(i in 1:n){
+    for(j in i:n){
+      if(j <= i) next
+      idx.nongap = (mx[i,] != '-') & (mx[j,] != '-')
+      d = sum(mx[i,idx.nongap] == mx[j,idx.nongap])
+      if(ratio){
+        d = 1 - d /  min(sum(mx[i,] != '-'), sum(mx[j,] != '-'))
+      }
+      mx.dist[i,j] = d
+      mx.dist[j,i] = d
+    }
+  }
+  return(mx.dist)
+}
+
+
+#' ----------------------------------------------------------------------
+#' Convert matrix of the sequence alignment to the position matrix
+#'
+#' This function takes a matrix of sequences and converts it into a position matrix,
+#' where each non-gap character ('-') is assigned a position number, ignoring specified
+#' flanking regions.
+#'
+#' @param mx A character matrix where each row represents an aligned sequence.
+#' @param n.flank Integer, number of flank positions to ignore at both the beginning
+#'        and end of each sequence. Defaults to 0, which means no flanking positions are ignored.
+#'
+#' @return A matrix of the same dimensions as `mx`, where each non-gap position
+#'         in the original matrix is replaced by its position number, adjusted
+#'         for flanking positions. Gap positions remain zero.
+#'
+#' @export
+mx2pos <- function(mx, n.flank = 0){
+  pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
+               dimnames = list(rownames(mx), NULL))
+  
+  for(irow in 1:nrow(mx)){
+    idx = which(mx[irow,] != '-')
+    if(n.flank != 0){
+      idx = idx[-(1:n.flank)]
+      idx <- idx[-((length(idx) - n.flank + 1):length(idx))]
+    }
+    pos[irow, idx] = 1:length(idx)
+  }
+  return(pos)
+  
+}
+
+#' ----------------------------------------------------------------------
+#' Calculate consensus sequence for each column in the alignment matrix
+#'
+#' This function computes the consensus sequence for each column of a character matrix `mx`.
+#' The function allows for specification of valid sequence characters in `s.val`.
+#' The most frequent character in each column is chosen as the consensus for that column.
+#'
+#' @param mx A character matrix where each row represents a aligned sequence and each column represents a position.
+#' @param s.val Character vector specifying valid sequence characters, defaults to c('A', 'C', 'G', 'T').
+#'        Values are case-insensitive.
+#'
+#' @return A character vector of length equal to the number of columns in `mx`, containing the consensus sequence.
+#'
+#' @export
+mx2cons <- function(mx,
+                    s.val = c('A', 'C', 'G', 'T')){
+  s.val = toupper(s.val)
+  if(length(s.val) <= 1) stop('Wrong values are provided')
+  n = ncol(mx)
+  s.cons = rep(s.val[1], n)
+  n.cons = colSums(toupper(mx) == s.val[1])
+  for(i in 2:length(s.val)){
+    val.cnt = colSums(toupper(mx) == s.val[i])
+    idx.more = val.cnt > n.cons
+    s.cons[idx.more] = s.val[i]
+    n.cons[idx.more] = val.cnt[idx.more]
+  }
+  return(s.cons)
+}
+
+#' ----------------------------------------------------------------------
+#' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
+#'
+#' This function computes a profile matrix showing the count of each nucleotide
+#' ('A', 'C', 'G', 'T') at every position in a given matrix of DNA sequences.
+#'
+#' @param mx Alignment matrix where each row represents a sequence and each
+#' column represents a nucleotide position in alignment.
+#'
+#' @return A numeric matrix with 4 rows, each representing one of the nucleotides
+#' ('A', 'C', 'G', 'T'). The columns correspond to the positions in the input alignment,
+#' and the values represent the count of each nucleotide at each position.
+#'
+#' @export
+mx2profile <- function(mx, gap.flag = F){
+  s.nts = c('A', 'C', 'G', 'T')
+  if(gap.flag){
+    s.nts = c(s.nts, '-') 
+  }
+  
+  # Diversity by each position
+  aln.len = ncol(mx)
+  mx = toupper(mx)
+  pos.profile = matrix(0, nrow = length(s.nts), ncol = aln.len, dimnames = list(c(s.nts, NULL)))
+  for(s.nt in s.nts){
+    pos.profile[s.nt,] = colSums(mx == s.nt)
+  }
+  return(pos.profile)
+}
+
 
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
@@ -611,6 +795,21 @@ rmSafe <- function(var) {
 }
 
 #' ----------------------------------------------------------------------
+#' Save All Local Objects in the current workspace to a File
+#'
+#' @param file.ws the name of the file where the workspace will be saved.
+#'
+#' @return None.
+#'
+#' @export
+saveWorkspace <- function(file.ws){
+  all.local.objects <- ls()
+  save(list = all.local.objects, file = file.ws)
+  pokaz('Workspace is saved in', file.ws)
+}
+
+
+#' ----------------------------------------------------------------------
 #' Convert BLAST results to GFF format
 #'
 #' @description
@@ -859,6 +1058,22 @@ wndMean <- function(v, wnd.size = 10000){
 }
 
 
+wndSum <- function(d, wnd.len, echo=T){
+  d.len = length(d)
+  d.sum <- d
+  if(echo) cat('\n')
+  for (i in 1:(wnd.len - 1)) {
+    if(echo) cat('.')
+    d.sum <- d.sum + c(tail(d, d.len - i), rep(0, i))
+  }
+  if(echo) cat('\n')
+  if(echo) pokazAttention('Please fix this function: remove flanking results')
+  return(d.sum)
+}
+
+
+
+
 #' Read BLAST Output File
 #'
 #' Reads a BLAST output file and returns its contents as a data frame. If the file contains
@@ -880,18 +1095,74 @@ readTableMy <- function(file){
   return(readBlast(file))
 }
 
-
-showt <- function(t, irow=NULL, chr=F, add = c()){
-  idx = c(1:5,7, add)
-  idx = intersect(idx, 1:ncol(t))
-  irow = irow[irow <= nrow(t)]
+#' Show BLAST Results Without Sequences
+#'
+#' This function displays a subset of BLAST results, focusing on specific columns and optionally, specific rows.
+#'
+#' @param x A data frame containing BLAST results.
+#' @param irow Optional vector of row indices to display. If NULL, it displays the first 100 rows or less if the data frame is smaller.
+#' @param add Optional vector of additional column indices to include in the display.
+#'
+#' @return Prints the specified subset of the BLAST data frame. This function does not return any value.
+showt <- function(x, irow=NULL, add = c()){
+  idx = c(1:5, 7, add)
+  idx = intersect(idx, 1:ncol(x))
+  irow = irow[irow <= nrow(x)]
   
-  if(chr) idx = c(idx, 10)
   if(is.null(irow)){
-    print(t[1:min(100, nrow(t)),idx])
+    print(x[1:min(100, nrow(x)), idx])
   } else {
-    print(t[irow,idx])
+    print(x[irow, idx])
   }
+}
+
+
+#' Max value in each row
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the maximum values of each row
+rowMax <- function(mx) {
+  res = rep(NA, nrow(mx))
+  idx.not.na = rowSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[idx.not.na,,drop=F], 1, max, na.rm = TRUE)
+  names(res) = rownames(mx)
+  return(res)
+}
+
+#' Max value in each column
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the maximum values of each column
+colMax <- function(mx) {
+  res = rep(NA, ncol(mx))
+  idx.not.na = colSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[, idx.not.na, drop=F], 2, max, na.rm = TRUE)
+  names(res) = colnames(mx)
+  return(res)
+}
+
+#' Min value in each row
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the minimum values of each row
+rowMin <- function(mx) {
+  res = rep(NA, nrow(mx))
+  idx.not.na = rowSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[idx.not.na, , drop=F], 1, min, na.rm = TRUE)
+  names(res) = rownames(mx)
+  return(res)
+}
+
+#' Min value in each column
+#'
+#' @param mx Numeric matrix
+#' @return Numeric vector with the minimum values of each column
+colMin <- function(mx) {
+  res = rep(NA, ncol(mx))
+  idx.not.na = colSums(!is.na(mx)) > 0
+  res[idx.not.na] = apply(mx[, idx.not.na, drop=F], 2, min, na.rm = TRUE)
+  names(res) = colnames(mx)
+  return(res)
 }
 
 

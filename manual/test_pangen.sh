@@ -3,6 +3,11 @@
 ./pangen.sh -path_out '../pan_test/anna_50' -refs 'NT1_50,TE11_50' -nchr_ref 8 -path_in '../lyrata_updated/' -nchr_query 8 -cores 30 -one2one
 ./pangen.sh -path_out '../pan_test/anna_norm' -refs 'NT1_220222,TE11_final' -nchr_ref 8 -path_in '../lyrata_updated/' -nchr_query 8 -cores 30 -one2one
 
+
+/pangen.sh -path_out '../pan_test/tom' -refs '0,6046-v1.1,6191-v1.1' -nchr_ref 5 -path_in '../pb_updated/' -nchr_query 5 -cores 30 -acc_anal acc_tom.txt -one2one
+
+
+
 ./analys.sh -path_out '../pan_test/tom2'  -ref 0 -blocks
 ./sv.sh -path_out '../pan_test/tom2'  -ref 0 -gff
  ./sv.sh -path_out '../pan_test/tom2'  -ref 0 -te -te_file ../new_genes/new_te.fasta
@@ -14,5 +19,5 @@
 ./pipeline_test.sh -path_out '../pan_test/tom2' -refs '0,6046-v1.1,6191-v1.1' -nchr_ref 5 -path_in '../pb_updated/' -nchr_query 5 -cores 30 -acc_anal acc_tom.txt -one2one
 
 ./pangen.sh -path_out '../pan_test/p27/' -refs '0,10024' -nchr_ref 5 -path_in '../pb_27/' -nchr_query 5 -cores 30  -one2one
-./analys.sh -path_out '../pan_test/p27/'  -ref 0 -blocks -seq -cores 30
+./analys.sh -path_msa  '../pacbio/pan_test/p27_02/'  -ref 0  -snp -cores 30 -aln_type "res_"
 ./sv.sh -path_out '../pan_test/p27/'  -ref 0  -gff -te -te_file ../new_genes/new_te.fasta -graph 

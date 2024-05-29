@@ -23,7 +23,11 @@ option_list = list(
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--aln.type"), type="character", default="default", 
-              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
+              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character"),
+  make_option(c("--acc.anal"), type = "character", default = NULL,
+              help = "files with accessions to analyze", metavar = "character"),
+  make_option(c("--stat.only"), type = "character", default = NULL,
+              help = "files with accessions to analyze", metavar = "character")
 ); 
 
 
@@ -31,7 +35,26 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 
-# Reference genome
+# If only the statistics is needed
+if (!is.null(opt$stat.only)) {
+  flag.stat.only = T
+} else {
+  flag.stat.only = F
+}
+
+
+# Accessions to analyse
+acc.anal <- opt$acc.anal
+if(acc.anal == 'NULL') acc.anal = NULL
+if(!is.null(acc.anal)){
+  if (!file.exists(acc.anal)) {
+    acc.anal = NULL
+    pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.')
+  } else {
+    tmp = read.table(acc.anal, stringsAsFactors = F)
+    acc.anal = tmp[,1]
+  }
+}
 
 # Alignment prefix
 if (!is.null(opt$aln.type)) {
@@ -40,8 +63,10 @@ if (!is.null(opt$aln.type)) {
   aln.type = 'msa_'
 }
 
-if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
+# Reference genome
+if (is.null(opt$ref.pref) || (opt$ref.pref == 'NULL')) {
+  ref.pref = NULL
+  # stop("ref.pref is NULL")
 } else {
   ref.pref <- opt$ref.pref
 }
@@ -60,31 +85,47 @@ gr.break.b = '/break'
 
 cutoff = 0.90
 
-# ---- Testing ----
-
-if(F){
-  library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
-  path.cons = './'
-  ref.pref = '0'  
-} 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
+if(is.null(ref.pref)){
+  
+  # pokaz('Reference genome:', ref.pref)
+  
+  s.pattern <- paste("^",aln.type,"\\d+_\\d+[^.]*\\.h5$", sep = '')
+  files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+  
+  # Extract reference names
+  files.suff <- sapply(files, function(filename) {
+    matches <- regmatches(filename, regexec(paste(aln.type, "\\d+_\\d+([^.]*)\\.h5", sep =""), filename))
+    return(matches[[1]][2])  
+  })
+  if(length(unique(files.suff)) != 1){
+    stop('Specify the genome, which was used for sorting')
+  }
 
-s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type, "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
-pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
-
-pokaz('Reference:', ref.pref)
-if(length(pref.combinations == 0)){
-  pokazAttention('No Combinations found.')
+  pref.combinations <- sapply(files, function(filename) {
+    matches <- regmatches(filename, regexec(paste(aln.type, "(\\d+)_(\\d+)[^.]*\\.h5", sep = ''), filename))
+    return(paste(matches[[1]][2], matches[[1]][3], sep = "_"))
+  })
+  names(pref.combinations) = NULL
+  
 } else {
-  pokaz('Combinations', pref.combinations)  
+  pokaz('Genome for sorting:', ref.pref)
+  # Old working version
+  s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
+  files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+  pref.combinations = gsub(aln.type, "", files)
+  pref.combinations <- sub("_ref.*$", "", pref.combinations)
+  pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
+  
 }
 
+if(length(pref.combinations) == 0){
+  stop('No Combinations found.')
+} else {
+  pokaz('Combinations:', pref.combinations)  
+}
 
 
 # ---- Positions of SVs ----
@@ -93,16 +134,32 @@ sv.pos.all = c()
 sv.beg.all = c()
 sv.end.all = c()
 
-flag.for = T
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb)
   
-  # Get accessions
-  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  # Get file for the combination
+  if(!is.null(ref.pref)){
+    file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  } else {
+    s.pattern.comb <- paste("^",aln.type,s.comb,"[^.]*\\.h5$", sep = '')
+    file.comb <- list.files(path = path.cons, pattern = s.pattern.comb, full.names = FALSE)
+    file.comb = paste(path.cons, file.comb, sep = '')
+    pokaz(file.comb)
+  }
   
+  # Get accessions
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
+  
+  # If the set of accessions to analyze has been provided, then focus only on them.
+  if(!is.null(acc.anal)){
+    accessions = intersect(accessions, acc.anal)
+    if(length(setdiff(acc.anal, accessions)) > 0) {
+      pokazAttention('Not all the accessions of interest are in the Alignment.') 
+    }
+  }
+  
   n.acc = length(accessions)
   
   pokaz('Combine SV info from accessions...')
@@ -181,11 +238,18 @@ for(s.comb in pref.combinations){
 
 pokaz('Saving....')
 
+
 file.sv.pos = paste(path.sv, 'sv_pangen_pos.rds', sep='')
+saveRDS(sv.pos.all, file.sv.pos)
+
+if(flag.stat.only){
+  pokaz('Stat was generated')
+  quit(save="no")
+} 
+## ---- Stop for Stat ----
+
 file.sv.pos.beg = paste(path.sv, 'sv_pangen_beg.rds', sep='')
 file.sv.pos.end = paste(path.sv, 'sv_pangen_end.rds', sep='')
-
-saveRDS(sv.pos.all, file.sv.pos)
 saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
 
@@ -252,7 +316,7 @@ for(i.acc in 1:length(accessions)){
   df$V1 = paste(acc, '_Chr', sv.pos.all$chr, sep = '')
   df$V4 = sv.beg.all[,acc] + 1
   df$V5 = sv.end.all[,acc] - 1
-  df$V9 = paste('ID=', sv.me$gr, '.', acc, 
+  df$V9 = paste('ID=', sv.pos.all$gr, '.', acc, 
                 ';len_init=', sv.pos.all$len,
                 ';len_acc=', abs(sv.end.all[,acc]-sv.beg.all[,acc])-1, sep = '')
   
@@ -343,6 +407,14 @@ writeFastaMy(seqs.big, file.sv.big)
 
 # ---- GFF densities ----
 
+# ***********************************************************************
+# ---- Manual testing ----
 
+if(F){
+  library(rhdf5)
+  source('../../../pannagram/utils/utils.R')
+  path.cons = './'
+  ref.pref = '0'  
+} 
 
 

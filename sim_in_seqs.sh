@@ -39,7 +39,7 @@ and processes the results based on similarity thresholds.
 
     -h, --help              Display this help and exit.
     -in FASTA_FILE          Specify the input FASTA file.
-    -out OUTPUT_FILE        Specify the output file for results.
+    -out OUTPUT_FILE        Specify the prefix of output files.
     -set GENOME_FILE     Specify the genome file to create BLAST database.    
     -sim SIMILARITY_THRESHOLD 
                             Set the similarity threshold for BLAST (default: 85).
@@ -78,7 +78,7 @@ while [ "$1" != "" ]; do
                  fasta_file=$1
                  ;;
         -out )   shift
-                 output_file=$1
+                 output_pref=$1
                  ;;
         -sim )   shift
                  sim_threshold=$1
@@ -108,7 +108,7 @@ if [ -z "$fasta_file" ]; then
 fi
 
 # Check if output file parameter is provided
-if [ -z "$output_file" ]; then
+if [ -z "$output_pref" ]; then
     echo "Output file not specified"
     exit 1
 fi
@@ -137,15 +137,27 @@ fi
 #            MAIN
 # ----------------------------------------------------------------------------
 
+# Fix the ourput redults
+if [[ "${output_pref}" == */ ]]; then
+    if [ ! -d "${output_pref}" ]; then
+      mkdir -p "${output_pref}"
+    fi
+
+    output_pref="${output_pref}result"
+    echo "Prefex for the ourput file was changed to ${output_pref}"
+  
+fi
+
 
 # Check if BLAST database exists
 if [ ! -f "${set_file}.nhr" ]; then
-    echo "BLAST database for $fasta_file not found. Creating database..."
+    # echo "BLAST database for $fasta_file not found. Creating database..."
+    echo "Creating database..."
     makeblastdb -in "$set_file" -dbtype nucl > /dev/null
 fi
 
 
-blast_res="${output_file}.blast.tmp"
+blast_res="${output_pref}.blast.tmp"
 
 if [ "$after_blast_flag" -eq 1 ]; then
     if [ ! -f "${blast_res}" ]; then
@@ -158,12 +170,12 @@ else
 fi
 
 
-if [ ! -s /path/to/your/file ]; then
+if [ ! -s "${blast_res}" ]; then
     pokaz_stage "Blast result is empty"
 else
     
     pokaz_stage "Similarity search..."
-    Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out ${output_file} \
+    Rscript sim/sim_in_seqs.R --in_file ${fasta_file} --res ${blast_res} --out "${output_pref}.rds" \
     --sim ${sim_threshold} --use_strand ${use_strand} --db_file ${set_file}
 
     # Remove BLAST temporary file if not needed

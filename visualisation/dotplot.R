@@ -29,6 +29,8 @@
 #' @export
 #'
 dotplot <- function(seq1, seq2, wsize, nmatch) {
+  
+  if(wsize < nmatch) stop('wsize must be larger than nmatch')
   # seq2.rc = rev(seqinr::comp(seq2))
   seq2.rc = revCompl(seq2)
   
@@ -47,12 +49,14 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   len1 = length(seq1)
   len2 = length(seq2)
   
+  # print(head(result))
+  
   p = invisible(
         ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
         geom_tile(width = 1, height = 1, linewidth = 0.5) +
         xlab(NULL) + ylab(NULL) +
-        xlim(c(0, len1)) +
-        ylim(c(0, len2)) +
+        # xlim(c(0, len1)) +
+        # ylim(c(0, len2)) +
         theme_minimal() + coord_fixed() +
         scale_x_continuous(expand = c(0, 0), limits = c(0, length(seq1))) + 
         scale_y_continuous(expand = c(0, 0), limits = c(0, length(seq2))) +
@@ -68,7 +72,7 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
     )
     
   
-  p
+  # p
   return(p )
 }
 
@@ -126,6 +130,48 @@ dotspiegel.s <- function(seq, wsize, nmatch) {
   return(dotspiegel(seq2nt(seq), wsize, nmatch))
 }
 
+#' Several dotplots with varying nmatch
+#'
+#' @param seq1 The first sequence to be compared.
+#' @param seq2 The second sequence to be compared.
+#' @param wsize The window size to be used in the dot plot.
+#' @param nmatch.beg Optional; the beginning number of matches required. 
+#'                   Defaults to the window size if not specified.
+#' @param nmatch.end Optional; the ending number of matches required.
+#'                   Defaults to the window size minus 5 if not specified.
+#' @param n.row Optional; the number of rows to arrange the plots in the grid.
+#'              Defaults to 2.
+#' @return A graphical object containing the grid of dotplots.
+#' 
+#' @export
+dotfacet <- function(seq1, seq2, wsize, nmatch.beg=NULL, nmatch.end=NULL, n.row = 2){
+  if(is.null(nmatch.beg)){
+    nmatch.beg = wsize
+    nmatch.end = NULL
+  }
+  
+  if(is.null(nmatch.end)){
+    nmatch.end = wsize - 5
+  }
+  
+  nmatch.range = nmatch.beg:nmatch.end
+  # pokaz('Range:', nmatch.range)
+  
+  p.list = list()
+  for(nmatch in nmatch.range){
+    p.list[[length(p.list) + 1]] = dotplot(seq1, seq2, wsize, nmatch)
+  }
+  
+  pp = cowplot::plot_grid(plotlist = p.list, nrow=n.row)
+  return(pp)
+  
+}
+
+
+
+dotfacet.s <- function(seq1, seq2, ...) {
+  return(dotfacet(seq2nt(seq1), seq2nt(seq2),...))
+}
 
 #' Convert a Nucleotide Sequence to a Matrix
 #'

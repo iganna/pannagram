@@ -119,7 +119,10 @@ loop.function <- function(f.maj, echo = T){
   pokaz('Read the skeleton alignment..')
   x.sk = readRDS(file.aln.pre)
   
-  # ---- Read Gaps bwteen normal blocks ----
+  # TODO: put real lengths, not approximations
+  max.chr.len = max(max(x.sk$V4), max(x.sk$V5)) + 10^6
+  
+  # ---- Read Gaps beteen normal blocks ----
   
   complexity.threshold = 200  # Max number of blast hits between two synteny blocks
   
@@ -138,6 +141,18 @@ loop.function <- function(f.maj, echo = T){
   } else {
     x.gap = NULL
   }
+  
+  # To catch possible bugs
+  # if(file.gaps.out == 'your_filename.txt'){
+  #   file.ws = "tmp_workspace.RData"
+  #   
+  #   all.local.objects <- ls()
+  #   save(list = all.local.objects, file = file.ws)
+  #   
+  #   pokaz('Workspace is saved in', file.ws)
+  #   stop('Enough..')
+  # }
+  
   
   if(!is.null(x.gap)){
     pokaz('Number of gaps', nrow(x.gap))
@@ -229,7 +244,6 @@ loop.function <- function(f.maj, echo = T){
   }
   
   
-  
   # ---- Read additional alignments ----
   
   file.gaps.out = paste0(path.gaps,
@@ -239,9 +253,21 @@ loop.function <- function(f.maj, echo = T){
   if(file.exists(file.gaps.out)){
     # Read blast results on "between blocks"
     pokaz('Read blast of "bad" gaps..', file.gaps.out)
-    x.gap = readTableMy(file.gaps.out)    
+    x.gap = readBlast(file.gaps.out)    
   }
 
+  # To catch possible bugs
+  # if(file.gaps.out == 'your_filename.txt'){
+  #   file.ws = "tmp_workspace.RData"
+  #   
+  #   all.local.objects <- ls()
+  #   save(list = all.local.objects, file = file.ws)
+  #   
+  #   pokaz('Workspace is saved in', file.ws)
+  #   stop('Enough..')
+  # }
+
+  
   if(!is.null(x.gap)) {
     # Fill up and down
     ## ----  Prepare ----
@@ -397,7 +423,6 @@ loop.function <- function(f.maj, echo = T){
     # Create empty
     x.bw <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
                               dimnames = list(NULL, colnames(x.sk))))
-    
   }
   
   # ---- Combine all together ----
@@ -409,7 +434,7 @@ loop.function <- function(f.maj, echo = T){
   rownames(x.comb) = NULL
   
   # ---- Check uniqueness ---- 
-  pos.q.occup = rep(0, 40000000)
+  pos.q.occup = rep(0, max.chr.len)
   x.sk1 = x.comb
   # x.sk1 = x.res
   # x.sk1 = x.bw
