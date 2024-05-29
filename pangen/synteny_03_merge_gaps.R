@@ -247,10 +247,14 @@ loop.function <- function(f.maj, echo = T){
   # To catch possible bugs
   # if(file.gaps.out == 'your_filename.txt'){
   #   file.ws = "tmp_workspace.RData"
-  #   saveWorkspace(file.ws)
+  #   
+  #   all.local.objects <- ls()
+  #   save(list = all.local.objects, file = file.ws)
+  #   
+  #   pokaz('Workspace is saved in', file.ws)
   #   stop('Enough..')
   # }
-  
+
   
   if(!is.null(x.gap)) {
     # Fill up and down
