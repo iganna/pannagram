@@ -215,9 +215,11 @@ loop.function <- function(f.maj, echo = T){
       # Set up the direction
       x.tmp0 = x.tmp
       idx.dir = which(x.tmp$V5 < x.tmp$V4)
-      tmp = x.tmp$V4[idx.dir]
-      x.tmp$V4[idx.dir] = x.tmp$V5[idx.dir]
-      x.tmp$V5[idx.dir] = tmp
+      if(length(idx.dir) > 0){
+        tmp = x.tmp$V4[idx.dir]
+        x.tmp$V4[idx.dir] = x.tmp$V5[idx.dir]
+        x.tmp$V5[idx.dir] = tmp  
+      }
       
       visit.info = initVisitInfo(nrow(x.tmp))
       
@@ -231,7 +233,9 @@ loop.function <- function(f.maj, echo = T){
       
     }
     
-    x.res = x.gap[idx.good,]
+    if(length(idx.good) > 0){
+      x.res = x.gap[idx.good,]  
+    }
     rmSafe(x.gap)
     
     # Clean overlaps from both (base and query) sides
