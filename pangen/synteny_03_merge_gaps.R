@@ -235,11 +235,16 @@ loop.function <- function(f.maj, echo = T){
     
     if(length(idx.good) > 0){
       x.res = x.gap[idx.good,]  
+      # Clean overlaps from both (base and query) sides
+      x.res = cleanOverlaps(x.res)
+    } else {
+      # Create empty
+      x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
+                                 dimnames = list(NULL, colnames(x.sk))))
     }
     rmSafe(x.gap)
     
-    # Clean overlaps from both (base and query) sides
-    x.res = cleanOverlaps(x.res)
+
     
   } else {
     # Create empty
