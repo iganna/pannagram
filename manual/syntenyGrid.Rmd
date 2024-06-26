@@ -5,13 +5,18 @@ title: "R Notebook"
 # sources
 
 ```{r}
-source("../visualisation/visualisation.R")
+getwd()
+source("~/projects/pannagram/visualisation/visualisation.R")
+source("~/projects/pannagram/visualisation/visualisation.R")
 source("../utils/utils.R")
 
 library(ggplot2)
 library(gridExtra)
 ```
 
+```{r}
+getwd()
+```
 # savePDF
 
 ```{r}
@@ -36,93 +41,6 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 
 ```
 
-# plotGenomesAgainstRef
-```{r}
-# New cool flex drop
-plotGenomeAgainstRef <- function(alignments_path, query_name, ref_name,
-                                  sort.descending=T,
-                                  x.label = NULL,
-                                  y.label = NULL) {
-  # if none given, deducing axis labels straight from filenames
-  if (is.null(x.label)) x.label = tools::file_path_sans_ext(basename(query_name))
-  if (is.null(y.label)) y.label = tools::file_path_sans_ext(basename(ref_name))
-  
-  # Read FASTA files
-  fasta_query <- readFastaMy(query_name)
-  fasta_ref <- readFastaMy(ref_name)
-  
-  # =============== reordering ===================
-  if (sort.descending){
-    order_query <- order(-nchar(fasta_query))
-    order_ref <- order(-nchar(fasta_ref))
-    fasta_query <- fasta_query[order_query]
-    fasta_ref <- fasta_ref[order_ref]
-  } else {
-    order_query <- seq(1, length(nchar(fasta_query)))
-    order_ref <- seq(1, length(nchar(fasta_ref)))
-  }
-
-  # lengths and cumsums
-  len_query = nchar(fasta_query)
-  len_ref = nchar(fasta_ref)
-  cum_query = c(0, cumsum(len_query))
-  cum_ref = c(0, cumsum(len_ref))
-
-  
-  #=========== Filling the new dataframe =====================
-  df <- data.frame()
-  query_prefix <- tools::file_path_sans_ext(basename(query_name))
-  for (i in seq_along(fasta_query)) {
-    for (j in seq_along(fasta_ref)) {
-      
-      file_name = paste(query_prefix, "_", order_query[i], "_", order_ref[j], "_maj.rds", sep='')
-      file_path = file.path(alignments_path, file_name)
-      if (file.exists(file_path)) {
-        data_ij <- readRDS(file_path)
-        
-        # Adjust coordinates based on cumulative lengths
-        data_ij[, c(2, 3)] = data_ij[, c(2, 3)] + cum_query[i]
-        data_ij[, c(4, 5)] = data_ij[, c(4, 5)] + cum_ref[j]
-        df = rbind(df, data_ij)
-      }
-    }
-  }
-  
-  # these will be fed straight to plotSynteny
-  v.plasmid.divisors = cum_query[-length(cum_query)]
-  h.plasmid.divisors = cum_ref[-length(cum_ref)]
-  
-  # these will be added as separate geoms
-  query_labels = sub("^[^ ]+ ", "", names(fasta_query))
-  ref_labels = sub("^[^ ]+ ", "", names(fasta_ref))
-      
-  pS = plotSynteny(df,
-                   x.label=x.label,
-                   y.label=y.label,
-                   axis.ticks=seq(0, 10, by = 2),
-                   hlines=h.plasmid.divisors,
-                   vlines=v.plasmid.divisors,
-                   col.line = "#3530D966",
-                   show.point = T,
-                   expand = c(0,0)
-    ) +
-    annotate("text", x = cum_query[-1], y = rep(0, length(cum_query) - 1),
-             label = query_labels,
-             vjust = -0.3, hjust = -0.02,
-             size = 2.7, angle=90,
-             # alpha=0.9,
-             color="#7D7D7D") +
-    annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1], 
-             label = ref_labels,
-             vjust = 1.2, hjust = -0.02,
-             size = 2.7,
-             # alpha=0.9,
-             color="#7D7D7D")
-  
-  pS
-  return(pS)
-}
-```
 
 ## arguments
 
@@ -142,7 +60,7 @@ alignments_path <- paste0("../DATA/PRJNA1048330/pangen_pre/alignments_", ref_id)
 ## call
 
 ```{r}
-p = plotGenomesAgainstRef(alignments_path, query_name, ref_name)
+p <- plotGenomeAgainstRef(alignments_path, query_name, ref_name)
 p
 # savePDF(p)
 ```
@@ -264,4 +182,31 @@ syntenyGrid <- function(directory, prefix, no.borders=F) {
 p = syntenyGrid("../DATA/PRJNA1048330/pangen_pre/alignments_ml59/", "ml2")
 ggsave("plot_grid.png", p)
 browseURL("plot_grid.png")
+```
+
+```{r}
+#' Get unique file prefixes in a given path
+#'
+#' This function gets all the files in the given path, splits the file names by the `_` character,
+#' and returns the unique prefixes. Files without a `_` character are ignored.
+#'
+#' @param path Character string specifying the path to the directory.
+#'
+#' @return A character vector of unique file prefixes.
+#'
+#' @examples
+#' \dontrun{
+#'   # Get unique prefixes in the current directory
+#'   get_prefixes(".")
+#' }
+#' @export
+get_prefixes <- function(path) {
+  files <- list.files(path)
+  files_with_underscore <- files[grepl("_", files)]
+  split_files <- strsplit(files_with_underscore, "_")
+  prefixes <- sapply(split_files, function(x) x[1])
+  return(unique(prefixes))
+}
+get_prefixes("/home/uzumymw/projects/pannagram/DATA/PRJNA1049504/pangen_pre/blast_gaps_TP_16")
+
 ```

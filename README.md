@@ -1,5 +1,5 @@
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/pannagram_logo.png" width="30%" height="auto">
+<img src="images/pannagram_logo.png" width="30%" height="auto">
 </p>
 
 # Pannagram
@@ -13,24 +13,24 @@ Additionally, Pannagram contains useful functions for visualization. The manual 
 
 Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
 ```sh
-conda env create -f pannagram_conda_env.yml
-conda activate pannagram_conda_env
+conda env create -f environment.yml
+conda activate pannagram
 ```
-The environment downloads required R libraries, [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/) and [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html).
+The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/) and [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html).
 
 ## 1. Pangenome linear alignment
 
 ### 1.1 Building the alignment
 Pangenome alignment can be built in two modes:
  - **reference-free**:
-```
+```sh
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
       -path_out 'output_folder' \
       -nchr_query 5 -nchr_ref 5 
 ```
 
  - **reference-based**:
-```
+```sh
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
                  -path_out 'output_folder' \
@@ -38,13 +38,20 @@ Pangenome alignment can be built in two modes:
 ```
 
  - **quick look**:
-If there is no information on genomes and corresponding chromosomes available, one can run preparation steps using `./pangen_pre.sh`.
+If there is no information on genomes and corresponding chromosomes available, one can run preparation steps:
+```sh
+./pangen_pre.sh -ref '<reference file prefix>' \ # 'SM52', 'ml4', 'TP16' etc.
+    -path_ref '<reference file directory path>' \
+    -path_in '<genome files directory path>' \
+    -path_out '<output files path>' \
+    -cores 8
+```
  
 An extended description of the parameters for all three scripts are avaliable by executing scripts with the flag `-help`.
 
 ### 1.2 Extract information from the pangenome alignment
 Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
-```
+```sh
 ./analys.sh -path_msa 'msa_folder' \
       -path_chr 'chr_folder' \
       -blocks  \  # Find Synteny block inforamtion for visualisation
@@ -54,7 +61,7 @@ Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.
 
 ### 1.3 Calling structural variants
 When the pangenome linear alignment is built, SVs can be called using the following script:
-```
+```sh
 ./analys.sh -path_msa 'msa_folder' \
       -sv_call  \         # Create output .gff and .fasta files with SVs
       -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
@@ -67,24 +74,24 @@ Pannagram contains a number of useful methods for visualization in R.
 ### 2.1 Visualisation of the pangenome alignment
 All genomes together:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/pangenome_alignment.png" width="50%" height="auto">
+<img src="images/pangenome_alignment.png" width="50%" height="auto">
 </p>
 
 A dotplot for a pair of genomes:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/syntenyplot.png" width="40%" height="auto">
+<img src="images/syntenyplot.png" width="40%" height="auto">
 </p>
 
 ### 2.2 Graph of Nestedness on Structural variants
 
 Every node is an SV:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/graph_of_svs.png" width="40%" height="auto">
+<img src="images/graph_of_svs.png" width="40%" height="auto">
 </p>
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/graph_of_svs_te.png" width="50%" height="auto">
+<img src="images/graph_of_svs_te.png" width="50%" height="auto">
 </p>
 
 
@@ -93,10 +100,10 @@ Every node is a unique sequence, size - the amount of this sequence in SVs:
  - In the ACTG-mode:
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot.png" width="50%" height="auto">
+<img src="images/msaplot.png" width="50%" height="auto">
 </p>
 
-```
+```r
 # --- Quick start code ---
 source('utils/utils.R')  			# Functions to work with sequences
 source('visualisation/msaplot.R')	# Visualisation
@@ -108,11 +115,11 @@ msaplot(aln.mx)						# ggplot object
 - In the Polymorphism mode:
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/msaplot_diff.png" width="50%" height="auto">
+<img src="images/msaplot_diff.png" width="50%" height="auto">
 </p>
 
 
-```
+```r
 # --- Quick start code ---
 msadiff(aln.mx)						# ggplot object
 ```
@@ -120,11 +127,11 @@ msadiff(aln.mx)						# ggplot object
 
 Simultaneously on forward (dark color) and reverse complement (pink color) strands:
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/dotplot.png" width="40%" height="auto">
+<img src="images/dotplot.png" width="40%" height="auto">
 </p>
 
 
-```
+```r
 # --- Quick start code ---
 source('utils/utils.R')  			# Functions to work with sequences
 source('visualisation/dotplot.R')	# Visualisation
@@ -135,10 +142,10 @@ dotplot(s, s, 15, 9)				# ggplot object
 ### 2.5 ORF-finder and visualisation
 
 <p align="left">
-<img src="https://github.com/iganna/pannagram/blob/main/images/orfplot.png" width="40%" height="auto">
+<img src="images/orfplot.png" width="40%" height="auto">
 </p>
 
-```
+```r
 # --- Quick start code ---
 source('utils/utils.R')  			# Functions to work with sequences
 source('visualisation/orfplot.R')	# Visualisation
@@ -154,7 +161,7 @@ orfplot(orfs$pos)					# ggplot object
 #### ...in the genome
 The first approach involves searching against entire genomes or individual chromosomes. 
 The quickstart toy-example is:
-```
+```sh
 ./sim_in_genome.sh -in genes.fasta -genome genome.fasta -out out.txt
 ```
 The result is a GFF file with hits matching the similarity threshold.
@@ -162,7 +169,7 @@ The result is a GFF file with hits matching the similarity threshold.
 #### ...in another set
 The second approach, in contrast, is designed to search for similarities against another set of sequences. 
 The quickstart toy-example is:
-```
+```sh
 sim_in_seqs.sh -in genes.fasta -set genome.fasta -out out.txt
 ```
 The result is an RDS (R Data Structure) table. 

@@ -43,7 +43,7 @@ print_usage() {
 
     cat << EOF
 Usage: ${0##*/} [-h] [-s STAGE] [-cores CORES] 
-                [-ref REF_NAME] [-path_in INPUT_FOLDER] [-path_out OUTPUT_FOLDER] 
+                [-ref REF_NAME] [-path_in INPUT_FOLDER] [-path_out OUTPUT_FOLDER]
                 [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
                 [-sort_len] [-one2one] [-accessions ACC_ANAL] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
@@ -314,4 +314,20 @@ fi
 
 
 
+# ----------------------------------------------
+# Step 6: Plotting
+if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_pref}" ]; then
 
+    pokaz_stage "Step ${step_num}. Plotting the results."
+
+    Rscript pangen/plot_genome_synteny.R \
+    --ref ${ref_pref} \
+    --path_ref ${path_chr_ref} \
+    --path_in ${path_in} \
+    --path_out ${pref_global} \
+    --algn_path ${path_alignment}
+
+    touch "$path_flags/step${step_num}_done_${ref_pref}"
+fi
+
+((step_num = step_num + 1))
