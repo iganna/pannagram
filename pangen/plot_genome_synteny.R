@@ -69,6 +69,6 @@ dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 for (id in query.ids){
     query.name <- normalizePath(file.path(path.in, paste0(id, ".fna")), mustWork = FALSE)
     pdf.name <- paste0(ref, "-", id)
-    p <- plotGenomeAgainstRef(algn.path, query.name, ref.name)
+    p <- plotGenomeAgainstRef(algn.path, query.name, ref.name, seq.order="alphanum")
     savePDF(p, path = pdf.path, name = pdf.name)
 }

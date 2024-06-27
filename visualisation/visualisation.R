@@ -150,32 +150,44 @@ plotPanAcc <- function(file.msa, acc){
 #' @import ggplot2
 #' @export
 plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
-                                 sort.descending=T,
+                                 seq.order = "descending",
                                  query.label = NULL,
                                  ref.label = NULL) {
   # if none given, deducing axis labels straight from filenames
-  if (is.null(query.label)) query.label = tools::file_path_sans_ext(basename(query.name))
-  if (is.null(ref.label)) ref.label = tools::file_path_sans_ext(basename(ref.name))
-  
+  if (is.null(query.label)) {
+    query.label <- tools::file_path_sans_ext(basename(query.name))
+  }
+  if (is.null(ref.label)) {
+    ref.label <- tools::file_path_sans_ext(basename(ref.name))
+  }
+
   # Read FASTA files
   fasta_query <- readFastaMy(query.name)
   fasta_ref <- readFastaMy(ref.name)
   
+  query_labels <- sub("^[^ ]+ ", "", names(fasta_query))
+  ref_labels <- sub("^[^ ]+ ", "", names(fasta_ref))
+
   # =============== reordering ===================
-  if (sort.descending){
+  if (seq.order=="descending") {
     order_query <- order(-nchar(fasta_query))
     order_ref <- order(-nchar(fasta_ref))
-    fasta_query <- fasta_query[order_query]
-    fasta_ref <- fasta_ref[order_ref]
+  } else if (seq.order == "alphanum"){
+    order_query <- order(query_labels)
+    order_ref <- order(ref_labels)
   } else {
     order_query <- seq(1, length(nchar(fasta_query)))
     order_ref <- seq(1, length(nchar(fasta_ref)))
   }
+  fasta_query <- fasta_query[order_query]
+  fasta_ref <- fasta_ref[order_ref]
+  query_labels <- query_labels[order_query]
+  ref_labels <- ref_labels[order_ref]
   
-  len_query = nchar(fasta_query)
-  len_ref = nchar(fasta_ref)
-  cum_query = c(0, cumsum(len_query))
-  cum_ref = c(0, cumsum(len_ref))
+  len_query <- nchar(fasta_query)
+  len_ref <- nchar(fasta_ref)
+  cum_query <- c(0, cumsum(len_query))
+  cum_ref <- c(0, cumsum(len_ref))
   
   
   #=========== Filling the new dataframe =====================
@@ -183,15 +195,13 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   query_prefix <- tools::file_path_sans_ext(basename(query.name))
   for (i in seq_along(fasta_query)) {
     for (j in seq_along(fasta_ref)) {
-      
-      file_name = paste(query_prefix, "_", order_query[i], "_", order_ref[j], "_maj.rds", sep='')
+      file_name = paste0(query_prefix, "_", order_query[i], "_", order_ref[j], "_maj.rds")
       file_path = file.path(alignments.path, file_name)
       if (file.exists(file_path)) {
         data_ij <- readRDS(file_path)
-        
         data_ij[, c(2, 3)] = data_ij[, c(2, 3)] + cum_query[i]
         data_ij[, c(4, 5)] = data_ij[, c(4, 5)] + cum_ref[j]
-        df = rbind(df, data_ij)
+        df <- rbind(df, data_ij)
       }
     }
   }
@@ -199,27 +209,24 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   v.plasmid.divisors = cum_query[-length(cum_query)]
   h.plasmid.divisors = cum_ref[-length(cum_ref)]
   
-  query_labels = sub("^[^ ]+ ", "", names(fasta_query))
-  ref_labels = sub("^[^ ]+ ", "", names(fasta_ref))
-  
   pS = plotSynteny(df,
-                   query.label=query.label,
-                   ref.label=ref.label,
-                   hlines=h.plasmid.divisors,
-                   vlines=v.plasmid.divisors,
+                   query.label = query.label,
+                   ref.label = ref.label,
+                   hlines = h.plasmid.divisors,
+                   vlines = v.plasmid.divisors,
                    col.line = "#3530D966",
-                   show.point = T,
-                   expand = c(0,0)
+                   show.point = TRUE,
+                   expand = c(0, 0)
   ) +
     annotate("text", x = cum_query[-1], y = rep(0, length(cum_query) - 1),
              label = query_labels,
              vjust = -0.3, hjust = -0.02,
              size = 2.7, angle=90,
-             color="#7D7D7D") +
-    annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1], 
+             color = "#7D7D7D") +
+    annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1],
              label = ref_labels,
              vjust = 1.2, hjust = -0.02,
              size = 2.7,
-             color="#7D7D7D")
+             color = "#7D7D7D")
   return(pS)
 }
