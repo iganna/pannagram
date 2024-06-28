@@ -45,7 +45,7 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 ## arguments
 
 ```{r}
-query_path <- "~/projects/rhizobium-spring24/data/assembly/PRJNA1048330/repack/"
+query_path <- "~/projects/rhizobium-spring24/data/assembly/PRJNA1048330/repack_correct/"
 ref_path <- query_path
 
 query_id <- "ml66"
@@ -54,7 +54,7 @@ ref_id <- "ml2"
 query_name <- paste0(query_path, query_id, ".fna")
 ref_name <- paste0(ref_path, ref_id, ".fna")
 
-alignments_path <- paste0("../DATA/PRJNA1048330/pangen_pre/alignments_", ref_id)
+alignments_path <- paste0("../DATA/PRJNA1048330/pangen_pre_3/alignments_", ref_id)
 ```
 
 ## call
