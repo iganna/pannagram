@@ -11,12 +11,12 @@ Additionally, Pannagram contains useful functions for visualization. The manual 
 
 ### Recreating working environment
 
-Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
+Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) or [Mamba](https://github.com/mamba-org/mamba) installed. To create and activate the package environment run:
 ```sh
 conda env create -f environment.yml
 conda activate pannagram
 ```
-The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/) and [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html).
+The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/), [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html) and others.
 
 ## 1. Pangenome linear alignment
 
@@ -79,19 +79,19 @@ All genomes together:
 
 A dotplot for a pair of genomes:
 <p align="left">
-<img src="images/syntenyplot.png" width="40%" height="auto">
+<img src="images/syntenyplot.png" width="50%" height="auto">
 </p>
 
 ### 2.2 Graph of Nestedness on Structural variants
 
 Every node is an SV:
 <p align="left">
-<img src="images/graph_of_svs.png" width="40%" height="auto">
+<img src="images/graph_of_svs.png" width="50%" height="auto">
 </p>
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
-<img src="images/graph_of_svs_te.png" width="50%" height="auto">
+<img src="images/graph_of_svs_te.png" width="60%" height="auto">
 </p>
 
 
