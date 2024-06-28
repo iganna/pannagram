@@ -191,8 +191,7 @@ BiocManager::crayon
 BiocManager::rhdf5
 msa
 dplyr
-seqinr
-foreach
+oreach
 stringr
 ggplot2
 utils.R сам устанавливает crayon.
