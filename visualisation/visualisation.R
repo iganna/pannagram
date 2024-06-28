@@ -49,12 +49,24 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
   if (is.null(query.label)) query.label = 'query'
   if (is.null(ref.label)) ref.label = 'base'
 
-  range.x = max(c(x$V2,x$V3)) - min(c(x$V2,x$V3))
-  range.y = max(c(x$V4,x$V5)) - min(c(x$V4,x$V5))
+  x.limits = c(x$V2,x$V3)
+  y.limits = c(x$V4,x$V5)
+  
+  range.x = max(x.limits) - min(x.limits)
+  range.y = max(y.limits) - min(y.limits)
   range.m = max(range.x, range.y)
-  max.lim = max(c(x$V4,x$V5,x$V2,x$V3))
+  max.lim = max(x.limits, y.limits)
 
-  n.scale.step = 5
+  if (range.m <1.05e6){
+    n.scale.step <- 0.1
+  } else if (range.m <5.1e6){
+    n.scale.step <- 0.5
+  } else if (range.m <10.2e6){
+    n.scale.step <- 1
+  } else {
+    n.scale.step <- 5
+  }
+  # n.scale.step = 0.5
   for(i.scale in 6:2){
     n.scale = 10^i.scale
     if((range.m > n.scale*n.scale.step) || (i.scale == 2)){
