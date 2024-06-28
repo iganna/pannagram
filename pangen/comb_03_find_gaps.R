@@ -98,9 +98,12 @@ loop.function <- function(s.comb, echo = T){
   idx.break = c()
   for(acc in accessions){
     
-    # pokaz('Accession', acc, 'combination', s.comb)
+    pokaz('Accession', acc, 'combination', s.comb)
     
     v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    if(length(v.init) == 0) {
+      stop(sprintf("Skipping empty accession: %s\n", acc))
+    }
     v = v.init
     
     
@@ -109,13 +112,16 @@ loop.function <- function(s.comb, echo = T){
     # Find blocks of additional breaks
     v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
     v = v[v[,1] != 0,]                              # 1 - existing coordinates of accessions
+    if(nrow(v) == 0) {
+      stop(sprintf("Skipping empty v for accession: %s\n", acc))
+    }
     v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
     v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
     
     # Save blocks
     idx.block.tmp = which(abs(diff(v[,4])) != 1)
     idx.block.df = data.frame(beg = v[c(1,idx.block.tmp+1), 2], end = v[c(idx.block.tmp, nrow(v)), 2])
-    
+
     # pokaz('Number of blocks', length(idx.block.beg))
     v.block = rep(0, length(v.init))
     for(i.bl in 1:nrow(idx.block.df)){
@@ -125,7 +131,7 @@ loop.function <- function(s.comb, echo = T){
     suppressMessages({
       h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
     })
-    
+
     # v = v[order(v[,1]),]  # not necessary
     
     # with the absence, but neighbouring
@@ -136,6 +142,9 @@ loop.function <- function(s.comb, echo = T){
                        (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
     
     # Fix (beg < end) order
+    if(length(idx.tmp) == 0) {
+      stop(sprintf("Skipping empty idx.tmp for accession: %s\n", acc))
+    }
     idx.tmp.acc = data.frame(beg = v[idx.tmp,2], end = v[idx.tmp+1,2], acc = acc)
     idx.ord = which(idx.tmp.acc$beg > idx.tmp.acc$end)
     if(length(idx.ord) > 0){
@@ -207,8 +216,3 @@ if(num.cores == 1){
 }
 
 warnings()
-
-
-
-
-
