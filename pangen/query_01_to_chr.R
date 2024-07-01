@@ -1,6 +1,5 @@
 suppressMessages({
   library("optparse")
-  # library(Biostrings)
   library("foreach")
   library(doParallel)
 })
@@ -56,8 +55,8 @@ acc.anal <- opt$acc.anal
 
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
-    acc.anal = NULL
     pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.')
+    acc.anal = NULL
   } else {
     tmp = read.table(acc.anal, stringsAsFactors = F)
     acc.anal = tmp[,1]
@@ -100,7 +99,7 @@ pokazAttention('Only the following extensions will be considered:', query.types)
 search.pattern <- paste0(".*\\.(?:", paste(query.types, collapse="|"), ")$")
 query.name <- basename(list.files(path.query, pattern = search.pattern, full.names = TRUE))
 if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
-query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name))
+query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name), stringsAsFactors = F)
 
 # Optional: Filter based on a list of accession numbers, if provided
 if(!is.null(acc.anal)){

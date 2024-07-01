@@ -65,6 +65,7 @@ Options:
     -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
     -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
     -path_cons PATH_CONSENSUS   Path to the consensus folder.
+    -nchr N_CHR                 Number of chromosomes in every.
 
     # Input Design Handling
     -sort_len                   Flag to sort chromosomes by length.
@@ -107,6 +108,7 @@ do
         -path_chrom) path_chr_acc=$2; shift ;;  # path to the folder with individual chromosomes in separate files
         -path_parts) path_parts=$2; shift ;;  # path to the folder with chromosomal parts
         -path_cons) path_consensus=$2; shift ;;  # path to the consensus folder
+        -nchr) nchr=$2; shift ;;  # number of chromosomes
 
         -part_len) part_len=$2; shift ;;  # fragments to which each chromosome should be cut, has a default value 5000
 
@@ -218,9 +220,15 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
 
     pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
-     Rscript pangen/query_01_to_chr.R   --path.in ${path_in} --path.out ${path_chr_acc} \
-    --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}  \
-    --all.chr T
+    if [ -n "${nchr+x}" ]; then
+        Rscript pangen/query_01_to_chr.R   --path.in ${path_in} --path.out ${path_chr_acc} \
+            --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}  \
+            --n.chr %{nchr}
+    else
+        Rscript pangen/query_01_to_chr.R   --path.in ${path_in} --path.out ${path_chr_acc} \
+            --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}  \
+            --all.chr T
+    fi
     
     touch "$path_flags/step${step_num}_done"
 fi
@@ -233,9 +241,17 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
 
     pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
-     Rscript pangen/query_02_to_parts.R --path.chr  ${path_chr_acc}  \
-    --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
-    --filter_rep ${filter_rep} --all.chr T --rev ${flag_rev}
+
+    if [ -n "${nchr+x}" ]; then
+
+        Rscript pangen/query_02_to_parts.R --path.chr  ${path_chr_acc}  \
+            --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
+            --filter_rep ${filter_rep} --n.chr %{nchr} --rev ${flag_rev}
+    else
+        Rscript pangen/query_02_to_parts.R --path.chr  ${path_chr_acc}  \
+            --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
+            --filter_rep ${filter_rep} --all.chr T --rev ${flag_rev}
+    fi
 
     touch "$path_flags/step${step_num}_done"
 fi
@@ -250,9 +266,16 @@ if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
 
         file_acc_ref=${path_chr_acc}ref_acc.txt
         echo "${ref_pref}" > ${file_acc_ref}
-        Rscript pangen/query_01_to_chr.R --all.chr T \
+        
+        if [ -n "${nchr+x}" ]; then
+            Rscript pangen/query_01_to_chr.R --n.chr %{nchr} \
                 --path.in ${path_chr_ref} --path.out ${path_chr_acc}   \
                 --cores ${cores} --acc.anal ${file_acc_ref}
+        else
+            Rscript pangen/query_01_to_chr.R --all.chr T \
+                --path.in ${path_chr_ref} --path.out ${path_chr_acc}   \
+                --cores ${cores} --acc.anal ${file_acc_ref}
+        fi
 
         rm ${file_acc_ref}
 

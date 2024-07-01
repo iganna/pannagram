@@ -1,9 +1,7 @@
 suppressMessages({
   library("optparse")
-  # library(Biostrings)
   library("foreach")
   library(doParallel)
-  # library(stringi)
 })
 
 source("utils/utils.R")
@@ -39,7 +37,7 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-pokaz(opt)
+# pokaz(opt)
 
 # ***********************************************************************
 # ---- Values of parameters ----

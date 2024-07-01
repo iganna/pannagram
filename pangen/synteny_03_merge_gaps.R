@@ -244,8 +244,6 @@ loop.function <- function(f.maj, echo = T){
     }
     rmSafe(x.gap)
     
-
-    
   } else {
     # Create empty
     x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
