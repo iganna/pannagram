@@ -103,7 +103,6 @@ All genomes together:
 A dotplot for a pair of genomes:
 <p align="left">
 <img src="images/syntenyplot.png" width="50%" height="auto">
-<img src="images/syntenyplot.png" width="40%" height="auto">
 </p>
 
 ### 2.2 Graph of Nestedness on Structural variants
@@ -111,13 +110,11 @@ A dotplot for a pair of genomes:
 Every node is an SV:
 <p align="left">
 <img src="images/graph_of_svs.png" width="50%" height="auto">
-<img src="images/graph_of_svs.png" width="40%" height="auto">
 </p>
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
 <img src="images/graph_of_svs_te.png" width="60%" height="auto">
-<img src="images/graph_of_svs_te.png" width="50%" height="auto">
 </p>
 
 
