@@ -223,7 +223,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
     if [ -n "${nchr+x}" ]; then
         Rscript pangen/query_01_to_chr.R   --path.in ${path_in} --path.out ${path_chr_acc} \
             --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}  \
-            --n.chr %{nchr}
+            --n.chr ${nchr}
     else
         Rscript pangen/query_01_to_chr.R   --path.in ${path_in} --path.out ${path_chr_acc} \
             --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}  \
@@ -246,7 +246,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
 
         Rscript pangen/query_02_to_parts.R --path.chr  ${path_chr_acc}  \
             --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
-            --filter_rep ${filter_rep} --n.chr %{nchr} --rev ${flag_rev}
+            --filter_rep ${filter_rep} --n.chr ${nchr} --rev ${flag_rev}
     else
         Rscript pangen/query_02_to_parts.R --path.chr  ${path_chr_acc}  \
             --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
@@ -268,7 +268,7 @@ if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
         echo "${ref_pref}" > ${file_acc_ref}
         
         if [ -n "${nchr+x}" ]; then
-            Rscript pangen/query_01_to_chr.R --n.chr %{nchr} \
+            Rscript pangen/query_01_to_chr.R --n.chr ${nchr} \
                 --path.in ${path_chr_ref} --path.out ${path_chr_acc}   \
                 --cores ${cores} --acc.anal ${file_acc_ref}
         else
