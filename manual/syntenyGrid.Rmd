@@ -7,7 +7,6 @@ title: "R Notebook"
 ```{r}
 getwd()
 source("~/projects/pannagram/visualisation/visualisation.R")
-source("~/projects/pannagram/visualisation/visualisation.R")
 source("../utils/utils.R")
 
 library(ggplot2)

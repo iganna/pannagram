@@ -24,7 +24,6 @@ The environment downloads required R interpreter version and all needed librarie
 Pangenome alignment can be built in two modes:
  - **reference-free**:
 ```sh
-```sh
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
       -path_out 'output_folder' \
       -nchr_query 5 -nchr_ref 5 
@@ -33,7 +32,6 @@ Pangenome alignment can be built in two modes:
 ```
 
  - **reference-based**:
-```sh
 ```sh
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
@@ -100,7 +98,6 @@ Pannagram contains a number of useful methods for visualization in R.
 All genomes together:
 <p align="left">
 <img src="images/pangenome_alignment.png" width="50%" height="auto">
-<img src="images/pangenome_alignment.png" width="50%" height="auto">
 </p>
 
 A dotplot for a pair of genomes:
@@ -130,10 +127,8 @@ Every node is a unique sequence, size - the amount of this sequence in SVs:
 
 <p align="left">
 <img src="images/msaplot.png" width="50%" height="auto">
-<img src="images/msaplot.png" width="50%" height="auto">
 </p>
 
-```r
 ```r
 # --- Quick start code ---
 source('utils/utils.R')  			# Functions to work with sequences
@@ -147,11 +142,9 @@ msaplot(aln.mx)						# ggplot object
 
 <p align="left">
 <img src="images/msaplot_diff.png" width="50%" height="auto">
-<img src="images/msaplot_diff.png" width="50%" height="auto">
 </p>
 
 
-```r
 ```r
 # --- Quick start code ---
 msadiff(aln.mx)						# ggplot object
@@ -161,11 +154,9 @@ msadiff(aln.mx)						# ggplot object
 Simultaneously on forward (dark color) and reverse complement (pink color) strands:
 <p align="left">
 <img src="images/dotplot.png" width="40%" height="auto">
-<img src="images/dotplot.png" width="40%" height="auto">
 </p>
 
 
-```r
 ```r
 # --- Quick start code ---
 source('utils/utils.R')  			# Functions to work with sequences
@@ -178,10 +169,8 @@ dotplot(s, s, 15, 9)				# ggplot object
 
 <p align="left">
 <img src="images/orfplot.png" width="40%" height="auto">
-<img src="images/orfplot.png" width="40%" height="auto">
 </p>
 
-```r
 ```r
 # --- Quick start code ---
 source('utils/utils.R')  			# Functions to work with sequences
@@ -199,7 +188,6 @@ orfplot(orfs$pos)					# ggplot object
 The first approach involves searching against entire genomes or individual chromosomes. 
 The quickstart toy-example is:
 ```sh
-```sh
 ./sim_in_genome.sh -in genes.fasta -genome genome.fasta -out out.txt
 ```
 The result is a GFF file with hits matching the similarity threshold.
@@ -207,7 +195,6 @@ The result is a GFF file with hits matching the similarity threshold.
 #### ...in another set
 The second approach, in contrast, is designed to search for similarities against another set of sequences. 
 The quickstart toy-example is:
-```sh
 ```sh
 sim_in_seqs.sh -in genes.fasta -set genome.fasta -out out.txt
 ```
