@@ -1,14 +1,16 @@
 name: pannagram
 channels:
+  - conda-forge
   - bioconda
-  - defaults
 dependencies:
-  - "r-base>=4.2.0,<5"
-  - "r-foreach>=1.5.2,<2"
-  - "r-crayon>=1.5.1,<2"
-  - "r-optparse>=1.7.1,<2"
-  - "r-doparallel>=1.0.17,<2"
-  - "r-ggplot2>=3.3.6,<4"
+  - r-base==4.3.3
+  - r-foreach==1.5.2
+  - r-crayon==1.5.3
+  - r-optparse==1.7.5
+  - r-doparallel==1.0.17
+  - r-ggplot2==3.5.1
+  - bioconductor-rhdf5==2.46.1
+  - bioconductor-muscle==3.44.0
   
-  - "blast>=2.12.0,<3"
-  - "mafft>=7.505,<8"
+  - blast==2.5.0
+  - mafft==7.526

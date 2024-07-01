@@ -49,12 +49,24 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
   if (is.null(query.label)) query.label = 'query'
   if (is.null(ref.label)) ref.label = 'base'
 
-  range.x = max(c(x$V2,x$V3)) - min(c(x$V2,x$V3))
-  range.y = max(c(x$V4,x$V5)) - min(c(x$V4,x$V5))
+  x.limits = c(x$V2,x$V3)
+  y.limits = c(x$V4,x$V5)
+  
+  range.x = max(x.limits) - min(x.limits)
+  range.y = max(y.limits) - min(y.limits)
   range.m = max(range.x, range.y)
-  max.lim = max(c(x$V4,x$V5,x$V2,x$V3))
+  max.lim = max(x.limits, y.limits)
 
-  n.scale.step = 5
+  if (range.m <1.05e6){
+    n.scale.step <- 0.1
+  } else if (range.m <5.1e6){
+    n.scale.step <- 0.5
+  } else if (range.m <10.2e6){
+    n.scale.step <- 1
+  } else {
+    n.scale.step <- 5
+  }
+  # n.scale.step = 0.5
   for(i.scale in 6:2){
     n.scale = 10^i.scale
     if((range.m > n.scale*n.scale.step) || (i.scale == 2)){
@@ -141,7 +153,7 @@ plotPanAcc <- function(file.msa, acc){
 #' @param alignments.path Char with path to **directory**, where `.rds` files with alignments are located. By default, pangen pipeline writes such files into dir with **alignments_** prefix
 #' @param query.name Char with path to **FASTA file** with genome, used as query (horizontal axis)
 #' @param ref.name Char with path to **FASTA file** with genome, used as reference (vertical axis)
-#' @param sort.descending Flag to sort sequences (chromosome, plasmids, fragments, etc.) of a genome by their lengths in descending order. Default: `TRUE`
+#' @param seq.order Sequence reordering type (both axis): 'default': fasta file order, 'descending': sorted from longest to shortest sequence, 'alphanum': sorted by sequence labels (excluding accession number)
 #' @param query.label Char for x axis label (query). Default `NULL` will automatically deduce label based on given `query.name`
 #' @param ref.label Char for y axis label (reference). Default `NULL` will automatically deduce label based on given `ref.name`
 #'
@@ -150,76 +162,86 @@ plotPanAcc <- function(file.msa, acc){
 #' @import ggplot2
 #' @export
 plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
-                                 sort.descending=T,
+                                 seq.order = "default",
                                  query.label = NULL,
                                  ref.label = NULL) {
   # if none given, deducing axis labels straight from filenames
-  if (is.null(query.label)) query.label = tools::file_path_sans_ext(basename(query.name))
-  if (is.null(ref.label)) ref.label = tools::file_path_sans_ext(basename(ref.name))
-  
-  # Read FASTA files
-  fasta_query <- readFastaMy(query.name)
-  fasta_ref <- readFastaMy(ref.name)
-  
-  # =============== reordering ===================
-  if (sort.descending){
-    order_query <- order(-nchar(fasta_query))
-    order_ref <- order(-nchar(fasta_ref))
-    fasta_query <- fasta_query[order_query]
-    fasta_ref <- fasta_ref[order_ref]
-  } else {
-    order_query <- seq(1, length(nchar(fasta_query)))
-    order_ref <- seq(1, length(nchar(fasta_ref)))
+  if (is.null(query.label)) {
+    query.label <- tools::file_path_sans_ext(basename(query.name))
   }
+  if (is.null(ref.label)) {
+    ref.label <- tools::file_path_sans_ext(basename(ref.name))
+  }
+
+  # Read FASTA files
+  fasta.query <- readFastaMy(query.name)
+  fasta.ref <- readFastaMy(ref.name)
   
-  len_query = nchar(fasta_query)
-  len_ref = nchar(fasta_ref)
-  cum_query = c(0, cumsum(len_query))
-  cum_ref = c(0, cumsum(len_ref))
+  # Filter out accession numbers, that are typically present before the space character
+  query.labels <- sub("^[^ ]+ ", "", names(fasta.query))
+  ref.labels <- sub("^[^ ]+ ", "", names(fasta.ref))
+
+  # =============== reordering ===================
+  if (seq.order=="descending") {
+    order.query <- order(-nchar(fasta.query))
+    order.ref <- order(-nchar(fasta.ref))
+  } else if (seq.order == "alphanum"){
+    order.query <- order(query.labels)
+    order.ref <- order(ref.labels)
+  } else if (seq.order == "default"){
+    order.query <- seq(1, length(nchar(fasta.query)))
+    order.ref <- seq(1, length(nchar(fasta.ref)))
+  } else {
+    stop("Unknown keyword for `seq.order`. Options: 'default', 'alphanum', 'descending'")
+  }
+  fasta.query <- fasta.query[order.query]
+  fasta.ref <- fasta.ref[order.ref]
+  query.labels <- query.labels[order.query]
+  ref.labels <- ref.labels[order.ref]
+  
+  len.query <- nchar(fasta.query)
+  len.ref <- nchar(fasta.ref)
+  cum.query <- c(0, cumsum(len.query))
+  cum.ref <- c(0, cumsum(len.ref))
   
   
   #=========== Filling the new dataframe =====================
   df <- data.frame()
   query_prefix <- tools::file_path_sans_ext(basename(query.name))
-  for (i in seq_along(fasta_query)) {
-    for (j in seq_along(fasta_ref)) {
-      
-      file_name = paste(query_prefix, "_", order_query[i], "_", order_ref[j], "_maj.rds", sep='')
+  for (i in seq_along(fasta.query)) {
+    for (j in seq_along(fasta.ref)) {
+      file_name = paste0(query_prefix, "_", order.query[i], "_", order.ref[j], "_maj.rds")
       file_path = file.path(alignments.path, file_name)
       if (file.exists(file_path)) {
-        data_ij <- readRDS(file_path)
-        
-        data_ij[, c(2, 3)] = data_ij[, c(2, 3)] + cum_query[i]
-        data_ij[, c(4, 5)] = data_ij[, c(4, 5)] + cum_ref[j]
-        df = rbind(df, data_ij)
+        data.ij <- readRDS(file_path)
+        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.query[i]
+        data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[j]
+        df <- rbind(df, data.ij)
       }
     }
   }
   
-  v.plasmid.divisors = cum_query[-length(cum_query)]
-  h.plasmid.divisors = cum_ref[-length(cum_ref)]
+  v.plasmid.divisors = cum.query[-length(cum.query)]
+  h.plasmid.divisors = cum.ref[-length(cum.ref)]
   
-  query_labels = sub("^[^ ]+ ", "", names(fasta_query))
-  ref_labels = sub("^[^ ]+ ", "", names(fasta_ref))
-  
-  pS = plotSynteny(df,
-                   query.label=query.label,
-                   ref.label=ref.label,
-                   hlines=h.plasmid.divisors,
-                   vlines=v.plasmid.divisors,
+  synteny.plot = plotSynteny(df,
+                   query.label = query.label,
+                   ref.label = ref.label,
+                   hlines = h.plasmid.divisors,
+                   vlines = v.plasmid.divisors,
                    col.line = "#3530D966",
-                   show.point = T,
-                   expand = c(0,0)
+                   show.point = TRUE,
+                   expand = c(0, 0)
   ) +
-    annotate("text", x = cum_query[-1], y = rep(0, length(cum_query) - 1),
-             label = query_labels,
+    annotate("text", x = cum.query[-1], y = rep(0, length(cum.query) - 1),
+             label = query.labels,
              vjust = -0.3, hjust = -0.02,
              size = 2.7, angle=90,
-             color="#7D7D7D") +
-    annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1], 
-             label = ref_labels,
+             color = "#7D7D7D") +
+    annotate("text", x = rep(0, length(cum.ref) - 1), y = cum.ref[-1],
+             label = ref.labels,
              vjust = 1.2, hjust = -0.02,
              size = 2.7,
-             color="#7D7D7D")
-  return(pS)
+             color = "#7D7D7D")
+  return(synteny.plot)
 }

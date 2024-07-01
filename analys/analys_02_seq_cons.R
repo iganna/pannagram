@@ -1,6 +1,5 @@
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('seqinr')
   library('foreach')
   library(doParallel)
   library("optparse")

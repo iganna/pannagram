@@ -2,7 +2,6 @@
 
 suppressMessages({
   # library(Biostrings)
-  # library(seqinr)
   #library(spgs)  # reverseComplement("actg")
   library(foreach)
   library(doParallel)
@@ -518,7 +517,6 @@ if(num.cores == 1){
   tmp = foreach(f.blast = files.blast, .packages=c(
                                               # 'stringr',
                                               # 'Biostrings', 
-                                              # 'seqinr',
                                               'crayon'), .verbose = F)  %dopar% { 
                               loop.function(f.blast)
                             }
