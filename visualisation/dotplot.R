@@ -31,7 +31,6 @@
 dotplot <- function(seq1, seq2, wsize, nmatch) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
-  # seq2.rc = rev(seqinr::comp(seq2))
   seq2.rc = revCompl(seq2)
   
   mx1 = toupper(seq2mx(seq1, wsize))
@@ -255,7 +254,7 @@ seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
   mx1 = toupper(seq2mx(seq1, wsize))
   result = mxComp(mx1, mx1, wsize, nmatch)
   
-  seq1.rc = rev(seqinr::comp(seq1))
+  seq1.rc = revCompl(seq1)
   mx1.rc = toupper(seq2mx(seq1.rc, wsize))
   result.rc = mxComp(mx1, mx1.rc, wsize, nmatch)
   

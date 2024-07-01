@@ -11,12 +11,12 @@ Additionally, Pannagram contains useful functions for visualization. The manual 
 
 ### Recreating working environment
 
-Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) installed. To create and activate the package environment run:
+Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) or [Mamba](https://github.com/mamba-org/mamba) installed. To create and activate the package environment run:
 ```sh
 conda env create -f environment.yml
 conda activate pannagram
 ```
-The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/) and [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html).
+The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/), [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html) and others.
 
 ## 1. Pangenome linear alignment
 
@@ -26,7 +26,7 @@ Pangenome alignment can be built in two modes:
 ```sh
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
       -path_out 'output_folder' \
-      -nchr_query 5 -nchr_ref 5 
+      -nchr_query 5 -nchr_ref 5  
 ```
 
  - **reference-based**:
@@ -34,7 +34,7 @@ Pangenome alignment can be built in two modes:
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
                  -path_out 'output_folder' \
-                 -nchr_query 5 -nchr_ref 5 
+                 -nchr_query 5 -nchr_ref 5  
 ```
 
  - **quick look**:
@@ -79,19 +79,19 @@ All genomes together:
 
 A dotplot for a pair of genomes:
 <p align="left">
-<img src="images/syntenyplot.png" width="40%" height="auto">
+<img src="images/syntenyplot.png" width="50%" height="auto">
 </p>
 
 ### 2.2 Graph of Nestedness on Structural variants
 
 Every node is an SV:
 <p align="left">
-<img src="images/graph_of_svs.png" width="40%" height="auto">
+<img src="images/graph_of_svs.png" width="50%" height="auto">
 </p>
 
 Every node is a unique sequence, size - the amount of this sequence in SVs:
 <p align="left">
-<img src="images/graph_of_svs_te.png" width="50%" height="auto">
+<img src="images/graph_of_svs_te.png" width="60%" height="auto">
 </p>
 
 
@@ -178,26 +178,6 @@ includes a flag column that indicates whether the sequences meet the similarity 
 Additionally, the second script takes into account the coverage strand, 
 determining not just if a sequence is covered, but also if it's covered in a specific orientation.
 
-<!--
-
-## Dependencies
-
-BiocManager::muscle
-
-foreach
-doParallel
-optparse
-BiocManager::crayon
-BiocManager::rhdf5
-msa
-dplyr
-seqinr
-foreach
-stringr
-ggplot2
-utils.R сам устанавливает crayon.
-
--->
 ## Acknowledgements
 
 **Development:**
@@ -215,4 +195,3 @@ utils.R сам устанавливает crayon.
 **Resources:**
 - Logo was generated with the help of DALL-E
 - Parallel Processing Tool: O. Tange (2018): GNU Parallel 2018, ISBN 9781387509881, DOI [https://doi.org/10.5281/zenodo.1146014](https://doi.org/10.5281/zenodo.1146014).
-
