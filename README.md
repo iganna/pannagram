@@ -26,9 +26,7 @@ Pangenome alignment can be built in two modes:
 ```sh
 ./pangen.sh -path_in 'input_folder_with_all_genomes'  \
       -path_out 'output_folder' \
-      -nchr_query 5 -nchr_ref 5 
-      -path_out 'output_folder' \
-      -nchr_query 5 -nchr_ref 5 
+      -nchr_query 5 -nchr_ref 5  
 ```
 
  - **reference-based**:
@@ -36,20 +34,10 @@ Pangenome alignment can be built in two modes:
 ./pangen_ref.sh  -ref 'tari10'  
                  -path_in 'input_folder_with_all_genomes'  \
                  -path_out 'output_folder' \
-                 -nchr_query 5 -nchr_ref 5 
-                 -path_out 'output_folder' \
-                 -nchr_query 5 -nchr_ref 5 
+                 -nchr_query 5 -nchr_ref 5  
 ```
 
  - **quick look**:
-If there is no information on genomes and corresponding chromosomes available, one can run preparation steps:
-```sh
-./pangen_pre.sh -ref '<reference file prefix>' \ # 'SM52', 'ml4', 'TP16' etc.
-    -path_ref '<reference file directory path>' \
-    -path_in '<genome files directory path>' \
-    -path_out '<output files path>' \
-    -cores 8
-```
 If there is no information on genomes and corresponding chromosomes available, one can run preparation steps:
 ```sh
 ./pangen_pre.sh -ref '<reference file prefix>' \ # 'SM52', 'ml4', 'TP16' etc.
@@ -69,21 +57,10 @@ Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.
       -blocks  \  # Find Synteny block inforamtion for visualisation
       -seq  \     # Create consensus sequence of the pangenome
       -snp        # SNP calling
-```sh
-./analys.sh -path_msa 'msa_folder' \
-      -path_chr 'chr_folder' \
-      -blocks  \  # Find Synteny block inforamtion for visualisation
-      -seq  \     # Create consensus sequence of the pangenome
-      -snp        # SNP calling
 ```
 
 ### 1.3 Calling structural variants
 When the pangenome linear alignment is built, SVs can be called using the following script:
-```sh
-./analys.sh -path_msa 'msa_folder' \
-      -sv_call  \         # Create output .gff and .fasta files with SVs
-      -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
-      -sv_graph           # Construct the graph of SVs
 ```sh
 ./analys.sh -path_msa 'msa_folder' \
       -sv_call  \         # Create output .gff and .fasta files with SVs
@@ -201,25 +178,6 @@ includes a flag column that indicates whether the sequences meet the similarity 
 Additionally, the second script takes into account the coverage strand, 
 determining not just if a sequence is covered, but also if it's covered in a specific orientation.
 
-<!--
-
-## Dependencies
-
-BiocManager::muscle
-
-foreach
-doParallel
-optparse
-BiocManager::crayon
-BiocManager::rhdf5
-msa
-dplyr
-oreach
-stringr
-ggplot2
-utils.R сам устанавливает crayon.
-
--->
 ## Acknowledgements
 
 **Development:**
@@ -237,20 +195,3 @@ utils.R сам устанавливает crayon.
 **Resources:**
 - Logo was generated with the help of DALL-E
 - Parallel Processing Tool: O. Tange (2018): GNU Parallel 2018, ISBN 9781387509881, DOI [https://doi.org/10.5281/zenodo.1146014](https://doi.org/10.5281/zenodo.1146014).
-
-**Development:**
-- Anna Igolkina - Lead Developer and Project Initiator
-- Alexander Bezlepsky - Assistant
-
-**Testing:**
-- Anna Igolkina: Lead Tester
-- Anna Glushkevich: Testing the alignment on _A. lyrata_ genomes
-- Elizaveta Grigoreva: Testing the alignment on _A. thaliana_ and _A. lyrata_ genomes
-- Jilong Ma: Testing the SV-graph on spider genomes
-- Alexander Bezlepsky: Testing the Pannagram's functionality on Rhizobial genomes
-- Gregoire Bohl-Viallefond: Testing the annotation converter on _A. thaliana_ alignment
-
-**Resources:**
-- Logo was generated with the help of DALL-E
-- Parallel Processing Tool: O. Tange (2018): GNU Parallel 2018, ISBN 9781387509881, DOI [https://doi.org/10.5281/zenodo.1146014](https://doi.org/10.5281/zenodo.1146014).
-
