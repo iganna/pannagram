@@ -220,6 +220,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
 
     pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
+    rm -rf ${path_chr_acc}
+
     if [ -n "${nchr+x}" ]; then
         Rscript pangen/query_01_to_chr.R   --path.in ${path_in} --path.out ${path_chr_acc} \
             --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal}  \
@@ -241,6 +243,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
 
     pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
+    rm -rf ${path_parts}
 
     if [ -n "${nchr+x}" ]; then
 
@@ -303,7 +306,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
       fi
     done
 
-    # exit 1
+    rm -rf ${path_blast_parts}
 
     # Blast parts on the reference genome
     ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_acc} -path_parts ${path_parts} -path_result ${path_blast_parts} \
@@ -322,10 +325,13 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
 
     pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
-        Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-                        --ref ${ref_pref} \
-                        --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
-                        --cores ${cores}
+    rm -rf ${path_alignment}
+    rm -rf ${path_gaps}
+
+    Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+                    --ref ${ref_pref} \
+                    --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
+                    --cores ${cores}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
 

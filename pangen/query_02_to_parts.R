@@ -1,3 +1,5 @@
+# Step 2. Chromosomes into parts
+
 suppressMessages({
   library("optparse")
   library("foreach")
@@ -6,12 +8,9 @@ suppressMessages({
 
 source("utils/utils.R")
 
-# pokazStage('Step 2. Chromosomes into parts')
-
 # ***********************************************************************
 # ---- Command line arguments ----
 args = commandArgs(trailingOnly=TRUE)
-
 
 option_list <- list(
   make_option(c("--all.chr"), type = "character", default = NULL, 
@@ -31,7 +30,11 @@ option_list <- list(
   make_option(c("--rev"), type = "character", default = NULL, 
               help = "flag make the reverce sequences", metavar = "character"),
   make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -40,6 +43,45 @@ opt = parse_args(opt_parser);
 # pokaz(opt)
 
 # ***********************************************************************
+# ---- Logging ----
+
+log.level <- opt$log.level
+
+# Check if the log level is provided
+if(!is.null(log.level)){
+  if(is.na(suppressWarnings(as.numeric(log.level)))){  # Try to convert log level to numeric
+    log.level = 0  # If conversion fails, default to 0
+  } else {
+    log.level = as.numeric(log.level)
+  }
+} else {
+  log.level = 0  # If no log level is provided, default to 0
+}
+
+
+# Define logging levels for the main code and the code in the loop (parallel processes)
+ll.main = 2
+ll.loop = 3 
+
+# Determine if the main code should be echoed
+echo.main = log.level >= ll.main
+
+# Determine if the code in the loop should be echoed
+echo.loop = log.level >= ll.loop
+
+path.log <- opt$path.log
+if(!is.null(path.log) & !is.null(log.level)){
+  # if(!dir.exists(path.log)) dir.create(path.log)  
+  path.log = paste0(path.log, 'query_02/')
+  if(!dir.exists(path.log)) dir.create(path.log)
+  file.log.main = paste0(path.log, 'main.log')
+  invisible(file.create(file.log.main))
+} else {
+  path.log = NULL
+  file.log.main = NULL
+}
+
+
 # ---- Values of parameters ----
 
 # Number of cores
@@ -52,8 +94,6 @@ if(all.chr){
 } else {
   n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
 }
-
-
 
 # Set chromosome and parts paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
@@ -75,17 +115,20 @@ filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_
 flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
 
 if(flag.rev == 1){
-  pokaz("Mirror universe")
+  pokaz("Mirror universe", 
+        file=file.log.main, echo=echo.main)
 }
 
 # ***********************************************************************
 # ---- Preparation ----
 
-pokaz('Directory with chromosomes:', path.chr)
+pokaz('Path with chromosomes:', path.chr, 
+      file=file.log.main, echo=echo.main)
 files.query = list.files(path = path.chr, pattern = paste0('\\.', 'fasta', '$', collapse = '') )
 files.query <- sub("\\.fasta$", "", files.query)
 query.name = unique(sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]))
-pokaz('Names of genomes:', query.name)
+pokaz('Names of genomes for the analysis:', query.name, 
+      file=file.log.main, echo=echo.main)
 
 if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')
@@ -102,10 +145,20 @@ if(all.chr){
 
 # ***********************************************************************
 # ---- MAIN program body ----
-loop.function <- function(i.comb, echo = T){
+loop.function <- function(i.comb, 
+                          echo.loop=T, 
+                          file.log.loop=NULL){
   
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]
+  
+  #' --- --- --- --- --- --- --- --- --- --- ---
+  
+  # Log files
+  if (is.null(file.log.loop)){
+    file.log.loop = paste0(path.log, 'loop_', i.comb, '_acc_', acc,'.log')
+    invisible(file.create(file.log.loop))
+  }
   
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
   
@@ -113,21 +166,18 @@ loop.function <- function(i.comb, echo = T){
   if( file.exists(file.out)) {
     return(NULL)
   }
-  pokaz('File', file.in)
+  pokaz('File:', file.in, 
+        file=file.log.loop, echo=echo.loop)
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
   
-  if(flag.rev == 1){
+  if(flag.rev == 1){  # Mirror universe
     q.fasta = nt2seq(rev(seq2nt(q.fasta)))
-    
-    # q.fasta = nt2seq(seq2nt(q.fasta)[seq(1, nchar(q.fasta), 2)])
-    
   }
   
   s = splitSeq(q.fasta, n=len.parts)
   len.chr = nchar(q.fasta)
   pos.beg = seq(1, len.chr, len.parts)
-  
   
   if(!is.null(len.step)){
     s = c(s, 
@@ -140,9 +190,12 @@ loop.function <- function(i.comb, echo = T){
     pos.beg = pos.beg[idx.order]
   }
   
-  if(length(s) != length(pos.beg)) stop('Problem with chunks')
+  if(length(s) != length(pos.beg)) {
+    pokaz('Problem with chunks', 
+          file=file.log.loop, echo=echo.loop)
+    stop('Problem with chunks') 
+  }
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
-  
   
   if(filter_rep == 0){
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
@@ -164,14 +217,20 @@ loop.function <- function(i.comb, echo = T){
   rmSafe(s)
   rmSafe(pos.beg)
   rmSafe(seqs.score)
+  pokaz('Done.',
+        file=file.log.loop, echo=echo.loop)
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
 if(num.cores == 1){
+  file.log.loop = paste0(path.log, 'loop_all.log')
+  invisible(file.create(file.log.loop))
   for(i.comb in 1:nrow(combinations)){
-    loop.function(i.comb)
+    loop.function(i.comb, 
+                  file.log.loop = file.log.loop, 
+                  echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -181,12 +240,16 @@ if(num.cores == 1){
   tmp.output = foreach(i.comb = 1:nrow(combinations), 
                        .packages=c('crayon'),
                        .export = c('n.chr')) %dopar% {
-    loop.function(i.comb)
+    loop.function(i.comb,
+                  echo.loop=echo.loop)
   }
   stopCluster(myCluster)
 }
 
 warnings()
+
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----
