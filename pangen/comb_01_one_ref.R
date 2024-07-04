@@ -183,7 +183,7 @@ loop.function <- function(i.chr.pair, echo = T){
     x = readRDS(file.aln.full)
     
     print(base.len)
-    saveRDS(x, 'tmp.rds')
+    # saveRDS(x, 'tmp.rds')
     
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)

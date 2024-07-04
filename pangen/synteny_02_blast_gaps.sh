@@ -114,7 +114,7 @@ function process_blast {
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -max_hsps 10 > /dev/null 2>> log_err.txt 
+               -max_hsps 10 > /dev/null 2>&1
     fi
 
     # BLAST search in "cross" mode
@@ -133,7 +133,7 @@ function process_blast {
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
-               -max_hsps 5 > /dev/null 2>> log_err.txt 
+               -max_hsps 5 > /dev/null 2>&1
     fi
 }
 
