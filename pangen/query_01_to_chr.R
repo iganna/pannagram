@@ -11,7 +11,7 @@ source("utils/utils.R")
 # ***********************************************************************
 # ---- Command line arguments ----
 
-args = commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
 option_list <- list(
   make_option(c("--all.chr"), type = "character", default = NULL, 
@@ -34,11 +34,8 @@ option_list <- list(
               help = "Level of log to be shown on the screen", metavar = "character")
 )
 
-
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser);
-
-# print(opt)
+opt_parser <- OptionParser(option_list = option_list)
+opt <- parse_args(opt_parser)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -46,37 +43,34 @@ opt = parse_args(opt_parser);
 log.level <- opt$log.level
 
 # Check if the log level is provided
-if(!is.null(log.level)){
-  if(is.na(suppressWarnings(as.numeric(log.level)))){  # Try to convert log level to numeric
-    log.level = 0  # If conversion fails, default to 0
-  } else {
-    log.level = as.numeric(log.level)
+if (!is.null(log.level)) {
+  log.level <- suppressWarnings(as.numeric(log.level))
+  if (is.na(log.level)) {  # If conversion fails, default to 0
+    log.level <- 0
   }
 } else {
-  log.level = 0  # If no log level is provided, default to 0
+  log.level <- 0  # If no log level is provided, default to 0
 }
 
-
 # Define logging levels for the main code and the code in the loop (parallel processes)
-ll.main = 2
-ll.loop = 3 
+ll.main <- 2
+ll.loop <- 3 
 
 # Determine if the main code should be echoed
-echo.main = log.level >= ll.main
+echo.main <- log.level >= ll.main
 
 # Determine if the code in the loop should be echoed
-echo.loop = log.level >= ll.loop
+echo.loop <- log.level >= ll.loop
 
 path.log <- opt$path.log
-if(!is.null(path.log) & !is.null(log.level)){
-  # if(!dir.exists(path.log)) dir.create(path.log)  
-  path.log = paste0(path.log, 'query_01/')
-  if(!dir.exists(path.log)) dir.create(path.log)
-  file.log.main = paste0(path.log, 'main.log')
+if (!is.null(path.log) & !is.null(log.level)) {
+  path.log <- paste0(path.log, 'query_01/')
+  if (!dir.exists(path.log)) dir.create(path.log)
+  file.log.main <- paste0(path.log, 'main.log')
   invisible(file.create(file.log.main))
 } else {
-  path.log = NULL
-  file.log.main = NULL
+  path.log <- NULL
+  file.log.main <- NULL
 }
 
 # ---- Values of other parameters ----
@@ -87,7 +81,7 @@ num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 # Ensure the number of chromosomes is specified and set it
 all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
 if(all.chr){
-  n.chr = NULL
+  n.chr <- NULL
 } else {
   n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), 
                   stop("The input number of chromosomes 'n.chr' must be specified!"))  
@@ -96,16 +90,16 @@ if(all.chr){
 # Accessions to analyse
 acc.anal <- opt$acc.anal
 if(acc.anal == 'NULL'){
-  acc.anal = NULL
+  acc.anal <- NULL
 }
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
     pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.', 
                    file=file.log.main, echo=echo.main)
-    acc.anal = NULL
+    acc.anal <- NULL
   } else {
     tmp = read.table(acc.anal, stringsAsFactors = F)
-    acc.anal = tmp[,1]
+    acc.anal <- tmp[,1]
   }
 }
 
@@ -142,7 +136,7 @@ pokaz('Path with genomes:', path.query,
       file=file.log.main, echo=echo.main)
 
 # Set accepted genome file types
-query.types = c('fasta', 'fna', 'fa', 'fas') #  'ffn', 'faa', 'frn'
+query.types <- c('fasta', 'fna', 'fa', 'fas') #  'ffn', 'faa', 'frn'
 pokazAttention('Only the following extensions will be considered:', query.types, 
                file=file.log.main, echo=echo.main)
 
@@ -154,10 +148,10 @@ query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name
 
 # Optional: Filter based on a list of accession numbers, if provided
 if(!is.null(acc.anal)){
-  acc.anal = gsub("(\\.[^.]+)$", "", basename(acc.anal))
+  acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
   # pokaz('Accessions in the folder', query.name, file=file.log.main, echo=echo.main)
   # pokaz('Accessions in the filtration file', acc.anal, file=file.log.main, echo=echo.main)
-  query.name = query.name[query.name$acc %in% acc.anal,,drop=F]
+  query.name <- query.name[query.name$acc %in% acc.anal,,drop=F]
 }
 
 # Final check and display of genome names for analysis
@@ -169,7 +163,7 @@ pokaz('Names of genomes for the analysis:', query.name$acc,
 # ***********************************************************************
 # ---- MAIN program body ----
 
-file.log.pref=''
+file.log.pref <- ''
 
 loop.function <- function(i.acc, 
                           echo.loop=T, 
