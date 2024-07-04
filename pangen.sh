@@ -52,7 +52,7 @@ Usage: ${0##*/}  -path_in INPUT_FOLDER  -path_out OUTPUT_FOLDER
                 [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
                 [-sort_len] [-all2all] [-accessions ACC_FILE] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
-                [-h] [-s STAGE] [-cores CORES] [-echo]
+                [-h] [-s STAGE] [-cores CORES] [-log LOG_LEVEL]
                 
 This script performs alignment of query genomes to the reference genome.
 
@@ -61,7 +61,12 @@ Options:
     -s, -stage STAGE            Specify the stage from which to run: a number from 1 to 12.
                                 If not provided, the last interrupted stage will be re-run.
     -cores CORES                Number of cores for parallel processing. Default is 1.
-    -echo                       Set up this flag to see the progress when number of cores is 1.
+    -log LOG_LEVEL              The level of logging to be shown on the screen. 
+                                Options: 
+                                    0 - off
+                                    1 - steps (default),
+                                    2 - progress
+                                    3 - all
 
         
     * Required parameters:
@@ -216,7 +221,16 @@ fi
 #           LOGS
 # ----------------------------------------------------------------------------
 
-log_level=${log_level:-1}  # Set the default value to 'pipeline'
+# The logging system has multiple levels for console output. 
+# Full logs are always written to files regardless of the console logging level.
+#
+# Logging Levels:
+# 0 - Off, log nothing: No logging information will be output to the console.
+# 1 - Only steps (default): Only the stages will be logged to the console.
+# 2 - Log the progress of steps: Detailed information about the stages will be logged to the console.
+# 3 - All, log full info from the inner loops: Complete information about all loops will be logged to the console.
+
+log_level=${log_level:-1}  # Set the default value to 'steps'
 
 if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
     pokaz_error "Error: log_level must be a number between 0 and 3."
@@ -231,8 +245,8 @@ make_dir ${path_logs}
 path_log="${path_logs}pangen/"
 make_dir ${path_log}
 
-# File with pipeline logs
-file_log="${path_log}pipeline.log"
+# File with steps logs
+file_log="${path_log}steps.log"
 > "${file_log}"
 
 # ----------------------------------------------------------------------------
@@ -244,7 +258,7 @@ file_log="${path_log}pipeline.log"
 if [ -z "$cores" ]; then
     cores=1
 fi
-log_message 1 "$log_level" "$file_log" \
+log_message 2 "$log_level" "$file_log" \
     pokaz_message "Number of cores: ${cores}"
 
 # ----------------------------------------------
@@ -254,7 +268,7 @@ if ! [[ "$ref_num" =~ ^[0-9]+$ ]]; then
         pokaz_error "Error: Number of reference genomes is not a number."
     exit 1
 fi
-log_message 1 "$log_level" "$file_log" \
+log_message 2 "$log_level" "$file_log" \
     pokaz_message "Number of genomes for randomisation: ${ref_num}"
 
 
@@ -289,7 +303,7 @@ else
     # Check if the number of reference genomes is sufficient
     if (( ${#refs_all[@]} < ref_num )); then
         genomes_needed=$((ref_num - ${#refs_all[@]}))
-        log_message 0 "$log_level" "$file_log" \
+        log_message 1 "$log_level" "$file_log" \
             pokaz_attention "Not enough reference genomes. Adding $genomes_needed genome(s)."
 
         # Add genomes from acc_set to refs_all to satisfy the number of ref_num, ensuring no repeats
@@ -304,7 +318,7 @@ else
     fi
 
     if (( ${#refs_all[@]} > ref_num )); then
-        log_message 0 "$log_level" "$file_log" \
+        log_message 1 "$log_level" "$file_log" \
             pokaz_attention "Parameter -nref is ignored; it doesn't match number of genome in -refs"
     fi
 fi
@@ -312,7 +326,7 @@ fi
 
 
 # Print the selected reference genomes for verification
-log_message 1 "$log_level" "$file_log" \
+log_message 2 "$log_level" "$file_log" \
     pokaz_message "Names of genomes for randomisation: $(IFS=,; echo "${refs_all[*]}")"
 
 # Check that all of the genomes are in the folder
@@ -331,11 +345,11 @@ if [ -z "$chr_num" ]; then
     file_ref=$(find "$path_in" -type f -name "${refs_all[0]}.*")
     chr_num=$(grep -c '^>' "$file_ref")
 
-    log_message 0 "$log_level" "$file_log" \
+    log_message 1 "$log_level" "$file_log" \
         pokaz_attention "Number of chromosomes identified: ${chr_num}"
     additional_params+=" -nchr_ref ${chr_num} -nchr_query ${chr_num}"
 else
-    log_message 0 "$log_level" "$file_log" \
+    log_message 2 "$log_level" "$file_log" \
         pokaz_message "Number of chromosomes to analyse: ${chr_num}"    
 fi
 
@@ -421,7 +435,7 @@ for ref0 in "${refs_all[@]}"; do
 
 
     # File with pipeline logs
-    file_log_ref="${path_logs}pangen_ref_${ref0}/pipeline.log"
+    file_log_ref="${path_logs}pangen_ref_${ref0}/steps.log"
 
     cat ${file_log_ref} >> ${file_log}
 

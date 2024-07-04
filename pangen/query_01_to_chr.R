@@ -40,38 +40,7 @@ opt <- parse_args(opt_parser)
 # ***********************************************************************
 # ---- Logging ----
 
-log.level <- opt$log.level
-
-# Check if the log level is provided
-if (!is.null(log.level)) {
-  log.level <- suppressWarnings(as.numeric(log.level))
-  if (is.na(log.level)) {  # If conversion fails, default to 0
-    log.level <- 0
-  }
-} else {
-  log.level <- 0  # If no log level is provided, default to 0
-}
-
-# Define logging levels for the main code and the code in the loop (parallel processes)
-ll.main <- 2
-ll.loop <- 3 
-
-# Determine if the main code should be echoed
-echo.main <- log.level >= ll.main
-
-# Determine if the code in the loop should be echoed
-echo.loop <- log.level >= ll.loop
-
-path.log <- opt$path.log
-if (!is.null(path.log) & !is.null(log.level)) {
-  path.log <- paste0(path.log, 'query_01/')
-  if (!dir.exists(path.log)) dir.create(path.log)
-  file.log.main <- paste0(path.log, 'main.log')
-  invisible(file.create(file.log.main))
-} else {
-  path.log <- NULL
-  file.log.main <- NULL
-}
+source('utils/logging.R') # a common code for all R logging
 
 # ---- Values of other parameters ----
 
@@ -86,6 +55,7 @@ if(all.chr){
   n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), 
                   stop("The input number of chromosomes 'n.chr' must be specified!"))  
 }
+pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 
 # Accessions to analyse
 acc.anal <- opt$acc.anal
@@ -98,21 +68,15 @@ if(!is.null(acc.anal)){
                    file=file.log.main, echo=echo.main)
     acc.anal <- NULL
   } else {
-    tmp = read.table(acc.anal, stringsAsFactors = F)
+    tmp <- read.table(acc.anal, stringsAsFactors = F)
     acc.anal <- tmp[,1]
   }
 }
-
-pokaz('Number of chromosomes:', n.chr,
-      file=file.log.main, echo=echo.main)
 
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))
 path.chr   <- ifelse(!is.null(opt$path.out), opt$path.out, stop("The chromosome-out path 'path.out' must be specified!"))
 if(!dir.exists(path.chr)) dir.create(path.chr)
-
-
-
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
@@ -132,13 +96,11 @@ sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
 # ---- Preparation ----
 
 # Processor of input genome files
-pokaz('Path with genomes:', path.query, 
-      file=file.log.main, echo=echo.main)
+pokaz('Path with genomes:', path.query, file=file.log.main, echo=echo.main)
 
 # Set accepted genome file types
 query.types <- c('fasta', 'fna', 'fa', 'fas') #  'ffn', 'faa', 'frn'
-pokazAttention('Only the following extensions will be considered:', query.types, 
-               file=file.log.main, echo=echo.main)
+pokazAttention('Only the following extensions will be considered:', query.types, file=file.log.main, echo=echo.main)
 
 # List and filter genome files in the specified path based on the accepted file types
 search.pattern <- paste0(".*\\.(?:", paste(query.types, collapse="|"), ")$")
@@ -170,13 +132,14 @@ loop.function <- function(i.acc,
                           file.log.loop=NULL){
   
   acc = query.name$acc[i.acc]
-  #' --- --- --- --- --- --- --- --- --- --- ---
   
   # Log files
   if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_', i.acc, '_acc_', acc,'.log')
     invisible(file.create(file.log.loop))
   }
+  
+  #' --- --- --- --- --- --- --- --- --- --- ---
   
   # Don't run if the chromosomal files exist
   if(!all.chr){  # if the chromosome number is an important parameter, not ALL_CHROMOSOMES

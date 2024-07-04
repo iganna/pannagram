@@ -45,42 +45,7 @@ opt = parse_args(opt_parser);
 # ***********************************************************************
 # ---- Logging ----
 
-log.level <- opt$log.level
-
-# Check if the log level is provided
-if(!is.null(log.level)){
-  if(is.na(suppressWarnings(as.numeric(log.level)))){  # Try to convert log level to numeric
-    log.level = 0  # If conversion fails, default to 0
-  } else {
-    log.level = as.numeric(log.level)
-  }
-} else {
-  log.level = 0  # If no log level is provided, default to 0
-}
-
-
-# Define logging levels for the main code and the code in the loop (parallel processes)
-ll.main = 2
-ll.loop = 3 
-
-# Determine if the main code should be echoed
-echo.main = log.level >= ll.main
-
-# Determine if the code in the loop should be echoed
-echo.loop = log.level >= ll.loop
-
-path.log <- opt$path.log
-if(!is.null(path.log) & !is.null(log.level)){
-  # if(!dir.exists(path.log)) dir.create(path.log)  
-  path.log = paste0(path.log, 'query_02/')
-  if(!dir.exists(path.log)) dir.create(path.log)
-  file.log.main = paste0(path.log, 'main.log')
-  invisible(file.create(file.log.main))
-} else {
-  path.log = NULL
-  file.log.main = NULL
-}
-
+source('utils/logging.R') # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -152,13 +117,13 @@ loop.function <- function(i.comb,
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]
   
-  #' --- --- --- --- --- --- --- --- --- --- ---
-  
   # Log files
   if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_', i.comb, '_acc_', acc,'.log')
     invisible(file.create(file.log.loop))
   }
+  
+  #' --- --- --- --- --- --- --- --- --- --- ---
   
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
   

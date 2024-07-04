@@ -1,20 +1,13 @@
-#library(ggplot2)
+# Alignment-1. Remaining syntenic (major) matches
 
 suppressMessages({
-  # library(Biostrings)
-  #library(spgs)  # reverseComplement("actg")
   library(foreach)
   library(doParallel)
-  # library(stringr)
   library(optparse)
 })
 
-
 source("utils/utils.R")
 source("pangen/synteny_funcs.R")
-
-# pokazStage('Step 4. Alignment-1. Remaining syntenic (major) matches')
-
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -33,9 +26,12 @@ option_list <- list(
   make_option(c("--path.gaps"), type="character", default=NULL, 
               help="path tothe directory with gaps", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 )
-
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -43,6 +39,10 @@ opt = parse_args(opt_parser, args = args);
 # print(opt)
 
 # ***********************************************************************
+# ---- Logging ----
+
+source('utils/logging.R') # a common code for all R logging
+
 # ---- Values of parameters ----
 
 # Number of cores
@@ -68,14 +68,26 @@ len.blast = 50
 
 files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 
-pokaz('Number of BLAST-result files:', length(files.blast))
+pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, echo=echo.main)
 if(length(files.blast) == 0) stop('No BLAST files provided')
 
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(f.blast, echo = T){
+loop.function <- function(f.blast, 
+                          echo.loop=T, 
+                          file.log.loop=NULL){
+  
+  # Log files
+  if (is.null(file.log.loop)){
+    file.log.loop = paste0(path.log, 'loop_file_', 
+                           sub("\\.[^.]*$", "", basename(f.blast)),
+                           '.log')
+    invisible(file.create(file.log.loop))
+  }
+  
+  #' --- --- --- --- --- --- --- --- --- --- ---
   
   # Remove the '.txt' extension
   pref.comb <- sub("\\.txt$", "", f.blast)
@@ -88,30 +100,31 @@ loop.function <- function(f.blast, echo = T){
   parts = parts[-c(length(parts) - 1, length(parts))]
   acc <- paste0(parts, collapse = '_')
   
-  if(echo) pokaz(acc, query.chr, base.chr)
+  pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   
   # file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
-  # if(file.exists(file.aln.postgap3)) {
+  # if(file.exists(file.aln.postgap3)){
+  #   pokaz('Done.', file=file.log.loop, echo=echo.loop, file=file.log.loop, echo=echo.loop)
   #   return(NULL)
-  # }  
+  # }
   
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
-  if(echo) pokaz('Base:', base.file)
+  pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
   base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
-  if(echo) pokaz('Length of base:', base.len)
+  pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
   
   # Read query sequences
   query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
-  if(echo) pokaz('Query:', query.file)
+  pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
   
   query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
-  if(echo) pokaz('Length of query:', query.len)
+  pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
   # Output files
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
@@ -119,15 +132,18 @@ loop.function <- function(f.blast, echo = T){
   # if(T){   
   if(!file.exists(file.aln.pre)){
     
-    if(echo) pokaz('Alignment:', acc, query.chr, base.chr)
+    pokaz('Alignment:', acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
     
     # ---- Read blast results ----
-    pokaz(paste(path.blast.res, f.blast, sep = ''))
+    pokaz(paste0(path.blast.res, f.blast), file=file.log.loop, echo=echo.loop)
     # x = read.table(paste(path.blast.res, f.blast, sep = ''), stringsAsFactors = F, header = F)
-    x = readTableMy(paste(path.blast.res, f.blast, sep = ''))
-    if(is.null(x)) return(NULL)
+    x = readBlast(paste(path.blast.res, f.blast, sep = ''))
+    if(is.null(x)){
+      pokaz('Done.', file=file.log.loop, echo=echo.loop)
+      return(NULL)
+    }
     
-    if(echo) pokaz('Read blast results finished, numer of rows is', nrow(x))
+    pokaz('Read blast results finished, numer of rows is', nrow(x), file=file.log.loop, echo=echo.loop)
     
     ## ---- Pre-processing ----
     # Save true base coordinate
@@ -157,8 +173,11 @@ loop.function <- function(f.blast, echo = T){
     x.major = cbind(x[idx.maj,setdiff(colnames(x), c('V8', 'V9'))], idx.maj)
     
     
-    pokaz('Number of rows in the synteny', nrow(x.major))
-    if(nrow(x.major) == 0) return(NULL)
+    pokaz('Number of rows in the synteny', nrow(x.major), file=file.log.loop, echo=echo.loop)
+    if(nrow(x.major) == 0) {
+      pokaz('Done.', file=file.log.loop, echo=echo.loop)
+      return(NULL)
+    }
     
     # Sort to set the id
     x.major = x.major[order(x.major$V2),]  # not needed
@@ -181,7 +200,10 @@ loop.function <- function(f.blast, echo = T){
     
     if(length(idx) > 0){
       x.major = x.major[-idx,,drop=F]
-      if(nrow(x.major) == 0) return(NULL)
+      if(nrow(x.major) == 0){
+        pokaz('Done.', file=file.log.loop, echo=echo.loop)
+        return(NULL)
+      }
     }
     
     # ----  Define blocks  in the skeleton ----
@@ -210,17 +232,20 @@ loop.function <- function(f.blast, echo = T){
       if(length(idx) == 0) break
       if(min(x.block$len[idx]) > 20000) break
       idx.remove = idx[x.block$len[idx] == min(x.block$len[idx])][1]
-      if(echo) pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove])
+      pokaz('- Remove block', idx.remove, ';length:', x.block$len[idx.remove], file=file.log.loop, echo=echo.loop)
       x.block = x.block[-idx.remove,]
       # rownames(x.block) = NULL
     }
-    if(is.unsorted(x.major$p.beg)) pokazAttention('1!!')
+    if(is.unsorted(x.major$p.beg)) pokazAttention('1!!', file=file.log.loop, echo=echo.loop)
     
     # Remove wrong blocks completely
     remain.block = x.block$block.id
     if(length(remain.block) > 0){
       x.major = x.major[x.major$block.id %in% remain.block, , drop=F]
-      if(nrow(x.major) == 0) return(NULL)
+      if(nrow(x.major) == 0) {
+        pokaz('Done.', file=file.log.loop, echo=echo.loop)
+        return(NULL)
+      }
     }
     
     # Check remained blocks
@@ -233,7 +258,6 @@ loop.function <- function(f.blast, echo = T){
     
     if(length(unique((x.major$dir))) > 1){  # different dirertions exist
       cnt = table(x.major$block.id, x.major$dir)
-      if(echo) print(cnt)
       if(sum(cnt[,1] * cnt[,2]) != 0) stop('Blocks in x.major are wrongly defined')
     }
     
@@ -243,7 +267,6 @@ loop.function <- function(f.blast, echo = T){
     x$block.id = x.major$block.id
     # saveRDS(x, file.aln.pre, compress = F)
     
-    
     # ---- Remove short overlaps: twice, because from "both sides" ----
     for(i.tmp in 1:2){
       x = cleanBigOverlaps(x)
@@ -252,12 +275,10 @@ loop.function <- function(f.blast, echo = T){
     
     # ---- Check sequences after cuts ----
     x.dir = setDir(x, base.len = base.len)
+    
     checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
                          base.fas.fw = base.fas.fw,
                          base.fas.bw = base.fas.bw)
-    
-    if(is.unsorted(x$p.beg)) pokazAttention('6!!')
-    
     # ---- Check uniquness of occupancy ----
     pos.q.occup = rep(0, base.len)
     for(irow in 1:nrow(x)){
@@ -266,18 +287,20 @@ loop.function <- function(f.blast, echo = T){
       pos.q.occup[x$V4[irow]:x$V5[irow]] = pos.q.occup[x$V4[irow]:x$V5[irow]] + 1
     }
     if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')
-    if(echo) pokaz('Occupancy of base', sum(pos.q.occup))
+    pokaz('Occupancy of base', sum(pos.q.occup), file=file.log.loop, echo=echo.loop)
     
     # Save
     saveRDS(x, file.aln.pre, compress = F)
     
   } else {
-    if(echo) pokaz('Reading instead of analysis', file.aln.pre)
+    pokaz('Reading instead of analysis', file.aln.pre, file=file.log.loop, echo=echo.loop)
     x = readRDS(file.aln.pre)
   } # if blast alignment exists
   
+  
+  
   if((nrow(x) <= 1) || (is.null(x))) {
-    if(echo) pokaz('No gaps')
+    pokaz('No gaps', file=file.log.loop, echo=echo.loop)
     
     rmSafe(x)
     rmSafe(x.major)
@@ -286,18 +309,18 @@ loop.function <- function(f.blast, echo = T){
     rmSafe(query.fas.chr)
     gc()
     
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   
   
   # ---- Get gaps ----
-  if(echo) pokaz('Get gaps')
+  pokaz('Get gaps', file=file.log.loop, echo=echo.loop)
   
   x.dir = setDir(x, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
                        base.fas.fw = base.fas.fw, 
                        base.fas.bw = base.fas.bw)
-  
   
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions in query
@@ -320,8 +343,8 @@ loop.function <- function(f.blast, echo = T){
   file.gap.query = paste0(path.gaps, pref.comarisson, 'query.fasta', collapse = '')
   # Base file
   file.gap.base = paste0(path.gaps, pref.comarisson, 'base.fasta', collapse = '')
-  if(echo) pokaz('Create gaps for', file.gap.query)
-  if(echo) pokaz('Create gaps for', file.gap.base)
+  pokaz('Create gaps for', file.gap.query, file=file.log.loop, echo=echo.loop)
+  pokaz('Create gaps for', file.gap.base, file=file.log.loop, echo=echo.loop)
   
   for(irow in 1:(nrow(x)-1)){
     
@@ -414,20 +437,18 @@ loop.function <- function(f.blast, echo = T){
   }  # irow search for gaps
   
   # ---- Write remained blocks ----
-  if(echo) pokaz('Create fasta for the remained sequences')
+  pokaz('Create fasta for the remained sequences', file=file.log.loop, echo=echo.loop)
   file.gap.query = paste0(path.gaps, pref.comarisson, 'residual_query.fasta', collapse = '')
   # Base file
   file.gap.base = paste0(path.gaps, pref.comarisson, 'residual_base.fasta', collapse = '')
-  if(echo) pokaz('Create gaps for', file.gap.query)
-  if(echo) pokaz('Create gaps for', file.gap.base)
-  
+  pokaz('Create gaps for', file.gap.query, file=file.log.loop, echo=echo.loop)
+  pokaz('Create gaps for', file.gap.base, file=file.log.loop, echo=echo.loop)
   
   ## ---- Write query ----
   # Query: Zero-coverage blocks
   diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
   begs = which(diffs == -1)
   ends = which(diffs == 1) - 1
-  
   
   if(length(begs) > 0){
     for(irow in 1:length(begs)){
@@ -455,9 +476,9 @@ loop.function <- function(f.blast, echo = T){
       # Standard naming (as before)
       pref.q = paste(pref.comarisson,
                      'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
-      # pokaz('pos.gap.q', pos.gap.q)
-      # pokaz('p.beg', p.beg)
-      # pokaz('p.end', p.end)
+      # pokaz('pos.gap.q', pos.gap.q, file=file.log.loop, echo=echo.loop)
+      # pokaz('p.beg', p.beg, file=file.log.loop, echo=echo.loop)
+      # pokaz('p.end', p.end, file=file.log.loop, echo=echo.loop)
       if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks - 2')
       
       if(length(s.q) != length(pref.q)) stop('Chunk lengths do not much')
@@ -465,7 +486,6 @@ loop.function <- function(f.blast, echo = T){
       writeFastaMy(s.q, file.gap.query, append = T)
     }
   }
-  
   
   ## ---- Write base ----
   # Query: Zero-coverage blocks
@@ -492,13 +512,15 @@ loop.function <- function(f.blast, echo = T){
     }
   }
   
-  
   rmSafe(x)
   rmSafe(x.major)
   rmSafe(base.fas.bw)
   rmSafe(base.fas.fw)
   rmSafe(query.fas.chr)
   gc()
+  
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  return(NULL)
 }
 
 # ***********************************************************************
@@ -506,25 +528,29 @@ loop.function <- function(f.blast, echo = T){
 
 
 if(num.cores == 1){
+  file.log.loop = paste0(path.log, 'loop_all.log')
+  invisible(file.create(file.log.loop))
   for(f.blast in files.blast){
-    loop.function(f.blast)
+    loop.function(f.blast,
+                  file.log.loop = file.log.loop, 
+                  echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(f.blast = files.blast, .packages=c(
-                                              # 'stringr',
-                                              # 'Biostrings', 
-                                              'crayon'), .verbose = F)  %dopar% { 
-                              loop.function(f.blast)
+  tmp = foreach(f.blast = files.blast, .packages=c('crayon'), .verbose = F)  %dopar% { 
+                              loop.function(f.blast,
+                                            echo.loop=echo.loop)
                             }
   stopCluster(myCluster)
 }
 
 warnings()
 
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----

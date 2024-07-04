@@ -198,7 +198,7 @@ if [ "$run_sv_sim" = true ]; then
 
     # if [ ! -f "${file_sv_big_on_set}" ]; then
         blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
-           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
            -perc_identity "${similarity_value}"
     # fi
 
@@ -226,7 +226,7 @@ if [ "$sv_graph" = true ]; then
     
     # if [ ! -f "${file_sv_big_on_sv}" ]; then
         blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
            -perc_identity ${similarity_value} 
     # fi
 

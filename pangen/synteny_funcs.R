@@ -107,7 +107,6 @@ cleanBigOverlapsQuery <- function(x.df, rm.threshold = 0.5){
     x.df = defineOverlappsQuery(x.df)
     x.df =  x.df[((abs(x.df$rm.len) / x.df$V7) <= rm.threshold) | (x.df$rm.len == 0),]
     if(n.row == nrow(x.df)) break
-    pokaz(n.row)
   }
   
   return(x.df)
@@ -145,7 +144,6 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V8[irow] = substr(x.df$V8[irow], (aln.adjust+1), nchar(x.df$V8[irow]))
       x.df$V9[irow] = substr(x.df$V9[irow], (aln.adjust+1), nchar(x.df$V9[irow]))
 
-      
       # Adjust positions - query
       s.q.cut = seq2nt(x.df$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
@@ -155,7 +153,6 @@ cutSmallOverlapsQuery <- function(x.df){
       s.b.cut = seq2nt(x.df$V9[irow])
       adjustment.b = sum(s.b.cut != '-') - 1
       x.df$V4[irow] = x.df$V5[irow] - adjustment.b * sign(0.5 - x.df$dir[irow])
-      
       
     }
     if(adjustment < 0){
@@ -168,14 +165,11 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V8[irow] = substr(x.df$V8[irow], 1, (aln.adjust-1))
       x.df$V9[irow] = substr(x.df$V9[irow], 1, (aln.adjust-1))
       
-      
-      
       # Adjust positions
       
       s.q.cut = seq2nt(x.df$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
       x.df$V3[irow] = x.df$V2[irow] + adjustment.q
-      
       
       # if(x.df$dir[irow] == 1) stop('dir')
       # Adjust positions - base
@@ -184,14 +178,11 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V5[irow] = x.df$V4[irow] + adjustment.b * sign(0.5 - x.df$dir[irow])
     }
     
-    # print(info(x.df[irow,]))
-    
     x.df$V7[irow] = nchar(x.df$V8[irow])  # doesn't matter 8 or 9 here
     
     # print(x.df[irow, -c(8,9)])
     # if(x.df$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
-  
   
   # Undate begin-eng positions
   x.df$p.beg <- ifelse(x.df$V4 < x.df$V5, x.df$V4, x.df$V5)
@@ -297,7 +288,6 @@ cleanBigOverlaps <- function(x.df, rm.threshold = 0.5){
     x.df = defineOverlapps(x.df)
     x.df =  x.df[((abs(x.df$rm.len) / x.df$V7) <= rm.threshold) | (x.df$rm.len == 0),]
     if(n.row == nrow(x.df)) break
-    pokaz(n.row)
   }
   
   return(x.df)
@@ -404,7 +394,6 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
       s2 = toupper(paste0(query.fas[(-(nchar(s1)-1):0) + x[irow, 'V3']], collapse = ''))
     }
     
-    
     if(s1 != s2 ){
       pokaz('Row', irow)
       pokaz(s1)
@@ -425,7 +414,6 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
     } else {
       s2 = toupper(paste0(base.fas[(-(nchar(s1)-1):0) + x[irow, 'V5']], collapse = ''))
     }
-    
     
     if(s1 != s2 ){
       pokaz('Row', irow)
@@ -485,7 +473,6 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
 
     d.add = vist.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
 
-    
     jrow = c(jrow, jrow.add)
     d = c(d, d.add)
   }

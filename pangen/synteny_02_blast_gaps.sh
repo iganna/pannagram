@@ -113,7 +113,7 @@ function process_blast {
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
-               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -max_hsps 10 > /dev/null 2>> log_err.txt 
     fi
 
@@ -132,7 +132,7 @@ function process_blast {
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
-               -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -max_hsps 5 > /dev/null 2>> log_err.txt 
     fi
 }

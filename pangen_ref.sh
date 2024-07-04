@@ -63,7 +63,7 @@ Options:
     -log LOG_LEVEL              The level of logging to be shown on the screen. 
                                 Options: 
                                     0 - off
-                                    1 - pipeline (default),
+                                    1 - steps (default),
                                     2 - progress
                                     3 - all
 
@@ -238,7 +238,7 @@ fi
 #           LOGS
 # ----------------------------------------------------------------------------
 
-log_level=${log_level:-1}  # Set the default value to 'pipeline'
+log_level=${log_level:-1}  # Set the default value to 'steps'
 
 if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
     pokaz_error "Error: log_level must be a number between 0 and 3."
@@ -253,8 +253,8 @@ make_dir ${path_logs}
 path_log_ref="${path_logs}pangen_ref_${ref_name}/"
 make_dir ${path_log_ref}
 
-# File with pipeline logs
-file_log_ref="${path_log_ref}pipeline.log"
+# File with steps logs
+file_log_ref="${path_log_ref}steps.log"
 > "${file_log_ref}"
 
 # ----------------------------------------------------------------------------
@@ -282,18 +282,18 @@ step_num=1
 
 if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_stage "Step ${step_num}. Genomes into chromosomes."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
     rm -rf ${path_chr_acc}
 
+    path_log_step="${path_log_ref}step${step_num}_query_01/"
+
     Rscript pangen/query_01_to_chr.R --n.chr ${n_chr_query}  \
-        --path.in ${path_in} --path.out ${path_chr_acc} --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal} \
-        --path.log "${path_log_ref}step${step_num}_" --log.level ${log_level}
+            --path.in ${path_in} --path.out ${path_chr_acc} --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal} \
+            --path.log ${path_log_step} --log.level ${log_level}
     
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_message "Done."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -302,19 +302,19 @@ fi
 # Split quiery chromosomes into parts
 if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_stage "Step ${step_num}. Chromosomes into parts."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
     rm -rf ${path_parts}
 
+    path_log_step="${path_log_ref}step${step_num}_query_02/"
+
     Rscript pangen/query_02_to_parts.R --n.chr ${n_chr_query}  --path.chr  ${path_chr_acc}  \
-        --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
-        --filter_rep ${filter_rep} --rev ${flag_rev} \
-        --path.log "${path_log_ref}step${step_num}_" --log.level ${log_level}
+            --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
+            --filter_rep ${filter_rep} --rev ${flag_rev} \
+            --path.log ${path_log_step} --log.level ${log_level}
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_message "Done."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -326,8 +326,7 @@ fi
 if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
 
     if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
-        log_message 1 "$log_level" "$file_log_ref" \
-            pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
+        log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
         file_acc_ref=${path_chr_acc}ref_acc.txt
         echo "${ref_name}" > ${file_acc_ref}
@@ -338,8 +337,7 @@ if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
         rm ${file_acc_ref}
 
         touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" \
-            pokaz_message "Done."
+        log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
     fi
 
     ((step_num = step_num + 1))
@@ -350,28 +348,39 @@ fi
 # Blast parts on the reference genome
 if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
 
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
 
-    # Create a database on the reference genome
-    for file in ${path_chr_acc}${ref_name}_chr*fasta ; do
-      # echo ${file}
-      # Check if the BLAST database files already exist
-      if [ ! -f "${file}.nin" ]; then
-          makeblastdb -in ${file} -dbtype nucl > /dev/null
-      fi
-    done
-
+    # ---- Cleanup the blast folder ----
 
     rm -rf ${path_blast_parts}
 
+    # ---- Create a database on the reference genome ----
+
+    log_message 2 "$log_level" "$file_log_ref" pokaz_message "Create BLAST databases."
+
+    for file in ${path_chr_acc}${ref_name}_chr*fasta ; do
+        # Check if the BLAST database files already exist
+        if [ ! -f "${file}.nin" ]; then
+            makeblastdb -in ${file} -dbtype nucl > /dev/null
+        fi
+    done
+
+    # ---- Run BLAST ----
+
+    log_message 2 "$log_level" "$file_log_ref" pokaz_message "Run BLAST."    
+
+    # Logs for the BLAST
+    path_log_step="${path_log_ref}step${step_num}_query_03/"
+    make_dir ${path_log_step}
+
     # Blast parts on the reference genome
-    ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_acc} -path_parts ${path_parts} -path_result ${path_blast_parts} \
-     -ref_name ${ref_name} -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores}
+    ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_acc} -path_parts ${path_parts} \
+            -path_result ${path_blast_parts} -ref_name ${ref_name} \
+            -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores} -log_path ${path_log_step}
 
     touch "$path_flags/step${step_num}_done_${ref_name}"
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_message "Done."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -380,20 +389,21 @@ fi
 # First round of alignments
 if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
 
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
     rm -rf ${path_alignment}
     rm -rf ${path_gaps}
+
+    path_log_step="${path_log_ref}step${step_num}_synteny_01/"
     
     Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-                        --ref ${ref_name}   \
-                        --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
-                        --cores ${cores}
+            --ref ${ref_name}   \
+            --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
+            --cores ${cores} \
+            --path.log ${path_log_step} --log.level ${log_level}
 
     touch "$path_flags/step${step_num}_done_${ref_name}"
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_message "Done."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 
     # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
     # rm -rf ${path_blast_parts}
@@ -405,13 +415,17 @@ fi
 # Blast regions between synteny blocks
 if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
 
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 
-    ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores}
+    # Logs for the BLAST
+    path_log_step="${path_log_ref}step${step_num}_synteny_02/"
+    make_dir ${path_log_step}
+
+    # Run BLAST for gaps
+    ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores} #-log_path ${path_log_step}
+
     touch "$path_flags/step${step_num}_done_${ref_name}"
-    log_message 1 "$log_level" "$file_log_ref" \
-        pokaz_message "Done."
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -424,9 +438,9 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
         pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
     Rscript pangen/synteny_03_merge_gaps.R --ref ${ref_name} \
-    --path.aln ${path_alignment}  --path.chr ${path_chr_acc}\
-    --path.gaps ${path_gaps}   \
-    --cores ${cores}
+            --path.aln ${path_alignment}  --path.chr ${path_chr_acc}\
+            --path.gaps ${path_gaps}   \
+            --cores ${cores}
 
     # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
     # rm -rf ${path_gaps}
