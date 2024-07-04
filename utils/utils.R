@@ -754,8 +754,6 @@ pokaz <- function(..., file = NULL, echo = T) {
   
   if (!is.null(file)){
     # Capture the output and write to file
-    pokaz('File:', file)
-    print('yes')
     write(arguments, file = file, append = TRUE)
   }
 }
