@@ -21,7 +21,8 @@ source(paste(path.pannagram, 'analys/analys_func.R', sep = ''))  # gffgff
 
 ## Paths-Folders
 ```{r}
-path.work = '../../work/004_test_pan/data_greg/'  # change to yours
+getwd()
+path.work = '../DATA/PRJNA1048330/pangen_3/'  # change to yours
 
 path.annot = paste(path.work, 'annotation/', sep = '')
 path.cons = paste(path.work, 'consensus/', sep = '')  # the result of pannagram
@@ -31,8 +32,8 @@ path.figures = paste(path.work, 'figures/', sep = '')
 if (!dir.exists(path.out))  dir.create(path.out)  # Check if the directory exists
 if (!dir.exists(path.figures))  dir.create(path.figures)  # Check if the directory exists
 
-n.chr = 5
-ref.acc = '0'
+n.chr = 3
+ref.acc = 'ml18'
 
 # If reference-free:
 aln.type = 'msa_'
@@ -63,7 +64,7 @@ c.grey = '#EBEBEB'
 ## Pairwise alignments
 ```{r}
 # Set chromosome index and setup the corresponding MSA file
-i.chr = 4
+i.chr = 1
 file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
 
 # Read group information from the MSA file and extract accession names and pangenome length
@@ -80,7 +81,7 @@ for(acc in accessions){
 }
 
 # Combine all plots and display
-p.combo <- plot_grid(plotlist = p.list, ncol = 3)
+p.combo <- plot_grid(plotlist = p.list, ncol = 5)
 p.combo
 
 # Save the combined plot to a PDF file
@@ -90,21 +91,70 @@ dev.off()
 
 
 ```
+```{r}
+plot_pangenome_coordinates <- function(path.work, n.chr, ref.acc, aln.type, i.chr) {
+  # Define paths
+  path.annot <- paste0(path.work, 'annotation/')
+  path.cons <- paste0(path.work, 'consensus/')
+  path.out <- paste0(path.work, 'out/')
+  path.figures <- paste0(path.work, 'figures/')
+  
+  # Create directories if they don't exist
+  if (!dir.exists(path.out)) dir.create(path.out)
+  if (!dir.exists(path.figures)) dir.create(path.figures)
+  
+  # Define group access paths
+  gr.accs.b <- "/accs"
+  
+  # Define colors
+  c.red <- '#872341'
+  c.grey <- '#EBEBEB'
+  
+  # Set chromosome index and setup the corresponding MSA file
+  file.msa <- paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc, '.h5')
+  
+  # Read group information from the MSA file and extract accession names and pangenome length
+  groups <- h5ls(file.msa)
+  accessions <- groups$name[groups$group == gr.accs.b]
+  pan.len <- unique(groups$dim[groups$group == gr.accs.b])
+  if (length(pan.len) != 1) stop('Something is wrong in the alignment')
+  
+  # Create plots for each accession
+  p.list <- list()
+  for (acc in accessions) {
+    # Create ggplot object for correspondence between pangenome coordinate and an accession
+    p.list[[acc]] <- plotPanAcc(file.msa, acc)
+  }
+  
+  # Combine all plots and display
+  p.combo <- plot_grid(plotlist = p.list, ncol = 5)
+  return(p.combo)
+}
+
+p <- plot_pangenome_coordinates(
+  path.work="../DATA/PRJNA1048330/pangen_3/",
+  n.chr=3,
+  ref.acc = 'ml18',
+  aln.type = 'msa_',
+  i.chr=1
+)
+```
 
 ## Common alignment plot (grey shades)
 ```{r}
 
 # Load MSA blocks information and set window size
 file.blocks = paste(path.cons, aln.type, 'blocks_ref_', ref.acc, '.rds', sep = '')
-wnd.size = 100000
+wnd.size = 50000
 
 # Read block indices and prepare plots for each of the first 5 chromosomes
 idx.blocks = readRDS(file.blocks)
 p.list = list()
-for(i.chr in 1:5){
-  p.list[[i.chr]] = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), c(1, 2, 3), wnd.size=wnd.size)
+for(i.chr in 1:n.chr){
+  p.list[[i.chr]] = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc),c(1,2,3,6,7,8,12,15,4,5,9,10,11,13,14,16), wnd.size=wnd.size)
 }
 
+p.list[3]
 # Combine and display all chromosome plots
 p.combo <- plot_grid(plotlist = p.list, nrow = 5)
 p.combo
