@@ -25,10 +25,10 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 #' @examples
 #' \dontrun{
 #'   # Get unique prefixes in the current directory
-#'   get_prefixes(".")
+#'   getPrefixes(".")
 #' }
 #' @export
-get_prefixes <- function(path) {
+getPrefixes <- function(path) {
   files <- list.files(path)
   files_with_underscore <- files[grepl("_", files)]
   split_files <- strsplit(files_with_underscore, "_")

@@ -58,8 +58,7 @@ path.in <- opt$path_in
 path.out <- opt$path_out
 algn.path <- opt$algn_path
 
-# Extracting only ids from path
-query.ids <- get_prefixes(algn.path)
+query.ids <- getPrefixes(algn.path)
 pokaz("Number of pdf files:", length(query.ids))
 
 ref.name <- normalizePath(file.path(path.ref, paste0(ref, ".fna")), mustWork = FALSE)
