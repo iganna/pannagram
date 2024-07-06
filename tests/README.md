@@ -1,6 +1,6 @@
 # Testing Pannagram
 
-Currently only some functions from `utils/utils.R` are covered with tests. The core testing package `testthat` was not added to `environment.sh`, so in order to run existing tests you should:
+Currently only some functions from `utils/utils.R` are covered with tests. The core testing package `testthat` was not added to `environment.yml`, so in order to run existing tests you should:
 
 1. Activate the pannagram environment as explained in [root README](../README.md#recreating-working-environment)
 2. Manually add `testthat` package to it:
