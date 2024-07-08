@@ -207,11 +207,11 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   
   #=========== Filling the new dataframe =====================
   df <- data.frame()
-  query_prefix <- tools::file_path_sans_ext(basename(query.name))
+  query.prefix <- tools::file_path_sans_ext(basename(query.name))
   for (i in seq_along(fasta.query)) {
     for (j in seq_along(fasta.ref)) {
-      file_name = paste0(query_prefix, "_", order.query[i], "_", order.ref[j], "_maj.rds")
-      file_path = file.path(alignments.path, file_name)
+      file.name = paste0(query.prefix, "_", order.query[i], "_", order.ref[j], "_maj.rds")
+      file_path = file.path(alignments.path, file.name)
       if (file.exists(file_path)) {
         data.ij <- readRDS(file_path)
         data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.query[i]

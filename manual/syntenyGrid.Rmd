@@ -196,16 +196,16 @@ browseURL("plot_grid.png")
 #' @examples
 #' \dontrun{
 #'   # Get unique prefixes in the current directory
-#'   get_prefixes(".")
+#'   getPrefixes(".")
 #' }
 #' @export
-get_prefixes <- function(path) {
+getPrefixes <- function(path) {
   files <- list.files(path)
   files_with_underscore <- files[grepl("_", files)]
   split_files <- strsplit(files_with_underscore, "_")
   prefixes <- sapply(split_files, function(x) x[1])
   return(unique(prefixes))
 }
-get_prefixes("/home/uzumymw/projects/pannagram/DATA/PRJNA1049504/pangen_pre/blast_gaps_TP_16")
+getPrefixes("/home/uzumymw/projects/pannagram/DATA/PRJNA1049504/pangen_pre/blast_gaps_TP_16")
 
 ```

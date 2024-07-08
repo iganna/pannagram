@@ -336,7 +336,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
     --path_ref ${path_chr_ref} \
     --path_in ${path_in} \
     --path_out ${pref_global} \
-    --algn_path ${path_alignment}
+    --algn_path ${path_alignment} \
+    --cores ${cores}
 
     touch "$path_flags/step${step_num}_done_${ref_pref}"
 fi
