@@ -11,7 +11,7 @@
 # ./pipeline_consensus.sh -path_out '../pan_test/tom' -ref_set '0,6046-v1.1,6191-v1.1' -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -cores 30 -acc_anal acc_tom.txt -one2one
 
 
-# ./pangen.sh  -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA  -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test -nchr_ref 1 -nchr_query 1 -nrefs 3
+# ./pangen.sh  -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA  -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test -nchr_ref 1 -nchr_acc 1 -nrefs 3
 
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
@@ -141,7 +141,7 @@ while [[ $# -gt 0 ]]; do
         ;;
     -nchr)
         chr_num="$2"
-        additional_params+=" -nchr_ref ${chr_num} -nchr_query ${chr_num}"
+        additional_params+=" -nchr_ref ${chr_num} -nchr_acc ${chr_num}"
         shift 2
         ;;
     -nchr_ref) # ignore this parameter
@@ -149,8 +149,8 @@ while [[ $# -gt 0 ]]; do
         pokaz_attention "Please use -nchr or omit the parameter for automatic chromosome count detection."
         shift 2
         ;;
-    -nchr_query)
-        pokaz_attention "Parameter -nchr_query is ignored."
+    -nchr_acc)
+        pokaz_attention "Parameter -nchr_acc is ignored."
         pokaz_attention "Please use -nchr or omit the parameter for automatic chromosome count detection."
         shift 2
         ;;
@@ -332,7 +332,7 @@ if [ -z "$chr_num" ]; then
 
     log_message 1 "$log_level" "$file_log" \
         pokaz_attention "Number of chromosomes identified: ${chr_num}"
-    additional_params+=" -nchr_ref ${chr_num} -nchr_query ${chr_num}"
+    additional_params+=" -nchr_ref ${chr_num} -nchr_acc ${chr_num}"
 else
     log_message 2 "$log_level" "$file_log" \
         pokaz_message "Number of chromosomes to analyse: ${chr_num}"    
@@ -381,7 +381,7 @@ if [ -z "${start_step}" ]; then
 
 fi
 
-# Looping through and deleting files of stages, which are less then the current one
+# Looping through and deleting files of stages, which are greater or equal to the current one
 for file_step in "${path_flags}"step*_done*; do
     # echo "Processing file: $file_step"
     if [ -f "$file_step" ]; then

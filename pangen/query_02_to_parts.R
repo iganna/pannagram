@@ -25,7 +25,7 @@ option_list <- list(
               help = "pathway to the chromosome directory", metavar = "character"),
   make_option(c("--path.parts"), type = "character", default = NULL, 
               help = "pathway to the parts directory", metavar = "character"),
-  make_option(c("--filter_rep"), type = "character", default = NULL, 
+  make_option(c("--purge_reps"), type = "character", default = NULL, 
               help = "flag to keep or not repeats", metavar = "character"),
   make_option(c("--rev"), type = "character", default = NULL, 
               help = "flag make the reverce sequences", metavar = "character"),
@@ -74,7 +74,14 @@ if(!is.null(opt$part.step)){
   len.step = NULL
 }
 # len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
-filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
+
+# Purge repeats by the complexity
+if(is.null(opt$purge_reps)){
+  purge_reps = F
+} else {
+  purge_reps = as.logical(opt$purge_reps)
+  if(is.na(purge_reps)) stop('Wrong flag for purging repeats')
+}
 
 
 flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
@@ -162,11 +169,7 @@ loop.function <- function(i.comb,
   }
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
   
-  if(filter_rep == 0){
-    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
-    writeFastaMy(s, file.out)
-  } else {
-    
+  if(purge_reps){  # Filter out repeats
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
@@ -175,6 +178,9 @@ loop.function <- function(i.comb,
     
     writeFastaMy(s[seqs.score <= 0.2], file.out)
     writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+  } else {
+    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
+    writeFastaMy(s, file.out)
     
   }
   

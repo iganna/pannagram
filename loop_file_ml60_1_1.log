@@ -1,0 +1,17 @@
+    ml60 1 1
+    Base: ml2_chr1.fasta
+    Length of base: 1114955
+    Query: ml60_chr1.fasta
+    Length of query: 1139678
+    Alignment: ml60 1 1
+    /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_parts_ml2/ml60_1_1.txt
+    Read blast results finished, numer of rows is 224
+    Number of rows in the synteny 224
+    Occupancy of base 1081117
+    Get gaps
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml60_qchr_1_bchr_1_query.fasta
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml60_qchr_1_bchr_1_base.fasta
+    Create fasta for the remained sequences
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml60_qchr_1_bchr_1_residual_query.fasta
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml60_qchr_1_bchr_1_residual_base.fasta
+    Done.

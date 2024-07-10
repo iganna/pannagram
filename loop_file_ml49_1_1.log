@@ -1,0 +1,23 @@
+    ml49 1 1
+    Base: ml2_chr1.fasta
+    Length of base: 1114955
+    Query: ml49_chr1.fasta
+    Length of query: 1577431
+    Alignment: ml49 1 1
+    /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_parts_ml2/ml49_1_1.txt
+    Read blast results finished, numer of rows is 252
+    Number of rows in the synteny 252
+    - Remove block 8 ;length: 1569
+    - Remove block 9 ;length: 2489
+    - Remove block 6 ;length: 2504
+    - Remove block 5 ;length: 3754
+    - Remove block 2 ;length: 8877
+    - Remove block 3 ;length: 10696
+    Occupancy of base 783028
+    Get gaps
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml49_qchr_1_bchr_1_query.fasta
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml49_qchr_1_bchr_1_base.fasta
+    Create fasta for the remained sequences
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml49_qchr_1_bchr_1_residual_query.fasta
+    Create gaps for /Volumes/Samsung_T5/vienn/pannagram_test/symA_test/blast_gaps_ml2/acc_ml49_qchr_1_bchr_1_residual_base.fasta
+    Done.

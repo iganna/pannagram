@@ -12,10 +12,10 @@ source utils/error_block.sh
 # ----------------------------------------------------------------------------
 
 
-#./pangen_ref.sh -path_out '../pan_test/tom/' -ref_name '0'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
-#./pangen_ref.sh -path_out '../pan_test/tom/' -ref_name '6046-v1.1'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all_cmp F -acc_anal 'acc_tom.txt'
+#./pangen_ref.sh -path_out '../pan_test/tom/' -ref_name '0'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all2all F -acc_anal 'acc_tom.txt'
+#./pangen_ref.sh -path_out '../pan_test/tom/' -ref_name '6046-v1.1'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all2all F -acc_anal 'acc_tom.txt'
 
-#./pangen_ref.sh -path_out ../pan_test/ly_th/ -ref_name 0 -path_chr_ref ../pan_test/p27/chromosomes/ -n_chr_ref 5 -path_in ../lyrata/ -n_chr_query 8 -all_cmp T -cores 30
+#./pangen_ref.sh -path_out ../pan_test/ly_th/ -ref_name 0 -path_ref ../pan_test/p27/chromosomes/ -n_chr_ref 5 -path_in ../lyrata/ -n_chr_query 8 -all2all T -cores 30
 
 
 # ----------------------------------------------------------------------------
@@ -30,8 +30,8 @@ print_usage() {
 
     cat << EOF
 Usage: ${0##*/} -ref REF_NAME -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER
-                -nchr_ref N_CHR_REF -nchr_query N_CHR_QUERY
-                [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM] 
+                -nchr_ref N_CHR_REF -nchr_acc N_CHR_QUERY
+                [-path_ref PATH_REF] [-path_chrom PATH_CHROM] 
                 [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS] 
                 [-sort_len] [-one2one] [-accessions ACC_FILE] 
                 [-part_len PART_LEN] [-p_ident P_IDENT] [-purge_repeats]
@@ -61,10 +61,10 @@ Options:
         
     * Numbers of chromosomes (required):
         -nchr_ref N_CHR_REF         Number of chromosomes in the reference genome.
-        -nchr_query N_CHR_QUERY     Number of chromosomes in the query genome.
+        -nchr_acc N_CHR_QUERY     Number of chromosomes in the query genome.
 
     * Paths (optional):
-        -path_ref PATH_CHR_REF      Path where the reference genome is stored. 
+        -path_ref PATH_REF          Path where the reference genome is stored. 
                                     Do not provide if it's the same folder as the path with query genomes.
         -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
         -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
@@ -85,7 +85,7 @@ Options:
 
     
 Examples:
-    ${0##*/} -path_out 'output_folder' -path_in 'input_genomes' -ref '0' -nchr_query 5 -nchr_ref 5
+    ${0##*/} -path_out 'output_folder' -path_in 'input_genomes' -ref '0' -nchr_acc 5 -nchr_ref 5
 
 EOF
 }
@@ -101,42 +101,38 @@ while [ $# -gt 0 ]
 do
     case $1 in
         -h | -help ) print_usage; exit ;;
-        -s | -stage ) start_step="$2"; shift ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
-        -log) log_level=$2; shift ;;  # path to the output
-        -cores) cores=$2; shift ;;
+        -s | -stage ) start_step="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
+        -log)         log_level=$2;    shift 2 ;;  # path to the output
+        -cores)       cores=$2;        shift 2 ;;
 
-        -path_out) path_out=$2; shift ;;  # path to the output
-        -path_in) path_in=$2; shift ;;  # path with all genomes in fasta format
+        -path_out) pref_global=$2; shift 2 ;;  # path to the output
+        -path_in)  path_in=$2;     shift 2 ;;  # path with all genomes in fasta format
 
-        -ref) ref_name=$2; shift ;;  # name of the reference genome
-	    -path_ref) path_chr_ref=$2; shift ;;  # dont provide if it's the same folder as the path with query genomes
+        -ref)      ref_name=$2; shift 2 ;;  # name of the reference genome
+        -path_ref) path_ref=$2; shift 2 ;;  # dont provide if it's the same folder as the path with query genomes
 
-        -nchr_ref) n_chr_ref=$2; shift ;;  # number of chromosomes in the reference genome
-        -nchr_query) n_chr_query=$2; shift ;;  # number of chromosome in the query genome
+        -path_chrom) path_chrom=$2;     shift 2 ;;  # path to the folder with individual chromosomes in separate files
+        -path_parts) path_parts=$2;     shift 2 ;;  # path to the folder with chromosomal parts
+        -path_cons)  path_consensus=$2; shift 2 ;;  # path to the consensus folder
 
-        -path_chrom) path_chr_acc=$2; shift ;;  # path to the folder with individual chromosomes in separate files
-        -path_parts) path_parts=$2; shift ;;  # path to the folder with chromosomal parts
-        -path_cons) path_consensus=$2; shift ;;  # path to the consensus folder
+        -nchr)      nchr=$2;     shift 2 ;;  # number of chromosomes
+        -nchr_ref)  nchr_ref=$2; shift 2 ;;  # number of chromosomes in the reference genome
+        -nchr_acc)  nchr_acc=$2; shift 2 ;;  # number of chromosome in the query genome
 
-        -part_len) part_len=$2; shift ;;  # fragments to which each chromosome should be cut, has a default value 5000
+        -part_len)  part_len=$2; shift 2 ;;  # fragments to which each chromosome should be cut, has a default value 5000
+        -p_ident)   p_ident=$2;  shift 2 ;;  # percent of identity
 
-        -sort_by_len) sort_chr_len="T" ;;  # flag whether to sort chromosomes by length or not
-        -one2one) all_cmp="F" ;;  # compare all to all or not
+        -sort_by_len)   sort_chr_len="T"; shift 1 ;;  # flag whether to sort chromosomes by length or not
+        -one2one)       one2one="T";      shift 1 ;;  # conpare all to all or not
+        -purge_reps )   purge_reps="T"    shift 1 ;;  # filtration of repeats, default - not
+        -rev )          flag_rev="T"      shift 1 ;;  # reverce parts
 
-        -p_ident) p_ident=$2; shift ;;  # percent of identity
-        -purge_repeats ) filter_rep=1 ;;  # filtration of repeats, default - not
-
-        -rev ) flag_rev=1 ;;  # filtration of repeats, default - not
-
-        -accessions) acc_anal=$2; shift ;;  # file with accessions to analyse
-        -combinations) comb_anal=$2; shift ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
-
-        
+        -accessions) acc_anal=$2;    shift 1 ;;  # file with accessions to analyse
+        -combinations) comb_anal=$2; shift 1 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
     
         *) print_usage
-            unrecognized_options+=("$1"); shift ;;
+            unrecognized_options+=("$1"); shift 1 ;;
     esac
-    shift
 done
 
 # Output of Unrecognized Parameters
@@ -153,13 +149,11 @@ fi
 
 # ---- Check of missimg parameters
 
-
 check_missing_variable "path_out"
 check_missing_variable "path_in"
 check_missing_variable "ref_name"
 check_missing_variable "n_chr_ref"
 check_missing_variable "n_chr_query"
-
 
 # ---- if some parameters zre not given - set the default value
 
@@ -169,19 +163,20 @@ start_step="${start_step:-100}"  # Starting step
 cores="${cores:-1}"  # Number of cores
 p_ident="${p_ident:-85}"  
 part_len="${part_len:-5000}"  
-all_cmp="${all_cmp:-T}"
+one2one="${one2one:-F}"
 sort_chr_len="${sort_chr_len:-F}"
-filter_rep="${filter_rep:-0}"
+purge_reps="${purge_reps:-F}"
 flag_rev="${flag_rev:-0}"
 
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 comb_anal="${comb_anal:-NULL}"   # Set of combinations to analyse
 
+
+
 # Rename the reference genome prefix
 # Rename the reference, it sould not contain any '_' symbol, because it is used later for splitting
 # ref_name_true=${ref_name}
 # ref_name=${ref_name//_/$'-'}
-
 
 #---- Paths
 # Required
@@ -190,14 +185,15 @@ path_in=$(add_symbol_if_missing "$path_in" "/")
 path_out=$(add_symbol_if_missing "$path_out" "/")
 
 # Could be defined
-path_chr_acc="${path_chr_acc:-${path_out}chromosomes/}"
-path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
+path_chrom="${path_chrom:-${path_out}chromosomes/}"
+path_chrom=$(add_symbol_if_missing "$path_chrom" "/")
 
 path_parts="${path_parts:-${path_out}parts/}"
 path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
-path_chr_ref="${path_chr_ref:-${path_chr_acc}}"
-path_chr_ref=$(add_symbol_if_missing "$path_chr_ref" "/")
+path_ref="${path_ref:-${path_in}}"
+path_ref=$(add_symbol_if_missing "$path_ref" "/")
+
 
 path_consensus="${path_consensus:-${path_out}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
@@ -219,181 +215,54 @@ if [ ! -d "$path_flags" ]; then
 fi
 
 # ----------------------------------------------------------------------------
+#           STAGES
+# ----------------------------------------------------------------------------
+
+
+
+# ----------------------------------------------------------------------------
 #           LOGS
 # ----------------------------------------------------------------------------
 
-log_level=${log_level:-1}  # Set the default value to 'steps'
-
-if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
-    pokaz_error "Error: log_level must be a number between 0 and 3."
-    exit 1
-fi
-
-# Hidden path with logs
-path_logs="${path_out}logs/"
-make_dir ${path_logs}
-
-# Path for logs of this script
-path_log_ref="${path_logs}pangen_ref_${ref_name}/"
-make_dir ${path_log_ref}
-
-# File with steps logs
-file_log_ref="${path_log_ref}steps.log"
-> "${file_log_ref}"
-
-# ----------------------------------------------------------------------------
-#           ATTENTION MESSAGES
-# ----------------------------------------------------------------------------
-
-# Attention: If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order
-
-# if(!sort.by.lengths){
-#   msg = 'If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
-#   pokazAttention(msg)
-# } else {
-#   msg = 'Chromosomes will be sorted by their length'
-#   pokazAttention(msg)
-# }
-
+source utils/logging_ref.sh
 
 # ----------------------------------------------------------------------------
 #           MAIN PIPELINE
 # ----------------------------------------------------------------------------
 
-step_num=1
 # ----------------------------------------------
-# Split quiery fasta into chromosomes
+# Run the pangen_pre
 
-if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Genomes into chromosomes."
-
-    rm -rf ${path_chr_acc}
-
-    path_log_step="${path_log_ref}step${step_num}_query_01/"
-
-    Rscript pangen/query_01_to_chr.R --n.chr ${n_chr_query}  \
-            --path.in ${path_in} --path.out ${path_chr_acc} --sort ${sort_chr_len} --cores ${cores} --acc.anal ${acc_anal} \
-            --path.log ${path_log_step} --log.level ${log_level}
-    
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+if [ "$one2one" = "F" ]; then
+    one2one_option=" "
+else
+    one2one_option=" -one2one "
 fi
 
-((step_num = step_num + 1))
-
-# ----------------------------------------------
-# Split quiery chromosomes into parts
-if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
-
-    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Chromosomes into parts."
-
-    rm -rf ${path_parts}
-
-    path_log_step="${path_log_ref}step${step_num}_query_02/"
-
-    Rscript pangen/query_02_to_parts.R --n.chr ${n_chr_query}  --path.chr  ${path_chr_acc}  \
-            --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
-            --filter_rep ${filter_rep} --rev ${flag_rev} \
-            --path.log ${path_log_step} --log.level ${log_level}
-
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+if [ "$purge_reps" = "F" ]; then
+    purge_reps_option=" "
+else
+    purge_reps_option=" -purge_reps "
 fi
 
-((step_num = step_num + 1))
-
-
-# ----------------------------------------------
-# Split reference fasta into chromosomes if additionally needed
-
-if [[ "${path_chr_acc}" != "$path_chr_ref" ]]; then
-
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
-        log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
-
-        file_acc_ref=${path_chr_acc}ref_acc.txt
-        echo "${ref_name}" > ${file_acc_ref}
-        Rscript pangen/query_01_to_chr.R --n.chr ${n_chr_ref}  \
-                --path.in ${path_chr_ref} --path.out ${path_chr_acc}   \
-                --cores ${cores} --acc.anal ${file_acc_ref}
-
-        rm ${file_acc_ref}
-
-        touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
-    fi
-
-    ((step_num = step_num + 1))
-
+if [ "$purge_reps" = "F" ]; then
+    purge_reps_option=" "
+else
+    purge_reps_option=" -purge_reps "
 fi
 
-# ----------------------------------------------
-# Blast parts on the reference genome
-if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
-
-    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
-
-    # ---- Cleanup the blast folder ----
-
-    rm -rf ${path_blast_parts}
-
-    # ---- Create a database on the reference genome ----
-
-    log_message 2 "$log_level" "$file_log_ref" pokaz_message "Create BLAST databases."
-
-    for file in ${path_chr_acc}${ref_name}_chr*fasta ; do
-        # Check if the BLAST database files already exist
-        if [ ! -f "${file}.nin" ]; then
-            makeblastdb -in ${file} -dbtype nucl > /dev/null
-        fi
-    done
-
-    # ---- Run BLAST ----
-
-    log_message 2 "$log_level" "$file_log_ref" pokaz_message "Run BLAST."    
-
-    # Logs for the BLAST
-    path_log_step="${path_log_ref}step${step_num}_query_03/"
-    make_dir ${path_log_step}
-
-    # Blast parts on the reference genome
-    ./pangen/query_03_blast_parts.sh -path_ref ${path_chr_acc} -path_parts ${path_parts} \
-            -path_result ${path_blast_parts} -ref_name ${ref_name} \
-            -all_vs_all ${all_cmp} -p_ident ${p_ident} -cores ${cores} -log_path ${path_log_step}
-
-    touch "$path_flags/step${step_num}_done_${ref_name}"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
-fi
-
-((step_num = step_num + 1))
+./pangen_pre.sh -path_in ${path_in} -path_out ${path_out} \
+        -ref ${ref_name} -path_ref ${path_ref} \
+        -path_chrom ${path_chrom} -path_parts ${path_parts} -path_cons ${path_consensus} \
+        -nchr_ref ${nchr_ref} -nchr_acc ${nchr_acc} \
+        -part_len ${part_len}  -p_ident ${-p_ident} \
+        ${one2one_option} ${purge_reps_option} \
+        -accessions ${acc_anal} -combinations) ${comb_anal}
 
 # ----------------------------------------------
-# First round of alignments
-if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
+# Fing the number of last successful stage        
 
-    log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
-
-    rm -rf ${path_alignment}
-    rm -rf ${path_gaps}
-
-    path_log_step="${path_log_ref}step${step_num}_synteny_01/"
-    
-    Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-            --ref ${ref_name}   \
-            --path.gaps  ${path_gaps} --path.chr ${path_chr_acc} \
-            --cores ${cores} \
-            --path.log ${path_log_step} --log.level ${log_level}
-
-    touch "$path_flags/step${step_num}_done_${ref_name}"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
-
-    # # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-    # rm -rf ${path_blast_parts}
-fi
-
-((step_num = step_num + 1))
 
 # ----------------------------------------------
 # Blast regions between synteny blocks
@@ -422,7 +291,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
         pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
     Rscript pangen/synteny_03_merge_gaps.R --ref ${ref_name} \
-            --path.aln ${path_alignment}  --path.chr ${path_chr_acc}\
+            --path.aln ${path_alignment}  --path.chr ${path_chrom}\
             --path.gaps ${path_gaps}   \
             --cores ${cores}
 
@@ -446,7 +315,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_$
         pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
     Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
-    --pref ${ref_name}  --cores ${cores} --path.chr ${path_chr_acc}
+    --pref ${ref_name}  --cores ${cores} --path.chr ${path_chrom}
 
     touch "$path_flags/step${step_num}_done_${ref_name}"
     log_message 1 "$log_level" "$file_log_ref" \
