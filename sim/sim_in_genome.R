@@ -43,6 +43,9 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 
 # ---- Main ----
 
+# Rename the output file
+output.file = paste(output.file, round(sim.cutoff * 100), sep = '_')
+
 
 v = read.table(blast.file, stringsAsFactors = F)
 v = v[v$V6 >= sim.cutoff * 100,]
@@ -62,7 +65,7 @@ tmp = res$V4[idx.tmp]
 res$V4[idx.tmp] = res$V5[idx.tmp]
 res$V5[idx.tmp] = tmp
 
-blastres2gff(res, output.file)
+blastres2gff(res, paste(output.file, '.gff', sep = ''))
 
 write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
