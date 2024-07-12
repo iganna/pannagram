@@ -5,13 +5,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/error_block.sh
-
-# ----------------------------------------------------------------------------
-#             USAGE
-# ----------------------------------------------------------------------------
-
-#./pangen_pre.sh -pref_global ../pan_test/ly_th/  -path_ref ../pan_test/p27/chromosomes/ -ref_name 0
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -73,6 +67,8 @@ EOF
 #            PARAMETERS
 # ----------------------------------------------------------------------------
 
+start_step=0
+
 unrecognized_options=()
 
 while [ $# -gt 0 ]
@@ -105,25 +101,23 @@ do
         -purge_reps )   purge_reps="T"    shift 1 ;;  # filtration of repeats, default - not
         -rev )          flag_rev="T"      shift 1 ;;  # reverce parts
 
-        -accessions) acc_anal=$2;    shift 1 ;;  # file with accessions to analyse
-        -combinations) comb_anal=$2; shift 1 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
+        -accessions) acc_anal=$2;    shift 2 ;;  # file with accessions to analyse
+        -combinations) comb_anal=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
     
-        *) print_usage
+        *) 
             unrecognized_options+=("$1"); shift 1 ;;
     esac
 done
 
 
 # Output of Unrecognized Parameters
-if [[ ${#unrecognized_options[@]} -gt 0 ]]
-then
-  echo "Unrecognized options:"
-  for option in "${unrecognized_options[@]}"
-  do
-    echo "$option"
-  done
+if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
+    print_usage
+    echo "Unrecognized options:"
+    for option in "${unrecognized_options[@]}"; do
+        echo "$option"
+    done
 fi
-
 
 # ---- Check of missimg parameters
 
@@ -135,7 +129,6 @@ check_missing_variable "ref_name"
 
 # Basic parameters
 
-start_step="${start_step:-100}"  # Starting step
 cores="${cores:-1}"  # Number of cores
 p_ident="${p_ident:-85}"  
 part_len="${part_len:-5000}"  
@@ -182,17 +175,19 @@ path_alignment=${pref_global}alignments_${ref_name}/
 path_gaps=${pref_global}blast_gaps_${ref_name}/
 
 
-# Path with stages
-path_flags="${pref_global}.flags/"
-if [ ! -d "$path_flags" ]; then
-    mkdir -p "$path_flags"
-fi
+# ----------------------------------------------------------------------------
+#           STEPS
+# ----------------------------------------------------------------------------
+
+source utils/chunk_steps.sh
+
+echo "Pangen-pre starts from step ${start_step}"
 
 # ----------------------------------------------------------------------------
 #           LOGS
 # ----------------------------------------------------------------------------
 
-source utils/logging_ref.sh
+source utils/chunk_logging_ref.sh
 
 > "${file_log_ref}"  # Clean up the logging file
 

@@ -4,7 +4,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/error_block.sh
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -15,7 +15,6 @@ source utils/utils_bash.sh
 print_usage() {
   echo "-path_gaps"
 }
-
 
 # ----------------------------------------------------------------------------
 #                 PARAMETERS

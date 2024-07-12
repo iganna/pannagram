@@ -17,7 +17,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/error_block.sh
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -104,6 +104,7 @@ EOF
 # ref_set=""
 ref_num=2
 additional_params=""
+start_step=0
 # all2all=""
 # one2one=""
 
@@ -330,12 +331,10 @@ if [ -z "$chr_num" ]; then
     file_ref=$(find "$path_in" -type f -name "${refs_all[0]}.*")
     chr_num=$(grep -c '^>' "$file_ref")
 
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_attention "Number of chromosomes identified: ${chr_num}"
+    log_message 1 "$log_level" "$file_log" pokaz_attention "Number of chromosomes identified: ${chr_num}"
     additional_params+=" -nchr_ref ${chr_num} -nchr_acc ${chr_num}"
 else
-    log_message 2 "$log_level" "$file_log" \
-        pokaz_message "Number of chromosomes to analyse: ${chr_num}"    
+    log_message 2 "$log_level" "$file_log" pokaz_message "Number of chromosomes to analyse: ${chr_num}"    
 fi
 
 
@@ -348,8 +347,7 @@ path_out=$(add_symbol_if_missing "$path_out" "/")
 path_consensus="${path_consensus:-${path_out}consensus/}"
 path_consensus=$(add_symbol_if_missing "$path_consensus" "/")
 
-log_message 0 "$log_level" "$file_log" \
-    pokaz_message "Path with consensus MSA: ${path_consensus}"
+log_message 0 "$log_level" "$file_log" pokaz_message "Path with consensus MSA: ${path_consensus}"
 
 # ----------------------------------------------
 # Path with chromosomes
@@ -357,65 +355,16 @@ path_chr_acc="${path_chr_acc:-${path_out}chromosomes/}"
 path_chr_acc=$(add_symbol_if_missing "$path_chr_acc" "/")
 
 # ----------------------------------------------------------------------------
-#             CHECK STEPS
-# ----------------------------------------------------------------------------
-
-# Path with steps
-path_flags="${path_out}.flags/"
-path_flags=$(add_symbol_if_missing "$path_flags" "/")
-if [ ! -d "$path_flags" ]; then
-    mkdir -p "$path_flags"
-fi
-
-
-if [ -z "${start_step}" ]; then
-    max_step_file=$(ls ${path_flags}step*_done 2> /dev/null | sort -V | tail -n 1)
-
-    if [ -z "$max_step_file" ]; then
-        start_step=1
-    else
-        start_step=${max_step_file##*step}
-        start_step=${start_step%_done}
-        start_step=$((start_step + 1))
-    fi
-
-fi
-
-# Looping through and deleting files of stages, which are greater or equal to the current one
-for file_step in "${path_flags}"step*_done*; do
-    # echo "Processing file: $file_step"
-    if [ -f "$file_step" ]; then
-        # Extracting step number from the file name
-        step_tmp=$(echo "$file_step" | sed -e 's/.*step\([0-9]*\)_done.*/\1/')
-
-        # Check if step number is greater or equal to start_step
-        if [ "$step_tmp" -ge "$start_step" ]; then
-            # echo "remove ${file_step}"
-            rm -f "$file_step"
-        fi
-    fi
-done
-
-
-# if [ "$start_step" -eq 3 ]; then
-#     log_message 1 "$log_level" "$file_log" \
-#         pokaz_message "Starting step: reference cycles 3-7"
-# else
-#     log_message 1 "$log_level" "$file_log" \
-#         pokaz_message "Starting step: ${start_step}"
-# fi
-
-
-# ----------------------------------------------------------------------------
 #             ONE REFERENCE
 # ----------------------------------------------------------------------------
 
+echo "Pangen starts from step ${start_step}"
 
 # Iterate over each word in ref_set
 for ref0 in "${refs_all[@]}"; do
     
     command="./pangen_ref.sh -ref ${ref0} ${additional_params}"
-    # echo "Executing command: ${command}"
+    echo "\033[0;34mExecuting command: ${command}\033[0m" # blue colored
     eval "${command}"
 
 
@@ -431,10 +380,16 @@ for tmp in {1..7}; do
 done
 
 # ----------------------------------------------------------------------------
-#             COMMON CONSENSUS
+#             CHECK STEPS
 # ----------------------------------------------------------------------------
 
-step_num=9
+step_num=0
+source utils/chunk_steps.sh
+echo "Pangen continues from step ${start_step}"
+
+# ----------------------------------------------------------------------------
+#             COMMON CONSENSUS
+# ----------------------------------------------------------------------------
 
 # ----------------------------------------------
 # Run consensus for a pair of files
@@ -454,8 +409,7 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
     done
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Done!"
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -469,8 +423,7 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
     Rscript pangen/comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Done!"
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -484,15 +437,13 @@ fi
 
 if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
+    log_message 1 "$log_level" "$file_log" pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
 
     Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
                       --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Done!"
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -514,8 +465,7 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
                       --path.mafft.out ${pref_mafft_out}
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Done!"
+    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
 fi
 
 ((step_num = step_num + 1))
@@ -524,8 +474,7 @@ fi
 # Combine all together
 if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
+    log_message 1 "$log_level" "$file_log" pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
 
     Rscript pangen/comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
                       --path.mafft.in ${pref_mafftin} \
@@ -533,8 +482,7 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
                       --path.cons ${path_consensus} 
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Done!"
+    log_message 1 "$log_level" "$file_log" pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))
@@ -546,14 +494,12 @@ fi
 aln_type='msa_'
 if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Step ${step_num}. Get synteny blocks."
+    log_message 1 "$log_level" "$file_log" pokaz_message "Step ${step_num}. Get synteny blocks."
 
     Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref0} --cores ${cores} --aln.type ${aln_type}
 
     touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_message "Done!"
+    log_message 1 "$log_level" "$file_log" pokaz_message "Done!"
 fi
 
 ((step_num = step_num + 1))

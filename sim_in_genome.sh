@@ -69,10 +69,10 @@ while [ "$1" != "" ]; do
                   genome_file=$1
                   ;;
         -afterblast ) 
-                  after_blast_flag=1  # Устанавливаем флаг в 1, если флаг -afterblast присутствует
+                  after_blast_flag=1
                   ;;
         -keepblast ) 
-                  keep_blast_flag=1  # Устанавливаем флаг в 1, если флаг -afterblast присутствует
+                  keep_blast_flag=1
                   ;;
         * )      echo "Invalid parameter: $1"
                  exit 1

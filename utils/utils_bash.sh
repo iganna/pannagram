@@ -43,7 +43,7 @@ check_missing_variable() {
 # Display a stage message
 pokaz_stage() {
     local text="$1"
-    local color_code="38;2;52;252;252"  
+    color_code="38;5;37"
     printf "\e[${color_code}m* %s\e[0m\n" "$text"
 }
 
@@ -51,7 +51,7 @@ pokaz_stage() {
 # Display an attention message
 pokaz_attention() {
     local text="$1"
-    local color_code="38;2;52;252;252"
+    local color_code="38;5;203"
     printf "\e[${color_code}m  %s\e[0m\n" "$text"
 }
 
@@ -65,8 +65,9 @@ pokaz_error() {
 # Display a stage message
 pokaz_message() {
     local text="$1"
-    local color_code="38;5;195"  # Very light blue color code
+    local color_code="38;5;158"  # Very light blue color code
     printf "\e[${color_code}m  %s\e[0m\n" "$text"
+    # echo "  ${text}"
 }
 
 
@@ -96,31 +97,31 @@ make_dir() {
 # Logging messages either to the console or to a specified file based on the given log level.
 # Logging into files - always
 # Logging into the console - based on the level
-log_message() {
-    local log_level_command=$1
-    local log_level=$2
-    local file_log_ref=$3
-    shift 3
+# log_message() {
+#     local log_level_command=$1
+#     local log_level=$2
+#     local file_log=$3
+#     shift 3
 
-    local pokaz_command=$1
-    shift
-    local message="$*"
+#     local pokaz_command=$1
+#     shift
+#     local message="$*"
 
-    # echo '----'
-    # echo ${log_level_command} 
-    # echo ${log_level} 
-    # echo ${file_log_ref} 
-    # echo ${pokaz_command} 
-    # echo ${message}
-    # echo '==='
+#     # echo '----'
+#     # echo ${log_level_command} 
+#     # echo ${log_level} 
+#     # echo ${file_log} 
+#     # echo ${pokaz_command} 
+#     # echo ${message}
+#     # echo '==='
 
-    # Print to the console
-    if [ "${log_level_command}" -le "${log_level}" ]; then
-        $pokaz_command "$message"
-    fi
+#     # Print to the console
+#     if [ "${log_level_command}" -le "${log_level}" ]; then
+#         $pokaz_command "$message"
+#     fi
 
-    $pokaz_command "$message" | sed 's/\x1b\[[0-9;]*m//g' >> "$file_log_ref"
+#     $pokaz_command "$message" | sed 's/\x1b\[[0-9;]*m//g' >> "$file_log"
 
-}
+# }
 
 

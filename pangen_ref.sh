@@ -5,18 +5,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/error_block.sh
-
-# ----------------------------------------------------------------------------
-#             USAGE
-# ----------------------------------------------------------------------------
-
-
-#./pangen_ref.sh -path_out '../pan_test/tom/' -ref_name '0'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all2all F -acc_anal 'acc_tom.txt'
-#./pangen_ref.sh -path_out '../pan_test/tom/' -ref_name '6046-v1.1'  -n_chr_ref 5 -path_in '../pb_updated/' -n_chr_query 5 -all2all F -acc_anal 'acc_tom.txt'
-
-#./pangen_ref.sh -path_out ../pan_test/ly_th/ -ref_name 0 -path_ref ../pan_test/p27/chromosomes/ -n_chr_ref 5 -path_in ../lyrata/ -n_chr_query 8 -all2all T -cores 30
-
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -51,7 +40,6 @@ Options:
                                     2 - progress
                                     3 - all
 
-        
     * Paths and names (required):
         -path_in INPUT_FOLDER       Folder to the directory with query genomes. 
                                     Possible file types: fasta, fna, fa, fas.
@@ -97,6 +85,7 @@ EOF
 
 unrecognized_options=()
 
+start_step=0
 while [ $# -gt 0 ]
 do
     case $1 in
@@ -105,7 +94,7 @@ do
         -log)         log_level=$2;    shift 2 ;;  # path to the output
         -cores)       cores=$2;        shift 2 ;;
 
-        -path_out) pref_global=$2; shift 2 ;;  # path to the output
+        -path_out) path_out=$2; shift 2 ;;  # path to the output
         -path_in)  path_in=$2;     shift 2 ;;  # path with all genomes in fasta format
 
         -ref)      ref_name=$2; shift 2 ;;  # name of the reference genome
@@ -130,20 +119,18 @@ do
         -accessions) acc_anal=$2;    shift 1 ;;  # file with accessions to analyse
         -combinations) comb_anal=$2; shift 1 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
     
-        *) print_usage
+        *) 
             unrecognized_options+=("$1"); shift 1 ;;
     esac
 done
 
 # Output of Unrecognized Parameters
-if [[ ${#unrecognized_options[@]} -gt 0 ]]
-then
-  pokaz_error "Unrecognized options:"
-  for option in "${unrecognized_options[@]}"
-  do
-    pokaz_error "$option"
-  done
-  exit 1
+if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
+    print_usage
+    echo "Unrecognized options:"
+    for option in "${unrecognized_options[@]}"; do
+        echo "$option"
+    done
 fi
 
 
@@ -152,14 +139,13 @@ fi
 check_missing_variable "path_out"
 check_missing_variable "path_in"
 check_missing_variable "ref_name"
-check_missing_variable "n_chr_ref"
-check_missing_variable "n_chr_query"
+check_missing_variable "nchr_ref"
+check_missing_variable "nchr_acc"
 
 # ---- if some parameters zre not given - set the default value
 
 # Basic parameters
 
-start_step="${start_step:-100}"  # Starting step
 cores="${cores:-1}"  # Number of cores
 p_ident="${p_ident:-85}"  
 part_len="${part_len:-5000}"  
@@ -170,7 +156,6 @@ flag_rev="${flag_rev:-0}"
 
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 comb_anal="${comb_anal:-NULL}"   # Set of combinations to analyse
-
 
 
 # Rename the reference genome prefix
@@ -207,62 +192,38 @@ path_blast_parts=${path_out}blast_parts_${ref_name}/
 path_alignment=${path_out}alignments_${ref_name}/
 path_gaps=${path_out}blast_gaps_${ref_name}/
 
-
-# Path with stages
-path_flags="${path_out}.flags/"
-if [ ! -d "$path_flags" ]; then
-    mkdir -p "$path_flags"
-fi
-
-# ----------------------------------------------------------------------------
-#           STAGES
-# ----------------------------------------------------------------------------
-
-
-
 # ----------------------------------------------------------------------------
 #           LOGS
 # ----------------------------------------------------------------------------
 
-source utils/logging_ref.sh
+source utils/chunk_logging_ref.sh
 
 # ----------------------------------------------------------------------------
 #           MAIN PIPELINE
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------
-# Run the pangen_pre
+# Run pangen_pre.sh
 
-
-if [ "$one2one" = "F" ]; then
-    one2one_option=" "
-else
-    one2one_option=" -one2one "
-fi
-
-if [ "$purge_reps" = "F" ]; then
-    purge_reps_option=" "
-else
-    purge_reps_option=" -purge_reps "
-fi
-
-if [ "$purge_reps" = "F" ]; then
-    purge_reps_option=" "
-else
-    purge_reps_option=" -purge_reps "
-fi
+one2one_option=$([ "$one2one" = "F" ] && echo " " || echo " -one2one ")
+purge_reps_option=$([ "$purge_reps" = "F" ] && echo " " || echo " -purge_reps ")
 
 ./pangen_pre.sh -path_in ${path_in} -path_out ${path_out} \
         -ref ${ref_name} -path_ref ${path_ref} \
         -path_chrom ${path_chrom} -path_parts ${path_parts} -path_cons ${path_consensus} \
         -nchr_ref ${nchr_ref} -nchr_acc ${nchr_acc} \
-        -part_len ${part_len}  -p_ident ${-p_ident} \
-        ${one2one_option} ${purge_reps_option} \
-        -accessions ${acc_anal} -combinations) ${comb_anal}
+        -part_len ${part_len}  -p_ident ${p_ident} \
+        -accessions ${acc_anal} -combinations ${comb_anal} \
+        -s ${start_step} \
+        ${one2one_option} ${purge_reps_option}
 
-# ----------------------------------------------
-# Fing the number of last successful stage        
+# ---- STEPS -----------------------------------
+# Find the number of last successful stage  
 
+start_step=0
+source utils/chunk_steps.sh
+
+echo "Pangen-ref continues from step ${start_step}"
 
 # ----------------------------------------------
 # Blast regions between synteny blocks

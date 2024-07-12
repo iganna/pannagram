@@ -41,7 +41,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/logging.R') # a common code for all R logging
+source('utils/chunk_logging.R') # a common code for all R logging
 
 # ---- Values of parameters ----
 

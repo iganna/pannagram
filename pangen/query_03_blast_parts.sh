@@ -2,7 +2,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/error_block.sh
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -33,24 +33,24 @@ all_vs_all=""
 
 while [ $# -gt 0 ]
 do
+    echo ${1}
     case $1 in
     # for options with required arguments, an additional shift is required
-    -path_ref) path_ref=$2; shift ;;
-    -path_parts) parts=$2; shift ;;
-    -path_result) blastres=$2; shift ;;
-    -ref_name) ref_name=$2; shift ;;
-    -all_vs_all) all_vs_all=$2; shift ;;
-    -p_ident) p_ident=$2; shift ;;
-    -cores) cores=$2; shift ;;
-    -penalty) penalty=$2; shift ;;
-    -gapopen) gapopen=$2; shift ;;
-    -gapextend) gapextend=$2; shift ;;
-    -max_hsps) max_hsps=$2; shift ;;
-    -log_path) log_path=$2; shift ;;
+    -path_ref) path_ref=$2; shift 2;;
+    -path_parts) parts=$2; shift 2;;
+    -path_result) blastres=$2; shift 2;;
+    -ref_name) ref_name=$2; shift 2;;
+    -all_vs_all) all_vs_all=T; shift 1;;
+    -p_ident) p_ident=$2; shift 2;;
+    -cores) cores=$2; shift 2;;
+    -penalty) penalty=$2; shift 2;;
+    -gapopen) gapopen=$2; shift 2;;
+    -gapextend) gapextend=$2; shift 2;;
+    -max_hsps) max_hsps=$2; shift 2;;
+    -log_path) log_path=$2; shift 2;;
     *) print_usage
        echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
     esac
-    shift
 done
 
 
