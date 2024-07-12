@@ -14,25 +14,26 @@ source("utils/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 
 option_list <- list(
-  make_option(c("--all.chr"), type = "character", default = NULL, 
-              help = "Flag to use all chromosomes, not only the provided number", metavar = "character"),
-  make_option(c("--n.chr"), type = "character", default = NULL, 
-              help = "Number of chromosomes", metavar = "character"),
+  make_option(c("--all.chr"), type = "logical", default = FALSE, 
+              help = "Flag to use all chromosomes, not only the provided number", metavar = "logical"),
+  make_option(c("--n.chr"), type = "numeric", default = NULL, 
+              help = "Number of chromosomes", metavar = "numeric"),
   make_option(c("--path.in"), type = "character", default = NULL, 
               help = "Path to the input directory", metavar = "character"),
   make_option(c("--path.out"), type = "character", default = NULL, 
               help = "Path to the output directory", metavar = "character"),
-  make_option(c("--sort"), type = "character", default = NULL, 
-              help = "Sort chromosomes by lengths or not", metavar = "character"),
+  make_option(c("--sort"), type = "logical", default = FALSE, 
+              help = "Sort chromosomes by lengths or not", metavar = "logical"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "Number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--acc.anal"), type = "character", default = NULL,
+  make_option(c("--accessions"), type = "character", default = NULL,
               help = "Files with accessions to analyze", metavar = "character"),
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+  make_option(c("--log.level"), type = "numeric", default = 0,
+              help = "Level of log to be shown on the screen", metavar = "numeric")
 )
+
 
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
@@ -59,17 +60,18 @@ pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 
 # Accessions to analyse
 acc.anal <- opt$acc.anal
-if(acc.anal == 'NULL'){
-  acc.anal <- NULL
-}
 if(!is.null(acc.anal)){
-  if (!file.exists(acc.anal)) {
-    pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.', 
-                   file=file.log.main, echo=echo.main)
+  if(acc.anal == 'NULL'){
     acc.anal <- NULL
   } else {
-    tmp <- read.table(acc.anal, stringsAsFactors = F)
-    acc.anal <- tmp[,1]
+    if (!file.exists(acc.anal)) {
+      pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.', 
+                     file=file.log.main, echo=echo.main)
+      acc.anal <- NULL
+    } else {
+      tmp <- read.table(acc.anal, stringsAsFactors = F)
+      acc.anal <- tmp[,1]
+    }
   }
 }
 

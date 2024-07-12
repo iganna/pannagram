@@ -37,8 +37,8 @@ ${0##*/} -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER
 OTHER PARAMETERS:
     [-h] [-s STAGE] [-cores CORES] [-log LOG_LEVEL]
     [-sort_len] [-purge_repeats]
-    [-path_ref PATH_CHR_REF] [-path_chrom PATH_CHROM]
-    [-path_parts PATH_PARTS] [-path_cons PATH_CONSENSUS]
+    [-path_ref PATH_CHR_REF]
+    [-path_cons PATH_CONSENSUS] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
     [-p_ident P_IDENT] [-part_len PART_LEN]
     [-accessions ACC_FILE] [-combinations COMB_FILE]
     

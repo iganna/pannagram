@@ -67,6 +67,7 @@ EOF
 #            PARAMETERS
 # ----------------------------------------------------------------------------
 
+# Default values of parameters
 start_step=0
 
 unrecognized_options=()
