@@ -67,7 +67,7 @@ extractChrByFormat <- function(gff, s.chr){
 gff2gff <- function(path.cons, 
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
-                    ref.acc, 
+                    ref.acc='0', 
                     n.chr = 5,
                     exact.match=T, 
                     gr.accs.e = "accs/",

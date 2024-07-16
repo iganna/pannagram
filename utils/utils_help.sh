@@ -38,12 +38,16 @@ OTHER PARAMETERS:
     [-h] [-s STAGE] [-cores CORES] [-log LOG_LEVEL]
     [-sort_len] [-purge_repeats]
     [-path_ref PATH_CHR_REF]
-    [-path_cons PATH_CONSENSUS] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
     [-p_ident P_IDENT] [-part_len PART_LEN]
     [-accessions ACC_FILE] [-combinations COMB_FILE]
     
 EOF
 }
+
+#[-path_cons PATH_CONSENSUS] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
+# -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
+# -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
+# -path_cons PATH_CONSENSUS   Path to the consensus folder. 
 
 # Function to display a long help message
 print_usage_detailed() {
@@ -87,9 +91,6 @@ Options:
     * Optional paths:
         -path_ref PATH_CHR_REF      Path where the reference genome is stored. 
                                     Do not provide if it's the same folder as the path with query genomes.
-        -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
-        -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
-        -path_cons PATH_CONSENSUS   Path to the consensus folder.
 
     * Input Design Handling:
         -sort_len                   Flag to sort chromosomes by length.

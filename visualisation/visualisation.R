@@ -77,7 +77,10 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
       break
     }
   }
-
+  
+  # Replase 0eX to 0
+  s.ticks <- ifelse(grepl("^0e", s.ticks), "0", s.ticks)
+  
   p <- ggplot(x, aes(x=V2, y=V4, xend=V3, yend=V5, color=as.factor(V4<V5))) +
     geom_segment(show.legend = FALSE) +
     theme_bw() +

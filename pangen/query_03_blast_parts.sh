@@ -11,11 +11,11 @@ source utils/chunk_error_control.sh
 source utils/utils_bash.sh
 
 print_usage() {
-  echo "-path_ref"
+  echo "-path_chrom"
   echo "-path_parts"
   echo "-path_result"
-  echo "-ref_name"
-  echo "-all_vs_all"
+  echo "-ref"
+  echo "-one2one"
   echo "-p_ident"
   echo "-cores"
   echo "-penalty"
@@ -29,18 +29,17 @@ print_usage() {
 #                 PARAMETERS
 # ----------------------------------------------------------------------------
 
-all_vs_all=""
+all_vs_all="T"
 
 while [ $# -gt 0 ]
 do
-    echo ${1}
     case $1 in
     # for options with required arguments, an additional shift is required
-    -path_ref) path_ref=$2; shift 2;;
+    -path_chrom) path_chrom=$2; shift 2;;
     -path_parts) parts=$2; shift 2;;
     -path_result) blastres=$2; shift 2;;
-    -ref_name) ref_name=$2; shift 2;;
-    -all_vs_all) all_vs_all=T; shift 1;;
+    -ref) ref_name=$2; shift 2;;
+    -one2one) all_vs_all="F"; shift 1;;
     -p_ident) p_ident=$2; shift 2;;
     -cores) cores=$2; shift 2;;
     -penalty) penalty=$2; shift 2;;
@@ -62,11 +61,6 @@ gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
-
-if [ -z ${all_vs_all} ]; then
-    echo "Error: Variable 'all_vs_all' is not set."
-    exit 1
-fi
 
 
 # ----------------------------------------------------------------------------
@@ -127,5 +121,5 @@ run_blast() {
 export -f run_blast
 
 # Run BLAST in parallel
-parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_ref${ref_name}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all ::: ${log_path}
+parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_chrom${ref_name}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all ::: ${log_path}
 

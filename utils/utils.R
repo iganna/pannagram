@@ -739,7 +739,7 @@ pokaz <- function(..., file = NULL, echo = T) {
     }
   }
   
-  arguments <- paste('    ', paste(arguments_list, collapse = " "), sep = '')
+  arguments <- paste('  ', paste(arguments_list, collapse = " "), sep = '')
   
   text.color <- make_style("#FDFDFD")
   # bg <- make_style("grey5", bg = TRUE)

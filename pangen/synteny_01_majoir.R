@@ -7,7 +7,7 @@ suppressMessages({
 })
 
 source("utils/utils.R")
-source("pangen/synteny_funcs.R")
+source("pangen/synteny_func.R")
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -540,10 +540,12 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(f.blast = files.blast, .packages=c('crayon'), .verbose = F)  %dopar% { 
-                              loop.function(f.blast,
-                                            echo.loop=echo.loop)
-                            }
+  tmp = foreach(f.blast = files.blast, 
+                .packages=c('crayon'), 
+                .verbose = F)  %dopar% { 
+                  loop.function(f.blast,
+                                echo.loop=echo.loop)
+                }
   stopCluster(myCluster)
 }
 

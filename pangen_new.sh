@@ -19,10 +19,12 @@ source utils/utils_help.sh
 mode_pre="F"
 mode_ref="F"
 mode_msa="F"
+clean_dir="F"
+one_step="F"
 
 unrecognized_options=()
 
-start_step=0
+start_step=100
 while [ $# -gt 0 ]
 do
     case $1 in
@@ -31,6 +33,8 @@ do
         -s | -stage ) start_step="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -log)         log_level=$2;    shift 2 ;;  # path to the output
         -cores)       cores=$2;        shift 2 ;;
+        -clean_dir)   clean_dir="T"    shift 1 ;;
+        -one_step)    one_step="T"    shift 1 ;;
         
         # Required
         -path_out) path_out=$2; shift 2 ;;  # path to the output
@@ -45,10 +49,10 @@ do
         -refs) ref_set="$2"; mode_msa="T"; shift 2 ;;
         -nref) ref_num="$2"; mode_msa="T"; shift 2 ;;
 
-        # Optional paths
-        -path_chrom) path_chrom=$2;  shift 2 ;;  # path to the folder with individual chromosomes in separate files
-        -path_parts) path_parts=$2;  shift 2 ;;  # path to the folder with chromosomal parts
-        -path_cons)  path_cons=$2;   shift 2 ;;  # path to the consensus folder
+        # # Optional paths
+        # -path_chrom) path_chrom=$2;  shift 2 ;;  # path to the folder with individual chromosomes in separate files
+        # -path_parts) path_parts=$2;  shift 2 ;;  # path to the folder with chromosomal parts
+        # -path_cons)  path_cons=$2;   shift 2 ;;  # path to the consensus folder
 
         # Number of chromosomes
         -nchr)      nchr=$2;     shift 2 ;;  # number of chromosomes
@@ -172,17 +176,21 @@ fi
 # ----------------------------------------------
 # Optional paths paths
 
-path_cons="${path_cons:-${path_out}consensus/}"
-path_cons=$(add_symbol_if_missing "$path_cons" "/")
-
-path_chrom="${path_chrom:-${path_out}chromosomes/}"
-path_chrom=$(add_symbol_if_missing "$path_chrom" "/")
-
-path_parts="${path_parts:-${path_out}parts/}"
-path_parts=$(add_symbol_if_missing "$path_parts" "/")
-
 path_ref="${path_ref:-${path_in}}"
 path_ref=$(add_symbol_if_missing "$path_ref" "/")
+
+# path_cons="${path_cons:-${path_out}consensus/}"
+# path_cons=$(add_symbol_if_missing "$path_cons" "/")
+
+# path_chrom="${path_chrom:-${path_out}chromosomes/}"
+# path_chrom=$(add_symbol_if_missing "$path_chrom" "/")
+
+# path_parts="${path_parts:-${path_out}parts/}"
+# path_parts=$(add_symbol_if_missing "$path_parts" "/")
+
+path_cons="${path_out}consensus/"
+path_chrom="${path_out}chromosomes/"
+path_parts="${path_out}parts/"
 
 # ----------------------------------------------
 # Make folders
@@ -336,6 +344,9 @@ fi
 # fi
 
 # Path for logs of this script
+
+pangen_run_num=0
+
 path_log="${path_logs}pangen${pangen_run_num}/"
 echo ${path_log}
 mkdir -p ${path_log}
@@ -475,25 +486,31 @@ else
     refs_all=("${ref_name}")
 fi
 
-# ============================================================================
-#                 MAIN PIPELINE
-# ============================================================================
 
-# ----------------------------------------------------------------------------
-#            CHROMOSOMES-PARTS
-# ----------------------------------------------------------------------------
+# ╔═══════════════════════════════════════════════════════════════════════════════════╗  /\_/\  
+# ║                                                                                   ║ ( o.o ) 
+# ║                                  MAIN PIPELINE                                    ║  > ^ <
+# ║                                                                                   ║ /     \
+# ╚═══════════════════════════════════════════════════════════════════════════════════╝ \_____/
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                         CHROMOSOMES & PARTS                               │
+# └───────────────────────────────────────────────────────────────────────────┘
     
 step_num=1
 # ----------------------------------------------
 # Split query fasta into chromosomes
 
 step_file="$path_flags/step${step_num}_done"
-if [ $start_step -le ${step_num} ] || [ ! -f  ${step_file} ]; then
+if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
 
     with_level 1 pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
     # Clean up the output folders
-    rm -f ${path_chrom}*fasta
+    if   [ "$clean_dir" = "T" ]; then 
+        rm -f ${path_chrom}*fasta
+    fi
 
     # Path for logging
     path_log_step="${path_log}step${step_num}_query_01/"
@@ -502,11 +519,16 @@ if [ $start_step -le ${step_num} ] || [ ! -f  ${step_file} ]; then
     Rscript pangen/query_01_to_chr.R --path.in ${path_in} --path.out ${path_chrom} \
             --cores ${cores}  \
             ${option_nchr} ${option_accessions}\
-            --path.log ${path_log_step} --log.level ${log_level}
+            
 
     # Done
     touch "${step_file}"
     with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
     
 fi
 
@@ -514,12 +536,15 @@ fi
 
 # ----------------------------------------------
 # Split query chromosomes into parts
-if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" ]; then
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
 
     with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
     # Clean up the output folders
-    rm -f ${path_parts}*fasta
+    if   [ "$clean_dir" = "T" ]; then 
+        rm -f ${path_parts}*fasta
+    fi    
 
     # Path for logging
     path_log_step="${path_log}step${step_num}_query_02/"
@@ -532,40 +557,53 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done" 
             --path.log ${path_log_step} --log.level ${log_level}
 
     # Done
-    touch "$path_flags/step${step_num}_done"
+    touch "${step_file}"
     with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
     
 fi
 
 ((step_num = step_num + 1))
 
-exit 2
 
 # ----------------------------------------------------------------------------
 #            REFERENCE-BASED
 # ----------------------------------------------------------------------------
 
 for ref0 in "${refs_all[@]}"; do
+
+
     with_level 1  pokaz_attention "Reference ${ref0}"
+
+    # New paths
+    path_blast_parts=${path_out}blast_parts_${ref0}/
+    path_alignment=${path_out}alignments_${ref0}/
+    path_gaps=${path_out}blast_gaps_${ref0}/
 
     # ----------------------------------------------
     # Split reference fasta into chromosomes if additionally needed
     if [[ "${path_in}" != "$path_ref" ]]; then
 
-        if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
-            log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
+        step_file="$path_flags/step${step_num}_${ref0}_done"
+        if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
+            with_level 1 pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
             # Temporary file to analyse only the reference genome from the folder
-            file_acc_ref=${path_consensus}ref_acc.txt
-            echo "${ref_name}" > ${file_acc_ref}
+            file_acc_ref=${path_cons}ref_acc.txt
+            echo "${ref0}" > ${file_acc_ref}
 
             # Path for logging
             path_log_step="${path_log}step${step_num}_query_01_ref/"
             
             Rscript pangen/query_01_to_chr.R --all.chr T \
-                    --sort ${sort_chr_len}
+                    --sort ${sort_chr_len} \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
-                    --cores ${cores} --acc.anal ${file_acc_ref} \
+                    --cores ${cores} \
+                    --acc.anal ${file_acc_ref} \
                     ${nchr_ref} \
                     --path.log ${path_log_step} --log.level ${log_level}
 
@@ -573,9 +611,13 @@ for ref0 in "${refs_all[@]}"; do
             rm ${file_acc_ref}
 
             # Done
-            touch "$path_flags/step${step_num}_done_${ref_name}"
-            log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+            touch "${step_file}"
+            with_level 1 pokaz_message "Step is done."
 
+            # If only one step
+            if   [ "$one_step" = "T" ]; then 
+                exit 0
+            fi
         fi
 
         ((step_num = step_num + 1))
@@ -584,18 +626,33 @@ for ref0 in "${refs_all[@]}"; do
     # ----------------------------------------------
     # Blast parts on the reference genome
 
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-        log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
-        log_message 1 "$log_level" "$file_log_ref" pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
+        with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
+        with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
 
         # ---- Clean up the output folders ----
-        rm ${path_blast_parts}
+        if   [ "$clean_dir" = "T" ]; then 
+            rm -f ${path_blast_parts}*txt
+        fi    
+        
 
         # ---- Create a database on the reference genome ----
-        log_message 2 "$log_level" "$file_log_ref" pokaz_message "Create BLAST databases."
+        with_level 2 pokaz_message "Create BLAST databases."
 
-        for file in ${path_chrom}${ref_name}_chr*fasta ; do
+        # Check if there are any files matching the pattern
+        shopt -s nullglob
+        files=(${path_chrom}${ref0}_chr*fasta)
+        shopt -u nullglob
+
+        if [ ${#files[@]} -eq 0 ]; then
+          with_level 0 pokaz_error "Error: No files matching the pattern ${path_chrom}${ref0}_chr*fasta"
+          exit 1
+        fi
+
+        # Iterate over each file
+        for file in "${files[@]}"; do
           # Check if the BLAST database files already exist
           if [ ! -f "${file}.nin" ]; then
               makeblastdb -in ${file} -dbtype nucl > /dev/null
@@ -604,20 +661,31 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Run BLAST ----
 
-        log_message 2 "$log_level" "$file_log_ref" pokaz_message "Run BLAST."    
+        with_level 2 pokaz_message "Run BLAST."    
 
         # Logs for the BLAST
         path_log_step="${path_log}step${step_num}_query_03/"
         make_dir ${path_log_step}
 
         # Blast parts on the reference genome
-        ./pangen/query_03_blast_parts.sh -path_ref ${path_chrom} -path_parts ${path_parts} \
-                -path_result ${path_blast_parts} -ref_name ${ref_name} \
-                ${option_one2one} -p_ident ${p_ident} -cores ${cores} -log_path ${path_log_step}
+        ./pangen/query_03_blast_parts.sh \
+                -path_chrom ${path_chrom} \
+                -path_parts ${path_parts} \
+                -path_result ${path_blast_parts} \
+                -ref ${ref0} \
+                ${option_one2one} \
+                -p_ident ${p_ident} \
+                -cores ${cores} \
+                -log_path ${path_log_step}
 
         # Done
-        touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
     fi
 
     ((step_num = step_num + 1))
@@ -625,28 +693,36 @@ for ref0 in "${refs_all[@]}"; do
     # ----------------------------------------------
     # First round of alignments
 
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-        log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
+        with_level 1 pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
         # Clean up the output folders
-        rm ${path_alignment}
-        rm ${path_gaps}
-
+        if   [ "$clean_dir" = "T" ]; then 
+            rm -f "${path_alignment}*rds"
+            rm -f "${path_gaps}*fasta"
+        fi    
+        
         # Logs for the BLAST
         path_log_step="${path_log}step${step_num}_synteny_01/"
         make_dir ${path_log_step}
         
         # Run the step
         Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
-                --ref ${ref_name}   \
+                --ref ${ref0}   \
                 --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
                 --cores ${cores} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done
-        touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
 
         # Clean up the output folders of previous stages
         # If the first round of alignment didn't have any errors - remove the blast which was needed for it
@@ -658,18 +734,33 @@ for ref0 in "${refs_all[@]}"; do
 
     # ----------------------------------------------
     # Step 6: Plotting
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
 
-        pokaz_stage "Step ${step_num}. Plotting the results."
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-        Rscript pangen/plot_genome_synteny.R \
-                --ref ${ref_name} \
+        with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
+
+        # Logs for the Plot
+        path_log_step="${path_log}step${step_num}_synteny_01_plot_${ref0}/"
+        make_dir ${path_log_step}
+
+        Rscript pangen/synteny_01_plot.R \
+                --ref ${ref0} \
                 --path_ref ${path_ref} \
                 --path_in ${path_in} \
-                --path_out ${pref_global} \
-                --algn_path ${path_alignment}
+                --path_out ${path_out} \
+                --algn_path ${path_alignment} \
+                --path.log ${path_log_step} \
+                --log.level ${log_level}
 
-        touch "$path_flags/step${step_num}_done_${ref_name}"
+        # Done
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
     fi
 
     ((step_num = step_num + 1))
@@ -677,67 +768,108 @@ for ref0 in "${refs_all[@]}"; do
 
     # ========== CHECK MODE ==========
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
-        echo "Pannagram's PREliminary mode is done."
+        with_level 0 pokaz_message "Pannagram's PREliminary mode is done."
         exit
     fi 
-
         
     # ----------------------------------------------
     # Blast regions between synteny blocks
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
 
-        log_message 1 "$log_level" "$file_log_ref" pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1 pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 
         # Logs for the BLAST
-        path_log_step="${path_log_ref}step${step_num}_synteny_02/"
+        path_log_step="${path_log}step${step_num}_synteny_02_${ref0}/"
         make_dir ${path_log_step}
 
         # Run BLAST for gaps
-        ./pangen/synteny_02_blast_gaps.sh -path_gaps ${path_gaps} -cores ${cores} #-log_path ${path_log_step}
+        ./pangen/synteny_02_blast_gaps.sh \
+                -path_gaps ${path_gaps} \
+                -cores ${cores} \
+                -log_path ${path_log_step}
 
-        touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+        # Done
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
     fi
 
     ((step_num = step_num + 1))
 
     # ----------------------------------------------
     # Second round of alignments
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
 
-        log_message 1 "$log_level" "$file_log_ref" \
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1 \
             pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
-        Rscript pangen/synteny_03_merge_gaps.R --ref ${ref_name} \
+        # Logs for the merging gaps
+        path_log_step="${path_log}step${step_num}_synteny_03_${ref0}/"
+        make_dir ${path_log_step}
+
+        Rscript pangen/synteny_03_merge_gaps.R --ref ${ref0} \
                 --path.aln ${path_alignment}  --path.chr ${path_chrom}\
                 --path.gaps ${path_gaps}   \
-                --cores ${cores}
+                --cores ${cores} \
+                --path.log ${path_log_step} \
+                --log.level ${log_level}
 
         # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
         # rm -rf ${path_gaps}
         # ls ${path_alignment}*maj*
         # rm -rf ${path_alignment}*maj*
 
-        touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" \
-            pokaz_message "Done."
+        # Done
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
     fi
 
     ((step_num = step_num + 1))
 
     # ----------------------------------------------
-    # Creaete a consensus
-    if [ $start_step -le ${step_num} ] || [ ! -f "$path_flags/step${step_num}_done_${ref_name}" ]; then
+    # Create a consensus
 
-        log_message 1 "$log_level" "$file_log_ref" \
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1 \
             pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
-        Rscript pangen/comb_01_one_ref.R --path.cons ${path_consensus} --path.aln ${path_alignment} \
-        --pref ${ref_name}  --cores ${cores} --path.chr ${path_chrom}
 
-        touch "$path_flags/step${step_num}_done_${ref_name}"
-        log_message 1 "$log_level" "$file_log_ref" \
-            pokaz_message "Done."
+        # Logs for creating the consensus
+        path_log_step="${path_log}step${step_num}_comb_01_one_${ref0}/"
+        make_dir ${path_log_step}
+
+        Rscript pangen/comb_01_one_ref.R \
+                --path.cons ${path_cons} \
+                --path.aln ${path_alignment} \
+                --pref ${ref0}  \
+                --cores ${cores} \
+                --path.chr ${path_chrom} \
+                --path.log ${path_log_step} \
+                --log.level ${log_level}
+
+        # Done
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
     fi
 
     ((step_num = step_num + 1))
@@ -753,6 +885,8 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
 fi
 
 
+echo "MSAAAA"
+exit 0
 # ----------------------------------------------------------------------------
 #            MSA
 # ----------------------------------------------------------------------------
@@ -764,10 +898,16 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
     log_message 1 "$log_level" "$file_log" \
         pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
 
-    Rscript pangen/comb_03_find_gaps.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores}
+    Rscript pangen/comb_03_find_gaps.R --path.cons ${path_cons} --ref.pref ${ref0} --cores ${cores}
 
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 fi
 
 ((step_num = step_num + 1))
@@ -783,11 +923,17 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
 
     log_message 1 "$log_level" "$file_log" pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
 
-    Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_consensus} --ref.pref ${ref0} --cores ${cores} \
+    Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_cons} --ref.pref ${ref0} --cores ${cores} \
                       --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
 
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 fi
 
 ((step_num = step_num + 1))
@@ -808,8 +954,14 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
                       --path.mafft.in ${pref_mafftin} \
                       --path.mafft.out ${pref_mafft_out}
 
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log_ref" pokaz_message "Step is done."
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 fi
 
 ((step_num = step_num + 1))
@@ -823,10 +975,16 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
     Rscript pangen/comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
                       --path.mafft.in ${pref_mafftin} \
                       --path.mafft.out ${pref_mafft_out} \
-                      --path.cons ${path_consensus} 
+                      --path.cons ${path_cons} 
 
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" pokaz_message "Done!"
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 fi
 
 ((step_num = step_num + 1))
@@ -840,10 +998,16 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
 
     log_message 1 "$log_level" "$file_log" pokaz_message "Step ${step_num}. Get synteny blocks."
 
-    Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref0} --cores ${cores} --aln.type ${aln_type}
+    Rscript analys/analys_01_blocks.R --path.cons ${path_cons} --ref.pref  ${ref0} --cores ${cores} --aln.type ${aln_type}
 
-    touch "$path_flags/step${step_num}_done"
-    log_message 1 "$log_level" "$file_log" pokaz_message "Done!"
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 fi
 
 ((step_num = step_num + 1))

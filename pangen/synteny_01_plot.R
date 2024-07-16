@@ -1,7 +1,7 @@
 
 ### imports
 source("visualisation/visualisation.R")
-source("pangen/plot_genome_synteny_funcs.R")
+source("pangen/synteny_func_plot.R")
 source("utils/utils.R")
 
 suppressMessages({
@@ -39,10 +39,23 @@ option_list <- list(
         type = "character",
         default = NULL,
         help = "Path to the alignment directory",
-        metavar = "character")    
+        metavar = "character"),
+    make_option(c("--path.log"), 
+        type = "character", 
+        default = NULL,
+        help = "Path for log files",
+        metavar = "character"),
+    make_option(c("--log.level"), 
+        type = "character", 
+        default = NULL,
+        help = "Level of log to be shown on the screen", 
+        metavar = "character")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
+
+# Logging
+source('utils/chunk_logging.R') # a common code for all R logging
 
 if (
     is.null(opt$ref) ||
@@ -60,7 +73,7 @@ algn.path <- opt$algn_path
 
 # Extracting only ids from path
 query.ids <- get_prefixes(algn.path)
-pokaz("Number of pdf files:", length(query.ids))
+pokaz("Number of pdf files:", length(query.ids), file=file.log.main, echo=echo.main)
 
 ref.name <- normalizePath(file.path(path.ref, paste0(ref, ".fna")), mustWork = FALSE)
 pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork = FALSE)
@@ -72,3 +85,7 @@ for (id in query.ids){
     p <- plotGenomeAgainstRef(algn.path, query.name, ref.name, seq.order="alphanum")
     savePDF(p, path = pdf.path, name = pdf.name)
 }
+
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
+

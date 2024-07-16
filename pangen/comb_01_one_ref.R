@@ -14,7 +14,7 @@ suppressMessages({
 })
 
 source("utils/utils.R")
-source("pangen/synteny_funcs.R")
+source("pangen/synteny_func.R")
 
 # pokazStage('Step 7. Combine reference-based alignments by chromosomes')
 
@@ -37,7 +37,11 @@ option_list = list(
   make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to the reference file", metavar="character"),
   make_option(c("--type"), type="character", default=NULL, 
-              help="type of fasta files", metavar="character")
+              help="type of fasta files", metavar="character"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 )
 
 
@@ -47,6 +51,10 @@ opt = parse_args(opt_parser, args = args);
 
 
 # ***********************************************************************
+# ---- Logging ----
+
+source('utils/chunk_logging.R') # a common code for all R logging
+
 # ---- Values of parameters ----
 
 # print(opt)
@@ -77,8 +85,8 @@ if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
 aln.suff <- "_full.rds"
 aln.files <- list.files(path.aln)
 
-pokaz('Paths with alignments', path.aln)
-# pokaz('Files', aln.files)
+pokaz('Paths with alignments', path.aln, file=file.log.main, echo=echo.main)
+# pokaz('Files', aln.files, file=file.log.main, echo=echo.main)
 
 aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
 # pokaz(aln.files)
@@ -90,7 +98,7 @@ accessions <- sapply(aln.files, function(filename){
 names(accessions) = NULL
 
 accessions <- sort(unique(accessions))
-pokaz('Accessions:', accessions)
+pokaz('Accessions:', accessions, file=file.log.main, echo=echo.main)
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
@@ -100,12 +108,12 @@ chromosome.pairs <- unique(do.call(rbind, lapply(aln.files, function(filename){
               as.numeric(parts[length(parts) - 1]))
   return(s.comb)})))
 
-pokaz('Combinations:', paste(chromosome.pairs[,1], chromosome.pairs[,2], sep = '_'))
+pokaz('Combinations:', paste(chromosome.pairs[,1], chromosome.pairs[,2], sep = '_'), file=file.log.main, echo=echo.main)
 
 # ---- Length of reference chromosomes ----
 
 file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
-pokaz('File with chromosomal lengths', file.chr.len)
+pokaz('File with chromosomal lengths', file.chr.len, file=file.log.main, echo=echo.main)
 if(!file.exists(file.chr.len)){
   chr.len = c()
   
@@ -131,26 +139,36 @@ if(!file.exists(file.chr.len)){
   chr.len = readRDS(file.chr.len)
 }
 
-pokaz('Chromosomal lengths', chr.len)
+pokaz('Chromosomal lengths:', chr.len, file=file.log.main, echo=echo.main)
 
 # ----  Combine correspondence  ----
 
-pokaz('Reference:', base.acc.ref)
+pokaz('Reference:', base.acc.ref, file=file.log.main, echo=echo.main)
 max.len.gap = 20000
 
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(i.chr.pair, echo = T){
+loop.function <- function(i.chr.pair, 
+                          echo.loop=T, 
+                          file.log.loop=NULL){
   
   
   query.chr = chromosome.pairs[i.chr.pair, 1]
   base.chr = chromosome.pairs[i.chr.pair, 2]
   
+  # Log files
+  if (is.null(file.log.loop)){
+    file.log.loop = paste0(path.log, 'loop_file_', 
+                           query.chr, '_', base.chr,
+                           '.log')
+    invisible(file.create(file.log.loop))
+  }
   
-  if(echo) pokaz('Combination', query.chr, base.chr)
-  pokaz('Chromosomal length', chr.len)
+  
+  pokaz('Combination', query.chr, base.chr, file=file.log.loop, echo=echo.loop)
+  pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
   file.comb = paste(path.cons, 'comb_', query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5', sep = '')
@@ -171,18 +189,19 @@ loop.function <- function(i.chr.pair, echo = T){
   
   for(acc in accessions){
     
-    if(echo) pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr)
+    pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr, 
+                   file=file.log.loop, echo=echo.loop)
     
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
     if(!file.exists(file.aln.full)) next
     
-    if(echo) pokaz('Alignment file:', file.aln.full)
+    pokaz('Alignment file:', file.aln.full, file=file.log.loop, echo=echo.loop)
     
     # Reading the alignment
     x = readRDS(file.aln.full)
     
-    print(base.len)
+    pokaz('Base len', base.len, file=file.log.loop, echo=echo.loop)
     # saveRDS(x, 'tmp.rds')
     
     # Get query coordinates in base order
@@ -218,6 +237,9 @@ loop.function <- function(i.chr.pair, echo = T){
   
   H5close()
   gc()
+  
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  return(NULL)
 }
 
 
@@ -226,20 +248,28 @@ loop.function <- function(i.chr.pair, echo = T){
 
 
 if(num.cores == 1){
+  file.log.loop = paste0(path.log, 'loop_all.log')
+  invisible(file.create(file.log.loop))
   for(i.chr.pair in 1:nrow(chromosome.pairs)){
-    loop.function(i.chr.pair)
+    loop.function(i.chr.pair,
+                  file.log.loop = file.log.loop, 
+                  echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                              loop.function(i.chr.pair)
-                            }
+  tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), 
+                .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                  loop.function(i.chr.pair,
+                                echo.loop=echo.loop)
+                }
   stopCluster(myCluster)
 }
 
 warnings()
 
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
 
