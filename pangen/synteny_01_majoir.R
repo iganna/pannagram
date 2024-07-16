@@ -54,11 +54,9 @@ path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with 
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
 path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, stop('Folder with Gaps is not specified'))
 
-
 # Create folders for the alignment results
 if(!dir.exists(path.aln)) dir.create(path.aln)
 if(!dir.exists(path.gaps)) dir.create(path.gaps)
-
 
 # ***********************************************************************
 # ---- Preparation ----
@@ -70,7 +68,6 @@ files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
 
 pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, echo=echo.main)
 if(length(files.blast) == 0) stop('No BLAST files provided')
-
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -87,7 +84,7 @@ loop.function <- function(f.blast,
     invisible(file.create(file.log.loop))
   }
   
-  #' --- --- --- --- --- --- --- --- --- --- ---
+  # --- --- --- --- --- --- --- --- --- --- ---
   
   # Remove the '.txt' extension
   pref.comb <- sub("\\.txt$", "", f.blast)
@@ -551,8 +548,7 @@ if(num.cores == 1){
 
 warnings()
 
-pokaz('Done.',
-      file=file.log.main, echo=echo.main)
+pokaz('Done.', file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----

@@ -10,7 +10,7 @@ suppressMessages({
 
 source("utils/utils.R")
 
-pokazStage('Define blocks in the alignemnt')
+# Define blocks in the alignemnt
 
 args = commandArgs(trailingOnly=TRUE)
 

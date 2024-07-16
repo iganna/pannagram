@@ -1,3 +1,5 @@
+# Combine all alignments together into the final one
+
 suppressMessages({
 library(rhdf5)
 library('foreach')
@@ -6,8 +8,6 @@ library("optparse")
 source('utils/utils.R')
 source('pangen/comb_func_mafft_refine.R')
 })
-
-# pokazStage('Step 12. Combine all alignments together into the final one')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -24,7 +24,11 @@ option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to directory with the consensus", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -33,6 +37,10 @@ opt = parse_args(opt_parser, args = args);
 # print(opt)
 
 # ***********************************************************************
+# ---- Logging ----
+
+source('utils/chunk_logging.R') # a common code for all R logging
+
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
@@ -63,19 +71,17 @@ gr.break.b = '/break'
 
 max.block.elemnt = 3 * 10^ 6
 
-
 # ---- Combinations of chromosomes query-base to create the alignments ----
-
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pokaz('Path', path.cons)
-pokaz('Files', files)
+pokaz('Path', path.cons, file=file.log.main, echo=echo.main)
+pokaz('Files', files, file=file.log.main, echo=echo.main)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-pokaz('Reference:', ref.pref)
-pokaz('Combinations', pref.combinations)
+pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
+pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 
 # ***********************************************************************
@@ -87,7 +93,7 @@ stat.comb <- data.frame(comb = character(),
 
 for(s.comb in pref.combinations){
   
-  pokaz('* Combination', s.comb)
+  pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
@@ -118,11 +124,11 @@ for(s.comb in pref.combinations){
   
   
   # ---- Get long alignment positions ----
-  pokaz('Read Long alignments..')
+  pokaz('Read Long alignments..', file=file.log.main, echo=echo.main)
   idx.skip = c()
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
-    # if((i %% 100) == 0) pokaz('Aln', i)
+    # if((i %% 100) == 0) pokaz('Aln', i, file=file.log.main, echo=echo.main)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
     
     if(!file.exists(file.aln)) {
@@ -139,7 +145,7 @@ for(s.comb in pref.combinations){
     # }
 
     
-    # pokaz(file.aln)
+    # pokaz(file.aln, file=file.log.main, echo=echo.main)
     aln.seq = readFastaMy(file.aln)
     
     # # ---  
@@ -206,7 +212,7 @@ for(s.comb in pref.combinations){
   mafft.res$extra[mafft.res$extra < 0] = 0
   
   # ---- Short alignments ----
-  pokaz('Read Short alignments..')
+  pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
   msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
   msa.res$len = unlist(lapply(msa.res$aln, nrow))
   msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
@@ -214,7 +220,7 @@ for(s.comb in pref.combinations){
   msa.res$extra[msa.res$extra < 0] = 0
 
   # ---- Singletons alignments ----
-  pokaz('Read Singletons..')
+  pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
   single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
   single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
   single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
@@ -273,9 +279,9 @@ for(s.comb in pref.combinations){
     pos.end = pos.end.all[[i.pos]]
     pos.delete = rep(0, base.len)
     pos.delete[pos.beg] = 1
-    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete[pos.end] = pos.delete[pos.end]-1
-    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1))
+    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete = cumsum(pos.delete)
     pos.delete[pos.beg] = 0
     pos.delete[pos.end] = 0
@@ -314,7 +320,7 @@ for(s.comb in pref.combinations){
   
   pos.nonzero = fp.main != 0
   for(acc in accessions){
-    pokaz('Accession', acc)
+    pokaz('Accession', acc, file=file.log.main, echo=echo.main)
     v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
     v.aln = rep(0, base.len.aln)
     v.aln[fp.main[pos.nonzero]] = v[pos.nonzero]
@@ -434,3 +440,7 @@ if(F){
   
   
 }
+
+pokaz('Done.', file=file.log.main, echo=echo.main)
+
+

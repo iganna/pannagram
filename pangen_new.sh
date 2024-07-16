@@ -570,9 +570,9 @@ fi
 ((step_num = step_num + 1))
 
 
-# ----------------------------------------------------------------------------
-#            REFERENCE-BASED
-# ----------------------------------------------------------------------------
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                         REFERENCE-BASED                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
 
 for ref0 in "${refs_all[@]}"; do
 
@@ -848,9 +848,8 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1 \
             pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
-
         # Logs for creating the consensus
-        path_log_step="${path_log}step${step_num}_comb_01_one_${ref0}/"
+        path_log_step="${path_log}step${step_num}_comb_01_${ref0}/"
         make_dir ${path_log_step}
 
         Rscript pangen/comb_01_one_ref.R \
@@ -885,20 +884,69 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
 fi
 
 
-echo "MSAAAA"
-exit 0
-# ----------------------------------------------------------------------------
-#            MSA
-# ----------------------------------------------------------------------------
+
+#./pangen_new.sh -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test2 -log 2
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
+# ║                                                                                   ║      /|_||_\`.__
+# ║                                  MSA                                              ║     (   _    _ _\
+# ║                                                                                   ║     =`-(_)--(_)-'
+# ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
+
+with_level 1 pokaz_stage "* MGA is strting * *"
+
+# ----------------------------------------------
+# Run consensus for a pair of files
+ref0=${refs_all[0]}
+
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+    for ((i = 1; i < ${#refs_all[@]}; i++)); do
+        ref1=${refs_all[i]}
+
+        with_level 1 pokaz_stage "Step ${step_num}. Randomisation of alignments. Combine two references: ${ref0} and ${ref1}."
+        # ref1=${ref1//_/$'-'}
+
+        # Logging
+        path_log_step="${path_log}step${step_num}_comb_02_${ref0}_${ref1}/"
+        make_dir ${path_log_step}
+        
+        Rscript pangen/comb_02_two_refs.R \
+                --path.cons ${path_cons} \
+                --ref0 ${ref0} \
+                --ref1 ${ref1} \
+                --cores ${cores} \
+                --path.log ${path_log_step} \
+                --log.level ${log_level}
+
+    done
+
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+fi
+
+((step_num = step_num + 1))
 
 
 # ----------------------------------------------
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+# Common gaps
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
+    with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
 
-    Rscript pangen/comb_03_find_gaps.R --path.cons ${path_cons} --ref.pref ${ref0} --cores ${cores}
+    # Logging
+    path_log_step="${path_log}step${step_num}_comb_03/"
+    make_dir ${path_log_step}
+
+    Rscript pangen/comb_03_find_gaps.R \
+            --path.cons ${path_cons} \
+            --ref.pref ${ref0} \
+            --cores ${cores} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
 
     # Done
     touch "${step_file}"
@@ -912,19 +960,31 @@ fi
 
 ((step_num = step_num + 1))
 
+
 # ----------------------------------------------
 # Create sequences to run MAFFT and perform some small alignments
-pref_mafftin="${path_out}mafft_in/"
-if [ ! -d "$pref_mafftin" ]; then
-    mkdir -p "$pref_mafftin"
+path_mafft_in="${path_out}mafft_in/"
+if [ ! -d "$path_mafft_in" ]; then
+    mkdir -p "$path_mafft_in"
 fi
 
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    log_message 1 "$log_level" "$file_log" pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
+    with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
 
-    Rscript pangen/comb_04_prepare_aln.R --path.cons ${path_cons} --ref.pref ${ref0} --cores ${cores} \
-                      --path.chromosomes ${path_chr_acc} --path.mafft.in ${pref_mafftin}
+    # Logging
+    path_log_step="${path_log}step${step_num}_comb_04/"
+    make_dir ${path_log_step}
+
+    Rscript pangen/comb_04_prepare_aln.R \
+            --path.cons ${path_cons} \
+            --ref.pref ${ref0} \
+            --cores ${cores} \
+            --path.chromosomes ${path_chrom} \
+            --path.mafft.in ${path_mafft_in} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
 
     # Done
     touch "${step_file}"
@@ -940,19 +1000,25 @@ fi
 
 # ----------------------------------------------
 # Run MAFFT
-pref_mafft_out="${path_out}mafft_out/"
-if [ ! -d "$pref_mafft_out" ]; then
-    mkdir -p "$pref_mafft_out"
+path_mafft_out="${path_out}mafft_out/"
+if [ ! -d "$path_mafft_out" ]; then
+    mkdir -p "$path_mafft_out"
 fi
 
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    log_message 1 "$log_level" "$file_log" \
-        pokaz_stage "Step ${step_num}. Run MAFFT."
+    with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
 
-    ./pangen/comb_05_run_mafft.sh  --cores ${cores} \
-                      --path.mafft.in ${pref_mafftin} \
-                      --path.mafft.out ${pref_mafft_out}
+    # Logging
+    path_log_step="${path_log}step${step_num}_comb_05/"
+    make_dir ${path_log_step}
+
+    ./pangen/comb_05_run_mafft.sh \
+            -cores ${cores} \
+            -path_mafft_in ${path_mafft_in} \
+            -path_mafft_out ${path_mafft_out} \
+            -log_path ${path_log_step}
 
     # Done
     touch "${step_file}"
@@ -965,17 +1031,27 @@ if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" 
 fi
 
 ((step_num = step_num + 1))
-
+echo ${step_num}
 # ----------------------------------------------
 # Combine all together
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
 
-    log_message 1 "$log_level" "$file_log" pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    Rscript pangen/comb_06_final_aln.R  --cores ${cores}  --ref.pref ${ref0} \
-                      --path.mafft.in ${pref_mafftin} \
-                      --path.mafft.out ${pref_mafft_out} \
-                      --path.cons ${path_cons} 
+    with_level 1 pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
+
+    # Logging
+    path_log_step="${path_log}step${step_num}_comb_06/"
+    make_dir ${path_log_step}
+
+    Rscript pangen/comb_06_final_aln.R  \
+            --cores ${cores} \
+            --ref.pref ${ref0} \
+            --path.mafft.in ${path_mafft_in} \
+            --path.mafft.out ${path_mafft_out} \
+            --path.cons ${path_cons} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
 
     # Done
     touch "${step_file}"
@@ -994,11 +1070,16 @@ fi
 # Get synteny blocks
 
 aln_type='msa_'
-if [ $start_step -le ${step_num} ] && [ ! -f "$path_flags/step${step_num}_done" ]; then
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    log_message 1 "$log_level" "$file_log" pokaz_message "Step ${step_num}. Get synteny blocks."
+    with_level 1 pokaz_message "Step ${step_num}. Get synteny blocks."
 
-    Rscript analys/analys_01_blocks.R --path.cons ${path_cons} --ref.pref  ${ref0} --cores ${cores} --aln.type ${aln_type}
+    Rscript analys/analys_01_blocks.R \
+            --path.cons ${path_cons} \
+            --ref.pref  ${ref0} \
+            --cores ${cores} \
+            --aln.type ${aln_type}
 
     # Done
     touch "${step_file}"
