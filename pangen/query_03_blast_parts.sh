@@ -110,7 +110,8 @@ run_blast() {
     blastn -db "${ref_file}" -query "${part_file}" -out "${outfile}" \
            -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
            -perc_identity "${p_ident}" -penalty "$penalty" -gapopen "$gapopen" -gapextend "$gapextend" \
-           -max_hsps "$max_hsps" >> "$file_log" 2>&1 # -word_size 50 
+           -max_hsps "$max_hsps" \
+           >> "$file_log" 2>&1 # -word_size 50 
 
     if [ -d "$log_path" ]; then
         echo "Done." >> "$file_log"

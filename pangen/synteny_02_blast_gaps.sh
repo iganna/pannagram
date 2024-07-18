@@ -65,22 +65,35 @@ function process_db {
     query_file_path="$1"
     path_gaps="$2"
     path_db="$3"
+    log_path=${4}
 
     # Extract the file name from the full file path.
     query_file=$(basename "$query_file_path")
     # Replace 'query' with 'base' in the file name.
     base_file="${query_file/query/base}"
 
+    # Create a log file
+    if [ -d "$log_path" ]; then
+        file_log="${log_path}${p_filename}_${ref_chr}_db.log"
+        > "$file_log"
+    else
+        file_log="/dev/null"
+    fi
+
     # Check if BLAST database files do not exist.
     if [ -f "${path_gaps}${base_file}" ] && [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
         # Create BLAST database
         makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null
     fi
+
+    if [ -d "$log_path" ]; then
+        echo "Done." >> "$file_log"
+    fi
 }
 
 export -f process_db
 
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_db {} $path_gaps $path_db
+find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_db {} $path_gaps $path_db ${log_path}
 
 
 # ----------------------------------------------------------------------------

@@ -212,7 +212,7 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
     # Try to define options for number of chromosomes
 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
-        option_nchr=" --all.chr "
+        option_nchr=" --all.chr T"
         option_nchr_ref=" --all.chr T "
     else   # REF and MSA mode
         # Define from files
@@ -518,8 +518,9 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
     # Run the step
     Rscript pangen/query_01_to_chr.R --path.in ${path_in} --path.out ${path_chrom} \
             --cores ${cores}  \
-            ${option_nchr} ${option_accessions}\
-            
+            ${option_nchr} \
+            ${option_accessions} \
+            --path.log ${path_log_step} --log.level ${log_level}
 
     # Done
     touch "${step_file}"
@@ -630,7 +631,9 @@ for ref0 in "${refs_all[@]}"; do
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
         with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
-        with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
+        # with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
+        with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s $((${step_num}-1)) to mask highly repetative regions"
+
 
         # ---- Clean up the output folders ----
         if   [ "$clean_dir" = "T" ]; then 

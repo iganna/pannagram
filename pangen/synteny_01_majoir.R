@@ -294,8 +294,7 @@ loop.function <- function(f.blast,
     x = readRDS(file.aln.pre)
   } # if blast alignment exists
   
-  
-  
+
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
     
@@ -309,7 +308,6 @@ loop.function <- function(f.blast,
     pokaz('Done.', file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
-  
   
   # ---- Get gaps ----
   pokaz('Get gaps', file=file.log.loop, echo=echo.loop)
@@ -348,8 +346,11 @@ loop.function <- function(f.blast,
     # Common file name
     pref.gap = paste('gap_', irow, '_', irow + 1, '_', sep = '')
     
+    # If from another block - don't consider the gap
     if(x$bl[irow] != x$bl[irow+1]) next
-    d1 = x$V2[irow+1] - x$V3[irow]
+    
+    pos = sort(c(x$V2[irow], x$V3[irow], x$V2[irow+1], x$V3[irow+1]))
+    d1 = pos[3] - pos[2]
     
     pos = sort(c(x$V4[irow], x$V5[irow], x$V4[irow+1], x$V5[irow+1]))
     d2 = pos[3] - pos[2]
@@ -378,7 +379,8 @@ loop.function <- function(f.blast,
     if(!((d1 >= len.blast) & (d2 >= len.blast))) next
     
     # Create files for BLAST
-    pos.gap.q = x$V3[irow]:x$V2[irow + 1]
+    pos = sort(c(x$V2[irow], x$V3[irow], x$V2[irow+1], x$V3[irow+1]))
+    pos.gap.q = pos[2]:pos[3]
     pos = sort(c(x$V4[irow], x$V5[irow], x$V4[irow+1], x$V5[irow+1]))
     pos.gap.b = pos[2]:pos[3]
     pos.gap.q = pos.gap.q[-c(1, length(pos.gap.q))]
@@ -554,7 +556,7 @@ pokaz('Done.', file=file.log.main, echo=echo.main)
 # ---- Manual testing ----
 
 if(F){
-  source('synteny_funcs.R')
+  source('../pangen/synteny_func.R')
   source('../utils/utils.R')
   
 }

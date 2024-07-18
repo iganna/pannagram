@@ -13,8 +13,8 @@ source("utils/utils.R")
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--all.chr"), type = "character", default = NULL, 
-              help = "Flag to use all chromosomes, not only the provided number", metavar = "character"),
+  make_option(c("--all.chr"), type = "logical", default = FALSE, 
+              help = "Flag to use all chromosomes, not only the provided number", metavar = "logical"),
   make_option(c("--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
   make_option(c("--part.len"), type = "character", default = NULL, 
@@ -57,8 +57,10 @@ all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
 if(all.chr){
   n.chr <- NULL
 } else {
-  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
+  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), 
+                  stop("The input number of chromosomes 'n.chr' must be specified!"))  
 }
+pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 
 # Set chromosome and parts paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
