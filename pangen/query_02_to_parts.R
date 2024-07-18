@@ -40,7 +40,7 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# pokaz(opt)
+pokaz(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -172,8 +172,7 @@ loop.function <- function(i.comb,
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
   
   if(purge.reps){  # Filter out repeats
-    pokaz('Filterout repeats', 
-          file=file.log.loop, echo=echo.loop)
+    pokaz('Filterout repeats', file=file.log.loop, echo=echo.loop)
     
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
@@ -181,8 +180,18 @@ loop.function <- function(i.comb,
     
     seqs.score = sapply(s, repeatScore)
     
-    writeFastaMy(s[seqs.score <= 0.2], file.out)
-    writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+    if (sum(seqs.score <= 0.2) > 0){
+      writeFastaMy(s[seqs.score <= 0.2], file.out)  
+    } else {
+      pokaz('No good sequences sequences.', file=file.log.loop, echo=echo.loop)
+    }
+    
+    if (sum(seqs.score > 0.2) > 0){
+      writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+    } else {
+      pokaz('No rest sequences.', file=file.log.loop, echo=echo.loop)
+    }
+    
   } else {
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     writeFastaMy(s, file.out)
