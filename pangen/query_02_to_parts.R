@@ -172,6 +172,9 @@ loop.function <- function(i.comb,
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
   
   if(purge.reps){  # Filter out repeats
+    pokaz('Filterout repeats', 
+          file=file.log.loop, echo=echo.loop)
+    
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
