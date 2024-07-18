@@ -375,6 +375,35 @@ mx2profile <- function(mx, gap.flag = F){
   return(pos.profile)
 }
 
+#' ----------------------------------------------------------------------
+#' Convert a Nucleotide Sequence to a Matrix of Words of a Specific Size
+#'
+#' @description
+#' `seq2mx` converts a nucleotide sequence into a matrix representation. This function is used 
+#' in the context of generating a dotplot. It takes a sequence and a window size, then creates 
+#' a matrix where each row represents a segment of the sequence of the specified window size.
+#'
+#' @param seq A character vector representing the nucleotide sequence.
+#' @param wsize The window size (an integer) for segmenting the sequence.
+#'
+#' @return A matrix where each row corresponds to a segment of the sequence, represented 
+#' by `wsize` nucleotides.
+#'
+#' @examples
+#' # Example usage:
+#' seq <- c("A", "C", "T", "G", "A", "C", "T", "G")
+#' wsize <- 3
+#' seq2mx(seq, wsize)
+#'
+#' @export
+#'
+seq2mx <- function(seq, wsize){
+  
+  m <- embed(seq, wsize)
+  matrix_seq <- m[, ncol(m):1]
+  
+  return(matrix_seq)
+}
 
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
@@ -865,7 +894,9 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
 #'
 repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
   
-  substrings <- unlist(stringi::stri_sub_all(s, 1:(nchar(s)-wsize+1), wsize -1 + 1:(nchar(s)-wsize+1)))
+  s.mx <- seq2mx(seq2nt(s), wsize = wsize)
+  substrings <- apply(s.mx, 1, function(s) paste0(s, collapse = ''))
+  # substrings <- unlist(stringi::stri_sub_all(s, 1:(nchar(s)-wsize+1), wsize -1 + 1:(nchar(s)-wsize+1)))
   substrings = sort(substrings)
   cnt <- rle(substrings)
   cnt = cnt$lengths

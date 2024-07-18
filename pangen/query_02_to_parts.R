@@ -25,7 +25,7 @@ option_list <- list(
               help = "pathway to the chromosome directory", metavar = "character"),
   make_option(c("--path.parts"), type = "character", default = NULL, 
               help = "pathway to the parts directory", metavar = "character"),
-  make_option(c("--purge_reps"), type = "character", default = NULL, 
+  make_option(c("--purge.reps"), type = "character", default = NULL, 
               help = "flag to keep or not repeats", metavar = "character"),
   make_option(c("--rev"), type = "character", default = NULL, 
               help = "flag make the reverce sequences", metavar = "character"),
@@ -78,11 +78,11 @@ if(!is.null(opt$part.step)){
 # len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
 
 # Purge repeats by the complexity
-if(is.null(opt$purge_reps)){
-  purge_reps = F
+if(is.null(opt$purge.reps)){
+  purge.reps = F
 } else {
-  purge_reps = as.logical(opt$purge_reps)
-  if(is.na(purge_reps)) stop('Wrong flag for purging repeats')
+  purge.reps = as.logical(opt$purge.reps)
+  if(is.na(purge.reps)) stop('Wrong flag for purging repeats')
 }
 
 
@@ -171,7 +171,7 @@ loop.function <- function(i.comb,
   }
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
   
-  if(purge_reps){  # Filter out repeats
+  if(purge.reps){  # Filter out repeats
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')

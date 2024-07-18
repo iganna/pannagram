@@ -269,7 +269,7 @@ part_len="${part_len:-5000}"
 if [ -z "${purge_reps}" ]; then
     option_purge_reps=" "
 else
-    option_purge_reps=" --purge.reps "
+    option_purge_reps=" --purge.reps T"
 fi
 
 # Reverse parts

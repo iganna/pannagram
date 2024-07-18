@@ -172,35 +172,6 @@ dotfacet.s <- function(seq1, seq2, ...) {
   return(dotfacet(seq2nt(seq1), seq2nt(seq2),...))
 }
 
-#' Convert a Nucleotide Sequence to a Matrix
-#'
-#' @description
-#' `seq2mx` converts a nucleotide sequence into a matrix representation. This function is used 
-#' in the context of generating a dotplot. It takes a sequence and a window size, then creates 
-#' a matrix where each row represents a segment of the sequence of the specified window size.
-#'
-#' @param seq A character vector representing the nucleotide sequence.
-#' @param wsize The window size (an integer) for segmenting the sequence.
-#'
-#' @return A matrix where each row corresponds to a segment of the sequence, represented 
-#' by `wsize` nucleotides.
-#'
-#' @examples
-#' # Example usage:
-#' seq <- c("A", "C", "T", "G", "A", "C", "T", "G")
-#' wsize <- 3
-#' seq2mx(seq, wsize)
-#'
-#' @export
-#'
-seq2mx <- function(seq, wsize){
-  
-  m <- embed(seq, wsize)
-  matrix_seq <- m[, ncol(m):1]
-  
-  return(matrix_seq)
-}
-
 
 #' Compare Two Matrices for Dotplot Generation
 #'
