@@ -266,6 +266,8 @@ p_ident="${p_ident:-85}"
 part_len="${part_len:-5000}"  
 
 # Filter repeats
+echo "repeats ${purge_reps}"
+
 if [ -z "${purge_reps}" ]; then
     option_purge_reps=" "
 else
