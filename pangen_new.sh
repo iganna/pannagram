@@ -27,6 +27,7 @@ unrecognized_options=()
 start_step=100
 while [ $# -gt 0 ]
 do
+    echo $1
     case $1 in
         -h) print_usage_short; print_examples; exit ;;
         -help ) print_usage_detailed; print_examples; exit ;;
@@ -266,7 +267,6 @@ p_ident="${p_ident:-85}"
 part_len="${part_len:-5000}"  
 
 # Filter repeats
-echo "repeats ${purge_reps}"
 
 if [ -z "${purge_reps}" ]; then
     option_purge_reps=" "
