@@ -223,7 +223,8 @@ if(num.cores == 1){
   registerDoParallel(myCluster)
   
   tmp.output = foreach(i.comb = 1:nrow(combinations), 
-                       .packages=c('crayon'),
+                       .packages=c('crayon',
+                                   'stringi'),  # for purging repeats
                        .export = c('n.chr')) %dopar% {
     loop.function(i.comb,
                   echo.loop=echo.loop)
