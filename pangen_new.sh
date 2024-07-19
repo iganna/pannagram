@@ -400,7 +400,7 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
 fi
 
 with_level 2 pokaz_message "Number of chromosomes ${nchr}"
-with_level 2 pokaz_message "Number of cores ${nchr}"
+with_level 2 pokaz_message "Number of cores ${cores}"
 
 # ----------------------------------------------------------------------------
 #            Check reference genomes for MSA

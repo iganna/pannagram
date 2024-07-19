@@ -75,15 +75,28 @@ algn.path <- opt$algn_path
 query.ids <- get_prefixes(algn.path)
 pokaz("Number of pdf files:", length(query.ids), file=file.log.main, echo=echo.main)
 
-ref.name <- normalizePath(file.path(path.ref, paste0(ref, ".fna")), mustWork = FALSE)
+# Find the file with the reference genome
+# ref.name <- normalizePath(file.path(path.ref, paste0(ref, ".fna")), mustWork = FALSE)  # OLD VERSION
+ext <- c('fasta', 'fna', 'fa', 'fas')
+ref.name <- findGenomeFile(genome.pref = ref, 
+                           path.genome = path.ref,
+                           ext = ext)
+if (is.null(ref.name)) stop('No reference genome files found in the specified folder')
+
+# Output folder with plots
 pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork = FALSE)
 dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 
 for (id in query.ids){
-    query.name <- normalizePath(file.path(path.in, paste0(id, ".fna")), mustWork = FALSE)
-    pdf.name <- paste0(ref, "-", id)
-    p <- plotGenomeAgainstRef(algn.path, query.name, ref.name, seq.order="alphanum")
-    savePDF(p, path = pdf.path, name = pdf.name)
+  # query.name <- normalizePath(file.path(path.in, paste0(id, ".fna")), mustWork = FALSE)
+  query.name <- findGenomeFile(genome.pref = id, 
+                               path.genome = path.in,
+                               ext = ext)
+  if (is.null(query.name)) stop('No target genome files found in the specified folder')
+  
+  pdf.name <- paste0(ref, "-", id)
+  p <- plotGenomeAgainstRef(algn.path, query.name, ref.name, seq.order="alphanum")
+  savePDF(p, path = pdf.path, name = pdf.name)
 }
 
 pokaz('Done.',

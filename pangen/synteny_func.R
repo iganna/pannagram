@@ -439,10 +439,16 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
 #'
 #' @return A list containing updated traversal information.
 #'
-graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
+graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, visit.info,
                              forward = F) {
   
-  if(irow == nrow(x.tmp)) return(vist.info)
+  # x.top = x.tmp$V3[1]
+  # y.top = x.tmp$V5[1]
+  # w.beg = 0
+  # w.end = 0
+  # 
+  
+  if(irow == nrow(x.tmp)) return(visit.info)
   
   # Find neighbours
   i.rem = -(1:irow)
@@ -455,7 +461,7 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
   w.pure = x.tmp$w[jrow] - 2 * max.over
   delta = (-x.over + max.over) + (-y.over + max.over)
   
-  d = vist.info$d.to[irow] + delta - w.pure + max.over*2
+  d = visit.info$d.to[irow] + delta - w.pure + max.over*2
   
   
   if((w.end -  w.beg) > 0){
@@ -471,13 +477,13 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
     max.over = pmax(ifelse(x.over > 0, x.over, 0), y.over)
     w.pure = x.tmp$w[jrow.add] - 2 * max.over
 
-    d.add = vist.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
+    d.add = visit.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
 
     jrow = c(jrow, jrow.add)
     d = c(d, d.add)
   }
   
-  if(length(jrow) == 0) return(vist.info)
+  if(length(jrow) == 0) return(visit.info)
   
   # Order neighbours
   order.neighbours <- order(d)
@@ -485,10 +491,10 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
   jrow  <- jrow[order.neighbours]
   
   for (j in 1:length(jrow)) {
-    if(d[j] >= vist.info$d.to[jrow[j]]) next
+    if(d[j] >= visit.info$d.to[jrow[j]]) next
     
-    vist.info$d.to[jrow[j]] = d[j]
-    vist.info$v.prev[jrow[j]] = irow
+    visit.info$d.to[jrow[j]] = d[j]
+    visit.info$v.prev[jrow[j]] = irow
     
     if(x.tmp$V5[jrow[j]] > y.top){  # Продвижение вперед
       # New window
@@ -511,14 +517,14 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
       w.end.next = 0
     }
     
-    vist.info = graphTraverseWnd(x.tmp, jrow[j], 
+    visit.info = graphTraverseWnd(x.tmp, jrow[j], 
                                  x.tmp$V3[jrow[j]], 
                                  max(x.tmp$V5[jrow[j]], y.top), 
                                  w.beg.next, 
                                  w.end.next, 
-                                 vist.info)
+                                 visit.info)
   }
-  return(vist.info)
+  return(visit.info)
 }
 
 #' Reconstruct Path from Predecessor Vector

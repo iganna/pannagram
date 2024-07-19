@@ -8,6 +8,7 @@ suppressMessages({
 
 source("utils/utils.R")
 source("pangen/synteny_func.R")
+source("visualisation/visualisation.R")
 
 # pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 
@@ -208,7 +209,7 @@ loop.function <- function(f.maj,
     
     idx.good = c()
     for(i in 1:length(cnt)){
-      if(i %% 100 == 0) pokaz('Number of analysed gaps', i, file=file.log.loop, echo=echo.loop)
+      if(i %% 100 == 0) pokaz('Pgress: Number of analysed gaps', i, file=file.log.loop, echo=echo.loop)
       
       # name of the node
       s = names(cnt)[i]
@@ -221,6 +222,17 @@ loop.function <- function(f.maj,
       
       # Add two extra "nodes", for the begin and end
       x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx')]
+      x.tmp = x.tmp[order(x.tmp$V2),]
+      
+      # Show plot
+      gg = plotSynDot(x.tmp)
+      dir.create( paste0(path.gaps,'/pdf/'), showWarnings = FALSE, recursive = TRUE)
+      plot.file = paste0(path.gaps,'/pdf/', s, ".pdf")
+      pokaz(plot.file)
+      pdf(plot.file, width=4, height=4)
+      print(gg)
+      dev.off()
+      
       
       if(nrow(x.tmp) > complexity.threshold) next
       
@@ -242,7 +254,7 @@ loop.function <- function(f.maj,
         x.tmp$V4[idx.dir] = x.tmp$V5[idx.dir]
         x.tmp$V5[idx.dir] = tmp  
       }
-      
+
       visit.info = initVisitInfo(nrow(x.tmp))
       
       visit.info2 = graphTraverseWnd(x.tmp, 1, x.tmp$V3[1], x.tmp$V5[1], 0, 0, visit.info)

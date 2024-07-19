@@ -36,3 +36,33 @@ get_prefixes <- function(path) {
   return(unique(prefixes))
 }
 
+
+#' Find Genome Files in Folder
+#'
+#' This function searches for files in the specified directory that start with a given prefix 
+#' and end with one of the specified extensions.
+#'
+#' @param genome.pref A character string representing the prefix of the file names.
+#' @param path.ref A character string representing the directory where the files are searched.
+#' @param ext A character vector of file extensions to search for. Default is c('fasta', 'fna', 'fa', 'fas').
+#' @return A character vector with the names of the matching files. If no files are found, an error is raised.
+#' @examples
+#' ref <- "ref"
+#' path.ref <- "."
+#' findGenomeFile(ref, path.ref)
+#' @export
+findGenomeFile <- function(genome.pref, path.genome, ext = c('fasta', 'fna', 'fa', 'fas')) {
+  # Create the pattern
+  ext.pattern <- paste(ext, collapse = "|")
+  pattern <- paste0("^", genome.pref, ".*\\.(", ext.pattern, ")$")
+  
+  # Search for files in the specified directory
+  ref.files <- list.files(path = path.genome, pattern = pattern, full.names = TRUE)
+  
+  # Check if any files were found and return the result or raise an error
+  if (length(ref.files) == 0) {
+    return(NULL)
+  } else {
+    return(ref.files)
+  }
+}

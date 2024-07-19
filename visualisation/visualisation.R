@@ -99,7 +99,7 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
 }
 
 
-ploDot <- function(..., alpha = 1) {
+plotSynDot <- function(..., alpha = 1) {
   pokazAttention('Please use plotSynteny(..., show.dot=T)')
   p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
   return(p)
@@ -183,8 +183,8 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   # Filter out accession numbers, that are typically present before the space character
   query.labels <- sub("^[^ ]+ ", "", names(fasta.query))
   ref.labels <- sub("^[^ ]+ ", "", names(fasta.ref))
-
-  # =============== reordering ===================
+  
+  # === === === === Reordering === === === ===
   if (seq.order=="descending") {
     order.query <- order(-nchar(fasta.query))
     order.ref <- order(-nchar(fasta.ref))
@@ -207,8 +207,7 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   cum.query <- c(0, cumsum(len.query))
   cum.ref <- c(0, cumsum(len.ref))
   
-  
-  #=========== Filling the new dataframe =====================
+  # === === === Filling the new data.frame === === ===
   df <- data.frame()
   query_prefix <- tools::file_path_sans_ext(basename(query.name))
   for (i in seq_along(fasta.query)) {
