@@ -69,11 +69,13 @@ ref <- opt$ref
 path.ref <- opt$path_ref
 path.in <- opt$path_in
 path.out <- opt$path_out
-algn.path <- opt$algn_path
+path.aln<- opt$algn_path
 
 # Extracting only ids from path
-query.ids <- get_prefixes(algn.path)
-pokaz("Number of pdf files:", length(query.ids), file=file.log.main, echo=echo.main)
+pattern <- ".*_[0-9]+_[0-9]+_maj\\.rds$"
+files.aln <- list.files(path = path.aln, pattern = pattern, full.names = F)
+query.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rds$", "\\1", s)))
+pokaz('Genomes analysed:', query.ids, file=file.log.main, echo=echo.main)
 
 # Find the file with the reference genome
 # ref.name <- normalizePath(file.path(path.ref, paste0(ref, ".fna")), mustWork = FALSE)  # OLD VERSION
@@ -88,14 +90,13 @@ pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork =
 dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 
 for (id in query.ids){
-  # query.name <- normalizePath(file.path(path.in, paste0(id, ".fna")), mustWork = FALSE)
   query.name <- findGenomeFile(genome.pref = id, 
                                path.genome = path.in,
                                ext = ext)
   if (is.null(query.name)) stop('No target genome files found in the specified folder')
   
   pdf.name <- paste0(ref, "-", id)
-  p <- plotGenomeAgainstRef(algn.path, query.name, ref.name, seq.order="alphanum")
+  p <- plotGenomeAgainstRef(path.aln, query.name, ref.name, seq.order="alphanum")
   savePDF(p, path = pdf.path, name = pdf.name)
 }
 

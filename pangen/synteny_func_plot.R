@@ -54,7 +54,8 @@ get_prefixes <- function(path) {
 findGenomeFile <- function(genome.pref, path.genome, ext = c('fasta', 'fna', 'fa', 'fas')) {
   # Create the pattern
   ext.pattern <- paste(ext, collapse = "|")
-  pattern <- paste0("^", genome.pref, ".*\\.(", ext.pattern, ")$")
+  # pattern <- paste0("^", genome.pref, ".*\\.(", ext.pattern, ")$")
+  pattern <- paste0("^", genome.pref, "\\.(", ext.pattern, ")$")
   
   # Search for files in the specified directory
   ref.files <- list.files(path = path.genome, pattern = pattern, full.names = TRUE)
