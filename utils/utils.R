@@ -894,9 +894,9 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
 #'
 repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
   
-  s.mx <- seq2mx(seq2nt(s), wsize = wsize)
-  substrings <- apply(s.mx, 1, function(s) paste0(s, collapse = ''))
-  # substrings <- unlist(stringi::stri_sub_all(s, 1:(nchar(s)-wsize+1), wsize -1 + 1:(nchar(s)-wsize+1)))
+  # s.mx <- seq2mx(seq2nt(s), wsize = wsize)
+  # substrings <- apply(s.mx, 1, function(s) paste0(s, collapse = ''))
+  substrings <- unlist(stringi::stri_sub_all(s, 1:(nchar(s)-wsize+1), wsize -1 + 1:(nchar(s)-wsize+1)))
   substrings = sort(substrings)
   cnt <- rle(substrings)
   cnt = cnt$lengths
