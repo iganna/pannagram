@@ -78,7 +78,6 @@ query.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rd
 pokaz('Genomes analysed:', query.ids, file=file.log.main, echo=echo.main)
 
 # Find the file with the reference genome
-# ref.name <- normalizePath(file.path(path.ref, paste0(ref, ".fna")), mustWork = FALSE)  # OLD VERSION
 ext <- c('fasta', 'fna', 'fa', 'fas')
 ref.name <- findGenomeFile(genome.pref = ref, 
                            path.genome = path.ref,

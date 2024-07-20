@@ -177,44 +177,53 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   }
 
   # Read FASTA files
-  fasta.query <- readFastaMy(query.name)
-  fasta.ref <- readFastaMy(ref.name)
+  query.genome <- readFastaMy(query.name)
+  ref.genome <- readFastaMy(ref.name)
   
   # Filter out accession numbers, that are typically present before the space character
-  query.labels <- sub("^[^ ]+ ", "", names(fasta.query))
-  ref.labels <- sub("^[^ ]+ ", "", names(fasta.ref))
+  query.labels <- sub("^[^ ]+ ", "", names(query.genome))
+  ref.labels <- sub("^[^ ]+ ", "", names(ref.genome))
   
   # === === === === Reordering === === === ===
   if (seq.order=="descending") {
-    order.query <- order(-nchar(fasta.query))
-    order.ref <- order(-nchar(fasta.ref))
+    order.query <- order(-nchar(query.genome))
+    order.ref <- order(-nchar(ref.genome))
   } else if (seq.order == "alphanum"){
     order.query <- order(query.labels)
     order.ref <- order(ref.labels)
   } else if (seq.order == "default"){
-    order.query <- seq(1, length(nchar(fasta.query)))
-    order.ref <- seq(1, length(nchar(fasta.ref)))
+    order.query <- seq(1, length(nchar(query.genome)))
+    order.ref <- seq(1, length(nchar(ref.genome)))
   } else {
     stop("Unknown keyword for `seq.order`. Options: 'default', 'alphanum', 'descending'")
   }
-  fasta.query <- fasta.query[order.query]
-  fasta.ref <- fasta.ref[order.ref]
+  query.genome <- query.genome[order.query]
   query.labels <- query.labels[order.query]
+  
+  ref.genome <- ref.genome[order.ref]
   ref.labels <- ref.labels[order.ref]
   
-  len.query <- nchar(fasta.query)
-  len.ref <- nchar(fasta.ref)
+  # Cummulative lengths
+  len.query <- nchar(query.genome)
+  len.ref <- nchar(ref.genome)
   cum.query <- c(0, cumsum(len.query))
   cum.ref <- c(0, cumsum(len.ref))
   
   # === === === Filling the new data.frame === === ===
   df <- data.frame()
   query_prefix <- tools::file_path_sans_ext(basename(query.name))
-  for (i in seq_along(fasta.query)) {
-    for (j in seq_along(fasta.ref)) {
+  max.ref.chr = 0
+  max.query.chr = 0
+  for (i in seq_along(query.genome)) {
+    for (j in seq_along(ref.genome)) {
       file_name = paste0(query_prefix, "_", order.query[i], "_", order.ref[j], "_maj.rds")
       file_path = file.path(alignments.path, file_name)
       if (file.exists(file_path)) {
+        # Max chr numbers
+        max.query.chr = i
+        max.ref.chr = j
+        
+        # Synteny
         data.ij <- readRDS(file_path)
         data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.query[i]
         data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[j]
@@ -225,6 +234,8 @@ plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
   
   v.plasmid.divisors = cum.query[-length(cum.query)]
   h.plasmid.divisors = cum.ref[-length(cum.ref)]
+  
+  
   
   synteny.plot = plotSynteny(df,
                    query.label = query.label,

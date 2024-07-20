@@ -224,14 +224,14 @@ loop.function <- function(f.maj,
       x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx')]
       x.tmp = x.tmp[order(x.tmp$V2),]
       
-      # Show plot
-      gg = plotSynDot(x.tmp)
-      dir.create( paste0(path.gaps,'/pdf/'), showWarnings = FALSE, recursive = TRUE)
-      plot.file = paste0(path.gaps,'/pdf/', s, ".pdf")
-      pokaz(plot.file)
-      pdf(plot.file, width=4, height=4)
-      print(gg)
-      dev.off()
+      # # Show plot
+      # gg = plotSynDot(x.tmp)
+      # dir.create( paste0(path.gaps,'/pdf/'), showWarnings = FALSE, recursive = TRUE)
+      # plot.file = paste0(path.gaps,'/pdf/', s, ".pdf")
+      # pokaz(plot.file)
+      # pdf(plot.file, width=4, height=4)
+      # print(gg)
+      # dev.off()
       
       
       if(nrow(x.tmp) > complexity.threshold) next
