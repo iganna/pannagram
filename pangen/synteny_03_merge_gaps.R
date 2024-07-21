@@ -111,11 +111,11 @@ loop.function <- function(f.maj,
   
   # If the full file has been already created - next
   file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
-  # if(file.exists(file.aln.full)) {
-  #   pokaz('File exist', file.aln.full, file=file.log.loop, echo=echo.loop)
-  #   pokaz('Done.', file=file.log.loop, echo=echo.loop)
-  #   return(NULL)
-  # }
+  if(file.exists(file.aln.full)) {
+    pokaz('File exist', file.aln.full, file=file.log.loop, echo=echo.loop)
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    return(NULL)
+  }
   
   pokaz('Alignment:', acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   
@@ -530,4 +530,18 @@ warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
+
+
+
+# ---- Manual testing  ----
+
+# Bash:
+#for file in *; do
+#  if [ -f "$file" ]; then
+#    last_line=$(tail -n 1 "$file")
+#    if [[ "$last_line" != *Done* ]]; then
+#      echo "$file: $last_line"
+#    fi
+#  fi
+#done
 

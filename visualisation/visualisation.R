@@ -164,90 +164,105 @@ plotPanAcc <- function(file.msa, acc){
 #'
 #' @import ggplot2
 #' @export
-plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
+plotGenomeAgainstRef <- function(alignments.path, acc.name, ref.name,
                                  seq.order = "default",
-                                 query.label = NULL,
+                                 acc.label = NULL,
                                  ref.label = NULL) {
   # if none given, deducing axis labels straight from filenames
-  if (is.null(query.label)) {
-    query.label <- tools::file_path_sans_ext(basename(query.name))
+  if (is.null(acc.label)) {
+    acc.label <- tools::file_path_sans_ext(basename(acc.name))
   }
   if (is.null(ref.label)) {
     ref.label <- tools::file_path_sans_ext(basename(ref.name))
   }
 
   # Read FASTA files
-  query.genome <- readFastaMy(query.name)
+  acc.genome <- readFastaMy(acc.name)
   ref.genome <- readFastaMy(ref.name)
   
   # Filter out accession numbers, that are typically present before the space character
-  query.labels <- sub("^[^ ]+ ", "", names(query.genome))
+  acc.labels <- sub("^[^ ]+ ", "", names(acc.genome))
   ref.labels <- sub("^[^ ]+ ", "", names(ref.genome))
   
   # === === === === Reordering === === === ===
   if (seq.order=="descending") {
-    order.query <- order(-nchar(query.genome))
+    order.acc <- order(-nchar(acc.genome))
     order.ref <- order(-nchar(ref.genome))
   } else if (seq.order == "alphanum"){
-    order.query <- order(query.labels)
+    order.acc <- order(acc.labels)
     order.ref <- order(ref.labels)
   } else if (seq.order == "default"){
-    order.query <- seq(1, length(nchar(query.genome)))
+    order.acc <- seq(1, length(nchar(acc.genome)))
     order.ref <- seq(1, length(nchar(ref.genome)))
   } else {
     stop("Unknown keyword for `seq.order`. Options: 'default', 'alphanum', 'descending'")
   }
-  query.genome <- query.genome[order.query]
-  query.labels <- query.labels[order.query]
+  acc.genome <- acc.genome[order.acc]
+  acc.labels <- acc.labels[order.acc]
   
   ref.genome <- ref.genome[order.ref]
   ref.labels <- ref.labels[order.ref]
   
   # Cummulative lengths
-  len.query <- nchar(query.genome)
+  len.acc <- nchar(acc.genome)
   len.ref <- nchar(ref.genome)
-  cum.query <- c(0, cumsum(len.query))
+  cum.acc <- c(0, cumsum(len.acc))
   cum.ref <- c(0, cumsum(len.ref))
   
   # === === === Filling the new data.frame === === ===
   df <- data.frame()
-  query_prefix <- tools::file_path_sans_ext(basename(query.name))
+  acc_prefix <- tools::file_path_sans_ext(basename(acc.name))
   max.ref.chr = 0
-  max.query.chr = 0
-  for (i in seq_along(query.genome)) {
+  max.acc.chr = 0
+  for (i in seq_along(acc.genome)) {
     for (j in seq_along(ref.genome)) {
-      file_name = paste0(query_prefix, "_", order.query[i], "_", order.ref[j], "_maj.rds")
+      file_name = paste0(acc_prefix, "_", order.acc[i], "_", order.ref[j], "_maj.rds")
       file_path = file.path(alignments.path, file_name)
       if (file.exists(file_path)) {
         # Max chr numbers
-        max.query.chr = i
+        max.acc.chr = i
         max.ref.chr = j
         
         # Synteny
         data.ij <- readRDS(file_path)
-        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.query[i]
+        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.acc[i]
         data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[j]
         df <- rbind(df, data.ij)
       }
     }
   }
   
-  v.plasmid.divisors = cum.query[-length(cum.query)]
-  h.plasmid.divisors = cum.ref[-length(cum.ref)]
+  v.sep.acc = cum.acc[-length(cum.acc)]
+  h.sep.ref = cum.ref[-length(cum.ref)]
+  
+  # Annotations
+  annot.acc = data.frame(x = cum.acc[-1], 
+                           y = rep(0, length(cum.acc) - 1),
+                           label = acc.labels)
+  annot.ref = data.frame(x = rep(0, length(cum.ref) - 1), 
+                           y = cum.ref[-1],
+                           label = ref.labels)
+  
+  # Remain only the existing chromosomes
+  v.sep.acc = v.sep.acc[1:max.acc.chr]
+  h.sep.ref = h.sep.ref[1:max.ref.chr]
+  
+  annot.acc = annot.acc[1:max.acc.chr,]
+  annot.ref = annot.ref[1:max.ref.chr,]
   
   
-  
+  # Plot
   synteny.plot = plotSynteny(df,
-                   query.label = query.label,
+                   acc.label = acc.label,
                    ref.label = ref.label,
-                   hlines = h.plasmid.divisors,
-                   vlines = v.plasmid.divisors,
+                   hlines = h.sep.ref,
+                   vlines = v.sep.acc,
                    col.line = "#3530D966",
                    show.point = TRUE,
                    expand = c(0, 0)
   ) +
-    annotate("text", x = cum.query[-1], y = rep(0, length(cum.query) - 1),
-             label = query.labels,
+    annotate("text", x = cum.acc[-1], y = rep(0, length(cum.acc) - 1),
+             label = acc.labels,
              vjust = -0.3, hjust = -0.02,
              size = 2.7, angle=90,
              color = "#7D7D7D") +
