@@ -8,7 +8,7 @@ suppressMessages({
 
 source("utils/utils.R")
 source("pangen/synteny_func.R")
-source("visualisation/visualisation.R")
+# source("visualisation/visualisation.R")
 
 # pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
 
@@ -472,16 +472,16 @@ loop.function <- function(f.maj,
   rownames(x.comb) = NULL
   
   
-  # To catch possible bugs
-  if(T){
-    file.ws = "tmp_workspace.RData"
-
-    all.local.objects <- ls()
-    save(list = all.local.objects, file = file.ws)
-
-    pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-    stop('Enough..')
-  }
+  # # To catch possible bugs
+  # if(T){
+  #   file.ws = "tmp_workspace.RData"
+  # 
+  #   all.local.objects <- ls()
+  #   save(list = all.local.objects, file = file.ws)
+  # 
+  #   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+  #   stop('Enough..')
+  # }
   
   
   # ---- Check uniqueness ---- 
