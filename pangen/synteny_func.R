@@ -1,3 +1,36 @@
+glueZero <- function(x){
+  x = x[order(x$V2),]
+  
+  ipos = 1
+  while(ipos < nrow(x)) {
+    # print(ipos)
+    idx = which((x[,'V4'] == (x[ipos,'V5'] + 1)) & (x[,'V2'] == (x[ipos,'V3'] + 1)))
+    if (length(idx) == 0){
+      ipos = ipos+1
+      next
+    }
+    # if(idx != (ipos+1)) print(idx)  # glue with not the next record
+    
+    x[ipos, 'V3'] <- x[idx, 'V3']
+    x[ipos, 'V5'] <- x[idx, 'V5']
+    x[ipos, 'V7'] <- x[ipos, 'V7'] + x[idx, 'V7']
+    x[ipos, 'V8'] <- paste(x[ipos, 'V8'], x[idx, 'V8'], sep = '')
+    x[ipos, 'V9'] <- paste(x[ipos, 'V9'], x[idx, 'V9'], sep = '')
+    x <- x[-idx,]
+  }
+  
+  rownames(x) <- NULL
+  return(x)
+}
+
+glueZero2 <- function(x){
+  
+  
+}
+
+
+
+
 #' Clean All Overlaps in a Data Frame
 #'
 #' This function cleans both big and small overlaps in the provided data frame.

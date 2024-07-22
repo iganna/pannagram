@@ -1,0 +1,213 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+
+
+x = load('/Volumes/Samsung_T5/vienn/pannagram_test/tmp_workspace.RData')
+
+
+y = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/acc_GCA_034639625_1_qchr_1_bchr_1_out.txt')
+plotSynDot(y)
+
+
+z = readFastaMy('/Volumes/Samsung_T5/vienn/pannagram_test/acc_GCA_034639625_1_qchr_1_bchr_1_base.fasta')
+
+z = readFastaMy('/Volumes/Samsung_T5/vienn/pannagram_test/cabbage/acc_GCA_034639625_1_qchr_1_bchr_1_base.fasta')
+
+z.len = unname(nchar(z))
+max(z.len)
+
+
+s = seq2nt(z[z.len == max(z.len)])
+dotplot(s[1:10000], s[:10000], 15, 14)
+
+```
+
+
+
+# Read gaps
+```{r}
+
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml14_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml4_qchr_1_bchr_1_gap_663_664'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml18_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml18_qchr_1_bchr_1_gap_1167_1168'
+substring = 'acc_ml18_qchr_1_bchr_1_gap_1170_1171'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml20_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml20_qchr_1_bchr_1_gap_648_649'
+substring = 'acc_ml20_qchr_1_bchr_1_gap_580_581'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml29_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml29_qchr_1_bchr_1_gap_563_564'
+substring = 'acc_ml29_qchr_1_bchr_1_gap_666_667'
+substring = 'acc_ml29_qchr_1_bchr_1_gap_684_685'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml42_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml42_qchr_1_bchr_1_gap_541_542'
+
+
+indices <- intersect(which(grepl(substring, x$V1)),
+                     which(grepl(substring, x$V10)))
+
+df.gap = x[indices,]
+
+
+
+df.gap$q.beg = as.numeric(sapply(df.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+df.gap$b.beg = as.numeric(sapply(df.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+
+df.gap$q.end = as.numeric(sapply(df.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+df.gap$b.end = as.numeric(sapply(df.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+
+df.gap$V2 = df.gap$V2 + df.gap$q.beg
+df.gap$V3 = df.gap$V3 + df.gap$q.beg
+df.gap$V4 = df.gap$V4 + df.gap$b.beg
+df.gap$V5 = df.gap$V5 + df.gap$b.beg
+df.gap$idx = 1:nrow(df.gap)
+df.gap$dir = (df.gap$V4 > df.gap$V5) * 1
+
+plotSynDot(df.gap)
+
+```
+
+```{r}
+
+# df.gap = glueZero(df.gap)
+# plotSynDot(x.gap)
+
+x.ticks = sort(unique(c(df.gap$V2, df.gap$V3+1)))
+y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
+
+cell.x.pos = data.frame(beg = x.ticks[-length(x.ticks)], end = x.ticks[-1]-1)
+cell.y.pos = data.frame(beg = y.ticks[-length(y.ticks)], end = y.ticks[-1]-1)
+
+pos.x.attr = rep(0, max(cell.x.pos$end))
+pos.y.attr = rep(0, max(cell.x.pos$end))
+
+mx = matrix(0, nrow = nrow(cell.x.pos), ncol = nrow(cell.y.pos))
+
+x.list = list()
+for(irow in 1:nrow(df.gap)){
+  pos.tmp = which((cell.x.pos$beg >= df.gap$V2[irow]) & (cell.x.pos$end <= df.gap$V3[irow]))
+  x.list[[irow]] = pos.tmp
+}
+
+y.list = list()
+for(irow in 1:nrow(df.gap)){
+  pos.tmp = which((cell.y.pos$beg >= df.gap$V4[irow]) & (cell.y.pos$end <= df.gap$V5[irow]))
+  y.list[[irow]] = pos.tmp
+}
+
+
+
+
+```
+
+
+
+
+
+# Prepare data
+```{r}
+# SORT DIR
+tmp = df.gap$V4[df.gap$dir == 1]
+df.gap$V4[df.gap$dir == 1] = df.gap$V5[df.gap$dir == 1]
+df.gap$V5[df.gap$dir == 1] = tmp
+
+
+x.min = df.gap$V2[1]
+y.min = min(df.gap$V4)
+df.gap[,c('V2', 'V3')] = df.gap[,c('V2', 'V3')] - x.min + 1
+df.gap[,c('V4', 'V5')] = df.gap[,c('V4', 'V5')] - y.min + 1
+df.gap$len.y = df.gap$V5 - df.gap$V4  + 1
+
+plotSynDot(df.gap)
+```
+
+# Function
+```{r}
+overlap.cutoff = 0.2
+
+traverseBlastGaps <- function(pos.x, pos.y.occ, idx.added) {
+  
+  d.x <- df.gap$V3 - pos.x
+  idx.next <- which(d.x > 0)
+  
+  # pokaz(pos.x, length(idx.next))
+  
+  if(length(idx.next) > 0) {
+    best.score = 0
+    best.res = NULL
+    for(i.next in idx.next) {
+      # pokaz(pos.x, i.next)
+      
+      pos.y.i.next <- df.gap$V4[i.next]:df.gap$V5[i.next]
+      y.overlap <- sum(pos.y.occ[pos.y.i.next] > 0) / df.gap$len.y[i.next] 
+      
+      if(y.overlap >= overlap.cutoff) next
+      
+      # Push the next fragment
+      pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] + 1
+      idx.added <- c(idx.added, i.next)
+      pos.x <- df.gap$V3[i.next]
+      
+      # Recursion
+      res = traverseBlastGaps(pos.x, pos.y.occ, idx.added)
+      if(res$score > best.score){
+        best.score = res$score
+        best.res = res
+      }
+      
+      # Pop the next fragment
+      pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] - 1 
+      idx.added = idx.added[-length(idx.added)]
+    }
+    
+    if(best.score != 0){
+      return(best.res)
+    } else {
+      score = sum(pos.y.occ > 0)
+      return(list(score = score, idx.added = idx.added))
+    }
+    
+  } else {
+    # Score at the end of the path
+    score = sum(pos.y.occ > 0)
+    return(list(score = score, idx.added = idx.added))
+  }
+}
+```
+
+# Run
+```{r}
+pos.y.occ = rep(0, max(df.gap$V5))
+pox.x = 0
+idx.added = c()
+
+res = traverseBlastGaps(pos.x.curr, pos.y.occ, idx.added)
+
+plotSynDot(df.gap)
+
+plotSynDot(df.gap[res$idx.added,])
+
+
+
+
+
+```
+
+
+
+
+
+
