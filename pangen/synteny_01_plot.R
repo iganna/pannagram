@@ -121,7 +121,7 @@ for (acc in acc.ids){
                                  len = nchar(seq.chr))
         chr.len = rbind(chr.len, chr.len.tmp)
       }
-      write.table(chr.len, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
+      write.table(chr.len, file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
     }
   }
   if (is.null(acc)) stop('No target genome files found in the specified folder')
