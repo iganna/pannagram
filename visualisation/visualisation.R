@@ -219,7 +219,6 @@ plotGenomeAgainstRef <- function(alignments.path, acc.name, ref.name,
     for (j in seq_along(ref.genome)) {
       file_name = paste0(acc_prefix, "_", order.acc[i], "_", order.ref[j], "_maj.rds")
       file_path = file.path(alignments.path, file_name)
-
       if (file.exists(file_path)) {
         # Max chr numbers
         max.acc.chr = i
