@@ -5,4 +5,4 @@ analys/sv_old
 log*
 loop*
 .DS_Store
-
+tmp*
