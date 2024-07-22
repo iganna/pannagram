@@ -111,9 +111,9 @@ for (acc in acc.ids){
       chr.len = rbind(chr.len, chr.len.id)  
     } else {
       for(i.chr in 1:1e10){
-        file.chr =  paste0(path.chr, id, '_chr_',i.chr,'.fasta')
+        file.chr =  paste0(path.chr, id, '_chr',i.chr,'.fasta')
         pokaz('Chromosomel file', file.chr)
-        if(!file.exists(file.chr)) next
+        if(!file.exists(file.chr)) break
         pokaz('yes')
         seq.chr = readFastaMy(file.chr)
         chr.len.tmp = data.frame(acc = id,
