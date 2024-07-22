@@ -500,6 +500,9 @@ loop.function <- function(f.blast,
       pos.gap.b = begs[irow]:ends[irow]
       
       s.b = base.fas.fw[pos.gap.b]
+      
+      if((sum(s.b == 'N') + sum(s.b == 'n')) > length(s.b) / 2) next
+      
       s.b = nt2seq(s.b)
       
       s.base.names = paste(pref.comarisson,

@@ -521,7 +521,6 @@ loop.function <- function(f.maj,
 
 
 if(num.cores == 1){
-  pokaz('XXX')
   file.log.loop = paste0(path.log, 'loop_all.log')
   invisible(file.create(file.log.loop))
   for(f.maj in files.maj){
