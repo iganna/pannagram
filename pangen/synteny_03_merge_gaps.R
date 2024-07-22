@@ -88,7 +88,7 @@ loop.function <- function(f.maj,
     invisible(file.create(file.log.loop))
   }
   
-  # Parser for BLAST-resulr file
+  # Parser for BLAST-result file
   parts <- strsplit(pref.comb, "_")[[1]]
   
   base.chr <- parts[length(parts) - 1]
@@ -97,7 +97,6 @@ loop.function <- function(f.maj,
   acc <- paste0(parts, collapse = '_')
   
   pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
-  
   
   pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
   
@@ -472,6 +471,19 @@ loop.function <- function(f.maj,
   x.comb = x.comb[order(x.comb$V2),]
   rownames(x.comb) = NULL
   
+  
+  # To catch possible bugs
+  if(T){
+    file.ws = "tmp_workspace.RData"
+
+    all.local.objects <- ls()
+    save(list = all.local.objects, file = file.ws)
+
+    pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+    stop('Enough..')
+  }
+  
+  
   # ---- Check uniqueness ---- 
   pos.q.occup = rep(0, max.chr.len)
   x.sk1 = x.comb
@@ -479,7 +491,10 @@ loop.function <- function(f.maj,
   # x.sk1 = x.bw
   for(irow in 1:nrow(x.sk1)){
     pp = x.sk1$V4[irow]:x.sk1$V5[irow]
-    if(sum(pos.q.occup[pp]) > 0) stop('non-unique')
+    if(sum(pos.q.occup[pp]) > 0) {
+      pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
+      stop('non-unique') 
+    }
     pos.q.occup[pp] = pos.q.occup[pp] + 1
   }
   sum(pos.q.occup > 1)
@@ -506,6 +521,7 @@ loop.function <- function(f.maj,
 
 
 if(num.cores == 1){
+  pokaz('XXX')
   file.log.loop = paste0(path.log, 'loop_all.log')
   invisible(file.create(file.log.loop))
   for(f.maj in files.maj){
@@ -531,8 +547,6 @@ warnings()
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
 
-
-
 # ---- Manual testing  ----
 
 # Bash:
@@ -544,4 +558,16 @@ pokaz('Done.',
 #    fi
 #  fi
 #done
+
+
+# To catch possible bugs
+# if(file.gaps.out == 'your_filename.txt'){
+#   file.ws = "tmp_workspace.RData"
+#   
+#   all.local.objects <- ls()
+#   save(list = all.local.objects, file = file.ws)
+#   
+#   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+#   stop('Enough..')
+# }
 
