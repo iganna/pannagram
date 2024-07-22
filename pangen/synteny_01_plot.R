@@ -89,6 +89,7 @@ pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork =
 dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 
 for (id in query.ids){
+  pokaz('Accession', id, file=file.log.main, echo=echo.main)
   query.name <- findGenomeFile(genome.pref = id, 
                                path.genome = path.in,
                                ext = ext)
