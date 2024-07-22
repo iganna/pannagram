@@ -112,8 +112,9 @@ for (acc in acc.ids){
     } else {
       for(i.chr in 1:1e10){
         file.chr =  paste0(path.chr, id, '_chr_',i.chr,'.fasta')
-        # pokaz('Chromosomel file', file.chr)
-        if(!file.exists()) next
+        pokaz('Chromosomel file', file.chr)
+        if(!file.exists(file.chr)) next
+        pokaz('yes')
         seq.chr = readFastaMy(file.chr)
         chr.len.tmp = data.frame(acc = id,
                                  chr = i.chr,
