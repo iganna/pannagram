@@ -40,7 +40,7 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# pokaz(opt)
+pokaz(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -56,11 +56,13 @@ num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
 if(all.chr){
   n.chr <- NULL
+  pokaz('Number of chromosomes: ALL', file=file.log.main, echo=echo.main)
 } else {
   n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), 
                   stop("The input number of chromosomes 'n.chr' must be specified!"))  
+  pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 }
-pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
+
 
 # Set chromosome and parts paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))

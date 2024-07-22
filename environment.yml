@@ -9,7 +9,7 @@ dependencies:
   - r-optparse==1.7.5
   - r-doparallel==1.0.17
   - r-ggplot2==3.5.1
-  - r-stringi-1.8.4
+  - r-stringi==1.8.4
   - bioconductor-rhdf5==2.46.1
   - bioconductor-muscle==3.44.0
   

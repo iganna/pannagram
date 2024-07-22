@@ -23,17 +23,17 @@ option_list <- list(
         help = "Path to reference sequence",
         metavar = "character"
     ),
-    make_option(c("--path_in"),
-        type = "character",
-        default = NULL,
-        help = "Path to genome fasta files",
-        metavar = "character"
-    ),
     make_option(c("--path_out"),
         type = "character",
         default = NULL,
         help = "Path to the output directory",
         metavar = "character"
+    ),
+    make_option(c("--path_chr"),
+                type = "character",
+                default = NULL,
+                help = "Path to chromosomes",
+                metavar = "character"
     ),
     make_option(c("--algn_path"),
         type = "character",
@@ -60,44 +60,73 @@ source('utils/chunk_logging.R') # a common code for all R logging
 if (
     is.null(opt$ref) ||
     is.null(opt$path_ref) ||
-    is.null(opt$path_in) ||
+    is.null(opt$path_chr) ||
     is.null(opt$path_out) ||
     is.null(opt$algn_path)
 ) stop("All mandatory arguments must be provided.")
 
 ref <- opt$ref
 path.ref <- opt$path_ref
-path.in <- opt$path_in
+path.chr <- opt$path_chr
 path.out <- opt$path_out
 path.aln<- opt$algn_path
 
 # Extracting only ids from path
 pattern <- ".*_[0-9]+_[0-9]+_maj\\.rds$"
 files.aln <- list.files(path = path.aln, pattern = pattern, full.names = F)
-query.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rds$", "\\1", s)))
-pokaz('Genomes analysed:', query.ids, file=file.log.main, echo=echo.main)
+acc.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rds$", "\\1", s)))
+pokaz('Genomes analysed:', acc.ids, file=file.log.main, echo=echo.main)
 
-# Find the file with the reference genome
-ext <- c('fasta', 'fna', 'fa', 'fas')
-ref.name <- findGenomeFile(genome.pref = ref, 
-                           path.genome = path.ref,
-                           ext = ext)
-if (is.null(ref.name)) stop('No reference genome files found in the specified folder')
+# # Find the file with the reference genome
+# ext <- c('fasta', 'fna', 'fa', 'fas')
+# ref.name <- findGenomeFile(genome.pref = ref, 
+#                            path.genome = path.ref,
+#                            ext = ext)
+# if (is.null(ref.name)) stop('No reference genome files found in the specified folder')
 
 # Output folder with plots
 pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork = FALSE)
 dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 
-for (id in query.ids){
-  pokaz('Accession', id, file=file.log.main, echo=echo.main)
-  query.name <- findGenomeFile(genome.pref = id, 
-                               path.genome = path.in,
-                               ext = ext)
-  if (is.null(query.name)) stop('No target genome files found in the specified folder')
+print(path.aln)
+
+for (acc in acc.ids){
+  pokaz('Accession', acc, file=acc, echo=echo.main)
+  
+  # Lengths of chromosomes for the accession and reference
+  chr.len = c()
+  for(id in c(ref, acc)){
+    file.chr.len = paste0(path.chr, id, '_chr_len.txt')  
+    pokaz(file.chr.len)
+    if(file.exists(file.chr.len)){
+      chr.len.id = read.table(file.chr.len, header=T)
+      chr.len = rbind(chr.len, chr.len.id)  
+    } else {
+      for(i.chr in 1:Inf){
+        file.chr =  paste0(path.chr, id, '_chr_',i.chr,'.fasta')
+        pokaz('Chromosomel file', file.chr)
+        if(!file.exists()) next
+        seq.chr = readFastaMy(file.chr)
+        chr.len.tmp = data.frame(acc = id,
+                                 chr = i.chr,
+                                 len = nchar(seq.chr))
+        chr.len = rbind(chr.len, chr.len.tmp)
+      }
+    }
+  }
+  pokaz(chr.len)
+  
+  if (is.null(acc)) stop('No target genome files found in the specified folder')
   
   pdf.name <- paste0(ref, "-", id)
-  p <- plotGenomeAgainstRef(path.aln, query.name, ref.name, seq.order="alphanum")
-  savePDF(p, path = pdf.path, name = pdf.name)
+  
+  # print(acc)
+  # print(ref.name)
+  # p <- plotGenomeAgainstRef(path.aln, 
+  #                           acc.name=acc, 
+  #                           ref.name=ref, 
+  #                           seq.order="alphanum")
+  # savePDF(p, path = pdf.path, name = pdf.name)
 }
 
 pokaz('Done.',

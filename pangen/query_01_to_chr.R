@@ -162,10 +162,12 @@ loop.function <- function(i.acc,
   }
  
   # ***********************************
+  # When no chromosome-files were produced before
   
   pokaz('Accession', acc,
         file=file.log.loop, echo=echo.loop)
   q.fasta = readFastaMy(paste0(path.query, query.name$file[i.acc], collapse = ''))
+  
   
   if(all.chr){ # if to analyse all chromosomes
     n.chr = length(q.fasta)
@@ -176,6 +178,14 @@ loop.function <- function(i.acc,
                    file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
+  
+  # Chromosomal lengths
+  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+  df.chr.lengths = data.frame(acc = acc,
+                              chr = 1:length(q.fasta),
+                              len = nchar(q.fasta))
+  write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
+  
   
   if(sort.by.lengths){
     q.len = sapply(q.fasta, nchar)
@@ -196,7 +206,7 @@ loop.function <- function(i.acc,
     acc.s = acc
     file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
     if(file.exists(file.out)){
-      return(NULL)
+      next
     }
     pokaz('File out:', file.out,
                    file=file.log.loop, echo=echo.loop)
@@ -209,6 +219,7 @@ loop.function <- function(i.acc,
   
   pokaz('Done.',
         file=file.log.loop, echo=echo.loop)
+  return(NULL)
 }
   
 # ***********************************************************************

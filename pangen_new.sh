@@ -750,7 +750,7 @@ for ref0 in "${refs_all[@]}"; do
         Rscript pangen/synteny_01_plot.R \
                 --ref ${ref0} \
                 --path_ref ${path_ref} \
-                --path_in ${path_in} \
+                --path_chr ${path_chrom} \
                 --path_out ${path_out} \
                 --algn_path ${path_alignment} \
                 --path.log ${path_log_step} \
