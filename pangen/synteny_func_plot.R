@@ -25,10 +25,10 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 #' @examples
 #' \dontrun{
 #'   # Get unique prefixes in the current directory
-#'   get_prefixes(".")
+#'   getPrefixes(".")
 #' }
 #' @export
-get_prefixes <- function(path) {
+getPrefixes <- function(path) {
   files <- list.files(path)
   files_with_underscore <- files[grepl("_", files)]
   split_files <- strsplit(files_with_underscore, "_")
@@ -36,34 +36,50 @@ get_prefixes <- function(path) {
   return(unique(prefixes))
 }
 
-
-#' Find Genome Files in Folder
+#' In given directory find FASTA file with chosen basename (no matter what extension)
 #'
-#' This function searches for files in the specified directory that start with a given prefix 
-#' and end with one of the specified extensions.
+#' Returns absolute path to fasta file, given its basename is unique in the directory
+#' Throws descriptive error otherwise. No support for compressed FASTAs currently
 #'
-#' @param genome.pref A character string representing the prefix of the file names.
-#' @param path.ref A character string representing the directory where the files are searched.
-#' @param ext A character vector of file extensions to search for. Default is c('fasta', 'fna', 'fa', 'fas').
-#' @return A character vector with the names of the matching files. If no files are found, an error is raised.
-#' @examples
-#' ref <- "ref"
-#' path.ref <- "."
-#' findGenomeFile(ref, path.ref)
+#' @param directory Character string specifying the path to the directory.
+#' @param basename Character string with no fasta suffix
+#' @return A character string with absolute file path
+#'
 #' @export
-findGenomeFile <- function(genome.pref, path.genome, ext = c('fasta', 'fna', 'fa', 'fas')) {
-  # Create the pattern
-  ext.pattern <- paste(ext, collapse = "|")
-  # pattern <- paste0("^", genome.pref, ".*\\.(", ext.pattern, ")$")
-  pattern <- paste0("^", genome.pref, "\\.(", ext.pattern, ")$")
+findGenomeFile <- function(directory, basename) {
+  extensions <- c('.fasta', '.fna', '.fa', '.fas')
+  extensions <- c(extensions, toupper(extensions))
   
-  # Search for files in the specified directory
-  ref.files <- list.files(path = path.genome, pattern = pattern, full.names = TRUE)
+  compressed.extensions <- c('.gz', '.zip', '.bz2', '.xz')
+  compressed.extensions <- c(compressed.extensions, toupper(compressed.extensions))
   
-  # Check if any files were found and return the result or raise an error
-  if (length(ref.files) == 0) {
-    return(NULL)
-  } else {
-    return(ref.files)
+  found.files <- character(0)
+  
+  for (ext in extensions) {
+    filename <- file.path(directory, paste0(basename, ext))
+    if (file.exists(filename)) {
+      found.files <- c(found.files, filename)
+    }
   }
+
+  if (length(found.files) > 1) {
+    stop(paste0("For basename '", basename, "' multiple FASTA files were found in '", directory, "':\n", 
+               paste0(found.files, collapse = "\n")))
+  }
+  
+  if (length(found.files) == 1) {
+    return(found.files[1])
+  }
+  
+  for (ext in extensions) {
+    for (comp.ext in compressed.extensions) {
+      compressed.filename <- file.path(directory, paste0(basename, ext, comp.ext))
+      if (file.exists(compressed.filename)) {
+        stop(paste0("Compressed file found:\n", compressed.filename, 
+                      "\nCompressed FASTA files are not currently supported."))
+      }
+    }
+  }
+  
+  return(NULL)
 }

@@ -754,7 +754,8 @@ for ref0 in "${refs_all[@]}"; do
                 --path_out ${path_out} \
                 --algn_path ${path_alignment} \
                 --path.log ${path_log_step} \
-                --log.level ${log_level}
+                --log.level ${log_level} \
+                --cores ${cores}
 
         # Done
         touch "${step_file}"

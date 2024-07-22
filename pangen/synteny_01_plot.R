@@ -5,7 +5,8 @@ source("pangen/synteny_func_plot.R")
 source("utils/utils.R")
 
 suppressMessages({
-    require("optparse")
+  require("optparse")
+  library("parallel")
 })
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -49,7 +50,13 @@ option_list <- list(
         type = "character", 
         default = NULL,
         help = "Level of log to be shown on the screen", 
-        metavar = "character")
+        metavar = "character"),
+    make_option(c("--cores"),
+                type = "integer",
+                default = 1,
+                help = "Number of cores to use",
+                metavar = "character"
+    )
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
