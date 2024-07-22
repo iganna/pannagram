@@ -183,7 +183,8 @@ loop.function <- function(i.acc,
   file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
   df.chr.lengths = data.frame(acc = acc,
                               chr = 1:length(q.fasta),
-                              len = nchar(q.fasta))
+                              len = nchar(q.fasta), 
+                              name = gsub(" ", "_", names(q.fasta)))
   write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
   
   

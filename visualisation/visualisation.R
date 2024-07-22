@@ -164,70 +164,72 @@ plotPanAcc <- function(file.msa, acc){
 #'
 #' @import ggplot2
 #' @export
-plotGenomeAgainstRef <- function(alignments.path, acc.name, ref.name,
-                                 seq.order = "default",
-                                 acc.label = NULL,
-                                 ref.label = NULL) {
-  # if none given, deducing axis labels straight from filenames
-  if (is.null(acc.label)) {
-    acc.label <- tools::file_path_sans_ext(basename(acc.name))
-  }
-  if (is.null(ref.label)) {
-    ref.label <- tools::file_path_sans_ext(basename(ref.name))
-  }
-
-  # Read FASTA files
-  acc.genome <- readFastaMy(acc.name)
-  ref.genome <- readFastaMy(ref.name)
+plotSynAllChr <- function(path.aln, 
+                               acc, 
+                               ref,
+                               chr.len,
+                               seq.order = "default"
+                               ) {
   
-  # Filter out accession numbers, that are typically present before the space character
-  acc.labels <- sub("^[^ ]+ ", "", names(acc.genome))
-  ref.labels <- sub("^[^ ]+ ", "", names(ref.genome))
+  # # Get alignments and numbers of chromosomes
+  # pattern <- ".*_[0-9]+_[0-9]+_maj\\.rds$"
+  # files.aln <- list.files(path = path.aln, pattern = pattern, full.names = F)
+  # acc.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rds$", "\\1", s)))
+  # acc.chrs <- unique(sapply(files.aln, function(s) sub(".*_([0-9]+)_[0-9]+_maj\\.rds$", "\\1", s)))
+  # ref.chrs <- unique(sapply(files.aln, function(s) sub(".*_[0-9]+_([0-9]+)_maj\\.rds$", "\\1", s)))
+  
+  if(!(ref %in% chr.len$acc)) stop('Number of chromosomes in the reference genomes in not defined')
+  if(!(acc %in% chr.len$acc)) stop('Number of chromosomes in the accession genomes in not defined')
+  
+  # Number of chromosomes
+  n.chr.ref = max(chr.len$chr[chr.len$acc == ref])
+  n.chr.acc = max(chr.len$chr[chr.len$acc == acc])
+  
+  # Lengths of chromosomes
+  chr.len.acc = chr.len[chr.len$acc == acc,]
+  chr.len.ref = chr.len[chr.len$acc == ref,]
+  chr.len.acc = chr.len.acc[order(chr.len.acc$chr),]
+  chr.len.ref = chr.len.ref[order(chr.len.ref$chr),]
+  
+  # Check that all choromosomes are presented
+  if(nrow(chr.len.acc) != n.chr.acc) stop('Wrong number of chromosomes in accession')
+  if(nrow(chr.len.ref) != n.chr.ref) stop('Wrong number of chromosomes in reference')
+  
   
   # === === === === Reordering === === === ===
   if (seq.order=="descending") {
-    order.acc <- order(-nchar(acc.genome))
-    order.ref <- order(-nchar(ref.genome))
+    order.acc <- order(-n.chr.acc)
+    order.ref <- order(-n.chr.ref)
   } else if (seq.order == "alphanum"){
-    order.acc <- order(acc.labels)
-    order.ref <- order(ref.labels)
+    stop('Wrong name')
+    # order.acc <- order(acc.labels)
+    # order.ref <- order(ref.labels)
   } else if (seq.order == "default"){
-    order.acc <- seq(1, length(nchar(acc.genome)))
-    order.ref <- seq(1, length(nchar(ref.genome)))
+    order.acc <- 1:n.chr.acc
+    order.ref <- 1:n.chr.ref
   } else {
-    stop("Unknown keyword for `seq.order`. Options: 'default', 'alphanum', 'descending'")
+    stop("Unknown keyword for `seq.order`. Options: 'default', 'descending'")
   }
-  acc.genome <- acc.genome[order.acc]
-  acc.labels <- acc.labels[order.acc]
   
-  ref.genome <- ref.genome[order.ref]
-  ref.labels <- ref.labels[order.ref]
+  # === === === === Main === === === ===
   
   # Cummulative lengths
-  len.acc <- nchar(acc.genome)
-  len.ref <- nchar(ref.genome)
-  cum.acc <- c(0, cumsum(len.acc))
-  cum.ref <- c(0, cumsum(len.ref))
+  cum.acc <- c(0, cumsum(chr.len.acc$len[order.acc]))
+  cum.ref <- c(0, cumsum(chr.len.ref$len[order.ref]))
   
-  # === === === Filling the new data.frame === === ===
+  # pokaz('Number of chromosomes ref and acc:', n.chr.ref, n.chr.acc)
+  
+  # Read the alignments
   df <- data.frame()
-
-  acc_prefix <- tools::file_path_sans_ext(basename(acc.name))
-  max.ref.chr = 0
-  max.acc.chr = 0
-  for (i in seq_along(acc.genome)) {
-    for (j in seq_along(ref.genome)) {
-      file_name = paste0(acc_prefix, "_", order.acc[i], "_", order.ref[j], "_maj.rds")
-      file_path = file.path(alignments.path, file_name)
-      if (file.exists(file_path)) {
-        # Max chr numbers
-        max.acc.chr = i
-        max.ref.chr = j
-        
+  for (i.acc in order.acc) {
+    for (i.ref in order.ref) {
+      file.aln = paste0(path.aln, acc, "_", i.acc, "_", i.ref, "_maj.rds")
+      # pokaz(file.aln)
+      if (file.exists(file.aln)) {
         # Synteny
-        data.ij <- readRDS(file_path)
-        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.acc[i]
-        data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[j]
+        data.ij <- readRDS(file.aln)
+        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.acc[i.acc]
+        data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[i.ref]
         df <- rbind(df, data.ij)
       }
     }
@@ -237,6 +239,16 @@ plotGenomeAgainstRef <- function(alignments.path, acc.name, ref.name,
   h.sep.ref = cum.ref[-length(cum.ref)]
   
   # Annotations
+  
+  if("name" %in% colnames(chr.len)){
+    acc.labels = chr.len.acc$name[order.acc]
+    ref.labels = chr.len.ref$name[order.ref]
+  } else {
+    acc.labels = paste('Chr', order.acc)
+    ref.labels = paste('Chr', order.ref)  
+  }
+  
+  
   annot.acc = data.frame(x = cum.acc[-1], 
                            y = rep(0, length(cum.acc) - 1),
                            label = acc.labels)
@@ -244,18 +256,19 @@ plotGenomeAgainstRef <- function(alignments.path, acc.name, ref.name,
                            y = cum.ref[-1],
                            label = ref.labels)
   
-  # Remain only the existing chromosomes
-  v.sep.acc = v.sep.acc[1:max.acc.chr]
-  h.sep.ref = h.sep.ref[1:max.ref.chr]
-  
-  annot.acc = annot.acc[1:max.acc.chr,]
-  annot.ref = annot.ref[1:max.ref.chr,]
-  
+  # # Remain only the existing chromosomes
+  # v.sep.acc = v.sep.acc[1:max.acc.chr]
+  # h.sep.ref = h.sep.ref[1:max.ref.chr]
+  # 
+  # annot.acc = annot.acc[1:max.acc.chr,]
+  # annot.ref = annot.ref[1:max.ref.chr,]
+  # 
+  # 
   
   # Plot
   synteny.plot = plotSynteny(df,
-                   acc.label = acc.label,
-                   ref.label = ref.label,
+                             query.label = acc,
+                             ref.label = ref,
                    hlines = h.sep.ref,
                    vlines = v.sep.acc,
                    col.line = "#3530D966",

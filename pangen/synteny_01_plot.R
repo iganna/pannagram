@@ -98,20 +98,21 @@ dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 print(path.aln)
 
 for (acc in acc.ids){
-  pokaz('Accession', acc, file=acc, echo=echo.main)
+  pokaz('Accession', acc, 
+        file=file.log.main, echo=echo.main)
   
   # Lengths of chromosomes for the accession and reference
   chr.len = c()
   for(id in c(ref, acc)){
     file.chr.len = paste0(path.chr, id, '_chr_len.txt')  
-    pokaz(file.chr.len)
+    # pokaz(file.chr.len)
     if(file.exists(file.chr.len)){
       chr.len.id = read.table(file.chr.len, header=T)
       chr.len = rbind(chr.len, chr.len.id)  
     } else {
       for(i.chr in 1:Inf){
         file.chr =  paste0(path.chr, id, '_chr_',i.chr,'.fasta')
-        pokaz('Chromosomel file', file.chr)
+        # pokaz('Chromosomel file', file.chr)
         if(!file.exists()) next
         seq.chr = readFastaMy(file.chr)
         chr.len.tmp = data.frame(acc = id,
@@ -119,21 +120,20 @@ for (acc in acc.ids){
                                  len = nchar(seq.chr))
         chr.len = rbind(chr.len, chr.len.tmp)
       }
+      write.table(chr.len, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
     }
   }
-  pokaz(chr.len)
-  
   if (is.null(acc)) stop('No target genome files found in the specified folder')
   
-  pdf.name <- paste0(ref, "-", id)
+  # Get ggplot with the synteny
+  p <- plotSynAllChr(path.aln,
+                            acc=acc,
+                            ref=ref,
+                            chr.len=chr.len)
   
-  # print(acc)
-  # print(ref.name)
-  # p <- plotGenomeAgainstRef(path.aln, 
-  #                           acc.name=acc, 
-  #                           ref.name=ref, 
-  #                           seq.order="alphanum")
-  # savePDF(p, path = pdf.path, name = pdf.name)
+  # Save
+  pdf.name <- paste0(ref, "-", id)
+  savePDF(p, path = pdf.path, name = pdf.name)
 }
 
 pokaz('Done.',
