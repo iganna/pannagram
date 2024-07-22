@@ -110,7 +110,7 @@ for (acc in acc.ids){
       chr.len.id = read.table(file.chr.len, header=T)
       chr.len = rbind(chr.len, chr.len.id)  
     } else {
-      for(i.chr in 1:Inf){
+      for(i.chr in 1:1e10){
         file.chr =  paste0(path.chr, id, '_chr_',i.chr,'.fasta')
         # pokaz('Chromosomel file', file.chr)
         if(!file.exists()) next
