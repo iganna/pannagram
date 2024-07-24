@@ -158,7 +158,8 @@ loop.function <- function(f.blast,
     #                      base.fas.bw = base.fas.bw)
     
     # Set direction
-    # x$dir = (x$V4 > x$V5) * 1
+    x$dir = (x$V4 > x$V5) * 1
+    # x = glueZero(x)
     
     # Check - could be removed:
     checkCorrespToGenome(x = setDir(x, base.len = base.len),
