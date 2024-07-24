@@ -36,7 +36,7 @@ dotplot(s[1:10000], s[:10000], 15, 14)
 ```{r}
 
 
-x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml14_qchr_1_bchr_1_out.txt')
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test5/blast_gaps_ml2/acc_ml4_qchr_1_bchr_1_out.txt')
 substring = 'acc_ml4_qchr_1_bchr_1_gap_663_664'
 
 x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml18_qchr_1_bchr_1_out.txt')
@@ -62,7 +62,6 @@ indices <- intersect(which(grepl(substring, x$V1)),
 df.gap = x[indices,]
 
 
-
 df.gap$q.beg = as.numeric(sapply(df.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
 df.gap$b.beg = as.numeric(sapply(df.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
 
@@ -83,7 +82,7 @@ plotSynDot(df.gap)
 ```{r}
 
 # df.gap = glueZero(df.gap)
-# plotSynDot(x.gap)
+# plotSynDot(df.gap)
 
 x.ticks = sort(unique(c(df.gap$V2, df.gap$V3+1)))
 y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
@@ -109,8 +108,6 @@ for(irow in 1:nrow(df.gap)){
 }
 
 
-
-
 ```
 
 
@@ -125,7 +122,7 @@ df.gap$V4[df.gap$dir == 1] = df.gap$V5[df.gap$dir == 1]
 df.gap$V5[df.gap$dir == 1] = tmp
 
 
-x.min = df.gap$V2[1]
+x.min = min(df.gap$V2)
 y.min = min(df.gap$V4)
 df.gap[,c('V2', 'V3')] = df.gap[,c('V2', 'V3')] - x.min + 1
 df.gap[,c('V4', 'V5')] = df.gap[,c('V4', 'V5')] - y.min + 1
@@ -138,12 +135,12 @@ plotSynDot(df.gap)
 ```{r}
 overlap.cutoff = 0.2
 
-traverseBlastGaps <- function(pos.x, pos.y.occ, idx.added) {
+traverseBlastGaps <- function(df.gap, pos.x, pos.y.occ, idx.added) {
   
   d.x <- df.gap$V3 - pos.x
   idx.next <- which(d.x > 0)
   
-  # pokaz(pos.x, length(idx.next))
+  pokaz(pos.x, length(idx.next), idx.added)
   
   if(length(idx.next) > 0) {
     best.score = 0
@@ -153,7 +150,6 @@ traverseBlastGaps <- function(pos.x, pos.y.occ, idx.added) {
       
       pos.y.i.next <- df.gap$V4[i.next]:df.gap$V5[i.next]
       y.overlap <- sum(pos.y.occ[pos.y.i.next] > 0) / df.gap$len.y[i.next] 
-      
       if(y.overlap >= overlap.cutoff) next
       
       # Push the next fragment
@@ -162,7 +158,7 @@ traverseBlastGaps <- function(pos.x, pos.y.occ, idx.added) {
       pos.x <- df.gap$V3[i.next]
       
       # Recursion
-      res = traverseBlastGaps(pos.x, pos.y.occ, idx.added)
+      res = traverseBlastGaps(df.gap, pos.x, pos.y.occ, idx.added)
       if(res$score > best.score){
         best.score = res$score
         best.res = res
@@ -186,6 +182,8 @@ traverseBlastGaps <- function(pos.x, pos.y.occ, idx.added) {
     return(list(score = score, idx.added = idx.added))
   }
 }
+
+
 ```
 
 # Run
@@ -194,7 +192,41 @@ pos.y.occ = rep(0, max(df.gap$V5))
 pox.x = 0
 idx.added = c()
 
-res = traverseBlastGaps(pos.x.curr, pos.y.occ, idx.added)
+res = traverseBlastGaps(df.gap, pos.x.curr, pos.y.occ, idx.added)
+
+plotSynDot(df.gap)
+
+plotSynDot(df.gap[res$idx.added,])
+
+
+```
+
+# New function
+## Prepare
+```{r}
+
+
+y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
+cell.y.pos = data.frame(beg = y.ticks[-length(y.ticks)], end = y.ticks[-1]-1)
+cell.y.pos$len = cell.y.pos$end - cell.y.pos$beg + 1
+pos.y.attr = rep(0, max(cell.x.pos$end))
+
+
+df.gap$X4 = 0
+df.gap$X5 = 0
+y.list = list()
+for(irow in 1:nrow(df.gap)){
+  pos.tmp = which((cell.y.pos$beg >= df.gap$V4[irow]) & (cell.y.pos$end <= df.gap$V5[irow]))
+  df.gap$X4[irow] = min(pos.tmp)
+  df.gap$X5[irow] = max(pos.tmp)
+}
+
+
+pos.y.occ = rep(0, nrow(cell.y.pos))
+pox.x = 0
+idx.added = c()
+
+res = traverseBlastGaps2(df.gap, pox.x, pos.y.occ, idx.added)
 
 plotSynDot(df.gap)
 
@@ -202,9 +234,274 @@ plotSynDot(df.gap[res$idx.added,])
 
 
 
+```
+
+
+## NEW Function
+```{r}
+traverseBlastGaps2 <- function(df.gap, pos.x, pos.y.occ, idx.added) {
+  
+  d.x <- df.gap$V3 - pos.x
+  idx.next <- which(d.x > 0)
+  
+  # pokaz(pos.x, length(idx.next), idx.added)
+  
+  if(length(idx.next) > 0) {
+    best.score = 0
+    best.res = NULL
+    for(i.next in idx.next) {
+      # pokaz(pos.x, i.next)
+      
+      pos.y.i.next <- df.gap$X4[i.next]:df.gap$X5[i.next]
+      pos.y.i.next.overlap = pos.y.i.next[pos.y.occ[pos.y.i.next] > 0]
+      
+      y.overlap <- sum(cell.y.pos$len[pos.y.i.next.overlap]) / df.gap$len.y[i.next] 
+      if(y.overlap >= overlap.cutoff) next
+      
+      # Push the next fragment
+      pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] + 1
+      idx.added <- c(idx.added, i.next)
+      pos.x <- df.gap$V3[i.next]
+      
+      # Recursion
+      res = traverseBlastGaps2(df.gap, pos.x, pos.y.occ, idx.added)
+      # print(res$score)
+      if(res$score > best.score){
+        best.score = res$score
+        best.res = res
+      }
+      
+      # Pop the next fragment
+      pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] - 1 
+      idx.added = idx.added[-length(idx.added)]
+    }
+    
+    if(best.score != 0){
+      return(best.res)
+    } else {
+      
+      score = sum(cell.y.pos$len[pos.y.occ > 0])
+      # print(which(pos.y.occ>0))
+      # print(score)
+      
+      return(list(score = score, idx.added = idx.added))
+    }
+    
+  } else {
+    # Score at the end of the path
+    score = sum(cell.y.pos$len[pos.y.occ > 0])
+    
+    # print(sum(pos.y.occ))
+    #   print(score)
+    return(list(score = score, idx.added = idx.added))
+  }
+}
+```
+
+
+
+# Super New
+```{r}
+
+df.gap = glueZero(df.gap)
+df.gap = cleanOverlaps(df.gap)
+
+
+
+plotSynDot(df.gap)
+
+
+if(nrow(df.gap) == 1) stop('Polishing is not needed')
+
+y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
+cell.y.pos = data.frame(beg = y.ticks[-length(y.ticks)], end = y.ticks[-1]-1)
+cell.y.pos$len = cell.y.pos$end - cell.y.pos$beg + 1
+pos.y.attr = rep(0, max(cell.x.pos$end))
+
+
+df.gap$X4 = 0
+df.gap$X5 = 0
+y.list = list()
+for(irow in 1:nrow(df.gap)){
+  pos.tmp = which((cell.y.pos$beg >= df.gap$V4[irow]) & (cell.y.pos$end <= df.gap$V5[irow]))
+  df.gap$X4[irow] = min(pos.tmp)
+  df.gap$X5[irow] = max(pos.tmp)
+}
+
+
+df.gap$len.x = df.gap$V3 - df.gap$V2 + 1
+df.gap$len.y = abs(df.gap$V4 - df.gap$V5) + 1
+
+pos.y.occ = rep(0, nrow(cell.y.pos))
+pos.x = 0
+idx.added <- c()
+
+
+df.gap = df.gap[order(df.gap$V2),]
+
+while(T){
+  d.x <- df.gap$V3 - pos.x
+  idx.next <- which((d.x > 0) & (d.x / df.gap$len.x > (1-overlap.cutoff)))
+  
+  
+  if(length(idx.next) == 0) break
+  
+  i.next.found = 0
+  for(i.next in idx.next) {
+    
+      # if(i.next == 5) stop()
+    
+      pos.y.i.next <- df.gap$X4[i.next]:df.gap$X5[i.next]
+      pos.y.i.next.overlap = pos.y.i.next[pos.y.occ[pos.y.i.next] > 0]
+      
+      y.overlap <- sum(cell.y.pos$len[pos.y.i.next.overlap]) / df.gap$len.y[i.next] 
+      if(y.overlap >= overlap.cutoff) next
+      
+      i.next.found = i.next
+      break
+  }
+  
+  if(i.next.found == 0) break
+  
+  idx.added = c(idx.added, i.next.found)
+  pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] + 1
+  pos.x <- df.gap$V3[i.next]
+  
+}
+
+
+plotSynDot(df.gap)
+
+plotSynDot(df.gap[c(idx.added),])
+
 
 
 ```
+
+
+
+
+
+
+# Glue Zero
+
+
+## Big example
+```{r}
+
+x.all = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_parts_ml2/ml4_1_1.txt')
+
+pos.beg.info = 4
+x.all$q.beg = as.numeric(sapply(x.all$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+x.all$q.end = as.numeric(sapply(x.all$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+
+x.all$V2 = x.all$V2 + x.all$q.beg
+x.all$V3 = x.all$V3 + x.all$q.beg
+x.all$idx = 1:nrow(x.all)
+x.all$dir = (x.all$V4 > x.all$V5) * 1
+
+plotSynteny(x.all)
+
+```
+
+## Gap example
+```{r}
+x.all = df.gap
+
+```
+
+## Time compare
+```{r}
+plotSynteny(x.all)
+
+beg <- Sys.time()
+x.new1 = glueZero(x.all)
+end <- Sys.time()
+execution_time <- end - beg
+print(execution_time)
+
+x.new1 = x.new1[order(x.new1$V2),]
+
+plotSynteny(x.new1)
+
+beg <- Sys.time()
+x.new2 = glueZero2(x.all)
+end <- Sys.time()
+execution_time <- end - beg
+print(execution_time)
+
+x.new2 = x.new2[order(x.new2$V2),]
+
+plotSynteny(x.new2)
+
+```
+
+
+```{r}
+
+showt(x.new1, 1:10)
+showt(x.new2, 1:10)
+
+sum(x.new1$dir == 0)
+sum(x.new2$dir == 0)
+
+x.new1 = x.new1[x.new1$dir == 0,]
+x.new2 = x.new2[x.new2$dir == 0,]
+
+if(nrow(x.new1) != nrow(x.new2)) stop('wrong number of positive direction')
+
+for(irow in 1:nrow(x.new1)){
+  if(x.new1$V8[irow] !=  x.new2$V8[irow]) stop('A')
+  if(x.new1$V9[irow] !=  x.new2$V9[irow]) stop('B')
+}
+
+```
+
+
+
+
+# Cabbage
+```{r}
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/cabbage/GCA_018177695_1_1_1.txt')
+
+
+start.pos = as.numeric(sapply(strsplit(x[,1], "\\|"), "[", 4)) - 1
+x[,2:3] = x[,2:3] + start.pos
+x$idx = 1:nrow(x)
+x$dir = (x$V4 > x$V5) * 1
+
+
+```
+
+
+```{r}
+x.all = x
+
+
+
+beg <- Sys.time()
+x.new1 = glueZero_old(x.all)
+end <- Sys.time()
+execution_time <- end - beg
+print(execution_time)
+
+beg <- Sys.time()
+x.new2 = glueZero(x.all)
+end <- Sys.time()
+execution_time <- end - beg
+print(execution_time)
+
+dim(x.new1)
+dim(x.new2)
+
+sum(x.new1$V7)
+sum(x.new2$V7)
+
+
+```
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-glueZero <- function(x){
+glueZero_old <- function(x){
   x = x[order(x$V2),]
   
   ipos = 1
@@ -23,12 +23,60 @@ glueZero <- function(x){
   return(x)
 }
 
-glueZero2 <- function(x){
+
+#' Merge Rows from Blast results
+#'
+#' This function merges blast hits if they follow each other.
+#'
+#' @param x.all A data frame containing the input data. It should include the columns `dir`, `V2`, `V3`, `V4`, `V5`, `V7`, `V8`, and `V9`.
+#' 
+#' @return A data frame where rows have been merged based on the specified conditions.
+#'
+glueZero <- function(x.all){
   
-  
+  x.all.idx = 1:nrow(x.all)
+  x.new = c()
+  for(dir.val in 0:1){
+    
+    # subtable with the specific direction
+    idx.dir = (x.all$dir == dir.val)
+    if(sum(idx.dir) == 0) next
+    x = x.all[idx.dir,]
+    x$idx = x.all.idx[idx.dir]
+    x.nrow = nrow(x)
+    
+    if(x.nrow > 1){
+      idx.remove = c()
+      for(irow in 1:(x.nrow - 1)){
+        jrow = irow + 1
+        while(x$V2[jrow] < x$V3[irow]){
+          jrow = jrow + 1
+          if(jrow > x.nrow) break
+        }
+        if(jrow > x.nrow) break
+        if((abs(x$V2[jrow] - x$V3[irow]) == 1) && (abs(x$V4[jrow] - x$V5[irow]) == 1)){
+          x$V2[jrow] = x$V2[irow]
+          x$V4[jrow] = x$V4[irow]
+          
+          x$V7[jrow] <- x$V7[jrow] + x$V7[irow]
+          x$V8[jrow] <- paste0(x$V8[irow], x$V8[jrow])
+          x$V9[jrow] <- paste0(x$V9[irow], x$V9[jrow])
+          
+          # remember the index to delete
+          idx.remove = c(idx.remove, irow)
+        }
+      }  #for(irow in 1:(x.nrow - 1))
+      
+      if(length(idx.remove) > 0){
+        x = x[-idx.remove,]
+      } 
+    }  # if(x.nrow > 1)
+    
+    x.new = rbind(x.new, x)
+  }
+
+  return(x.new)
 }
-
-
 
 
 #' Clean All Overlaps in a Data Frame

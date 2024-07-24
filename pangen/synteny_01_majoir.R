@@ -147,19 +147,25 @@ loop.function <- function(f.blast,
     x$p.beg <- ifelse(x$V4 < x$V5, x$V4, x$V5)
     x$p.end <- ifelse(x$V4 < x$V5, x$V5, x$V4)
     
-    
     # Set correct position
     start.pos = as.numeric(sapply(strsplit(x[,1], "\\|"), "[", 4)) - 1
     x[,2:3] = x[,2:3] + start.pos
     
-    # Chech - could be removed:
-    x.dir = setDir(x, base.len = base.len)
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)
+    # # Check - could be removed:
+    # checkCorrespToGenome(x = setDir(x, base.len = base.len), 
+    #                      query.fas = query.fas.chr,
+    #                      base.fas.fw = base.fas.fw,
+    #                      base.fas.bw = base.fas.bw)
     
     # Set direction
     x$dir = (x$V4 > x$V5) * 1
+    x = glueZero(x)
+    
+    # Check - could be removed:
+    checkCorrespToGenome(x = setDir(x, base.len = base.len),
+                         query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
     
     # Set past id
     x$part.id = cumsum(c(T, diff(as.numeric(as.factor(x$V1))) != 0))
@@ -271,11 +277,11 @@ loop.function <- function(f.blast,
     }
     
     # ---- Check sequences after cuts ----
-    x.dir = setDir(x, base.len = base.len)
-    
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+    checkCorrespToGenome(x=setDir(x, base.len = base.len), 
+                         query.fas = query.fas.chr,
                          base.fas.fw = base.fas.fw,
                          base.fas.bw = base.fas.bw)
+    
     # ---- Check uniquness of occupancy ----
     pos.q.occup = rep(0, base.len)
     for(irow in 1:nrow(x)){
@@ -312,8 +318,8 @@ loop.function <- function(f.blast,
   # ---- Get gaps ----
   pokaz('Get gaps', file=file.log.loop, echo=echo.loop)
   
-  x.dir = setDir(x, base.len = base.len)
-  checkCorrespToGenome(x.dir, query.fas = query.fas.chr, 
+  checkCorrespToGenome(x=setDir(x, base.len = base.len),
+                       query.fas = query.fas.chr, 
                        base.fas.fw = base.fas.fw, 
                        base.fas.bw = base.fas.bw)
   

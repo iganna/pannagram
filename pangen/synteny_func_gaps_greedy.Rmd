@@ -1,0 +1,175 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+# Files
+```{r}
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test5/blast_gaps_ml2/acc_ml4_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml4_qchr_1_bchr_1_gap_663_664'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml18_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml18_qchr_1_bchr_1_gap_1167_1168'
+substring = 'acc_ml18_qchr_1_bchr_1_gap_1170_1171'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml20_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml20_qchr_1_bchr_1_gap_648_649'
+substring = 'acc_ml20_qchr_1_bchr_1_gap_580_581'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml29_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml29_qchr_1_bchr_1_gap_563_564'
+substring = 'acc_ml29_qchr_1_bchr_1_gap_666_667'
+substring = 'acc_ml29_qchr_1_bchr_1_gap_684_685'
+
+x = readBlast('/Volumes/Samsung_T5/vienn/pannagram_test/symA_test4/blast_gaps_ml2/acc_ml42_qchr_1_bchr_1_out.txt')
+substring = 'acc_ml42_qchr_1_bchr_1_gap_541_542'
+
+```
+
+
+# Read init
+## Get by names
+```{r}
+indices <- intersect(which(grepl(substring, x$V1)),
+                     which(grepl(substring, x$V10)))
+
+if(length(indices) == 0) stop('WRONG NAMES')
+
+df.gap = x[indices,]
+```
+
+## Transform positions
+```{r}
+pos.beg.info = 2
+
+df.gap$q.beg = as.numeric(sapply(df.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+df.gap$b.beg = as.numeric(sapply(df.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+
+df.gap$q.end = as.numeric(sapply(df.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+df.gap$b.end = as.numeric(sapply(df.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+
+df.gap$V2 = df.gap$V2 + df.gap$q.beg
+df.gap$V3 = df.gap$V3 + df.gap$q.beg
+df.gap$V4 = df.gap$V4 + df.gap$b.beg
+df.gap$V5 = df.gap$V5 + df.gap$b.beg
+df.gap$idx = 1:nrow(df.gap)
+df.gap$dir = (df.gap$V4 > df.gap$V5) * 1
+```
+
+df.gap = x.tmp
+
+
+```{r}
+plotSynDot(df.gap)
+
+df.gap = glueZero(df.gap)
+
+df.gap = cleanOverlaps(df.gap)
+
+plotSynDot(df.gap)
+```
+
+
+```{r}
+# SORT DIR
+tmp = df.gap$V4[df.gap$dir == 1]
+df.gap$V4[df.gap$dir == 1] = df.gap$V5[df.gap$dir == 1]
+df.gap$V5[df.gap$dir == 1] = tmp
+
+x.min = min(df.gap$V2)
+y.min = min(df.gap$V4)
+df.gap[,c('V2', 'V3')] = df.gap[,c('V2', 'V3')] - x.min + 1
+df.gap[,c('V4', 'V5')] = df.gap[,c('V4', 'V5')] - y.min + 1
+df.gap$len.y = df.gap$V5 - df.gap$V4  + 1
+
+df.gap$dir = 0
+
+
+plotSynDot(df.gap)
+```
+# Greedy
+```{r}
+
+
+if(nrow(df.gap) == 1) stop('Polishing is not needed')
+
+y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
+cell.y.pos = data.frame(beg = y.ticks[-length(y.ticks)], end = y.ticks[-1]-1)
+cell.y.pos$len = cell.y.pos$end - cell.y.pos$beg + 1
+pos.y.attr = rep(0, max(cell.x.pos$end))
+
+
+df.gap$X4 = 0
+df.gap$X5 = 0
+y.list = list()
+for(irow in 1:nrow(df.gap)){
+  pos.tmp = which((cell.y.pos$beg >= df.gap$V4[irow]) & (cell.y.pos$end <= df.gap$V5[irow]))
+  df.gap$X4[irow] = min(pos.tmp)
+  df.gap$X5[irow] = max(pos.tmp)
+}
+
+
+df.gap$len.x = df.gap$V3 - df.gap$V2 + 1
+df.gap$len.y = abs(df.gap$V4 - df.gap$V5) + 1
+
+pos.y.occ = rep(0, nrow(cell.y.pos))
+pos.x = 0
+idx.added <- c()
+
+
+df.gap = df.gap[order(df.gap$V2),]
+
+while(T){
+  d.x <- df.gap$V3 - pos.x
+  idx.next <- which((d.x > 0) & (d.x / df.gap$len.x > (1-overlap.cutoff)))
+  
+  
+  if(length(idx.next) == 0) break
+  
+  i.next.found = 0
+  for(i.next in idx.next) {
+    
+      # if(i.next == 5) stop()
+    
+      pos.y.i.next <- df.gap$X4[i.next]:df.gap$X5[i.next]
+      pos.y.i.next.overlap = pos.y.i.next[pos.y.occ[pos.y.i.next] > 0]
+      
+      y.overlap <- sum(cell.y.pos$len[pos.y.i.next.overlap]) / df.gap$len.y[i.next] 
+      if(y.overlap >= overlap.cutoff) next
+      
+      i.next.found = i.next
+      break
+  }
+  
+  if(i.next.found == 0) break
+  
+  idx.added = c(idx.added, i.next.found)
+  pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] + 1
+  pos.x <- df.gap$V3[i.next]
+  
+}
+
+
+plotSynDot(df.gap)
+
+plotSynDot(df.gap[c(idx.added),])
+
+```
+
+
+
+```{r}
+indices <- grep(s, x.comb$V1)
+
+
+
+
+```
+
+
+
+
+
+
