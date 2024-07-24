@@ -195,7 +195,7 @@ loop.function <- function(i.comb,
       writeFastaMy(s.repeat, file.out.rest)
       
       # Masking positions
-      pos.repeat = sapply(names(s.repeat), function(s) strsplit(s, '\\|')[[1]][4])
+      pos.repeat = as.numeric(sapply(names(s.repeat), function(s) strsplit(s, '\\|')[[1]][4]))
       pos.masking = data.frame(beg = pos.repeat, end = pos.repeat + len.parts - 1)
       
       saveRDS(pos.masking, file.out.masking)
