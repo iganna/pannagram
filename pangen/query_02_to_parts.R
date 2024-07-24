@@ -179,7 +179,7 @@ loop.function <- function(i.comb,
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
-    file.out.masking = paste0(path.chr, 'mask', acc, '_chr', i.chr, '.rds', collapse = '')
+    file.out.masking = paste0(path.chr, 'mask_', acc, '_chr', i.chr, '.rds', collapse = '')
     
     seqs.score = sapply(s, repeatScore)
     

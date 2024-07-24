@@ -209,7 +209,7 @@ loop.function <- function(f.blast,
       }
     }
     
-    # ----  Define blocks  in the skeleton ----
+    # ----  Define blocks in the skeleton ----
     
     # re-arrange IDs
     x.major$id = rank(x.major$id)
@@ -289,7 +289,9 @@ loop.function <- function(f.blast,
       # if(sum(pos.q.occup[x$V4[irow]:x$V5[irow]]) > 0) stop()
       pos.q.occup[x$V4[irow]:x$V5[irow]] = pos.q.occup[x$V4[irow]:x$V5[irow]] + 1
     }
-    if(sum(pos.q.occup > 1) > 0) stop('Overlaps in base are remained')
+    if(sum(pos.q.occup > 1) > 0){
+      stop('Overlaps in base are remained')
+    } 
     pokaz('Occupancy of base', sum(pos.q.occup), file=file.log.loop, echo=echo.loop)
     
     # Save
@@ -336,7 +338,30 @@ loop.function <- function(f.blast,
   pos.q.free = -pos.q.free
   pos.b.free = -pos.b.free
   
+  # ---- Masking ----
+  # Accession
+  file.out.masking = paste0(path.chr, 'mask_', acc, '_chr', query.chr, '.rds', collapse = '')
+  if(file.exists(file.out.masking)){
+    pokaz('Read masking of the accession', file.out.masking, file=file.log.loop, echo=echo.loop)
+    pos.masking = readRDS(file.out.masking)
+    for(irow in 1:nrow(pos.masking)){
+      pos.q.free[pos.masking$beg[irow]:pos.masking$end[irow]] = -1
+    }
+  }
+  
+  file.out.masking = paste0(path.chr, 'mask_', base.acc, '_chr', base.chr, '.rds', collapse = '')
+  if(file.exists(file.out.masking)){
+    pokaz('Read masking of the reference', file.out.masking, file=file.log.loop, echo=echo.loop)
+    pos.masking = readRDS(file.out.masking)
+    for(irow in 1:nrow(pos.masking)){
+      pos.b.free[pos.masking$beg[irow]:pos.masking$end[irow]] = -1
+    }
+  }
+  
+  # Reference
+  
   # ---- Write gaps ----
+  
   # Within non-occupied positions find those, which can be
   
   pref.comarisson = paste('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
@@ -374,7 +399,7 @@ loop.function <- function(f.blast,
     #   idx.remove = c(idx.remove, irow)
     # }
     
-    # Don't consider for blast
+    # Don't consider for blast short sequences
     if(d1 <= len.blast){
       pos.q.free[(x$V3[irow]+1):(x$V2[irow+1]-1)] = -1
     }
@@ -389,12 +414,16 @@ loop.function <- function(f.blast,
     pos.gap.q = pos[2]:pos[3]
     pos = sort(c(x$V4[irow], x$V5[irow], x$V4[irow+1], x$V5[irow+1]))
     pos.gap.b = pos[2]:pos[3]
-    pos.gap.q = pos.gap.q[-c(1, length(pos.gap.q))]
+    
+    # Remove flanking positions
+    pos.gap.q = pos.gap.q[-c(1, length(pos.gap.q))]  
     pos.gap.b = pos.gap.b[-c(1, length(pos.gap.b))]
     
     # Save occupancy
     pos.q.free[pos.gap.q] = irow
     pos.b.free[pos.gap.b] = irow
+    
+    # if already occupied by masking - do not 
     
     # if(file.exists(file.gap.query)) next
     
