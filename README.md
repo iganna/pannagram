@@ -37,27 +37,25 @@ Can try running code from this repo under [WSL](https://learn.microsoft.com/en-u
 Pangenome alignment can be built in two modes:
  - **reference-free**:
 ```sh
-./pangen.sh -path_in 'input_folder_with_all_genomes'  \
-      -path_out 'output_folder' \
-      -nchr_query 5 -nchr_ref 5  
+./pannagram.sh -path_in '<genome files directory path>' \
+    -path_out '<output files path>'
 ```
 
  - **reference-based**:
 ```sh
-./pangen_ref.sh  -ref 'tari10'  
-                 -path_in 'input_folder_with_all_genomes'  \
-                 -path_out 'output_folder' \
-                 -nchr_query 5 -nchr_ref 5  
+./pannagram.sh -ref '<reference file prefix>' \
+    -path_in '<genome files directory path>' \
+    -path_out '<output files path>' \
+    -cores 8 -pre
 ```
 
  - **quick look**:
 If there is no information on genomes and corresponding chromosomes available, one can run preparation steps:
 ```sh
-./pangen_pre.sh -ref '<reference file prefix>' \ # 'SM52', 'ml4', 'TP16' etc.
-    -path_ref '<reference file directory path>' \
+./pannagram.sh -ref '<reference file prefix>' \
     -path_in '<genome files directory path>' \
     -path_out '<output files path>' \
-    -cores 8
+    -cores 8 -pre
 ```
  
 An extended description of the parameters for all three scripts are avaliable by executing scripts with the flag `-help`.

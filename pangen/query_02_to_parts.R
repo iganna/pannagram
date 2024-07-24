@@ -179,6 +179,7 @@ loop.function <- function(i.comb,
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
+    file.out.masking = paste0(path.chr, 'mask', acc, '_chr', i.chr, '.rds', collapse = '')
     
     seqs.score = sapply(s, repeatScore)
     
@@ -189,7 +190,16 @@ loop.function <- function(i.comb,
     }
     
     if (sum(seqs.score > 0.2) > 0){
-      writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+      
+      s.repeat = s[seqs.score > 0.2]
+      writeFastaMy(s.repeat, file.out.rest)
+      
+      # Masking positions
+      pos.repeat = sapply(names(s.repeat), function(s) strsplit(s, '\\|')[[1]][4])
+      pos.masking = data.frame(beg = pos.repeat, end = pos.repeat + len.parts - 1)
+      
+      saveRDS(pos.masking, file.out.masking)
+      
     } else {
       pokaz('No rest sequences.', file=file.log.loop, echo=echo.loop)
     }
