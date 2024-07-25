@@ -1,3 +1,4 @@
+# Create and Alignment in Pangenome coordinates
 suppressMessages({ library(Biostrings)
   library(rhdf5)
   library('foreach')
@@ -7,7 +8,7 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 
-pokazStage('Create and Alignment in Pangenome coordinates')
+
 
 args = commandArgs(trailingOnly=TRUE)
 

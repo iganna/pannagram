@@ -1,3 +1,4 @@
+# Get SV positions, GFF files, dencity files and consensys sequences
 # Find SVs and create GFF file
 
 suppressMessages({ library(Biostrings)
@@ -9,7 +10,6 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 
-pokazStage('Get SV positions, GFF files, dencity files and consensys sequences')
 pokazAttention('Be sure, that consensus sequence for the pangenome chromosomes have been generated')
 
 args = commandArgs(trailingOnly=TRUE)

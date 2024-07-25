@@ -1,3 +1,5 @@
+# Get sequence alignments and consensus sequence
+
 suppressMessages({ library(Biostrings)
   library(rhdf5)
   library('foreach')
@@ -7,7 +9,7 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 
-pokazStage('Get sequence alignments and consensus sequence')
+
 
 args = commandArgs(trailingOnly=TRUE)
 
