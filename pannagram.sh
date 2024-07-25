@@ -1042,7 +1042,7 @@ echo ${step_num}
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    with_level 1 pokaz_message "Step ${step_num}. Combine all alignments together into the final one."
+    with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 
     # Logging
     path_log_step="${path_log}step${step_num}_comb_06/"
@@ -1077,7 +1077,7 @@ aln_type='msa_'
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    with_level 1 pokaz_message "Step ${step_num}. Get synteny blocks."
+    with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
 
     Rscript analys/analys_01_blocks.R \
             --path.cons ${path_cons} \

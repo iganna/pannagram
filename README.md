@@ -38,21 +38,22 @@ Pangenome alignment can be built in two modes:
  - **reference-free**:
 ```sh
 ./pannagram.sh -path_in '<genome files directory path>' \
-    -path_out '<output files path>'
+    -path_out '<output files path>' \
+    -cores 8
 ```
 
  - **reference-based**:
 ```sh
-./pannagram.sh -ref '<reference file prefix>' \
+./pannagram.sh -ref '<reference genome name>' \
     -path_in '<genome files directory path>' \
     -path_out '<output files path>' \
-    -cores 8 -pre
+    -cores 8
 ```
 
  - **quick look**:
 If there is no information on genomes and corresponding chromosomes available, one can run preparation steps:
 ```sh
-./pannagram.sh -ref '<reference file prefix>' \
+./pannagram.sh -ref '<reference genome name>' \
     -path_in '<genome files directory path>' \
     -path_out '<output files path>' \
     -cores 8 -pre
@@ -63,8 +64,8 @@ An extended description of the parameters for all three scripts are avaliable by
 ### 1.2 Extract information from the pangenome alignment
 Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
 ```sh
-./analys.sh -path_msa 'msa_folder' \
-      -path_chr 'chr_folder' \
+./analys.sh -path_msa '<output path with consensus>' \
+      -path_chr '<path with chromosomes>' \
       -blocks  \  # Find Synteny block inforamtion for visualisation
       -seq  \     # Create consensus sequence of the pangenome
       -snp        # SNP calling
@@ -73,7 +74,7 @@ Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.
 ### 1.3 Calling structural variants
 When the pangenome linear alignment is built, SVs can be called using the following script:
 ```sh
-./analys.sh -path_msa 'msa_folder' \
+./analys.sh -path_msa '<output path with consensus>' \
       -sv_call  \         # Create output .gff and .fasta files with SVs
       -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
       -sv_graph           # Construct the graph of SVs
