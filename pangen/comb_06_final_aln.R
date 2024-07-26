@@ -131,6 +131,17 @@ for(s.comb in c('3_3')){
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
   for(i in 1:nrow(mafft.res)){
+    
+    if(i == 10827){
+      file.ws = "tmp_workspace.RData"
+
+      all.local.objects <- ls()
+      save(list = all.local.objects, file = file.ws)
+
+      pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+      stop('Enough..')
+    }
+    
     # pokaz('Aln', i, file=file.log.main, echo=echo.main)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
     
