@@ -252,7 +252,6 @@ for(s.comb in pref.combinations){
   v.beg[v.len == 0] = 0
   v.end[v.len == 0] = 0
   
-  
   # ---- Check direction ----
   idx.wrong.dir = sign(v.end - v.beg) < 0
   v.end[idx.wrong.dir] = 0

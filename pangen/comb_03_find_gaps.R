@@ -129,8 +129,11 @@ loop.function <- function(s.comb,
     # ----  Find breaks  ----
     
     # Find blocks of additional breaks
-    v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    v = v[v[,1] != 0,]                              # 1 - existing coordinates of accessions
+    v = cbind(v, 1:length(v))                       # column 2 - in ref-based coordinates
+    
+    v = v[!is.na(v[,1]),]                           # column 1 - existing coordinates of accessions
+    v = v[v[,1] != 0,]                              # column 1 - existing coordinates of accessions
+    
     if(nrow(v) == 0) {
       stop(sprintf("Skipping empty v for accession: %s\n", acc))
     }
@@ -140,18 +143,6 @@ loop.function <- function(s.comb,
     # Save blocks
     idx.block.tmp = which(abs(diff(v[,4])) != 1)
     idx.block.df = data.frame(beg = v[c(1,idx.block.tmp+1), 2], end = v[c(idx.block.tmp, nrow(v)), 2])
-    
-    
-    
-
-    file.ws = "tmp_workspace.RData"
-
-    all.local.objects <- ls()
-    save(list = all.local.objects, file = file.ws)
-
-    pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-    stop('Enough..')
-
 
     v.block = rep(0, length(v.init))
     for(i.bl in 1:nrow(idx.block.df)){
