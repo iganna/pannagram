@@ -153,8 +153,6 @@ for(s.comb in c('3_3')){
     # pokaz(file.aln, file=file.log.main, echo=echo.main)
     aln.seq = readFastaMy(file.aln)
     
-    if(length(aln.seq) == 0)
-    
     # # ---  
     # # REFINEMENT:
     # mx.aln = aln2mx(aln.seq)
@@ -168,8 +166,6 @@ for(s.comb in c('3_3')){
     # 
     # mafft.aln.pos[[i]] = res$pos
     # # ---
-    
-    
     
     # ---
     # WITHOUT REFINEMENT
