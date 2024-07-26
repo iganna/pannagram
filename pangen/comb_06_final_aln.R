@@ -153,6 +153,8 @@ for(s.comb in c('3_3')){
     # pokaz(file.aln, file=file.log.main, echo=echo.main)
     aln.seq = readFastaMy(file.aln)
     
+    if(length(aln.seq) == 0)
+    
     # # ---  
     # # REFINEMENT:
     # mx.aln = aln2mx(aln.seq)
@@ -167,13 +169,6 @@ for(s.comb in c('3_3')){
     # mafft.aln.pos[[i]] = res$pos
     # # ---
     
-    
-    if(i == 10827){
-      file.ws = "tmp_workspace.RData"
-      all.local.objects <- ls()
-      save(list = all.local.objects, file = file.ws)
-      stop('Enough..')
-    }
     
     
     # ---
@@ -203,7 +198,7 @@ for(s.comb in c('3_3')){
       pos.mx[i.seq, tmp.nongap] = pos.tmp
     }
     # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
-    pos.mx = pos.mx[,colSums(pos.mx != 0) != 0]
+    pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
     row.names(pos.mx) = name.acc
 
 
