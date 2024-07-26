@@ -129,7 +129,7 @@ for(s.comb in c('3_3')){
   idx.skip = c()
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
-    pokaz('Aln', i, file=file.log.main, echo=echo.main)
+    # pokaz('Aln', i, file=file.log.main, echo=echo.main)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
     
     if(!file.exists(file.aln)) {
@@ -200,6 +200,8 @@ for(s.comb in c('3_3')){
 
     
   }
+  
+  print('here')
   
   if(length(idx.skip) > 0){
     mafft.aln.pos = mafft.aln.pos[-idx.skip]
