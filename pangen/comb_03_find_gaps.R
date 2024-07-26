@@ -140,6 +140,18 @@ loop.function <- function(s.comb,
     # Save blocks
     idx.block.tmp = which(abs(diff(v[,4])) != 1)
     idx.block.df = data.frame(beg = v[c(1,idx.block.tmp+1), 2], end = v[c(idx.block.tmp, nrow(v)), 2])
+    
+    
+    
+
+    file.ws = "tmp_workspace.RData"
+
+    all.local.objects <- ls()
+    save(list = all.local.objects, file = file.ws)
+
+    pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+    stop('Enough..')
+
 
     v.block = rep(0, length(v.init))
     for(i.bl in 1:nrow(idx.block.df)){

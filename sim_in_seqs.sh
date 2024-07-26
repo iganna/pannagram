@@ -4,7 +4,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/error_block.sh
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
