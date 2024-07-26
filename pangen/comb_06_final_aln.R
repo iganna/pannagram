@@ -203,8 +203,6 @@ for(s.comb in pref.combinations){
     
   }
   
-  print('here')
-  
   if(length(idx.skip) > 0){
     mafft.aln.pos = mafft.aln.pos[-idx.skip]
     mafft.res = mafft.res[-idx.skip,]
