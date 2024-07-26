@@ -6,3 +6,6 @@ log*
 loop*
 .DS_Store
 tmp*
+old/
+future/
+
