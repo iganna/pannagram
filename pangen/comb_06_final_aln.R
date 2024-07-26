@@ -128,6 +128,8 @@ for(s.comb in c('3_3')){
   pokaz('Read Long alignments..', file=file.log.main, echo=echo.main)
   idx.skip = c()
   mafft.aln.pos = list()
+  
+  pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
   for(i in 1:nrow(mafft.res)){
     # pokaz('Aln', i, file=file.log.main, echo=echo.main)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
