@@ -91,7 +91,8 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
-for(s.comb in pref.combinations){
+# for(s.comb in pref.combinations){
+for(s.comb in c('3_3')){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
@@ -128,7 +129,7 @@ for(s.comb in pref.combinations){
   idx.skip = c()
   mafft.aln.pos = list()
   for(i in 1:nrow(mafft.res)){
-    # if((i %% 100) == 0) pokaz('Aln', i, file=file.log.main, echo=echo.main)
+    pokaz('Aln', i, file=file.log.main, echo=echo.main)
     file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
     
     if(!file.exists(file.aln)) {
