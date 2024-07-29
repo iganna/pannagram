@@ -108,7 +108,12 @@ pokazAttention('Only the following extensions will be considered:', query.types,
 
 # List and filter genome files in the specified path based on the accepted file types
 search.pattern <- paste0(".*\\.(?:", paste(query.types, collapse="|"), ")$")
+pokaz(search.pattern)
+
 query.name <- basename(list.files(path.query, pattern = search.pattern, full.names = TRUE))
+
+pokaz(query.name)
+
 if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
 query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name), stringsAsFactors = F)
 
