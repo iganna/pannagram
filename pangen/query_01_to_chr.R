@@ -112,6 +112,8 @@ query.name <- basename(list.files(path.query, pattern = search.pattern, full.nam
 if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
 query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name), stringsAsFactors = F)
 
+pokaz(query.name, file=file.log.main, echo=echo.main)
+
 # Optional: Filter based on a list of accession numbers, if provided
 if(!is.null(acc.anal)){
   acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
