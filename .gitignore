@@ -1,11 +1,12 @@
 DATA/
+old/
+develop/
+.DS_Store
+.Rhistory
 **.nb.html
 test*
-analys/sv_old
+tmp*
 log*
 loop*
-.DS_Store
-tmp*
-old/
-future/
+
 
