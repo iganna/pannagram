@@ -27,6 +27,8 @@ option_list <- list(
               help="path tothe directory with gaps", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--one2one"), type = "logical", default = F, 
+              help = "One to one chromosomes or not", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
   make_option(c("--log.level"), type = "character", default = NULL,

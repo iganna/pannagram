@@ -67,6 +67,7 @@ do
         -all2all)     one2one="${one2one}F";      shift 1 ;;  # compare chromosomes all-to-all or not (default in PRE mode)
         -purge_reps | -purge_repeats ) purge_reps="T";    shift 1 ;;  # filtration of repeats, default - not
         -rev )        flag_rev="T";      shift 1 ;;  # reverce parts
+        -orf )        flag_orf="T";      shift 1 ;;  # reverce parts
 
         -accessions)   acc_file=$2;  shift 2 ;;  # file with accessions to analyse
         -combinations) comb_file=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
@@ -123,6 +124,7 @@ fi
 
 if [[ "${one2one}" == 'T' ]]; then
     option_one2one=" -one2one "
+    option_one2one_r=" --one2one T "
 else
     option_one2one=" "
 fi
@@ -271,6 +273,15 @@ if [ -z "${purge_reps}" ]; then
 else
     option_purge_reps=" --purge.reps T"
 fi
+
+
+if [ -z "${flag_rev}" ]; then
+    option_mirror=" "
+else
+    path_parts="${path_out}parts_mirror/"
+    option_mirror=" --purge.reps T"
+fi
+
 
 # Reverse parts
 if [ -z "${rev}" ]; then
@@ -535,6 +546,50 @@ fi
 
 ((step_num = step_num + 1))
 
+
+# ----------------------------------------------
+# If to find ORFs
+if [ ! -z "${flag_orf}" ]; then
+    
+    step_file="$path_flags/step${step_num}_done"
+    if [ ! -f ${step_file} ]; then
+
+        with_level 1 pokaz_stage "Additional step. Get all ORFs."
+
+        # Make ORF folder
+        path_orf="${path_out}orf/"
+        mkdir -p "${path_orf}"
+
+        # Clean up the output folders
+        if   [ "$clean_dir" = "T" ]; then 
+            rm -f ${path_orf}*fasta
+        fi
+
+        # Path for logging
+        path_log_step="${path_log}step${step_num}_query_01_orf/"
+
+        # Run the step
+        Rscript pangen/query_01_to_chr.R --path.in ${path_in} --path.orf ${path_orf} \
+                --cores ${cores}  \
+                ${option_nchr} \
+                ${option_accessions} \
+                --path.log ${path_log_step} --log.level ${log_level}
+
+        # Done
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
+        
+    fi
+
+fi
+
+
+
 # ----------------------------------------------
 # Split query chromosomes into parts
 step_file="$path_flags/step${step_num}_done"
@@ -554,7 +609,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
     Rscript pangen/query_02_to_parts.R --path.chr ${path_chrom} \
             --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
             ${option_purge_reps} ${option_rev} \
-            ${option_nchr}\
+            ${option_nchr} \
+            ${option_mirror} \
             --path.log ${path_log_step} --log.level ${log_level}
 
     # Done
@@ -632,9 +688,11 @@ for ref0 in "${refs_all[@]}"; do
 
         with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
         # with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
-        with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s $((${step_num}-1)) to mask highly repetative regions"
 
-
+        if [[ $option_purge_reps =~ ^[[:space:]]*$ ]]; then
+            with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s $((${step_num}-1)) to mask highly repetative regions"
+        fi
+    
         # ---- Clean up the output folders ----
         if   [ "$clean_dir" = "T" ]; then 
             rm -f ${path_blast_parts}*txt
@@ -694,6 +752,15 @@ for ref0 in "${refs_all[@]}"; do
     ((step_num = step_num + 1))
 
     # ----------------------------------------------
+    # Search for the mirror universe
+
+    if [ ! -z "${flag_rev}" ]; then
+        echo "Pannagram's Mirror mode is done."
+        exit
+    fi
+
+
+    # ----------------------------------------------
     # First round of alignments
 
     step_file="$path_flags/step${step_num}_${ref0}_done"
@@ -716,6 +783,7 @@ for ref0 in "${refs_all[@]}"; do
                 --ref ${ref0}   \
                 --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
                 --cores ${cores} \
+                ${option_one2one_r} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done

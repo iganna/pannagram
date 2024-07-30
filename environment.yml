@@ -10,8 +10,10 @@ dependencies:
   - r-doparallel==1.0.17
   - r-ggplot2==3.5.1
   - r-stringi==1.8.4
+  - r-usethis==2.2.3
   - bioconductor-rhdf5==2.46.1
   - bioconductor-muscle==3.44.0
   
   - blast==2.5.0
   - mafft==7.526
+  - parallel==20240722

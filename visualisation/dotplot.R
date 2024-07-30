@@ -43,12 +43,10 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   result.rc$values = -result.rc$values
   result.rc$col = length(seq2) - result.rc$col - wsize + 2
   result = rbind(result.rc, result)
-  result = rbind(result, c(1, length(seq2)-1, 0))
+  result = rbind(result, data.frame(row=1, col=length(seq2)-1, values=0))
   
   len1 = length(seq1)
   len2 = length(seq2)
-  
-  # print(head(result))
   
   p = invisible(
         ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
@@ -70,7 +68,6 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
                  vjust = 1.2, hjust = 0.5)
     )
     
-  
   # p
   return(p )
 }
