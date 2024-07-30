@@ -21,7 +21,7 @@ option_list <- list(
               help = "Number of chromosomes", metavar = "numeric"),
   make_option(c("--path.in"), type = "character", default = NULL, 
               help = "Path to the input directory", metavar = "character"),
-  make_option(c("--path.chr"), type = "character", default = NULL, 
+  make_option(c("--path.orf"), type = "character", default = NULL, 
               help = "Path to the output directory", metavar = "character"),
   make_option(c("--sort"), type = "logical", default = FALSE, 
               help = "Sort chromosomes by lengths or not", metavar = "logical"),
@@ -80,7 +80,7 @@ if(!is.null(acc.anal)){
 
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))
-path.orf   <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome-out path 'path.chr' must be specified!"))
+path.orf   <- ifelse(!is.null(opt$path.orf), opt$path.orf, stop("The chromosome-out path 'path.orf' must be specified!"))
 if(!dir.exists(path.orf)) dir.create(path.orf)
 
 # Decide whether to sort by length based on provided input or default to FALSE
@@ -228,9 +228,9 @@ pokaz('Done.',
 # ***********************************************************************
 # ---- Manual testing ----
 
-# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.chr ../pb_chromosomes/
-# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.chr ../ly_chromosomes/    
-# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.chr ../rhiz_chromosomes/ -s T
+# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.orf ../pb_chromosomes/
+# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.orf ../ly_chromosomes/    
+# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.orf ../rhiz_chromosomes/ -s T
 
 
 

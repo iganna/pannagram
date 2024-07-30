@@ -550,41 +550,37 @@ fi
 # ----------------------------------------------
 # If to find ORFs
 if [ ! -z "${flag_orf}" ]; then
-    
-    step_file="$path_flags/step${step_num}_done"
-    if [ ! -f ${step_file} ]; then
 
-        with_level 1 pokaz_stage "Additional step. Get all ORFs."
+    with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
-        # Make ORF folder
-        path_orf="${path_out}orf/"
-        mkdir -p "${path_orf}"
+    # Make ORF folder
+    path_orf="${path_out}orf/"
+    mkdir -p "${path_orf}"
 
-        # Clean up the output folders
-        if   [ "$clean_dir" = "T" ]; then 
-            rm -f ${path_orf}*fasta
-        fi
-
-        # Path for logging
-        path_log_step="${path_log}step${step_num}_query_01_orf/"
-
-        # Run the step
-        Rscript pangen/query_01_to_chr.R --path.in ${path_in} --path.orf ${path_orf} \
-                --cores ${cores}  \
-                ${option_nchr} \
-                ${option_accessions} \
-                --path.log ${path_log_step} --log.level ${log_level}
-
-        # Done
-        touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
-
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
-        
+    # Clean up the output folders
+    if   [ "$clean_dir" = "T" ]; then 
+        rm -f ${path_orf}*fasta
     fi
+
+    # Path for logging
+    path_log_step="${path_log}step${step_num}_query_01_orf/"
+
+    # Run the step
+    Rscript pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
+            --cores ${cores}  \
+            ${option_nchr} \
+            ${option_accessions} \
+            --path.log ${path_log_step} --log.level ${log_level}
+
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
+        
 
 fi
 

@@ -185,6 +185,7 @@ loop.function <- function(i.acc,
                               chr = 1:length(q.fasta),
                               len = nchar(q.fasta), 
                               name = gsub(" ", "_", names(q.fasta)))
+  df.chr.lengths = df.chr.lengths[1:n.chr,]
   write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
   
   
