@@ -7,7 +7,6 @@ suppressMessages({
 })
 
 source("utils/utils.R")
-source("analys/sv_func.R")
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -184,7 +183,7 @@ loop.function <- function(i.acc,
     s.orf = orf.res$orf
     names(s.orf) = paste(acc.s, '_Chr', i.chr, names(s.orf), sep='')
     
-    writeFastaMy(s, file=file.out, append=F)
+    writeFastaMy(s.orf, file=file.out, append=F)
   }
   
   rm(q.fasta)
