@@ -14,11 +14,17 @@ source utils/utils_bash.sh
 
 show_help() {
     cat << EOF
-Usage: ${0##*/}  -in_seq FASTA_FILE -out OUTPUT_FILE
-                [mode_option] [options]
+
+╔════════════════════════════════════════╗
+║   S e a r c h   f o r   s i m i l a r  ║
+║            s e q u e n c e s           ║
+╚════════════════════════════════════════╝
 
 This script performs a BLAST search on a given FASTA file against a specified genome 
 and processes the results based on similarity thresholds.
+
+Usage: ${0##*/}  -in_seq FASTA_FILE -out OUTPUT_FILE
+                [mode_option] [options]
 
 Mode (at least one option is required:
     -on_seq SEQUENCE_FILE   Fasta-file containing sequences for comparison.
@@ -62,19 +68,19 @@ use_strand=T
 while [ "$1" != "" ]; do
     case $1 in
         -h | --help ) show_help; exit ;;
-        -in_seq )    file_input=$1; shift 2 ;;
-        -out )       output_pref=$1; shift 2 ;;
-        -sim )       sim_threshold=$1; shift 2 ;;
+        -in_seq )    file_input=$2; shift 2 ;;
+        -out )       output_pref=$2; shift 2 ;;
+        -sim )       sim_threshold=$2; shift 2 ;;
 
-        -on_seq )    file_seq=$1; shift 2 ;;
-        -on_genome ) file_genome=$1; shift 2 ;;
-        -on_path )   path_genome=$1; shift 2 ;;
+        -on_seq )    file_seq=$2; shift 2 ;;
+        -on_genome ) file_genome=$2; shift 2 ;;
+        -on_path )   path_genome=$2; shift 2 ;;
 
         -afterblast ) after_blast_flag=1; shift ;;
         -keepblast )  keep_blast_flag=1; shift ;;
 
         -strandfree ) use_strand=F; shift ;;
-        * ) echo "Invalid parameter: $1"; exit 1 ;;
+        * ) echo "Invalid parameter: $1"; show_help; exit 1 ;;
     esac
 done
 
@@ -127,7 +133,7 @@ if [[ "${output_pref}" == */ ]]; then
     fi
 
     output_pref="${output_pref}result"
-    echo "Prefex for the ourput file was changed to ${output_pref}"
+    pokaz_message "Prefex for the ourput file was changed to ${output_pref}"
   
 fi
 
@@ -158,20 +164,20 @@ fi
 # Run the pileline
 
 for db_file in "${db_files[@]}"; do
-    
-    pokaz_message "Search on: $db_file"
 
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
     if [ ! -f "${db_file}.nhr" ]; then
-        echo "Creating database..."
+        pokaz_stage "Creating database for $db_file..."
         makeblastdb -in "$db_file" -dbtype nucl > /dev/null
     fi
 
     # ---------------------------------------------
     # Run BLAST
     # Define the temporary file for storing BLAST results
-    blast_res="${output_pref}${db_file}.blast.tmp"
+    db_name=$(basename -- "$db_file")
+    db_name="${db_name%.*}"
+    blast_res="${output_pref}.${db_name}.blast.tmp"
 
     # Check if BLAST results should be used from an existing file
     if [ "$after_blast_flag" -eq 1 ]; then
