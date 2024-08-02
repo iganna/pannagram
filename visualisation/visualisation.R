@@ -49,12 +49,24 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
   if (is.null(query.label)) query.label = 'query'
   if (is.null(ref.label)) ref.label = 'base'
 
-  range.x = max(c(x$V2,x$V3)) - min(c(x$V2,x$V3))
-  range.y = max(c(x$V4,x$V5)) - min(c(x$V4,x$V5))
+  x.limits = c(x$V2,x$V3)
+  y.limits = c(x$V4,x$V5)
+  
+  range.x = max(x.limits) - min(x.limits)
+  range.y = max(y.limits) - min(y.limits)
   range.m = max(range.x, range.y)
-  max.lim = max(c(x$V4,x$V5,x$V2,x$V3))
+  max.lim = max(x.limits, y.limits)
 
-  n.scale.step = 5
+  if (range.m <1.05e6){
+    n.scale.step <- 0.1
+  } else if (range.m <5.1e6){
+    n.scale.step <- 0.5
+  } else if (range.m <10.2e6){
+    n.scale.step <- 1
+  } else {
+    n.scale.step <- 5
+  }
+  # n.scale.step = 0.5
   for(i.scale in 6:2){
     n.scale = 10^i.scale
     if((range.m > n.scale*n.scale.step) || (i.scale == 2)){
@@ -65,7 +77,10 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
       break
     }
   }
-
+  
+  # Replase 0eX to 0
+  s.ticks <- ifelse(grepl("^0e", s.ticks), "0", s.ticks)
+  
   p <- ggplot(x, aes(x=V2, y=V4, xend=V3, yend=V5, color=as.factor(V4<V5))) +
     geom_segment(show.legend = FALSE) +
     theme_bw() +
@@ -84,7 +99,7 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
 }
 
 
-ploDot <- function(..., alpha = 1) {
+plotSynDot <- function(..., alpha = 1) {
   pokazAttention('Please use plotSynteny(..., show.dot=T)')
   p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
   return(p)
@@ -141,7 +156,7 @@ plotPanAcc <- function(file.msa, acc){
 #' @param alignments.path Char with path to **directory**, where `.rds` files with alignments are located. By default, pangen pipeline writes such files into dir with **alignments_** prefix
 #' @param query.name Char with path to **FASTA file** with genome, used as query (horizontal axis)
 #' @param ref.name Char with path to **FASTA file** with genome, used as reference (vertical axis)
-#' @param sort.descending Flag to sort sequences (chromosome, plasmids, fragments, etc.) of a genome by their lengths in descending order. Default: `TRUE`
+#' @param seq.order Sequence reordering type (both axis): 'default': fasta file order, 'descending': sorted from longest to shortest sequence, 'alphanum': sorted by sequence labels (excluding accession number)
 #' @param query.label Char for x axis label (query). Default `NULL` will automatically deduce label based on given `query.name`
 #' @param ref.label Char for y axis label (reference). Default `NULL` will automatically deduce label based on given `ref.name`
 #'
@@ -149,77 +164,126 @@ plotPanAcc <- function(file.msa, acc){
 #'
 #' @import ggplot2
 #' @export
-plotGenomeAgainstRef <- function(alignments.path, query.name, ref.name,
-                                 sort.descending=T,
-                                 query.label = NULL,
-                                 ref.label = NULL) {
-  # if none given, deducing axis labels straight from filenames
-  if (is.null(query.label)) query.label = tools::file_path_sans_ext(basename(query.name))
-  if (is.null(ref.label)) ref.label = tools::file_path_sans_ext(basename(ref.name))
+plotSynAllChr <- function(path.aln, 
+                               acc, 
+                               ref,
+                               chr.len,
+                               seq.order = "default"
+                               ) {
   
-  # Read FASTA files
-  fasta_query <- readFastaMy(query.name)
-  fasta_ref <- readFastaMy(ref.name)
+  # # Get alignments and numbers of chromosomes
+  # pattern <- ".*_[0-9]+_[0-9]+_maj\\.rds$"
+  # files.aln <- list.files(path = path.aln, pattern = pattern, full.names = F)
+  # acc.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rds$", "\\1", s)))
+  # acc.chrs <- unique(sapply(files.aln, function(s) sub(".*_([0-9]+)_[0-9]+_maj\\.rds$", "\\1", s)))
+  # ref.chrs <- unique(sapply(files.aln, function(s) sub(".*_[0-9]+_([0-9]+)_maj\\.rds$", "\\1", s)))
   
-  # =============== reordering ===================
-  if (sort.descending){
-    order_query <- order(-nchar(fasta_query))
-    order_ref <- order(-nchar(fasta_ref))
-    fasta_query <- fasta_query[order_query]
-    fasta_ref <- fasta_ref[order_ref]
+  if(!(ref %in% chr.len$acc)) stop('Number of chromosomes in the reference genomes in not defined')
+  if(!(acc %in% chr.len$acc)) stop('Number of chromosomes in the accession genomes in not defined')
+  
+  # Number of chromosomes
+  n.chr.ref = max(chr.len$chr[chr.len$acc == ref])
+  n.chr.acc = max(chr.len$chr[chr.len$acc == acc])
+  
+  # Lengths of chromosomes
+  chr.len.acc = chr.len[chr.len$acc == acc,]
+  chr.len.ref = chr.len[chr.len$acc == ref,]
+  chr.len.acc = chr.len.acc[order(chr.len.acc$chr),]
+  chr.len.ref = chr.len.ref[order(chr.len.ref$chr),]
+  
+  # Check that all choromosomes are presented
+  if(nrow(chr.len.acc) != n.chr.acc) stop('Wrong number of chromosomes in accession')
+  if(nrow(chr.len.ref) != n.chr.ref) stop('Wrong number of chromosomes in reference')
+  
+  
+  # === === === === Reordering === === === ===
+  if (seq.order=="descending") {
+    order.acc <- order(-n.chr.acc)
+    order.ref <- order(-n.chr.ref)
+  } else if (seq.order == "alphanum"){
+    stop('Wrong name')
+    # order.acc <- order(acc.labels)
+    # order.ref <- order(ref.labels)
+  } else if (seq.order == "default"){
+    order.acc <- 1:n.chr.acc
+    order.ref <- 1:n.chr.ref
   } else {
-    order_query <- seq(1, length(nchar(fasta_query)))
-    order_ref <- seq(1, length(nchar(fasta_ref)))
+    stop("Unknown keyword for `seq.order`. Options: 'default', 'descending'")
   }
   
-  len_query = nchar(fasta_query)
-  len_ref = nchar(fasta_ref)
-  cum_query = c(0, cumsum(len_query))
-  cum_ref = c(0, cumsum(len_ref))
+  # === === === === Main === === === ===
   
+  # Cummulative lengths
+  cum.acc <- c(0, cumsum(chr.len.acc$len[order.acc]))
+  cum.ref <- c(0, cumsum(chr.len.ref$len[order.ref]))
   
-  #=========== Filling the new dataframe =====================
+  # pokaz('Number of chromosomes ref and acc:', n.chr.ref, n.chr.acc)
+  
+  # Read the alignments
   df <- data.frame()
-  query_prefix <- tools::file_path_sans_ext(basename(query.name))
-  for (i in seq_along(fasta_query)) {
-    for (j in seq_along(fasta_ref)) {
-      
-      file_name = paste(query_prefix, "_", order_query[i], "_", order_ref[j], "_maj.rds", sep='')
-      file_path = file.path(alignments.path, file_name)
-      if (file.exists(file_path)) {
-        data_ij <- readRDS(file_path)
-        
-        data_ij[, c(2, 3)] = data_ij[, c(2, 3)] + cum_query[i]
-        data_ij[, c(4, 5)] = data_ij[, c(4, 5)] + cum_ref[j]
-        df = rbind(df, data_ij)
+  for (i.acc in order.acc) {
+    for (i.ref in order.ref) {
+      file.aln = paste0(path.aln, acc, "_", i.acc, "_", i.ref, "_maj.rds")
+      # pokaz(file.aln)
+      if (file.exists(file.aln)) {
+        # Synteny
+        data.ij <- readRDS(file.aln)
+        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.acc[i.acc]
+        data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[i.ref]
+        df <- rbind(df, data.ij)
       }
     }
   }
   
-  v.plasmid.divisors = cum_query[-length(cum_query)]
-  h.plasmid.divisors = cum_ref[-length(cum_ref)]
+  v.sep.acc = cum.acc[-length(cum.acc)]
+  h.sep.ref = cum.ref[-length(cum.ref)]
   
-  query_labels = sub("^[^ ]+ ", "", names(fasta_query))
-  ref_labels = sub("^[^ ]+ ", "", names(fasta_ref))
+  # Annotations
   
-  pS = plotSynteny(df,
-                   query.label=query.label,
-                   ref.label=ref.label,
-                   hlines=h.plasmid.divisors,
-                   vlines=v.plasmid.divisors,
+  if("name" %in% colnames(chr.len)){
+    acc.labels = chr.len.acc$name[order.acc]
+    ref.labels = chr.len.ref$name[order.ref]
+  } else {
+    acc.labels = paste('Chr', order.acc)
+    ref.labels = paste('Chr', order.ref)  
+  }
+  
+  
+  annot.acc = data.frame(x = cum.acc[-1], 
+                           y = rep(0, length(cum.acc) - 1),
+                           label = acc.labels)
+  annot.ref = data.frame(x = rep(0, length(cum.ref) - 1), 
+                           y = cum.ref[-1],
+                           label = ref.labels)
+  
+  # # Remain only the existing chromosomes
+  # v.sep.acc = v.sep.acc[1:max.acc.chr]
+  # h.sep.ref = h.sep.ref[1:max.ref.chr]
+  # 
+  # annot.acc = annot.acc[1:max.acc.chr,]
+  # annot.ref = annot.ref[1:max.ref.chr,]
+  # 
+  # 
+  
+  # Plot
+  synteny.plot = plotSynteny(df,
+                             query.label = acc,
+                             ref.label = ref,
+                   hlines = h.sep.ref,
+                   vlines = v.sep.acc,
                    col.line = "#3530D966",
-                   show.point = T,
-                   expand = c(0,0)
+                   show.point = TRUE,
+                   expand = c(0, 0)
   ) +
-    annotate("text", x = cum_query[-1], y = rep(0, length(cum_query) - 1),
-             label = query_labels,
+    annotate("text", x = cum.acc[-1], y = rep(0, length(cum.acc) - 1),
+             label = acc.labels,
              vjust = -0.3, hjust = -0.02,
              size = 2.7, angle=90,
-             color="#7D7D7D") +
-    annotate("text", x = rep(0, length(cum_ref) - 1), y = cum_ref[-1], 
-             label = ref_labels,
+             color = "#7D7D7D") +
+    annotate("text", x = rep(0, length(cum.ref) - 1), y = cum.ref[-1],
+             label = ref.labels,
              vjust = 1.2, hjust = -0.02,
              size = 2.7,
-             color="#7D7D7D")
-  return(pS)
+             color = "#7D7D7D")
+  return(synteny.plot)
 }

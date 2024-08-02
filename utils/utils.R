@@ -1,10 +1,6 @@
 suppressMessages({
-if (!require(crayon)) {
-  install.packages("crayon")
-}
-
-library(crayon)
-
+  if (!require(crayon)) install.packages("crayon")
+  library(crayon)
 })
 
 #' ----------------------------------------------------------------------
@@ -22,25 +18,51 @@ library(crayon)
 #' 
 #' @param file.fasta A string, the path to the FASTA file to be read.
 #' 
+#' @param stop.on.error Should the function stop if FASTA file is empty or has header-sequence missmatch
+#' 
 #' @return A named vector where the names are the sequence headers 
 #' 
 #' @author Anna A. Igolkina 
 #' 
-readFastaMy <- function(file.fasta){
+readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
   file.content <- readLines(file.fasta)
-  header.idx <- c(which(substr(file.content, 1, 1) == ">"), length(file.content) + 1)
-  n.seq = length(header.idx) - 1
- 
-  sequences <- c()
-  for(i.seq in 1:n.seq){
-    sequences = c(sequences, 
-                  paste0(file.content[(header.idx[i.seq]+1):(header.idx[i.seq+1]-1)], collapse = ''))
-  }
-  seq.names = file.content[header.idx[1:n.seq]]
-  seq.names = substr(seq.names, 2, nchar(seq.names))
-  names(sequences) = seq.names
   
-  rm(file.content)
+  if (length(file.content) == 0) {
+    if (stop.on.error) {
+      stop(paste("Error: Empty FASTA\n", file.fasta))
+    } else {
+      return(character(0))
+    }
+  }
+  
+  header.idx <- which(substr(file.content, 1, 1) == ">")
+  n.seq <- length(header.idx)
+  
+  if (n.seq == 0) {
+    if (stop.on.error) {
+      stop(paste("Error: No headers in FASTA\n", file.fasta))
+    } else {
+      return(character(0))
+    }
+  }
+  
+  sequences <- character(n.seq)
+  for (i.seq in 1:n.seq) {
+    start <- header.idx[i.seq] + 1
+    end <- if (i.seq < n.seq) header.idx[i.seq + 1] - 1 else length(file.content)
+    if (start <= end) {
+      sequences[i.seq] <- paste(file.content[start:end], collapse = '')
+    } else {
+      if (stop.on.error) {
+        stop(paste("Error: In FASTA\n", file.fasta, "\nEmpty sequence for header\n", file.content[header.idx[i.seq]]))
+      } else {
+        sequences[i.seq] <- ""
+      }
+    }
+  }
+  
+  seq.names <- substr(file.content[header.idx], 2, nchar(file.content[header.idx]))
+  names(sequences) <- seq.names
   
   return(sequences)
 }
@@ -52,7 +74,7 @@ readFastaMy <- function(file.fasta){
 #' in the vector will be written to the file with its corresponding name as a header.
 #'
 #' @param sequences A vector of sequences to be written to the FASTA file.
-#' #' @param file A string specifying the path to the output FASTA file.
+#' @param file A string specifying the path to the output FASTA file.
 #' @param seq.pref A string used as a prefix for sequence names when names are not provided
 #' in the sequences vector. Default is "seq". Names will be constructed as seq.pref_1, seq.pref_2, etc.
 #' @param append Logical. If TRUE, sequences will be appended to the file (if it exists). 
@@ -64,6 +86,13 @@ readFastaMy <- function(file.fasta){
 #'  
 writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append = FALSE){
   
+  if(length(sequences) == 0) {
+    if(!append) {
+      file.create(file)
+    }
+    return(invisible(NULL))
+  }
+  
   if(is.null(seq.names)){
     if(!is.null(names(sequences))){
       seq.names = names(sequences)
@@ -74,8 +103,6 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
       seq.names = paste(pref, 1:length(sequences), sep = '')
     }
   }
-  
-  
   # Open the file connection for writing or appending
   mode <- ifelse(append, "a", "w")
   con <- file(file, mode)
@@ -85,10 +112,7 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
     cat(sprintf(">%s\n", seq.names[i]), file = con)
     cat(sprintf("%s\n", sequences[i]), file = con)
   }
-  
-  # Close the file connection
   close(con)
-
 }
 
 #' ----------------------------------------------------------------------
@@ -176,16 +200,21 @@ nt2seq <- function(s){
 #' msaplot(seqs.mx)
 #' 
 aln2mx <- function(s.aln) {
-  aln.len = unique(nchar(s.aln))
-  if(length(aln.len) != 1) stop('Aligned sequences have different lengths')
-  if(is.null(names(s.aln))){
-    seq.names = paste('s', 1:length(s.aln), sep = '')
-  } else {
-    seq.names = names(s.aln)
+  if (length(s.aln) == 0) {
+    return(matrix(character(0), nrow = 0, ncol = 0))
   }
-  seqs.mx = matrix('-', length(s.aln), aln.len, dimnames = list(seq.names, NULL))
-  for(i.s in 1:length(s.aln)){
-    seqs.mx[i.s,] = seq2nt(s.aln[i.s])
+  
+  aln.len <- unique(nchar(s.aln))
+  if (length(aln.len) != 1) stop('Aligned sequences have different lengths')
+  
+  if (is.null(names(s.aln))) {
+    seq.names <- paste('s', 1:length(s.aln), sep = '')
+  } else {
+    seq.names <- names(s.aln)
+  }
+  seqs.mx <- matrix('-', length(s.aln), aln.len, dimnames = list(seq.names, NULL))
+  for (i.s in 1:length(s.aln)) {
+    seqs.mx[i.s, ] <- seq2nt(s.aln[i.s])
   }
   return(seqs.mx)
 }
@@ -210,18 +239,22 @@ aln2mx <- function(s.aln) {
 #' print(seqs)
 #'
 mx2aln <- function(mx) {
-  seqs = c()
-  for(irow in 1:nrow(mx)){
-    seqs = c(seqs, paste0(mx[irow,], collapse = ''))
+  if (nrow(mx) == 0 || ncol(mx) == 0) {
+    return(character(0))
   }
   
-  if(is.null(rownames(mx))){
-    seq.names = paste('s', 1:nrow(mx), sep = '')
+  seqs <- character(nrow(mx))
+  for (irow in 1:nrow(mx)) {
+    seqs[irow] <- paste0(mx[irow, ], collapse = '')
+  }
+  
+  if (is.null(rownames(mx))) {
+    seq.names <- paste('s', 1:nrow(mx), sep = '')
   } else {
-    seq.names = rownames(mx)
+    seq.names <- rownames(mx)
   }
-  names(seqs) = seq.names
   
+  names(seqs) <- seq.names
   return(seqs)
 }
 
@@ -236,20 +269,24 @@ mx2aln <- function(mx) {
 #' Each sequence is represented as an element in the vector.
 #' 
 mx2seq <- function(mx) {
-  seqs = c()
-  for(irow in 1:nrow(mx)){
-    s = mx[irow,]
-    s = s[s != '-']
-    seqs = c(seqs, paste0(s, collapse = ''))
+  if (nrow(mx) == 0 || ncol(mx) == 0) {
+    return(character(0))
   }
   
-  if(is.null(rownames(mx))){
-    seq.names = paste('s', 1:nrow(mx), sep = '')
+  seqs <- character(nrow(mx))
+  for (irow in 1:nrow(mx)) {
+    s <- mx[irow, ]
+    s <- s[s != '-']
+    seqs[irow] <- paste0(s, collapse = '')
+  }
+  
+  if (is.null(rownames(mx))) {
+    seq.names <- paste('s', 1:nrow(mx), sep = '')
   } else {
-    seq.names = rownames(mx)
+    seq.names <- rownames(mx)
   }
-  names(seqs) = seq.names
   
+  names(seqs) <- seq.names
   return(seqs)
 }
 
@@ -375,6 +412,35 @@ mx2profile <- function(mx, gap.flag = F){
   return(pos.profile)
 }
 
+#' ----------------------------------------------------------------------
+#' Convert a Nucleotide Sequence to a Matrix of Words of a Specific Size
+#'
+#' @description
+#' `seq2mx` converts a nucleotide sequence into a matrix representation. This function is used 
+#' in the context of generating a dotplot. It takes a sequence and a window size, then creates 
+#' a matrix where each row represents a segment of the sequence of the specified window size.
+#'
+#' @param seq A character vector representing the nucleotide sequence.
+#' @param wsize The window size (an integer) for segmenting the sequence.
+#'
+#' @return A matrix where each row corresponds to a segment of the sequence, represented 
+#' by `wsize` nucleotides.
+#'
+#' @examples
+#' # Example usage:
+#' seq <- c("A", "C", "T", "G", "A", "C", "T", "G")
+#' wsize <- 3
+#' seq2mx(seq, wsize)
+#'
+#' @export
+#'
+seq2mx <- function(seq, wsize){
+  
+  m <- embed(seq, wsize)
+  matrix_seq <- m[, ncol(m):1]
+  
+  return(matrix_seq)
+}
 
 #' ----------------------------------------------------------------------
 #' Translate Nucleotide Sequence to Amino Acid Sequence
@@ -681,37 +747,6 @@ justCompl <- function(s){
   return(seqs.c)
 }
 
-
-#' ----------------------------------------------------------------------
-#' Display stylized stage messages
-#'
-#' This function displays a stylized message indicating the stage or step of a process.
-#'
-#' @param ... Arguments to be concatenated into a message string.
-#'
-#' @return No return value, called for side effects.
-#' 
-#' @author Anna A. Igolkina 
-#' 
-pokazStage <- function(...) {
-  arguments_list <- list(...)
-  # Check if any arguments are vectors
-  for (i in seq_along(arguments_list)) {
-    if (is.character(arguments_list[[i]]) && length(arguments_list[[i]]) > 1) {
-      arguments_list[[i]] <- paste(arguments_list[[i]], collapse = " ")
-    }
-  }
-  
-  arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
-  
-  text.color <- make_style("#34FCFC")
-  # bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color)
-  # message(arguments)
-  cat(fancy(arguments))
-  cat('\n')
-}
-
 #' ----------------------------------------------------------------------
 #' Display attention messages with stylization
 #'
@@ -723,7 +758,7 @@ pokazStage <- function(...) {
 #' 
 #' @author Anna A. Igolkina 
 #' 
-pokazAttention <- function(...) {
+pokazAttention <- function(..., file = NULL, echo = T) {
   arguments_list <- list(...)
   # Check if any arguments are vectors
   for (i in seq_along(arguments_list)) {
@@ -737,9 +772,18 @@ pokazAttention <- function(...) {
   text.color <- make_style("#FC345C")
   # bg <- make_style("grey5", bg = TRUE)
   fancy <- combine_styles(text.color)
-  # message(arguments)
-  cat(fancy(arguments))
-  cat('\n')
+  formatted_output <- fancy(arguments)
+  
+  if (echo) {
+    # Output to console
+    cat(formatted_output)
+    cat('\n')
+  }  
+  
+  if (!is.null(file)){
+    # Capture the output and write to file
+    write(arguments, file = file, append = TRUE)
+  }
 }
 
 
@@ -752,7 +796,7 @@ pokazAttention <- function(...) {
 #'
 #' @author Anna A. Igolkina 
 #' 
-pokaz <- function(...) {
+pokaz <- function(..., file = NULL, echo = T) {
   arguments_list <- list(...)
   # Check if any arguments are vectors
   for (i in seq_along(arguments_list)) {
@@ -766,9 +810,18 @@ pokaz <- function(...) {
   text.color <- make_style("#FDFDFD")
   # bg <- make_style("grey5", bg = TRUE)
   fancy <- combine_styles(text.color)
-  # message(arguments)
-  cat(fancy(arguments))
-  cat('\n')
+  formatted_output <- fancy(arguments)
+
+  if (echo) {
+    # Output to console
+    cat(formatted_output)
+    cat('\n')
+  }  
+  
+  if (!is.null(file)){
+    # Capture the output and write to file
+    write(arguments, file = file, append = TRUE)
+  }
 }
 
 
@@ -878,6 +931,8 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
 #'
 repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
   
+  # s.mx <- seq2mx(seq2nt(s), wsize = wsize)
+  # substrings <- apply(s.mx, 1, function(s) paste0(s, collapse = ''))
   substrings <- unlist(stringi::stri_sub_all(s, 1:(nchar(s)-wsize+1), wsize -1 + 1:(nchar(s)-wsize+1)))
   substrings = sort(substrings)
   cnt <- rle(substrings)

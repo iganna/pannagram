@@ -144,9 +144,11 @@ loop.function <- function(f.maj,
   # TODO: put real lengths, not approximations
   max.chr.len = max(max(x.sk$V4), max(x.sk$V5)) + 10^6
   
-  # ---- Read Gaps between normal blocks ----
+  # ---- Read Gaps beteen normal blocks ----
   
   complexity.threshold = 200  # Max number of blast hits between two synteny blocks
+  
+  
   
   file.gaps.out = paste0(path.gaps,
                          'acc_', acc, 
@@ -198,10 +200,8 @@ loop.function <- function(f.maj,
     x.gap$V3 = x.gap$V3 + x.gap$q.beg
     x.gap$V4 = x.gap$V4 + x.gap$b.beg
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
-    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
-    
-    x.gap = glueZero(x.gap)
     x.gap$idx = 1:nrow(x.gap)
+    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
     if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
     if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
@@ -214,95 +214,58 @@ loop.function <- function(f.maj,
       
       # name of the node
       s = names(cnt)[i]
-      x.tmp = x.gap[x.gap$pref1 == s,]
       
       # If only one BLAST-hit - get it as it is.
-      if(nrow(x.tmp) == 1){
-        idx.good = c(idx.good, x.tmp$idx)
+      if(cnt[s] == 1) {
+        idx.good = c(idx.good, x.gap$idx[x.gap$pref1 == s])
         next
+      }
+      
+      # Add two extra "nodes", for the begin and end
+      x.tmp = x.gap[x.gap$pref1 == s,c('V2', 'V3', 'V4', 'V5', 'idx', 'dir')]
+      x.tmp = x.tmp[order(x.tmp$V2),]
+      
+      x.tmp = glueZero(x.tmp)
+      
+      # # Show plot
+      # gg = plotSynDot(x.tmp)
+      # dir.create( paste0(path.gaps,'/pdf/'), showWarnings = FALSE, recursive = TRUE)
+      # plot.file = paste0(path.gaps,'/pdf/', s, ".pdf")
+      # pokaz(plot.file)
+      # pdf(plot.file, width=4, height=4)
+      # print(gg)
+      # dev.off()
+      
+      if(nrow(x.tmp) > complexity.threshold) next
+      
+      q.beg = min(x.tmp$V2) - 1  # change
+      q.end = max(x.tmp$V3) + 1  # change
+      b.beg = min(c(x.tmp$V4, x.tmp$V5)) - 1  # change
+      b.end = max(c(x.tmp$V4, x.tmp$V5))+ 1  # change
+      
+      x.tmp = rbind(c(q.beg, q.beg, b.beg, b.beg, 0), x.tmp)
+      x.tmp = rbind(x.tmp, c(q.end, q.end, b.end, b.end, 0))
+      x.tmp = x.tmp[order(x.tmp$V2),]
+      x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
+      
+      # Set up the direction
+      x.tmp0 = x.tmp
+      idx.dir = which(x.tmp$V5 < x.tmp$V4)
+      if(length(idx.dir) > 0){
+        tmp = x.tmp$V4[idx.dir]
+        x.tmp$V4[idx.dir] = x.tmp$V5[idx.dir]
+        x.tmp$V5[idx.dir] = tmp  
       }
 
-      # Clean overlaps
-      x.tmp = cleanOverlaps(x.tmp)
-      if(nrow(x.tmp) == 1){
-        idx.good = c(idx.good, x.tmp$idx)
-        next
-      } 
+      visit.info = initVisitInfo(nrow(x.tmp))
       
-      # Transform positions to positive
-      df.gap = x.tmp[,c('V2', 'V3', 'V4', 'V5', 'idx', 'dir')]
-      tmp = df.gap$V4[df.gap$dir == 1]
-      df.gap$V4[df.gap$dir == 1] = df.gap$V5[df.gap$dir == 1]
-      df.gap$V5[df.gap$dir == 1] = tmp
-      df.gap$dir = 0
+      visit.info2 = graphTraverseWnd(x.tmp, 1, x.tmp$V3[1], x.tmp$V5[1], 0, 0, visit.info)
       
-      # Transform positions to start from 1
-      x.min = min(df.gap$V2)
-      y.min = min(df.gap$V4)
-      df.gap[,c('V2', 'V3')] = df.gap[,c('V2', 'V3')] - x.min + 1
-      df.gap[,c('V4', 'V5')] = df.gap[,c('V4', 'V5')] - y.min + 1
-      df.gap$len.y = df.gap$V5 - df.gap$V4  + 1
+      # Reconstruct the optimal path
+      idx.opt = reconstructTraverse(visit.info2$v.prev)
+      idx.opt = idx.opt[-c(1, length(idx.opt))]
       
-      # ---- Greedy loop ----
-      
-      overlap.cutoff = 0.2
-      
-      # New system of coordinates on Y axis
-      y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
-      cell.y.pos = data.frame(beg = y.ticks[-length(y.ticks)], end = y.ticks[-1]-1)
-      cell.y.pos$len = cell.y.pos$end - cell.y.pos$beg + 1
-      pos.y.attr = rep(0, max(cell.y.pos$end))
-      
-      df.gap$X4 = 0
-      df.gap$X5 = 0
-      y.list = list()
-      for(irow in 1:nrow(df.gap)){
-        pos.tmp = which((cell.y.pos$beg >= df.gap$V4[irow]) & (cell.y.pos$end <= df.gap$V5[irow]))
-        df.gap$X4[irow] = min(pos.tmp)
-        df.gap$X5[irow] = max(pos.tmp)
-      }
-      
-      df.gap$len.x = df.gap$V3 - df.gap$V2 + 1
-      df.gap$len.y = abs(df.gap$V4 - df.gap$V5) + 1
-      
-      pos.y.occ = rep(0, nrow(cell.y.pos))
-      pos.x = 0
-      idx.added <- c()
-      
-      df.gap = df.gap[order(df.gap$V2),]
-      
-      while(T){
-        d.x <- df.gap$V3 - pos.x
-        idx.next <- which((d.x > 0) & (d.x / df.gap$len.x > (1-overlap.cutoff)))
-        
-        
-        if(length(idx.next) == 0) break
-        
-        i.next.found = 0
-        for(i.next in idx.next) {
-          
-          # if(i.next == 5) stop()
-          
-          pos.y.i.next <- df.gap$X4[i.next]:df.gap$X5[i.next]
-          pos.y.i.next.overlap = pos.y.i.next[pos.y.occ[pos.y.i.next] > 0]
-          
-          y.overlap <- sum(cell.y.pos$len[pos.y.i.next.overlap]) / df.gap$len.y[i.next] 
-          if(y.overlap >= overlap.cutoff) next
-          
-          i.next.found = i.next
-          break
-        }
-        
-        if(i.next.found == 0) break
-        
-        idx.added = c(idx.added, i.next.found)
-        pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] + 1
-        pos.x <- df.gap$V3[i.next]
-        
-      }      
-      
-      # ---- Remaining ----
-      idx.good = c(idx.good, df.gap$idx[idx.added])
+      idx.good = c(idx.good, x.tmp$idx[idx.opt])
       
     }
     
@@ -348,8 +311,153 @@ loop.function <- function(f.maj,
   # }
 
   
-  if(!is.null(x.gap) & F) {
-   
+  if(!is.null(x.gap)) {
+    # Fill up and down
+    ## ----  Prepare ----
+    x.sk = x.sk[order(x.sk$V2),]  # because all alignment will be according to the sorted "query"
+    
+    # Find positions of blocks, so that only at block edges somethings is changing, so we need not-trivial gaps
+    x.sk$bl.end <- c(diff(x.sk$block.id) != 0, 1)
+    x.sk$bl.beg <- c(1, diff(x.sk$block.id) != 0)
+    x.sk$idx = 1:nrow(x.sk)
+    
+    y.tops = x.sk$p.beg  # top positions
+    y.bots = x.sk$p.end  # bottom positions
+    
+    # Here was the previous place of "read.table"
+
+    # Get real positions of fragments
+    x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][2])) - 1
+    x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][2])) - 1
+    x.gap$V2 = x.gap$V2 + x.gap$q.beg
+    x.gap$V3 = x.gap$V3 + x.gap$q.beg
+    x.gap$V4 = x.gap$V4 + x.gap$b.beg
+    x.gap$V5 = x.gap$V5 + x.gap$b.beg
+    x.gap$idx = -(1:nrow(x.gap))
+    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1  # BUT DON'T change the order of V4 and V5
+    x.gap$bl.beg = -1
+    x.gap$bl.end = -1
+    
+    # Combine new core skeleton and new gaps
+    comb.names = intersect(colnames(x.sk), colnames(x.gap))
+    x.comb = rbind(x.sk[, comb.names], 
+                   x.gap[, comb.names])
+    x.comb = x.comb[order(x.comb$V2),]  # This sorting is relevant, because x.sk was initially also sorted!!
+    
+    idx.end = which(x.comb$bl.end == 1)
+    idx.beg = which(x.comb$bl.beg == 1)
+    
+    ## ---- Remain in "up" direction ----
+    idx.remain = c()
+    for(i.cur in idx.end){
+      # pokaz(i.cur)
+      # if(x.comb$dir[i.cur] == 1) next
+      n.gaps = countValueStretch(x.comb$bl.end, i.cur)
+      if(n.gaps == 0) next
+      
+      # Get all possible BLAST-hits, which can be "after" the block.
+      x.tmp = x.comb[i.cur + (0:(n.gaps)),]
+      
+      if(nrow(x.tmp) > complexity.threshold) next
+      
+      x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
+      x.tmp$w[1] = 0
+      
+      # # Remain the proper direction
+      # x.tmp = x.tmp[x.tmp$dir == x.tmp$dir[1],]
+      
+      if(x.comb$dir[i.cur] == 0){
+        # Find next "top" base, so you should not consider BLAST-hits higher than this
+        y.top = min(c(Inf, y.tops[y.tops > x.comb$V5[i.cur]]))
+        y.bot = min(x.comb$V4[i.cur], x.comb$V5[i.cur])  # min - потому что хочу взять и саму затравку
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        if(nrow(x.tmp) <= 1) next
+        
+        # Run path search
+        idx.visit = pathUpPlus(x.tmp)
+      } else {
+        
+        # Find next "bottom" base, so you should not consider BLAST-hits higher than this
+        y.bot = max(c(-Inf, y.bots[y.bots < x.comb$V5[i.cur]]))
+        y.top = max(x.comb$V4[i.cur], x.comb$V5[i.cur])
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        
+        if(nrow(x.tmp) <= 1) next
+        
+        idx.visit = pathUpMinus(x.tmp)
+      }
+      
+      # If found something - add
+      if(!is.null(idx.visit)){
+        idx.remain = c(idx.remain, x.tmp$idx[idx.visit][-1])
+      }
+    }
+    
+    ## ---- Remain in "Downwards" direction ----
+    for(i.cur in idx.beg){
+      
+      # if(x.comb$dir[i.cur] == 1) next
+      n.gaps = countValueStretchBW(x.comb$bl.end, i.cur)
+      if(n.gaps == 0) next
+      
+      # Get all possible BLAST-hits, which can be "after" the block.
+      x.tmp = x.comb[i.cur + ((-n.gaps):0),]
+      
+      if(nrow(x.tmp) > complexity.threshold) next
+      
+      x.tmp$w = abs(x.tmp$V3 - x.tmp$V2) + abs(x.tmp$V4 - x.tmp$V5)
+      x.tmp$w[1] = 0
+      
+      # # Remain the proper direction - NOT NEEDED, because I've changed to "top" and "bottom"
+      # x.tmp = x.tmp[x.tmp$dir == x.comb$dir[i.cur],]
+      
+      if(x.comb$dir[i.cur] == 0){
+        # Find next "bottom" base, so you should not consider BLAST-hits higher than this
+        y.bot = max(c(-Inf, y.bots[y.bots < x.comb$V5[i.cur]]))
+        y.top = max(x.comb$V4[i.cur], x.comb$V5[i.cur])
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        
+        if(nrow(x.tmp) <= 1) next
+        
+        # Run path search
+        idx.visit = pathDownPlus(x.tmp)
+        
+      } else {
+        # Find next "top" base, so you should not consider BLAST-hits higher than this
+        y.top = min(c(Inf, y.tops[y.tops > x.comb$V5[i.cur]]))
+        y.bot = min(x.comb$V4[i.cur], x.comb$V5[i.cur])  # min - потому что хочу взять и саму затравку
+        
+        x.tmp = x.tmp[(x.tmp$V4 >= y.bot) & (x.tmp$V5 >= y.bot),]
+        x.tmp = x.tmp[(x.tmp$V4 <= y.top) & (x.tmp$V5 <= y.top),]
+        
+        if(nrow(x.tmp) <= 1) next
+        # stop('DownMinus direction found')
+        
+        # Run path search
+        idx.visit = pathDownMinus(x.tmp)
+      }
+      
+      # If found something - add
+      if(!is.null(idx.visit)){
+        idx.remain = c(idx.remain, x.tmp$idx[idx.visit])
+      }
+    }
+    
+    if(length(idx.remain) != 0){
+      x.bw = x.gap[abs(idx.remain),]
+      # Clean overlaps from both base and query sides
+      x.bw = cleanOverlaps(x.bw)
+    } else {
+      x.bw = x.gap[F,]
+    }
+    
+    rmSafe(x.gap)
     
   } else {
     
@@ -366,6 +474,7 @@ loop.function <- function(f.maj,
   x.comb = x.comb[order(x.comb$V2),]
   rownames(x.comb) = NULL
   
+  
   # # To catch possible bugs
   # if(T){
   #   file.ws = "tmp_workspace.RData"
@@ -376,6 +485,7 @@ loop.function <- function(f.maj,
   #   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
   #   stop('Enough..')
   # }
+  
   
   # ---- Check uniqueness ---- 
   pos.q.occup = rep(0, max.chr.len)

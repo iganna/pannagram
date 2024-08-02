@@ -43,24 +43,39 @@ check_missing_variable() {
 # Display a stage message
 pokaz_stage() {
     local text="$1"
-    local color_code="38;2;52;252;252"  
-    echo -e "\e[${color_code}m* ${text}\e[0m"
+    color_code="38;5;37"
+    printf "\e[${color_code}m* %s\e[0m\n" "$text"
 }
 
 
 # Display an attention message
 pokaz_attention() {
     local text="$1"
-    local color_code="38;2;52;252;252"  
-    echo -e "\e[${color_code}m* ${text}\e[0m"
+    local color_code="38;5;203"
+    printf "\e[${color_code}m  %s\e[0m\n" "$text"
 }
 
+# Display an error message in red
+pokaz_error() {
+    local text="$1"
+    local color_code="31"  # ANSI color code for red
+    printf "\e[${color_code}m%s\e[0m\n" "$text"
+}
 
 # Display a stage message
 pokaz_message() {
     local text="$1"
-    local color_code="38;5;195"  # Very light blue color code
-    echo -e "\e[${color_code}m  ${text}\e[0m"
+    local color_code="38;5;158"  # Very light blue color code
+    printf "\e[${color_code}m  %s\e[0m\n" "$text"
+    # echo "  ${text}"
+}
+
+
+# Display a the command and evaluate
+show_run() {
+    local cmd="$@"    
+    printf "\033[1;35mRunning command: $cmd\033[0m\n"
+    eval "$cmd"
 }
 
 
@@ -68,4 +83,45 @@ pokaz_message() {
 pokaz_help() {
     pokaz_message "< Welcome to Hellp >"
 }
+
+
+# Create directory if not exists
+make_dir() {
+    local path_name="$1"
+    if [ ! -d "$path_name" ]; then
+        mkdir -p "$path_name"
+    fi
+}
+
+
+# Logging messages either to the console or to a specified file based on the given log level.
+# Logging into files - always
+# Logging into the console - based on the level
+# log_message() {
+#     local log_level_command=$1
+#     local log_level=$2
+#     local file_log=$3
+#     shift 3
+
+#     local pokaz_command=$1
+#     shift
+#     local message="$*"
+
+#     # echo '----'
+#     # echo ${log_level_command} 
+#     # echo ${log_level} 
+#     # echo ${file_log} 
+#     # echo ${pokaz_command} 
+#     # echo ${message}
+#     # echo '==='
+
+#     # Print to the console
+#     if [ "${log_level_command}" -le "${log_level}" ]; then
+#         $pokaz_command "$message"
+#     fi
+
+#     $pokaz_command "$message" | sed 's/\x1b\[[0-9;]*m//g' >> "$file_log"
+
+# }
+
 

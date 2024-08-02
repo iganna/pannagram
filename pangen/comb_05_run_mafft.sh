@@ -1,25 +1,9 @@
 
-
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-# Exit immediately if any command returns a non-zero status
-set -e
-
-# Keep track of the last executed command
-trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
-
-# Define a trap for the EXIT signal
-trap 'catch $?' EXIT
-
-# Function to handle the exit signal
-catch() {
-    # Check if the exit code is non-zero
-    if [ $1 -ne 0 ]; then
-        echo "\"${last_command}\" command failed with exit code $1."
-    fi
-}
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -31,18 +15,14 @@ source utils/utils_bash.sh
 #             PARAMETERS
 # ----------------------------------------------------------------------------
 
-
-# pokaz_stage "Step 11. Run MAFFT"
-
-
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --cores) cores="$2"; shift ;;
-        --path.mafft.in) path_mafft_in="$2"; shift ;;
-        --path.mafft.out) path_mafft_out="$2"; shift ;;
+        -cores) cores="$2"; shift 2;;
+        -path_mafft_in) path_mafft_in="$2"; shift 2;;
+        -path_mafft_out) path_mafft_out="$2"; shift 2;;
+        -log_path) log_path=$2; shift 2;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
-    shift
 done
 
 
@@ -115,28 +95,42 @@ trap "echo 'Script interrupted'; exit" INT
 # Defining the function to be executed in parallel
 mafft_task() {
     input_file=$1
+    log_path=$2
+
     base_name=$(basename "${input_file}" .fasta)
     output_file="${path_mafft_out}/${base_name}_aligned.fasta"
 
-    if [ -e "$output_file" ]; then
-        return  # Skip if output file exists
+    # if [ -e "$output_file" ]; then
+    #     return  # Skip if output file exists
+    # fi
+
+    # Create a log file
+    if [ -d "$log_path" ]; then
+        file_log="${log_path}${base_name}.log"
+        > "$file_log"
+    else
+        file_log="/dev/null"
     fi
 
     # Run MAFFT
     # timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
     { 
-        timeout --foreground 600 mafft --quiet --op 3  --ep 0.1 --treeout "${input_file}" > "${output_file}" 
+        timeout --foreground 600 mafft --quiet --op 3  --ep 0.1 --treeout  "${input_file}" > "${output_file}"  
     } || {
         rm "${output_file}"
         echo "MAFFT command failed for $input_file, but continuing with other files."
     }
+
+    if [ -d "$log_path" ]; then
+        echo "Done." >> "$file_log"
+    fi
 }
 
 export -f mafft_task
 export path_mafft_out
 
 # Run tasks in parallel, using a number of parallel jobs equal to the number of cores
-find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | parallel -j $cores mafft_task
+find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | parallel -j $cores mafft_task {}  ${log_path}
 
 
 echo "  Done!"

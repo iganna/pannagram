@@ -1,6 +1,7 @@
+# Get sequence alignments and consensus sequence
+
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('seqinr')
   library('foreach')
   library(doParallel)
   library("optparse")
@@ -8,7 +9,7 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 
-pokazStage('Get sequence alignments and consensus sequence')
+
 
 args = commandArgs(trailingOnly=TRUE)
 

@@ -1,8 +1,8 @@
 # Find SVs and create GFF file
+# Compare SVs with TEs
 
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('seqinr')
   library('foreach')
   library(doParallel)
   library("optparse")
@@ -10,7 +10,6 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 
-pokazStage('Compare SVs with TEs')
 
 args = commandArgs(trailingOnly=TRUE)
 

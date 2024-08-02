@@ -31,7 +31,6 @@
 dotplot <- function(seq1, seq2, wsize, nmatch) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
-  # seq2.rc = rev(seqinr::comp(seq2))
   seq2.rc = revCompl(seq2)
   
   mx1 = toupper(seq2mx(seq1, wsize))
@@ -44,12 +43,10 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   result.rc$values = -result.rc$values
   result.rc$col = length(seq2) - result.rc$col - wsize + 2
   result = rbind(result.rc, result)
-  result = rbind(result, c(1, length(seq2)-1, 0))
+  result = rbind(result, data.frame(row=1, col=length(seq2)-1, values=0))
   
   len1 = length(seq1)
   len2 = length(seq2)
-  
-  # print(head(result))
   
   p = invisible(
         ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
@@ -71,7 +68,6 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
                  vjust = 1.2, hjust = 0.5)
     )
     
-  
   # p
   return(p )
 }
@@ -173,35 +169,6 @@ dotfacet.s <- function(seq1, seq2, ...) {
   return(dotfacet(seq2nt(seq1), seq2nt(seq2),...))
 }
 
-#' Convert a Nucleotide Sequence to a Matrix
-#'
-#' @description
-#' `seq2mx` converts a nucleotide sequence into a matrix representation. This function is used 
-#' in the context of generating a dotplot. It takes a sequence and a window size, then creates 
-#' a matrix where each row represents a segment of the sequence of the specified window size.
-#'
-#' @param seq A character vector representing the nucleotide sequence.
-#' @param wsize The window size (an integer) for segmenting the sequence.
-#'
-#' @return A matrix where each row corresponds to a segment of the sequence, represented 
-#' by `wsize` nucleotides.
-#'
-#' @examples
-#' # Example usage:
-#' seq <- c("A", "C", "T", "G", "A", "C", "T", "G")
-#' wsize <- 3
-#' seq2mx(seq, wsize)
-#'
-#' @export
-#'
-seq2mx <- function(seq, wsize){
-  
-  m <- embed(seq, wsize)
-  matrix_seq <- m[, ncol(m):1]
-  
-  return(matrix_seq)
-}
-
 
 #' Compare Two Matrices for Dotplot Generation
 #'
@@ -255,7 +222,7 @@ seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
   mx1 = toupper(seq2mx(seq1, wsize))
   result = mxComp(mx1, mx1, wsize, nmatch)
   
-  seq1.rc = rev(seqinr::comp(seq1))
+  seq1.rc = revCompl(seq1)
   mx1.rc = toupper(seq2mx(seq1.rc, wsize))
   result.rc = mxComp(mx1, mx1.rc, wsize, nmatch)
   

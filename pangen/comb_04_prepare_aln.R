@@ -30,7 +30,11 @@ option_list = list(
   make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -39,6 +43,10 @@ opt = parse_args(opt_parser, args = args);
 # print(opt)
 
 # ***********************************************************************
+# ---- Logging ----
+
+source('utils/chunk_logging.R') # a common code for all R logging
+
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
@@ -72,14 +80,12 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
 s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pokaz('Files', files)
+pokaz('Files', files, file=file.log.main, echo=echo.main)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-# pokaz('Reference:', ref.pref)
-# pokaz('Combinations', pref.combinations)
-
-
+pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
+pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ----  Combine correspondence  ----
 
@@ -92,8 +98,6 @@ len.short = 50
 n.flank = 30
 
 gr.blocks = 'blocks/'
-
-
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -247,7 +251,6 @@ for(s.comb in pref.combinations){
   }
   v.beg[v.len == 0] = 0
   v.end[v.len == 0] = 0
-  
   
   # ---- Check direction ----
   idx.wrong.dir = sign(v.end - v.beg) < 0

@@ -1,24 +1,20 @@
+# Step 2. Chromosomes into parts
+
 suppressMessages({
   library("optparse")
-  # library(Biostrings)
-  # library("seqinr")       # read.fasta
   library("foreach")
   library(doParallel)
-  # library(stringi)
 })
 
 source("utils/utils.R")
-
-# pokazStage('Step 2. Chromosomes into parts')
 
 # ***********************************************************************
 # ---- Command line arguments ----
 args = commandArgs(trailingOnly=TRUE)
 
-
 option_list <- list(
-  make_option(c("--all.chr"), type = "character", default = NULL, 
-              help = "Flag to use all chromosomes, not only the provided number", metavar = "character"),
+  make_option(c("--all.chr"), type = "logical", default = FALSE, 
+              help = "Flag to use all chromosomes, not only the provided number", metavar = "logical"),
   make_option(c("--n.chr"), type = "character", default = NULL, 
               help = "number of chromosomes", metavar = "character"),
   make_option(c("--part.len"), type = "character", default = NULL, 
@@ -29,20 +25,28 @@ option_list <- list(
               help = "pathway to the chromosome directory", metavar = "character"),
   make_option(c("--path.parts"), type = "character", default = NULL, 
               help = "pathway to the parts directory", metavar = "character"),
-  make_option(c("--filter_rep"), type = "character", default = NULL, 
+  make_option(c("--purge.reps"), type = "character", default = NULL, 
               help = "flag to keep or not repeats", metavar = "character"),
   make_option(c("--rev"), type = "character", default = NULL, 
               help = "flag make the reverce sequences", metavar = "character"),
   make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-pokaz(opt)
+# pokaz(opt)
 
 # ***********************************************************************
+# ---- Logging ----
+
+source('utils/chunk_logging.R') # a common code for all R logging
+
 # ---- Values of parameters ----
 
 # Number of cores
@@ -52,10 +56,12 @@ num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
 if(all.chr){
   n.chr <- NULL
+  pokaz('Number of chromosomes: ALL', file=file.log.main, echo=echo.main)
 } else {
-  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), stop("The input number of chromosomes 'n.chr' must be specified!"))  
+  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), 
+                  stop("The input number of chromosomes 'n.chr' must be specified!"))  
+  pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 }
-
 
 
 # Set chromosome and parts paths
@@ -72,23 +78,33 @@ if(!is.null(opt$part.step)){
   len.step = NULL
 }
 # len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
-filter_rep <- as.numeric(ifelse(!is.null(opt$filter_rep), as.numeric(opt$filter_rep), 0))
+
+# Purge repeats by the complexity
+if(is.null(opt$purge.reps)){
+  purge.reps = F
+} else {
+  purge.reps = as.logical(opt$purge.reps)
+  if(is.na(purge.reps)) stop('Wrong flag for purging repeats')
+}
 
 
 flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
 
 if(flag.rev == 1){
-  pokaz("Mirror universe")
+  pokaz("Mirror universe", 
+        file=file.log.main, echo=echo.main)
 }
 
 # ***********************************************************************
 # ---- Preparation ----
 
-pokaz('Directory with chromosomes:', path.chr)
+pokaz('Path with chromosomes:', path.chr, 
+      file=file.log.main, echo=echo.main)
 files.query = list.files(path = path.chr, pattern = paste0('\\.', 'fasta', '$', collapse = '') )
 files.query <- sub("\\.fasta$", "", files.query)
 query.name = unique(sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]))
-pokaz('Names of genomes:', query.name)
+pokaz('Names of genomes for the analysis:', query.name, 
+      file=file.log.main, echo=echo.main)
 
 if(length(query.name) == 0){
   stop('Wrong names of chromosomal files or files are not provided')
@@ -105,10 +121,20 @@ if(all.chr){
 
 # ***********************************************************************
 # ---- MAIN program body ----
-loop.function <- function(i.comb, echo = T){
+loop.function <- function(i.comb, 
+                          echo.loop=T, 
+                          file.log.loop=NULL){
   
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]
+  
+  # Log files
+  if (is.null(file.log.loop)){
+    file.log.loop = paste0(path.log, 'loop_', i.comb, '_acc_', acc,'.log')
+    invisible(file.create(file.log.loop))
+  }
+  
+  #' --- --- --- --- --- --- --- --- --- --- ---
   
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
   
@@ -116,21 +142,18 @@ loop.function <- function(i.comb, echo = T){
   if( file.exists(file.out)) {
     return(NULL)
   }
-  pokaz('File', file.in)
+  pokaz('File:', file.in, 
+        file=file.log.loop, echo=echo.loop)
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
   
-  if(flag.rev == 1){
+  if(flag.rev == 1){  # Mirror universe
     q.fasta = nt2seq(rev(seq2nt(q.fasta)))
-    
-    # q.fasta = nt2seq(seq2nt(q.fasta)[seq(1, nchar(q.fasta), 2)])
-    
   }
   
   s = splitSeq(q.fasta, n=len.parts)
   len.chr = nchar(q.fasta)
   pos.beg = seq(1, len.chr, len.parts)
-  
   
   if(!is.null(len.step)){
     s = c(s, 
@@ -143,23 +166,47 @@ loop.function <- function(i.comb, echo = T){
     pos.beg = pos.beg[idx.order]
   }
   
-  if(length(s) != length(pos.beg)) stop('Problem with chunks')
+  if(length(s) != length(pos.beg)) {
+    pokaz('Problem with chunks', 
+          file=file.log.loop, echo=echo.loop)
+    stop('Problem with chunks') 
+  }
   names(s) = paste('acc_', acc, '|chr_', i.chr, '|part_', 1:length(s), '|', pos.beg, sep='')
   
-  
-  if(filter_rep == 0){
-    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
-    writeFastaMy(s, file.out)
-  } else {
+  if(purge.reps){  # Filter out repeats
+    pokaz('Filterout repeats', file=file.log.loop, echo=echo.loop)
     
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
     
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
+    file.out.masking = paste0(path.chr, 'mask_', acc, '_chr', i.chr, '.rds', collapse = '')
     
     seqs.score = sapply(s, repeatScore)
     
-    writeFastaMy(s[seqs.score <= 0.2], file.out)
-    writeFastaMy(s[seqs.score > 0.2], file.out.rest)
+    if (sum(seqs.score <= 0.2) > 0){
+      writeFastaMy(s[seqs.score <= 0.2], file.out)  
+    } else {
+      pokaz('No good sequences sequences.', file=file.log.loop, echo=echo.loop)
+    }
+    
+    if (sum(seqs.score > 0.2) > 0){
+      
+      s.repeat = s[seqs.score > 0.2]
+      writeFastaMy(s.repeat, file.out.rest)
+      
+      # Masking positions
+      pos.repeat = as.numeric(sapply(names(s.repeat), function(s) strsplit(s, '\\|')[[1]][4]))
+      pos.masking = data.frame(beg = pos.repeat, end = pos.repeat + len.parts - 1)
+      
+      saveRDS(pos.masking, file.out.masking)
+      
+    } else {
+      pokaz('No rest sequences.', file=file.log.loop, echo=echo.loop)
+    }
+    
+  } else {
+    file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
+    writeFastaMy(s, file.out)
     
   }
   
@@ -167,14 +214,20 @@ loop.function <- function(i.comb, echo = T){
   rmSafe(s)
   rmSafe(pos.beg)
   rmSafe(seqs.score)
+  pokaz('Done.',
+        file=file.log.loop, echo=echo.loop)
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
 if(num.cores == 1){
+  file.log.loop = paste0(path.log, 'loop_all.log')
+  invisible(file.create(file.log.loop))
   for(i.comb in 1:nrow(combinations)){
-    loop.function(i.comb)
+    loop.function(i.comb, 
+                  file.log.loop = file.log.loop, 
+                  echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -182,14 +235,19 @@ if(num.cores == 1){
   registerDoParallel(myCluster)
   
   tmp.output = foreach(i.comb = 1:nrow(combinations), 
-                       .packages=c('crayon'),
+                       .packages=c('crayon',
+                                   'stringi'),  # for purging repeats
                        .export = c('n.chr')) %dopar% {
-    loop.function(i.comb)
+    loop.function(i.comb,
+                  echo.loop=echo.loop)
   }
   stopCluster(myCluster)
 }
 
 warnings()
+
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----

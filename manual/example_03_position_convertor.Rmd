@@ -1,0 +1,142 @@
+---
+title: "Transformation of coordinates"
+output: null_document
+---
+
+# Setup
+```{r}
+library(ggplot2)
+library(cowplot)
+library(rhdf5)
+
+path.pannagram = '../'  # the folder with the cloned repo
+
+source(paste(path.pannagram, 'utils/utils.R', sep = ''))
+source(paste(path.pannagram, 'visualisation/visualisation.R', sep = ''))  # plotPanAcc
+source(paste(path.pannagram, 'visualisation/panplot.R', sep = ''))  # ggSynteny
+source(paste(path.pannagram, 'pangen/comb_func.R', sep = ''))  # getPrevNext
+source(paste(path.pannagram, 'analys/analys_func.R', sep = ''))  # gffgff
+
+```
+
+## Paths-Folders
+```{r}
+
+path.cons = '/Volumes/Samsung_T5/vienn/00_paper/01_data/02_alignment/pannagram_v05/'  # the result of pannagram
+
+ref.acc = '0'
+
+# If reference-free:
+# aln.type = 'msa_'
+
+# If reference-based:
+# aln.type = 'comb_'
+aln.type = 'v_'
+
+```
+
+## Additional variables
+```{r}
+
+gr.accs.e <- "accs/"
+gr.accs.b <- "/accs"
+
+```
+
+## Colors
+```{r}
+
+c.red = '#872341'
+c.grey = '#EBEBEB'
+
+```
+
+
+# Positions
+```{r}
+
+# Создание dataframe
+adjustment_value <- 2000000
+pos1 <- data.frame(
+  chr = c("Chr1", "Chr1", "Chr2", "Chr2", "Chr3", "Chr3", "Chr4", "Chr4", "Chr5", "Chr5"),
+  beg = c(14364752 - adjustment_value, 15750321, 3602775 - adjustment_value, 3735247, 12674550 - adjustment_value, 13674767, 2919690 - adjustment_value, 4011692, 11668616 - adjustment_value, 12082583),
+  end = c(14364752, 15750321 + adjustment_value, 3602775, 3735247 + adjustment_value, 12674550, 13674767 + adjustment_value, 2919690, 4011692 + adjustment_value, 11668616, 12082583 + adjustment_value)
+)
+
+acc1 = '0'
+acc2 = '1741'
+
+pos2 = pos2pos(path.cons, acc1, acc2, pos1, exact.match = F,
+                   aln.type = aln.type, s.chr='Chr')
+
+
+
+```
+
+
+## Get a GFF file for one accession using a GFF file from another accession
+```{r}
+# Display the list of accessions
+pokaz(accessions)
+
+# Define accessions for comparison
+acc1 = 'acc_0'
+acc2 = 'acc_6046-v1.1'
+
+# Read GFF
+file.gff.acc1 = paste(path.annot, 'TAIR10_GFF3_genes_transposons.gff', sep = '')
+gff1 = read.table(file.gff.acc1, stringsAsFactors = F)
+
+# Chromosome IDs
+gff1$chr = as.numeric(gsub('Chr', '', gff1$V1))
+gff1 = gff1[!is.na(gff1$chr),]  # remove wrong names or ChrC, ChrM, etc....
+
+# Filtration 
+gff1 = gff1[!(gff1$V3 %in% c('chromosome')),]  # unnecessary attributes
+gff1 = gff1[gff1$V3 %in% c('gene', 'exon'),]  # important attributes
+
+# Convert GFF Annotations from acc1 to acc2
+gff2.res = gff2gff(path.cons, acc1, acc2, ref.acc, gff1, flag.exact = T, 
+                   aln.type = aln.type)
+
+# Results
+gff2.remain = gff2.res$gff2.remain
+gff2.loosing = gff2.res$gff2.loosing
+pokaz('Annotated before:', nrow(gff1), 'Annotated now', nrow(gff2.remain), 'Lost', nrow(gff1) - nrow(gff2.remain))
+
+# TODO: Check that all exons have genes....
+
+# Save
+write.table(gff2.remain[,1:9], paste(path.annot, acc2, '_based_on_', acc1, '.txt', sep = ''),
+            quote = F, col.names = F, row.names = F, sep = '\t')
+
+
+```
+
+
+## Get alignment from positions (beg-end) in coordinates of accession Z
+```{r}
+# Define accession identifiers
+acc1 = 'acc_0'
+acc2 = 'acc_6046-v1.1'
+
+# Set the chromosome number for analysis
+i.chr = 1
+
+# Define the start and end positions for the region of interest
+pos.beg = 10000000
+pos.end = pos.beg + 500
+
+# Read multiple sequence alignment (MSA) data for both accessions from the HDF5 file
+file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
+          h5read(file.msa, paste(gr.accs.e, acc2, sep = '')))
+
+# Filter the MSA data to include only positions within the specified range
+idx.pos = (v[,1] >= pos.beg) & (v[,1] <= pos.end)
+v.corresp = v[idx.pos, 2]
+
+
+```
+
+

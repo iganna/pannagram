@@ -4,22 +4,7 @@
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-# Exit immediately if any command returns a non-zero status
-set -e
-
-# Keep track of the last executed command
-trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
-
-# Define a trap for the EXIT signal
-trap 'catch $?' EXIT
-
-# Function to handle the exit signal
-catch() {
-    # Check if the exit code is non-zero
-    if [ $1 -ne 0 ]; then
-        echo "\"${last_command}\" command failed with exit code $1."
-    fi
-}
+source utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -198,7 +183,7 @@ if [ "$run_sv_sim" = true ]; then
 
     # if [ ! -f "${file_sv_big_on_set}" ]; then
         blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
-           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
            -perc_identity "${similarity_value}"
     # fi
 
@@ -226,7 +211,7 @@ if [ "$sv_graph" = true ]; then
     
     # if [ ! -f "${file_sv_big_on_sv}" ]; then
         blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-           -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+           -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
            -perc_identity ${similarity_value} 
     # fi
 

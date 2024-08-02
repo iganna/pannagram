@@ -11,8 +11,6 @@ suppressMessages({
 source("utils/utils.R")
 # source("pangen/synteny_funcs.R")
 
-# pokazStage('Step 9. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment')
-
 # ***********************************************************************
 # ---- Command line arguments ----
 
@@ -24,13 +22,22 @@ option_list = list(
   make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer")
+              help = "number of cores to use for parallel processing", metavar = "integer"),
+  make_option(c("--path.log"), type = "character", default = NULL,
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL,
+              help = "Level of log to be shown on the screen", metavar = "character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
+
+# ***********************************************************************
+# ---- Logging ----
+
+source('utils/chunk_logging.R') # a common code for all R logging
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -46,7 +53,7 @@ if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
 # Reference genome
 if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
+  stop("Error: ref.pref is NULL")
 } else {
   ref.pref <- opt$ref.pref
 }
@@ -68,8 +75,8 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
-# pokaz('Reference:', ref.pref)
-# pokaz('Combinations', pref.combinations)
+pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
+pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ----  Combine correspondence  ----
 
@@ -85,7 +92,19 @@ gr.blocks = 'blocks/'
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(s.comb, echo = T){
+loop.function <- function(s.comb,
+                          echo.loop=T, 
+                          file.log.loop=NULL){
+  
+  # Log files
+  if (is.null(file.log.loop)){
+    file.log.loop = paste0(path.log, 'loop_file_', 
+                           s.comb,
+                           '.log')
+    invisible(file.create(file.log.loop))
+  }
+  
+  # --- --- --- --- --- --- --- --- --- --- ---
   
   file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
   
@@ -98,25 +117,33 @@ loop.function <- function(s.comb, echo = T){
   idx.break = c()
   for(acc in accessions){
     
-    # pokaz('Accession', acc, 'combination', s.comb)
+    pokaz('Accession', acc, 'combination', s.comb, file=file.log.loop, echo=echo.loop)
     
     v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    if(length(v.init) == 0) {
+      stop(sprintf("Skipping empty accession: %s\n", acc))
+    }
     v = v.init
     
     
     # ----  Find breaks  ----
     
     # Find blocks of additional breaks
-    v = cbind(v, 1:length(v))                       # 2 - in ref-based coordinates
-    v = v[v[,1] != 0,]                              # 1 - existing coordinates of accessions
+    v = cbind(v, 1:length(v))                       # column 2 - in ref-based coordinates
+    
+    v = v[!is.na(v[,1]),]                           # column 1 - existing coordinates of accessions
+    v = v[v[,1] != 0,]                              # column 1 - existing coordinates of accessions
+    
+    if(nrow(v) == 0) {
+      stop(sprintf("Skipping empty v for accession: %s\n", acc))
+    }
     v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
     v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
     
     # Save blocks
     idx.block.tmp = which(abs(diff(v[,4])) != 1)
     idx.block.df = data.frame(beg = v[c(1,idx.block.tmp+1), 2], end = v[c(idx.block.tmp, nrow(v)), 2])
-    
-    # pokaz('Number of blocks', length(idx.block.beg))
+
     v.block = rep(0, length(v.init))
     for(i.bl in 1:nrow(idx.block.df)){
       v.block[idx.block.df$beg[i.bl]:idx.block.df$end[i.bl]] = i.bl
@@ -125,7 +152,7 @@ loop.function <- function(s.comb, echo = T){
     suppressMessages({
       h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
     })
-    
+
     # v = v[order(v[,1]),]  # not necessary
     
     # with the absence, but neighbouring
@@ -136,6 +163,9 @@ loop.function <- function(s.comb, echo = T){
                        (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
     
     # Fix (beg < end) order
+    if(length(idx.tmp) == 0) {
+      stop(sprintf("Skipping empty idx.tmp for accession: %s\n", acc))
+    }
     idx.tmp.acc = data.frame(beg = v[idx.tmp,2], end = v[idx.tmp+1,2], acc = acc)
     idx.ord = which(idx.tmp.acc$beg > idx.tmp.acc$end)
     if(length(idx.ord) > 0){
@@ -184,31 +214,36 @@ loop.function <- function(s.comb, echo = T){
   
   H5close()
   gc()
+  
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  return(NULL)
 }
 
 
 # ***********************************************************************
 # ---- Loop  ----
 
-
 if(num.cores == 1){
+  file.log.loop = paste0(path.log, 'loop_all.log')
+  invisible(file.create(file.log.loop))
   for(s.comb in pref.combinations){
-    loop.function(s.comb)
+    loop.function(s.comb,
+                  file.log.loop = file.log.loop, 
+                  echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                              loop.function(s.comb)
-                            }
+  tmp = foreach(s.comb = pref.combinations, 
+                .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                  loop.function(s.comb,echo.loop=echo.loop)
+                }
   stopCluster(myCluster)
 }
 
 warnings()
 
-
-
-
-
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)

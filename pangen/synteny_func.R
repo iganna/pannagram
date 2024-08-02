@@ -1,3 +1,84 @@
+glueZero_old <- function(x){
+  x = x[order(x$V2),]
+  
+  ipos = 1
+  while(ipos < nrow(x)) {
+    # print(ipos)
+    idx = which((x[,'V4'] == (x[ipos,'V5'] + 1)) & (x[,'V2'] == (x[ipos,'V3'] + 1)))
+    if (length(idx) == 0){
+      ipos = ipos+1
+      next
+    }
+    # if(idx != (ipos+1)) print(idx)  # glue with not the next record
+    
+    x[ipos, 'V3'] <- x[idx, 'V3']
+    x[ipos, 'V5'] <- x[idx, 'V5']
+    x[ipos, 'V7'] <- x[ipos, 'V7'] + x[idx, 'V7']
+    x[ipos, 'V8'] <- paste(x[ipos, 'V8'], x[idx, 'V8'], sep = '')
+    x[ipos, 'V9'] <- paste(x[ipos, 'V9'], x[idx, 'V9'], sep = '')
+    x <- x[-idx,]
+  }
+  
+  rownames(x) <- NULL
+  return(x)
+}
+
+
+#' Merge Rows from Blast results
+#'
+#' This function merges blast hits if they follow each other.
+#'
+#' @param x.all A data frame containing the input data. It should include the columns `dir`, `V2`, `V3`, `V4`, `V5`, `V7`, `V8`, and `V9`.
+#' 
+#' @return A data frame where rows have been merged based on the specified conditions.
+#'
+glueZero <- function(x.all){
+  
+  x.all.idx = 1:nrow(x.all)
+  x.new = c()
+  for(dir.val in 0:1){
+    
+    # subtable with the specific direction
+    idx.dir = (x.all$dir == dir.val)
+    if(sum(idx.dir) == 0) next
+    x = x.all[idx.dir,]
+    x$idx = x.all.idx[idx.dir]
+    x.nrow = nrow(x)
+    
+    if(x.nrow > 1){
+      idx.remove = c()
+      for(irow in 1:(x.nrow - 1)){
+        jrow = irow + 1
+        while(x$V2[jrow] < x$V3[irow]){
+          jrow = jrow + 1
+          if(jrow > x.nrow) break
+        }
+        if(jrow > x.nrow) break
+        if((abs(x$V2[jrow] - x$V3[irow]) == 1) && (abs(x$V4[jrow] - x$V5[irow]) == 1)){
+          x$V2[jrow] = x$V2[irow]
+          x$V4[jrow] = x$V4[irow]
+          
+          x$V7[jrow] <- x$V7[jrow] + x$V7[irow]
+          x$V8[jrow] <- paste0(x$V8[irow], x$V8[jrow])
+          x$V9[jrow] <- paste0(x$V9[irow], x$V9[jrow])
+          
+          # remember the index to delete
+          idx.remove = c(idx.remove, irow)
+        }
+      }  #for(irow in 1:(x.nrow - 1))
+      
+      if(length(idx.remove) > 0){
+        x = x[-idx.remove,]
+      } 
+    }  # if(x.nrow > 1)
+    
+    x.new = rbind(x.new, x)
+  }
+
+  return(x.new)
+}
+
+
 #' Clean All Overlaps in a Data Frame
 #'
 #' This function cleans both big and small overlaps in the provided data frame.
@@ -107,7 +188,6 @@ cleanBigOverlapsQuery <- function(x.df, rm.threshold = 0.5){
     x.df = defineOverlappsQuery(x.df)
     x.df =  x.df[((abs(x.df$rm.len) / x.df$V7) <= rm.threshold) | (x.df$rm.len == 0),]
     if(n.row == nrow(x.df)) break
-    pokaz(n.row)
   }
   
   return(x.df)
@@ -145,7 +225,6 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V8[irow] = substr(x.df$V8[irow], (aln.adjust+1), nchar(x.df$V8[irow]))
       x.df$V9[irow] = substr(x.df$V9[irow], (aln.adjust+1), nchar(x.df$V9[irow]))
 
-      
       # Adjust positions - query
       s.q.cut = seq2nt(x.df$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
@@ -155,7 +234,6 @@ cutSmallOverlapsQuery <- function(x.df){
       s.b.cut = seq2nt(x.df$V9[irow])
       adjustment.b = sum(s.b.cut != '-') - 1
       x.df$V4[irow] = x.df$V5[irow] - adjustment.b * sign(0.5 - x.df$dir[irow])
-      
       
     }
     if(adjustment < 0){
@@ -168,14 +246,11 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V8[irow] = substr(x.df$V8[irow], 1, (aln.adjust-1))
       x.df$V9[irow] = substr(x.df$V9[irow], 1, (aln.adjust-1))
       
-      
-      
       # Adjust positions
       
       s.q.cut = seq2nt(x.df$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
       x.df$V3[irow] = x.df$V2[irow] + adjustment.q
-      
       
       # if(x.df$dir[irow] == 1) stop('dir')
       # Adjust positions - base
@@ -184,14 +259,11 @@ cutSmallOverlapsQuery <- function(x.df){
       x.df$V5[irow] = x.df$V4[irow] + adjustment.b * sign(0.5 - x.df$dir[irow])
     }
     
-    # print(info(x.df[irow,]))
-    
     x.df$V7[irow] = nchar(x.df$V8[irow])  # doesn't matter 8 or 9 here
     
     # print(x.df[irow, -c(8,9)])
     # if(x.df$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
-  
   
   # Undate begin-eng positions
   x.df$p.beg <- ifelse(x.df$V4 < x.df$V5, x.df$V4, x.df$V5)
@@ -297,7 +369,6 @@ cleanBigOverlaps <- function(x.df, rm.threshold = 0.5){
     x.df = defineOverlapps(x.df)
     x.df =  x.df[((abs(x.df$rm.len) / x.df$V7) <= rm.threshold) | (x.df$rm.len == 0),]
     if(n.row == nrow(x.df)) break
-    pokaz(n.row)
   }
   
   return(x.df)
@@ -404,7 +475,6 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
       s2 = toupper(paste0(query.fas[(-(nchar(s1)-1):0) + x[irow, 'V3']], collapse = ''))
     }
     
-    
     if(s1 != s2 ){
       pokaz('Row', irow)
       pokaz(s1)
@@ -425,7 +495,6 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
     } else {
       s2 = toupper(paste0(base.fas[(-(nchar(s1)-1):0) + x[irow, 'V5']], collapse = ''))
     }
-    
     
     if(s1 != s2 ){
       pokaz('Row', irow)
@@ -451,10 +520,16 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
 #'
 #' @return A list containing updated traversal information.
 #'
-graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
+graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, visit.info,
                              forward = F) {
   
-  if(irow == nrow(x.tmp)) return(vist.info)
+  # x.top = x.tmp$V3[1]
+  # y.top = x.tmp$V5[1]
+  # w.beg = 0
+  # w.end = 0
+  # 
+  
+  if(irow == nrow(x.tmp)) return(visit.info)
   
   # Find neighbours
   i.rem = -(1:irow)
@@ -467,7 +542,7 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
   w.pure = x.tmp$w[jrow] - 2 * max.over
   delta = (-x.over + max.over) + (-y.over + max.over)
   
-  d = vist.info$d.to[irow] + delta - w.pure + max.over*2
+  d = visit.info$d.to[irow] + delta - w.pure + max.over*2
   
   
   if((w.end -  w.beg) > 0){
@@ -483,14 +558,13 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
     max.over = pmax(ifelse(x.over > 0, x.over, 0), y.over)
     w.pure = x.tmp$w[jrow.add] - 2 * max.over
 
-    d.add = vist.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
+    d.add = visit.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
 
-    
     jrow = c(jrow, jrow.add)
     d = c(d, d.add)
   }
   
-  if(length(jrow) == 0) return(vist.info)
+  if(length(jrow) == 0) return(visit.info)
   
   # Order neighbours
   order.neighbours <- order(d)
@@ -498,10 +572,10 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
   jrow  <- jrow[order.neighbours]
   
   for (j in 1:length(jrow)) {
-    if(d[j] >= vist.info$d.to[jrow[j]]) next
+    if(d[j] >= visit.info$d.to[jrow[j]]) next
     
-    vist.info$d.to[jrow[j]] = d[j]
-    vist.info$v.prev[jrow[j]] = irow
+    visit.info$d.to[jrow[j]] = d[j]
+    visit.info$v.prev[jrow[j]] = irow
     
     if(x.tmp$V5[jrow[j]] > y.top){  # Продвижение вперед
       # New window
@@ -524,14 +598,14 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, vist.info,
       w.end.next = 0
     }
     
-    vist.info = graphTraverseWnd(x.tmp, jrow[j], 
+    visit.info = graphTraverseWnd(x.tmp, jrow[j], 
                                  x.tmp$V3[jrow[j]], 
                                  max(x.tmp$V5[jrow[j]], y.top), 
                                  w.beg.next, 
                                  w.end.next, 
-                                 vist.info)
+                                 visit.info)
   }
-  return(vist.info)
+  return(visit.info)
 }
 
 #' Reconstruct Path from Predecessor Vector

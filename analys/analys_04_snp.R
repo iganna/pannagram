@@ -1,6 +1,7 @@
+# SNP calling
+
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('seqinr')
   library('foreach')
   library(doParallel)
   library("optparse")
@@ -8,8 +9,6 @@ suppressMessages({ library(Biostrings)
 
 source("utils/utils.R")
 source("analys/analys_func.R")
-
-pokazStage('SNP calling')
 
 args = commandArgs(trailingOnly=TRUE)
 
