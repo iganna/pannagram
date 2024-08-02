@@ -170,19 +170,19 @@ orfplot(orfs$pos)					# ggplot object
 ## 3. Additional useful tools
 ### 3.1 Search for similar sequences
 
-#### ...in the genome
+#### ...on the genome
 The first approach involves searching against entire genomes or individual chromosomes. 
 The quickstart toy-example is:
 ```sh
-./sim_in_genome.sh -in genes.fasta -genome genome.fasta -out out.txt
+./simsearch.sh -in_seq genes.fasta -on_genome genome.fasta -out out.txt
 ```
 The result is a GFF file with hits matching the similarity threshold.
 
-#### ...in another set
+#### ...on another set
 The second approach, in contrast, is designed to search for similarities against another set of sequences. 
 The quickstart toy-example is:
 ```sh
-sim_in_seqs.sh -in genes.fasta -set genome.fasta -out out.txt
+./simsearch.sh -in_seq genes.fasta -on_seq genome.fasta -out out.txt
 ```
 The result is an RDS (R Data Structure) table. 
 This table shows the coverage of one sequence over another and 
