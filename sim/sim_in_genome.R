@@ -50,9 +50,12 @@ output.file = paste(output.file, round(sim.cutoff * 100), sep = '_')
 v = read.table(blast.file, stringsAsFactors = F)
 v = v[v$V6 >= sim.cutoff * 100,]
 
-seqs = readFastaMy(fasta.file)
-v$len1 = nchar(seqs)[v$V1]
-rm(seqs)
+# seqs = readFastaMy(fasta.file)
+# v$len1 = nchar(seqs)[v$V1]
+# rm(seqs)
+len1 = v$V9
+v = v[,1:8,drop=F]
+v$len1 = len1
 
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
 
