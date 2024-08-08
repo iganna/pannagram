@@ -167,9 +167,10 @@ for db_file in "${db_files[@]}"; do
 
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
+    db_file_full="${path_genome}$db_file.fasta"
     if [ ! -f "${db_file}.nhr" ]; then
         pokaz_stage "Creating database for $db_file..."
-        makeblastdb -in "$db_file".fasta -dbtype nucl > /dev/null
+        makeblastdb -in  ${db_file_full} -dbtype nucl > /dev/null
     fi
 
     # ---------------------------------------------
@@ -188,7 +189,7 @@ for db_file in "${db_files[@]}"; do
     else
         # Perform BLAST search
         pokaz_stage "BLAST search..."
-        blastn  -db ${db_file} \
+        blastn  -db ${db_file_full} \
                 -query ${file_input} \
                 -out ${blast_res} \
                 -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
