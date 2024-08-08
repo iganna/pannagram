@@ -211,7 +211,7 @@ for db_file in "${db_files[@]}"; do
         Rscript sim/sim_in_seqs.R \
                 --in_file $file_input \
                 --res $blast_res \
-                --out ${output_pref}.rds \
+                --out ${output_pref}${db_name}.rds \
                 --sim $sim_threshold \
                 --use_strand $use_strand \
                 --db_file $db_file
@@ -220,7 +220,7 @@ for db_file in "${db_files[@]}"; do
         Rscript sim/sim_in_genome.R \
                 --in_file $file_input \
                 --res $blast_res \
-                --out $output_pref \
+                --out $output_pref${db_name} \
                 --sim $sim_threshold
     fi
 
