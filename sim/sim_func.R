@@ -69,9 +69,12 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
     if(echo) pokaz(paste('Strand', i.strand))
     v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
     if(i.strand == 1){
-      tmp = v.rest$V4
-      v.rest$V4 = v.rest$V5
-      v.rest$V5 = tmp
+      # tmp = v.rest$V4
+      # v.rest$V4 = v.rest$V5
+      # v.rest$V5 = tmp
+      
+      tmp.max = max(c(v.rest$V4, v.rest$V5)) + 1
+      v.rest[,c('V4', 'V5')] = tmp.max - v.rest[,c('V4', 'V5')]
     }
     
     # if only one record - delete
@@ -157,10 +160,9 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
                           len1 = tapply(v.rest$len1, v.rest$comb, unique))
     
     # Fix V6
-    V6 = aggregate((V6 / 100) * cover ~ comb, data = v.rest, sum)
-    rownames(V6) = V6$comb
-    df.cover$V6 = V6[rownames(df.cover), 2]
-    df.cover$V6 = df.cover$V6 / df.cover$len1 * 100
+    cover.tot = aggregate((V6 / 100) * cover ~ comb, data = v.rest, sum) 
+    rownames(cover.tot) = cover.tot$comb
+    df.cover$V6 = cover.tot[rownames(df.cover), 2] / df.cover$V7
     
     # df.cover$dir = i.strand
     df.cover$ref.cover = df.cover$V5 - df.cover$V4 + 1
