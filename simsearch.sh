@@ -169,7 +169,7 @@ for db_file in "${db_files[@]}"; do
     # Check if the BLAST database exists for the current file
     if [ ! -f "${db_file}.nhr" ]; then
         pokaz_stage "Creating database for $db_file..."
-        makeblastdb -in "$db_file" -dbtype nucl > /dev/null
+        makeblastdb -in "$db_file".fasta -dbtype nucl > /dev/null
     fi
 
     # ---------------------------------------------

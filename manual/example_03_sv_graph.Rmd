@@ -111,7 +111,7 @@ p
 ```{r}
 
 # nodes:
-head(nodes)
+# head(nodes)
 
 # edges:
 head(b.graph)
