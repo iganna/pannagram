@@ -35,9 +35,9 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 
 # ---- Main ----
 
+pokaz( dirname(output.file))
 
-
-files <- list.files(path = dirname(output.file), pattern = paste0(basename(output.file), ".*95\\.cnt$"), full.names = TRUE)
+files <- list.files(path = dirname(output.file), pattern = ".*95\\.cnt$", full.names = TRUE)
 print(files)
 
 return()
