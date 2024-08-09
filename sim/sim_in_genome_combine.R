@@ -71,7 +71,7 @@ colnames(mx.cnt) = acc.names
 
 
 # Save
-write.table(mx.cnt, paste0(output.file, '.total_', sim.cutoff, '.cnt'), 
+write.table(mx.cnt, paste0(output.file, '.total_', sim.cutoff, '.txt'), 
             quote = F, row.names = T, col.names = T, sep = '\t')
 
 
