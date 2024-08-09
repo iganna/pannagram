@@ -38,7 +38,8 @@ sim.cutoff = as.numeric(sim.cutoff)
 output.dir = dirname(output.file)
 
 files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,"\\.cnt$"), full.names = T)
-print(files)
+if(length(files) == 0) stop('No files with results')
+# print(files)
 
 total.cnt.list = list()
 total.cnt.names = c()
@@ -66,7 +67,7 @@ acc.names <- sapply(basename(files), function(s){
 })
 
 colnames(mx.cnt) = acc.names
-pokaz(acc.names)
+# pokaz(acc.names)
 
 
 # Save
