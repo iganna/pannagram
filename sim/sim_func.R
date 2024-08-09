@@ -36,7 +36,7 @@
 #' 
 #' @export
 "Length (len1) should be defined before"
-findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
+findHitsInRef <- function(v, sim.cutoff, echo = T){
   
   
   if(!('len1' %in% colnames(v))) stop('No column len1 in the data.frame')
@@ -68,6 +68,7 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
   for(i.strand in 0:1){
     if(echo) pokaz(paste('Strand', i.strand))
     v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
+    
     if(i.strand == 1){
       # tmp = v.rest$V4
       # v.rest$V4 = v.rest$V5
@@ -162,7 +163,7 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
     # Fix V6
     cover.tot = aggregate((V6 / 100) * cover ~ comb, data = v.rest, sum) 
     rownames(cover.tot) = cover.tot$comb
-    df.cover$V6 = cover.tot[rownames(df.cover), 2] / df.cover$V7
+    df.cover$V6 = cover.tot[rownames(df.cover), 2] / df.cover$V7 * 100
     
     # df.cover$dir = i.strand
     df.cover$ref.cover = df.cover$V5 - df.cover$V4 + 1
