@@ -38,6 +38,9 @@
 "Length (len1) should be defined before"
 findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
   
+  
+  if(!('len1' %in% colnames(v))) stop('No column len1 in the data.frame')
+  
   s.tmp.comb = '___'
   
   # ---- Exact match ----
@@ -66,9 +69,12 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
     if(echo) pokaz(paste('Strand', i.strand))
     v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
     if(i.strand == 1){
-      tmp = v.rest$V4
-      v.rest$V4 = v.rest$V5
-      v.rest$V5 = tmp
+      # tmp = v.rest$V4
+      # v.rest$V4 = v.rest$V5
+      # v.rest$V5 = tmp
+      
+      tmp.max = max(c(v.rest$V4, v.rest$V5)) + 1
+      v.rest[,c('V4', 'V5')] = tmp.max - v.rest[,c('V4', 'V5')]
     }
     
     # if only one record - delete
@@ -76,8 +82,10 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
     v.rest = v.rest[order(v.rest$V1),]
     n.rest = nrow(v.rest)
     idx.one = which((v.rest$V8[-1] == v.rest$V8[-n.rest]) & (v.rest$V1[-1] == v.rest$V1[-n.rest]))
+    if(length(idx.one) == 0) next # If nothing is left
+    
     idx.one = sort(unique(c(idx.one,idx.one+1)))
-    v.rest = v.rest[idx.one,]
+    v.rest = v.rest[idx.one,,drop=F]
     
     v.rest = v.rest[order(-v.rest$V5),]
     v.rest = v.rest[order(v.rest$V4),]
@@ -145,11 +153,17 @@ findHitsInRef <- function(v, sim.cutoff = 0.9, echo = T){
                           V3 = tapply(v.rest$V3, v.rest$comb, max),
                           V4 = tapply(v.rest$V4, v.rest$comb, min),
                           V5 = tapply(v.rest$V5, v.rest$comb, max),
-                          V6 = tapply(v.rest$V6, v.rest$comb, mean),
+                          V6.old = tapply(v.rest$V6, v.rest$comb, mean),
                           V7 = tapply(v.rest$cover, v.rest$comb, sum), 
                           V8 = tapply(v.rest$V8, v.rest$comb, unique),
                           # comb = tapply(v.rest$comb, v.rest$comb, unique),
                           len1 = tapply(v.rest$len1, v.rest$comb, unique))
+    
+    # Fix V6
+    cover.tot = aggregate((V6 / 100) * cover ~ comb, data = v.rest, sum) 
+    rownames(cover.tot) = cover.tot$comb
+    df.cover$V6 = cover.tot[rownames(df.cover), 2] / df.cover$V7
+    
     # df.cover$dir = i.strand
     df.cover$ref.cover = df.cover$V5 - df.cover$V4 + 1
     rownames(df.cover) = NULL

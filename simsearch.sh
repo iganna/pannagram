@@ -132,7 +132,7 @@ if [[ "${output_pref}" == */ ]]; then
       mkdir -p "${output_pref}"
     fi
 
-    output_pref="${output_pref}result"
+    output_pref="${output_pref}simsearch"
     pokaz_message "Prefex for the ourput file was changed to ${output_pref}"
   
 fi
@@ -167,9 +167,10 @@ for db_file in "${db_files[@]}"; do
 
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
+    db_file_full="${path_genome}$db_file.fasta"
     if [ ! -f "${db_file}.nhr" ]; then
         pokaz_stage "Creating database for $db_file..."
-        makeblastdb -in "$db_file" -dbtype nucl > /dev/null
+        makeblastdb -in  ${db_file_full} -dbtype nucl > /dev/null
     fi
 
     # ---------------------------------------------
@@ -188,10 +189,10 @@ for db_file in "${db_files[@]}"; do
     else
         # Perform BLAST search
         pokaz_stage "BLAST search..."
-        blastn  -db ${db_file} \
+        blastn  -db ${db_file_full} \
                 -query ${file_input} \
                 -out ${blast_res} \
-                -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
+                -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" \
                 -perc_identity ${sim_threshold}
     fi
 
@@ -210,7 +211,7 @@ for db_file in "${db_files[@]}"; do
         Rscript sim/sim_in_seqs.R \
                 --in_file $file_input \
                 --res $blast_res \
-                --out ${output_pref}.rds \
+                --out ${output_pref}.${db_name}.rds \
                 --sim $sim_threshold \
                 --use_strand $use_strand \
                 --db_file $db_file
@@ -219,7 +220,7 @@ for db_file in "${db_files[@]}"; do
         Rscript sim/sim_in_genome.R \
                 --in_file $file_input \
                 --res $blast_res \
-                --out $output_pref \
+                --out $output_pref.${db_name} \
                 --sim $sim_threshold
     fi
 
@@ -230,6 +231,12 @@ for db_file in "${db_files[@]}"; do
 
 done
 
+# Combine all files to the total count file
+if [ ! -z "$path_genome" ]; then
+    Rscript sim/sim_in_genome_combine.R  \
+            --out $output_pref \
+            --sim $sim_threshold
+fi
 
 pokaz_message "Done!"
 
