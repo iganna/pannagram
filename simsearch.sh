@@ -165,8 +165,6 @@ fi
 
 for db_file in "${db_files[@]}"; do
 
-    break
-
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
     db_file_full="${path_genome}$db_file.fasta"
@@ -239,9 +237,6 @@ if [ ! -z "$path_genome" ]; then
             --out $output_pref \
             --sim $sim_threshold
 fi
-
-
-
 
 pokaz_message "Done!"
 
