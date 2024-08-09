@@ -22,7 +22,7 @@ output.file <- ifelse(!is.null(opt$out), opt$out,
                       stop("Output file not specified", call. = FALSE))
 sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim, 
                      stop("Similarity threshold not specified", call. = FALSE))
-sim.cutoff = as.numeric(sim.cutoff) / 100
+sim.cutoff = as.numeric(sim.cutoff)
 
 
 # ---- Testing ----
@@ -35,65 +35,42 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 
 # ---- Main ----
 
-pokaz( dirname(output.file))
+output.dir = dirname(output.file)
 
-files <- list.files(path = dirname(output.file), pattern = ".*95\\.cnt$", full.names = TRUE)
+files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,"\\.cnt$"), full.names = T)
 print(files)
 
-return()
-
-files <- list.files(path = path.simsearch, pattern = "85\\.cnt$", full.names = TRUE)
-
-mx.cnt = matrix(0, nrow = length(seqs.target), ncol = length(files), 
-                dimnames = list(names(seqs.target), NULL))
+total.cnt.list = list()
+total.cnt.names = c()
 
 for (i.file in 1:length(files)) {
   file = files[i.file]
   data <- read.table(file, header = TRUE, stringsAsFactors = F)
-  
-  mx.cnt[rownames(data),i.file] = data[,ncol(data)]
+  total.cnt.list[[i.file]] = data[,ncol(data), drop=F]
+  total.cnt.names = unique(c(total.cnt.names, rownames(data)))
+}
+
+mx.cnt = matrix(0, nrow = length(total.cnt.names), ncol = length(files), 
+                dimnames = list(total.cnt.names, NULL))
+
+for (i.file in 1:length(files)) {
+  mx.cnt[rownames(total.cnt.list[[i.file]]),i.file] = total.cnt.list[[i.file]][,1]
 }
 
 
+# Colnames
 
-# Rename the output file
-output.file = paste(output.file, round(sim.cutoff * 100), sep = '_')
+acc.names <- gsub(output.file, "", files)
+acc.names <- gsub(".cnt", "", files)
+colnames(mx.cnt) = acc.names
+pokaz(acc.names)
 
 
-v = read.table(blast.file, stringsAsFactors = F)
-v = v[v$V6 >= sim.cutoff * 100,]
+# Save
+write.table(mx.cnt, paste0(output.file, '.total_', sim.cutoff, '.cnt'), 
+            quote = F, row.names = 1, col.names = 1, sep = '\t')
 
-# seqs = readFastaMy(fasta.file)
-# v$len1 = nchar(seqs)[v$V1]
-# rm(seqs)
-len1 = v$V9
-v = v[,1:8,drop=F]
-v$len1 = len1
 
-res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
-
-# Sort V4 and V5 positions
-idx.tmp = res$V4 > res$V5
-# print(sum(idx.tmp))
-# print(sum(res$strand == '-'))
-
-tmp = res$V4[idx.tmp]
-res$V4[idx.tmp] = res$V5[idx.tmp]
-res$V5[idx.tmp] = tmp
-
-blastres2gff(res, paste(output.file, '.gff', sep = ''))
-
-write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
-
-# Copy-number information
-res.cnt =as.data.frame.matrix(table(res$V1, res$V8))
-res.cnt$total = rowSums(res.cnt)
-res.cnt = res.cnt[order(-res.cnt$total),]
-write.table(res.cnt, paste(output.file, '.cnt', sep = ''), quote = F, row.names = T, col.names = T, sep = '\t')
-
-cnt = tapply(res$V8, res$V1, length)
-pokaz('Mean, min, max number of hits per sequence:', mean(cnt),  min(cnt),  max(cnt))
-pokaz('Number of hits found:', nrow(res))
 
 
 
