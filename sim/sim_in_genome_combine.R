@@ -60,15 +60,18 @@ for (i.file in 1:length(files)) {
 
 # Colnames
 
-acc.names <- gsub(output.file, "", files)
-acc.names <- gsub(".cnt", "", files)
+acc.names <- sapply(basename(files), function(s){
+  s = strsplit(s, '\\.')[[1]]
+  return(s[length(s) - 1])
+})
+
 colnames(mx.cnt) = acc.names
 pokaz(acc.names)
 
 
 # Save
 write.table(mx.cnt, paste0(output.file, '.total_', sim.cutoff, '.cnt'), 
-            quote = F, row.names = 1, col.names = 1, sep = '\t')
+            quote = F, row.names = T, col.names = T, sep = '\t')
 
 
 
