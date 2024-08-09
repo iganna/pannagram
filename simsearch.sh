@@ -132,7 +132,7 @@ if [[ "${output_pref}" == */ ]]; then
       mkdir -p "${output_pref}"
     fi
 
-    output_pref="${output_pref}result"
+    output_pref="${output_pref}simsearch"
     pokaz_message "Prefex for the ourput file was changed to ${output_pref}"
   
 fi
@@ -164,6 +164,8 @@ fi
 # Run the pileline
 
 for db_file in "${db_files[@]}"; do
+
+    break
 
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
@@ -230,6 +232,15 @@ for db_file in "${db_files[@]}"; do
     fi
 
 done
+
+# Combine all files to the total count file
+if [ ! -z "$path_genome" ]; then
+    Rscript sim/sim_in_genome_combine.R  \
+            --out $output_pref \
+            --sim $sim_threshold
+fi
+
+
 
 
 pokaz_message "Done!"
