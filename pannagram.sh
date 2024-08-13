@@ -652,6 +652,8 @@ for ref0 in "${refs_all[@]}"; do
 
             # Path for logging
             path_log_step="${path_log}step${step_num}_query_01_ref/"
+
+            echo ${path_ref}
             
             Rscript pangen/query_01_to_chr.R --all.chr T \
                     # --sort ${sort_chr_len} \
