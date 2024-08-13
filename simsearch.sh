@@ -198,7 +198,8 @@ for db_file in "${db_files[@]}"; do
 
     # Check if the BLAST results file is empty
     if [ ! -s "${blast_res}" ]; then
-        pokaz_message "Blast result is empty"
+        pokaz_message "Blast result is empty for ${db_file}"
+        continue
     fi
     
     # ---------------------------------------------
