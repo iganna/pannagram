@@ -652,6 +652,8 @@ for ref0 in "${refs_all[@]}"; do
 
             # Path for logging
             path_log_step="${path_log}step${step_num}_query_01_ref/"
+
+            echo ${nchr_ref}
             
             Rscript pangen/query_01_to_chr.R --all.chr T \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
