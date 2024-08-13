@@ -659,7 +659,7 @@ for ref0 in "${refs_all[@]}"; do
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --accessions ${file_acc_ref} \
-                    ${nchr_ref} \
+                    ${option_nchr_ref} \
                     --path.log ${path_log_step} --log.level ${log_level}
 
             # Remove the temporary file
