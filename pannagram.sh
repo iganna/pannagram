@@ -660,7 +660,7 @@ for ref0 in "${refs_all[@]}"; do
             Rscript pangen/query_01_to_chr.R --all.chr T \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
-                    --acc.anal ${file_acc_ref} \
+                    --accessions ${file_acc_ref} \
                     ${nchr_ref} \
                     --path.log ${path_log_step} --log.level ${log_level}
 
