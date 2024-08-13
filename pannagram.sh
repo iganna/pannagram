@@ -57,7 +57,7 @@ do
 
         # Number of chromosomes
         -nchr)      nchr=$2;     shift 2 ;;  # number of chromosomes
-        -nchr_ref)  nchr_acc=$2; shift 2 ;;  # number of chromosome in the query genome
+        -nchr_ref)  nchr_ref=$2; shift 2 ;;  # number of chromosome in the query genome
 
         -part_len)  part_len=$2; shift 2 ;;  # fragments to which each chromosome should be cut, has a default value 5000
         -p_ident)   p_ident=$2;  shift 2 ;;  # percent of identity
