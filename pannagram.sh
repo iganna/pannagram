@@ -656,7 +656,6 @@ for ref0 in "${refs_all[@]}"; do
             echo ${path_ref}
             
             Rscript pangen/query_01_to_chr.R --all.chr T \
-                    # --sort ${sort_chr_len} \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --acc.anal ${file_acc_ref} \
