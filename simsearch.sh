@@ -133,7 +133,7 @@ if [[ "${output_pref}" == */ ]]; then
     fi
 
     output_pref="${output_pref}simsearch"
-    pokaz_message "Prefex for the ourput file was changed to ${output_pref}"
+    pokaz_message "Prefex for the output file was changed to ${output_pref}"
   
 fi
 
@@ -188,7 +188,7 @@ for db_file in "${db_files[@]}"; do
         fi
     else
         # Perform BLAST search
-        pokaz_stage "BLAST search..."
+        pokaz_stage "BLAST search in $db_file..."
         blastn  -db ${db_file_full} \
                 -query ${file_input} \
                 -out ${blast_res} \
@@ -203,7 +203,7 @@ for db_file in "${db_files[@]}"; do
     
     # ---------------------------------------------
     # Proceed to similarity search
-    pokaz_stage "Similarity search..."
+    pokaz_stage "Similarity search in ${db_file}, cutoff ${sim_threshold}..."
 
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
