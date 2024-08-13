@@ -656,7 +656,7 @@ for ref0 in "${refs_all[@]}"; do
             echo ${option_nchr_ref}
 
 
-            Rscript pangen/query_01_to_chr.R --all.chr T \
+            Rscript pangen/query_01_to_chr.R \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --accessions ${file_acc_ref} \
