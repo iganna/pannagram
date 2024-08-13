@@ -61,7 +61,7 @@ if(all.chr){
 pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 
 # Accessions to analyse
-acc.anal <- opt$acc.anal
+acc.anal <- opt$accessions
 if(!is.null(acc.anal)){
   if(acc.anal == 'NULL'){
     acc.anal <- NULL
