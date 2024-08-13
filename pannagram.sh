@@ -650,6 +650,8 @@ for ref0 in "${refs_all[@]}"; do
             file_acc_ref=${path_cons}ref_acc.txt
             echo "${ref0}" > ${file_acc_ref}
 
+            echo ${file_acc_ref}
+
             # Path for logging
             path_log_step="${path_log}step${step_num}_query_01_ref/"
 
