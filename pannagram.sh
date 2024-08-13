@@ -84,6 +84,7 @@ if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
     for option in "${unrecognized_options[@]}"; do
         echo "$option"
     done
+    exit 1
 fi
 
 
