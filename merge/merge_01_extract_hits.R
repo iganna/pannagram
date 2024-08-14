@@ -72,6 +72,11 @@ gff$id = sapply(gff$V9, function(s){
   return(res)
 }  )
 
+# ---- Remain "Parent" ----
+idx.contains <- grepl("Parent", gff$V9)
+if(sum(!idx.contains) > 0){
+  gff = gff[!idx.contains,]  
+}
 
 # ---- Remove very long hits ----
 idx.remain = (gff$V5 - gff$V4 + 1) <= len.max

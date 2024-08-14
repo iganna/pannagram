@@ -140,6 +140,16 @@ fi
 # ---------------------------------------------
 # Files for the blast
 
+# Add all .fasta files from path_genome to db_files if path_genome is not empty
+if [ ! -z "$path_genome" ]; then
+    db_files=()
+    for genome_file in "$path_genome"/*.fasta; do
+        # Get the base name of the file without path and extension
+        base_name=$(basename "$genome_file" .fasta)
+        db_files+=("$base_name")
+    done
+fi
+
 # Add file_seq to db_files if it's not empty
 if [ ! -z "$file_seq" ]; then
     path_genome="$(dirname "$file_seq")/"
@@ -150,16 +160,6 @@ fi
 if [ ! -z "$file_genome" ]; then
     path_genome="$(dirname "$file_genome")/"
     db_files=($(basename "$file_genome" .fasta))
-fi
-
-# Add all .fasta files from path_genome to db_files if path_genome is not empty
-if [ ! -z "$path_genome" ]; then
-    db_files=()
-    for genome_file in "$path_genome"/*.fasta; do
-        # Get the base name of the file without path and extension
-        base_name=$(basename "$genome_file" .fasta)
-        db_files+=("$base_name")
-    done
 fi
 
 # ---------------------------------------------
