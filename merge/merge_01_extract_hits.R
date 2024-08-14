@@ -137,22 +137,22 @@ for(i.chr in 1:length(genome)){
 pokaz('Chromosome lengths:', unname(nchar(genome)))
 
 # ---- Get all hits ----
-
-seqs.all = c()
-for(i.chr in 1:5){
-  s.chr = genome.list[[i.chr]]
-  gff.chr = gff[gff$V1 == paste('Chr', i.chr, sep = ''),]
-  
-  seqs = c()
-  for(irow in 1:nrow(gff.chr)){
-    seqs[irow] = nt2seq(s.chr[gff.chr$V4[irow]:gff.chr$V5[irow]])
-  }
-  names(seqs) = paste(gff.chr$id, gff.chr$V1,sep = '|')
-  
-  names(seqs) = gff.chr$id
-  
-  seqs.all = c(seqs.all, seqs)
-}
+# 
+# seqs.all = c()
+# for(i.chr in 1:5){
+#   s.chr = genome.list[[i.chr]]
+#   gff.chr = gff[gff$V1 == paste('Chr', i.chr, sep = ''),]
+#   
+#   seqs = c()
+#   for(irow in 1:nrow(gff.chr)){
+#     seqs[irow] = nt2seq(s.chr[gff.chr$V4[irow]:gff.chr$V5[irow]])
+#   }
+#   names(seqs) = paste(gff.chr$id, gff.chr$V1,sep = '|')
+#   
+#   names(seqs) = gff.chr$id
+#   
+#   seqs.all = c(seqs.all, seqs)
+# }
 
 # ---- Get sequences for merging ----
 
