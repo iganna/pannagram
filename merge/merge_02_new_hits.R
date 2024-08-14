@@ -87,6 +87,9 @@ if(length(idx.merged) == 0){
 }
   
 res = res[idx.merged,]
+
+write.table(res, 'tmp.txt', append = F, quote = F, sep = '\t', col.names = F, row.names = F)
+
 seqs.merge = c()
 for(irow in 1:(nrow(res) - 1)){
   if((res$id[irow] + 1) != res$id[irow + 1]) next
@@ -97,7 +100,7 @@ for(irow in 1:(nrow(res) - 1)){
   pos2 = pos[4]
   
   s = nt2seq(genome.list[[i.chr]][pos1:pos2])
-  s.name = paste0('te_mergeX|',
+  s.name = paste0('te_merge|',
                   res$id[irow], '|',
                   'Chr', i.chr, '|', 
                   pos1,'|', 
