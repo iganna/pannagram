@@ -100,20 +100,21 @@ run_blast() {
 
 
     # If log file exists and has the word "Done" - then don't run the blast again
-    if [ -f "$log_path" ]; then
-        if grep -q "Done" "$log_path"; then
-            echo "Over." >> "$file_log"
-            return 0
+
+    file_log="${log_path}${p_filename}_${ref_chr}.log"
+
+    if [ -d "$log_path" ]; then
+        if [ -f "$file_log" ]; then
+            if grep -q "Done" "$file_log"; then
+                echo "Over." >> "$file_log"
+                return 0
+            fi
         fi
+        : > "$file_log"  # Create or empty the log file
     else
-        # Create a log file
-        if [ -d "$log_path" ]; then
-            file_log="${log_path}${p_filename}_${ref_chr}.log"
-            > "$file_log"
-        else
-            file_log="/dev/null"
-        fi
-    fi 
+        file_log="/dev/null"
+    fi
+
     return 0
 
     # Run BLAST
