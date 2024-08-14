@@ -142,13 +142,13 @@ fi
 
 # Add file_seq to db_files if it's not empty
 if [ ! -z "$file_seq" ]; then
-    path_genome=$(dirname "$file_seq")
+    path_genome="$(dirname "$file_seq")/"
     db_files=($(basename "$file_seq" .fasta))
 fi
 
 # Add file_genome to db_files if it's not empty
 if [ ! -z "$file_genome" ]; then
-    path_genome=$(dirname "$file_genome")
+    path_genome="$(dirname "$file_genome")/"
     db_files=($(basename "$file_genome" .fasta))
 fi
 
