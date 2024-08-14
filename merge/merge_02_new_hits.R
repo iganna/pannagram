@@ -77,7 +77,7 @@ res = res[order(res$id),]
 idx.merged = which(diff(res$id) == 1)
 idx.merged = sort(unique(c(idx.merged, idx.merged + 1)))
 
-write.table(res[idx.merged,], file.fix, append = T, quote = F, sep = '\t', col.names = F, row.names = F)
+write.table(res[-idx.merged,], file.fix, append = T, quote = F, sep = '\t', col.names = F, row.names = F)
 
 # ---- Merge further ----
 
@@ -96,9 +96,8 @@ for(irow in 1:(nrow(res) - 1)){
   pos1 = pos[1]
   pos2 = pos[4]
   
-  
   s = nt2seq(genome.list[[i.chr]][pos1:pos2])
-  s.name = paste0('te_merge|',
+  s.name = paste0('te_mergeX|',
                   res$id[irow], '|',
                   'Chr', i.chr, '|', 
                   pos1,'|', 
