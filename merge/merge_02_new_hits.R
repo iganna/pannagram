@@ -72,6 +72,9 @@ res$name = rownames(res)
 pokaz('here1')
 res$id = as.numeric(sapply(res$name, function(s) strsplit(s, '\\|')[[1]][2]))
 pokaz('here2')
+
+pokez(length(grep("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3]))))
+
 res$chr = grep("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3]))
 pokaz('her3')
 
