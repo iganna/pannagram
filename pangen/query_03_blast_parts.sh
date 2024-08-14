@@ -98,6 +98,16 @@ run_blast() {
   	p_filename=$(echo "$p_filename" | sed 's/_chr\(.*\)$/_\1/')
     outfile=${blastres}${p_filename}_${ref_chr}.txt
 
+
+    # If log file exists and has the word "Done" - then don't run the blast again
+    # Проверьте, существует ли файл
+    if [ -f "$log_path" ]; then
+        if grep -q "Done" "$log_path"; then
+            return 0
+        fi
+    fi
+
+
     # Create a log file
     if [ -d "$log_path" ]; then
         file_log="${log_path}${p_filename}_${ref_chr}.log"
