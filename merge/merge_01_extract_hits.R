@@ -186,6 +186,15 @@ for(type in types){
       if(pos2 < pos1) stop('Wrong positions')
       
       if(pos2 - pos1 > 50000) stop('length is too long')
+      
+      if((pos2 == 14566046) && (pos1 == 14563556)){
+        file.ws = "tmp_workspace.RData"
+
+          all.local.objects <- ls()
+          save(list = all.local.objects, file = file.ws)
+        stop()
+      }
+      
       seqs = c(seqs, nt2seq(s.chr[pos1:pos2]))
     }
     
