@@ -3,6 +3,9 @@
 path.pannagram = ""
 source(paste(path.pannagram, 'utils/utils.R', sep = ''))
 
+
+pokazStage('Analyse counts..')
+
 library(optparse)
 
 option_list = list(
@@ -69,6 +72,8 @@ res$chr = as.numeric(gsub("Chr", '', sapply(res$name, function(s) strsplit(s, '\
 
 # Remove singletons
 res = res[res$total >= copy.number,]
+n.col.total = which(colnames(res) == 'total')
+res = res[,-(1:(n.col.total - 1))]
 
 # Sort according to the initial gff
 res = res[order(res$id),]
@@ -82,7 +87,7 @@ write.table(res[-idx.merged,], file.fix, append = T, quote = F, sep = '\t', col.
 # ---- Merge further ----
 
 if(length(idx.merged) == 0){
-  pokaz('New further merging')
+  pokaz('No further merging')
   quit(save = "no")
 }
   

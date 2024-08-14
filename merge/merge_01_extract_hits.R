@@ -1,9 +1,12 @@
 # This script gets gff file and the genome and return the set of candidate sequences for merging
 
+library(optparse)
+
 path.pannagram = ""
 source(paste(path.pannagram, 'utils/utils.R', sep = ''))
 
-library(optparse)
+pokazStage('Extract candidates for merging..')
+
 
 option_list = list(
   make_option(c("--file.gff"), type="character", default="", 

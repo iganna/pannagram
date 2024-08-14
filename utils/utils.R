@@ -824,6 +824,43 @@ pokaz <- function(..., file = NULL, echo = T) {
   }
 }
 
+#' ----------------------------------------------------------------------
+#' Display a stage stylized messages
+#'
+#' This function displays a general stylized message to the user.
+#'
+#' @param ... Arguments to be concatenated into a message string.
+#'
+#' @author Anna A. Igolkina 
+#' 
+pokazStage <- function(..., file = NULL, echo = T) {
+  arguments_list <- list(...)
+  # Check if any arguments are vectors
+  for (i in seq_along(arguments_list)) {
+    if (is.character(arguments_list[[i]]) && length(arguments_list[[i]]) > 1) {
+      arguments_list[[i]] <- paste(arguments_list[[i]], collapse = " ")
+    }
+  }
+  
+  arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
+  
+  text.color <- make_style("#74D5D5")
+  # bg <- make_style("grey5", bg = TRUE)
+  fancy <- combine_styles(text.color)
+  formatted_output <- fancy(arguments)
+  
+  if (echo) {
+    # Output to console
+    cat(formatted_output)
+    cat('\n')
+  }  
+  
+  if (!is.null(file)){
+    # Capture the output and write to file
+    write(arguments, file = file, append = TRUE)
+  }
+}
+
 
 #' ----------------------------------------------------------------------
 #' Safe Removal of Variable from Global Environment
