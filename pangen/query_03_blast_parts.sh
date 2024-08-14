@@ -106,19 +106,16 @@ run_blast() {
             echo "Over." >> "$file_log"
             return 0
         fi
-    fi
-
-    return 0
-
-
-    # Create a log file
-    if [ -d "$log_path" ]; then
-        file_log="${log_path}${p_filename}_${ref_chr}.log"
-        > "$file_log"
     else
-        file_log="/dev/null"
-    fi
-
+        # Create a log file
+        if [ -d "$log_path" ]; then
+            file_log="${log_path}${p_filename}_${ref_chr}.log"
+            > "$file_log"
+        else
+            file_log="/dev/null"
+        fi
+    fi 
+    return 0
 
     # Run BLAST
     blastn -db "${ref_file}" -query "${part_file}" -out "${outfile}" \
