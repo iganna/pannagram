@@ -10,9 +10,7 @@ option_list = list(
               help="Path to the GFF file", metavar="character"),
   make_option(c("--file.genome"), type="character", default="", 
               help="Path to the genome file", metavar="character"),
-  make_option(c("--file.seqs.prev"), type="character", default="", 
-              help="Path to the sequences file", metavar="character"),
-  make_option(c("--file.seqs.next"), type="character", default="", 
+  make_option(c("--file.seqs"), type="character", default="", 
               help="Path to the sequences file", metavar="character"),
   make_option(c("--file.fix"), type="character", default="", 
               help="Path to the sequences file", metavar="character"),
@@ -34,11 +32,8 @@ if (is.null(opt$file.cnt)) {
 if (is.null(opt$file.genome)) {
   stop("Error: --file.genome is required.")
 }
-if (is.null(opt$file.seqs.prev)) {
-  stop("Error: --file.seqs.prev is required.")
-}
-if (is.null(opt$file.seqs.next)) {
-  stop("Error: --file.seqs.next is required.")
+if (is.null(opt$file.seqs)) {
+  stop("Error: --file.seqs is required.")
 }
 if (is.null(opt$file.fix)) {
   stop("Error: --file.fix is required.")
@@ -46,8 +41,7 @@ if (is.null(opt$file.fix)) {
 
 file.cnt = opt$file.cnt
 file.genome = opt$file.genome
-file.seqs.next = opt$file.seqs.next
-file.seqs.prev = opt$file.seqs.prev
+file.seqs = opt$file.seqs
 file.fix = opt$file.fix
 copy.number = opt$copy.number
 
@@ -67,17 +61,11 @@ pokaz('Chromosome lengths:', unname(nchar(genome)))
 
 res = read.table(file.cnt, 
                  row.names = 1, header = 1, stringsAsFactors = F)
-head(res)
+
 res$name = rownames(res)
-pokaz('here1')
+rownames(res) = NULL
 res$id = as.numeric(sapply(res$name, function(s) strsplit(s, '\\|')[[1]][2]))
-pokaz('here2')
-
-pokaz(length(gsub("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3]))))
-
-res$chr = grep("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3]))
-pokaz('her3')
-
+res$chr = as.numeric(gsub("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3])))
 
 # Remove singletons
 res = res[res$total >= copy.number,]
@@ -85,15 +73,11 @@ res = res[res$total >= copy.number,]
 # Sort according to the initial gff
 res = res[order(res$id),]
 
-
 # ---- Split merged and non-merged sequences ----
 idx.merged = which(diff(res$id) == 1)
 idx.merged = sort(unique(c(idx.merged, idx.merged + 1)))
 
-seqs.prev = readFastaMy(file.seqs.prev)
-seqs.new = seqs.prev[res$name]
-
-writeFastaMy(seqs.new, file.fix, append = T)
+write.table(res[idx.merged,], file.fix, append = T, quote = F, sep = '\t', col.names = F, row.names = F)
 
 # ---- Merge further ----
 
@@ -125,7 +109,7 @@ for(irow in 1:(nrow(res) - 1)){
 
 if(length(seqs.merge) > 0){
   pokaz('Total number of sequences:', length(seqs.merge))
-  writeFastaMy(seqs.merge, file.seqs.next)  
+  writeFastaMy(seqs.merge, file.seqs)  
 } else {
   pokaz('No sequences were found for merging')  
 }
