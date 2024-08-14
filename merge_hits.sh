@@ -147,7 +147,7 @@ file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
 file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
-for ((i=1; i<=max_rounds; i++))
+for ((i=2; i<=max_rounds; i++))
 do
 	file_merged_seqs="${path_out}merged_seqs_${i}.fasta"
 
@@ -158,7 +158,7 @@ do
     path_simsearch="${path_out}simseqrch_seqs_${i}/"
 
 	# Run simsearch
-    
+
 	./simsearch.sh \
     -in_seq ${file_merged_seqs}    \
     -on_genome ${file_genome} \
@@ -188,7 +188,6 @@ do
         --file.fix ${file_merged_seqs_fixed} \
         --copy.number=${copy_number}
 
-    break
 done
 
 
