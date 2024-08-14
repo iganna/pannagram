@@ -844,7 +844,7 @@ pokazStage <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#74D5D5")
+  text.color <- make_style("#FDFDFD")
   # bg <- make_style("grey5", bg = TRUE)
   fancy <- combine_styles(text.color)
   formatted_output <- fancy(arguments)
