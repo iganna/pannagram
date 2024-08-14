@@ -67,6 +67,7 @@ pokaz('Chromosome lengths:', unname(nchar(genome)))
 
 res = read.table(file.cnt, 
                  row.names = 1, header = 1, stringsAsFactors = F)
+head(res)
 res$id = as.numeric(sapply(rownames(res), function(s) strsplit(s, '\\|')[[1]][2]))
 res$name = rownames(res)
 res$chr = grep("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3]))
