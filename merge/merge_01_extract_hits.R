@@ -23,8 +23,7 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-print(opt)
-
+# print(opt)
 
 # ---- Parsing of parameters ----
 opt = parse_args(opt_parser)
@@ -99,15 +98,16 @@ if(sum(idx.remain) > 0){
   stop('Patterns were not found in types of gff hits (3D column in the gff file)')
 }
 
-
 # ---- Sorting ----
 rownames(gff) = NULL
+
 # gff$idx.sort = 1:nrow(gff)
+
 gff = gff[order(gff$V5),]
 gff = gff[order(gff$V4),]
 gff = gff[order(gff$V1),]
-is.unsorted(gff$idx.sort)
 
+# is.unsorted(gff$idx.sort)
 # which(diff(gff$idx.sort) != 1)
 # gff$idx.sort = NULL
 
@@ -118,7 +118,6 @@ gff$idx = 1:nrow(gff)
 gff$len = gff$V5 - gff$V4 + 1
 
 gff$chr = as.numeric(gsub('Chr', '', gff$V1))
-
 
 # ---- Read the genome ----
 
@@ -131,7 +130,6 @@ for(i.chr in 1:length(genome)){
 }
 
 pokaz('Chromosome lengths:', unname(nchar(genome)))
-
 
 # ---- Get all hits ----
 
