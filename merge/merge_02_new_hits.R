@@ -68,11 +68,13 @@ pokaz('Chromosome lengths:', unname(nchar(genome)))
 res = read.table(file.cnt, 
                  row.names = 1, header = 1, stringsAsFactors = F)
 head(res)
-res$id = as.numeric(sapply(rownames(res), function(s) strsplit(s, '\\|')[[1]][2]))
 res$name = rownames(res)
+pokaz('here1')
+res$id = as.numeric(sapply(res$name, function(s) strsplit(s, '\\|')[[1]][2]))
+pokaz('here2')
 res$chr = grep("Chr", '', sapply(res$name, function(s) strsplit(s, '\\|')[[1]][3]))
+pokaz('her3')
 
-pokaz('here')
 
 # Remove singletons
 res = res[res$total >= copy.number,]
