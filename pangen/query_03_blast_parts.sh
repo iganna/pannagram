@@ -100,7 +100,6 @@ run_blast() {
 
 
     # If log file exists and has the word "Done" - then don't run the blast again
-    # Проверьте, существует ли файл
     if [ -f "$log_path" ]; then
         if grep -q "Done" "$log_path"; then
             echo "Over." >> "$file_log"
