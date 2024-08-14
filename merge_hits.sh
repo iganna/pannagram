@@ -184,7 +184,7 @@ do
         --file.cnt ${file_cnt} \
         --file.genome ${file_genome} \
         --file.seqs.prev ${file_merged_seqs} \
-        --file.seqs.next ${file_merged_seqs} \
+        --file.seqs.next ${file_merged_seqs_next} \
         --file.fix ${file_merged_seqs_fixed} \
         --copy.number=${copy_number}
 
