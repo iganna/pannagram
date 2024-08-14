@@ -28,7 +28,7 @@ print(opt)
 # ---- Parsing of parameters ----
 opt = parse_args(opt_parser)
 
-if (is.null(opt$file.gff)) {
+if (is.null(opt$file.cnt)) {
   stop("Error: --file.cnt is required.")
 }
 if (is.null(opt$file.genome)) {
