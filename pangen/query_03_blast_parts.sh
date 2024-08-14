@@ -103,9 +103,12 @@ run_blast() {
     # Проверьте, существует ли файл
     if [ -f "$log_path" ]; then
         if grep -q "Done" "$log_path"; then
+            echo "Over." >> "$file_log"
             return 0
         fi
     fi
+
+    return 0
 
 
     # Create a log file
@@ -115,6 +118,7 @@ run_blast() {
     else
         file_log="/dev/null"
     fi
+
 
     # Run BLAST
     blastn -db "${ref_file}" -query "${part_file}" -out "${outfile}" \
@@ -133,4 +137,7 @@ export -f run_blast
 
 # Run BLAST in parallel
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_chrom${ref_name}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all ::: ${log_path}
+
+
+exit 1
 
