@@ -88,8 +88,6 @@ if(length(idx.merged) == 0){
   
 res = res[idx.merged,]
 
-write.table(res, 'tmp.txt', append = F, quote = F, sep = '\t', col.names = F, row.names = F)
-
 seqs.merge = c()
 for(irow in 1:(nrow(res) - 1)){
   if((res$id[irow] + 1) != res$id[irow + 1]) next

@@ -157,12 +157,12 @@ do
     
     path_simsearch="${path_out}simseqrch_seqs_${i}/"
 
-	# Run simsearch
-	# ./simsearch.sh \
-    # -in_seq ${file_merged_seqs}    \
-    # -on_genome ${file_genome} \
-    # -out "${path_out}simseqrch_seqs_${i}/" \
-    # -sim ${sim_sutoff} 
+	Run simsearch
+	./simsearch.sh \
+    -in_seq ${file_merged_seqs}    \
+    -on_genome ${file_genome} \
+    -out "${path_out}simseqrch_seqs_${i}/" \
+    -sim ${sim_sutoff} 
     
 
 	# Get Collapsed sequences - neighbours only
