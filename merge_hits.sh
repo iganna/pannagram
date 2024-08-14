@@ -155,6 +155,8 @@ do
         break
     fi
     
+    path_simsearch="${path_out}simseqrch_seqs_${i}/"
+
 	# Run simsearch
 	# ./simsearch.sh \
     # -in_seq ${file_merged_seqs}    \
@@ -167,11 +169,22 @@ do
 
     file_merged_seqs_next="${path_out}merged_seqs_$((i+1)).fasta"
 
+    file_cnt=$(find ${path_simsearch} -type f -name "*${sim_sutoff}.cnt")
+
+    if [ -z "$file_cnt" ]; then
+        echo "Error: No file ending with ${sim_sutoff}.cnt found." >&2
+        exit 1
+    elif [ $(echo "$file_cnt" | wc -l) -ne 1 ]; then
+        echo "Error: More than one file matching the pattern *${sim_sutoff}.cnt found." >&2
+        exit 1
+    fi
+
 
     Rscript merge/merge_02_new_hits.R \
-        --file.genome=${file_genome} \
-        --file.seqs.prev=${file_merged_seqs} \
-        --file.seqs.next=${file_merged_seqs} \
+        --file.cnt ${file_cnt} \
+        --file.genome ${file_genome} \
+        --file.seqs.prev ${file_merged_seqs} \
+        --file.seqs.next ${file_merged_seqs} \
         --file.fix ${file_merged_seqs_fixed} \
         --copy.number=${copy_number}
 
