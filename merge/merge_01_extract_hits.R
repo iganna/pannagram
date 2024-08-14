@@ -46,6 +46,7 @@ patterns = opt$patterns
 len.max = opt$len.max
 len.gap = opt$len.gap
 
+pokaz('A')
 
 # ---- Prepare parameters ----
 
