@@ -49,7 +49,7 @@ len.gap = opt$len.gap
 # ---- Prepare parameters ----
 
 if(nchar(patterns) != ''){
-  patterns = sapply(patterns, ',')[[1]]
+  patterns = strsplit(patterns, ',')[[1]]
   pokaz('Keywords in types:', patterns)  
 } else {
   pokaz('No keywords to filter types')  
