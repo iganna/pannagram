@@ -135,15 +135,17 @@ fi
 
 file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
-Rscript merge/merge_01_extract_hits.R \
-        --file.gff=${file_gff} \
-        --file.genome=${file_genome} \
-        --file.seqs=${file_merged_seqs} \
-        --patterns=${patterns} \
-        --len.gap=${distance}
+# Rscript merge/merge_01_extract_hits.R \
+#         --file.gff=${file_gff} \
+#         --file.genome=${file_genome} \
+#         --file.seqs=${file_merged_seqs} \
+#         --patterns=${patterns} \
+#         --len.gap=${distance}
 
 # ----------------------------------------
 # Simrearch and Merge
+
+file_merged_seqs_fixed="${path_out}merged_seqs_fixed.fasta"
 
 for ((i=1; i<=max_rounds; i++))
 do
@@ -154,15 +156,27 @@ do
     fi
     
 	# Run simsearch
-	./simsearch.sh \
-    -in_seq ${file_merged_seqs}    \
-    -on_genome ${file_genome} \
-    -out "${path_out}simseqrch_seqs_${i}/" \
-    -sim ${sim_sutoff} 
+	# ./simsearch.sh \
+    # -in_seq ${file_merged_seqs}    \
+    # -on_genome ${file_genome} \
+    # -out "${path_out}simseqrch_seqs_${i}/" \
+    # -sim ${sim_sutoff} 
     
 
 	# Get Collapsed sequences - neighbours only
 
+    file_merged_seqs_next="${path_out}merged_seqs_$((i+1)).fasta"
+
+
+    Rscript merge/merge_02_new_hits.R \
+        --file.genome=${file_genome} \
+        --file.seqs.prev=${file_merged_seqs} \
+        --file.seqs.next=${file_merged_seqs} \
+        --file.fix ${file_merged_seqs_fixed} \
+        --copy.number=${copy_number}
+
+
+    break
 done
 
 
