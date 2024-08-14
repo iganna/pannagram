@@ -67,7 +67,7 @@ do
         -h | --help) print_usage; exit ;;
         
         # Required
-        -i | --file_gff)     file_in=$2;      shift 2 ;;  
+        -i | --file_gff)     file_gff=$2;      shift 2 ;;  
 		-g | --file_genome)  file_genome=$2;  shift 2 ;;  
         -o | --path_out)     path_out=$2;     shift 2 ;;  
 		
@@ -100,7 +100,7 @@ fi
 
 
 # Check for required parameters
-if [ -z "$file_in" ] || [ -z "$file_genome" ] || [ -z "$path_out" ]; then
+if [ -z "$file_gff" ] || [ -z "$file_genome" ] || [ -z "$path_out" ]; then
     echo "Error: Missing required parameters (-i, -g, -o)."
     print_usage
     exit 1

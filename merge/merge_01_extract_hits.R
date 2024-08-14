@@ -46,8 +46,6 @@ patterns = opt$patterns
 len.max = opt$len.max
 len.gap = opt$len.gap
 
-pokaz('A')
-
 # ---- Prepare parameters ----
 
 if(nchar(patterns) != ''){
@@ -59,6 +57,8 @@ if(nchar(patterns) != ''){
 
 
 # ---- Read the data ----
+if(!file.exists(file.gff)) stop(paste('Gff file does not exist:', file.gff))
+
 gff = read.table(file.gff, stringsAsFactors = F)
 gff = gff[gff$V3 != 'centromeric_repeat',]
 table(gff$V3)
