@@ -135,19 +135,19 @@ fi
 
 file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
-# Rscript merge/merge_01_extract_hits.R \
-#         --file.gff=${file_gff} \
-#         --file.genome=${file_genome} \
-#         --file.seqs=${file_merged_seqs} \
-#         --patterns=${patterns} \
-#         --len.gap=${distance}
+Rscript merge/merge_01_extract_hits.R \
+        --file.gff=${file_gff} \
+        --file.genome=${file_genome} \
+        --file.seqs=${file_merged_seqs} \
+        --patterns=${patterns} \
+        --len.gap=${distance}
 
 # ----------------------------------------
 # Simrearch and Merge
 
 file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
-for ((i=2; i<=max_rounds; i++))
+for ((i=1; i<=max_rounds; i++))
 do
 	file_merged_seqs="${path_out}merged_seqs_${i}.fasta"
 
