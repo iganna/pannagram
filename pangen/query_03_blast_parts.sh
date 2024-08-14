@@ -115,9 +115,9 @@ run_blast() {
         file_log="/dev/null"
     fi
 
-    return 0
-
+    
     # Run BLAST
+    rm "${outfile}"  # Clean up the file
     blastn -db "${ref_file}" -query "${part_file}" -out "${outfile}" \
            -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
            -perc_identity "${p_ident}" -penalty "$penalty" -gapopen "$gapopen" -gapextend "$gapextend" \
@@ -135,6 +135,4 @@ export -f run_blast
 # Run BLAST in parallel
 parallel -j $cores run_blast ::: ${parts}*.fasta ::: $path_chrom${ref_name}_chr*.fasta ::: $blastres ::: $p_ident ::: $penalty ::: $gapopen ::: $gapextend ::: $max_hsps ::: $all_vs_all ::: ${log_path}
 
-
-exit 1
 
