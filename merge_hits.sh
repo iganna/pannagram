@@ -142,8 +142,6 @@ Rscript merge/merge_01_extract_hits.R \
         --patterns=${patterns} \
         --len.gap=${distance}
 
-exit 
-
 # ----------------------------------------
 # Simrearch and Merge
 

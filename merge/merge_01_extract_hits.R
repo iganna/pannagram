@@ -61,7 +61,6 @@ if(!file.exists(file.gff)) stop(paste('Gff file does not exist:', file.gff))
 
 gff = read.table(file.gff, stringsAsFactors = F)
 gff = gff[gff$V3 != 'centromeric_repeat',]
-table(gff$V3)
 
 pokaz('Chromosomes:', unique(gff$V1))
 
@@ -83,7 +82,6 @@ if(sum(idx.remain) > 0){
   stop(paste0('All hits are longer than ', len.max))
 }
 
-
 # ---- Remain types by the patterns ----
 idx.remain = rep(F, nrow(gff))
 
@@ -104,17 +102,16 @@ if(sum(idx.remain) > 0){
 
 # ---- Sorting ----
 rownames(gff) = NULL
-gff$idx.sort = 1:nrow(gff)
+# gff$idx.sort = 1:nrow(gff)
 gff = gff[order(gff$V5),]
 gff = gff[order(gff$V4),]
 gff = gff[order(gff$V1),]
 is.unsorted(gff$idx.sort)
 
-which(diff(gff$idx.sort) != 1)
-gff$idx.sort = NULL
+# which(diff(gff$idx.sort) != 1)
+# gff$idx.sort = NULL
 
 gff$idx = 1:nrow(gff)
-
 
 # ---- Attributes of hits ----
 
@@ -168,7 +165,7 @@ for(type in types){
   
   # Number of overlapping hits
   n.over = sum(gff.type$dist < 0)
-  pokaz('Number of overlaps:', n.over)
+  # pokaz('Number of overlaps:', n.over)
   
   for(i.chr in 1:5){
     pokaz('Chromosome', i.chr)
@@ -201,6 +198,7 @@ for(type in types){
 }
 
 if(length(seqs.merge) > 0){
+  pokaz('Total number of sequences:', length(seqs.merge))
   writeFastaMy(seqs.merge, file.seqs)  
 } else {
   pokaz('No sequences were found for merging')  
