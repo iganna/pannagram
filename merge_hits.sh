@@ -86,7 +86,7 @@ done
 # Output of Unrecognized Parameters
 if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
     print_usage
-    pokaz_message "Unrecognized options:"
+    echo "Unrecognized options:"
     for option in "${unrecognized_options[@]}"; do
         echo "$option"
     done
