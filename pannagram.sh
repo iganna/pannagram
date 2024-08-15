@@ -27,7 +27,7 @@ unrecognized_options=()
 start_step=100
 while [ $# -gt 0 ]
 do
-    # echo $1
+    echo $1
     case $1 in
         -h) print_usage_short; print_examples; exit ;;
         -help ) print_usage_detailed; print_examples; exit ;;
