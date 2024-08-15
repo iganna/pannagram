@@ -113,10 +113,8 @@ if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
 query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name), stringsAsFactors = F)
 
 # Optional: Filter based on a list of accession numbers, if provided
-pokaz('query.name', query.name)
-pokaz('acc.anal', acc.anal)
 if(!is.null(acc.anal)){
-  acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
+  # acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
   # pokaz('Accessions in the folder', query.name, file=file.log.main, echo=echo.main)
   # pokaz('Accessions in the filtration file', acc.anal, file=file.log.main, echo=echo.main)
   query.name <- query.name[query.name$acc %in% acc.anal,,drop=F]
