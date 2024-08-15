@@ -63,13 +63,13 @@ do
         -p_ident)   p_ident=$2;  shift 2 ;;  # percent of identity
 
         -sort_by_len) sort_chr_len="T"; shift 1 ;;  # flag whether to sort chromosomes by length or not
-        -one2one)     one2one="${one2one}T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
-        -all2all)     one2one="${one2one}F";      shift 1 ;;  # compare chromosomes all-to-all or not (default in PRE mode)
+        -one2one)     one2one="T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
+        -all2all)     one2one="F";      shift 1 ;;  # compare chromosomes all-to-all or not (default in PRE mode)
         -purge_reps | -purge_repeats ) purge_reps="T";    shift 1 ;;  # filtration of repeats, default - not
         -rev )        flag_rev="T";      shift 1 ;;  # reverce parts
         -orf )        flag_orf="T";      shift 1 ;;  # reverce parts
 
-        -accessions)   acc_file=$2;  shift 2 ;;  # file with accessions to analyse
+        -accessions)   acc_file=$2; echo 'XXXX'; shift 2 ;;  # file with accessions to analyse
         -combinations) comb_file=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
     
         *) unrecognized_options+=("$1"); shift 1 ;;
