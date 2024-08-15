@@ -47,7 +47,7 @@ do
         -path_ref) path_ref=$2; shift 2 ;;  # dont provide if it's the same folder as the path with query genomes
 
         # MSA
-        -refs) ref_set="$2"; mode_msa="T"; shift 2 ;;
+        -refs) ref_set="$2"; mode_msa="T"; echo ${ref_set}; shift 2 ;;
         -nref) ref_num="$2"; mode_msa="T"; shift 2 ;;
 
         # # Optional paths
