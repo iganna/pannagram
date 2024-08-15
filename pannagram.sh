@@ -47,7 +47,7 @@ do
         -path_ref) path_ref=$2; shift 2 ;;  # dont provide if it's the same folder as the path with query genomes
 
         # MSA
-        -refs) ref_set="$2"; mode_msa="T"; echo ${ref_set}; shift 2 ;;
+        -refs) ref_set="$2"; mode_msa="T"; shift 2 ;;
         -nref) ref_num="$2"; mode_msa="T"; shift 2 ;;
 
         # # Optional paths
@@ -69,7 +69,7 @@ do
         -rev )        flag_rev="T";      shift 1 ;;  # reverce parts
         -orf )        flag_orf="T";      shift 1 ;;  # reverce parts
 
-        -accessions)   acc_file=$2; echo 'XXXX'; shift 2 ;;  # file with accessions to analyse
+        -accessions)   acc_file=$2;  shift 2 ;;  # file with accessions to analyse
         -combinations) comb_file=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
     
         *) unrecognized_options+=("$1"); shift 1 ;;
