@@ -38,7 +38,7 @@ option_list <- list(
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
-# print(opt)
+print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -113,6 +113,7 @@ if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
 query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name), stringsAsFactors = F)
 
 # Optional: Filter based on a list of accession numbers, if provided
+pokaz('acc.anal', acc.anal)
 if(!is.null(acc.anal)){
   acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
   # pokaz('Accessions in the folder', query.name, file=file.log.main, echo=echo.main)

@@ -27,7 +27,7 @@ unrecognized_options=()
 start_step=100
 while [ $# -gt 0 ]
 do
-    echo $1
+    # echo $1
     case $1 in
         -h) print_usage_short; print_examples; exit ;;
         -help ) print_usage_detailed; print_examples; exit ;;
@@ -210,8 +210,10 @@ mkdir -p "${path_flags}"
 # ----------------------------------------------
 # Number pf chromosomes
 
+
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
+    with_level 1 pokaz_stage "Define the number of chromosomes"
 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
         option_nchr=" --all.chr T"
