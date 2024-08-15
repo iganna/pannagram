@@ -278,11 +278,7 @@ loop.function <- function(f.maj,
   if(!is.null(x.gap)) {
     
     
-    file.ws = "tmp_workspace.RData"
-    all.local.objects <- ls()
-    save(list = all.local.objects, file = file.ws)
-    pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-    stop('Enough..')
+    
 
     
     ## ---- Change positions ----
@@ -302,6 +298,21 @@ loop.function <- function(f.maj,
     for(irow in 1:nrow(x.gap)){
       
       if(x.gap$dir[irow] == 0){
+        tmp = which((x.tmp$V2 == x.gap$V2[irow]) & (x.gap$V3[irow] == x.tmp$V3) & 
+                      (x.tmp$V4 == x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5))  
+      } else {
+        tmp = which((x.tmp$V2 == x.gap$V2[irow]) & (x.gap$V3[irow] == x.tmp$V3) & 
+                      (x.tmp$V5 == x.gap$V5[irow]) & (x.gap$V4[irow] == x.tmp$V4))
+      }
+      
+      if(length(tmp) == 1){
+        id.corresp = rbind(id.corresp, c(irow, tmp))
+        next
+      } else if(length(tmp) > 1){
+        stop('Something is wrong with coordinates 1')
+      } 
+      
+      if(x.gap$dir[irow] == 0){
         tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
                       (x.tmp$V4 <= x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5))  
       } else {
@@ -309,9 +320,14 @@ loop.function <- function(f.maj,
                       (x.tmp$V5 <= x.gap$V5[irow]) & (x.gap$V4[irow] <= x.tmp$V4))
       }
       
-      # for inversions 
-      if(length(tmp) > 1) stop('Something is wrong with coordinates')
-      id.corresp = rbind(id.corresp, c(irow, tmp))
+      if(length(tmp) == 1){
+        id.corresp = rbind(id.corresp, c(irow, tmp))
+        next
+      } else if(length(tmp) > 1){
+      
+        pokaz('Something is wrong with coordinates 2')
+        id.corresp = rbind(id.corresp, cbind(irow, tmp))
+      } 
     }
     id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
     
@@ -331,7 +347,7 @@ loop.function <- function(f.maj,
     # Clean the overlap
     x.tmp = cleanOverlaps(x.tmp)
     if(nrow(x.tmp) == 1){
-      idx.bw = id.corresp$init[id.corresp$new %in% x.tmp$idx]
+      idx.bw = unique(id.corresp$init[id.corresp$new %in% x.tmp$idx])  # UNIQUE
     } else {
       
       # ---- The same greedy as before ----
@@ -344,7 +360,7 @@ loop.function <- function(f.maj,
       overlap.cutoff = 0.2
       idx.remain = greedy_loop(df.gap, overlap.cutoff)
       
-      idx.bw = id.corresp$init[id.corresp$new %in% df.gap$idx[idx.remain]]
+      idx.bw = unique(id.corresp$init[id.corresp$new %in% df.gap$idx[idx.remain]])  # UNIQUE
     }
     
     # ---- Remaining ----
@@ -366,10 +382,10 @@ loop.function <- function(f.maj,
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
+    idx.bw = unique(idx.bw)   # UNIQUE
     x.bw = x.gap[idx.bw,]
     x.bw = glueZero(x.bw)
     x.bw = cleanOverlaps(x.bw)
-    
     
   } else {
     
