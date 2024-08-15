@@ -15,6 +15,7 @@ source utils/utils_bash.sh
 print_usage() {
   echo "-path_gaps"
   echo "-log_path"
+  echo "-p_ident"
 }
 
 # ----------------------------------------------------------------------------
@@ -30,6 +31,7 @@ while [ $# -gt 0 ]; do
         -gapextend) gapextend=$2; shift 2;;
         -max_hsps) max_hsps=$2; shift 2;;
         -cores) cores=$2; shift 2;;
+        -p_ident) p_ident=$2; shift 2;;
         *) 
             print_usage
             echo "$0: error - unrecognized option $1" 1>&2
@@ -45,6 +47,7 @@ gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
+p_ident="${p_ident:-85}"
 
 
 # Path to databases
@@ -52,7 +55,6 @@ path_db=${path_gaps}db/
 if [ ! -d "${path_db}" ]; then
   mkdir -p "${path_db}"
 fi
-
 
 # ----------------------------------------------------------------------------
 #                 CREATE BLAST DATABASES
@@ -105,6 +107,7 @@ function process_blast {
     path_gaps="$2"
     path_db="$3"
     log_path="$4"
+    p_ident="$5"
 
     query_file=$(basename "$query_file_path")
     base_file="${query_file/query/base}"
@@ -128,10 +131,13 @@ function process_blast {
        [[ -e ${path_db}${base_file}.nsq ]] && \
        [[ -e ${path_gaps}${query_file} ]]; then
 
+echo "blastn -db ${path_db}${base_file} -query ${path_gaps}${query_file} -out ${path_gaps}${out_file} -outfmt '6 qseqid qstart qend sstart send pident length qseq sseq sseqid' -perc_identity ${p_ident} -max_hsps 10" >> "$file_log"
+
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -perc_identity "${p_ident}" \
                -max_hsps 10  >> "$file_log" 2>&1
     fi
 
@@ -165,6 +171,7 @@ function process_blast {
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
+               -perc_identity "${p_ident}" \
                -max_hsps 5 >> "$file_log" 2>&1
     fi
 
@@ -175,7 +182,7 @@ function process_blast {
 
 export -f process_blast
 
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast {} $path_gaps $path_db ${log_path}
+find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast {} $path_gaps $path_db ${log_path} ${p_ident}
 
 
 # pokaz_message "Done!"

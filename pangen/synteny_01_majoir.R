@@ -366,11 +366,11 @@ loop.function <- function(f.blast,
   
   # Within non-occupied positions find those, which can be
   
-  pref.comarisson = paste('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
+  pref.comparisson = paste('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
   # Query-file
-  file.gap.query = paste0(path.gaps, pref.comarisson, 'query.fasta', collapse = '')
+  file.gap.query = paste0(path.gaps, pref.comparisson, 'query.fasta', collapse = '')
   # Base file
-  file.gap.base = paste0(path.gaps, pref.comarisson, 'base.fasta', collapse = '')
+  file.gap.base = paste0(path.gaps, pref.comparisson, 'base.fasta', collapse = '')
   pokaz('Create gaps for', file.gap.query, file=file.log.loop, echo=echo.loop)
   pokaz('Create gaps for', file.gap.base, file=file.log.loop, echo=echo.loop)
   
@@ -450,7 +450,7 @@ loop.function <- function(f.blast,
     s.q = splitSeq(s.q, n = n.bl)
     
     # Standsrd naming (as before)
-    pref.q = paste(pref.comarisson, pref.gap,
+    pref.q = paste(pref.comparisson, pref.gap,
                    'query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
     
     if(sum(pos.gap.q[p.beg] > pos.gap.q[p.end]) > 0) stop('Wrong boundaries of gap blocks - 2')
@@ -463,7 +463,7 @@ loop.function <- function(f.blast,
     s.b = base.fas.fw[pos.gap.b]
     s.b = nt2seq(s.b)
     
-    s.base.names = paste(pref.comarisson, pref.gap,
+    s.base.names = paste(pref.comparisson, pref.gap,
                          'base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
     
     names(s.b) = s.base.names
@@ -474,24 +474,50 @@ loop.function <- function(f.blast,
   
   # ---- Write remained blocks ----
   pokaz('Create fasta for the remained sequences', file=file.log.loop, echo=echo.loop)
-  file.gap.query = paste0(path.gaps, pref.comarisson, 'residual_query.fasta', collapse = '')
+  file.gap.query = paste0(path.gaps, pref.comparisson, 'residual_query.fasta', collapse = '')
   # Base file
-  file.gap.base = paste0(path.gaps, pref.comarisson, 'residual_base.fasta', collapse = '')
+  file.gap.base = paste0(path.gaps, pref.comparisson, 'residual_base.fasta', collapse = '')
   pokaz('Create gaps for', file.gap.query, file=file.log.loop, echo=echo.loop)
   pokaz('Create gaps for', file.gap.base, file=file.log.loop, echo=echo.loop)
   
+  x$idx = 1:nrow(x)
+  
   ## ---- Write query ----
   # Query: Zero-coverage blocks
-  diffs = diff(c(1, (pos.q.free != 0) * 1, 1))
-  begs = which(diffs == -1)
-  ends = which(diffs == 1) - 1
   
-  if(length(begs) > 0){
-    for(irow in 1:length(begs)){
+  
+  # file.ws = "tmp_workspace.RData"
+  # all.local.objects <- ls()
+  # save(list = all.local.objects, file = file.ws)
+  # pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+  # stop('Enough..')
+  
+  x = x[order(x$V2),]
+  diffs = findOnes( (pos.q.free == 0) * 1)
+  
+  if(nrow(diffs) > 0){
+    for(irow in 1:nrow(diffs)){
       
-      if((ends[irow] - begs[irow]) < len.blast) next
-      if((ends[irow] - begs[irow]) > max.len) next
-      pos.gap.q = begs[irow]:ends[irow]
+      if((diffs$end[irow] - diffs$beg[irow]) < len.blast) next
+      if((diffs$end[irow] - diffs$beg[irow]) > max.len) next
+      pos.gap.q = diffs$beg[irow]:diffs$end[irow]
+      
+      irow.prev = which(x$V2 <  diffs$beg[irow])  # x is sorted by V2
+      irow.next = which(x$V3 >  diffs$end[irow])
+      
+      if(length(irow.prev) == 0){
+        irow.prev = 0
+      } else {
+        irow.prev = x$id[max(irow.prev)]
+      }
+      
+      if(length(irow.next) == 0){
+        irow.next = nrow(x) + 1
+      } else {
+        irow.next = x$id[min(irow.next)]
+      }
+      
+      pref.gap = paste('connect_', irow.prev, '_', irow.next, '_', sep = '')
       
       # Define Chunks
       s.q = query.fas.chr[pos.gap.q]
@@ -510,7 +536,7 @@ loop.function <- function(f.blast,
       s.q = splitSeq(s.q, n = n.bl)
       
       # Standard naming (as before)
-      pref.q = paste(pref.comarisson,
+      pref.q = paste(pref.comparisson, pref.gap,
                      'resid_query', '|', pos.gap.q[p.beg], '|', pos.gap.q[p.end], sep = '')
       # pokaz('pos.gap.q', pos.gap.q, file=file.log.loop, echo=echo.loop)
       # pokaz('p.beg', p.beg, file=file.log.loop, echo=echo.loop)
@@ -525,24 +551,50 @@ loop.function <- function(f.blast,
   
   ## ---- Write base ----
   # Query: Zero-coverage blocks
-  diffs = diff(c(1, (pos.b.free != 0) * 1, 1))
-  begs = which(diffs == -1)
-  ends = which(diffs == 1) - 1
   
-  if(length(begs) > 0){
-    for(irow in 1:length(begs)){
-      if((ends[irow] - begs[irow]) < len.blast) next
-      if((ends[irow] - begs[irow]) > max.len) next
+  # Switch V4 and V5
+  idx = which(x$V4 > x$V5)
+  tmp = x$V4[idx]
+  x$V4[idx] = x$V5[idx]
+  x$V5[idx] = tmp
+  
+  # Sorting
+  x = x[order(x$V4),]
+  diffs = findOnes( (pos.b.free == 0) * 1)
+  
+  
+  if(nrow(diffs) > 0){
+    for(irow in 1:nrow(diffs)){
       
-      pos.gap.b = begs[irow]:ends[irow]
+      if((diffs$end[irow] - diffs$beg[irow]) < len.blast) next
+      if((diffs$end[irow] - diffs$beg[irow]) > max.len) next
+      pos.gap.b = diffs$beg[irow]:diffs$end[irow]
       
+      irow.prev = which(x$V4 <  diffs$beg[irow])  # x is sorted by V2
+      irow.next = which(x$V5 >  diffs$end[irow])
+      
+      if(length(irow.prev) == 0){
+        irow.prev = 0
+      } else {
+        irow.prev = x$id[max(irow.prev)]
+      }
+      
+      if(length(irow.next) == 0){
+        irow.next = nrow(x) + 1
+      } else {
+        irow.next = x$id[min(irow.next)]
+      }
+      
+      pref.gap = paste('connect_', irow.prev, '_', irow.next, '_', sep = '')
+      
+    
       s.b = base.fas.fw[pos.gap.b]
       
       if((sum(s.b == 'N') + sum(s.b == 'n')) > length(s.b) / 2) next
       
       s.b = nt2seq(s.b)
       
-      s.base.names = paste(pref.comarisson,
+      s.base.names = paste(pref.comparisson, pref.gap,
                            'resid_base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
       
       names(s.b) = s.base.names

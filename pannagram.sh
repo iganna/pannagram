@@ -61,6 +61,7 @@ do
 
         -part_len)  part_len=$2; shift 2 ;;  # fragments to which each chromosome should be cut, has a default value 5000
         -p_ident)   p_ident=$2;  shift 2 ;;  # percent of identity
+        -p_ident_gap)   p_ident=$2;  shift 2 ;;  # percent of identity
 
         -sort_by_len) sort_chr_len="T"; shift 1 ;;  # flag whether to sort chromosomes by length or not
         -one2one)     one2one="T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
@@ -213,7 +214,7 @@ mkdir -p "${path_flags}"
 
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
-    with_level 1 pokaz_stage "Define the number of chromosomes"
+    pokaz_stage "Define the number of chromosomes"
 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
         option_nchr=" --all.chr T"
@@ -267,6 +268,7 @@ fi
 
 # Default parameters
 p_ident="${p_ident:-85}"  
+p_ident_gap="${p_ident_gap:-85}"  
 part_len="${part_len:-5000}"  
 
 # Filter repeats
@@ -858,7 +860,8 @@ for ref0 in "${refs_all[@]}"; do
         ./pangen/synteny_02_blast_gaps.sh \
                 -path_gaps ${path_gaps} \
                 -cores ${cores} \
-                -log_path ${path_log_step}
+                -log_path ${path_log_step} \
+                -p_ident ${p_ident_gap}
 
         # Done
         touch "${step_file}"

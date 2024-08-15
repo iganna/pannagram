@@ -8,6 +8,7 @@ suppressMessages({
 
 source("utils/utils.R")
 source("pangen/synteny_func.R")
+source("pangen/synteny_func_gap.R")
 # source("visualisation/visualisation.R")
 
 # pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
@@ -230,76 +231,13 @@ loop.function <- function(f.maj,
       } 
       
       # Transform positions to positive
-      df.gap = x.tmp[,c('V2', 'V3', 'V4', 'V5', 'idx', 'dir')]
-      tmp = df.gap$V4[df.gap$dir == 1]
-      df.gap$V4[df.gap$dir == 1] = df.gap$V5[df.gap$dir == 1]
-      df.gap$V5[df.gap$dir == 1] = tmp
-      df.gap$dir = 0
       
-      # Transform positions to start from 1
-      x.min = min(df.gap$V2)
-      y.min = min(df.gap$V4)
-      df.gap[,c('V2', 'V3')] = df.gap[,c('V2', 'V3')] - x.min + 1
-      df.gap[,c('V4', 'V5')] = df.gap[,c('V4', 'V5')] - y.min + 1
-      df.gap$len.y = df.gap$V5 - df.gap$V4  + 1
+      df.gap = transform_positions(x.tmp)
       
-      # ---- Greedy loop ----
+      ## ---- Greedy loop ----
       
       overlap.cutoff = 0.2
-      
-      # New system of coordinates on Y axis
-      y.ticks = sort(unique(c(df.gap$V4, df.gap$V5+1)))
-      cell.y.pos = data.frame(beg = y.ticks[-length(y.ticks)], end = y.ticks[-1]-1)
-      cell.y.pos$len = cell.y.pos$end - cell.y.pos$beg + 1
-      pos.y.attr = rep(0, max(cell.y.pos$end))
-      
-      df.gap$X4 = 0
-      df.gap$X5 = 0
-      y.list = list()
-      for(irow in 1:nrow(df.gap)){
-        pos.tmp = which((cell.y.pos$beg >= df.gap$V4[irow]) & (cell.y.pos$end <= df.gap$V5[irow]))
-        df.gap$X4[irow] = min(pos.tmp)
-        df.gap$X5[irow] = max(pos.tmp)
-      }
-      
-      df.gap$len.x = df.gap$V3 - df.gap$V2 + 1
-      df.gap$len.y = abs(df.gap$V4 - df.gap$V5) + 1
-      
-      pos.y.occ = rep(0, nrow(cell.y.pos))
-      pos.x = 0
-      idx.added <- c()
-      
-      df.gap = df.gap[order(df.gap$V2),]
-      
-      while(T){
-        d.x <- df.gap$V3 - pos.x
-        idx.next <- which((d.x > 0) & (d.x / df.gap$len.x > (1-overlap.cutoff)))
-        
-        
-        if(length(idx.next) == 0) break
-        
-        i.next.found = 0
-        for(i.next in idx.next) {
-          
-          # if(i.next == 5) stop()
-          
-          pos.y.i.next <- df.gap$X4[i.next]:df.gap$X5[i.next]
-          pos.y.i.next.overlap = pos.y.i.next[pos.y.occ[pos.y.i.next] > 0]
-          
-          y.overlap <- sum(cell.y.pos$len[pos.y.i.next.overlap]) / df.gap$len.y[i.next] 
-          if(y.overlap >= overlap.cutoff) next
-          
-          i.next.found = i.next
-          break
-        }
-        
-        if(i.next.found == 0) break
-        
-        idx.added = c(idx.added, i.next.found)
-        pos.y.occ[pos.y.i.next] <- pos.y.occ[pos.y.i.next] + 1
-        pos.x <- df.gap$V3[i.next]
-        
-      }      
+      idx.added = greedy_loop(df.gap, overlap.cutoff)
       
       # ---- Remaining ----
       idx.good = c(idx.good, df.gap$idx[idx.added])
@@ -336,20 +274,102 @@ loop.function <- function(f.maj,
     x.gap = readBlast(file.gaps.out)    
   }
 
-  # To catch possible bugs
-  # if(file.gaps.out == 'your_filename.txt'){
-  #   file.ws = "tmp_workspace.RData"
-  #   
-  #   all.local.objects <- ls()
-  #   save(list = all.local.objects, file = file.ws)
-  #   
-  #   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-  #   stop('Enough..')
-  # }
-
   
-  if(!is.null(x.gap) & F) {
-   
+  if(!is.null(x.gap)) {
+    
+    
+    file.ws = "tmp_workspace.RData"
+    all.local.objects <- ls()
+    save(list = all.local.objects, file = file.ws)
+    pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+    stop('Enough..')
+
+    
+    ## ---- Change positions ----
+    
+    pos.shift = posShift(x.gap)
+    
+    x.gap[,2:3] = x.gap[,2:3] + pos.shift$q[x.gap$V1,]$shift
+    x.gap[,4:5] = x.gap[,4:5] + pos.shift$r[x.gap$V10,]$shift
+    
+    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    x.tmp = glueZero(x.gap)
+    x.tmp$idx = 1:nrow(x.tmp)
+    # plotSynDot(x.tmp)
+
+    # Find the correspondence between x.gap and x.tmp
+    id.corresp = c()
+    for(irow in 1:nrow(x.gap)){
+      
+      if(x.gap$dir[irow] == 0){
+        tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
+                      (x.tmp$V4 <= x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5))  
+      } else {
+        tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
+                      (x.tmp$V5 <= x.gap$V5[irow]) & (x.gap$V4[irow] <= x.tmp$V4))
+      }
+      
+      # for inversions 
+      if(length(tmp) > 1) stop('Something is wrong with coordinates')
+      id.corresp = rbind(id.corresp, c(irow, tmp))
+    }
+    id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
+    
+    
+    # Remain only those, that have the intersection in numbers
+    num.q = sapply(x.tmp$V1, function(s) strsplit(s, '_')[[1]][8:9])
+    num.r = sapply(x.tmp$V10, function(s) strsplit(s, '_')[[1]][8:9])
+    
+    idx.remain = ((num.q[1,] == num.r[1,]) | 
+              (num.q[1,] == num.r[2,]) | 
+              (num.q[2,] == num.r[1,]) | 
+              (num.q[2,] == num.r[2,]))
+    
+    x.tmp = x.tmp[idx.remain,]
+    
+    
+    # Clean the overlap
+    x.tmp = cleanOverlaps(x.tmp)
+    if(nrow(x.tmp) == 1){
+      idx.bw = id.corresp$init[id.corresp$new %in% x.tmp$idx]
+    } else {
+      
+      # ---- The same greedy as before ----
+      # Transform positions to positive
+      
+      df.gap = transform_positions(x.tmp)
+      
+      ## ---- Greedy loop ----
+      
+      overlap.cutoff = 0.2
+      idx.remain = greedy_loop(df.gap, overlap.cutoff)
+      
+      idx.bw = id.corresp$init[id.corresp$new %in% df.gap$idx[idx.remain]]
+    }
+    
+    # ---- Remaining ----
+    
+    # Change positions back
+    x.gap[,2:3] = x.gap[,2:3] - pos.shift$q[x.gap$V1,]$shift
+    x.gap[,4:5] = x.gap[,4:5] - pos.shift$r[x.gap$V10,]$shift
+    
+    # Shift positions to the initial
+    x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    
+    x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    
+    x.gap$V2 = x.gap$V2 + x.gap$q.beg
+    x.gap$V3 = x.gap$V3 + x.gap$q.beg
+    x.gap$V4 = x.gap$V4 + x.gap$b.beg
+    x.gap$V5 = x.gap$V5 + x.gap$b.beg
+    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    
+    x.bw = x.gap[idx.bw,]
+    x.bw = glueZero(x.bw)
+    x.bw = cleanOverlaps(x.bw)
+    
     
   } else {
     
@@ -365,6 +385,8 @@ loop.function <- function(f.maj,
   x.comb = rbind(x.comb, x.bw[,comb.names])
   x.comb = x.comb[order(x.comb$V2),]
   rownames(x.comb) = NULL
+  
+  x.comb = glueZero(x.comb)
   
   # # To catch possible bugs
   # if(T){

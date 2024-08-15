@@ -61,7 +61,10 @@ gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
+p_ident="${p_ident:-85}"
 
+
+echo ${p_ident}
 
 # ----------------------------------------------------------------------------
 #                 MAIN
@@ -117,7 +120,9 @@ run_blast() {
 
     
     # Run BLAST
-    rm "${outfile}"  # Clean up the file
+    if [ -f "${outfile}" ]; then 
+      rm "${outfile}"    # Clean up the file
+    fi
     blastn -db "${ref_file}" -query "${part_file}" -out "${outfile}" \
            -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
            -perc_identity "${p_ident}" -penalty "$penalty" -gapopen "$gapopen" -gapextend "$gapextend" \

@@ -12,7 +12,7 @@ pref.comb = ''
 file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
 
 
-file.aln.pre = '/Volumes/Samsung_T5/vienn/pannagram_test/symA_test2/alignments_ml2/ml4_1_1_full.rds'
+file.aln.pre = '/Volumes/Samsung_T5/vienn/test/pannagram_test/symA_test2/alignments_ml2/ml4_1_1_full.rds'
 
 x = readRDS(file.aln.pre)
 
