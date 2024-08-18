@@ -82,7 +82,7 @@ do
 		-n | --copy_number)  copy_number=$2;   shift 2 ;;
         -r | --max_rounds)   max_rounds=$2;    shift 2 ;;
 
-        -k | --keepblast)   keepblast=' --keepblast ';    shift 1 ;;
+        -k | --keepblast)   keepblast=' -keepblast ';    shift 1 ;;
 
         *) unrecognized_options+=("$1"); shift 1 ;;
     esac
