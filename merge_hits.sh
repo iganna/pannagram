@@ -29,7 +29,7 @@ print_usage() {
 
 Usage:
 ${0##*/} -i F_GFF -g F_GENOME -o PATH_OUT \
-		[-s SIMILARITY] [-d DISTANCE] [-p PATTERNS] [-n COPY_NUM] [-h]
+		[-s SIMILARITY] [-d DISTANCE] [-p PATTERNS] [-n COPY_NUM] [-k] [-h]
 
 Options:
     -h, --help         Display this help message and exit.
@@ -44,6 +44,7 @@ Options:
     -p, --patterns PATTERNS      Patterns of repeats to analyse. Default: LTR.
     -n, --copy_number COPY_NUM   Minimum number of copies per genome. Default: 3.
     -r, --max_rounds MAX_ROUND   Maximum number of rounds of merging. Default: 10.
+    -k, --keepblast              Keep the intermediate BLAST files
 
 EOF
 }
@@ -59,6 +60,7 @@ distance=1000
 patterns="LTR"
 copy_number=3
 max_rounds=10
+keepblast=""
 
 
 while [ $# -gt 0 ]
@@ -79,6 +81,8 @@ do
         -p | --patterns)     patterns=$2;      shift 2 ;;
 		-n | --copy_number)  copy_number=$2;   shift 2 ;;
         -r | --max_rounds)   max_rounds=$2;    shift 2 ;;
+
+        -k | --keepblast)   keepblast=' --keepblast ';    shift 1 ;;
 
         *) unrecognized_options+=("$1"); shift 1 ;;
     esac
@@ -172,7 +176,7 @@ do
     -out "${path_out}simseqrch_seqs_${i}/" \
     -sim ${sim_sutoff} \
     -cov ${covegare} \
-    -keepblast
+    ${keepblast}
     
 
 	# Get Collapsed sequences - neighbours only
@@ -213,7 +217,8 @@ if grep -q "^>" ${file_fix_seqs}; then
         -on_genome ${file_genome} \
         -out "${path_out}simseqrch_seqs_fix/" \
         -sim ${sim_sutoff} \
-        -cov ${covegare} 
+        -cov ${covegare} \
+        ${keepblast}
 else
     echo "Nothing to merge"
 fi
