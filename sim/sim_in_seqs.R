@@ -43,7 +43,7 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 use.strand <- ifelse(!is.null(opt$use_strand), as.logical(opt$use_strand), 
                      stop("Strand should be provided", call. = FALSE))
 
-coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage)
+coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 
 
 # ---- Testing ----

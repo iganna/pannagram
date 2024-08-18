@@ -8,7 +8,9 @@ option_list = list(
   make_option(c("--out"), type = "character", default = NULL,
               help = "Path to the output coverage file", metavar = "FILE"),
   make_option(c("--sim"), type = "numeric", default = 90,
-              help = "Similarity threshold", metavar = "NUMBER")
+              help = "Similarity threshold", metavar = "NUMBER"),
+  make_option(c("--coverage"), type = "numeric", default = NULL,
+              help = "Coverage threshold", metavar = "NUMBER")
 )
 
 # Create the option parser
@@ -24,6 +26,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff)
 
+coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 
 # ---- Testing ----
 
@@ -37,7 +40,7 @@ sim.cutoff = as.numeric(sim.cutoff)
 
 output.dir = dirname(output.file)
 
-files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,"\\.cnt$"), full.names = T)
+files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,'_', coverage,"\\.cnt$"), full.names = T)
 if(length(files) == 0) stop('No files with results')
 # print(files)
 
@@ -71,7 +74,7 @@ colnames(mx.cnt) = acc.names
 
 
 # Save
-write.table(mx.cnt, paste0(output.file, '.total_cnt_', sim.cutoff, '.txt'), 
+write.table(mx.cnt, paste0(output.file, '.total_cnt_', sim.cutoff,'_', coverage, '.txt'), 
             quote = F, row.names = T, col.names = T, sep = '\t')
 
 
