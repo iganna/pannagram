@@ -38,8 +38,17 @@
 "Length (len1) should be defined before"
 findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
   
+  
   if(is.null(coverage)) coverage = sim.cutoff
   if(!('len1' %in% colnames(v))) stop('No column len1 in the data.frame')
+  
+  if (! ((sim.cutoff >= 0) & (sim.cutoff <= 1))) {
+    stop(paste("Similarity cutoff should be between 0 and 1, now", sim.cutoff))
+  }
+  
+  if (! ((coverage >= 0) & (coverage <= 1))) {
+    stop(paste("Coverage cutoff should be between 0 and 1, now", coverage))
+  }
   
   s.tmp.comb = '___'
   
@@ -68,6 +77,7 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
   for(i.strand in 0:1){
     if(echo) pokaz(paste('Strand', i.strand))
     v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
+    
     
     if(i.strand == 1){
       # tmp = v.rest$V4
@@ -169,9 +179,11 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     df.cover$ref.cover = df.cover$V5 - df.cover$V4 + 1
     rownames(df.cover) = NULL
     if(i.strand == 1){
-      tmp = df.cover$V4
-      df.cover$V4 = df.cover$V5
-      df.cover$V5 = tmp
+      # tmp = df.cover$V4
+      # df.cover$V4 = df.cover$V5
+      # df.cover$V5 = tmp
+      
+      df.cover[,c('V4', 'V5')] = tmp.max - df.cover[,c('V4', 'V5')]
     }
     df.cover$V8 = sapply(df.cover$V8, function(s) strsplit(s, '\\|')[[1]][1])
     
