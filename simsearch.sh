@@ -214,7 +214,7 @@ for db_file in "${db_files[@]}"; do
     
     # ---------------------------------------------
     # Proceed to similarity search
-    pokaz_stage "Similarity search in ${db_file}, sim. cutoff ${sim_threshold}, coverage. cutoff ${coverage}..."
+    pokaz_stage "Search in ${db_file}: similarity ${sim_threshold}, coverage ${coverage}..."
 
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
@@ -245,7 +245,7 @@ for db_file in "${db_files[@]}"; do
 done
 
 # Combine all files to the total count file
-f [[ -z "$file_seq" && -z "$file_genome" ]]; then
+if [[ -z "$file_seq" && -z "$file_genome" ]]; then
     Rscript sim/sim_in_genome_combine.R  \
             --out $output_pref \
             --sim $sim_threshold
