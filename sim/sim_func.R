@@ -36,16 +36,16 @@
 #' 
 #' @export
 "Length (len1) should be defined before"
-findHitsInRef <- function(v, sim.cutoff, echo = T){
+findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
   
-  
+  if(is.null(coverage)) coverage = sim.cutoff
   if(!('len1' %in% colnames(v))) stop('No column len1 in the data.frame')
   
   s.tmp.comb = '___'
   
   # ---- Exact match ----
-  # Take to the analysis those positions, which are already enough under the similaruty threshold
-  idx.include = (v$V7 / v$len1 > sim.cutoff)
+  # Take to the analysis those positions, which are already enough under the coverage threshold
+  idx.include = (v$V7 / v$len1 > coverage)  # CHANGED FROM sim.cutoff
   v.include = v[idx.include,]
   
   # Result variable
@@ -108,7 +108,7 @@ findHitsInRef <- function(v, sim.cutoff, echo = T){
     
     v.rest$cover = v.rest$V3 - v.rest$V2 + 1
     v.rest$ref.overlap1 = c(v.rest$V4[-1] - v.rest$V5[-nrow(v.rest)] - 1, 0)
-    v.rest$allowedoverlap1 = v.rest$len1 * (1-sim.cutoff)
+    v.rest$allowedoverlap1 = v.rest$len1 * (1-coverage)  # CHANGED FROM sim.cutoff
     suffixname = (v.rest$ref.overlap1 > v.rest$allowedoverlap1) * 1
     v.rest$suffixname = c(1, suffixname[-length(suffixname)])
     v.rest$suffixname[1 + which(v.rest$V8[-1] != v.rest$V8[-nrow(v.rest)])] = 1
@@ -175,8 +175,10 @@ findHitsInRef <- function(v, sim.cutoff, echo = T){
     }
     df.cover$V8 = sapply(df.cover$V8, function(s) strsplit(s, '\\|')[[1]][1])
     
-    idx.include = (df.cover$V7 / df.cover$len1 > sim.cutoff) & (df.cover$V6 > sim.cutoff * 100) & 
-      (df.cover$ref.cover / df.cover$len1 > sim.cutoff) & (df.cover$len1 / df.cover$ref.cover > sim.cutoff)
+    idx.include = (df.cover$V7 / df.cover$len1 > coverage) &  # CHANGED FROM sim.cutoff
+                  (df.cover$V6 > sim.cutoff * 100) & 
+                  (df.cover$ref.cover / df.cover$len1 > coverage) &   # CHANGED FROM sim.cutoff
+                  (df.cover$len1 / df.cover$ref.cover > coverage)     # CHANGED FROM sim.cutoff
     
     # Add Strand
     df.cover$strand = s.strand[i.strand + 1]

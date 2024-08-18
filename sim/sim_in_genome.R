@@ -12,7 +12,9 @@ option_list = list(
   make_option(c("--out"), type = "character", default = NULL,
               help = "Path to the output coverage file", metavar = "FILE"),
   make_option(c("--sim"), type = "numeric", default = 90,
-              help = "Similarity threshold", metavar = "NUMBER")
+              help = "Similarity threshold", metavar = "NUMBER"),
+  make_option(c("--coverage"), type = "numeric", default = NULL,
+              help = "Coverage threshold", metavar = "NUMBER")
 )
 
 # Create the option parser
@@ -32,6 +34,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
+coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage)
 
 # ---- Testing ----
 
@@ -57,7 +60,7 @@ len1 = v$V9
 v = v[,1:8,drop=F]
 v$len1 = len1
 
-res = findHitsInRef(v, sim.cutoff = sim.cutoff, echo = F)
+res = findHitsInRef(v, sim.cutoff = sim.cutoff, coverage=coverage, echo = F)
 
 # Sort V4 and V5 positions
 idx.tmp = res$V4 > res$V5

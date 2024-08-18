@@ -36,6 +36,7 @@ Options:
     -out OUTPUT_FILE       Path to the output file where the processed results will be saved.
     
     -sim SIMILARITY_CUTOFF (Optional) Similarity cutoff for sequence comparison.
+    -cov SEQUENCE_COVERAGE (Optional) Cutoff for the coverage.
     -afterblast            (Optional) Flag to process existing BLAST results.
     -keepblast             (Optional) Flag to keep intermediate BLAST results.
     -strandfree            (Optional) Use both strands for coverage. This option is used together with -on_seq.
@@ -71,6 +72,7 @@ while [ "$1" != "" ]; do
         -in_seq )    file_input=$2; shift 2 ;;
         -out )       output_pref=$2; shift 2 ;;
         -sim )       sim_threshold=$2; shift 2 ;;
+        -cov )       coverage=$2; shift 2 ;;
 
         -on_seq )    file_seq=$2; shift 2 ;;
         -on_genome ) file_genome=$2; shift 2 ;;
@@ -117,6 +119,12 @@ fi
 if [ -z "$sim_threshold" ]; then
     sim_threshold=85
     pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
+fi
+
+# Check if coverage parameter is provided. If not - set qeual to sim
+if [ -z "$coverage" ]; then
+    coverage=${sim_threshold}
+    pokaz_message "Coverage not specified, default: ${sim_threshold}"
 fi
 
 # Your script code goes here
@@ -217,14 +225,16 @@ for db_file in "${db_files[@]}"; do
                 --out ${output_pref}.${db_name}.rds \
                 --sim $sim_threshold \
                 --use_strand $use_strand \
-                --db_file $db_file
+                --db_file $db_file \
+                --coverage ${coverage}
     else
         # On a genome
         Rscript sim/sim_in_genome.R \
                 --in_file $file_input \
                 --res $blast_res \
                 --out $output_pref.${db_name} \
-                --sim $sim_threshold
+                --sim $sim_threshold \
+                --coverage ${coverage}
     fi
 
     # Remove the BLAST temporary file if not needed
@@ -238,7 +248,8 @@ done
 if [ ! -z "$path_genome" ]; then
     Rscript sim/sim_in_genome_combine.R  \
             --out $output_pref \
-            --sim $sim_threshold
+            --sim $sim_threshold \
+            --coverage ${coverage}
 fi
 
 pokaz_message "Done!"

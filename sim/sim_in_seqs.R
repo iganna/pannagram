@@ -16,7 +16,9 @@ option_list = list(
   make_option(c("--use_strand"), type = "character", default = NULL,
               help = "Use strand or not", metavar = "FILE"),
   make_option(c("--sim"), type = "numeric", default = 90,
-              help = "Similarity threshold", metavar = "NUMBER")
+              help = "Similarity threshold", metavar = "NUMBER"),
+  make_option(c("--coverage"), type = "numeric", default = NULL,
+              help = "Coverage threshold", metavar = "NUMBER")
 )
 
 # Create the option parser
@@ -40,6 +42,8 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 
 use.strand <- ifelse(!is.null(opt$use_strand), as.logical(opt$use_strand), 
                      stop("Strand should be provided", call. = FALSE))
+
+coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage)
 
 
 # ---- Testing ----
