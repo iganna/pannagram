@@ -4,7 +4,7 @@ path.pannagram = ""
 source(paste(path.pannagram, 'utils/utils.R', sep = ''))
 
 
-pokazStage('Analyse counts..')
+pokazStage('Combine results..')
 
 library(optparse)
 
@@ -83,7 +83,6 @@ if(nrow(x) == 0){
 # Read all of the sequence files and take those sequences, which match in  names
 
 file.seqs <- list.files(path = path.out, pattern = "^merged_seqs", full.names = TRUE)
-print(file.seqs)
 
 seqs.all = c()
 
