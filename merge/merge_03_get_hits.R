@@ -12,6 +12,8 @@ option_list = list(
   make_option(c("--path.out"), type="character", default="", 
               help="Path to the output folder", metavar="character"),
   make_option(c("--file.fix"), type="character", default="", 
+              help="Path to the sequences file", metavar="character"),
+  make_option(c("--file.fix.seqs"), type="character", default="", 
               help="Path to the sequences file", metavar="character")
 );
 
@@ -30,8 +32,14 @@ if (is.null(opt$file.fix)) {
   stop("Error: --file.fix is required.")
 }
 
+if (is.null(opt$file.fix.seqs)) {
+  stop("Error: --file.fix.seqs is required.")
+}
+
+
 path.out = opt$path.out
 file.fix = opt$file.fix
+file.fix.seqs = opt$file.fix.seqs
 
 
 
@@ -85,7 +93,7 @@ for(f in file.seqs){
 
 seqs.all = seqs.all[x[,1]]
 
-writeFastaMy(seqs.all, paste0(path.out, 'seqs_fixed.fasta'))
+writeFastaMy(seqs.all, paste0(path.out, '/seqs_fixed.fasta'))
 
 
 
