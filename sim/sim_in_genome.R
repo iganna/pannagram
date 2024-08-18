@@ -47,7 +47,7 @@ coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 # ---- Main ----
 
 # Rename the output file
-output.file = paste(output.file, round(sim.cutoff * 100), sep = '_')
+output.file = paste(output.file, round(sim.cutoff * 100), round(coverage * 100), sep = '_')
 
 
 v = read.table(blast.file, stringsAsFactors = F)
