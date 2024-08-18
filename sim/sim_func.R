@@ -78,6 +78,7 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     if(echo) pokaz(paste('Strand', i.strand))
     v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
     
+    if(nrow(v.rest) == 0) next
     
     if(i.strand == 1){
       # tmp = v.rest$V4
@@ -122,6 +123,8 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     suffixname = (v.rest$ref.overlap1 > v.rest$allowedoverlap1) * 1
     v.rest$suffixname = c(1, suffixname[-length(suffixname)])
     v.rest$suffixname[1 + which(v.rest$V8[-1] != v.rest$V8[-nrow(v.rest)])] = 1
+    v.rest$suffixname[1 + which(v.rest$V3[-1] < v.rest$V2[-nrow(v.rest)])] = 1
+    
     v.rest$suffixname = cumsum(v.rest$suffixname)
     v.rest$V8 = paste(v.rest$V8, v.rest$suffixname, sep = '|id')
     
