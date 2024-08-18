@@ -71,6 +71,11 @@ for (i in 2:nrow(x)) {
   }
 }
 
+file.ws = "tmp_workspace.RData"
+all.local.objects <- ls()
+save(list = all.local.objects, file = file.ws)
+stop('Enough..')
+
 if(!is.null(to.remove)){
   to.remove = t(to.remove)
   x = x[-to.remove[,1],]
