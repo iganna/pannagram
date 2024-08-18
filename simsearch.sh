@@ -203,7 +203,7 @@ for db_file in "${db_files[@]}"; do
                 -query ${file_input} \
                 -out ${blast_res} \
                 -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" \
-                -perc_identity ${sim_threshold}
+                -perc_identity $((sim_threshold - 1))
     fi
 
     # Check if the BLAST results file is empty
