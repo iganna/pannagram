@@ -39,6 +39,7 @@ Options:
     -o, --path_out PATH_OUT      Path to the directory where all results and intermediate files will be saved.
     
     -s, --sim  SIMILARITY        Similarity cutoff value used in the analysis. Default: 90.
+    -c, --covegare  COVERAGE     Similarity cutoff value used in the analysis. Default: equal to sim.
     -d, --distance  DISTANCE     Distance between two hits. Default: 1000.
     -p, --patterns PATTERNS      Patterns of repeats to analyse. Default: LTR.
     -n, --copy_number COPY_NUM   Minimum number of copies per genome. Default: 3.
@@ -73,6 +74,7 @@ do
 		
 		# Optional
 		-s | --sim) 		 sim_sutoff=$2;    shift 2 ;;
+        -c | --covegare)     covegare=$2;    shift 2 ;;
 		-d | --distance) 	 distance=$2;      shift 2 ;;  
         -p | --patterns)     patterns=$2;      shift 2 ;;
 		-n | --copy_number)  copy_number=$2;   shift 2 ;;
@@ -93,6 +95,11 @@ if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
     exit 1
 fi
 
+
+# Check if coverage parameter is provided. If not - set qeual to sim
+if [ -z "$coverage" ]; then
+    coverage=${sim_threshold}
+fi
 
 # ----------------------------------------------------------------------------
 #            PARAMETERS: checking
@@ -163,23 +170,23 @@ do
     -in_seq ${file_merged_seqs}    \
     -on_genome ${file_genome} \
     -out "${path_out}simseqrch_seqs_${i}/" \
-    -sim ${sim_sutoff} 
+    -sim ${sim_sutoff} \
+    -cov ${covegare} 
     
 
 	# Get Collapsed sequences - neighbours only
 
     file_merged_seqs_next="${path_out}merged_seqs_$((i+1)).fasta"
 
-    file_cnt=$(find ${path_simsearch} -type f -name "*${sim_sutoff}.cnt")
+    file_cnt=$(find ${path_simsearch} -type f -name "*${sim_sutoff}_${covegare}.cnt")
 
     if [ -z "$file_cnt" ]; then
-        echo "Error: No file ending with ${sim_sutoff}.cnt found." >&2
+        echo "Error: No file ending with ${sim_sutoff}_${covegare}.cnt found." >&2
         exit 1
     elif [ $(echo "$file_cnt" | wc -l) -ne 1 ]; then
-        echo "Error: More than one file matching the pattern *${sim_sutoff}.cnt found." >&2
+        echo "Error: More than one file matching the pattern *${sim_sutoff}_${covegare}.cnt found." >&2
         exit 1
     fi
-
 
     Rscript merge/merge_02_new_hits.R \
         --file.cnt ${file_cnt} \
