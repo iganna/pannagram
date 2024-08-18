@@ -60,12 +60,13 @@ len1 = v$V9
 v = v[,1:8,drop=F]
 v$len1 = len1
 
+# ---- for testing ----
+# file.ws = "tmp_workspace.RData"
+# all.local.objects <- ls()
+# save(list = all.local.objects, file = file.ws)
+# stop('Enough..')
 
-file.ws = "tmp_workspace.RData"
-all.local.objects <- ls()
-save(list = all.local.objects, file = file.ws)
-stop('Enough..')
-
+# ---- Similarity analysis ----
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, coverage=coverage, echo = F)
 
 # Sort V4 and V5 positions
