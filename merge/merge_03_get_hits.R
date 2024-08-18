@@ -41,8 +41,6 @@ path.out = opt$path.out
 file.fix = opt$file.fix
 file.fix.seqs = opt$file.fix.seqs
 
-
-
 # ---- Read the merged sequences
 # file.fix = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/tebagra/tair12_data/simsearch_90/merged_seqs_fixed.txt'
 
@@ -94,7 +92,7 @@ for(f in file.seqs){
                readFastaMy(f))
 }
 
-seqs.all = seqs.all[x[,1]]
+seqs.all = seqs.all[x$V2]
 
 writeFastaMy(seqs.all, file.fix.seqs)
 
