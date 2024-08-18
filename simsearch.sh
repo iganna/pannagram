@@ -202,7 +202,7 @@ for db_file in "${db_files[@]}"; do
         blastn  -db ${db_file_full} \
                 -query ${file_input} \
                 -out ${blast_res} \
-                -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" 
+                -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" \
                 -perc_identity ${sim_threshold}
     fi
 
