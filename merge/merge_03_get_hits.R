@@ -71,10 +71,6 @@ for (i in 2:nrow(x)) {
   }
 }
 
-file.ws = "tmp_workspace.RData"
-all.local.objects <- ls()
-save(list = all.local.objects, file = file.ws)
-stop('Enough..')
 
 if(!is.null(to.remove)){
   to.remove = t(to.remove)
@@ -82,7 +78,7 @@ if(!is.null(to.remove)){
 }
 
 if(nrow(x) == 0){
-  print('Nothing to merge')
+  print('No sequences as merged')
   return()
 }
 
@@ -100,7 +96,7 @@ for(f in file.seqs){
 
 seqs.all = seqs.all[x[,1]]
 
-writeFastaMy(seqs.all, paste0(path.out, '/seqs_fixed.fasta'))
+writeFastaMy(seqs.all, file.fix.seqs)
 
 
 
