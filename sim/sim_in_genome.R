@@ -34,7 +34,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff) / 100
 
-coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage)
+coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 
 # ---- Testing ----
 
