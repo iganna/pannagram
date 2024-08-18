@@ -82,7 +82,8 @@ res = res[order(res$id),]
 idx.merged = which(diff(res$id) == 1)
 idx.merged = sort(unique(c(idx.merged, idx.merged + 1)))
 
-write.table(res[-idx.merged,], file.fix, append = T, quote = F, sep = '\t', col.names = F, row.names = F)
+# write.table(res[-idx.merged,], file.fix, append = T, quote = F, sep = '\t', col.names = F, row.names = F)
+write.table(res, file.fix, append = T, quote = F, sep = '\t', col.names = F, row.names = F)  # Save all!
 
 # ---- Merge further ----
 
