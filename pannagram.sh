@@ -812,10 +812,10 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 
         # Logs for the Plot
-        path_log_step="${path_log}step${step_num}_synteny_01_plot_${ref0}/"
+        path_log_step="${path_log}step${step_num}_synteny_02_plot_${ref0}/"
         make_dir ${path_log_step}
 
-        Rscript pangen/synteny_01_plot.R \
+        Rscript pangen/synteny_02_plot.R \
                 --ref ${ref0} \
                 --path_ref ${path_ref} \
                 --path_chr ${path_chrom} \
@@ -838,12 +838,59 @@ for ref0 in "${refs_all[@]}"; do
     ((step_num = step_num + 1))
 
 
-    # ========== CHECK MODE ==========
-    if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
-        with_level 0 pokaz_message "Pannagram's PREliminary mode is done."
-        exit
-    fi 
-        
+done        
+
+# ========== CHECK MODE ==========
+if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
+    with_level 0 pokaz_message "Pannagram's PREliminary mode is done."
+    exit
+fi 
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                         FILL THE GAPS                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
+
+
+for ref0 in "${refs_all[@]}"; do        
+
+    # New paths
+    path_blast_parts=${path_out}blast_parts_${ref0}/
+    path_alignment=${path_out}alignments_${ref0}/
+    path_gaps=${path_out}blast_gaps_${ref0}/
+
+    # ----------------------------------------------
+    # Get sequences between the synteny blocks
+
+    step_file="$path_flags/step${step_num}_${ref0}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1 pokaz_stage "Step ${step_num}. Get of gaps between syntenic matches."
+
+        # Logs gap sequences
+        path_log_step="${path_log}step${step_num}_synteny_03_${ref0}/"
+        make_dir ${path_log_step}
+
+        # Run
+        Rscript pangen/synteny_03_get_gaps.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+                --ref ${ref0}   \
+                --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
+                --cores ${cores} \
+                ${option_one2one_r} \
+                --path.log ${path_log_step} --log.level ${log_level}
+
+        # Done
+        touch "${step_file}"
+        with_level 1 pokaz_message "Step is done."
+
+        # If only one step
+        if   [ "$one_step" = "T" ]; then 
+            exit 0
+        fi
+    fi
+
+    ((step_num = step_num + 1))
+
     # ----------------------------------------------
     # Blast regions between synteny blocks
 
@@ -853,11 +900,11 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1 pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 
         # Logs for the BLAST
-        path_log_step="${path_log}step${step_num}_synteny_02_${ref0}/"
+        path_log_step="${path_log}step${step_num}_synteny_04_${ref0}_blast/"
         make_dir ${path_log_step}
 
         # Run BLAST for gaps
-        ./pangen/synteny_02_blast_gaps.sh \
+        ./pangen/synteny_04_blast_gaps.sh \
                 -path_gaps ${path_gaps} \
                 -cores ${cores} \
                 -log_path ${path_log_step} \
@@ -885,10 +932,10 @@ for ref0 in "${refs_all[@]}"; do
             pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
         # Logs for the merging gaps
-        path_log_step="${path_log}step${step_num}_synteny_03_${ref0}/"
+        path_log_step="${path_log}step${step_num}_synteny_05_${ref0}/"
         make_dir ${path_log_step}
 
-        Rscript pangen/synteny_03_merge_gaps.R --ref ${ref0} \
+        Rscript pangen/synteny_05_merge_gaps.R --ref ${ref0} \
                 --path.aln ${path_alignment}  --path.chr ${path_chrom}\
                 --path.gaps ${path_gaps}   \
                 --cores ${cores} \

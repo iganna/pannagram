@@ -277,10 +277,6 @@ loop.function <- function(f.maj,
   
   if(!is.null(x.gap)) {
     
-    
-    
-
-    
     ## ---- Change positions ----
     
     pos.shift = posShift(x.gap)
@@ -309,6 +305,13 @@ loop.function <- function(f.maj,
         id.corresp = rbind(id.corresp, c(irow, tmp))
         next
       } else if(length(tmp) > 1){
+        
+        file.ws = "tmp_workspace.RData"
+        all.local.objects <- ls()
+        save(list = all.local.objects, file = file.ws)
+        pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+        stop('Enough..')
+        
         stop('Something is wrong with coordinates 1')
       } 
       
