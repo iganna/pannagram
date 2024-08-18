@@ -171,7 +171,8 @@ do
     -on_genome ${file_genome} \
     -out "${path_out}simseqrch_seqs_${i}/" \
     -sim ${sim_sutoff} \
-    -cov ${covegare} 
+    -cov ${covegare} \
+    -keepblast
     
 
 	# Get Collapsed sequences - neighbours only
