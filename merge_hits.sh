@@ -198,6 +198,26 @@ do
 done
 
 
+file_fix_seqs="${path_out}seqs_fix.fasta"
+
+Rscript merge/merge_02_new_hits.R \
+    --path.out ${path_out} \
+    --file.fix ${file_merged_seqs_fixed} \
+    --file.fix.seqs=${file_fix_seqs}
+
+
+if grep -q "^>" ${file_fix_seqs}; then
+    ./simsearch.sh \
+        -in_seq ${file_fix_seqs}    \
+        -on_genome ${file_genome} \
+        -out "${path_out}simseqrch_seqs_fix/" \
+        -sim ${sim_sutoff} \
+        -cov ${covegare} 
+else
+    echo "Nothing to merge"
+fi
+
+
 
 
 
