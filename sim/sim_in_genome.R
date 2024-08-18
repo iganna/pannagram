@@ -89,7 +89,7 @@ res.cnt$total = rowSums(res.cnt)
 res.cnt = res.cnt[order(-res.cnt$total),]
 write.table(res.cnt, paste(output.file, '.cnt', sep = ''), quote = F, row.names = T, col.names = T, sep = '\t')
 
-cnt = tapply(res$V8, res$V1, length)
+cnt = tapply(res[,8], res[,1], length)
 pokaz('Mean, min, max number of hits per sequence:', mean(cnt),  min(cnt),  max(cnt))
 pokaz('Number of hits found:', nrow(res))
 
