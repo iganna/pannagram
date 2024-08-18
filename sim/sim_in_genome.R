@@ -84,7 +84,7 @@ colnames(res) <- c('query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage
 write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
 # Copy-number information
-res.cnt =as.data.frame.matrix(table(res$V1, res$V8))
+res.cnt =as.data.frame.matrix(table(res$query, res$genome.chr))
 res.cnt$total = rowSums(res.cnt)
 res.cnt = res.cnt[order(-res.cnt$total),]
 write.table(res.cnt, paste(output.file, '.cnt', sep = ''), quote = F, row.names = T, col.names = T, sep = '\t')
