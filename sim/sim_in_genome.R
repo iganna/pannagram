@@ -64,7 +64,6 @@ v$len1 = len1
 file.ws = "tmp_workspace.RData"
 all.local.objects <- ls()
 save(list = all.local.objects, file = file.ws)
-pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
 stop('Enough..')
 
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, coverage=coverage, echo = F)
