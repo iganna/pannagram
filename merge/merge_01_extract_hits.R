@@ -182,6 +182,8 @@ for(type in types){
     idx.merge = setdiff(idx.merge, nrow(gff.chr))
     pokaz('Number of merged hits:', length(idx.merge))
     
+    if(length(idx.merge) == 0) next
+    
     seqs = c()
     for(i.merge in idx.merge){
       pos1 = gff.chr$V4[i.merge]
@@ -200,6 +202,8 @@ for(type in types){
       
       seqs = c(seqs, nt2seq(s.chr[pos1:pos2]))
     }
+    
+    if(length(seqs) == 0) next
     
     # Names
     names(seqs) = paste0('te_merge|',
