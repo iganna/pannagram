@@ -47,7 +47,7 @@ file.fix.seqs = opt$file.fix.seqs
 # file.fix = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/tebagra/tair12_data/simsearch_90/merged_seqs_fixed.txt'
 
 x = read.table(file.fix, stringsAsFactors = F)
-print(paste0('Number of rows in x', nrow(x)))
+# print(paste0('Number of rows in x', nrow(x)))
 
 x.info = t(sapply(gsub("Chr", "", x$V2), function(s) as.numeric(strsplit(s, '\\|')[[1]][3:5])))
 rownames(x.info) = NULL
