@@ -80,6 +80,7 @@ res$V5[idx.tmp] = tmp
 
 blastres2gff(res, paste(output.file, '.gff', sep = ''))
 
+colnames(res) <- c('query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g', 'strand')
 write.table(res, paste(output.file, '.table', sep = ''), quote = F, row.names = F, col.names = T, sep = '\t')
 
 # Copy-number information
