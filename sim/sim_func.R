@@ -125,6 +125,9 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     v.rest$suffixname[1 + which(v.rest$V8[-1] != v.rest$V8[-nrow(v.rest)])] = 1
     v.rest$suffixname[1 + which(v.rest$V3[-1] < v.rest$V2[-nrow(v.rest)])] = 1
     
+    v.rest$suffixname[1 + which((v.rest$V2[-1] < v.rest$V2[-nrow(v.rest)]) &
+                                  (v.rest$V3[-1] < v.rest$V3[-nrow(v.rest)]))] = 1
+    
     v.rest$suffixname = cumsum(v.rest$suffixname)
     v.rest$V8 = paste(v.rest$V8, v.rest$suffixname, sep = '|id')
     
