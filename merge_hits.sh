@@ -42,8 +42,8 @@ Options:
     -c, --covegare  COVERAGE     Similarity cutoff value used in the analysis. Default: equal to sim.
     -d, --distance  DISTANCE     Distance between two hits. Default: 1000.
     -p, --patterns PATTERNS      Patterns of repeats to analyse. Default: LTR.
-    -n, --copy_number COPY_NUM   Minimum number of copies per genome. Default: 3.
-    -r, --max_rounds MAX_ROUND   Maximum number of rounds of merging. Default: 10.
+    -n, --copy_number COPY_NUM   Minimum number of copies per genome. Default: 4.
+    -r, --max_rounds MAX_ROUND   Maximum number of rounds of merging. Default: 20.
     -k, --keepblast              Keep the intermediate BLAST files
 
 EOF
@@ -58,8 +58,8 @@ unrecognized_options=()
 sim_sutoff=90
 distance=1000
 patterns="LTR"
-copy_number=3
-max_rounds=10
+copy_number=4
+max_rounds=20
 keepblast=""
 
 
