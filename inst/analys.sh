@@ -99,6 +99,12 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Check if path_chromosomes is empty while any of run_seq, run_aln, or run_snp are set to true
+if [ -z "$path_chromosomes" ] && ([ "$run_seq" = true ] || [ "$run_aln" = true ] || [ "$run_snp" = true ]); then
+    pokaz_error "Error: -path_chr must be specified when any of -seq, -aln, or -snp options are used."
+    exit 1
+fi
+
 cores="${cores:-1}"  # Number of cores
 acc_anal="${acc_anal:-NULL}"   # Set of accessions to analyse
 ref_pref="${ref_pref:-NULL}"   # Set of accessions to analyse
@@ -106,7 +112,6 @@ ref_pref="${ref_pref:-NULL}"   # Set of accessions to analyse
 pokaz_message "Number of cores: ${cores}"
 
 # check_missing_variable "ref_pref"
-
 # check_missing_variable "pref_global"
 # pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
@@ -125,30 +130,43 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
-
-    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --cores ${cores} --aln.type ${aln_type}
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --cores ${cores} \
+        --aln.type ${aln_type}
 fi
 
 if [ "$run_seq" = true ]; then
-
-    Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --path.chromosomes ${path_chromosomes} \
+        --aln.type ${aln_type} \
+        --cores ${cores}
 fi
 
 if [ "$run_aln" = true ]; then
-
-    Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --aln.type ${aln_type} --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --path.chromosomes ${path_chromosomes} \
+        --aln.type ${aln_type} \
+        --cores ${cores}
 fi
 
 
 if [ "$run_snp" = true ]; then
-
-    Rscript $INSTALLED_PATH/analys/analys_04_snp.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --path.chromosomes ${path_chromosomes} \
+        --aln.type ${aln_type} \
+        --cores ${cores}
 fi
 
 
 # ********************************   SVs   ***********************************
-
-
 
 # -------------------------------------------------
 # Sv calling
@@ -157,8 +175,11 @@ if [ "$run_sv_call" = true ]; then
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
     # So, sonsensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
-
-    Rscript $INSTALLED_PATH/analys/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}  --acc.anal ${acc_anal}
+    Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --aln.type ${aln_type} \
+        --acc.anal ${acc_anal}
 fi
 
 
