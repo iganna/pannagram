@@ -1,3 +1,5 @@
+#!/bin/bash
+INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
@@ -146,7 +148,7 @@ fi
 
 file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
-Rscript merge/merge_01_extract_hits.R \
+Rscript $INSTALLED_PATH/ merge/merge_01_extract_hits.R \
         --file.gff=${file_gff} \
         --file.genome=${file_genome} \
         --file.seqs=${file_merged_seqs} \
@@ -170,7 +172,7 @@ do
 
 	# Run simsearch
 
-	./simsearch.sh \
+	$INSTALLED_PATH/simsearch.sh \
     -in_seq ${file_merged_seqs}    \
     -on_genome ${file_genome} \
     -out "${path_out}simseqrch_seqs_${i}/" \
@@ -193,7 +195,7 @@ do
         exit 1
     fi
 
-    Rscript merge/merge_02_new_hits.R \
+    Rscript $INSTALLED_PATH/ merge/merge_02_new_hits.R \
         --file.cnt ${file_cnt} \
         --file.genome ${file_genome} \
         --file.seqs ${file_merged_seqs_next} \
@@ -205,14 +207,14 @@ done
 
 file_fix_seqs="${path_out}seqs_fix.fasta"
 
-Rscript merge/merge_03_get_hits.R \
+Rscript $INSTALLED_PATH/ merge/merge_03_get_hits.R \
     --path.out ${path_out} \
     --file.fix ${file_merged_seqs_fixed} \
     --file.fix.seqs=${file_fix_seqs}
 
 
 if grep -q "^>" ${file_fix_seqs}; then
-    ./simsearch.sh \
+    $INSTALLED_PATH/simsearch.sh \
         -in_seq ${file_fix_seqs}    \
         -on_genome ${file_genome} \
         -out "${path_out}simseqrch_seqs_fix/" \

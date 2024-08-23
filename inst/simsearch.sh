@@ -1,16 +1,16 @@
 #!/bin/bash
-
+INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/chunk_error_control.sh
+source $INSTALLED_PATH/utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils/utils_bash.sh
+source $INSTALLED_PATH/utils/utils_bash.sh
 
 show_help() {
     cat << EOF
@@ -219,7 +219,7 @@ for db_file in "${db_files[@]}"; do
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
         # On a set of sequences
-        Rscript sim/sim_in_seqs.R \
+        Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
                 --in_file $file_input \
                 --res $blast_res \
                 --out ${output_pref}.${db_name}.rds \
@@ -229,7 +229,7 @@ for db_file in "${db_files[@]}"; do
                 --coverage ${coverage}
     else
         # On a genome
-        Rscript sim/sim_in_genome.R \
+        Rscript $INSTALLED_PATH/sim/sim_in_genome.R \
                 --in_file $file_input \
                 --res $blast_res \
                 --out $output_pref.${db_name} \
@@ -246,7 +246,7 @@ done
 
 # Combine all files to the total count file
 if [[ -z "$file_seq" && -z "$file_genome" ]]; then
-    Rscript sim/sim_in_genome_combine.R  \
+    Rscript $INSTALLED_PATH/sim/sim_in_genome_combine.R  \
             --out $output_pref \
             --sim $sim_threshold
 fi

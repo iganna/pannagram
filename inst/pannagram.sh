@@ -1,16 +1,16 @@
-
+#!/bin/bash
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
-
-source utils/chunk_error_control.sh
+INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
+source $INSTALLED_PATH/utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils/utils_bash.sh
-source utils/utils_help.sh
+source $INSTALLED_PATH/utils/utils_bash.sh
+source $INSTALLED_PATH/utils/utils_help.sh
 
 # ----------------------------------------------------------------------------
 #            PARAMETERS: parsing
@@ -532,7 +532,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
     path_log_step="${path_log}step${step_num}_query_01/"
 
     # Run the step
-    Rscript pangen/query_01_to_chr.R --path.in ${path_in} --path.out ${path_chrom} \
+    Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R --path.in ${path_in} --path.out ${path_chrom} \
             --cores ${cores}  \
             ${option_nchr} \
             ${option_accessions} \
@@ -571,7 +571,7 @@ if [ ! -z "${flag_orf}" ]; then
     path_log_step="${path_log}step${step_num}_query_01_orf/"
 
     # Run the step
-    Rscript pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
+    Rscript $INSTALLED_PATH/pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
             --cores ${cores}  \
             ${option_nchr} \
             ${option_accessions} \
@@ -607,7 +607,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
     path_log_step="${path_log}step${step_num}_query_02/"
 
     # Run the step
-    Rscript pangen/query_02_to_parts.R --path.chr ${path_chrom} \
+    Rscript $INSTALLED_PATH/pangen/query_02_to_parts.R --path.chr ${path_chrom} \
             --path.parts ${path_parts} --part.len $part_len --cores ${cores} \
             ${option_purge_reps} ${option_rev} \
             ${option_nchr} \
@@ -657,7 +657,7 @@ for ref0 in "${refs_all[@]}"; do
             # Path for logging
             path_log_step="${path_log}step${step_num}_query_01_ref/"
 
-            Rscript pangen/query_01_to_chr.R \
+            Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --accessions ${file_acc_ref} \
@@ -729,7 +729,7 @@ for ref0 in "${refs_all[@]}"; do
         make_dir ${path_log_step}
 
         # Blast parts on the reference genome
-        ./pangen/query_03_blast_parts.sh \
+        $INSTALLED_PATH/pangen/query_03_blast_parts.sh \
                 -path_chrom ${path_chrom} \
                 -path_parts ${path_parts} \
                 -path_result ${path_blast_parts} \
@@ -779,7 +779,7 @@ for ref0 in "${refs_all[@]}"; do
         make_dir ${path_log_step}
         
         # Run the step
-        Rscript pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+        Rscript $INSTALLED_PATH/pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
                 --ref ${ref0}   \
                 --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
                 --cores ${cores} \
@@ -815,7 +815,7 @@ for ref0 in "${refs_all[@]}"; do
         path_log_step="${path_log}step${step_num}_synteny_02_plot_${ref0}/"
         make_dir ${path_log_step}
 
-        Rscript pangen/synteny_02_plot.R \
+        Rscript $INSTALLED_PATH/pangen/synteny_02_plot.R \
                 --ref ${ref0} \
                 --path_ref ${path_ref} \
                 --path_chr ${path_chrom} \
@@ -872,7 +872,7 @@ for ref0 in "${refs_all[@]}"; do
         make_dir ${path_log_step}
 
         # Run
-        Rscript pangen/synteny_03_get_gaps.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+        Rscript $INSTALLED_PATH/pangen/synteny_03_get_gaps.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
                 --ref ${ref0}   \
                 --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
                 --cores ${cores} \
@@ -904,7 +904,7 @@ for ref0 in "${refs_all[@]}"; do
         make_dir ${path_log_step}
 
         # Run BLAST for gaps
-        ./pangen/synteny_04_blast_gaps.sh \
+        $INSTALLED_PATH/pangen/synteny_04_blast_gaps.sh \
                 -path_gaps ${path_gaps} \
                 -cores ${cores} \
                 -log_path ${path_log_step} \
@@ -935,7 +935,7 @@ for ref0 in "${refs_all[@]}"; do
         path_log_step="${path_log}step${step_num}_synteny_05_${ref0}/"
         make_dir ${path_log_step}
 
-        Rscript pangen/synteny_05_merge_gaps.R --ref ${ref0} \
+        Rscript $INSTALLED_PATH/pangen/synteny_05_merge_gaps.R --ref ${ref0} \
                 --path.aln ${path_alignment}  --path.chr ${path_chrom}\
                 --path.gaps ${path_gaps}   \
                 --cores ${cores} \
@@ -972,7 +972,7 @@ for ref0 in "${refs_all[@]}"; do
         path_log_step="${path_log}step${step_num}_comb_01_${ref0}/"
         make_dir ${path_log_step}
 
-        Rscript pangen/comb_01_one_ref.R \
+        Rscript $INSTALLED_PATH/pangen/comb_01_one_ref.R \
                 --path.cons ${path_cons} \
                 --path.aln ${path_alignment} \
                 --pref ${ref0}  \
@@ -1005,7 +1005,7 @@ fi
 
 
 
-#./pangen_new.sh -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test2 -log 2
+# $INSTALLED_PATH/pangen_new.sh -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test2 -log 2
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
@@ -1033,7 +1033,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
         path_log_step="${path_log}step${step_num}_comb_02_${ref0}_${ref1}/"
         make_dir ${path_log_step}
         
-        Rscript pangen/comb_02_two_refs.R \
+        Rscript $INSTALLED_PATH/pangen/comb_02_two_refs.R \
                 --path.cons ${path_cons} \
                 --ref0 ${ref0} \
                 --ref1 ${ref1} \
@@ -1061,7 +1061,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     path_log_step="${path_log}step${step_num}_comb_03/"
     make_dir ${path_log_step}
 
-    Rscript pangen/comb_03_find_gaps.R \
+    Rscript $INSTALLED_PATH/pangen/comb_03_find_gaps.R \
             --path.cons ${path_cons} \
             --ref.pref ${ref0} \
             --cores ${cores} \
@@ -1097,7 +1097,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     path_log_step="${path_log}step${step_num}_comb_04/"
     make_dir ${path_log_step}
 
-    Rscript pangen/comb_04_prepare_aln.R \
+    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
             --path.cons ${path_cons} \
             --ref.pref ${ref0} \
             --cores ${cores} \
@@ -1134,7 +1134,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     path_log_step="${path_log}step${step_num}_comb_05/"
     make_dir ${path_log_step}
 
-    ./pangen/comb_05_run_mafft.sh \
+    $INSTALLED_PATH/pangen/comb_05_run_mafft.sh \
             -cores ${cores} \
             -path_mafft_in ${path_mafft_in} \
             -path_mafft_out ${path_mafft_out} \
@@ -1164,7 +1164,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     path_log_step="${path_log}step${step_num}_comb_06/"
     make_dir ${path_log_step}
 
-    Rscript pangen/comb_06_final_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
             --cores ${cores} \
             --ref.pref ${ref0} \
             --path.mafft.in ${path_mafft_in} \
@@ -1195,7 +1195,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
 
-    Rscript analys/analys_01_blocks.R \
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
             --path.cons ${path_cons} \
             --ref.pref  ${ref0} \
             --cores ${cores} \

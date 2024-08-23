@@ -3,14 +3,14 @@
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
-
-source utils/chunk_error_control.sh
+INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
+source $INSTALLED_PATH/utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils/utils_bash.sh
+source $INSTALLED_PATH/utils/utils_bash.sh
 
 
 print_usage() {
@@ -126,23 +126,23 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
 
-    Rscript analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --cores ${cores} --aln.type ${aln_type}
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --cores ${cores} --aln.type ${aln_type}
 fi
 
 if [ "$run_seq" = true ]; then
 
-    Rscript analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
 fi
 
 if [ "$run_aln" = true ]; then
 
-    Rscript analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --aln.type ${aln_type} --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes} --aln.type ${aln_type} --cores ${cores}
 fi
 
 
 if [ "$run_snp" = true ]; then
 
-    Rscript analys/analys_04_snp.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_04_snp.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --path.chromosomes ${path_chromosomes}  --aln.type ${aln_type} --cores ${cores}
 fi
 
 
@@ -158,7 +158,7 @@ if [ "$run_sv_call" = true ]; then
     # So, sonsensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
 
-    Rscript analys/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}  --acc.anal ${acc_anal}
+    Rscript $INSTALLED_PATH/analys/sv_01_calling.R --path.cons ${path_consensus} --ref.pref  ${ref_pref} --aln.type ${aln_type}  --acc.anal ${acc_anal}
 fi
 
 
@@ -188,7 +188,7 @@ if [ "$run_sv_sim" = true ]; then
     # fi
 
     file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
-    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
+    Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
             --out ${file_sv_big_on_set_cover} --sim ${similarity_value} --use_strand F
 
     rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
@@ -216,7 +216,7 @@ if [ "$sv_graph" = true ]; then
     # fi
 
     file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
-    Rscript sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
+    Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
             --out ${file_sv_big_on_sv_cover} --sim ${similarity_value} --use_strand T
 
     rm "$file_sv_big".nin
