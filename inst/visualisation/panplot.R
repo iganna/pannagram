@@ -6,7 +6,7 @@ extractBlocks <- function(path.aln, n.acc, len.break = 50000, len.break.gap = 10
   idx.synteny = c()
   for(i.chr in 1:5){
     if(echo) message(paste('Chromosome', i.chr))
-    v = readRDS(paste(path.aln, 'val_common_chr_', i.chr, '_ref_add.rds',sep = ''))
+    v = readRDS(paste0(path.aln, 'val_common_chr_', i.chr, '_ref_add.rds'))
     n.v = nrow(v)
     accessions = colnames(v)[1:n.acc]
     
@@ -141,7 +141,7 @@ prepareBlocks <- function(idx.break, file.cen.pos=NULL, file.acc.len=NULL, gap.l
   if(!is.null(file.cen.pos) & !is.null(file.acc.len)){
     cen.pos = read.table(file.cen.pos,
                          stringsAsFactors = F, header = 1)
-    cen.pos.chr = cen.pos[cen.pos$Chromosome.x == paste('Chr',i.chr, sep = ''),]
+    cen.pos.chr = cen.pos[cen.pos$Chromosome.x == paste0('Chr',i.chr),]
     cen.pos.chr$Accession.x = as.character(cen.pos.chr$Accession.x)
     cen.pos.chr$End2 = 0
     

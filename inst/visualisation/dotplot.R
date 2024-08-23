@@ -185,7 +185,7 @@ dotfacet.s <- function(seq1, seq2, ...) {
 #'
 #' @return A data frame with indices of matching positions and the number of matches at these positions.
 #' The data frame has three columns: row index, column index, and the value (number of matches).
-#'
+#' @export
 mxComp <- function(mx1, mx2, wsize, nmatch){
   mx.res = 0
   for(s in c('A', 'C', 'G', 'T')){
@@ -216,7 +216,7 @@ mxComp <- function(mx1, mx2, wsize, nmatch){
 #'
 #' @return A numeric value representing the complexity of the sequence. This value is 
 #' calculated as the total number of matching segments normalized by the length of the sequence.
-#'
+#' @export 
 seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
   
   mx1 = toupper(seq2mx(seq1, wsize))

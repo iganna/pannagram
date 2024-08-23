@@ -1,6 +1,6 @@
 library(ggplot2)
 
-#' ----------------------------------------------------------------------
+
 #' Plot Synteny Between Two Genomic Regions
 #'
 #' This function generates a ggplot2-based visualization of synteny in the alignment.
@@ -105,7 +105,7 @@ plotSynDot <- function(..., alpha = 1) {
   return(p)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Plot Synteny Blocks Between Two Genomic Regions (Alias for \code{\link{plotSynteny}})
 #'
 #' This function is an alias for the \code{\link{plotSynteny}} function and 
@@ -115,7 +115,7 @@ plotSyntenyBlocks <- function(...) {
   plotSynteny(...)
 }
 
-#' ----------------------------------------------------------------------
+
 plotPanAcc <- function(file.msa, acc){
   
   # Setup
@@ -127,7 +127,7 @@ plotPanAcc <- function(file.msa, acc){
   c.grey = '#EBEBEB'
   
   # Read the correpondence for one accession
-  v.acc = h5read(file.msa, paste(gr.accs.e, acc, sep = ''))
+  v.acc = h5read(file.msa, paste0(gr.accs.e, acc))
   v.acc = data.frame(pan = idx, acc = v.acc[idx])
   v.acc = v.acc[v.acc$acc != 0,]
   
@@ -137,7 +137,7 @@ plotPanAcc <- function(file.msa, acc){
     geom_point(size = 0.01) + 
     theme_minimal() +
     labs(x = "Pangenome coord, Mbp", 
-         y = paste(acc, ', Mbp', sep = ''), 
+         y = paste0(acc, ', Mbp'), 
          title = NULL) +
     scale_color_manual(values = c("-1" = c.red, "1" = "black")) +
     theme(legend.position = "none") + 
@@ -148,7 +148,7 @@ plotPanAcc <- function(file.msa, acc){
   
 }
 
-#' ----------------------------------------------------------------------
+
 #' Plot Synteny Between Two Genomes
 #'
 #' This function wraps `plotSynteny` to visualize synteny regions between two full genomes, reading the files, produced by the pangen pipeline
