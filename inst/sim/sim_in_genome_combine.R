@@ -1,7 +1,7 @@
 # Load the necessary library
 library(optparse)
-source('sim/sim_func.R')
-source('utils/utils.R')
+source(system.file("sim/sim_func.R", package = "pannagram"))
+source(system.file("utils/utils.R", package = "pannagram"))
 
 # Define options
 option_list = list(
@@ -31,7 +31,7 @@ coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 # ---- Testing ----
 
 # blast.file = 'tmp.txt.blast.tmp'
-# source('pannagram/utils.R')
+# source("pannagram/utils.R")
 # fasta.file = 'new_genes/new_genes.fasta'
 # sim.cutoff = 0.85
 

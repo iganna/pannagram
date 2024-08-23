@@ -14,7 +14,7 @@
 #'   - V7: Similarity measure.
 #'   - V8: Another identifier of the reference sequence.
 #'   - len1: Column representing length of queries, crucial for certain calculations in the function.
-#'   
+
 #' @param sim.cutoff The similarity cutoff for considering a hit. Defaults to 0.9.
 #' @param echo Logical flag to indicate if intermediate steps should be printed. Defaults to TRUE.
 #'
@@ -35,7 +35,6 @@
 #' result <- findHitsInRef(v, sim.cutoff = 0.9, echo = TRUE)
 #' 
 #' @export
-"Length (len1) should be defined before"
 findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
   
   
@@ -217,11 +216,11 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
 #'   - V1: An identifier column for sequences #1.
 #'   - V2: A numeric column representing the start position of the sequences #1.
 #'   - V3: A numeric column representing the end position of the sequences #1.
-#'   
+
 #'   - V8: An identifier column for sequences #2.
 #'   - V4: A numeric column representing the start position of the sequences #2.
 #'   - V5: A numeric column representing the end position of the sequences #2.
-#'   
+
 #' @param use.strand Logical, if TRUE, strand information is considered in the processing.
 #'
 #' @return Returns a data frame `v.cover` with the following structure:
@@ -235,8 +234,6 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
 #' # result <- findNestedness(data, TRUE)
 #'
 #' @export
-#'
-
 findNestedness <- function(v.res, use.strand = T){
   
   idx.strand = v.res$V4 > v.res$V5
@@ -282,12 +279,12 @@ findNestedness <- function(v.res, use.strand = T){
 #'   - V1: An identifier column for sequences #1.
 #'   - V2: A numeric column representing the start position of the sequences #1.
 #'   - V3: A numeric column representing the end position of the sequences #1.
-#'   
+
 #'   if `side = 1` is provided, then also:
 #'   - V8: An identifier column for sequences #2.
 #'   - V4: A numeric column representing the start position of the sequences #2.
 #'   - V5: A numeric column representing the end position of the sequences #2.
-#'   
+
 #' @param side An integer indicating which side to consider for coverage calculation of #1 or of #2. 
 #'             Defaults to 0, so coverage of sequences "#1.
 #'
