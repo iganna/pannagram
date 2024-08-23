@@ -1,9 +1,7 @@
 suppressMessages({
-  if (!require(crayon)) install.packages("crayon")
   library(crayon)
 })
 
-#' ----------------------------------------------------------------------
 #' Read FASTA File
 #'
 #' This function reads a FASTA file and returns a named vector of sequences.
@@ -23,7 +21,7 @@ suppressMessages({
 #' @return A named vector where the names are the sequence headers 
 #' 
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
   file.content <- readLines(file.fasta)
   
@@ -67,7 +65,7 @@ readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
   return(sequences)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Write Sequences to a FASTA File
 #'
 #' This function writes a named vector of sequences to a FASTA file. Each sequence
@@ -83,7 +81,7 @@ readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
 #' @return Invisible NULL.
 #' 
 #' @author Anna A. Igolkina
-#'  
+#' @export
 writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append = FALSE){
   
   if(length(sequences) == 0) {
@@ -115,7 +113,7 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
   close(con)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Split a Sequence into Fixed-Length Chunks
 #'
 #' This function splits a given sequence into chunks of a specified length. If the sequence's length 
@@ -134,7 +132,7 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
 #'}
 #'
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 splitSeq <- function(sequence, n = 5000, step = 0) {
   
   # Split the sequence into individual characters
@@ -156,7 +154,7 @@ splitSeq <- function(sequence, n = 5000, step = 0) {
   return(s.chunks)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Convert a string to a vector of nucleotides
 #'
 #' @param s A single string representing a sequence.
@@ -171,7 +169,7 @@ seq2nt <- function(s){
 }
 
 
-#' ----------------------------------------------------------------------
+
 #' Convert a vector of nucleotides to a string
 #'
 #' @param s A character vector where each element is a single nucleotide.
@@ -184,7 +182,6 @@ nt2seq <- function(s){
 }
 
 
-#' ----------------------------------------------------------------------
 #' Convert Aligned Sequences to Nucleotide Matrix
 #'
 #' This function takes a vector of aligned sequences and converts them into a matrix,
@@ -220,7 +217,6 @@ aln2mx <- function(s.aln) {
 }
 
 
-#' ----------------------------------------------------------------------
 #' Convert Nucleotide Matrix to Sequences of the alignment
 #'
 #' This function takes a matrix of nucleotides representing the alignment,
@@ -258,7 +254,7 @@ mx2aln <- function(mx) {
   return(seqs)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Convert Nucleotide Matrix to Sequences without gaps (unaligned)
 #'
 #' This function takes a matrix of nucleotides representing the alignment,
@@ -291,7 +287,6 @@ mx2seq <- function(mx) {
 }
 
 
-#' ----------------------------------------------------------------------
 #' Calculate Distance Matrix Based on Row Differences
 #'
 #' Computes a symmetric distance matrix for a given matrix `mx`, where the distance
@@ -320,7 +315,6 @@ mx2dist <- function(mx, ratio = F){
 }
 
 
-#' ----------------------------------------------------------------------
 #' Convert matrix of the sequence alignment to the position matrix
 #'
 #' This function takes a matrix of sequences and converts it into a position matrix,
@@ -352,7 +346,7 @@ mx2pos <- function(mx, n.flank = 0){
   
 }
 
-#' ----------------------------------------------------------------------
+
 #' Calculate consensus sequence for each column in the alignment matrix
 #'
 #' This function computes the consensus sequence for each column of a character matrix `mx`.
@@ -382,7 +376,7 @@ mx2cons <- function(mx,
   return(s.cons)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
 #'
 #' This function computes a profile matrix showing the count of each nucleotide
@@ -412,7 +406,7 @@ mx2profile <- function(mx, gap.flag = F){
   return(pos.profile)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Convert a Nucleotide Sequence to a Matrix of Words of a Specific Size
 #'
 #' @description
@@ -433,7 +427,6 @@ mx2profile <- function(mx, gap.flag = F){
 #' seq2mx(seq, wsize)
 #'
 #' @export
-#'
 seq2mx <- function(seq, wsize){
   
   m <- embed(seq, wsize)
@@ -442,7 +435,7 @@ seq2mx <- function(seq, wsize){
   return(matrix_seq)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Translate Nucleotide Sequence to Amino Acid Sequence
 #'
 #' This function translates a given nucleotide sequence into its corresponding
@@ -453,7 +446,7 @@ seq2mx <- function(seq, wsize){
 #' @return A character vector representing the translated amino acid sequence.
 #' @examples
 #' translateSeq('atgctctgccagtgccacggcggaagcgacaaagccBBB')
-#' 
+#' @export
 translateSeq <- function(seq) {
   # Define the genetic code as a named vector
   genetic.code <- c(
@@ -498,7 +491,7 @@ translateSeq <- function(seq) {
   return(aa.seq)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Identify and Extract Open Reading Frames (ORFs) from a Nucleotide Sequence
 #'
 #' This function identifies open reading frames (ORFs) within a nucleotide sequence by translating it
@@ -521,7 +514,6 @@ translateSeq <- function(seq) {
 #' print(result$orf)
 #'
 #' @export
-#' @importFrom stringr str_detect
 seq2orf <- function(seq, orf.min.len = 25){
   # Handle sequence naming
   if(is.null(names(seq))){
@@ -586,7 +578,7 @@ seq2orf <- function(seq, orf.min.len = 25){
 }
 
 
-#' ----------------------------------------------------------------------
+
 #' Identify Open Reading Frames (ORFs) in Both DNA Strands
 #'
 #' This function searches for open reading frames (ORFs) in both the forward and reverse complement
@@ -664,7 +656,7 @@ orfFinder <- function(seq.init, orf.min.len = 25){
   return(list(pos = pos, orf = orfs))
 }
 
-#' ----------------------------------------------------------------------
+
 #' Generate the reverse complement of a vectorized sequence
 #'
 #' @param s A character vector where each element is a single nucleotide.
@@ -674,7 +666,7 @@ orfFinder <- function(seq.init, orf.min.len = 25){
 #' revCompl(c("A", "T", "G", "C"))
 #' 
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 revCompl <- function(s){
   
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
@@ -694,7 +686,7 @@ revCompl <- function(s){
   return(seqs.rc)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Convert a Nucleotide Sequence to its Reverse Complement
 #'
 #' This function takes a nucleotide sequence, converts it into its reverse complement,
@@ -717,7 +709,7 @@ revComplSeq <- function(seq){
 }
 
 
-#' ----------------------------------------------------------------------
+
 #' Generate the complement of a vectorized sequence
 #'
 #' @param s A character vector where each element is a single nucleotide.
@@ -747,7 +739,7 @@ justCompl <- function(s){
   return(seqs.c)
 }
 
-#' ----------------------------------------------------------------------
+
 #' Display attention messages with stylization
 #'
 #' This function displays a stylized attention message to alert the user.
@@ -787,7 +779,6 @@ pokazAttention <- function(..., file = NULL, echo = T) {
 }
 
 
-#' ----------------------------------------------------------------------
 #' Display general stylized messages
 #'
 #' This function displays a general stylized message to the user.
@@ -824,7 +815,7 @@ pokaz <- function(..., file = NULL, echo = T) {
   }
 }
 
-#' ----------------------------------------------------------------------
+
 #' Display a stage stylized messages
 #'
 #' This function displays a general stylized message to the user.
@@ -862,7 +853,6 @@ pokazStage <- function(..., file = NULL, echo = T) {
 }
 
 
-#' ----------------------------------------------------------------------
 #' Safe Removal of Variable from Global Environment
 #'
 #' This function safely removes a specified variable from the global environment
@@ -876,7 +866,7 @@ pokazStage <- function(..., file = NULL, echo = T) {
 #' rmSafe(x)
 #' rmSafe(xxx)  # no error
 #' # x is now removed from the global environment
-#'
+#' @export
 rmSafe <- function(var) {
   var.name = deparse(substitute(var))
   if (exists(var.name, envir = globalenv())) {
@@ -884,7 +874,7 @@ rmSafe <- function(var) {
   }
 }
 
-#' ----------------------------------------------------------------------
+
 #' Save All Local Objects in the current workspace to a File
 #'
 #' @param file.ws the name of the file where the workspace will be saved.
@@ -899,7 +889,6 @@ saveWorkspace <- function(file.ws){
 }
 
 
-#' ----------------------------------------------------------------------
 #' Convert BLAST results to GFF format
 #'
 #' @description
@@ -915,7 +904,7 @@ saveWorkspace <- function(file.ws){
 #' @examples
 #' # Example usage (assuming `blast_results` is your data frame with BLAST results):
 #' blastres2gff(blast_results, "output.gff")
-#'
+#' @export
 blastres2gff <- function(v.blast, f.gff, to.sort = T){
   v.gff = data.frame(col1 = v.blast$V8,
                      col2 = 'blast2gff',
@@ -940,7 +929,6 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
 }
 
 
-#' ----------------------------------------------------------------------
 #' Calculate the Repeat Score of a String
 #'
 #' @description
@@ -977,17 +965,8 @@ repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
   
   return(sum(cnt[cnt > dup.cutoff]) / length(substrings))
 }
-# SLOW VERSION:
-# old_repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
-#   substrings <- sapply(1:(nchar(s) - wsize + 1), function(i) {
-#     substring(s, i, i + wsize - 1)
-#   })
-#   cnt = table(substrings)
-#   return(sum(cnt[cnt > dup.cutoff]) / length(substrings))
-# }
 
 
-#' ----------------------------------------------------------------------
 #' Convert Combination String to Reference Chromosome Number
 #'
 #' This function parses a combination string of the format 'X_Y' where X and Y are numbers.
@@ -1010,7 +989,6 @@ comb2ref <- function(s.comb){
 }
 
 
-#' ----------------------------------------------------------------------
 #' Load or Install and Load an R Package
 #'
 #' This function attempts to load an R package. If the package is not already installed,
@@ -1049,7 +1027,6 @@ load.library <- function(package) {
 }
 
 
-#' ----------------------------------------------------------------------
 #' Find Sequences of Ones in Binary Vector
 #'
 #' Identifies and returns the start and end indices of consecutive sequences of ones in a binary vector.
@@ -1066,7 +1043,6 @@ load.library <- function(package) {
 #'   1   2   3
 #'   2   5   5
 #'   3   8  10
-#'   
 #' @export
 findOnes <- function(g.bin) {
   changes <- diff(c(0, g.bin, 0))
@@ -1075,7 +1051,7 @@ findOnes <- function(g.bin) {
   return(data.frame(beg = beg, end = end))
 }
 
-#' ----------------------------------------------------------------------
+
 #' Finds Duplicates and return unique values
 #'
 #' @param x Vector to search for duplicates.
@@ -1088,7 +1064,6 @@ uniqueDuplicates <- function(x){
 }
 
 
-#' ----------------------------------------------------------------------
 #' Finds indexes of all non-unique values
 #'
 #' @param x Vector to search for duplicates.
@@ -1099,7 +1074,7 @@ idxDuplicates <- function(x){
   return(which(x %in% y))
 }
 
-#' ----------------------------------------------------------------------
+
 #' Write GFF Data to File
 #'
 #' Writes first 9 columns of the table to the gff file.
@@ -1107,13 +1082,11 @@ idxDuplicates <- function(x){
 #' @param gff A data frame representing GFF data.
 #' @param file The path to the file where the GFF data should be written.
 #' @export
-#' @examples
 writeGFF <- function(gff, file){
   write.table(gff[,1:9], file, quote = F, row.names = F, col.names = F, sep = '\t')
 }
 
 
-#' ----------------------------------------------------------------------
 #' Calculate Moving Window Mean
 #'
 #' This function calculates the moving window mean for a given numeric vector.
@@ -1128,7 +1101,6 @@ writeGFF <- function(gff, file){
 #' wndMean(v, wnd.size = 10000)
 #' @export
 wndMean <- function(v, wnd.size = 10000){
-  
   # Calculate the length of the input vector
   len.v <- length(v)
   # Determine the number of full parts within the window size
@@ -1164,8 +1136,6 @@ wndSum <- function(d, wnd.len, echo=T){
 }
 
 
-
-
 #' Read BLAST Output File
 #'
 #' Reads a BLAST output file and returns its contents as a data frame. If the file contains
@@ -1196,6 +1166,7 @@ readTableMy <- function(file){
 #' @param add Optional vector of additional column indices to include in the display.
 #'
 #' @return Prints the specified subset of the BLAST data frame. This function does not return any value.
+#' @export
 showt <- function(x, irow=NULL, add = c()){
   idx = c(1:5, 7, add)
   idx = intersect(idx, 1:ncol(x))
@@ -1256,9 +1227,3 @@ colMin <- function(mx) {
   names(res) = colnames(mx)
   return(res)
 }
-
-
-
-
-
-
