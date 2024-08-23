@@ -8,7 +8,7 @@ suppressMessages({
   library(rhdf5)
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 
 # Define blocks in the alignemnt
 
@@ -62,10 +62,10 @@ if (!is.null(opt$aln.type)) {
 # path.cons = './'
 # ref.pref = '0'
 # library(rhdf5)
-# source('../../../pannagram/utils/utils.R')
+# source("../../../pannagram/utils/utils.R")
 
 
-s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", aln.type, ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -94,7 +94,7 @@ gr.blocks = 'blocks/'
 
 loop.function <- function(s.comb, echo = T){
   
-  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste0(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -111,7 +111,7 @@ loop.function <- function(s.comb, echo = T){
     
     pokaz('Accession', acc, 'combination', s.comb)
   
-    v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v.init = h5read(file.comb, paste0(gr.accs.e, acc))
     v = v.init
     
     # ----  Find breaks  ----
@@ -135,7 +135,7 @@ loop.function <- function(s.comb, echo = T){
     
     # Save
     suppressMessages({
-      h5write(v.init, file.comb, paste(gr.accs.e, acc, sep = ''))
+      h5write(v.init, file.comb, paste0(gr.accs.e, acc))
     })
     
     # Remember for common breaks
@@ -154,12 +154,12 @@ loop.function <- function(s.comb, echo = T){
     pokaz('Accession', acc, 'combination', s.comb)
     
     # Read correspondence
-    v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v.init = h5read(file.comb, paste0(gr.accs.e, acc))
     
     # Add NA as common breaks
     v.init[idx.no.blocks] = NA
     suppressMessages({
-      h5write(v.init, file.comb, paste(gr.accs.e, acc, sep = ''))
+      h5write(v.init, file.comb, paste0(gr.accs.e, acc))
     })
     
     pokaz('Content NA:', sum(is.na(v.init)), 'zeros:', sum(!is.na(v.init) & (v.init ==0)), 'pos:', sum(!is.na(v.init) & (v.init !=0)))
@@ -204,7 +204,7 @@ loop.function <- function(s.comb, echo = T){
     
     # Save blocks
     suppressMessages({
-      h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
+      h5write(v.block, file.comb, paste0(gr.blocks, acc))
     })
     
     rmSafe(x.corr)
@@ -249,7 +249,7 @@ if(num.cores == 1){
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 
 df.blocks = do.call(rbind, list.blocks)
-file.blocks = paste(path.cons, aln.type,'blocks_ref_',ref.pref,'.rds', sep = '')
+file.blocks = paste0(path.cons, aln.type,'blocks_ref_',ref.pref,'.rds')
 saveRDS(df.blocks, file.blocks, compress = F)
 
 

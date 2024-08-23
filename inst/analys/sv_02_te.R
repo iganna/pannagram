@@ -8,7 +8,7 @@ suppressMessages({ library(Biostrings)
   library("optparse")
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 
 
 args = commandArgs(trailingOnly=TRUE)
@@ -36,9 +36,9 @@ if (is.null(opt$ref.pref)) {
 
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
-path.sv = paste(path.cons, 'sv/', sep = '')
+path.sv = paste0(path.cons, 'sv/')
 if (!dir.exists(path.sv)) dir.create(path.sv)
-path.gff = paste(path.sv, 'gff/', sep = '')
+path.gff = paste0(path.sv, 'gff/')
 if (!dir.exists(path.gff)) dir.create(path.gff)
 
 gr.accs.e <- "accs/"
@@ -52,7 +52,7 @@ cutoff = 0.90
 
 if(F){
   library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
+source(system.file("pannagram/utils/utils.R", package = "pannagram"))
   path.cons = './'
   ref.pref = '0'  
 } 
@@ -60,7 +60,7 @@ if(F){
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", 'msa_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("msa_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -82,7 +82,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste0(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -92,7 +92,7 @@ for(s.comb in pref.combinations){
   sv.cover = 0
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.comb, paste0(gr.accs.e, acc))
     sv.cover = sv.cover + ((v == 0) & (!is.na(v))) * 1
   }
   
@@ -112,7 +112,7 @@ for(s.comb in pref.combinations){
   sv.end = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.comb, paste0(gr.accs.e, acc))
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
     sv.end = cbind(sv.end, v[sv.pos$end])
   }
@@ -164,9 +164,9 @@ for(s.comb in pref.combinations){
 
 pokaz('Saving....')
 
-file.sv.pos = paste(path.sv, 'sv_pangen_pos.rds', sep='')
-file.sv.pos.beg = paste(path.sv, 'sv_pangen_beg.rds', sep='')
-file.sv.pos.end = paste(path.sv, 'sv_pangen_end.rds', sep='')
+file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
+file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
+file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 
 saveRDS(sv.pos.all, file.sv.pos)
 saveRDS(sv.beg.all, file.sv.pos.beg)
@@ -192,7 +192,7 @@ sv.annot = paste('ID=', sv.se$gr,
                  ';presence=',sv.se$freq.max,sep = '',
                  ';len_init=', sv.se$len)
 
-sv.se.gff = data.frame(V1 = paste('PanGen_Chr', sv.se$chr, sep = ''),
+sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
                        V2 = 'pannagram',
                        V3 = sv.se.type, 
                        V4 = sv.se$beg + 1, 
@@ -205,11 +205,11 @@ sv.se.gff = data.frame(V1 = paste('PanGen_Chr', sv.se$chr, sep = ''),
 sv.me = sv.pos.all[sv.pos.all$single != 1,]
 
 s.multi = 'multi'
-sv.me.gff = data.frame(V1 = paste('PanGen_Chr', sv.me$chr, sep = ''),
+sv.me.gff = data.frame(V1 = paste0('PanGen_Chr', sv.me$chr),
                        V2 = 'pannagram',
                        V3 = s.multi, V4 = sv.me$beg, V5 = sv.me$end,
                        V6 = '.', V7 = '+', V8 = '.', 
-                       V9 = paste('ID=', sv.me$gr, ';len_init=', sv.me$len, sep = ''), 
+                       V9 = paste0('ID=', sv.me$gr, ';len_init=', sv.me$len), 
                        V10 = sv.pos.all[sv.me$gr, 'V10'])
 
 sv.gff = rbind(sv.se.gff, sv.me.gff)
@@ -257,7 +257,7 @@ for(i.acc in 1:length(accessions)){
 }
 
 # ---- FASTA of seSVs ----
-path.seq = paste(path.cons, 'seq/', sep = '')
+path.seq = paste0(path.cons, 'seq/')
 if (!dir.exists(path.seq)) {
   pokazAttention('Consensus sequence doesn’t exist')
   stop('Please generate the pangenome consensus sequence first')
@@ -268,8 +268,8 @@ big.len = 50
 max.len = 30000
 
 
-file.sv.small =  paste(path.sv, 'seq_sv_small.fasta', sep = '')
-file.sv.big =  paste(path.sv, 'seq_sv_big.fasta', sep = '')
+file.sv.small =  paste0(path.sv, 'seq_sv_small.fasta')
+file.sv.big =  paste0(path.sv, 'seq_sv_big.fasta')
 
 pokaz(file.sv.small)
 
@@ -277,7 +277,7 @@ seqs.small = c()
 seqs.big = c()
 for(s.coms in pref.combinations){
   i.chr = comb2ref(s.comb)
-  file.chr = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  file.chr = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
   s.chr = readFastaMy(file.chr)
   s.chr = seq2nt(s.chr)
   

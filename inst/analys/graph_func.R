@@ -266,7 +266,7 @@ getGraphFromBlast <- function(bl.res = NULL,
   graph.mutual <- igraph::simplify(igraph::make_graph(t(edges.mutual), directed = T))
   graph.mutual.comp <- igraph::components(graph.mutual)
   
-  nodes.mutual =     data.frame(node = paste('N', graph.mutual.comp$membership, sep = ''), 
+  nodes.mutual =     data.frame(node = paste0('N', graph.mutual.comp$membership), 
                                 name = names(graph.mutual.comp$membership))
   nodes.rest = data.frame(node = paste('R', (1:length(names.rest)), sep = ''), 
                           name = names.rest)
@@ -378,7 +378,7 @@ refineDirectEdges <- function(edges.compact, echo = T){
     
     # Connect second-layer destinations to the initial targets: (target) -> (out1) -> (out2)
     out12 = out2[out1]
-    names(out12) = paste(edges.sub[idx.target, 1], '_', out1, '_', sep = '')
+    names(out12) = paste0(edges.sub[idx.target, 1], '_', out1, '_')
     
     # Remove the intermediate subname: change "target_out1_out2" into "target_out2"
     out12 = unlist(out12)
@@ -482,7 +482,7 @@ old_getGraphFromBlast <- function(bl.res, sim.cutoff = 0.85, i.len.field = 5){
   te.nodes.graph <- igraph::simplify(te.nodes.graph)
   te.nodes.comp <- igraph::components(te.nodes.graph)
   
-  nodes = data.frame(node = paste('N', te.nodes.comp$membership, sep = ''), 
+  nodes = data.frame(node = paste0('N', te.nodes.comp$membership), 
                      te = names(te.nodes.comp$membership))
   nodes.rest = data.frame(node = paste('R', (1:length(te.rest)), sep = ''), te = te.rest)
   nodes = rbind(nodes, nodes.rest)

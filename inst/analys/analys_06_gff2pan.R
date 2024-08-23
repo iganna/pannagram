@@ -5,9 +5,9 @@
 # ---- Libraries and dependencies ----
 library(crayon)
 library(rhdf5)
-source('utils/utils.R')
-source('pangen/comb_func.R')
-source('analys_func.R')
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/comb_func.R", package = "pannagram"))
+source(system.file("analys_func.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Setup ----
@@ -66,12 +66,12 @@ for(acc in accessions){
   pokaz('Accession', acc)
   
   # Read the GFF file 
-  gff.acc = read.table(paste(path.annot, acc,'.gff', sep = ''), stringsAsFactors = F)
+  gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
   gff.pan = gff2gff(path.msa, acc1 = acc, acc2 = 'PanGen', pangenome.name='PanGen',
                     gff1 = gff.acc, ref.acc = ref.acc,
                     s.chr = s.chr,n.chr = n.chr,exact.match = F)
   gff.pan$V1 = gsub('contig_', 'PanGen_Chr',gff.pan$V1)
-  writeGFF(gff.pan, paste(path.res, acc,'.gff', sep = ''))
+  writeGFF(gff.pan, paste0(path.res, acc,'.gff'))
   
 }
 

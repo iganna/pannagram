@@ -7,8 +7,8 @@ suppressMessages({ library(Biostrings)
   library("optparse")
 })
 
-source("utils/utils.R")
-source("analys/analys_func.R")
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("analys/analys_func.R", package = "pannagram"))
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -55,9 +55,9 @@ if (!is.null(opt$aln.type)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
-path.seq = paste(path.cons, 'seq/', sep = '')
+path.seq = paste0(path.cons, 'seq/')
 
-path.snp = paste(path.cons, 'snps/', sep = '')
+path.snp = paste0(path.cons, 'snps/')
 if (!dir.exists(path.snp)) dir.create(path.snp)
 
 gr.accs.e <- "accs/"
@@ -69,7 +69,7 @@ gr.break.b = '/break'
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", aln.type, ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -91,13 +91,13 @@ for(s.comb in pref.combinations){
   
   # Get Consensus
   i.chr = comb2ref(s.comb)
-  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  file.seq.cons = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
   s.pangen = readFastaMy(file.seq.cons)
   s.pangen.name = names(s.pangen)[1]
   s.pangen = seq2nt(s.pangen)
   
   # Get accessions
-  file.seq = paste(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.seq = paste0(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.seq)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -106,7 +106,7 @@ for(s.comb in pref.combinations){
   pos.diff = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     pos = which((v != s.pangen) & (v != '-'))
     pos.diff = c(pos.diff, pos)
@@ -122,7 +122,7 @@ for(s.comb in pref.combinations){
   snp.val = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     tmp = (v[pos] != s.pangen[pos]) * 1
     tmp[v[pos] == '-'] = -1
@@ -140,14 +140,14 @@ for(s.comb in pref.combinations){
   colnames(snp.matrix) = c(s.pangen.name, accessions)
   snp.matrix = cbind(pos, snp.matrix)
 
-  file.snps = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt', sep = '')
+  file.snps = paste0(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt')
   write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
   
   
   #Save VCF-file
   
-  file.vcf = paste(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.vcf', sep = '')
-  saveVCF(snp.val, pos, chr.name=paste('PanGen_Chr', i.chr, sep = ''), file.vcf = file.vcf)
+  file.vcf = paste0(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.vcf')
+  saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   
 }

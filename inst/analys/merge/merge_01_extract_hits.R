@@ -2,8 +2,8 @@
 
 library(optparse)
 
-path.pannagram = ""
-source(paste(path.pannagram, 'utils/utils.R', sep = ''))
+
+source(system.file("utils/utils.R", package = "pannagram"))
 
 pokazStage('Extract candidates for merging..')
 
@@ -144,7 +144,7 @@ pokaz('Chromosome lengths:', unname(nchar(genome)))
 # seqs.all = c()
 # for(i.chr in 1:5){
 #   s.chr = genome.list[[i.chr]]
-#   gff.chr = gff[gff$V1 == paste('Chr', i.chr, sep = ''),]
+#   gff.chr = gff[gff$V1 == paste0('Chr', i.chr),]
 #   
 #   seqs = c()
 #   for(irow in 1:nrow(gff.chr)){
@@ -176,7 +176,7 @@ for(type in types){
   for(i.chr in 1:5){
     pokaz('Chromosome', i.chr)
     s.chr = genome.list[[i.chr]]
-    gff.chr = gff.type[gff.type$V1 == paste('Chr', i.chr, sep = ''),]
+    gff.chr = gff.type[gff.type$V1 == paste0('Chr', i.chr),]
     
     idx.merge = which(gff.chr$dist <= len.gap)
     idx.merge = setdiff(idx.merge, nrow(gff.chr))

@@ -46,16 +46,16 @@
 
 if(F){
   
-  source('../utils/utils.R')
-  source('../pangen/comb_func.R')
-  source('analys_func.R')
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/comb_func.R", package = "pannagram"))
+source(system.file("analys_func.R", package = "pannagram"))
   
 }
 
 if(F){
   s.chr = '_Chr1'
   gff.chr <- c("something_Chr15", "test_Chr2", "another_ChrX", "not_matching", "example_Chr123")
-  idx.match <- grep(paste(".*",s.chr,"\\d+", sep = ''), gff.chr)
+  idx.match <- grep(paste0(".*",s.chr,"\\d+"), gff.chr)
   
   chr.num <- as.numeric(sub(paste(".*",s.chr,"(\\d+)", sep = ''), "\\1", gff.chr[idx.match]))
   print(cbind(idx.match, chr.num))
@@ -72,9 +72,9 @@ if(F){
 # ---- Libraries and dependencies ----
 library(crayon)
 library(rhdf5)
-source('utils/utils.R')
-source('pangen/comb_func.R')
-source('analys_func.R')
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/comb_func.R", package = "pannagram"))
+source(system.file("analys_func.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Setup ----
@@ -135,7 +135,7 @@ s.pannagram = 'Pannagram'
 # Initialize an empty list to store all GFF data
 
 
-file.gff.main = paste(path.res, 'gff_main.rds', sep = '')
+file.gff.main = paste0(path.res, 'gff_main.rds')
 if(!file.exists(file.gff.main)){
   gff.main = c()
   
@@ -145,7 +145,7 @@ if(!file.exists(file.gff.main)){
     pokaz('Accession', acc)
     
     # Read the GFF file 
-    gff = read.table(paste(path.annot, acc,'.gff', sep = ''), stringsAsFactors = F)
+    gff = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
     colnames(gff) = c('V1', 'V2', 'type', 'beg', 'end', 'V6', 'strand', 'V8', 'info')
     n.gff = nrow(gff)
     gff = gff[gff$type != 'chromosome',]
@@ -194,11 +194,11 @@ if(!file.exists(file.gff.main)){
 # ***********************************************************************
 # ---- Convert of initial of GFF files ----
 for(acc in accessions){
-  file.raw.gff = paste(path.res, acc,'_pangen_raw.gff', sep = '')
-  file.raw.txt = paste(path.res, acc,'_pangen_raw.txt', sep = '')
+  file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
+  file.raw.txt = paste0(path.res, acc,'_pangen_raw.txt')
   if(file.exists(file.raw.gff) & file.exists(file.raw.txt)) next
   pokaz('Conversion of accession', acc)
-  gff.acc = read.table(paste(path.annot, acc,'.gff', sep = ''), stringsAsFactors = F)
+  gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
   gff.acc.pan = gff2gff(path.cons = path.msa,
                         gff.acc,
                         acc1 = acc,
@@ -224,13 +224,13 @@ for(acc in accessions){
 for(i.chr in 1:5){
   
   pokaz(paste('Chromosome', i.chr))
-  file.chr.gff = paste(path.res, 'chr_', i.chr,'.gff', sep = '')
+  file.chr.gff = paste0(path.res, 'chr_', i.chr,'.gff')
   if(file.exists(file.chr.gff)) next
 
   # Read basic info from the alignment
   s.comb = paste('1', '1', sep = '_')
-  file.msa = paste(path.msa, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
-  # file.msa = paste(path.msa, 'val_common_chr_', i.chr,'_ref_add.h5', sep = '')
+  file.msa = paste0(path.msa, aln.type, s.comb,'_ref_',ref.pref,'.h5')
+  # file.msa = paste0(path.msa, 'val_common_chr_', i.chr,'_ref_add.h5')
   
   groups = h5ls(file.msa)
   # accessions = groups$name[groups$group == gr.accs.b]
@@ -241,7 +241,7 @@ for(i.chr in 1:5){
   
   # ---- Gene Minus and gene Plus ----
 
-  file.gene.blocks = paste(path.res, 'gene_blocks_chr_', i.chr, '.RData', sep = '')
+  file.gene.blocks = paste0(path.res, 'gene_blocks_chr_', i.chr, '.RData')
     
   if(!file.exists(file.gene.blocks)){
     
@@ -252,7 +252,7 @@ for(i.chr in 1:5){
     for(acc in accessions){
       pokaz('Accession', acc)
       # Idx in the pangenome coordinate
-      v = h5read(file.msa, paste(gr.accs.e, acc, sep = ''))
+      v = h5read(file.msa, paste0(gr.accs.e, acc))
       
       v = cbind(v, 1:len.pan)
       v = v[!is.na(v[,1]),]
@@ -514,7 +514,7 @@ for(i.chr in 1:5){
   
   for(acc in accessions){
     # Reading
-    gff.exons = read.table(paste(path.res, acc,'_pangen_raw.txt', sep = ''), 
+    gff.exons = read.table(paste0(path.res, acc,'_pangen_raw.txt'), 
                            stringsAsFactors = F,
                            header = 1)
     gff.exons = gff.exons[gff.exons$V3 == 'CDS',]

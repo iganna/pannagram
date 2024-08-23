@@ -7,7 +7,7 @@ suppressMessages({ library(Biostrings)
   library("optparse")
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 
 
 
@@ -56,7 +56,7 @@ if (!is.null(opt$aln.type)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
-path.seq = paste(path.cons, 'seq/', sep = '')
+path.seq = paste0(path.cons, 'seq/')
 if (!dir.exists(path.seq)) dir.create(path.seq)
 
 
@@ -71,7 +71,7 @@ gr.break.b = '/break'
 # ---- Testing ----
 # 
 # library(rhdf5)
-# source('../../../pannagram/utils/utils.R')
+# source("../../../pannagram/utils/utils.R")
 # path.cons = './'
 # path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
 # ref.pref = '0'
@@ -81,7 +81,7 @@ gr.break.b = '/break'
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-s.pattern <- paste("^", aln.type, ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", aln.type, ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -108,14 +108,14 @@ loop.function <- function(s.comb, echo = T){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste0(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
   
   # File with sequences
-  file.seq = paste(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.seq = paste0(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5')
   if (file.exists(file.seq)) file.remove(file.seq)
   h5createFile(file.seq)
   h5createGroup(file.seq, gr.accs.e)
@@ -125,7 +125,7 @@ loop.function <- function(s.comb, echo = T){
   idx.negative = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.comb, paste0(gr.accs.e, acc))
     v.na = is.na(v)
     v[v.na] = 0
     if(is.null(mx.consensus)){
@@ -133,7 +133,7 @@ loop.function <- function(s.comb, echo = T){
     }
     
     q.chr = strsplit(s.comb, '_')[[1]][1]
-    genome = readFastaMy(paste(path.chromosomes, acc, '_chr', q.chr, '.fasta', sep = ''))
+    genome = readFastaMy(paste0(path.chromosomes, acc, '_chr', q.chr, '.fasta'))
     genome = seq2nt(genome)
     genome = toupper(genome)
   
@@ -154,7 +154,7 @@ loop.function <- function(s.comb, echo = T){
     }
     
     suppressMessages({
-      h5write(s, file.seq, paste(gr.accs.e, acc, sep = ''))
+      h5write(s, file.seq, paste0(gr.accs.e, acc))
     })
     
     rmSafe(v)
@@ -173,7 +173,7 @@ loop.function <- function(s.comb, echo = T){
   # ---- Consensus sequence ----
   pokaz('Prepare consensus fasta-sequence')
   i.chr = comb2ref(s.comb)
-  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  file.seq.cons = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
   
   
   n = nrow(mx.consensus)
@@ -189,7 +189,7 @@ loop.function <- function(s.comb, echo = T){
   s.cons = paste0(s.cons, collapse = '')
   
   pokaz('Saving consensus sequence...')
-  names(s.cons) = paste('PanGen_Chr', i.chr, sep = '')
+  names(s.cons) = paste0('PanGen_Chr', i.chr)
   writeFastaMy(s.cons, file.seq.cons)
   
   rmSafe(mx.consensus)

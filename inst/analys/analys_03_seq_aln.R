@@ -6,7 +6,7 @@ suppressMessages({ library(Biostrings)
   library("optparse")
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 
 
 
@@ -47,9 +47,9 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
-path.seq = paste(path.cons, 'seq/', sep = '')
+path.seq = paste0(path.cons, 'seq/')
 
-path.aln = paste(path.cons, 'aln_pangen/', sep = '')
+path.aln = paste0(path.cons, 'aln_pangen/')
 if (!dir.exists(path.aln)) dir.create(path.aln)
 
 # Alignment prefix
@@ -70,7 +70,7 @@ gr.break.b = '/break'
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 
-s.pattern <- paste("^", 'msa_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", 'msa_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("msa_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -91,17 +91,17 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.seq = paste(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.seq = paste0(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.seq)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
 
-  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.fasta', sep = '')
+  file.aln = paste0(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.fasta')
 
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.seq, paste0(gr.accs.e, acc))
     v = paste0(v, collapse='')
     names(v) = acc
     writeFastaMy(v, file.aln, append = T)
@@ -112,11 +112,11 @@ for(s.comb in pref.combinations){
 
   
   # ---- MAF file ----
-  file.aln = paste(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.maf', sep = '')
+  file.aln = paste0(path.aln, 'aln_', s.comb,'_ref_',ref.pref,'_pangen.maf')
 
   # Add pangen line
   i.chr = comb2ref(s.comb)
-  file.seq.cons = paste(path.seq, 'seq_cons_', i.chr, '.fasta', sep = '')
+  file.seq.cons = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
   s.pangen = readFastaMy(file.seq.cons)
   len.pangen = nchar(s.pangen)
   
@@ -151,7 +151,7 @@ for(s.comb in pref.combinations){
   
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.seq, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.seq, paste0(gr.accs.e, acc))
     v = paste0(v, collapse='')
     
     write(paste('s ',

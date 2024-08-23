@@ -17,11 +17,11 @@
 extractChrByFormat <- function(gff, s.chr){
   
   n.gff = nrow(gff)
-  matched.chr.format <- grep(paste(".*",s.chr,"\\d+", sep = ''), gff$V1, value = TRUE)
+  matched.chr.format <- grep(paste0(".*",s.chr,"\\d+"), gff$V1, value = TRUE)
   if(length(matched.chr.format) < 0.7 * n.gff) stop('Check the chromosome formats (#1)')
   
   # Cheromosome ID
-  idx.chr.format <- grep(paste(".*",s.chr,"\\d+", sep = ''), gff$V1, value = F)
+  idx.chr.format <- grep(paste0(".*",s.chr,"\\d+"), gff$V1, value = F)
   gff = gff[idx.chr.format,]
   if(nrow(gff) < 0.7 * n.gff) stop('Check the chromosome formats (#2)')
   
@@ -90,11 +90,11 @@ gff2gff <- function(path.cons,
   # }
   
   colnames.1.to.9 = colnames(gff1)[1:9]
-  colnames(gff1)[1:9] = paste('V', 1:9, sep = '')
+  colnames(gff1)[1:9] = paste0('V', 1:9)
   # Prepare new annotation
   gff2 = gff1
   gff2$len.init = gff2$V5 - gff2$V4 + 1
-  gff2$V9 = paste(gff2$V9, ';len_init=', gff2$len.init, sep='')
+  gff2$V9 = paste0(gff2$V9, ';len_init=', gff2$len.init)
   gff2$V2 = 'pannagram'
   gff2$V4 = -1
   gff2$V5 = -1
@@ -110,17 +110,17 @@ gff2gff <- function(path.cons,
     # ---
     
     if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5', sep = '')
+    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5')
     
     if(tolower(acc1) %in% tolower(pangenome.names)){
-      v = h5read(file.msa, paste(gr.accs.e, acc2, sep = ''))
+      v = h5read(file.msa, paste0(gr.accs.e, acc2))
       v = cbind(1:length(v), v)
     } else if (tolower(acc2) %in% tolower(pangenome.names)){
-      v = h5read(file.msa, paste(gr.accs.e, acc1, sep = ''))
+      v = h5read(file.msa, paste0(gr.accs.e, acc1))
       v = cbind(v, 1:length(v))
     } else {  # Two different accessions
-      v = cbind(h5read(file.msa, paste(gr.accs.e, acc1, sep = '')),
-                h5read(file.msa, paste(gr.accs.e, acc2, sep = '')))  
+      v = cbind(h5read(file.msa, paste0(gr.accs.e, acc1)),
+                h5read(file.msa, paste0(gr.accs.e, acc2)))  
     }
     
     max.chr.len = max(nrow(v), max(abs(v[!is.na(v)])))
@@ -170,7 +170,7 @@ gff2gff <- function(path.cons,
   gff2.remain$V7[idx.neg] = s.strand[gff2.remain$V7[idx.neg]]
   
   gff2.remain$len.new = gff2.remain$V5 - gff2.remain$V4 + 1
-  gff2.remain$V9 = paste(gff2.remain$V9, ';len_new=', gff2.remain$len.new, sep='')  # add new length
+  gff2.remain$V9 = paste0(gff2.remain$V9, ';len_new=', gff2.remain$len.new)  # add new length
   gff2.remain$V9 = paste(gff2.remain$V9, ';len_ratio=', 
                          round(gff2.remain$len.new / gff2.remain$len.init, 2), sep='')  # add new length
   
@@ -180,7 +180,6 @@ gff2gff <- function(path.cons,
 }
 
 
-#' ----------------------------------------------------------------------
 #' Convert BED Annotations Using MSA Data
 #'
 #' This function utilizes Multiple Sequence Alignment (MSA) data to convert BED annotations
@@ -243,7 +242,7 @@ bed2bed <- function(path.cons,
   return(bed2)
 }
 
-#' ----------------------------------------------------------------------
+
 pos2pos <- function(path.cons, 
                     acc1, acc2,
                     pos1, 
@@ -278,7 +277,7 @@ pos2pos <- function(path.cons,
   return(pos2)
 }
 
-#' ----------------------------------------------------------------------
+
 plotMsaFragment <- function(path.cons, 
                        acc,
                        chr,
@@ -354,8 +353,8 @@ getMxFragment <- function(path.cons,
     pos1.acc = pos1
     pos2.acc = pos2
   } else {
-    file.msa = paste(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
-    v.acc = h5read(file.msa, paste(gr.accs.e, acc, sep = ''))
+    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
+    v.acc = h5read(file.msa, paste0(gr.accs.e, acc))
     pos1.acc = which(v.acc == pos1)
     pos2.acc = which(v.acc == pos2)  
   }
@@ -364,7 +363,7 @@ getMxFragment <- function(path.cons,
   if(length(pos2.acc) == 0) stop('Second position doesn’t exist')
   
   # Get Alignment
-  file.seq.msa = paste(path.cons, 'seq_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5', sep = '')
+  file.seq.msa = paste0(path.cons, 'seq_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
   
   h5ls(file.seq.msa)
   
@@ -381,7 +380,7 @@ getMxFragment <- function(path.cons,
   for(i.acc in 1:length(accessions)){
     # pokaz(accessions[i.acc])
     if(echo) cat('.')
-    s.acc = h5read(file.seq.msa, paste(gr.accs.e, accessions[i.acc], sep = ''))
+    s.acc = h5read(file.seq.msa, paste0(gr.accs.e, accessions[i.acc]))
     
     # if(length(s.acc) != length(v.acc))  stop('MSA and seq do not match')
     seq.mx[i.acc,] = s.acc[pos1.acc:pos2.acc]
@@ -393,7 +392,7 @@ getMxFragment <- function(path.cons,
 }
 
 
-#' ----------------------------------------------------------------------
+
 #' Fill a vector with 1 corresponding to Begin and End positions in GFF Annotations
 #' 
 #' @param len.acc Integer, length of the vector.
@@ -427,7 +426,7 @@ fillBegEnd <- function(len.acc, gff){
 }
 
 
-#' ----------------------------------------------------------------------
+
 #' Identify Included and Overlapping Annotations in GFF Data
 #'
 #' This function processes a GFF data frame to find and distinguish between 'include' relationships 
@@ -491,7 +490,7 @@ findIncludeAndOverlap <- function(gff, echo = F){
               gff.cut = gff.cut))
 }
 
-#' ----------------------------------------------------------------------
+
 #' Check for Translocations in Numeric Vector
 #'
 #' Evaluates a numeric vector for translocations by identifying repeated 
@@ -522,7 +521,7 @@ checkTranslocations <- function(g, raise.error = F){
 
 
 
-#' ----------------------------------------------------------------------
+
 #' 
 getGeneBlocks <- function(g.tmp, len.pan, v.acc){
   
