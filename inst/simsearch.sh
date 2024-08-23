@@ -133,17 +133,13 @@ fi
 #            MAIN
 # ----------------------------------------------------------------------------
 
-# ---------------------------------------------
 # Fix the output file result
-if [[ "${output_pref}" == */ ]]; then
-    if [ ! -d "${output_pref}" ]; then
-      mkdir -p "${output_pref}"
-    fi
-
-    output_pref="${output_pref}simsearch"
-    pokaz_message "Prefex for the output file was changed to ${output_pref}"
-  
+output_pref=$(add_symbol_if_missing "$output_pref" "/")
+if [ ! -d "${output_pref}" ]; then
+    mkdir -p "${output_pref}"
 fi
+output_pref="${output_pref}simsearch"
+pokaz_message "Prefex for the output file was changed to ${output_pref}"
 
 # ---------------------------------------------
 # Files for the blast
