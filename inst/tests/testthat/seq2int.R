@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 
 test_that("seq2nt: Couldn't convert string to vector of nucleotides", {

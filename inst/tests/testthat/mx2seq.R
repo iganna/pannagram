@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 test_that("mx2seq: Couldn't correctly convert nucleotide matrix to sequences without gaps", {
   mx <- matrix(c('A', 'C', 'G', 'T', '-', 'C', 'T', 'T', 'A', '-', 'G', 'G', 'A', 'C', '-', 'T',

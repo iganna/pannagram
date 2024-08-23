@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 create_temp_fasta <- function() {
   tempfile(fileext = ".fasta")

@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 test_that("readFastaMy: Couldn't correctly read FASTA file", {
   test_file <- tempfile(fileext = ".fasta")

@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 
 test_that("mx2aln: Couldn't correctly convert nucleotide matrix to sequences", {

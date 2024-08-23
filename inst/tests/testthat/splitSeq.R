@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 test_that("splitSeq: Could't split sequence into chunks of specified length", {
   seq <- "1111222233334444"

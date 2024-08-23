@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 test_that("nt2seq: Converts vector of nucleotides to string", {
   result <- nt2seq(c("A", "T", "G", "C"))

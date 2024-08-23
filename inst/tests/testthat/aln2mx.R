@@ -1,5 +1,5 @@
 library(testthat)
-source("../../utils/utils.R")
+source(system.file("utils", "utils.R", package = "pannagram"))
 
 
 test_that("aln2mx: Couldn't correctly convert aligned sequences to nucleotide matrix", {
