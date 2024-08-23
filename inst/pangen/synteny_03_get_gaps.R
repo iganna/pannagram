@@ -6,8 +6,8 @@ suppressMessages({
   library(optparse)
 })
 
-source("utils/utils.R")
-source("pangen/synteny_func.R")
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/synteny_func.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -43,7 +43,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -110,17 +110,17 @@ loop.function <- function(f.blast,
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
+  base.fas.fw = readFastaMy(paste0(path.chr, base.file))
   base.fas.fw = seq2nt(base.fas.fw)
   base.fas.bw = revCompl(base.fas.fw)
   base.len = length(base.fas.bw)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
   
   # Read query sequences
-  query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
+  query.file = paste0(acc, '_chr',query.chr, '.fasta')
   pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
   
-  query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
+  query.fas.chr = readFastaMy(paste0(path.chr, query.file))
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
@@ -194,7 +194,7 @@ loop.function <- function(f.blast,
   
   # Within non-occupied positions find those, which can be
   
-  pref.comparisson = paste('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_', sep = '')
+  pref.comparisson = paste0('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_')
   # Query-file
   file.gap.query = paste0(path.gaps, pref.comparisson, 'query.fasta', collapse = '')
   # Base file
@@ -205,7 +205,7 @@ loop.function <- function(f.blast,
   for(irow in 1:(nrow(x)-1)){
     
     # Common file name
-    pref.gap = paste('gap_', irow, '_', irow + 1, '_', sep = '')
+    pref.gap = paste0('gap_', irow, '_', irow + 1, '_')
     
     # If from another block - don't consider the gap
     if(x$bl[irow] != x$bl[irow+1]) next
@@ -345,7 +345,7 @@ loop.function <- function(f.blast,
         irow.next = x$id[min(irow.next)]
       }
       
-      pref.gap = paste('connect_', irow.prev, '_', irow.next, '_', sep = '')
+      pref.gap = paste0('connect_', irow.prev, '_', irow.next, '_')
       
       # Define Chunks
       s.q = query.fas.chr[pos.gap.q]
@@ -413,7 +413,7 @@ loop.function <- function(f.blast,
         irow.next = x$id[min(irow.next)]
       }
       
-      pref.gap = paste('connect_', irow.prev, '_', irow.next, '_', sep = '')
+      pref.gap = paste0('connect_', irow.prev, '_', irow.next, '_')
       
       
       s.b = base.fas.fw[pos.gap.b]
@@ -476,8 +476,8 @@ pokaz('Done.', file=file.log.main, echo=echo.main)
 # ---- Manual testing ----
 
 if(F){
-  source('../pangen/synteny_func.R')
-  source('../utils/utils.R')
+source(system.file("pangen/synteny_func.R", package = "pannagram"))
+source(system.file("utils/utils.R", package = "pannagram"))
 
   # file.ws = "tmp_workspace.RData"
   # all.local.objects <- ls()

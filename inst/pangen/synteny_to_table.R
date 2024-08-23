@@ -1,8 +1,8 @@
 # GAP, SNP, DIV
 
 
-source("utils/utils.R")
-source('visualisation/dotplot.R')
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("visualisation/dotplot.R", package = "pannagram"))
 
 
 
@@ -130,9 +130,9 @@ diff.tab$type[(diff.tab$type == 'HDR') &(diff.tab$len.q*diff.tab$len.r == 0) & (
 
 if(F){
   library(ggplot2)
-  source("../utils/utils.R")
-  source('../visualisation/dotplot.R')
-  source('../visualisation/orfplot.R')
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("visualisation/dotplot.R", package = "pannagram"))
+source(system.file("visualisation/orfplot.R", package = "pannagram"))
 }
 
 

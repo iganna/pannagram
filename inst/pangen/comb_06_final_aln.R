@@ -5,8 +5,8 @@ library(rhdf5)
 library('foreach')
 library(doParallel)
 library("optparse")
-source('utils/utils.R')
-source('pangen/comb_func_mafft_refine.R')
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
 })
 
 # ***********************************************************************
@@ -39,7 +39,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -73,7 +73,7 @@ max.block.elemnt = 3 * 10^ 6
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pokaz('Path', path.cons, file=file.log.main, echo=echo.main)
 pokaz('Files', files, file=file.log.main, echo=echo.main)
@@ -96,12 +96,12 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
-  file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
-  base.len = length(h5read(file.comb, paste(gr.accs.e, accessions[1], sep = '')))
+  base.len = length(h5read(file.comb, paste0(gr.accs.e, accessions[1])))
   
   
   # n.rows.block = round(max.block.elemnt / n.acc)
@@ -110,7 +110,7 @@ for(s.comb in pref.combinations){
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
   mafft.res = data.frame(file = list.files(path = path.mafft.out, 
-                                           pattern = paste('^', pref, '.*_flank_', n.flank, '_aligned.fasta$', sep='')))
+                                           pattern = paste0('^', pref, '.*_flank_', n.flank, '_aligned.fasta$')))
   
   
   mafft.res$comb = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]])
@@ -133,7 +133,7 @@ for(s.comb in pref.combinations){
     
 
     # pokaz('Aln', i, file=file.log.main, echo=echo.main)
-    file.aln = paste(path.mafft.out, mafft.res$file[i], sep = '')
+    file.aln = paste0(path.mafft.out, mafft.res$file[i])
     
     if(!file.exists(file.aln)) {
       idx.skip = c(idx.skip, i)
@@ -216,7 +216,7 @@ for(s.comb in pref.combinations){
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
-  msa.res = readRDS(paste(path.cons, 'aln_short_', s.comb, '.rds', sep = ''))
+  msa.res = readRDS(paste0(path.cons, 'aln_short_', s.comb, '.rds'))
   msa.res$len = unlist(lapply(msa.res$aln, nrow))
   msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
   # if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
@@ -224,7 +224,7 @@ for(s.comb in pref.combinations){
 
   # ---- Singletons alignments ----
   pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
-  single.res = readRDS(paste(path.cons, 'singletons_', s.comb, '.rds', sep = ''))
+  single.res = readRDS(paste0(path.cons, 'singletons_', s.comb, '.rds'))
   single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
   single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
   # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
@@ -313,7 +313,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.res = paste0(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
@@ -324,7 +324,7 @@ for(s.comb in pref.combinations){
   pos.nonzero = fp.main != 0
   for(acc in accessions){
     pokaz('Accession', acc, file=file.log.main, echo=echo.main)
-    v = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v = h5read(file.comb, paste0(gr.accs.e, acc))
     v.aln = rep(0, base.len.aln)
     v.aln[fp.main[pos.nonzero]] = v[pos.nonzero]
     # v.aln[fp.main[pos.remain]] = v[pos.remain]
@@ -365,7 +365,7 @@ for(s.comb in pref.combinations){
     # Maybe something was overlapped by accident
     
     suppressMessages({
-      h5write(v.aln, file.res, paste(gr.accs.e, acc, sep = ''))
+      h5write(v.aln, file.res, paste0(gr.accs.e, acc))
       
       stat.comb <- rbind(stat.comb, 
                          data.frame(comb = acc, coverage = sum(v.aln != 0)))
@@ -380,7 +380,7 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste(path.cons, 'stat', s.comb, '_', ref.pref,'.rds', sep = ''))
+saveRDS(stat.comb, paste0(path.cons, 'stat', s.comb, '_', ref.pref,'.rds'))
 
 
 # ***********************************************************************
@@ -401,7 +401,7 @@ if(F){
   accessions = groups$name[groups$group == gr.accs.b]
   v = c()
   for(acc in accessions){
-    v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v.acc = h5read(file.comb, paste0(gr.accs.e, acc))
     v = cbind(v, v.acc)
     print(acc)
     print(sum((v.acc != 0) & (!is.na(v.acc))))
@@ -410,7 +410,7 @@ if(F){
   # ********************
   # Tom-Greg
   library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
+source(system.file("pannagram/utils/utils.R", package = "pannagram"))
   path.cons = './'
   path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
   ref.pref = '0'
@@ -427,7 +427,7 @@ if(F){
   # ********************
   # Rhizobia
   library(rhdf5)
-  source('../../../arabidopsis/pacbio/pannagram/utils/utils.R')
+source(system.file("utils/utils.R", package = "pannagram"))
   path.cons = './'
   path.chromosomes = '../chromosomes/'
   ref.pref = 'GR3013_prokka'

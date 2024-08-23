@@ -8,7 +8,7 @@ suppressMessages({
   library(rhdf5)
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 # source("pangen/synteny_funcs.R")
 
 # ***********************************************************************
@@ -37,7 +37,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -70,7 +70,7 @@ if(F){
 }
 
 
-s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
@@ -106,7 +106,7 @@ loop.function <- function(s.comb,
   
   # --- --- --- --- --- --- --- --- --- --- ---
   
-  file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -119,7 +119,7 @@ loop.function <- function(s.comb,
     
     pokaz('Accession', acc, 'combination', s.comb, file=file.log.loop, echo=echo.loop)
     
-    v.init = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+    v.init = h5read(file.comb, paste0(gr.accs.e, acc))
     if(length(v.init) == 0) {
       stop(sprintf("Skipping empty accession: %s\n", acc))
     }
@@ -150,7 +150,7 @@ loop.function <- function(s.comb,
     }
     
     suppressMessages({
-      h5write(v.block, file.comb, paste(gr.blocks, acc, sep = ''))
+      h5write(v.block, file.comb, paste0(gr.blocks, acc))
     })
 
     # v = v[order(v[,1]),]  # not necessary
@@ -207,7 +207,7 @@ loop.function <- function(s.comb,
     
   }
   
-  file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
+  file.breaks = paste0(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds')
   saveRDS(idx.break, file.breaks)
   
   rmSafe(idx.break)

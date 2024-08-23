@@ -6,9 +6,9 @@ suppressMessages({
 })
 
 
-source("utils/utils.R")
-source("pangen/synteny_func.R")
-source("pangen/synteny_func_gap.R")
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/synteny_func.R", package = "pannagram"))
+source(system.file("pangen/synteny_func_gap.R", package = "pannagram"))
 # source("visualisation/visualisation.R")
 
 # pokazStage('Step 6. Alignment-2. Fill the gaps between synteny blocks')
@@ -43,7 +43,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -124,16 +124,16 @@ loop.function <- function(f.maj,
   # # Read reference sequences
   # base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
   # pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  # base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
+  # base.fas.fw = readFastaMy(paste0(path.chr, base.file))
   # base.fas.fw = seq2nt(base.fas.fw)
   # base.fas.bw = revCompl(base.fas.fw)
   # base.len = length(base.fas.bw)
   # 
   # # Read query sequences
-  # query.file = paste(acc, '_chr',query.chr, '.fasta', sep = '')
+  # query.file = paste0(acc, '_chr',query.chr, '.fasta')
   # pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
   # 
-  # query.fas.chr = readFastaMy(paste(path.chr, query.file, sep = ''))
+  # query.fas.chr = readFastaMy(paste0(path.chr, query.file))
   # query.fas.chr = seq2nt(query.fas.chr)
   # query.len = length(query.fas.chr)
   

@@ -14,8 +14,8 @@ glueZero_old <- function(x){
     x[ipos, 'V3'] <- x[idx, 'V3']
     x[ipos, 'V5'] <- x[idx, 'V5']
     x[ipos, 'V7'] <- x[ipos, 'V7'] + x[idx, 'V7']
-    x[ipos, 'V8'] <- paste(x[ipos, 'V8'], x[idx, 'V8'], sep = '')
-    x[ipos, 'V9'] <- paste(x[ipos, 'V9'], x[idx, 'V9'], sep = '')
+    x[ipos, 'V8'] <- paste0(x[ipos, 'V8'], x[idx, 'V8'])
+    x[ipos, 'V9'] <- paste0(x[ipos, 'V9'], x[idx, 'V9'])
     x <- x[-idx,]
   }
   
@@ -801,7 +801,7 @@ pathDownMinus <- function(x.tmp){
 #' This function identifies the optimal alignment path when base and query directions are opposite (Minus). 
 #' It first inverts the base positions and then utilizes the `pathUpPlus` function to determine the 
 #' best alignment path.
-#'  
+
 #' @param x.tmp A data frame containing alignment information.
 #'
 #' @return An integer vector indicating the rows of x.tmp, which form the best alignment path.

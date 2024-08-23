@@ -14,7 +14,7 @@ suppressMessages({
   library(rhdf5)
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 # source("pangen/synteny_funcs.R")
 
 
@@ -48,7 +48,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -113,11 +113,11 @@ loop.function <- function(s.comb,
   }
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste(path.cons, 'comb_',s.comb,'_ref_',ref0,'.h5', sep = '')
-  file.comb1 = paste(path.cons, 'comb_',s.comb,'_ref_',ref1,'.h5', sep = '')
+  file.comb0 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref0,'.h5')
+  file.comb1 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref1,'.h5')
   
   # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste(path.cons, 'res_',s.comb,'_ref_',ref0,'.h5', sep = '')
+  file.res = paste0(path.cons, 'res_',s.comb,'_ref_',ref0,'.h5')
   if(file.exists(file.res)){
     file.comb0 = file.res
   } else {
@@ -127,7 +127,7 @@ loop.function <- function(s.comb,
   }
   
   # Get the corresponsing function between two references
-  s = paste(gr.accs.e, '', ref1, sep = '')
+  s = paste0(gr.accs.e, '', ref1)
   
   f01 <- h5read(file.comb0, s)
   base.len = length(f01)
@@ -146,7 +146,7 @@ loop.function <- function(s.comb,
     # if(acc == ref1) next
     
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
-    s = paste('/',gr.accs.e, acc, sep = '')
+    s = paste0('/',gr.accs.e, acc)
     
     # Data from the main reference
     v0 = h5read(file.comb0, s)
@@ -237,7 +237,7 @@ pokaz('Done.',
 # ---- Manual testing ----
 
 if(F){
-  source('../../../pannagram/utils.R')
+source(system.file("utils/utils.R", package = "pannagram"))
   path.cons = './'
   ref0 = '0'
   ref1 = '6046-v1.1'

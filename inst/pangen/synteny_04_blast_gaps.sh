@@ -1,16 +1,16 @@
 #!/bin/bash
-
+INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 # ----------------------------------------------------------------------------
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source utils/chunk_error_control.sh
+source $INSTALLED_PATH/utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
 # ----------------------------------------------------------------------------
 
-source utils/utils_bash.sh
+source $INSTALLED_PATH/utils/utils_bash.sh
 
 print_usage() {
   echo "-path_gaps"

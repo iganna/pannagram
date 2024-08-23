@@ -6,7 +6,7 @@ suppressMessages({
   library(doParallel)
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -45,7 +45,7 @@ opt = parse_args(opt_parser);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -134,7 +134,7 @@ loop.function <- function(i.comb,
     invisible(file.create(file.log.loop))
   }
   
-  #' --- --- --- --- --- --- --- --- --- --- ---
+  
   
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
   

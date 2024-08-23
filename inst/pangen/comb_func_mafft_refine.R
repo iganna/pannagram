@@ -306,7 +306,7 @@ refineMafft <- function(mx, n.flank = 30){
   
 }
 
-#' ---------------------------------------------------------------------
+
 #' Mask Unaligned Blocks in The Alignment Matrix
 #'
 #' This function identifies a masks unaligned or poorly aligned blocks in
@@ -397,7 +397,7 @@ maskUnaligned <- function(mx, sim.cutoff = 0.2){
 }
 
 
-#' ---------------------------------------------------------------------
+
 #' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
 #'
 #' This function computes a profile matrix showing the count of each nucleotide

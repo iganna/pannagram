@@ -10,7 +10,7 @@ suppressMessages({
   # library(Biostrings)
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 # source("synteny_funcs.R")
 
 # pokazStage('Step 10. Prepare sequences for MAFFT')
@@ -45,7 +45,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -78,7 +78,7 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste("^", 'res_', ".*", '_ref_', ref.pref, sep = '')
+s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pokaz('Files', files, file=file.log.main, echo=echo.main)
 pref.combinations = gsub("res_", "", files)
@@ -108,7 +108,7 @@ for(s.comb in pref.combinations){
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
-  file.comb = paste(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5', sep = '')
+  file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -117,14 +117,14 @@ for(s.comb in pref.combinations){
   # # For testing
   # v = c()
   # for(acc in accessions){
-  #   v.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
+  #   v.acc = h5read(file.comb, paste0(gr.accs.e, acc))
   #   v = cbind(v, v.acc)
   # }
   
   # ---- Merge coverages ----
-  file.breaks = paste(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds', sep = '')
+  file.breaks = paste0(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds')
   idx.break = readRDS(file.breaks)
-  # idx.break = idx.break[idx.break$acc != paste('', ref.pref, sep = ''),]  # Remove the reference correspondence
+  # idx.break = idx.break[idx.break$acc != paste0('', ref.pref),]  # Remove the reference correspondence
   
   
   
@@ -170,8 +170,8 @@ for(s.comb in pref.combinations){
     #   v.end = cbind(v.end, idx.break$end)
     #   next
     # }
-    x.acc = h5read(file.comb, paste(gr.accs.e, acc, sep = ''))
-    blocks.acc = h5read(file.comb, paste(gr.blocks, acc, sep = ''))
+    x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
+    blocks.acc = h5read(file.comb, paste0(gr.blocks, acc))
     
     # ### ---- Find prev and next ----
     # n = nrow(x.acc)
@@ -394,11 +394,11 @@ for(s.comb in pref.combinations){
   saveRDS(list(aln = res.msa,
                seqs = aln.seqs[idx.short], 
                pos.idx = aln.pos[idx.short],
-               ref.pos = idx.break[idx.short, c('beg', 'end')]), paste(path.cons, 'aln_short_',s.comb,'.rds', sep = ''), compress = F)
+               ref.pos = idx.break[idx.short, c('beg', 'end')]), paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
   
   saveRDS(list(pos.beg = v.beg[idx.singletons,],
                pos.end = v.end[idx.singletons,],
-               ref.pos = idx.break[idx.singletons, c('beg', 'end')]), paste(path.cons, 'singletons_',s.comb,'.rds', sep = ''), compress = F)
+               ref.pos = idx.break[idx.singletons, c('beg', 'end')]), paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
   # ---- Create files for mafft ----
   
@@ -415,7 +415,7 @@ for(s.comb in pref.combinations){
       pos.idx <- aln.pos[[i.tmp]]
       s.aln <- s.break[[i.tmp]]
       
-      f.pref <- paste(path.mafft.in, s.aln, '_flank_', n.flank, '.fasta', sep = '')
+      f.pref <- paste0(path.mafft.in, s.aln, '_flank_', n.flank, '.fasta')
       
       writeFastaMy(seqs, f.pref)
     }
@@ -449,14 +449,14 @@ warnings()
 
 if(F){
   library(rhdf5)
-  source('../../../pannagram/utils/utils.R')
+source(system.file("utils/utils.R", package = "pannagram"))
   path.cons = './'
   path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
   ref.pref = '0'
   
   
   library(rhdf5)
-  source('/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/pannagram/utils/utils.R')
+source(system.file("/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/pannagram/utils/utils.R", package = "pannagram"))
   path.cons = '/Volumes/Samsung_T5/vienn/alignment/new/consensus/'
   path.chromosomes = '/Volumes/Samsung_T5/vienn/pb_chromosomes/'
   ref.pref = '0'

@@ -1,8 +1,8 @@
 
 ### imports
-source("visualisation/visualisation.R")
-source("pangen/synteny_func_plot.R")
-source("utils/utils.R")
+source(system.file("visualisation/visualisation.R", package = "pannagram"))
+source(system.file("pangen/synteny_func_plot.R", package = "pannagram"))
+source(system.file("utils/utils.R", package = "pannagram"))
 
 suppressMessages({
   require("optparse")
@@ -62,7 +62,7 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 # Logging
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 if (
     is.null(opt$ref) ||

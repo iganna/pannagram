@@ -6,7 +6,7 @@ suppressMessages({
   library(doParallel)
 })
 
-source("utils/utils.R")
+source(system.file("utils/utils.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -20,7 +20,7 @@ option_list <- list(
               help = "Number of chromosomes", metavar = "numeric"),
   make_option(c("--path.in"), type = "character", default = NULL, 
               help = "Path to the input directory", metavar = "character"),
-  make_option(c("--path.out"), type = "character", default = NULL, 
+  make_option(c("--path.orf"), type = "character", default = NULL, 
               help = "Path to the output directory", metavar = "character"),
   make_option(c("--sort"), type = "logical", default = FALSE, 
               help = "Sort chromosomes by lengths or not", metavar = "logical"),
@@ -43,7 +43,7 @@ opt <- parse_args(opt_parser)
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of other parameters ----
 
@@ -61,7 +61,7 @@ if(all.chr){
 pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 
 # Accessions to analyse
-acc.anal <- opt$accessions
+acc.anal <- opt$acc.anal
 if(!is.null(acc.anal)){
   if(acc.anal == 'NULL'){
     acc.anal <- NULL
@@ -79,8 +79,8 @@ if(!is.null(acc.anal)){
 
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))
-path.chr   <- ifelse(!is.null(opt$path.out), opt$path.out, stop("The chromosome-out path 'path.out' must be specified!"))
-if(!dir.exists(path.chr)) dir.create(path.chr)
+path.orf   <- ifelse(!is.null(opt$path.orf), opt$path.orf, stop("The chromosome-out path 'path.orf' must be specified!"))
+if(!dir.exists(path.orf)) dir.create(path.orf)
 
 # Decide whether to sort by length based on provided input or default to FALSE
 sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
@@ -114,7 +114,7 @@ query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name
 
 # Optional: Filter based on a list of accession numbers, if provided
 if(!is.null(acc.anal)){
-  # acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
+  acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
   # pokaz('Accessions in the folder', query.name, file=file.log.main, echo=echo.main)
   # pokaz('Accessions in the filtration file', acc.anal, file=file.log.main, echo=echo.main)
   query.name <- query.name[query.name$acc %in% acc.anal,,drop=F]
@@ -143,23 +143,8 @@ loop.function <- function(i.acc,
     invisible(file.create(file.log.loop))
   }
   
-  #' --- --- --- --- --- --- --- --- --- --- ---
   
-  # Don't run if the chromosomal files exist
-  if(!all.chr){  # if the chromosome number is an important parameter, not ALL_CHROMOSOMES
-    n.exist = 0
-    for(i.chr in 1:n.chr){
-      file.out = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
-      if(file.exists(file.out)){
-        n.exist = n.exist + 1
-      }
-    }
-    # pokaz(n.exist, n.chr,
-    #       file=file.log.loop, echo=echo.loop)
-    if(n.exist == n.chr){  # If chromosomal files are already formed
-      return(NULL)
-    }
-  }
+
  
   # ***********************************
   # When no chromosome-files were produced before
@@ -179,42 +164,26 @@ loop.function <- function(i.acc,
     return(NULL)
   }
   
-  # Chromosomal lengths
-  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
-  df.chr.lengths = data.frame(acc = acc,
-                              chr = 1:length(q.fasta),
-                              len = nchar(q.fasta), 
-                              name = gsub(" ", "_", names(q.fasta)))
-  df.chr.lengths = df.chr.lengths[1:n.chr,]
-  write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
-  
-  
-  if(sort.by.lengths){
-    q.len = sapply(q.fasta, nchar)
-    pokaz('Lengths', q.len)
-    q.fasta = q.fasta[order(-q.len)]
-  }
-  
-  pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed',
-                 file=file.log.loop, echo=echo.loop)
-  
-  if(length(q.fasta) > n.chr){
-    pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed',
-                   file=file.log.loop, echo=echo.loop)
-  }
-  
+
   for(i.chr in 1:n.chr){
     # acc.s = gsub('_', '-', acc)
     acc.s = acc
-    file.out = paste0(path.chr, acc.s, '_chr', i.chr, '.fasta', collapse = '')
-    if(file.exists(file.out)){
-      next
-    }
+    file.out = paste0(path.orf, acc.s, '_chr', i.chr, '_orf.fasta', collapse = '')
+
     pokaz('File out:', file.out,
                    file=file.log.loop, echo=echo.loop)
     
-    s = toupper(q.fasta[i.chr])
-    writeFastaMy(s, file=file.out, append=F, seq.names = paste(acc.s, '_Chr', i.chr , sep=''))
+    s = seq2nt(q.fasta[i.chr])
+    s = s[s != 'n']
+    s = s[s != 'N']
+    s = nt2seq(s) 
+    
+    orf.res = orfFinder(s)
+    
+    s.orf = orf.res$orf
+    names(s.orf) = paste(acc.s, '_Chr', i.chr, names(s.orf), sep='')
+    
+    writeFastaMy(s.orf, file=file.out, append=F)
   }
   
   rm(q.fasta)
@@ -258,9 +227,9 @@ pokaz('Done.',
 # ***********************************************************************
 # ---- Manual testing ----
 
-# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.out ../pb_chromosomes/
-# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.out ../ly_chromosomes/    
-# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.out ../rhiz_chromosomes/ -s T
+# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.orf ../pb_chromosomes/
+# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.orf ../ly_chromosomes/    
+# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.orf ../rhiz_chromosomes/ -s T
 
 
 

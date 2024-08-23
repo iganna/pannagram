@@ -13,8 +13,8 @@ suppressMessages({
   library(rhdf5)
 })
 
-source("utils/utils.R")
-source("pangen/synteny_func.R")
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("pangen/synteny_func.R", package = "pannagram"))
 
 # pokazStage('Step 7. Combine reference-based alignments by chromosomes')
 
@@ -53,7 +53,7 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # ---- Logging ----
 
-source('utils/chunk_logging.R') # a common code for all R logging
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- Values of parameters ----
 
@@ -65,12 +65,12 @@ num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) system(paste('mkdir ', path.cons, sep = ''))
+if(!dir.exists(path.cons)) system(paste0('mkdir ', path.cons))
 
 # File with chromosomal lengths, which should be in the consensus dir
 path.chr.len = ifelse(!is.null(opt$path.chr.len), opt$path.chr.len, 'chr_len/')
-path.chr.len = paste(path.cons, path.chr.len, sep = '')
-if(!dir.exists(path.chr.len)) system(paste('mkdir ', path.chr.len, sep = ''))
+path.chr.len = paste0(path.cons, path.chr.len)
+if(!dir.exists(path.chr.len)) system(paste0('mkdir ', path.chr.len))
 
 if (!is.null(opt$path.chr)) path.chr <- opt$path.chr  # to know the chromosomal lengths
 if (!is.null(opt$pref)) base.acc.ref <- opt$pref
@@ -112,7 +112,7 @@ pokaz('Combinations:', paste(chromosome.pairs[,1], chromosome.pairs[,2], sep = '
 
 # ---- Length of reference chromosomes ----
 
-file.chr.len = paste(path.chr.len, base.acc.ref, '_len.rds', sep = '')
+file.chr.len = paste0(path.chr.len, base.acc.ref, '_len.rds')
 pokaz('File with chromosomal lengths', file.chr.len, file=file.log.main, echo=echo.main)
 if(!file.exists(file.chr.len)){
   chr.len = c()
@@ -130,7 +130,7 @@ if(!file.exists(file.chr.len)){
     # Read base chromosome
     base.file = paste0(base.acc.ref, '_chr', i.chr , '.fasta', collapse = '')
     # pokaz('Base:', base.file)
-    base.fas.fw = readFastaMy(paste(path.chr, base.file, sep = ''))
+    base.fas.fw = readFastaMy(paste0(path.chr, base.file))
     base.fas.fw = seq2nt(base.fas.fw)
     chr.len = c(chr.len, length(base.fas.fw))
   }
@@ -171,7 +171,7 @@ loop.function <- function(i.chr.pair,
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
-  file.comb = paste(path.cons, 'comb_', query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5', sep = '')
+  file.comb = paste0(path.cons, 'comb_', query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5')
   if (file.exists(file.comb)) file.remove(file.comb)
   h5createFile(file.comb)
   
@@ -211,7 +211,7 @@ loop.function <- function(i.chr.pair,
     
     # Write into file
     suppressMessages({
-      h5write(x.corr, file.comb, paste(gr.accs, '', acc, sep = ''))
+      h5write(x.corr, file.comb, paste0(gr.accs, '', acc))
     })
     
     
@@ -228,8 +228,8 @@ loop.function <- function(i.chr.pair,
     # h5write(idx.gaps, file.comb, 'gaps_all')
     h5write(base.acc.ref, file.comb, 'ref')
     
-    h5write(1:base.len, file.comb, paste(gr.accs, '', base.acc.ref, sep = ''))
-    # h5write(NULL, file.comb, paste(gr.break, base.acc.ref, sep = ''))
+    h5write(1:base.len, file.comb, paste0(gr.accs, '', base.acc.ref))
+    # h5write(NULL, file.comb, paste0(gr.break, base.acc.ref))
   })
   
   # rmSafe(idx.break)
