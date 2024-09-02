@@ -1,0 +1,40 @@
+package:
+  name: pannagram
+  version: "0.1.0"
+
+source:
+  path: .
+
+build:
+  noarch: generic
+
+requirements:
+  host:
+  - r-base==4.3.3
+  - r-ggplot2==3.5.1
+  - r-devtools==2.4.5
+  - r-roxygen2==7.3.2
+  run:
+  - r-base==4.3.3
+  - r-testthat==3.2.1.1
+  - r-ggplot2==3.5.1
+  - r-foreach==1.5.2
+  - r-crayon==1.5.3
+  - r-optparse==1.7.5
+  - r-doparallel==1.0.17
+  - r-stringi==1.8.4
+  - r-usethis==3.0.0
+  - bioconductor-rhdf5==2.46.1
+  - bioconductor-muscle==3.44.0
+  - blast==2.16.0
+  - mafft==7.525
+  - parallel==20170422
+
+test:
+  commands:
+    - Rscript $PREFIX/lib/R/library/pannagram/tests/testthat/test.R
+    
+about:
+  home: https://www.github.com/iganna/pannagram
+  license: MIT
+  summary: "An example R package conda build."

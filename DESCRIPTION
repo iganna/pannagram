@@ -1,0 +1,25 @@
+Package: pannagram
+Title: What the Package Does (One Line, Title Case)
+Version: 0.1.0
+Authors@R:
+    c(
+        person(
+            "Name1",
+            "Lastname1",
+            email = "email_1@example.com",
+            role = c("aut", "cre"),
+            comment = c(ORCID = "YOUR-ORCID-ID")
+        ),
+        person(
+            "Name2",
+            "Lastname2",
+            email = "email_2@example.com",
+            role = "ctb",
+            comment = c(ORCID = "YOUR-ORCID-ID")
+        )
+    )
+Description: What the package does (one paragraph).
+License: use_mit_license()
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
