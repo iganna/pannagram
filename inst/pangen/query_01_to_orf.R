@@ -139,12 +139,14 @@ loop.function <- function(i.acc,
   
   # Log files
   if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_', i.acc, '_acc_', acc,'.log')
+    file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
     invisible(file.create(file.log.loop))
   }
   
-  
-
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return(NULL)
+  }
  
   # ***********************************
   # When no chromosome-files were produced before
@@ -198,11 +200,11 @@ loop.function <- function(i.acc,
   
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(i.acc in 1:nrow(query.name)){
     loop.function(i.acc, 
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

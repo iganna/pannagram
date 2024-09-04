@@ -86,6 +86,11 @@ loop.function <- function(f.blast,
     invisible(file.create(file.log.loop))
   }
   
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
+
   # --- --- --- --- --- --- --- --- --- --- ---
   
   # Remove the '.txt' extension
@@ -447,11 +452,11 @@ loop.function <- function(f.blast,
 
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(f.blast in files.blast){
     loop.function(f.blast,
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

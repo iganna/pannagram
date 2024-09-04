@@ -166,6 +166,10 @@ loop.function <- function(i.chr.pair,
     invisible(file.create(file.log.loop))
   }
   
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
   
   pokaz('Combination', query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
@@ -248,11 +252,11 @@ loop.function <- function(i.chr.pair,
 
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(i.chr.pair in 1:nrow(chromosome.pairs)){
     loop.function(i.chr.pair,
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

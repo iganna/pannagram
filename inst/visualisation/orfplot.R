@@ -17,6 +17,7 @@
 #'   strand = c('+', '-', '+')
 #' )
 #' orfplot(df)
+#' @export
 orfplot <- function(df, optimal = F, 
                     s.color = 'strand', 
                     show.legend = F,

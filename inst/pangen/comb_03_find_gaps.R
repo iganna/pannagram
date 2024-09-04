@@ -104,6 +104,11 @@ loop.function <- function(s.comb,
     invisible(file.create(file.log.loop))
   }
   
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
+  
   # --- --- --- --- --- --- --- --- --- --- ---
   
   file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
@@ -224,11 +229,11 @@ loop.function <- function(s.comb,
 # ---- Loop  ----
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(s.comb in pref.combinations){
     loop.function(s.comb,
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

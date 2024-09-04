@@ -75,8 +75,8 @@ if(length(files.blast) == 0) stop('No BLAST files provided')
 # ---- MAIN program body ----
 
 loop.function <- function(f.blast, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          file.log.loop=NULL,
+                          echo.loop=T){
   
   # Log files
   if (is.null(file.log.loop)){
@@ -129,17 +129,10 @@ loop.function <- function(f.blast,
   # Output files
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
   
-  # if(T){   
+  # ---- Check log Done ----
   if(file.exists(file.aln.pre)){
-    if(file.exists(file.log.loop)){
-      
-      log.content <- readLines(file.log.loop, warn = FALSE)
-      contains.done <- any(grepl("Done", log.content, ignore.case = TRUE))
-      
-      if (contains.done) {
-        next
-      } 
-      
+    if(checkDone(file.log.loop)){
+      next
     }
   }
   

@@ -130,17 +130,19 @@ loop.function <- function(i.comb,
   
   # Log files
   if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_', i.comb, '_acc_', acc,'.log')
+    file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
     invisible(file.create(file.log.loop))
   }
   
-  
-  
+  # Files
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
-  
   file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
+  
+  # ---- Check log Done ----
   if( file.exists(file.out)) {
-    return(NULL)
+    if(checkDone(file.log.loop)){
+      return(NULL)
+    }
   }
   pokaz('File:', file.in, 
         file=file.log.loop, echo=echo.loop)
@@ -222,11 +224,11 @@ loop.function <- function(i.comb,
 # ---- Loop  ----
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(i.comb in 1:nrow(combinations)){
     loop.function(i.comb, 
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

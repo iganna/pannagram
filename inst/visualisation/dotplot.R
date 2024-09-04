@@ -31,6 +31,11 @@
 dotplot <- function(seq1, seq2, wsize, nmatch) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  # Remove gaps
+  seq1 = seq1[seq1 != '-']
+  seq2 = seq2[seq2 != '-']
+  
   seq2.rc = revCompl(seq2)
   
   mx1 = toupper(seq2mx(seq1, wsize))
@@ -78,6 +83,8 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
 #' @description
 #' The same as `dotplot` but the sequences can be provided as strings
 #' 
+#' @export
+#'
 dotplot.s <- function(seq1, seq2, wsize, nmatch) {
   return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch))
 }

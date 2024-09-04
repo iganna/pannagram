@@ -89,6 +89,11 @@ loop.function <- function(f.maj,
     invisible(file.create(file.log.loop))
   }
   
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
+  
   # Parser for BLAST-result file
   parts <- strsplit(pref.comb, "_")[[1]]
   
@@ -455,11 +460,11 @@ loop.function <- function(f.maj,
 
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(f.maj in files.maj){
     loop.function(f.maj,
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

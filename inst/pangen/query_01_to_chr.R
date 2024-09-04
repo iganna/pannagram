@@ -139,11 +139,9 @@ loop.function <- function(i.acc,
   
   # Log files
   if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_', i.acc, '_acc_', acc,'.log')
+    file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
     invisible(file.create(file.log.loop))
   }
-  
-  
   
   # Don't run if the chromosomal files exist
   if(!all.chr){  # if the chromosome number is an important parameter, not ALL_CHROMOSOMES
@@ -157,7 +155,11 @@ loop.function <- function(i.acc,
     # pokaz(n.exist, n.chr,
     #       file=file.log.loop, echo=echo.loop)
     if(n.exist == n.chr){  # If chromosomal files are already formed
-      return(NULL)
+      
+      # ---- Check log Done ----
+      if(checkDone(file.log.loop)){
+        return(NULL)
+      }
     }
   }
  
@@ -226,14 +228,14 @@ loop.function <- function(i.acc,
   
 # ***********************************************************************
 # ---- Loop  ----
-  
+
 
 if(num.cores == 1){
-  file.log.loop = paste0(path.log, 'loop_all.log')
-  invisible(file.create(file.log.loop))
+  # file.log.loop = paste0(path.log, 'loop_all.log')
+  # invisible(file.create(file.log.loop))
   for(i.acc in 1:nrow(query.name)){
     loop.function(i.acc, 
-                  file.log.loop = file.log.loop, 
+                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

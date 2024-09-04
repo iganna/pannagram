@@ -6,7 +6,6 @@ suppressMessages({
 #'
 #' This function reads a FASTA file and returns a named vector of sequences.
 #' 
-#' 
 #' This function 3 times faster than the standard reading:
 #' start_time <- Sys.time()
 #' q.fasta = read.fasta(file.fasta)
@@ -162,7 +161,7 @@ splitSeq <- function(sequence, n = 5000, step = 0) {
 #' @return A character vector where each element is a single nucleotide.
 #' 
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 seq2nt <- function(s){
   if(length(s) != 1) stop('There should be only one sequence')
   return(strsplit(s, '')[[1]])
@@ -176,7 +175,7 @@ seq2nt <- function(s){
 #' @return A single string representing a sequence.
 #' 
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 nt2seq <- function(s){
   return(paste0(s, collapse = ''))
 }
@@ -196,6 +195,8 @@ nt2seq <- function(s){
 #' seqs.mx <- aln2mx(s.aln)
 #' msaplot(seqs.mx)
 #' 
+#' @author Anna A. Igolkina 
+#' @export 
 aln2mx <- function(s.aln) {
   if (length(s.aln) == 0) {
     return(matrix(character(0), nrow = 0, ncol = 0))
@@ -234,6 +235,8 @@ aln2mx <- function(s.aln) {
 #' seqs <- mx2seq(mx)
 #' print(seqs)
 #'
+#' @author Anna A. Igolkina 
+#' @export
 mx2aln <- function(mx) {
   if (nrow(mx) == 0 || ncol(mx) == 0) {
     return(character(0))
@@ -264,6 +267,8 @@ mx2aln <- function(mx) {
 #' @return A vector of sequences.
 #' Each sequence is represented as an element in the vector.
 #' 
+#' @author Anna A. Igolkina 
+#' @export
 mx2seq <- function(mx) {
   if (nrow(mx) == 0 || ncol(mx) == 0) {
     return(character(0))
@@ -294,6 +299,8 @@ mx2seq <- function(mx) {
 #'
 #' @param mx A numeric or logical matrix. Each row is compared with every other row.
 #'
+#' @author Anna A. Igolkina 
+#' @export
 mx2dist <- function(mx, ratio = F){
   ratio = T
   n = nrow(mx)
@@ -329,6 +336,7 @@ mx2dist <- function(mx, ratio = F){
 #'         in the original matrix is replaced by its position number, adjusted
 #'         for flanking positions. Gap positions remain zero.
 #'
+#' @author Anna A. Igolkina 
 #' @export
 mx2pos <- function(mx, n.flank = 0){
   pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
@@ -359,6 +367,7 @@ mx2pos <- function(mx, n.flank = 0){
 #'
 #' @return A character vector of length equal to the number of columns in `mx`, containing the consensus sequence.
 #'
+#' @author Anna A. Igolkina 
 #' @export
 mx2cons <- function(mx,
                     s.val = c('A', 'C', 'G', 'T')){
@@ -389,6 +398,7 @@ mx2cons <- function(mx,
 #' ('A', 'C', 'G', 'T'). The columns correspond to the positions in the input alignment,
 #' and the values represent the count of each nucleotide at each position.
 #'
+#' @author Anna A. Igolkina 
 #' @export
 mx2profile <- function(mx, gap.flag = F){
   s.nts = c('A', 'C', 'G', 'T')
@@ -426,6 +436,7 @@ mx2profile <- function(mx, gap.flag = F){
 #' wsize <- 3
 #' seq2mx(seq, wsize)
 #'
+#' @author Anna A. Igolkina 
 #' @export
 seq2mx <- function(seq, wsize){
   
@@ -446,6 +457,8 @@ seq2mx <- function(seq, wsize){
 #' @return A character vector representing the translated amino acid sequence.
 #' @examples
 #' translateSeq('atgctctgccagtgccacggcggaagcgacaaagccBBB')
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 translateSeq <- function(seq) {
   # Define the genetic code as a named vector
@@ -513,6 +526,7 @@ translateSeq <- function(seq) {
 #' print(result$pos)
 #' print(result$orf)
 #'
+#' @author Anna A. Igolkina 
 #' @export
 seq2orf <- function(seq, orf.min.len = 25){
   # Handle sequence naming
@@ -598,6 +612,7 @@ seq2orf <- function(seq, orf.min.len = 25){
 #' print(orfFinderResult$pos)
 #' print(orfFinderResult$orf)
 #'
+#' @author Anna A. Igolkina 
 #' @export
 orfFinder <- function(seq.init, orf.min.len = 25){
   seq.len = nchar(seq.init) # Calculate the length of the initial sequence
@@ -698,7 +713,8 @@ revCompl <- function(s){
 #' @examples
 #' revComplSeq("ATGC")
 #'
-#' @author Anna A. Igolkina
+#' @author Anna A. Igolkina 
+#' @export
 revComplSeq <- function(seq){
   
   seq = seq2nt(seq)
@@ -719,7 +735,7 @@ revComplSeq <- function(seq){
 #' justCompl(c("A", "T", "G", "C"))
 #' 
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 justCompl <- function(s){
   
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
@@ -749,7 +765,7 @@ justCompl <- function(s){
 #' @return No return value, called for side effects.
 #' 
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 pokazAttention <- function(..., file = NULL, echo = T) {
   arguments_list <- list(...)
   # Check if any arguments are vectors
@@ -786,7 +802,7 @@ pokazAttention <- function(..., file = NULL, echo = T) {
 #' @param ... Arguments to be concatenated into a message string.
 #'
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 pokaz <- function(..., file = NULL, echo = T) {
   arguments_list <- list(...)
   # Check if any arguments are vectors
@@ -798,16 +814,16 @@ pokaz <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('  ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#FDFDFD")
+  text.color <- crayon::make_style("#FDFDFD")
   # bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color)
+  fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)
 
   if (echo) {
     # Output to console
     cat(formatted_output)
     cat('\n')
-  }  
+  }
   
   if (!is.null(file)){
     # Capture the output and write to file
@@ -823,7 +839,7 @@ pokaz <- function(..., file = NULL, echo = T) {
 #' @param ... Arguments to be concatenated into a message string.
 #'
 #' @author Anna A. Igolkina 
-#' 
+#' @export
 pokazStage <- function(..., file = NULL, echo = T) {
   arguments_list <- list(...)
   # Check if any arguments are vectors
@@ -866,6 +882,8 @@ pokazStage <- function(..., file = NULL, echo = T) {
 #' rmSafe(x)
 #' rmSafe(xxx)  # no error
 #' # x is now removed from the global environment
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 rmSafe <- function(var) {
   var.name = deparse(substitute(var))
@@ -881,6 +899,7 @@ rmSafe <- function(var) {
 #'
 #' @return None.
 #'
+#' @author Anna A. Igolkina 
 #' @export
 saveWorkspace <- function(file.ws){
   all.local.objects <- ls()
@@ -904,6 +923,8 @@ saveWorkspace <- function(file.ws){
 #' @examples
 #' # Example usage (assuming `blast_results` is your data frame with BLAST results):
 #' blastres2gff(blast_results, "output.gff")
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 blastres2gff <- function(v.blast, f.gff, to.sort = T){
   v.gff = data.frame(col1 = v.blast$V8,
@@ -952,8 +973,8 @@ blastres2gff <- function(v.blast, f.gff, to.sort = T){
 #' s = 'TAAACCCTAAACCCTAAACCCTAAACCCTAACCCTAAACCCTAAACCCTAAACCCTAAACCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCCTAAACCC'
 #' repeatScore(s)
 #'
+#' @author Anna A. Igolkina 
 #' @export
-#'
 repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
   
   # s.mx <- seq2mx(seq2nt(s), wsize = wsize)
@@ -981,6 +1002,8 @@ repeatScore <- function(s, wsize = 11, dup.cutoff = 2){
 #' @examples
 #' comb2ref("3_5") # returns 5
 #' 
+#' @author Anna A. Igolkina 
+#' @export
 comb2ref <- function(s.comb){
   pattern <- "^\\d+_\\d+$"
   if(!grepl(pattern, s.comb)) stop('Something is wrong with the bombinations of chromosomes')
@@ -1003,7 +1026,8 @@ comb2ref <- function(s.comb){
 #' @examples
 #' load.library("ggplot2") # Attempts to load ggplot2, installing it first if necessary
 #' 
-#' @author Anna Igolkina
+#' @author Anna A. Igolkina 
+#' @export
 load.library <- function(package) {
   # Attempt to load the package
   if (!require(package, character.only = TRUE, quietly = TRUE)) {
@@ -1043,6 +1067,8 @@ load.library <- function(package) {
 #'   1   2   3
 #'   2   5   5
 #'   3   8  10
+#'   
+#' @author Anna A. Igolkina 
 #' @export
 findOnes <- function(g.bin) {
   changes <- diff(c(0, g.bin, 0))
@@ -1058,6 +1084,8 @@ findOnes <- function(g.bin) {
 #' @return Vector of unique duplicated values from `x`.
 #' @examples
 #' uniqueDuplicates(c(1, 2, 2, 3, 4, 4, 5))
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 uniqueDuplicates <- function(x){
   return(unique(x[duplicated(x)]))
@@ -1068,6 +1096,8 @@ uniqueDuplicates <- function(x){
 #'
 #' @param x Vector to search for duplicates.
 #' @return Indexes of duplicated values from `x`.
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 idxDuplicates <- function(x){
   y = unique(x[duplicated(x)])
@@ -1081,6 +1111,8 @@ idxDuplicates <- function(x){
 #'
 #' @param gff A data frame representing GFF data.
 #' @param file The path to the file where the GFF data should be written.
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 writeGFF <- function(gff, file){
   write.table(gff[,1:9], file, quote = F, row.names = F, col.names = F, sep = '\t')
@@ -1099,6 +1131,8 @@ writeGFF <- function(gff, file){
 #' @examples
 #' v <- 1:100000
 #' wndMean(v, wnd.size = 10000)
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 wndMean <- function(v, wnd.size = 10000){
   # Calculate the length of the input vector
@@ -1121,7 +1155,16 @@ wndMean <- function(v, wnd.size = 10000){
   return(wnd.mean)
 }
 
-
+#' Sliding Window Summation
+#'
+#' @param d Numeric vector. The data vector for which the sliding summation is performed.
+#' @param wnd.len Integer. The length of the sliding window. Must be a positive integer.
+#' @param echo Logical. If `TRUE`, the function will print dots to the console during execution. Default is `TRUE`.
+#'
+#' @return A numeric vector containing the result of the sliding window summation.
+#' 
+#' @author Anna A. Igolkina 
+#' @export
 wndSum <- function(d, wnd.len, echo=T){
   d.len = length(d)
   d.sum <- d
@@ -1144,6 +1187,9 @@ wndSum <- function(d, wnd.len, echo=T){
 #'
 #' @param file The BLAST output file to be read.
 #' @return A data frame containing the contents of the BLAST file if it contains data; otherwise, `NULL`.
+#' 
+#' @author Anna A. Igolkina 
+#' @export
 readBlast <- function(file) {
   if (any(grepl("^[^#]", readLines(file)))) {
     return(read.table(file, stringsAsFactors = F,  header = F))
@@ -1166,6 +1212,8 @@ readTableMy <- function(file){
 #' @param add Optional vector of additional column indices to include in the display.
 #'
 #' @return Prints the specified subset of the BLAST data frame. This function does not return any value.
+#' 
+#' @author Anna A. Igolkina 
 #' @export
 showt <- function(x, irow=NULL, add = c()){
   idx = c(1:5, 7, add)
@@ -1184,6 +1232,9 @@ showt <- function(x, irow=NULL, add = c()){
 #'
 #' @param mx Numeric matrix
 #' @return Numeric vector with the maximum values of each row
+#' 
+#' @author Anna A. Igolkina 
+#' @export
 rowMax <- function(mx) {
   res = rep(NA, nrow(mx))
   idx.not.na = rowSums(!is.na(mx)) > 0
@@ -1196,6 +1247,9 @@ rowMax <- function(mx) {
 #'
 #' @param mx Numeric matrix
 #' @return Numeric vector with the maximum values of each column
+#' 
+#' @author Anna A. Igolkina 
+#' @export
 colMax <- function(mx) {
   res = rep(NA, ncol(mx))
   idx.not.na = colSums(!is.na(mx)) > 0
@@ -1208,6 +1262,9 @@ colMax <- function(mx) {
 #'
 #' @param mx Numeric matrix
 #' @return Numeric vector with the minimum values of each row
+#' 
+#' @author Anna A. Igolkina 
+#' @export
 rowMin <- function(mx) {
   res = rep(NA, nrow(mx))
   idx.not.na = rowSums(!is.na(mx)) > 0
@@ -1220,6 +1277,9 @@ rowMin <- function(mx) {
 #'
 #' @param mx Numeric matrix
 #' @return Numeric vector with the minimum values of each column
+#' 
+#' @author Anna A. Igolkina 
+#' @export
 colMin <- function(mx) {
   res = rep(NA, ncol(mx))
   idx.not.na = colSums(!is.na(mx)) > 0
@@ -1227,3 +1287,30 @@ colMin <- function(mx) {
   names(res) = colnames(mx)
   return(res)
 }
+
+#' Check for the presence of the word "Done" in a log file
+#'
+#' This function reads the content of a specified log file and checks if the word "Done" (case-insensitive)
+#' is present in any line. If the word is found, the function returns TRUE. Otherwise, it returns FALSE.
+#' If the word is found, the function exits early.
+#'
+#' @param file.log.loop A character string specifying the path to the log file.
+#' @return Logical. TRUE if the word "Done" is found, FALSE otherwise.
+#' 
+#' @author Anna A. Igolkina 
+#' @export
+checkDone <- function(file.log) {
+  
+  if (!file.exists(file.log)) {
+    return(FALSE)
+  }
+  
+  log.content <- readLines(file.log, warn = FALSE)
+  contains.done <- any(grepl("Done", log.content, ignore.case = TRUE))
+  if (contains.done) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+

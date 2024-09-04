@@ -655,7 +655,7 @@ for ref0 in "${refs_all[@]}"; do
             echo "${ref0}" > ${file_acc_ref}
 
             # Path for logging
-            path_log_step="${path_log}step${step_num}_query_01_ref/"
+            path_log_step="${path_log}step${step_num}_query_01_${ref0}/"
 
             Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
@@ -725,7 +725,7 @@ for ref0 in "${refs_all[@]}"; do
         with_level 2 pokaz_message "Run BLAST."    
 
         # Logs for the BLAST
-        path_log_step="${path_log}step${step_num}_query_03/"
+        path_log_step="${path_log}step${step_num}_query_03_${ref0}_blast/"
         make_dir ${path_log_step}
 
         # Blast parts on the reference genome
@@ -775,7 +775,7 @@ for ref0 in "${refs_all[@]}"; do
         fi    
         
         # Logs for the BLAST
-        path_log_step="${path_log}step${step_num}_synteny_01/"
+        path_log_step="${path_log}step${step_num}_synteny_01_${ref0}_maj/"
         make_dir ${path_log_step}
         
         # Run the step
@@ -812,7 +812,7 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 
         # Logs for the Plot
-        path_log_step="${path_log}step${step_num}_synteny_02_plot_${ref0}/"
+        path_log_step="${path_log}step${step_num}_synteny_02_${ref0}_plot/"
         make_dir ${path_log_step}
 
         Rscript $INSTALLED_PATH/pangen/synteny_02_plot.R \
@@ -900,7 +900,7 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1 pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 
         # Logs for the BLAST
-        path_log_step="${path_log}step${step_num}_synteny_04_${ref0}_blast/"
+        path_log_step="${path_log}step${step_num}_synteny_04_${ref0}_blast_gaps/"
         make_dir ${path_log_step}
 
         # Run BLAST for gaps
@@ -932,7 +932,7 @@ for ref0 in "${refs_all[@]}"; do
             pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
         # Logs for the merging gaps
-        path_log_step="${path_log}step${step_num}_synteny_05_${ref0}/"
+        path_log_step="${path_log}step${step_num}_synteny_05_${ref0}_full/"
         make_dir ${path_log_step}
 
         Rscript $INSTALLED_PATH/pangen/synteny_05_merge_gaps.R --ref ${ref0} \
@@ -1146,6 +1146,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # If only one step
     if   [ "$one_step" = "T" ]; then 
+        echo "XX"
         exit 0
     fi
 fi
@@ -1212,6 +1213,9 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 fi
 
 ((step_num = step_num + 1))
+
+
+with_level 1 pokaz_message "* The pipeline is done."
 
 # if [ $start_step -eq 0 ]; then
 #     rm -f "$FLAG_DIR"/.*

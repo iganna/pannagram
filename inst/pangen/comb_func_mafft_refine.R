@@ -1,12 +1,13 @@
 
 refineMafft <- function(mx, n.flank = 30){
   
+  mx = toupper(mx)
   
   sim.cutoff = 0.2
   s.nt.fake = '!'
   
   
-  # Create the mayrix with posisionts
+  # Create the matrix with positions
   mx.pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
                   dimnames = list(rownames(mx), NULL))
   for(irow in 1:nrow(mx.pos)){
@@ -84,7 +85,6 @@ refineMafft <- function(mx, n.flank = 30){
       # pokaz('Exit 1')
       mx.ok = cbind(mx.ok, mx)
       mx.pos.ok = cbind(mx.pos.ok, mx.pos)
-      break
     } 
     
     blocks = blocks.all

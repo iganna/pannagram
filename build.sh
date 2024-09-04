@@ -7,7 +7,7 @@ mkdir R
 find inst -type f -name "*.R" -exec sh -c '
   for file; do
     if grep -q "@export" "$file"; then
-      ln -s "$(realpath "$file")" "R/$(basename "$file")"
+      ln -sf "$(realpath "$file")" "R/$(basename "$file")"
     fi
   done
 ' sh {} +
