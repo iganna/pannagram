@@ -3,13 +3,14 @@
     ```sh
     conda env create -f pannagram_dev.yaml
     conda activate pannagram_dev
-    Rscript -e "devtools::install()"
+    ./developer.sh
     ```
+    This will reinstall `pannagram` into your R environment with all its documentation.
 2. Now you can call your `.sh` scripts:
     ```sh
     ./inst/pannagram.sh -path_in ... -path_out ... -cores 8 # ... etc.
     ```
-    > **NOTE!** If you make any changes in `inst/**/*.R` files in order to see the results you must re-run `Rscript -e "devtools::install()"` to update internal `pannagram` package files accordingly!
+    > **NOTE!** If you make any changes in `inst/**/*.R` files in order to see the results you must re-run `./developer.sh` to update internal `pannagram` package files accordingly!
 
 # Builder mode:
 1. Shell:
