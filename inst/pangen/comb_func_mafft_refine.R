@@ -528,7 +528,7 @@ refineAlignment <- function(seqs, path.work, n.flank = 30){
   for(i.merge in which(df.merge$cl > max(clusters))){
     pokaz(i.merge)
     
-    # if(i.merge == 23) stop()
+    # if(i.merge == 27) stop()
     
     i.cl1 = df.merge$id1[i.merge]
     i.cl2 = df.merge$id2[i.merge]
@@ -890,6 +890,9 @@ blastTwoSeqs <- function(s1, s2, path.work){
   
   # Read the BLAST output into a data frame
   x = readBlast(file.blast.cons)
+  if(is.null(x)) {
+    return(data.frame(tmp=numeric()))
+  }
   x = x[x$V1 != x$V8,,drop=F] # Remove self-alignments
   
   # Split data into two groups: alignments starting from sequence 1 and sequence 2
