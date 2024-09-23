@@ -418,7 +418,24 @@ getProfile <- function(...) {
 }
 
 
-# path.work = '/Volumes/Samsung_T5/vienn/test/pannagram_test/mafft/'
+#' Refine Sequence Alignment
+#'
+#' This function refines sequence alignments by clustering sequences, removing flanking gaps, 
+#' and merging aligned clusters based on similarity and synteny analysis.
+#'
+#' @param seqs A list of aligned nucleotide sequences.
+#' @param path.work A character string specifying the working directory where temporary files 
+#' will be saved.
+#' @param n.flank An integer specifying the number of flanking positions to remove from both 
+#' sides of each sequence. Default is 30.
+#'
+#' @return A list with the following components:
+#' \describe{
+#'   \item{pos}{A list of matrices representing the positions of nucleotides in the refined alignments for each cluster.}
+#'   \item{aln}{A list of matrices representing the refined alignments for each cluster.}
+#' }
+#'
+#' @export
 refineAlignment <- function(seqs, path.work, n.flank = 30){
   
   seqs.mx = aln2mx(seqs)
