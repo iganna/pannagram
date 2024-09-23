@@ -218,6 +218,46 @@ aln2mx <- function(s.aln) {
 }
 
 
+#' aln2pos
+#'
+#' This function converts aligned sequences into a position matrix, 
+#' where each non-gap position is filled with the corresponding nucleotide position.
+#'
+#' @param seqs A character vector of aligned sequences.
+#'
+#' @return A matrix where each row represents a sequence and the positions of non-gap characters
+#'         are represented by their respective nucleotide positions.
+#'
+#' @examples
+#' seqs <- c(seq1 = "AT-GC", seq2 = "A--GC")
+#' aln2pos(seqs)
+#' 
+#' @export
+aln2pos <- function(seqs) {
+  
+  # Check that all sequences are of the same length
+  if (length(unique(nchar(seqs))) != 1) {
+    stop("All sequences must be of the same length.")
+  }
+  
+  # Initialize matrix to store positions
+  seq_length <- nchar(seqs[1]) # All sequences have the same length
+  pos.cl.mx <- matrix(0, nrow = length(seqs), ncol = seq_length)
+  
+  # Fill the matrix with positions of non-gap characters
+  for (irow in 1:length(seqs)) {
+    seq_row <- unlist(strsplit(seqs[irow], ""))  # Split sequence into individual characters
+    pos.cl.mx[irow, seq_row != '-'] <- 1:sum(seq_row != '-')  # Assign positions where character is not a gap
+  }
+  
+  # Add row names
+  rownames(pos.cl.mx) <- names(seqs)
+  
+  return(pos.cl.mx)
+}
+
+
+
 #' Convert Nucleotide Matrix to Sequences of the alignment
 #'
 #' This function takes a matrix of nucleotides representing the alignment,
@@ -370,7 +410,8 @@ mx2pos <- function(mx, n.flank = 0){
 #' @author Anna A. Igolkina 
 #' @export
 mx2cons <- function(mx,
-                    s.val = c('A', 'C', 'G', 'T')){
+                    s.val = c('A', 'C', 'G', 'T'),
+                    amount = NULL){
   s.val = toupper(s.val)
   if(length(s.val) <= 1) stop('Wrong values are provided')
   n = ncol(mx)
@@ -382,9 +423,35 @@ mx2cons <- function(mx,
     s.cons[idx.more] = s.val[i]
     n.cons[idx.more] = val.cnt[idx.more]
   }
+  
+  if(is.null(amount)){
+    return(s.cons)
+  }
+  
+  amount = min(amount, nrow(mx))
+  if(amount < 1) stop('Wrong number for the "amount" parameter')
+  
+  s.cons = matrix(s.cons, nrow = 1)
+  
+  if(amount > 1){
+    
+    n.add = amount - 1
+    s.cons.add = matrix('-',
+                        nrow = n.add,
+                        ncol = n)
+    
+    freq = colSums(mx != '-')
+    freq = round(freq / nrow(mx) * amount)
+    for(i.am in 1:n.add){
+      s.cons.add[i.am, freq >= i.am] = s.cons[freq >= i.am]
+    }
+    
+    s.cons = rbind(s.cons, s.cons.add)
+  }
+  row.names(s.cons) = paste('cons_', 1:amount)
+  
   return(s.cons)
 }
-
 
 #' Calculate Nucleotide Profile for Each Position in The Alignment Matrix
 #'

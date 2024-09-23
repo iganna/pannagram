@@ -70,7 +70,17 @@ msaplot <- function(seqs.mx, msa.cols = NULL, seq.type='nt'){
     }
   }
   
-
+  # Row names
+  if(is.null(row.names(seqs.mx))){
+    pokazAttention('Names of sequences are not provided. They were modified.')
+    row.names(seqs.mx) = paste0('s.', 1:nrow(seqs.mx))
+  }
+  
+  if(length(unique(row.names(seqs.mx))) != nrow(seqs.mx)){
+    pokazAttention('Names of sequences are not unique. They were modified.')
+    row.names(seqs.mx) = paste0('s.', 1:nrow(seqs.mx))
+  }
+  
   if (is.vector(seqs.mx)){
     seqs.mx = t(matrix(seqs.mx))
   }
