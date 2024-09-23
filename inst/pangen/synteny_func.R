@@ -32,6 +32,7 @@ glueZero_old <- function(x){
 #' 
 #' @return A data frame where rows have been merged based on the specified conditions.
 #'
+#' @export
 glueZero <- function(x.all){
   
   x.all.idx = 1:nrow(x.all)
