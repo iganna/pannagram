@@ -448,7 +448,7 @@ mx2cons <- function(mx,
     
     s.cons = rbind(s.cons, s.cons.add)
   }
-  row.names(s.cons) = paste('cons_', 1:amount)
+  row.names(s.cons) = paste0('cons_', 1:amount)
   
   return(s.cons)
 }
@@ -511,6 +511,27 @@ seq2mx <- function(seq, wsize){
   matrix_seq <- m[, ncol(m):1]
   
   return(matrix_seq)
+}
+
+
+#' Clean and Trim Sequence List
+#'
+#' This function processes a list of sequences by removing all dashes (`-`) and trimming
+#' a specified number of characters from both ends of each sequence.
+#'
+#' @param seqs A character vector of sequences to be processed.
+#' @param n.flank An integer specifying the number of characters to trim from both ends of each sequence.
+#' 
+#' @return A character vector with cleaned and trimmed sequences.
+#' 
+#' @examples
+#' seqs <- c("----AT--GC----", "----CGTA----")
+#' seqs.clean <- seq2clean(seqs, 1)
+#' print(seqs.clean) # Expected output: "ATGC", "CGTA"
+#' 
+#' @export
+seq2clean <- function(seqs, n.flank=0) {
+  sapply(gsub('-', '', seqs), function(seq) substr(seq, n.flank + 1, nchar(seq) - n.flank))
 }
 
 

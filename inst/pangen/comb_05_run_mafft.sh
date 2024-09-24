@@ -116,7 +116,7 @@ mafft_task() {
     # Run MAFFT
     # timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
     { 
-        timeout --foreground 600 mafft --quiet --op 3  --ep 0.1 --treeout  "${input_file}" > "${output_file}"  
+        timeout --foreground 60 mafft --quiet --op 3  --ep 0.1 --treeout  "${input_file}" > "${output_file}"  
     } || {
         rm "${output_file}"
         echo "MAFFT command failed for $input_file, but continuing with other files."
