@@ -1,12 +1,14 @@
-DATA/
+DATA/**
 old/
 develop/
 .DS_Store
 .Rhistory
 **.nb.html
-test*
 tmp*
 log*
 loop*
+R/
+man/
+NAMESPACE
 
 
