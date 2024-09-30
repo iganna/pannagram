@@ -62,8 +62,8 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 n.flank = 30
 
 
-files.in <- list.files(path = path.in, pattern = "\\.fasta$", full.names = F)
-files.out <- list.files(path = path.out, pattern = "\\.fasta$", full.names = F)
+files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
+files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
 files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
 
 
