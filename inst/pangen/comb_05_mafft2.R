@@ -67,7 +67,7 @@ files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names =
 files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
 files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
 
-path.mafft.in.tmp = paste(path.mafft.in, 'tmp/')
+path.mafft.in.tmp = paste0(path.mafft.in, 'tmp/')
 
 if (!file.exists(path.mafft.in.tmp)) {
   dir.create(path.mafft.in.tmp)
@@ -96,6 +96,7 @@ loop.function <- function(f.in,
   
   
   path.work = paste0(path.mafft.in.tmp, basename(f.in), '_')
+  pokaz(path.work)
   res = refineAlignment(seqs.clean, path.work)
   
   alignments = res$aln
