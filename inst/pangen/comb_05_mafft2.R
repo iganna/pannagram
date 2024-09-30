@@ -122,7 +122,7 @@ if(num.cores == 1){
   registerDoParallel(myCluster) 
   
   tmp = foreach(f.in = files.extra, 
-                .packages=c('crayon'), 
+                .packages=c('crayon', 'kmer'), 
                 .verbose = F)  %dopar% { 
                   loop.function(f.in,
                                 echo.loop=echo.loop)
