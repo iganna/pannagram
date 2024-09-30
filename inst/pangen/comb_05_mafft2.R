@@ -95,7 +95,7 @@ loop.function <- function(f.in,
   seqs.clean = seq2clean(seqs,n.flank)
   
   
-  path.work = paste0(path.mafft.in.tmp, basename(f.in), '_')
+  path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
   pokaz(path.work)
   res = refineAlignment(seqs.clean, path.work)
   
