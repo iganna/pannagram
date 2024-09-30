@@ -447,7 +447,7 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
     # If a file with accessions is provided - read all and intersect
     if [ -n "${acc_file}" ]; then
         # Read the accessions from the file, remove spaces, and create an array
-        mapfile -t acc_file_array < <(cat "$acc_file" | tr -d '[:space:]')
+        mapfile -t acc_file_array < <(grep -o '^[^[:space:]]*' "$acc_file")
 
         head "$acc_file"
 
