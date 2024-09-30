@@ -1,6 +1,7 @@
 # Combine all alignments together into the final one
 
 suppressMessages({
+library("kmer") 
 library(rhdf5)
 library('foreach')
 library(doParallel)
