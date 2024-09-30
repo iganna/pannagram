@@ -136,7 +136,7 @@ refineAlignment <- function(seqs.clean, path.work){
     mafft.mx[1, pos.mx[1,] != 0] = toupper(seq2nt(s1))
     mafft.mx[2, pos.mx[2,] != 0] = toupper(seq2nt(s2))
     
-    msaplot(mafft.mx)
+    # msaplot(mafft.mx)
     
     irow_support = c()
     cnunk.min.len = 25
