@@ -8,6 +8,7 @@ library(doParallel)
 library("optparse")
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func_mafft_refine2.R", package = "pannagram"))
+source(system.file("pangen/synteny_func.R", package = "pannagram"))
 })
 
 # ***********************************************************************
@@ -61,9 +62,6 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 # ---- Preparation ----
 
 n.flank = 30
-
-glueZero()
-
 
 files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
 files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
