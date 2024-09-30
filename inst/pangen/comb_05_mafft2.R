@@ -106,7 +106,7 @@ loop.function <- function(f.in,
   alignment.seq = mx2aln(alignment)
   
   
-  file.out = paste0(path.mafft.out, basename(f.in), "_aligned2.fasta")
+  file.out = paste0(path.mafft.out, sub('.fasta', '', basename(f.in)), "_aligned2.fasta")
   writeFasta(alignment.seq, file.out)
   
 }
