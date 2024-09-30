@@ -1134,7 +1134,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     path_log_step="${path_log}step${step_num}_comb_05/"
     make_dir ${path_log_step}
 
-    $INSTALLED_PATH/pangen/comb_05_run_mafft.sh \
+    $INSTALLED_PATH/pangen/comb_05_mafft.sh \
             -cores ${cores} \
             -path_mafft_in ${path_mafft_in} \
             -path_mafft_out ${path_mafft_out} \
@@ -1153,6 +1153,42 @@ fi
 
 ((step_num = step_num + 1))
 echo ${step_num}
+
+
+# ----------------------------------------------
+# Additional MAFFT
+
+step_file="$path_flags/step${step_num}_done"
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+    with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
+
+    # Logging
+    path_log_step="${path_log}step${step_num}_comb_05_additional/"
+    make_dir ${path_log_step}
+
+    Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
+            --cores ${cores} \
+            --ref.pref ${ref0} \
+            --path.mafft.in ${path_mafft_in} \
+            --path.mafft.out ${path_mafft_out} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
+
+    # Done
+    touch "${step_file}"
+    with_level 1 pokaz_message "Step is done."
+
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        echo "XX"
+        exit 0
+    fi
+fi
+
+((step_num = step_num + 1))
+echo ${step_num}
+
 # ----------------------------------------------
 # Combine all together
 

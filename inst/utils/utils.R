@@ -21,7 +21,7 @@ suppressMessages({
 #' 
 #' @author Anna A. Igolkina 
 #' @export
-readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
+readFasta <- function(file.fasta, stop.on.error = FALSE) {
   file.content <- readLines(file.fasta)
   
   if (length(file.content) == 0) {
@@ -64,6 +64,10 @@ readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
   return(sequences)
 }
 
+readFastaMy <- function(...) {
+  readFasta(...)
+}
+
 
 #' Write Sequences to a FASTA File
 #'
@@ -81,7 +85,7 @@ readFastaMy <- function(file.fasta, stop.on.error = FALSE) {
 #' 
 #' @author Anna A. Igolkina
 #' @export
-writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append = FALSE){
+writeFasta <- function(sequences, file, seq.names = NULL, pref = NULL, append = FALSE){
   
   if(length(sequences) == 0) {
     if(!append) {
@@ -112,6 +116,10 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
   close(con)
 }
 
+writeFastaMy <- function(...) {
+  writeFasta(...)
+}
+
 
 #' Split a Sequence into Fixed-Length Chunks
 #'
@@ -132,7 +140,7 @@ writeFastaMy <- function(sequences, file, seq.names = NULL, pref = NULL, append 
 #'
 #' @author Anna A. Igolkina 
 #' @export
-splitSeq <- function(sequence, n = 5000, step = 0) {
+splitSeq <- function(sequence, n = 5000, step = 0, merge = T) {
   
   # Split the sequence into individual characters
   sst <- seq2nt(sequence)
@@ -148,10 +156,43 @@ splitSeq <- function(sequence, n = 5000, step = 0) {
   
   # Convert each column of the matrix back to a string
   # Each column represents a chunk of the sequence
-  s.chunks <- apply(m, 2, paste0, collapse = '')
-  
-  return(s.chunks)
+  if(merge){
+    s.chunks <- apply(m, 2, paste0, collapse = '')
+    return(s.chunks)  
+  } else {
+    return(t(m))
+  }
 }
+
+
+#' Calculate GC Content in DNA Sequences
+#'
+#' This function calculates the GC content for a given set of DNA sequences, using a specified window size.
+#'
+#' @param s A character vector of DNA sequences. Each element of the vector should be a DNA sequence in the form of a string.
+#' @param wnd An integer specifying the window size for calculating the GC content. Default is 1000.
+#' @return A list where each element corresponds to a sequence from the input `s`. Each element is a numeric vector
+#' representing the GC content for each window in the sequence.
+#' @examples
+#' # Example usage
+#' sequences <- c("ATGCGATCGATCG", "GCGCGCGCGCGCG", "ATATATATATAT")
+#' gcContent(sequences, wnd = 5)
+#'
+#' @export
+gcContent <- function(s, wnd = 1000){
+  gc.list = list()
+  for(i.seq in 1:length(s)){
+    if(nchar(s[i.seq]) < wnd) next
+    m = splitSeq(s[i.seq], n = wnd, merge = F)
+    gc.tmp = rowSums(m == 'G') +
+      rowSums(m == 'C') +
+      rowSums(m == 'g') +
+      rowSums(m == 'c')
+    gc.tmp = gc.tmp / wnd
+    gc.list[[i.seq]] = gc.tmp
+  }
+  return(gc.list)
+} 
 
 
 #' Convert a string to a vector of nucleotides
