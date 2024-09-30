@@ -449,6 +449,8 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
         # Read the accessions from the file, remove spaces, and create an array
         mapfile -t acc_file_array < <(cat "$acc_file" | tr -d '[:space:]')
 
+        head "$acc_file"
+
         echo "accessions from the file"
         for ref in "${acc_file_array[@]}"; do
             echo "$ref"
