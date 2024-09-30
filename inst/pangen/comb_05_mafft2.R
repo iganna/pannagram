@@ -62,6 +62,8 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 
 n.flank = 30
 
+glueZero()
+
 
 files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
 files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
