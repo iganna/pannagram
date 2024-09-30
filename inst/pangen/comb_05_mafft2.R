@@ -72,6 +72,7 @@ loop.function <- function(f.in,
                           echo.loop=T, 
                           file.log.loop=NULL){
   
+  pokaz(f.in)
   # Log files
   if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_file_', 
