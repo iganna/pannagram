@@ -449,23 +449,15 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
         # Read the accessions from the file, remove spaces, and create an array
         mapfile -t acc_file_array < <(grep -o '^[^[:space:]]*' "$acc_file")
 
-        head "$acc_file"
-
-        echo "accessions from the file"
-        for ref in "${acc_file_array[@]}"; do
-            echo "$ref"
-        done
-
-
         # Intersection of arrays acc_set and acc_file_array
         acc_set=($(comm -12 <(printf '%s\n' "${acc_set[@]}" | sort) <(printf '%s\n' "${acc_file_array[@]}" | sort)))
     fi
 
-    # Print the genomes for verification
-    echo "Accessions after the intersection"
-    for ref in "${acc_set[@]}"; do
-        echo "$ref"
-    done
+    # # Print the genomes for verification
+    # echo "Accessions after the intersection"
+    # for ref in "${acc_set[@]}"; do
+    #     echo "$ref"
+    # done
 
     # Check if ref_num is greater than the number of genomes in acc_set
     if (( ref_num > ${#acc_set[@]} )); then
