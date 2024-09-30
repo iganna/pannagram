@@ -110,7 +110,7 @@ for(s.comb in pref.combinations){
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
   mafft.res = data.frame(file = list.files(path = path.mafft.out, 
-                                           pattern = paste0('^', pref, '.*_flank_', n.flank, '_aligned.fasta$')))
+                                           pattern = paste0('^', pref, '.*_flank_', n.flank, '_aligned*.fasta$')))
   
   
   mafft.res$comb = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]])
