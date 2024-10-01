@@ -84,7 +84,7 @@ gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
 gr.break.e = 'break/'
 gr.break.b = '/break'
-max.len.gap = 20000
+max.len.gap = 100000
 
 gr.blocks = 'blocks/'
 
@@ -163,8 +163,8 @@ loop.function <- function(s.comb,
     # with the absence, but neighbouring
     idx.tmp = which( (abs(diff(v[,4])) == 1) &  # Neighbouring in accession-based order
                        (abs(diff(abs(v[,3])) == 1)) &  # Neighbouring in ref-based order
-                       # (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
-                       # (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
+                       (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
+                       (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
                        (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
     
     # Fix (beg < end) order

@@ -93,7 +93,7 @@ gr.accs.e <- "accs/"
 gr.accs.b <- "/accs"
 gr.break.e = 'break/'
 gr.break.b = '/break'
-max.len.gap = 25000
+max.len.gap = 100000
 len.short = 50
 n.flank = 30
 
