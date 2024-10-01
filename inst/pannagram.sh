@@ -349,6 +349,7 @@ for dir in ${path_logs}pangen*; do
     fi
 done
 
+echo $max_number 
 # Output the largest number
 if [[ $max_number -eq -1 ]]; then
     pangen_run_num=0
