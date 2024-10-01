@@ -1139,6 +1139,24 @@ if [ ! -d "$path_mafft_out" ]; then
 fi
 
 step_file="$path_flags/step${step_num}_done"
+
+
+# ----
+if [ $start_step -le ${step_num} ]; then
+    echo "Condition 1: start_step ($start_step) <= step_num ($step_num) — TRUE"
+else
+    echo "Condition 1: start_step ($start_step) > step_num ($step_num) — FALSE"
+fi
+
+if [ ! -f "$step_file" ]; then
+    echo "Condition 2: File $step_file does not exist — TRUE"
+else
+    echo "Condition 2: File $step_file exists — FALSE"
+fi
+# ----
+
+
+
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
