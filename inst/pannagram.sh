@@ -192,13 +192,16 @@ path_ref=$(add_symbol_if_missing "$path_ref" "/")
 # path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
 path_cons="${path_out}consensus/"
-path_chrom="${path_out}chromosomes/"
-path_parts="${path_out}parts/"
+path_inter="${path_out}intermediate/"
+
+path_chrom="${path_inter}chromosomes/"
+path_parts="${path_inter}parts/"
 
 # ----------------------------------------------
 # Make folders
 
 mkdir -p "${path_out}"
+mkdir -p "${path_inter}"
 mkdir -p "${path_cons}"
 mkdir -p "${path_chrom}"
 mkdir -p "${path_parts}"
@@ -283,7 +286,7 @@ fi
 if [ -z "${flag_rev}" ]; then
     option_mirror=" "
 else
-    path_parts="${path_out}parts_mirror/"
+    path_parts="${path_inter}parts_mirror/"
     option_mirror=" --purge.reps T"
 fi
 
@@ -569,7 +572,7 @@ if [ ! -z "${flag_orf}" ]; then
     with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
     # Make ORF folder
-    path_orf="${path_out}orf/"
+    path_orf="${path_inter}orf/"
     mkdir -p "${path_orf}"
 
     # Clean up the output folders
@@ -648,9 +651,9 @@ for ref0 in "${refs_all[@]}"; do
     with_level 1  pokaz_attention "Reference ${ref0}"
 
     # New paths
-    path_blast_parts=${path_out}blast_parts_${ref0}/
-    path_alignment=${path_out}alignments_${ref0}/
-    path_gaps=${path_out}blast_gaps_${ref0}/
+    path_blast_parts=${path_inter}blast_parts_${ref0}/
+    path_alignment=${path_inter}alignments_${ref0}/
+    path_gaps=${path_inter}blast_gaps_${ref0}/
 
     # ----------------------------------------------
     # Split reference fasta into chromosomes if additionally needed
@@ -829,7 +832,7 @@ for ref0 in "${refs_all[@]}"; do
                 --ref ${ref0} \
                 --path_ref ${path_ref} \
                 --path_chr ${path_chrom} \
-                --path_out ${path_out} \
+                --path_out ${path_inter} \
                 --algn_path ${path_alignment} \
                 --path.log ${path_log_step} \
                 --log.level ${log_level} \
@@ -865,9 +868,9 @@ fi
 for ref0 in "${refs_all[@]}"; do        
 
     # New paths
-    path_blast_parts=${path_out}blast_parts_${ref0}/
-    path_alignment=${path_out}alignments_${ref0}/
-    path_gaps=${path_out}blast_gaps_${ref0}/
+    path_blast_parts=${path_inter}blast_parts_${ref0}/
+    path_alignment=${path_inter}alignments_${ref0}/
+    path_gaps=${path_inter}blast_gaps_${ref0}/
 
     # ----------------------------------------------
     # Get sequences between the synteny blocks
@@ -1093,7 +1096,7 @@ fi
 
 # ----------------------------------------------
 # Create sequences to run MAFFT and perform some small alignments
-path_mafft_in="${path_out}mafft_in/"
+path_mafft_in="${path_inter}mafft_in/"
 if [ ! -d "$path_mafft_in" ]; then
     mkdir -p "$path_mafft_in"
 fi
@@ -1130,7 +1133,7 @@ fi
 
 # ----------------------------------------------
 # Run MAFFT
-path_mafft_out="${path_out}mafft_out/"
+path_mafft_out="${path_inter}mafft_out/"
 if [ ! -d "$path_mafft_out" ]; then
     mkdir -p "$path_mafft_out"
 fi

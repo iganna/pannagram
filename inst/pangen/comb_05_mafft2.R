@@ -1,7 +1,6 @@
 # Combine all alignments together into the final one
 
 suppressMessages({
-library("kmer") 
 library(rhdf5)
 library('foreach')
 library(doParallel)
@@ -112,11 +111,8 @@ loop.function <- function(f.in,
 }
 
 
-
-
 # ***********************************************************************
 # ---- Loop  ----
-
 
 if(num.cores == 1){
   for(f.in in files.extra){
@@ -129,7 +125,7 @@ if(num.cores == 1){
   registerDoParallel(myCluster) 
   
   tmp = foreach(f.in = files.extra, 
-                .packages=c('crayon', 'kmer'), 
+                .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
                   loop.function(f.in,
                                 echo.loop=echo.loop)

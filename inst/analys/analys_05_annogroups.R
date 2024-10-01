@@ -3,8 +3,6 @@
 
 # previous pipeline
 
-
-
 #' ### Gff files
 #' * Creating combined snnotation (all2.rds file): `prior_annot.Rmd`
 #' * Define and solve confusing annotation groups: `get_genes_4.R`

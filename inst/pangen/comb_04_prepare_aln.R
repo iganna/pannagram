@@ -164,6 +164,7 @@ for(s.comb in pref.combinations){
   v.beg = c()
   v.end = c()
   for(acc in accessions){
+    pokaz(accessions)
     
     # if(sub('', '', acc) ==ref.pref){
     #   v.beg = cbind(v.beg, idx.break$beg)
@@ -222,8 +223,8 @@ for(s.comb in pref.combinations){
     # v.beg = cbind(v.beg, x.acc[idx.break$beg] )
     # v.end = cbind(v.end, x.acc[idx.break$end] )
     
-    v.beg = cbind(v.beg, x.acc[idx.break$beg] * idx.same.bl )
-    v.end = cbind(v.end, x.acc[idx.break$end] * idx.same.bl )
+    v.beg = cbind(v.beg, fillNext(x.acc)[idx.break$beg] * idx.same.bl )
+    v.end = cbind(v.end, fillPrev(x.acc)[idx.break$end] * idx.same.bl )
     # 
     
     # print(cbind(v.beg[!idx.same.bl,ncol(v.beg)], v.end[!idx.same.bl,ncol(v.beg)]))

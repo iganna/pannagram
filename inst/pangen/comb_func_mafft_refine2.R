@@ -600,7 +600,6 @@ calсDistAln <- function(seqs.mx) {
 
 
 calcDistKmer <- function(seqs.clean){
-  library("kmer")
   
   wsize = 7
   seqs.clean <- toupper(seqs.clean)

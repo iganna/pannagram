@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONDAENV_NAME="pannagram_dev"
+CONDAENV_NAME="pannagram"
 PACKAGE_NAME="pannagram"
 
 # Conda env chack

@@ -1206,6 +1206,103 @@ findOnes <- function(g.bin) {
   return(data.frame(beg = beg, end = end))
 }
 
+#' Find consecutive runs in a numeric vector
+#'
+#' This function identifies sequences of consecutive numbers in a numeric vector
+#' and returns the starting and ending positions of each sequence, as well as 
+#' the values at the start and end of the sequence and the length of each run.
+#'
+#' @param vec A numeric vector to analyze for consecutive runs.
+#' @return A data frame with the following columns:
+#' \item{beg}{Starting index of each run.}
+#' \item{end}{Ending index of each run.}
+#' \item{len}{Length of each run (number of consecutive numbers).}
+#' \item{v.beg}{Value at the start of each run.}
+#' \item{v.end}{Value at the end of each run.}
+#' 
+#' @examples
+#' # Example usage
+#' vec <- c(1, 2, 3, 5, 6, 7, 10, 11, 12, 14)
+#' findRuns(vec)
+#'
+#' @export
+findRuns <- function(vec) {
+  # Check if the vector is empty
+  if(length(vec) == 0) {
+    return(data.frame( beg = integer(), 
+                       end = integer(), 
+                       len = integer(), 
+                       v.beg = numeric(), 
+                       v.end = numeric() ))
+  }
+  
+  # Find the starting indices of consecutive sequences
+  pos.beg <- which(c(TRUE, diff(vec) != 1))
+  
+  # Find the ending indices of consecutive sequences
+  pos.end <- c(pos.beg[-1] - 1, length(vec))
+  
+  # Return a data frame with start/end positions, values, and lengths of runs
+  return(data.frame(
+    beg = pos.beg, 
+    end = pos.end, 
+    len = pos.end - pos.beg + 1,
+    v.beg = vec[pos.beg], 
+    v.end = vec[pos.end]
+  ))
+}
+
+
+#' Replace zero elements with the previous non-zero element
+#'
+#' This function replaces all zero elements in a numeric vector with the last non-zero element that appeared before it.
+#'
+#' @param x A numeric vector which may contain zeros.
+#' @return A numeric vector with zeros replaced by the most recent non-zero value.
+#' @examples
+#' x <- c(0, 3, 0, 0, 10, 0, 6, 0, 0, 2, 0, 1111,1,1,1, -19, 0, 34, 0)
+#' replace_zeros_with_last_nonzero(x)
+#'
+#' @export
+fillPrev <- function(x) {
+  
+  # Determine how many first elements are zeros
+  n <- sum(cumprod(x == 0))
+  
+  if(n == length(x)) return(x)
+  
+  non_zero <- x != 0  # non-zero elements
+  
+  # Use cummax to fill zero positions with the last non-zero value
+  x <- x[cummax(seq_along(x) * non_zero)]
+  
+  # Append n first zeros
+  if (n > 0) {
+    x <- c(rep(0, n), x)
+  }
+  
+  return(x)
+}
+
+#' Fill zeros with the next non-zero value
+#'
+#' @param x A numeric vector that may contain zeros.
+#' @return A numeric vector where zeros are filled with the next non-zero values.
+#' If there is no next non-zero value, the zeros remain unchanged.
+#' @export
+fillNext <- function(x) {
+  
+  # Apply rev-fillPrev-rev
+  x <- rev(fillPrev(rev(x)))
+
+  return(x)
+}
+
+
+# Example usage
+# vec <- c(0, 3, 0, 0, 5, 0, 6, 0, 0, 2)
+# replace_zeros_with_last_nonzero(vec)
+
 
 #' Finds Duplicates and return unique values
 #'
