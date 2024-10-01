@@ -163,8 +163,8 @@ loop.function <- function(s.comb,
     # with the absence, but neighbouring
     idx.tmp = which( (abs(diff(v[,4])) == 1) &  # Neighbouring in accession-based order
                        (abs(diff(abs(v[,3])) == 1)) &  # Neighbouring in ref-based order
-                       (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
-                       (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
+                       # (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
+                       # (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
                        (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
     
     # Fix (beg < end) order

@@ -91,10 +91,6 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
-file.ws = "tmp_workspace.RData"
-all.local.objects <- ls()
-save(list = all.local.objects, file = file.ws)
-
 
 for(s.comb in pref.combinations){
   
@@ -202,7 +198,7 @@ for(s.comb in pref.combinations){
     row.names(pos.mx) = name.acc
 
 
-    mafft.aln.pos[[i]] = pos.mx
+    mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
     # ---
 
     
@@ -361,7 +357,7 @@ for(s.comb in pref.combinations){
       if(acc %in% rownames(mafft.aln.pos[[i]])){
         v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
         
-        # if(7916909 %in%  mafft.aln.pos[[i]][acc,]) stop(i)
+        # if(1835154 %in%  mafft.aln.pos[[i]][acc,]) stop(i)
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
       } 
     }
