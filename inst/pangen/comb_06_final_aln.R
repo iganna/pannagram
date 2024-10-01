@@ -91,6 +91,11 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
+file.ws = "tmp_workspace.RData"
+all.local.objects <- ls()
+save(list = all.local.objects, file = file.ws)
+
+
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
