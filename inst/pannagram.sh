@@ -210,11 +210,6 @@ mkdir -p "${path_chrom}"
 mkdir -p "${path_parts}"
 
 # ----------------------------------------------
-# Flags
-path_flags="${path_out}flags/"
-mkdir -p "${path_flags}"
-
-# ----------------------------------------------
 # Number pf chromosomes
 
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
@@ -319,64 +314,6 @@ fi
 # Number of Cores
 
 cores="${cores:-1}"  # Number of cores
-
-
-
-# ----------------------------------------------------------------------------
-#           LOGS
-# ----------------------------------------------------------------------------
-
-log_level=${log_level:-1}  # Set the default value to 'steps'
-
-if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
-    pokaz_error "Error: log_level must be a number between 0 and 3."
-    exit 1
-fi
-
-# Hidden path with logs
-path_log="${path_out}logs/"
-mkdir -p ${path_log}
-
-# File with steps logs
-file_log="${path_log}steps.log"
-> "${file_log}"
-
-file_params="${path_log}command.log"
-
-if [[ ! -f "$file_params" ]]; then
-    # Saving initial parameters
-    echo "prev_path_out=${path_out}" > "$file_params"
-    echo "prev_path_in=${path_in}" >> "$file_params"
-    echo "prev_part_len=${part_len}" >> "$file_params"
-    echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
-    echo "prev_purge_reps=${purge_reps}" >> "$file_params"
-    echo "prev_p_ident=${p_ident}" >> "$file_params"
-    echo "prev_nchr=${nchr}" >> "$file_params"
-    echo "prev_nchr_ref=${nchr_ref}" >> "$file_params"
-else
-    # Loading previous parameters
-    source "$file_params"
-
-    if [[ "$prev_path_out" != "$path_out" || \
-          "$prev_path_in" != "$path_in" || \
-          "$prev_part_len" != "$part_len" || \
-          "$prev_p_ident_gap" != "$p_ident_gap" || \
-          "$prev_purge_reps" != "$purge_reps" || \
-          "$prev_p_ident" != "$p_ident" || \
-          "$prev_nchr" != "$nchr" || \
-          "$prev_nchr_ref" != "$nchr_ref" ]]; then
-        echo "Error: One or more parameters have changed!"
-        echo "prev_path_out=$prev_path_out, current_path_out=$path_out"
-        echo "prev_path_in=$prev_path_in, current_path_in=$path_in"
-        echo "prev_part_len=$prev_part_len, current_part_len=$part_len"
-        echo "prev_p_ident_gap=$prev_p_ident_gap, current_p_ident_gap=$p_ident_gap"
-        echo "prev_purge_reps=$prev_purge_reps, current_purge_reps=$purge_reps"
-        echo "prev_p_ident=$prev_p_ident, current_p_ident=$p_ident"
-        echo "prev_nchr=$prev_nchr, current_nchr=$nchr"
-        echo "prev_nchr_ref=$prev_nchr_ref, current_nchr_ref=$nchr_ref"
-        exit 1
-    fi
-fi
 
 # ----------------------------------------------
 # Function for levels
@@ -512,6 +449,61 @@ else
     refs_all=("${ref_name}")
 fi
 
+# ----------------------------------------------------------------------------
+#           LOGS
+# ----------------------------------------------------------------------------
+
+log_level=${log_level:-1}  # Set the default value to 'steps'
+
+if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
+    pokaz_error "Error: log_level must be a number between 0 and 3."
+    exit 1
+fi
+
+# Hidden path with logs
+path_log="${path_out}logs/"
+mkdir -p ${path_log}
+
+# File with steps logs
+file_log="${path_log}steps.log"
+> "${file_log}"
+
+file_params="${path_log}command.log"
+
+if [[ ! -f "$file_params" ]]; then
+    # Saving initial parameters
+    echo "prev_path_out=${path_out}" > "$file_params"
+    echo "prev_path_in=${path_in}" >> "$file_params"
+    echo "prev_part_len=${part_len}" >> "$file_params"
+    echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
+    echo "prev_purge_reps=${purge_reps}" >> "$file_params"
+    echo "prev_p_ident=${p_ident}" >> "$file_params"
+    echo "prev_nchr=${nchr}" >> "$file_params"
+    echo "prev_nchr_ref=${nchr_ref}" >> "$file_params"
+else
+    # Loading previous parameters
+    source "$file_params"
+
+    if [[ "$prev_path_out" != "$path_out" || \
+          "$prev_path_in" != "$path_in" || \
+          "$prev_part_len" != "$part_len" || \
+          "$prev_p_ident_gap" != "$p_ident_gap" || \
+          "$prev_purge_reps" != "$purge_reps" || \
+          "$prev_p_ident" != "$p_ident" || \
+          "$prev_nchr" != "$nchr" || \
+          "$prev_nchr_ref" != "$nchr_ref" ]]; then
+        echo "Error: One or more parameters have changed!"
+        echo "prev_path_out=$prev_path_out, current_path_out=$path_out"
+        echo "prev_path_in=$prev_path_in, current_path_in=$path_in"
+        echo "prev_part_len=$prev_part_len, current_part_len=$part_len"
+        echo "prev_p_ident_gap=$prev_p_ident_gap, current_p_ident_gap=$p_ident_gap"
+        echo "prev_purge_reps=$prev_purge_reps, current_purge_reps=$purge_reps"
+        echo "prev_p_ident=$prev_p_ident, current_p_ident=$p_ident"
+        echo "prev_nchr=$prev_nchr, current_nchr=$nchr"
+        echo "prev_nchr_ref=$prev_nchr_ref, current_nchr_ref=$nchr_ref"
+        exit 1
+    fi
+fi
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗  /\_/\  
 # ║                                                                                   ║ ( o.o ) 
