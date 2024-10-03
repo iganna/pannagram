@@ -198,6 +198,7 @@ path_ref=$(add_symbol_if_missing "$path_ref" "/")
 # path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
 
+path_plots="${path_out}plots/"
 
 path_inter="${path_out}intermediate/"
 path_cons="${path_inter}consensus/"
@@ -208,6 +209,7 @@ path_parts="${path_inter}parts/"
 # Make folders
 
 mkdir -p "${path_out}"
+mkdir -p "${path_plots}"
 mkdir -p "${path_inter}"
 mkdir -p "${path_cons}"
 mkdir -p "${path_chrom}"
@@ -849,7 +851,7 @@ for ref0 in "${refs_all[@]}"; do
                 --ref ${ref0} \
                 --path_ref ${path_ref} \
                 --path_chr ${path_chrom} \
-                --path_out ${path_out} \
+                --path_out ${path_plots} \
                 --algn_path ${path_alignment} \
                 --path.log ${path_log_step} \
                 --log.level ${log_level} \
