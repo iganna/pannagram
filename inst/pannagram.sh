@@ -502,16 +502,19 @@ else
           "$prev_purge_reps" != "$purge_reps" || \
           "$prev_p_ident" != "$p_ident" || \
           "$prev_nchr" != "$nchr" ]]; then
-        echo "Error: One or more parameters have changed!"
-        echo "prev_path_out=$prev_path_out, current_path_out=$path_out"
-        echo "prev_path_in=$prev_path_in, current_path_in=$path_in"
-        echo "prev_part_len=$prev_part_len, current_part_len=$part_len"
-        echo "prev_p_ident_gap=$prev_p_ident_gap, current_p_ident_gap=$p_ident_gap"
-        echo "prev_purge_reps=$prev_purge_reps, current_purge_reps=$purge_reps"
-        echo "prev_p_ident=$prev_p_ident, current_p_ident=$p_ident"
-        echo "prev_nchr=$prev_nchr, current_nchr=$nchr"
+        pokaz_error "Error: One or more parameters have changed!"
+        
+        [[ "$prev_path_out" != "$path_out" ]] && pokaz_attention "prev_path_out=$prev_path_out, current_path_out=$path_out"
+        [[ "$prev_path_in" != "$path_in" ]] && pokaz_attention "prev_path_in=$prev_path_in, current_path_in=$path_in"
+        [[ "$prev_part_len" != "$part_len" ]] && pokaz_attention "prev_part_len=$prev_part_len, current_part_len=$part_len"
+        [[ "$prev_p_ident_gap" != "$p_ident_gap" ]] && pokaz_attention "prev_p_ident_gap=$prev_p_ident_gap, current_p_ident_gap=$p_ident_gap"
+        [[ "$prev_purge_reps" != "$purge_reps" ]] && pokaz_attention "prev_purge_reps=$prev_purge_reps, current_purge_reps=$purge_reps"
+        [[ "$prev_p_ident" != "$p_ident" ]] && pokaz_attention "prev_p_ident=$prev_p_ident, current_p_ident=$p_ident"
+        [[ "$prev_nchr" != "$nchr" ]] && pokaz_attention "prev_nchr=$prev_nchr, current_nchr=$nchr"
+        
         exit 1
     fi
+
 fi
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗  /\_/\  
