@@ -197,10 +197,10 @@ path_ref=$(add_symbol_if_missing "$path_ref" "/")
 # path_parts="${path_parts:-${path_out}parts/}"
 # path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
-path_cons="${path_out}/"
-# path_cons="${path_out}consensus/"
-path_inter="${path_out}intermediate/"
 
+
+path_inter="${path_out}intermediate/"
+path_cons="${path_inter}consensus/"
 path_chrom="${path_inter}chromosomes/"
 path_parts="${path_inter}parts/"
 
@@ -1202,7 +1202,6 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
             --cores ${cores} \
-            --ref.pref ${ref0} \
             --path.mafft.in ${path_mafft_in} \
             --path.mafft.out ${path_mafft_out} \
             --path.log ${path_log_step} \
@@ -1230,10 +1229,9 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
             --cores ${cores} \
-            --ref.pref ${ref0} \
-            --path.mafft.in ${path_mafft_in} \
             --path.mafft.out ${path_mafft_out} \
             --path.cons ${path_cons} \
+            --path.out ${path_out} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
 
@@ -1258,7 +1256,7 @@ make_dir ${path_log_step}
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
-            --path.cons ${path_cons} \
+            --path.cons ${path_out} \
             --ref.pref  ${ref0} \
             --cores ${cores}
 

@@ -15,12 +15,12 @@ source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.mafft.in"), type="character", default=NULL, 
-              help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
   make_option(c("--path.mafft.out"), type="character", default=NULL, 
               help="path to directory, where to mafft results are", metavar="character"),
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to directory with the consensus", metavar="character"),
+  make_option(c("--path.out"), type="character", default=NULL, 
+              help="path to directory with MSA output", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
@@ -54,9 +54,9 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
 
-if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+if (!is.null(opt$path.out)) path.out <- opt$path.out
 
 
 # ***********************************************************************
@@ -301,7 +301,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.cons, aln.type.msa, s.comb,'.h5')
+  file.res = paste0(path.out, aln.type.msa, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   

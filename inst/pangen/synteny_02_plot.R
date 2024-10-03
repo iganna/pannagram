@@ -48,7 +48,8 @@ ref <- opt$ref
 path.ref <- opt$path_ref
 path.chr <- opt$path_chr
 path.out <- opt$path_out
-path.aln<- opt$algn_path
+path.aln <- opt$algn_path
+num.cores <- opt$cores
 
 # Extracting only ids from path
 pattern <- ".*_[0-9]+_[0-9]+_maj\\.rds$"
