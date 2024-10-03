@@ -1051,18 +1051,18 @@ fi
 # ║                                                                                   ║     =`-(_)--(_)-'
 # ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
 
-with_level 1 pokaz_stage " (^>^) MGA is strting.."
+with_level 1 pokaz_stage "MGA is strting..  (^>^)"
 
 # ----------------------------------------------
 # Run consensus for a pair of files
 
-with_level 1 pokaz_stage "Step ${step_num}. Randomisation of references." 
+with_level 1 pokaz_stage "Step ${step_num}. Randomisation of references.." 
 
 ref0=${refs_all[0]}
 for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
 
-    with_level 1 pokaz_message "  Combine two references: ${ref0} and ${ref1}."  # DO NOT MOVE< SHOULD BE INSIDE THE LOOP
+    with_level 1 pokaz_message "Combine two references: ${ref0} and ${ref1}.."  # DO NOT MOVE< SHOULD BE INSIDE THE LOOP
 
     # Logs
     step_name="step${step_num}_comb_02_${ref0}_${ref1}"
@@ -1091,7 +1091,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Common gaps
-with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
+with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment.."
 
 # Logs
 step_name="step${step_num}_comb_03_find_gaps"

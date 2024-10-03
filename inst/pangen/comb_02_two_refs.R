@@ -132,21 +132,22 @@ loop.function <- function(s.comb,
     h5createGroup(file.res, gr.accs.e)
     h5createGroup(file.res, gr.break.e)
     
-    # idx.trust
-    base.len = h5read(file.comb0, v.len)
-    idx.trust = rep(0, base.len)
+    idx.trust = 0
   }
   
   # Get the corresponsing function between two references
   
   s.ref1 = paste0(gr.accs.e, '', ref1)
   f01 <- h5read(file.comb0, s.ref1)
-  idx01 = which(f01 != 0)  # idx which we trust
+  idx01.b = f01 != 0
+  idx01 = which(idx01.b)  # idx which we trust
   f01 = f01[idx01]
   
   # Idx trust
-  idx.trust = idx.trust + idx01 * 1
-  h5write(idx.trust, file.res, v.idx.trust)
+  suppressMessages({
+    idx.trust = idx.trust + idx01.b * 1
+    h5write(idx.trust, file.res, v.idx.trust)
+  })
   
   # Get accessions to combine
   groups0 = h5ls(file.comb0)
