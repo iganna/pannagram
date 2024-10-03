@@ -75,9 +75,9 @@ if(F){
   options("width"=200, digits=10)
 }
 
-s.pattern <- paste0("^", aln.type.ref, ".*")
+s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.ref, "", files)
+pref.combinations = gsub(aln.type.comb, "", files)
 # pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -107,7 +107,7 @@ loop.function <- function(s.comb,
   
   # --- --- --- --- --- --- --- --- --- --- ---
   
-  file.comb = paste0(path.cons, aln.type.ref, s.comb,'.h5')
+  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
