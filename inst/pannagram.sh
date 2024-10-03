@@ -638,10 +638,10 @@ if [[ "${path_in}" != "$path_ref" ]]; then
     with_level 1 pokaz_stage "Step ${step_num}. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
     for ref0 in "${refs_all[@]}"; do
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
-
         step_file="$path_flags/step${step_num}_${ref0}_done"
         if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
+
+            with_level 1  pokaz_attention "Reference ${ref0}"
 
             # Temporary file to analyse only the reference genome from the folder
             file_acc_ref=${path_cons}ref_acc.txt
@@ -675,14 +675,14 @@ fi
 with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
 for ref0 in "${refs_all[@]}"; do
 
-    with_level 1  pokaz_attention "Reference ${ref0}"
-
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
     
     # Start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1  pokaz_attention "Reference ${ref0}"
 
         # with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
 
@@ -760,8 +760,6 @@ fi
 
 with_level 1 pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 for ref0 in "${refs_all[@]}"; do
-
-    with_level 1  pokaz_attention "Reference ${ref0}"
     
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
@@ -770,6 +768,8 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1  pokaz_attention "Reference ${ref0}"
 
         # Clean up the output folders
         if   [ "$clean_dir" = "T" ]; then 
@@ -811,14 +811,14 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 for ref0 in "${refs_all[@]}"; do
 
-    with_level 1  pokaz_attention "Reference ${ref0}"
-
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1  pokaz_attention "Reference ${ref0}"
 
         # Logs for the Plot
         path_log_step="${path_log}step${step_num}_synteny_02_${ref0}_plot/"
@@ -871,6 +871,8 @@ for ref0 in "${refs_all[@]}"; do
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
+        with_level 1  pokaz_attention "Reference ${ref0}"
+
         # Logs gap sequences
         path_log_step="${path_log}step${step_num}_synteny_03_${ref0}/"
         make_dir ${path_log_step}
@@ -909,6 +911,8 @@ for ref0 in "${refs_all[@]}"; do
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
+        with_level 1  pokaz_attention "Reference ${ref0}"
+
         # Logs for the BLAST
         path_log_step="${path_log}step${step_num}_synteny_04_${ref0}_blast_gaps/"
         make_dir ${path_log_step}
@@ -943,6 +947,8 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1  pokaz_attention "Reference ${ref0}"
 
         # Logs for the merging gaps
         path_log_step="${path_log}step${step_num}_synteny_05_${ref0}_full/"
@@ -982,6 +988,8 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1  pokaz_attention "Reference ${ref0}"
 
         # Logs for creating the consensus
         path_log_step="${path_log}step${step_num}_comb_01_${ref0}/"

@@ -448,7 +448,7 @@ loop.function <- function(f.maj,
 
 if(num.cores == 1){
   for(f.maj in files.maj){
-    loop.function(f.blast,
+    loop.function(f.maj,
                   echo.loop=echo.loop)
   }
 } else {
@@ -459,7 +459,7 @@ if(num.cores == 1){
   tmp = foreach(f.maj = files.maj, 
                 .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
-                  loop.function(f.blast,
+                  loop.function(f.maj,
                                 echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
