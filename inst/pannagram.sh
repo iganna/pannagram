@@ -484,27 +484,24 @@ file_params="${path_log}command.log"
 
 if [[ ! -f "$file_params" ]]; then
     # Saving initial parameters
-    echo "prev_path_out=${path_out}" > "$file_params"
     echo "prev_path_in=${path_in}" >> "$file_params"
     echo "prev_part_len=${part_len}" >> "$file_params"
-    echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
     echo "prev_purge_reps=${purge_reps}" >> "$file_params"
-    echo "prev_p_ident=${p_ident}" >> "$file_params"
     echo "prev_nchr=${nchr}" >> "$file_params"
+    echo "prev_p_ident=${p_ident}" >> "$file_params"
+    echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
 else
     # Loading previous parameters
     source "$file_params"
 
-    if [[ "$prev_path_out" != "$path_out" || \
-          "$prev_path_in" != "$path_in" || \
+    if [[ "$prev_path_in" != "$path_in" || \
           "$prev_part_len" != "$part_len" || \
           "$prev_p_ident_gap" != "$p_ident_gap" || \
           "$prev_purge_reps" != "$purge_reps" || \
           "$prev_p_ident" != "$p_ident" || \
           "$prev_nchr" != "$nchr" ]]; then
-        pokaz_error "Error: One or more parameters have changed!"
+        pokaz_error "Error: One or more parameters have been changed!"
         
-        [[ "$prev_path_out" != "$path_out" ]] && pokaz_attention "path_out: $prev_path_out -> $path_out"
         [[ "$prev_path_in" != "$path_in" ]] && pokaz_attention "path_in: $prev_path_in -> $path_in"
         [[ "$prev_part_len" != "$part_len" ]] && pokaz_attention "part_len: $prev_part_len -> $part_len"
         [[ "$prev_p_ident_gap" != "$p_ident_gap" ]] && pokaz_attention "p_ident_gap: $prev_p_ident_gap -> $p_ident_gap"
@@ -1054,12 +1051,12 @@ fi
 # ║                                                                                   ║     =`-(_)--(_)-'
 # ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
 
-with_level 1 pokaz_stage "* MGA is strting * *"
+with_level 1 pokaz_stage " (^>^) MGA is strting.."
 
 # ----------------------------------------------
 # Run consensus for a pair of files
 
-with_level 1 pokaz_stage "Step ${step_num}. Randomisation of alignments." 
+with_level 1 pokaz_stage "Step ${step_num}. Randomisation of references." 
 
 ref0=${refs_all[0]}
 for ((i = 1; i < ${#refs_all[@]}; i++)); do

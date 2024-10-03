@@ -96,8 +96,6 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 
-
-
 # ***********************************************************************
 # ---- MAIN program body ----
 
@@ -122,27 +120,35 @@ loop.function <- function(s.comb,
   file.comb0 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref0,'.h5')
   file.comb1 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref1,'.h5')
   
-  s.ref1 = paste0(gr.accs.e, '', ref1)
-  
   # Combined file. If it exists, then use it for the growing correspondence
   file.res = paste0(path.cons, 'res_',s.comb,'_ref_',ref0,'.h5')
   if(file.exists(file.res)){
     file.comb0 = file.res
+    
+    # idx.trust
+    idx.trust = h5read(file.comb0, v.idx.trust)
   } else {
     h5createFile(file.res)
     h5createGroup(file.res, gr.accs.e)
     h5createGroup(file.res, gr.break.e)
-    h5write(0, file.res, "s.trust")
+    
+    # idx.trust
+    base.len = h5read(file.comb0, v.len)
+    idx.trust = rep(0, base.len)
   }
   
   # Get the corresponsing function between two references
   
-  
+  s.ref1 = paste0(gr.accs.e, '', ref1)
   f01 <- h5read(file.comb0, s.ref1)
-  base.len = length(f01)
   idx01 = which(f01 != 0)  # idx which we trust
   f01 = f01[idx01]
   
+  # Idx trust
+  idx.trust = idx.trust + idx01 * 1
+  h5write(idx.trust, file.res, v.idx.trust)
+  
+  # Get accessions to combine
   groups0 = h5ls(file.comb0)
   groups1 = h5ls(file.comb1)
   
@@ -182,10 +188,6 @@ loop.function <- function(s.comb,
     
     pokaz('Length of resultant correspondence', length(v01), file=file.log.loop, echo=echo.loop)
     pokaz('Sum of matches', sum(v01 != 0), file=file.log.loop, echo=echo.loop)
-    
-    # Turn into real coordinates back
-    # v.final = rep(0, base.len)
-    # v.final[idx01] = v01
     
     v.final[idx01] = v0
     
