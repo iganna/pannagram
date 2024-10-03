@@ -68,8 +68,6 @@ pokaz('Genomes analysed:', acc.ids, file=file.log.main, echo=echo.main)
 pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork = FALSE)
 dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 
-print(path.aln)
-
 loop.function <- function(acc, 
                           echo.loop=T, 
                           file.log.loop=NULL){
@@ -87,8 +85,7 @@ loop.function <- function(acc,
     return()
   }
   
-  pokaz('Accession', acc, 
-        file=file.log.main, echo=echo.main)
+  pokaz('Accession', acc, file=file.log.main, echo=echo.main)
   
   # Lengths of chromosomes for the accession and reference
   chr.len = c()

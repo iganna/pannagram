@@ -19,8 +19,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to consensus directory", metavar="character"),
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
@@ -63,23 +61,9 @@ if (is.null(opt$max.len.gap)) {
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
-# Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("Error: ref.pref is NULL")
-} else {
-  ref.pref <- opt$ref.pref
-}
-
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-# Testing
-if(F){
-  library(rhdf5)
-  path.cons = './'
-  ref.pref = '0'
-  options("width"=200, digits=10)
-}
 
 s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -91,7 +75,6 @@ if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
 
-pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 
@@ -218,7 +201,7 @@ loop.function <- function(s.comb,
     
   }
   
-  file.breaks = paste0(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds')
+  file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   saveRDS(idx.break, file.breaks)
   
   rmSafe(idx.break)
@@ -258,3 +241,12 @@ warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
+
+# ***********************************************************************
+# ----- Manual Testing -----
+if(F){
+  library(rhdf5)
+  path.cons = './'
+  options("width"=200, digits=10)
+}
+
