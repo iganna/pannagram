@@ -1066,8 +1066,6 @@ ref0=${refs_all[0]}
 for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
 
-    with_level 1 pokaz_message "Combine two references: ${ref0} and ${ref1}.."  # DO NOT MOVE< SHOULD BE INSIDE THE LOOP
-
     # Logs
     step_name="step${step_num}_comb_02_${ref0}_${ref1}"
     step_file="${path_log}${step_name}_done"
@@ -1076,6 +1074,8 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         
     # Start
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+        with_level 1 pokaz_attention "Combine two references: ${ref0} and ${ref1}.."  # SHOULD BE INSIDE THE LOOP
         
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs.R \
                 --path.cons ${path_cons} \
@@ -1140,13 +1140,13 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     fi
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
-            --path.cons ${path_cons} \
-            --cores ${cores} \
-            --path.chromosomes ${path_chrom} \
-            --path.mafft.in ${path_mafft_in} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level} \
-            --max.len.gap ${max_len_gap}
+            --path.cons "${path_cons}" \
+            --cores "${cores}" \
+            --path.chromosomes "${path_chrom}" \
+            --path.mafft.in "${path_mafft_in}" \
+            --path.log "${path_log_step}" \
+            --log.level "${log_level}" \
+            --max.len.gap "${max_len_gap}"
 
     # Done
     touch "${step_file}"
@@ -1163,10 +1163,10 @@ with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
 step_name="step${step_num}_comb_05_mafft"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+make_dir "${path_log_step}"
 
 # Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+if [ "$start_step" -le "${step_num}" ] || [ ! -f "$step_file" ]; then
 
     # Paths
     path_mafft_out="${path_inter}mafft_out/"
@@ -1174,15 +1174,16 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
         mkdir -p "$path_mafft_out"
     fi
 
-    $INSTALLED_PATH/pangen/comb_05_mafft.sh \
-            -cores ${cores} \
-            -path_mafft_in ${path_mafft_in} \
-            -path_mafft_out ${path_mafft_out} \
-            -log_path ${path_log_step}
+    "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
+            -cores "${cores}" \
+            -path_mafft_in "${path_mafft_in}" \
+            -path_mafft_out "${path_mafft_out}" \
+            -log_path "${path_log_step}"
 
     # Done
     touch "${step_file}"
 fi
+
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
