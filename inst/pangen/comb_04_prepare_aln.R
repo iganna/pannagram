@@ -89,9 +89,9 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.ref, ".*")
+s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.ref, "", files)
+pref.combinations = gsub(aln.type.comb, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
