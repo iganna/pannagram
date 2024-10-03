@@ -23,6 +23,7 @@ mode_ref="F"
 mode_msa="F"
 clean_dir="F"
 one_step="F"
+purge_reps="F"
 
 unrecognized_options=()
 
@@ -273,11 +274,15 @@ part_len="${part_len:-5000}"
 
 # Filter repeats
 
-if [ -z "${purge_reps}" ]; then
+if [ "${purge_reps}" == "F" ]; then
     option_purge_reps=" "
-else
+elif [ "${purge_reps}" == "T" ]; then
     option_purge_reps=" --purge.reps T"
+else
+    echo "Error: purge_reps must be either 'F' or 'T'."
+    exit 1
 fi
+
 
 
 if [ -z "${flag_rev}" ]; then
@@ -486,7 +491,6 @@ if [[ ! -f "$file_params" ]]; then
     echo "prev_purge_reps=${purge_reps}" >> "$file_params"
     echo "prev_p_ident=${p_ident}" >> "$file_params"
     echo "prev_nchr=${nchr}" >> "$file_params"
-    echo "prev_nchr_ref=${nchr_ref}" >> "$file_params"
 else
     # Loading previous parameters
     source "$file_params"
@@ -497,8 +501,7 @@ else
           "$prev_p_ident_gap" != "$p_ident_gap" || \
           "$prev_purge_reps" != "$purge_reps" || \
           "$prev_p_ident" != "$p_ident" || \
-          "$prev_nchr" != "$nchr" || \
-          "$prev_nchr_ref" != "$nchr_ref" ]]; then
+          "$prev_nchr" != "$nchr" ]]; then
         echo "Error: One or more parameters have changed!"
         echo "prev_path_out=$prev_path_out, current_path_out=$path_out"
         echo "prev_path_in=$prev_path_in, current_path_in=$path_in"
@@ -507,7 +510,6 @@ else
         echo "prev_purge_reps=$prev_purge_reps, current_purge_reps=$purge_reps"
         echo "prev_p_ident=$prev_p_ident, current_p_ident=$p_ident"
         echo "prev_nchr=$prev_nchr, current_nchr=$nchr"
-        echo "prev_nchr_ref=$prev_nchr_ref, current_nchr_ref=$nchr_ref"
         exit 1
     fi
 fi
