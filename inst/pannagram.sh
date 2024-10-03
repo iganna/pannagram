@@ -847,7 +847,7 @@ for ref0 in "${refs_all[@]}"; do
                 --ref ${ref0} \
                 --path_ref ${path_ref} \
                 --path_chr ${path_chrom} \
-                --path_out ${path_inter} \
+                --path_out ${path_out} \
                 --algn_path ${path_alignment} \
                 --path.log ${path_log_step} \
                 --log.level ${log_level} \
@@ -1258,8 +1258,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
             --path.cons ${path_cons} \
             --ref.pref  ${ref0} \
-            --cores ${cores} \
-            --aln.type ${aln_type}
+            --cores ${cores}
 
     # Done
     touch "${step_file}"

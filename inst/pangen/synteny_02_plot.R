@@ -12,52 +12,24 @@ suppressMessages({
 args <- commandArgs(trailingOnly = TRUE)
 
 option_list <- list(
-    make_option(c("--ref"),
-        type = "character",
-        default = NULL,
-        help = "Name af reference sequence",
-        metavar = "character"
-    ),
-    make_option(c("--path_ref"),
-        type = "character",
-        default = NULL,
-        help = "Path to reference sequence",
-        metavar = "character"
-    ),
-    make_option(c("--path_out"),
-        type = "character",
-        default = NULL,
-        help = "Path to the output directory",
-        metavar = "character"
-    ),
-    make_option(c("--path_chr"),
-                type = "character",
-                default = NULL,
-                help = "Path to chromosomes",
-                metavar = "character"
-    ),
-    make_option(c("--algn_path"),
-        type = "character",
-        default = NULL,
-        help = "Path to the alignment directory",
-        metavar = "character"),
-    make_option(c("--path.log"), 
-        type = "character", 
-        default = NULL,
-        help = "Path for log files",
-        metavar = "character"),
-    make_option(c("--log.level"), 
-        type = "character", 
-        default = NULL,
-        help = "Level of log to be shown on the screen", 
-        metavar = "character"),
-    make_option(c("--cores"),
-                type = "integer",
-                default = 1,
-                help = "Number of cores to use",
-                metavar = "character"
-    )
+  make_option(c("--ref"), type = "character", default = NULL, 
+              help = "Name of reference sequence", metavar = "character"),
+  make_option(c("--path_ref"), type = "character", default = NULL, 
+              help = "Path to reference sequence", metavar = "character"),
+  make_option(c("--path_out"), type = "character", default = NULL, 
+              help = "Path to the output directory", metavar = "character"),
+  make_option(c("--path_chr"), type = "character", default = NULL, 
+              help = "Path to chromosomes", metavar = "character"),
+  make_option(c("--algn_path"), type = "character", default = NULL, 
+              help = "Path to the alignment directory", metavar = "character"),
+  make_option(c("--path.log"), type = "character", default = NULL, 
+              help = "Path for log files", metavar = "character"),
+  make_option(c("--log.level"), type = "character", default = NULL, 
+              help = "Level of log to be shown on the screen", metavar = "character"),
+  make_option(c("--cores"), type = "integer", default = 1, 
+              help = "Number of cores to use", metavar = "character")
 )
+
 
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -97,7 +69,23 @@ dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
 
 print(path.aln)
 
-for (acc in acc.ids){
+loop.function <- function(acc, 
+                          echo.loop=T, 
+                          file.log.loop=NULL){
+  
+  # Log files
+  if (is.null(file.log.loop)){
+    file.log.loop = paste0(path.log, 'loop_file_', 
+                           acc,
+                           '.log')
+    invisible(file.create(file.log.loop))
+  }
+  
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
+  
   pokaz('Accession', acc, 
         file=file.log.main, echo=echo.main)
   
@@ -127,14 +115,36 @@ for (acc in acc.ids){
   
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
-                            acc=acc,
-                            ref=ref,
-                            chr.len=chr.len)
+                     acc=acc,
+                     ref=ref,
+                     chr.len=chr.len)
   
   # Save
   pdf.name <- paste0(ref, "-", id)
   savePDF(p, path = pdf.path, name = pdf.name)
+  
 }
+
+
+if(num.cores == 1){
+  for(acc in acc.ids){
+    loop.function(acc,
+                  echo.loop=echo.loop)
+  }
+} else {
+  # Set the number of cores for parallel processing
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  tmp = foreach(acc = acc.ids, 
+                .packages=c('crayon'), 
+                .verbose = F)  %dopar% { 
+                  loop.function(acc,
+                                echo.loop=echo.loop)
+                }
+  stopCluster(myCluster)
+}
+
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
