@@ -91,7 +91,7 @@ extract_xy <- function(filename) {
 }
 pref.combinations <- unique(sapply(combo_files, extract_xy))
 
-if(length(pref.combinations)) {
+if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
 

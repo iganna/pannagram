@@ -94,7 +94,7 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.ref, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
-if(length(pref.combinations)) {
+if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
 

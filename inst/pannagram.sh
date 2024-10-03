@@ -879,7 +879,7 @@ fi
 # ----------------------------------------------
 # Get sequences between the synteny blocks
 
-with_level 1 pokaz_stage "Step ${step_num}. Get of gaps between syntenic matches."
+with_level 1 pokaz_stage "Step ${step_num}. Get gaps between syntenic matches."
 for ref0 in "${refs_all[@]}"; do        
 
     # Paths

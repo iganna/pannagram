@@ -81,7 +81,7 @@ pref.combinations = gsub(aln.type.comb, "", files)
 # pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
-if(length(pref.combinations)) {
+if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
 
