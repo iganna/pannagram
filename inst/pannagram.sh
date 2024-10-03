@@ -193,7 +193,8 @@ path_ref=$(add_symbol_if_missing "$path_ref" "/")
 # path_parts="${path_parts:-${path_out}parts/}"
 # path_parts=$(add_symbol_if_missing "$path_parts" "/")
 
-path_cons="${path_out}consensus/"
+path_cons="${path_out}/"
+# path_cons="${path_out}consensus/"
 path_inter="${path_out}intermediate/"
 
 path_chrom="${path_inter}chromosomes/"
