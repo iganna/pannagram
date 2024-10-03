@@ -89,9 +89,9 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
+s.pattern <- paste0("^", aln.type.ref, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
+pref.combinations = gsub(aln.type.ref, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
@@ -124,8 +124,6 @@ for(s.comb in pref.combinations){
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds')
   idx.break = readRDS(file.breaks)
   # idx.break = idx.break[idx.break$acc != paste0('', ref.pref),]  # Remove the reference correspondence
-  
-  
   
   # Merge full coverages 
   idx.break = idx.break[order(-idx.break$end),]
