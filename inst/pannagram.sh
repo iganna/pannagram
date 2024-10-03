@@ -315,6 +315,28 @@ fi
 
 cores="${cores:-1}"  # Number of cores
 
+
+
+# ----------------------------------------------------------------------------
+#           LOGS
+# ----------------------------------------------------------------------------
+
+log_level=${log_level:-1}  # Set the default value to 'steps'
+
+if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
+    pokaz_error "Error: log_level must be a number between 0 and 3."
+    exit 1
+fi
+
+# Hidden path with logs
+path_log="${path_out}logs/"
+mkdir -p ${path_log}
+
+# File with steps logs
+file_log="${path_log}steps.log"
+> "${file_log}"
+
+
 # ----------------------------------------------
 # Function for levels
 
@@ -450,23 +472,8 @@ else
 fi
 
 # ----------------------------------------------------------------------------
-#           LOGS
+#            Check previous command
 # ----------------------------------------------------------------------------
-
-log_level=${log_level:-1}  # Set the default value to 'steps'
-
-if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
-    pokaz_error "Error: log_level must be a number between 0 and 3."
-    exit 1
-fi
-
-# Hidden path with logs
-path_log="${path_out}logs/"
-mkdir -p ${path_log}
-
-# File with steps logs
-file_log="${path_log}steps.log"
-> "${file_log}"
 
 file_params="${path_log}command.log"
 
