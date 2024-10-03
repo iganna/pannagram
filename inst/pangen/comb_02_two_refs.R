@@ -90,6 +90,11 @@ extract_xy <- function(filename) {
   return(paste(x, y, sep = '_'))
 }
 pref.combinations <- unique(sapply(combo_files, extract_xy))
+
+if(length(pref.combinations)) {
+  stop('No files with the ref-based alignments are found')
+}
+
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ----  Combine correspondence  ----

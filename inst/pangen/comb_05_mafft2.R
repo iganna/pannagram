@@ -57,7 +57,6 @@ if (is.null(opt$ref.pref)) {
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 
-
 # ***********************************************************************
 # ---- Preparation ----
 

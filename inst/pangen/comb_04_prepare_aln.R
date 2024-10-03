@@ -94,6 +94,10 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.ref, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
+if(length(pref.combinations)) {
+  stop('No files with the ref-based alignments are found')
+}
+
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
