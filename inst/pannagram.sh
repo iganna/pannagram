@@ -548,7 +548,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
             --cores ${cores}  \
             ${option_nchr} \
             ${option_accessions} \
-            --path.log ${path_log_step} --log.level ${log_level}
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
 
     # Done
     touch "${step_file}"
@@ -1035,8 +1036,6 @@ with_level 1 pokaz_stage "* MGA is strting * *"
 # ----------------------------------------------
 # Run consensus for a pair of files
 
-with_level 1 pokaz_stage "Step ${step_num}. Randomisation of alignments. Combine two references: ${ref0} and ${ref1}."
-
 ref0=${refs_all[0]}
 
 step_file="$path_flags/step${step_num}_done"
@@ -1044,6 +1043,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     for ((i = 1; i < ${#refs_all[@]}; i++)); do
         ref1=${refs_all[i]}
+
+        with_level 1 pokaz_stage "Step ${step_num}. Randomisation of alignments. Combine two references: ${ref0} and ${ref1}."  # DO NOT MOVE< SHOULD BE INSIDE THE LOOP
 
         # Logging
         path_log_step="${path_log}step${step_num}_comb_02_${ref0}_${ref1}/"
@@ -1118,6 +1119,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     # Done
     touch "${step_file}"
 fi
+
+echo "Here"
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
