@@ -17,8 +17,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--path.mafft.in"), type="character", default=NULL, 
               help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
   make_option(c("--path.mafft.out"), type="character", default=NULL, 
               help="path to directory, where to mafft results are", metavar="character"),
   make_option(c("--path.cons"), type="character", default=NULL, 
@@ -56,13 +54,6 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
 
-# Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
-} else {
-  ref.pref <- opt$ref.pref
-}
-
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -77,7 +68,6 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.comb, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
-pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 
@@ -94,7 +84,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
-  file.comb = paste0(path.cons, aln.type.comb, s.comb,'_ref_',ref.pref,'.h5')
+  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -311,7 +301,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.cons, aln.type.msa, s.comb,'_ref_',ref.pref,'.h5')
+  file.res = paste0(path.cons, aln.type.msa, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
@@ -378,7 +368,7 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste0(path.cons, 'stat', s.comb, '_', ref.pref,'.rds'))
+saveRDS(stat.comb, paste0(path.cons, 'stat', s.comb,'.rds'))
 
 
 # ***********************************************************************
@@ -411,7 +401,6 @@ if(F){
 source(system.file("pannagram/utils/utils.R", package = "pannagram"))
   path.cons = './'
   path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-  ref.pref = '0'
   path.mafft.out = '../mafft_out/'
   n.flank = 30
   
@@ -428,7 +417,6 @@ source(system.file("pannagram/utils/utils.R", package = "pannagram"))
 source(system.file("utils/utils.R", package = "pannagram"))
   path.cons = './'
   path.chromosomes = '../chromosomes/'
-  ref.pref = 'GR3013_prokka'
   path.mafft.out = '../mafft_out/'
   n.flank = 30
   

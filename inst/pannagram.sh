@@ -67,6 +67,7 @@ do
         -part_len)  part_len=$2; shift 2 ;;  # fragments to which each chromosome should be cut, has a default value 5000
         -p_ident)   p_ident=$2;  shift 2 ;;  # percent of identity
         -p_ident_gap)   p_ident=$2;  shift 2 ;;  # percent of identity
+        -max_len_gap)  max_len_gap=$2; shift 2 ;;  # Max length that can be aligned with MAFFT
 
         -sort_by_len) sort_chr_len="T"; shift 1 ;;  # flag whether to sort chromosomes by length or not
         -one2one)     one2one="T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
@@ -273,6 +274,7 @@ fi
 p_ident="${p_ident:-85}"  
 p_ident_gap="${p_ident_gap:-85}"  
 part_len="${part_len:-5000}"  
+max_len_gap="${max_len_gap:-40000}"  
 
 # Filter repeats
 
@@ -1106,10 +1108,10 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_03_find_gaps.R \
             --path.cons ${path_cons} \
-            --ref.pref ${ref0} \
             --cores ${cores} \
             --path.log ${path_log_step} \
-            --log.level ${log_level}
+            --log.level ${log_level} \
+            --max.len.gap ${max_len_gap}
 
     # Done
     touch "${step_file}"
@@ -1139,12 +1141,12 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
             --path.cons ${path_cons} \
-            --ref.pref ${ref0} \
             --cores ${cores} \
             --path.chromosomes ${path_chrom} \
             --path.mafft.in ${path_mafft_in} \
             --path.log ${path_log_step} \
-            --log.level ${log_level}
+            --log.level ${log_level} \
+            --max.len.gap ${max_len_gap}
 
     # Done
     touch "${step_file}"

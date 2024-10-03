@@ -19,22 +19,20 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to consensus directory", metavar="character"),
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
   make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character"),
-  make_option(c("--max.len.gap"), type = "integer", default = NULL,
-              help = "Max len of the gap", metavar = "character")
+              help = "Level of log to be shown on the screen", metavar = "character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
+
+max.len.gap = 100000  # This should be a parameter!!!
 
 # ***********************************************************************
 # ---- Logging ----
@@ -52,34 +50,14 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
 
-# Max len gap
-if (is.null(opt$max.len.gap)) {
-  stop("Error: max.len.gap is NULL")
-} else {
-  max.len.gap <- opt$max.len.gap
-}
-
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
-# Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("Error: ref.pref is NULL")
-} else {
-  ref.pref <- opt$ref.pref
-}
-
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-# Testing
-if(F){
-  library(rhdf5)
-  path.cons = './'
-  ref.pref = '0'
-  options("width"=200, digits=10)
-}
+
 
 s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -91,9 +69,7 @@ if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
 
-pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
-
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -218,7 +194,7 @@ loop.function <- function(s.comb,
     
   }
   
-  file.breaks = paste0(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds')
+  file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   saveRDS(idx.break, file.breaks)
   
   rmSafe(idx.break)
@@ -258,3 +234,13 @@ warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
+
+
+# ***********************************************************************
+# ---- Testing ----
+if(F){
+  library(rhdf5)
+  path.cons = './'
+  options("width"=200, digits=10)
+}
+

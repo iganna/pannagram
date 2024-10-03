@@ -17,8 +17,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--path.mafft.in"), type="character", default=NULL, 
               help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
   make_option(c("--path.mafft.out"), type="character", default=NULL, 
               help="path to directory, where to mafft results are", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
@@ -46,13 +44,6 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-
-# Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
-} else {
-  ref.pref <- opt$ref.pref
-}
 
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out

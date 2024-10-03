@@ -27,14 +27,14 @@ option_list = list(
               help="path to directory with chromosomes", metavar="character"),
   make_option(c("--path.mafft.in"), type="character", default=NULL, 
               help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
   make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+              help = "Level of log to be shown on the screen", metavar = "character"),
+  make_option(c("--max.len.gap"), type = "integer", default = NULL,
+              help = "Max len of the gap", metavar = "character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -42,7 +42,6 @@ opt = parse_args(opt_parser, args = args);
 
 
 #TODO: SHOULD BE PARAMATERS
-max.len.gap = 100000
 len.short = 50
 n.flank = 30
 
@@ -60,6 +59,13 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 # ***********************************************************************
 # ---- Values of parameters ----
 
+# Max len gap
+if (is.null(opt$max.len.gap)) {
+  stop("Error: max.len.gap is NULL")
+} else {
+  max.len.gap <- opt$max.len.gap
+}
+
 # Number of cores for parallel processing
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
@@ -74,14 +80,6 @@ if(!dir.exists(path.cons)) stop('Consensus folder doesn???t exist')
 
 # Path to chromosomes
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
-
-# Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
-} else {
-  ref.pref <- opt$ref.pref
-}
-
 
 # Path to mafft input
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
@@ -98,9 +96,7 @@ if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
 
-pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
-
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -125,9 +121,8 @@ for(s.comb in pref.combinations){
   # }
   
   # ---- Merge coverages ----
-  file.breaks = paste0(path.cons, 'breaks_', s.comb,'_ref_',ref.pref,'.rds')
+  file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   idx.break = readRDS(file.breaks)
-  # idx.break = idx.break[idx.break$acc != paste0('', ref.pref),]  # Remove the reference correspondence
   
   # Merge full coverages 
   idx.break = idx.break[order(-idx.break$end),]
@@ -167,11 +162,6 @@ for(s.comb in pref.combinations){
   for(acc in accessions){
     pokaz(acc)
     
-    # if(sub('', '', acc) ==ref.pref){
-    #   v.beg = cbind(v.beg, idx.break$beg)
-    #   v.end = cbind(v.end, idx.break$end)
-    #   next
-    # }
     x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
     blocks.acc = h5read(file.comb, paste0(gr.blocks, acc))
     
@@ -454,15 +444,12 @@ if(F){
 source(system.file("utils/utils.R", package = "pannagram"))
   path.cons = './'
   path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
-  ref.pref = '0'
   
   
   library(rhdf5)
 source(system.file("/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/pannagram/utils/utils.R", package = "pannagram"))
   path.cons = '/Volumes/Samsung_T5/vienn/alignment/new/consensus/'
   path.chromosomes = '/Volumes/Samsung_T5/vienn/pb_chromosomes/'
-  ref.pref = '0'
-  
   
 }
 
