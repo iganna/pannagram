@@ -89,11 +89,10 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
+s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pokaz('Files', files, file=file.log.main, echo=echo.main)
-pref.combinations = gsub("res_", "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
+pref.combinations = gsub(aln.type.comb, "", files)
+pref.combinations <- sub(".h5", "", pref.combinations)
 
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
@@ -108,7 +107,7 @@ for(s.comb in pref.combinations){
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
-  file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
+  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]

@@ -75,10 +75,11 @@ if(F){
   options("width"=200, digits=10)
 }
 
-s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
+s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub("res_", "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
+pref.combinations = gsub(aln.type.comb, "", files)
+# pref.combinations <- sub("_ref.*$", "", pref.combinations)
+pref.combinations <- sub(".h5", "", pref.combinations)
 
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
@@ -106,7 +107,7 @@ loop.function <- function(s.comb,
   
   # --- --- --- --- --- --- --- --- --- --- ---
   
-  file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
+  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]

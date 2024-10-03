@@ -72,12 +72,10 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
+s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pokaz('Path', path.cons, file=file.log.main, echo=echo.main)
-pokaz('Files', files, file=file.log.main, echo=echo.main)
-pref.combinations = gsub("res_", "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
+pref.combinations = gsub(aln.type.comb, "", files)
+pref.combinations <- sub(".h5", "", pref.combinations)
 
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
@@ -96,7 +94,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
-  file.comb = paste0(path.cons, 'res_', s.comb,'_ref_',ref.pref,'.h5')
+  file.comb = paste0(path.cons, aln.type.comb, s.comb,'_ref_',ref.pref,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -313,7 +311,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.cons, 'msa_', s.comb,'_ref_',ref.pref,'.h5')
+  file.res = paste0(path.cons, aln.type.msa, s.comb,'_ref_',ref.pref,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   

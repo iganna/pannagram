@@ -16,7 +16,9 @@ source $INSTALLED_PATH/utils/utils_help.sh
 #            PARAMETERS: parsing
 # ----------------------------------------------------------------------------
 
-aln_type='msa_'
+aln_type_msa='msa_'
+aln_type_ref='ref_'
+aln_type_comb='comb_'
 
 mode_pre="F"
 mode_ref="F"

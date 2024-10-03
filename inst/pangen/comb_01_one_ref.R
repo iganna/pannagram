@@ -26,19 +26,19 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.chr.len"), type="character", default=NULL, 
+  make_option(c("--path.chr.len"), type="character", default=NULL,
               help="file with lengths of chromosomes", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
+  make_option(c("--path.cons"), type="character", default=NULL,
               help="path to consensus directory", metavar="character"),
-  make_option(c("--path.aln"), type="character", default=NULL, 
+  make_option(c("--path.aln"), type="character", default=NULL,
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--pref"), type="character", default=NULL, 
+  make_option(c("--pref"), type="character", default=NULL,
               help="prefix of the reference file", metavar="character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
+  make_option(c("--cores"), type = "integer", default = 1,
               help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.chr"), type="character", default=NULL, 
+  make_option(c("--path.chr"), type="character", default=NULL,
               help="path to the reference file", metavar="character"),
-  make_option(c("--type"), type="character", default=NULL, 
+  make_option(c("--type"), type="character", default=NULL,
               help="type of fasta files", metavar="character"),
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
@@ -46,11 +46,8 @@ option_list = list(
               help = "Level of log to be shown on the screen", metavar = "character")
 )
 
-
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
-
 
 # ***********************************************************************
 # ---- Logging ----
@@ -181,7 +178,7 @@ loop.function <- function(i.chr.pair,
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
-  file.comb = paste0(path.cons, 'comb_', query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5')
+  file.comb = paste0(path.cons, aln.type.ref, query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5')
   if (file.exists(file.comb)) file.remove(file.comb)
   h5createFile(file.comb)
   

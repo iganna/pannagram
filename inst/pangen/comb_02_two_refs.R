@@ -80,7 +80,7 @@ if (is.null(opt$ref1)) {
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-pattern <- "^comb_[0-9]+_[0-9]+_ref_.*\\.h5$"
+pattern <- paste0("^",aln.type.ref,"_[0-9]+_[0-9]+_ref_.*\\.h5$")
 combo_files <- list.files(path = path.cons, pattern = pattern, full.names = F)
 
 extract_xy <- function(filename) {
@@ -117,11 +117,11 @@ loop.function <- function(s.comb,
   }
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref0,'.h5')
-  file.comb1 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref1,'.h5')
+  file.comb0 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref0,'.h5')
+  file.comb1 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref1,'.h5')
   
   # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste0(path.cons, 'res_',s.comb,'_ref_',ref0,'.h5')
+  file.res = paste0(path.cons, aln.type.comb, s.comb, '.h5')
   if(file.exists(file.res)){
     file.comb0 = file.res
     

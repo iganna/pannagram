@@ -10,3 +10,10 @@ gr.blocks = 'blocks/'
 v.idx.trust = 'trust'
 v.len = 'len'
 v.ref.name = 'ref'
+
+
+# Alignment types
+
+aln.type.msa='msa_'
+aln.type.ref='ref_'
+aln.type.comb='comb_'
