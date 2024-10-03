@@ -16,6 +16,8 @@ source $INSTALLED_PATH/utils/utils_help.sh
 #            PARAMETERS: parsing
 # ----------------------------------------------------------------------------
 
+aln_type='msa_'
+
 mode_pre="F"
 mode_ref="F"
 mode_msa="F"
@@ -524,13 +526,14 @@ fi
 # └───────────────────────────────────────────────────────────────────────────┘
     
 step_num=1
+
 # ----------------------------------------------
 # Split query fasta into chromosomes
 
+with_level 1 pokaz_stage "Step ${step_num}. Genomes into chromosomes."
+
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
-
-    with_level 1 pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
     # Clean up the output folders
     if   [ "$clean_dir" = "T" ]; then 
@@ -549,63 +552,56 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
     
 fi
 
-((step_num = step_num + 1))
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
 # ----------------------------------------------
 # If to find ORFs
+
 if [ ! -z "${flag_orf}" ]; then
 
     with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
-    # Make ORF folder
-    path_orf="${path_inter}orf/"
-    mkdir -p "${path_orf}"
+    step_file="$path_flags/step${step_num}_done"
+    if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
 
-    # Clean up the output folders
-    if   [ "$clean_dir" = "T" ]; then 
-        rm -f ${path_orf}*fasta
+        # Make ORF folder
+        path_orf="${path_inter}orf/"
+        mkdir -p "${path_orf}"
+
+        # Clean up the output folders
+        if   [ "$clean_dir" = "T" ]; then 
+            rm -f ${path_orf}*fasta
+        fi
+
+        # Path for logging
+        path_log_step="${path_log}step${step_num}_query_01_orf/"
+
+        # Run the step
+        Rscript $INSTALLED_PATH/pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
+                --cores ${cores}  \
+                ${option_nchr} \
+                ${option_accessions} \
+                --path.log ${path_log_step} --log.level ${log_level}
+
+        # Done
+        touch "${step_file}"
     fi
 
-    # Path for logging
-    path_log_step="${path_log}step${step_num}_query_01_orf/"
-
-    # Run the step
-    Rscript $INSTALLED_PATH/pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
-            --cores ${cores}  \
-            ${option_nchr} \
-            ${option_accessions} \
-            --path.log ${path_log_step} --log.level ${log_level}
-
-    # Done
-    touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
-        
+    source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 fi
 
-
-
 # ----------------------------------------------
 # Split query chromosomes into parts
+
+with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
+
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
-
-    with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
     # Clean up the output folders
     if   [ "$clean_dir" = "T" ]; then 
@@ -625,17 +621,10 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
 
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
-    
 fi
 
-((step_num = step_num + 1))
-
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │                         REFERENCE-BASED                                   │
@@ -643,15 +632,16 @@ fi
 
 # ----------------------------------------------
 # Split reference fasta into chromosomes if additionally needed
-for ref0 in "${refs_all[@]}"; do
 
-    with_level 1  pokaz_attention "Reference ${ref0}"
-    
-    if [[ "${path_in}" != "$path_ref" ]]; then
+if [[ "${path_in}" != "$path_ref" ]]; then
+
+    with_level 1 pokaz_stage "Step ${step_num}. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
+    for ref0 in "${refs_all[@]}"; do
+
+        with_level 1  pokaz_attention "Reference ${ref0}"
 
         step_file="$path_flags/step${step_num}_${ref0}_done"
         if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
-            with_level 1 pokaz_stage "Step ${step_num}. Reference genome into chromosomes."
 
             # Temporary file to analyse only the reference genome from the folder
             file_acc_ref=${path_cons}ref_acc.txt
@@ -673,23 +663,20 @@ for ref0 in "${refs_all[@]}"; do
 
             # Done
             touch "${step_file}"
-            with_level 1 pokaz_message "Step is done."
-
-            # If only one step
-            if   [ "$one_step" = "T" ]; then 
-                exit 0
-            fi
         fi
-    fi
-done
-((step_num = step_num + 1))
+    done
+
+    source $INSTALLED_PATH/utils/chunk_step_done.sh
+fi
 
 # ----------------------------------------------
 # Blast parts on the reference genome
 
+with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
 for ref0 in "${refs_all[@]}"; do
 
     with_level 1  pokaz_attention "Reference ${ref0}"
+
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
     
@@ -697,7 +684,6 @@ for ref0 in "${refs_all[@]}"; do
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-        with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
         # with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
 
         if [[ $option_purge_reps =~ ^[[:space:]]*$ ]]; then
@@ -751,20 +737,15 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
-
-    fi
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
+        
     fi
 
     # Remove reference-dependent variables
     unset path_blast_parts
 
 done
-((step_num = step_num + 1))
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Search for the mirror universe
@@ -777,6 +758,7 @@ fi
 # ----------------------------------------------
 # First round of alignments
 
+with_level 1 pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 for ref0 in "${refs_all[@]}"; do
 
     with_level 1  pokaz_attention "Reference ${ref0}"
@@ -788,8 +770,6 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-        with_level 1 pokaz_stage "Step ${step_num}. Alignment-1: Remaining syntenic (major) matches."
 
         # Clean up the output folders
         if   [ "$clean_dir" = "T" ]; then 
@@ -811,16 +791,10 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
 
         # Clean up the output folders of previous stages
         # If the first round of alignment didn't have any errors - remove the blast which was needed for it
         # rm ${path_blast_parts}
-    fi
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
     fi
 
     # Remove reference-dependent variables
@@ -828,10 +802,13 @@ for ref0 in "${refs_all[@]}"; do
     unset path_alignment
 
 done
-((step_num = step_num + 1))
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Step 6: Plotting
+
+with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 for ref0 in "${refs_all[@]}"; do
 
     with_level 1  pokaz_attention "Reference ${ref0}"
@@ -842,8 +819,6 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-        with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 
         # Logs for the Plot
         path_log_step="${path_log}step${step_num}_synteny_02_${ref0}_plot/"
@@ -861,20 +836,15 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
-
-    fi
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
+        
     fi
 
     # Remove reference-dependent variables
     unset path_alignment
 
 done
-((step_num = step_num + 1))        
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh  
 
 # ========== CHECK MODE ==========
 
@@ -889,6 +859,8 @@ fi
 
 # ----------------------------------------------
 # Get sequences between the synteny blocks
+
+with_level 1 pokaz_stage "Step ${step_num}. Get of gaps between syntenic matches."
 for ref0 in "${refs_all[@]}"; do        
 
     # Paths
@@ -899,38 +871,34 @@ for ref0 in "${refs_all[@]}"; do
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-        with_level 1 pokaz_stage "Step ${step_num}. Get of gaps between syntenic matches."
-
         # Logs gap sequences
         path_log_step="${path_log}step${step_num}_synteny_03_${ref0}/"
         make_dir ${path_log_step}
 
         # Run
-        Rscript $INSTALLED_PATH/pangen/synteny_03_get_gaps.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+        Rscript $INSTALLED_PATH/pangen/synteny_03_get_gaps.R \
+                --path.aln ${path_alignment} \
                 --ref ${ref0}   \
-                --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
+                --path.gaps  ${path_gaps} \
+                --path.chr ${path_chrom} \
                 --cores ${cores} \
                 ${option_one2one_r} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
-  
     fi
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
-
+    
     unset path_alignment
     unset path_gaps
 done
 
-((step_num = step_num + 1))
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Blast regions between synteny blocks
+
+with_level 1 pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 for ref0 in "${refs_all[@]}"; do  
 
     # Paths
@@ -940,8 +908,6 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-        with_level 1 pokaz_stage "Step ${step_num}. BLAST of gaps between syntenic matches."
 
         # Logs for the BLAST
         path_log_step="${path_log}step${step_num}_synteny_04_${ref0}_blast_gaps/"
@@ -956,24 +922,18 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
-
-    fi
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
     fi
 
     unset path_alignment
     unset path_gaps
 done
 
-
-((step_num = step_num + 1))
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Second round of alignments
+
+with_level 1 pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 for ref0 in "${refs_all[@]}"; do  
     
     # Paths
@@ -983,9 +943,6 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-        with_level 1 \
-            pokaz_stage "Step ${step_num}. Alignment-2: Fill the gaps between synteny blocks."
 
         # Logs for the merging gaps
         path_log_step="${path_log}step${step_num}_synteny_05_${ref0}_full/"
@@ -1005,24 +962,18 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
-
-    fi
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
     fi
 
     unset path_alignment
     unset path_gaps
 done
 
-((step_num = step_num + 1))
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Create a consensus
 
+with_level 1 pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 for ref0 in "${refs_all[@]}"; do  
 
     # Paths
@@ -1031,9 +982,6 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-        with_level 1 \
-            pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 
         # Logs for creating the consensus
         path_log_step="${path_log}step${step_num}_comb_01_${ref0}/"
@@ -1050,17 +998,13 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-        with_level 1 pokaz_message "Step is done."
 
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
     fi
     unset path_alignment
 
 done
-((step_num = step_num + 1))
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------------------------------------
 #            CHECK MODE
@@ -1082,6 +1026,9 @@ with_level 1 pokaz_stage "* MGA is strting * *"
 
 # ----------------------------------------------
 # Run consensus for a pair of files
+
+with_level 1 pokaz_stage "Step ${step_num}. Randomisation of alignments. Combine two references: ${ref0} and ${ref1}."
+
 ref0=${refs_all[0]}
 
 step_file="$path_flags/step${step_num}_done"
@@ -1089,9 +1036,6 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     for ((i = 1; i < ${#refs_all[@]}; i++)); do
         ref1=${refs_all[i]}
-
-        with_level 1 pokaz_stage "Step ${step_num}. Randomisation of alignments. Combine two references: ${ref0} and ${ref1}."
-        # ref1=${ref1//_/$'-'}
 
         # Logging
         path_log_step="${path_log}step${step_num}_comb_02_${ref0}_${ref1}/"
@@ -1108,18 +1052,16 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
     done
 
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
 fi
 
-((step_num = step_num + 1))
-
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Common gaps
+with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
+
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment."
 
     # Logging
     path_log_step="${path_log}step${step_num}_comb_03/"
@@ -1134,28 +1076,23 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
 fi
 
-((step_num = step_num + 1))
-
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Create sequences to run MAFFT and perform some small alignments
-path_mafft_in="${path_inter}mafft_in/"
-if [ ! -d "$path_mafft_in" ]; then
-    mkdir -p "$path_mafft_in"
-fi
+
+with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
 
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
+    # Paths
+    path_mafft_in="${path_inter}mafft_in/"
+    if [ ! -d "$path_mafft_in" ]; then
+        mkdir -p "$path_mafft_in"
+    fi
 
     # Logging
     path_log_step="${path_log}step${step_num}_comb_04/"
@@ -1172,27 +1109,23 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
 fi
 
-((step_num = step_num + 1))
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Run MAFFT
-path_mafft_out="${path_inter}mafft_out/"
-if [ ! -d "$path_mafft_out" ]; then
-    mkdir -p "$path_mafft_out"
-fi
+
+with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
 
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
+    # Paths
+    path_mafft_out="${path_inter}mafft_out/"
+    if [ ! -d "$path_mafft_out" ]; then
+        mkdir -p "$path_mafft_out"
+    fi
 
     # Logging
     path_log_step="${path_log}step${step_num}_comb_05/"
@@ -1206,25 +1139,17 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        echo "XX"
-        exit 0
-    fi
 fi
 
-((step_num = step_num + 1))
-
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Additional MAFFT
 
+with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
+
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 
     # Logging
     path_log_step="${path_log}step${step_num}_comb_05_additional/"
@@ -1240,24 +1165,17 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        echo "XX"
-        exit 0
-    fi
 fi
 
-((step_num = step_num + 1))
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Combine all together
 
+with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
+
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 
     # Logging
     path_log_step="${path_log}step${step_num}_comb_06/"
@@ -1274,25 +1192,17 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
 fi
 
-((step_num = step_num + 1))
-
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 # Get synteny blocks
 
-aln_type='msa_'
+with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+
 step_file="$path_flags/step${step_num}_done"
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
 
     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
             --path.cons ${path_cons} \
@@ -1302,16 +1212,9 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
     # Done
     touch "${step_file}"
-    with_level 1 pokaz_message "Step is done."
-
-    # If only one step
-    if   [ "$one_step" = "T" ]; then 
-        exit 0
-    fi
 fi
 
-((step_num = step_num + 1))
-
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 with_level 1 pokaz_message "* The pipeline is done."
 
