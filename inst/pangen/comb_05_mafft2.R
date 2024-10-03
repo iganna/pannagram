@@ -1,7 +1,6 @@
 # Combine all alignments together into the final one
 
 suppressMessages({
-library(rhdf5)
 library('foreach')
 library(doParallel)
 library("optparse")
@@ -40,6 +39,8 @@ opt = parse_args(opt_parser, args = args);
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
+
+# ***********************************************************************
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
@@ -134,7 +135,6 @@ if(num.cores == 1){
 }
 
 warnings()
-
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 

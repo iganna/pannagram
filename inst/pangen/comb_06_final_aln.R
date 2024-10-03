@@ -36,10 +36,19 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
+# TODO: SHOULD BE PARAMETERS
+
+n.flank = 30
+max.block.elemnt = 3 * 10^ 6
+
 # ***********************************************************************
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ---- Values of parameters ----
 
@@ -60,16 +69,6 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
 
 # ***********************************************************************
-# ---- Preparation ----
-
-n.flank = 30
-
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-
-max.block.elemnt = 3 * 10^ 6
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 

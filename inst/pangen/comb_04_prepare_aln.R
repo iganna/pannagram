@@ -40,6 +40,12 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+
+#TODO: SHOULD BE PARAMATERS
+max.len.gap = 100000
+len.short = 50
+n.flank = 30
+
 # print(opt)
 
 # ***********************************************************************
@@ -47,6 +53,11 @@ opt = parse_args(opt_parser, args = args);
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
@@ -87,17 +98,6 @@ pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
-# ----  Combine correspondence  ----
-
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-max.len.gap = 100000
-len.short = 50
-n.flank = 30
-
-gr.blocks = 'blocks/'
 
 # ***********************************************************************
 # ---- MAIN program body ----

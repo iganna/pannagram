@@ -50,6 +50,11 @@ opt = parse_args(opt_parser, args = args);
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
@@ -91,11 +96,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-max.len.gap = 20000
+
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -121,6 +122,8 @@ loop.function <- function(s.comb,
   file.comb0 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref0,'.h5')
   file.comb1 = paste0(path.cons, 'comb_',s.comb,'_ref_',ref1,'.h5')
   
+  s.ref1 = paste0(gr.accs.e, '', ref1)
+  
   # Combined file. If it exists, then use it for the growing correspondence
   file.res = paste0(path.cons, 'res_',s.comb,'_ref_',ref0,'.h5')
   if(file.exists(file.res)){
@@ -129,14 +132,15 @@ loop.function <- function(s.comb,
     h5createFile(file.res)
     h5createGroup(file.res, gr.accs.e)
     h5createGroup(file.res, gr.break.e)
+    h5write(0, file.res, "s.trust")
   }
   
   # Get the corresponsing function between two references
-  s = paste0(gr.accs.e, '', ref1)
   
-  f01 <- h5read(file.comb0, s)
+  
+  f01 <- h5read(file.comb0, s.ref1)
   base.len = length(f01)
-  idx01 = which(f01 != 0)
+  idx01 = which(f01 != 0)  # idx which we trust
   f01 = f01[idx01]
   
   groups0 = h5ls(file.comb0)
@@ -157,7 +161,7 @@ loop.function <- function(s.comb,
     v0 = h5read(file.comb0, s)
     # pokaz('Vector in the ref0 file', length(v0), file=file.log.loop, echo=echo.loop)
     v.final = v0
-    v.final[idx01] = 0
+    v.final[idx01] = 0  # This is a potential problem... after all rounds of comb, we should leave only those positions, which were checked at least twice.
     v0 = v0[idx01]
     pokaz('Vector of meaningfull positions', length(v0), file=file.log.loop, echo=echo.loop)
     

@@ -34,10 +34,16 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
+max.len.gap = 100000  # This should be a parameter!!!
+
 # ***********************************************************************
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -69,7 +75,6 @@ if(F){
   options("width"=200, digits=10)
 }
 
-
 s.pattern <- paste0("^", 'res_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("res_", "", files)
@@ -77,16 +82,6 @@ pref.combinations <- sub("_ref.*$", "", pref.combinations)
 
 pokaz('Reference:', ref.pref, file=file.log.main, echo=echo.main)
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
-
-# ----  Combine correspondence  ----
-
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-max.len.gap = 100000
-
-gr.blocks = 'blocks/'
 
 
 # ***********************************************************************

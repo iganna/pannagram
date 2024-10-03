@@ -427,7 +427,6 @@ with_level 2 pokaz_message "Number of cores ${cores}"
 
 if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
 
-
     # ----------------------------------------------
     # Check the number of reference genomes for randomisation
 
@@ -466,7 +465,6 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
         with_level 0 pokaz_error "Error: ref_num ($ref_num) is greater than the number of available genomes (${#acc_set[@]}) in acc_set."
         exit 1
     fi
-
 
     # ----------------------------------------------
     # Check if reference genomes are set up
@@ -643,18 +641,12 @@ fi
 # │                         REFERENCE-BASED                                   │
 # └───────────────────────────────────────────────────────────────────────────┘
 
+# ----------------------------------------------
+# Split reference fasta into chromosomes if additionally needed
 for ref0 in "${refs_all[@]}"; do
 
-
     with_level 1  pokaz_attention "Reference ${ref0}"
-
-    # New paths
-    path_blast_parts=${path_inter}blast_parts_${ref0}/
-    path_alignment=${path_inter}alignments_${ref0}/
-    path_gaps=${path_inter}blast_gaps_${ref0}/
-
-    # ----------------------------------------------
-    # Split reference fasta into chromosomes if additionally needed
+    
     if [[ "${path_in}" != "$path_ref" ]]; then
 
         step_file="$path_flags/step${step_num}_${ref0}_done"
@@ -668,6 +660,7 @@ for ref0 in "${refs_all[@]}"; do
             # Path for logging
             path_log_step="${path_log}step${step_num}_query_01_${ref0}/"
 
+            # Run the step
             Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
@@ -687,13 +680,20 @@ for ref0 in "${refs_all[@]}"; do
                 exit 0
             fi
         fi
-
-        ((step_num = step_num + 1))
     fi
+done
+((step_num = step_num + 1))
 
-    # ----------------------------------------------
-    # Blast parts on the reference genome
+# ----------------------------------------------
+# Blast parts on the reference genome
 
+for ref0 in "${refs_all[@]}"; do
+
+    with_level 1  pokaz_attention "Reference ${ref0}"
+    # Paths
+    path_blast_parts=${path_inter}blast_parts_${ref0}/
+    
+    # Start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -708,7 +708,6 @@ for ref0 in "${refs_all[@]}"; do
         if   [ "$clean_dir" = "T" ]; then 
             rm -f ${path_blast_parts}*txt
         fi    
-        
 
         # ---- Create a database on the reference genome ----
         with_level 2 pokaz_message "Create BLAST databases."
@@ -723,7 +722,7 @@ for ref0 in "${refs_all[@]}"; do
           exit 1
         fi
 
-        # Iterate over each file
+        # Iterate over each file and create the database
         for file in "${files[@]}"; do
           # Check if the BLAST database files already exist
           if [ ! -f "${file}.nin" ]; then
@@ -754,26 +753,39 @@ for ref0 in "${refs_all[@]}"; do
         touch "${step_file}"
         with_level 1 pokaz_message "Step is done."
 
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
     fi
 
-    ((step_num = step_num + 1))
-
-    # ----------------------------------------------
-    # Search for the mirror universe
-
-    if [ ! -z "${flag_rev}" ]; then
-        echo "Pannagram's Mirror mode is done."
-        exit
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
     fi
 
+    # Remove reference-dependent variables
+    unset path_blast_parts
 
-    # ----------------------------------------------
-    # First round of alignments
+done
+((step_num = step_num + 1))
 
+# ----------------------------------------------
+# Search for the mirror universe
+
+if [ ! -z "${flag_rev}" ]; then
+    echo "Pannagram's Mirror mode is done."
+    exit
+fi
+
+# ----------------------------------------------
+# First round of alignments
+
+for ref0 in "${refs_all[@]}"; do
+
+    with_level 1  pokaz_attention "Reference ${ref0}"
+    
+    # Paths
+    path_blast_parts=${path_inter}blast_parts_${ref0}/
+    path_alignment=${path_inter}alignments_${ref0}/
+
+    # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -792,7 +804,7 @@ for ref0 in "${refs_all[@]}"; do
         # Run the step
         Rscript $INSTALLED_PATH/pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
                 --ref ${ref0}   \
-                --path.gaps  ${path_gaps} --path.chr ${path_chrom} \
+                --path.chr ${path_chrom} \
                 --cores ${cores} \
                 ${option_one2one_r} \
                 --path.log ${path_log_step} --log.level ${log_level}
@@ -801,22 +813,33 @@ for ref0 in "${refs_all[@]}"; do
         touch "${step_file}"
         with_level 1 pokaz_message "Step is done."
 
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
-
         # Clean up the output folders of previous stages
         # If the first round of alignment didn't have any errors - remove the blast which was needed for it
         # rm ${path_blast_parts}
     fi
 
-    ((step_num = step_num + 1))
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 
+    # Remove reference-dependent variables
+    unset path_blast_parts
+    unset path_alignment
 
-    # ----------------------------------------------
-    # Step 6: Plotting
+done
+((step_num = step_num + 1))
 
+# ----------------------------------------------
+# Step 6: Plotting
+for ref0 in "${refs_all[@]}"; do
+
+    with_level 1  pokaz_attention "Reference ${ref0}"
+
+    # Paths
+    path_alignment=${path_inter}alignments_${ref0}/
+    
+    # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -840,39 +863,39 @@ for ref0 in "${refs_all[@]}"; do
         touch "${step_file}"
         with_level 1 pokaz_message "Step is done."
 
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
     fi
 
-    ((step_num = step_num + 1))
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 
+    # Remove reference-dependent variables
+    unset path_alignment
 
-done        
+done
+((step_num = step_num + 1))        
 
 # ========== CHECK MODE ==========
+
 if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
     with_level 0 pokaz_message "Pannagram's PREliminary mode is done."
     exit
 fi 
 
-
 # ┌───────────────────────────────────────────────────────────────────────────┐
-# │                         FILL THE GAPS                                   │
+# │                         FILL THE GAPS                                     │
 # └───────────────────────────────────────────────────────────────────────────┘
 
-
+# ----------------------------------------------
+# Get sequences between the synteny blocks
 for ref0 in "${refs_all[@]}"; do        
 
-    # New paths
-    path_blast_parts=${path_inter}blast_parts_${ref0}/
+    # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_gaps=${path_inter}blast_gaps_${ref0}/
 
-    # ----------------------------------------------
-    # Get sequences between the synteny blocks
-
+    # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -893,18 +916,28 @@ for ref0 in "${refs_all[@]}"; do
         # Done
         touch "${step_file}"
         with_level 1 pokaz_message "Step is done."
-
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
+  
+    fi
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
     fi
 
-    ((step_num = step_num + 1))
+    unset path_alignment
+    unset path_gaps
+done
 
-    # ----------------------------------------------
-    # Blast regions between synteny blocks
+((step_num = step_num + 1))
 
+# ----------------------------------------------
+# Blast regions between synteny blocks
+for ref0 in "${refs_all[@]}"; do  
+
+    # Paths
+    path_alignment=${path_inter}alignments_${ref0}/
+    path_gaps=${path_inter}blast_gaps_${ref0}/
+
+    # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -925,17 +958,29 @@ for ref0 in "${refs_all[@]}"; do
         touch "${step_file}"
         with_level 1 pokaz_message "Step is done."
 
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
     fi
 
-    ((step_num = step_num + 1))
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 
-    # ----------------------------------------------
-    # Second round of alignments
+    unset path_alignment
+    unset path_gaps
+done
 
+
+((step_num = step_num + 1))
+
+# ----------------------------------------------
+# Second round of alignments
+for ref0 in "${refs_all[@]}"; do  
+    
+    # Paths
+    path_alignment=${path_inter}alignments_${ref0}/
+    path_gaps=${path_inter}blast_gaps_${ref0}/
+
+    # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -962,17 +1007,28 @@ for ref0 in "${refs_all[@]}"; do
         touch "${step_file}"
         with_level 1 pokaz_message "Step is done."
 
-        # If only one step
-        if   [ "$one_step" = "T" ]; then 
-            exit 0
-        fi
     fi
 
-    ((step_num = step_num + 1))
+    # If only one step
+    if   [ "$one_step" = "T" ]; then 
+        exit 0
+    fi
 
-    # ----------------------------------------------
-    # Create a consensus
+    unset path_alignment
+    unset path_gaps
+done
 
+((step_num = step_num + 1))
+
+# ----------------------------------------------
+# Create a consensus
+
+for ref0 in "${refs_all[@]}"; do  
+
+    # Paths
+    path_alignment=${path_inter}alignments_${ref0}/
+
+    # Step start
     step_file="$path_flags/step${step_num}_${ref0}_done"
     if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
@@ -1001,11 +1057,11 @@ for ref0 in "${refs_all[@]}"; do
             exit 0
         fi
     fi
-
-    ((step_num = step_num + 1))
-
+    unset path_alignment
 
 done
+((step_num = step_num + 1))
+
 # ----------------------------------------------------------------------------
 #            CHECK MODE
 # ----------------------------------------------------------------------------
@@ -1014,10 +1070,7 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
     exit
 fi
 
-
-
 # $INSTALLED_PATH/pangen_new.sh -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test2 -log 2
-
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
 # ║                                                                                   ║      /|_||_\`.__

@@ -4,6 +4,8 @@
 #'     /accs              0 H5I_DATASET    FLOAT 28940631
 #'     /accs          10002 H5I_DATASET    FLOAT 28940631
 #'     /accs          10015 H5I_DATASET    FLOAT 28940631
+#'     
+#' In combo-files the reference accession column will not have zeros, because it will participate further lika a function.
 
 suppressMessages({
   library(foreach)
@@ -55,6 +57,11 @@ opt = parse_args(opt_parser, args = args);
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
 # ---- Values of parameters ----
 
 # print(opt)
@@ -144,7 +151,6 @@ pokaz('Chromosomal lengths:', chr.len, file=file.log.main, echo=echo.main)
 # ----  Combine correspondence  ----
 
 pokaz('Reference:', base.acc.ref, file=file.log.main, echo=echo.main)
-max.len.gap = 20000
 
 
 # ***********************************************************************
@@ -180,9 +186,8 @@ loop.function <- function(i.chr.pair,
   h5createFile(file.comb)
   
   # Path to accessions chunks
-  gr.accs <- "accs/"
   # TODO: Check the availability of the group before creating it
-  h5createGroup(file.comb, gr.accs)
+  h5createGroup(file.comb, gr.accs.e)
   
   
   # gr.break = 'break/'
@@ -215,7 +220,7 @@ loop.function <- function(i.chr.pair,
     
     # Write into file
     suppressMessages({
-      h5write(x.corr, file.comb, paste0(gr.accs, '', acc))
+      h5write(x.corr, file.comb, paste0(gr.accs.e, '', acc))
     })
     
     
@@ -228,12 +233,12 @@ loop.function <- function(i.chr.pair,
   }
   
   suppressMessages({
-    # h5write(idx.break, file.comb, 'breaks_all')
-    # h5write(idx.gaps, file.comb, 'gaps_all')
-    h5write(base.acc.ref, file.comb, 'ref')
     
-    h5write(1:base.len, file.comb, paste0(gr.accs, '', base.acc.ref))
-    # h5write(NULL, file.comb, paste0(gr.break, base.acc.ref))
+    h5write(base.acc.ref, file.comb, v.ref.name)
+    h5write(base.len, file.comb, v.len)
+    
+    h5write(1:base.len, file.comb, paste0(gr.accs.e, '', base.acc.ref))
+  
   })
   
   # rmSafe(idx.break)
