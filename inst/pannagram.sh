@@ -1130,14 +1130,18 @@ step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
+# Paths for MAFFT, common for the next code too
+path_mafft_in="${path_inter}mafft_in/"
+path_mafft_out="${path_inter}mafft_out/"
+if [ ! -d "$path_mafft_in" ]; then
+    mkdir -p "$path_mafft_in"
+fi
+if [ ! -d "$path_mafft_out" ]; then
+    mkdir -p "$path_mafft_out"
+fi
+
 # Start
 if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    # Paths
-    path_mafft_in="${path_inter}mafft_in/"
-    if [ ! -d "$path_mafft_in" ]; then
-        mkdir -p "$path_mafft_in"
-    fi
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
             --path.cons "${path_cons}" \
@@ -1167,12 +1171,6 @@ make_dir "${path_log_step}"
 
 # Start
 if [ "$start_step" -le "${step_num}" ] || [ ! -f "$step_file" ]; then
-
-    # Paths
-    path_mafft_out="${path_inter}mafft_out/"
-    if [ ! -d "$path_mafft_out" ]; then
-        mkdir -p "$path_mafft_out"
-    fi
 
     "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
             -cores "${cores}" \
