@@ -1049,7 +1049,7 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
     exit
 fi
 
-# $INSTALLED_PATH/pangen_new.sh -path_in /Volumes/Samsung_T5/vienn/pannagram_test/symA -path_out /Volumes/Samsung_T5/vienn/pannagram_test/symA_test2 -log 2
+# ./pannagram.sh -path_in /Volumes/Samsung_T5/vienn/genomes/symA -path_out /Volumes/Samsung_T5/vienn/test/symA_test_0 -log 2 -cores 2
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
 # ║                                                                                   ║      /|_||_\`.__
