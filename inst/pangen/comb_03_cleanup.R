@@ -170,9 +170,9 @@ loop.function <- function(s.comb,
   
   
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
-  saveRDS(idx.break, file.breaks)
+  saveRDS(idx.breaks, file.breaks)
   
-  rmSafe(idx.break)
+  rmSafe(idx.breaks)
   
   H5close()
   gc()
