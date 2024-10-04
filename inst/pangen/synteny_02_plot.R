@@ -8,6 +8,7 @@ suppressMessages({
   library(foreach)
   library(doParallel)
   library(optparse)
+  library(ggplot2)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
