@@ -1095,6 +1095,33 @@ done
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
+
+# ----------------------------------------------
+# Remain only the trustable positions
+with_level 1 pokaz_stage "Step ${step_num}. Remain only the trustable syntenic positions.."
+
+# Logs
+step_name="step${step_num}_comb_03_cleanup"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+    Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
+            --path.cons ${path_cons} \
+            --cores ${cores} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --max.len.gap ${max_len_gap}
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
 # ----------------------------------------------
 # Common gaps
 with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment.."
