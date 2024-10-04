@@ -1121,184 +1121,184 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# ----------------------------------------------
-# Common gaps
-with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment.."
+# # ----------------------------------------------
+# # Common gaps
+# with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment.."
 
-# Logs
-step_name="step${step_num}_comb_03_find_gaps"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+# # Logs
+# step_name="step${step_num}_comb_03_find_gaps"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
 
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+# # Start
+# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-    Rscript $INSTALLED_PATH/pangen/comb_03_find_gaps.R \
-            --path.cons ${path_cons} \
-            --cores ${cores} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level} \
-            --max.len.gap ${max_len_gap}
+#     Rscript $INSTALLED_PATH/pangen/comb_03_find_gaps.R \
+#             --path.cons ${path_cons} \
+#             --cores ${cores} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level} \
+#             --max.len.gap ${max_len_gap}
 
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# ----------------------------------------------
-# Create sequences to run MAFFT and perform some small alignments
-
-with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
-
-# Logs
-step_name="step${step_num}_comb_04_prepare_aln"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Paths for MAFFT, common for the next code too
-path_mafft_in="${path_inter}mafft_in/"
-path_mafft_out="${path_inter}mafft_out/"
-if [ ! -d "$path_mafft_in" ]; then
-    mkdir -p "$path_mafft_in"
-fi
-if [ ! -d "$path_mafft_out" ]; then
-    mkdir -p "$path_mafft_out"
-fi
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
-            --path.cons "${path_cons}" \
-            --cores "${cores}" \
-            --path.chromosomes "${path_chrom}" \
-            --path.mafft.in "${path_mafft_in}" \
-            --path.log "${path_log_step}" \
-            --log.level "${log_level}" \
-            --max.len.gap "${max_len_gap}"
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# ----------------------------------------------
-# Run MAFFT
-
-with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
-
-# Logs
-step_name="step${step_num}_comb_05_mafft"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir "${path_log_step}"
-
-# Start
-if [ "$start_step" -le "${step_num}" ] || [ ! -f "$step_file" ]; then
-
-    "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
-            -cores "${cores}" \
-            -path_mafft_in "${path_mafft_in}" \
-            -path_mafft_out "${path_mafft_out}" \
-            -log_path "${path_log_step}"
-
-    # Done
-    touch "${step_file}"
-fi
-
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# ----------------------------------------------
-# Additional MAFFT
-
-with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
-
-# Logs
-step_name="step${step_num}_comb_05_mafft2"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
-            --cores ${cores} \
-            --path.mafft.in ${path_mafft_in} \
-            --path.mafft.out ${path_mafft_out} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level}
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# ----------------------------------------------
-# Combine all together
-
-with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
-
-# Logs
-step_name="step${step_num}_comb_06"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
-            --cores ${cores} \
-            --path.mafft.out ${path_mafft_out} \
-            --path.cons ${path_cons} \
-            --path.out ${path_out} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level}
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# ----------------------------------------------
-# Get synteny blocks
-
-with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
-
-# Logs
-step_name="step${step_num}_analys_01_blocks"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
-            --path.cons ${path_out} \
-            --ref.pref  ${ref0} \
-            --cores ${cores}
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-with_level 1 pokaz_message "* The pipeline is done."
-
-# if [ $start_step -eq 0 ]; then
-#     rm -f "$FLAG_DIR"/.*
-#     echo "Script completed successfully"
+#     # Done
+#     touch "${step_file}"
 # fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # ----------------------------------------------
+# # Create sequences to run MAFFT and perform some small alignments
+
+# with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
+
+# # Logs
+# step_name="step${step_num}_comb_04_prepare_aln"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
+
+# # Paths for MAFFT, common for the next code too
+# path_mafft_in="${path_inter}mafft_in/"
+# path_mafft_out="${path_inter}mafft_out/"
+# if [ ! -d "$path_mafft_in" ]; then
+#     mkdir -p "$path_mafft_in"
+# fi
+# if [ ! -d "$path_mafft_out" ]; then
+#     mkdir -p "$path_mafft_out"
+# fi
+
+# # Start
+# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+#     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
+#             --path.cons "${path_cons}" \
+#             --cores "${cores}" \
+#             --path.chromosomes "${path_chrom}" \
+#             --path.mafft.in "${path_mafft_in}" \
+#             --path.log "${path_log_step}" \
+#             --log.level "${log_level}" \
+#             --max.len.gap "${max_len_gap}"
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # ----------------------------------------------
+# # Run MAFFT
+
+# with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
+
+# # Logs
+# step_name="step${step_num}_comb_05_mafft"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir "${path_log_step}"
+
+# # Start
+# if [ "$start_step" -le "${step_num}" ] || [ ! -f "$step_file" ]; then
+
+#     "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
+#             -cores "${cores}" \
+#             -path_mafft_in "${path_mafft_in}" \
+#             -path_mafft_out "${path_mafft_out}" \
+#             -log_path "${path_log_step}"
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # ----------------------------------------------
+# # Additional MAFFT
+
+# with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
+
+# # Logs
+# step_name="step${step_num}_comb_05_mafft2"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
+
+# # Start
+# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+#     Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
+#             --cores ${cores} \
+#             --path.mafft.in ${path_mafft_in} \
+#             --path.mafft.out ${path_mafft_out} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level}
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # ----------------------------------------------
+# # Combine all together
+
+# with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
+
+# # Logs
+# step_name="step${step_num}_comb_06"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
+
+# # Start
+# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+#     Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
+#             --cores ${cores} \
+#             --path.mafft.out ${path_mafft_out} \
+#             --path.cons ${path_cons} \
+#             --path.out ${path_out} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level}
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # ----------------------------------------------
+# # Get synteny blocks
+
+# with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+
+# # Logs
+# step_name="step${step_num}_analys_01_blocks"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
+
+# # Start
+# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+#     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+#             --path.cons ${path_out} \
+#             --ref.pref  ${ref0} \
+#             --cores ${cores}
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# with_level 1 pokaz_message "* The pipeline is done."
+
+# # if [ $start_step -eq 0 ]; then
+# #     rm -f "$FLAG_DIR"/.*
+# #     echo "Script completed successfully"
+# # fi
 
 
 

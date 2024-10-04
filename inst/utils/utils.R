@@ -1237,7 +1237,7 @@ findRuns <- function(vec) {
   }
   
   # Find the starting indices of consecutive sequences
-  pos.beg <- which(c(TRUE, diff(vec) != 1))
+  pos.beg <- which(c(TRUE, abs(diff(vec)) != 1))
   
   # Find the ending indices of consecutive sequences
   pos.end <- c(pos.beg[-1] - 1, length(vec))

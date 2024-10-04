@@ -24,15 +24,15 @@ option_list = list(
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
   make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+              help = "Level of log to be shown on the screen", metavar = "character"),
+  make_option(c("--max.len.gap"), type = "integer", default = NULL,
+              help = "Max len of the gap", metavar = "character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
-
-max.len.gap = 100000  # This should be a parameter!!!
 
 # ***********************************************************************
 # ---- Logging ----
@@ -50,12 +50,20 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
 
+# Max len gap
+if (is.null(opt$max.len.gap)) {
+  stop("Error: max.len.gap is NULL")
+} else {
+  max.len.gap <- opt$max.len.gap
+}
+
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
+
 
 s.pattern <- paste0("^", aln.type.comb, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -68,6 +76,7 @@ if(length(pref.combinations) == 0) {
 }
 
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
+
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -84,74 +93,112 @@ loop.function <- function(s.comb,
     invisible(file.create(file.log.loop))
   }
   
-  # # ---- Check log Done ----
-  # if(checkDone(file.log.loop)){
-  #   return()
-  # }
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
   
   # --- --- --- --- --- --- --- --- --- --- ---
   
   file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
   
-  idx.trust = h5read(file.comb, v.idx.trust)
-  idx.trust = idx.trust != 0
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   
-  idx.breaks = c()
- 
+  # Create group for blocks
+  suppressMessages({ h5createGroup(file.comb, gr.blocks) })
+  
+  idx.break = c()
   for(acc in accessions){
-    pokaz(acc)
-    s.acc = paste0(gr.accs.e, acc)
-    v = h5read(file.comb, s.acc)
-    v = v[idx.trust]
-      
-    suppressMessages({
-      h5delete(file.comb, s.acc)
-      h5write(v, file.comb, s.acc)
-    })
     
-    v.init = v
-    # Define blocks
-    v.idx = 1:length(v)
+    pokaz('Accession', acc, 'combination', s.comb, file=file.log.loop, echo=echo.loop)
     
-    v.idx = v.idx[v != 0]
-    v = v[v != 0]
-    v.r = rank(v)
-    v.r[v < 0] = v.r[v < 0] * (-1)
-    v.b = findRuns(v.r)
+    v = h5read(file.comb, paste0(gr.accs.e, acc))
+    b = h5read(file.comb, paste0(gr.blocks, acc))
+    if(length(v.init) == 0) {
+      stop(sprintf("Skipping empty accession: %s\n", acc))
+    }
     
-    v.b$v.beg = v[v.b$beg]
-    v.b$v.end = v[v.b$end]
     
-    v.b$i.beg = v.idx[v.b$beg]
-    v.b$i.end = v.idx[v.b$end]
     
-    blocks.acc = rep(0, max(v))
-    for(irow in 1:nrow(v.b)){
-      blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+    # ----  Find breaks  ----
+    
+    # Find blocks of additional breaks
+    v = cbind(v, 1:length(v))                       # column 2 - in ref-based coordinates
+    
+    v = v[!is.na(v[,1]),]                           # column 1 - existing coordinates of accessions
+    v = v[v[,1] != 0,]                              # column 1 - existing coordinates of accessions
+    
+    if(nrow(v) == 0) {
+      stop(sprintf("Skipping empty v for accession: %s\n", acc))
+    }
+    v = cbind(v, 1:nrow(v))                       # 3 - ranked order in ref-based coordinates
+    v = cbind(v, rank(abs(v[,1])) * sign(v[,1]))  # 4 - signed-ranked-order in accessions coordinates 
+    
+    # Save blocks
+    idx.block.tmp = which(abs(diff(v[,4])) != 1)
+    idx.block.df = data.frame(beg = v[c(1,idx.block.tmp+1), 2], end = v[c(idx.block.tmp, nrow(v)), 2])
+
+    v.block = rep(0, length(v.init))
+    for(i.bl in 1:nrow(idx.block.df)){
+      v.block[idx.block.df$beg[i.bl]:idx.block.df$end[i.bl]] = i.bl
     }
     
     suppressMessages({
-      s.acc = paste0(gr.blocks, acc)
-      h5write(blocks.acc, file.comb, s.acc)
+      h5write(v.block, file.comb, paste0(gr.blocks, acc))
     })
+
+    # v = v[order(v[,1]),]  # not necessary
+    
+    # with the absence, but neighbouring
+    idx.tmp = which( (abs(diff(v[,4])) == 1) &  # Neighbouring in accession-based order
+                       (abs(diff(abs(v[,3])) == 1)) &  # Neighbouring in ref-based order
+                       (abs(diff(v[,1])) <= max.len.gap) &  # Filtering by length in accession coordinates
+                       (abs(diff(v[,2])) <= max.len.gap) &  # Filtering by length in reference coordinates
+                       (abs(diff(v[,1])) > 1))  # NOT neighbouring in accession-specific coordinates
+    
+    # Fix (beg < end) order
+    if(length(idx.tmp) == 0) {
+      stop(sprintf("Skipping empty idx.tmp for accession: %s\n", acc))
+    }
+    idx.tmp.acc = data.frame(beg = v[idx.tmp,2], end = v[idx.tmp+1,2], acc = acc)
+    idx.ord = which(idx.tmp.acc$beg > idx.tmp.acc$end)
+    if(length(idx.ord) > 0){
+      tmp = idx.tmp.acc$beg[idx.ord]
+      idx.tmp.acc$beg[idx.ord] = idx.tmp.acc$end[idx.ord]
+      idx.tmp.acc$end[idx.ord] = tmp
+    }
+    # idx.tmp.acc = idx.tmp.acc[order(idx.tmp.acc$beg),]  # order ONLY if ordered before
+    
+    # Remove overlaps
+    idx.overlap = which( (idx.tmp.acc$beg[-1] - idx.tmp.acc$end[-nrow(idx.tmp.acc)]) <= 3)
+    
+    i.cnt = 0
+    if(length(idx.overlap) > 0){
+      j.ov = 0
+      for(i.ov in idx.overlap){
+        if(i.ov <= j.ov) next
+        j.ov = i.ov + 1
+        while(j.ov %in% idx.overlap){
+          j.ov = j.ov + 1
+        }
+        # print(c(i.ov, j.ov))
+        i.cnt = i.cnt + 1
+        idx.tmp.acc$end[i.ov] = idx.tmp.acc$end[j.ov]
+      }
+      idx.tmp.acc = idx.tmp.acc[-(idx.overlap+1),]
+    }
     
     
-    # Find breaks
-    i.br.acc = which(abs(diff(v)) != 1)
-    df = data.frame(val.beg = v[i.br.acc],
-                    val.end = v[i.br.acc+1],
-                    idx.beg = v.idx[i.br.acc],
-                    idx.end = v.idx[i.br.acc+1])
+    # Save breaks
+    idx.break = rbind(idx.break, idx.tmp.acc)
     
-    df = df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
-    
-    df$acc = acc
-    df$len.ann = abs(df$val.end - df$val.beg) + 1
-    df$len.comb = abs(df$idx.end - df$idx.beg) + 1
-    
-    idx.breaks = rbind(idx.breaks, df)
+    rmSafe(x.corr)
+    rmSafe(x)
+    rmSafe(v)
+    rmSafe(v.init)
+    rmSafe(idx.tmp.acc)
+    rmSafe(idx.break.acc)
     
   }
   
@@ -196,9 +243,8 @@ warnings()
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
 
-
 # ***********************************************************************
-# ---- Testing ----
+# ----- Manual Testing -----
 if(F){
   library(rhdf5)
   path.cons = './'
