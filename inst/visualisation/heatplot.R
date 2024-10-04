@@ -58,7 +58,7 @@ heatplot <- function(tbl,
   df$Var1 = factor(df$Var1)
   df$Var2 = factor(df$Var2)
   
-  p <- ggplot(df, aes(Var1, Var2, fill = value)) +
+  p <- ggplot(df, aes(Var2, Var1, fill = value)) +
     geom_tile() +
     scale_fill_gradientn(colors = cols) +
     theme_minimal() +
