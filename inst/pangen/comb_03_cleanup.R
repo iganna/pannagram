@@ -155,6 +155,16 @@ loop.function <- function(s.comb,
     
   }
   
+  # Update index to trust
+  suppressMessages({
+    idx.trust = h5read(file.comb, v.idx.trust)
+    idx.trust = idx.trust[idx.trust != 0]
+    
+    h5delete(file.comb, v.idx.trust)
+    h5write(idx.trust, file.comb, v.idx.trust)
+  })
+  
+  
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   saveRDS(idx.break, file.breaks)
   
