@@ -1113,8 +1113,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
             --path.cons ${path_cons} \
             --cores ${cores} \
             --path.log ${path_log_step} \
-            --log.level ${log_level} \
-            --max.len.gap ${max_len_gap}
+            --log.level ${log_level} 
 
     # Done
     touch "${step_file}"
