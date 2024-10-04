@@ -122,38 +122,56 @@ for(s.comb in pref.combinations){
   
   # ---- Merge coverages ----
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
-  idx.break = readRDS(file.breaks)
+  idx.breaks = readRDS(file.breaks)
   
-  # Merge full coverages 
-  idx.break = idx.break[order(-idx.break$end),]
-  idx.break = idx.break[order(idx.break$beg),]
+  n.init = nrow(idx.breaks)
+  idx.breaks = idx.breaks[,c('idx.beg', 'idx.end')]
   
+  idx.breaks = idx.breaks[order(-idx.breaks$idx.end),]
+  idx.breaks = idx.breaks[order(idx.breaks$idx.beg),]
+  
+  idx.breaks$id = 1:nrow(idx.breaks)
+  idx.breaks = idx.breaks[!duplicated(idx.breaks[, c('idx.beg', 'idx.end')]),]
+  idx.breaks$cnt = c(idx.breaks$id[-1], n.init+1) - idx.breaks$id
+  if(!(sum(idx.breaks$cnt) == n.init)) stop('Checkpoint1')
+  if(sum(idx.breaks$cnt < 0) > 0) stop('Checkpoint2')
+  
+  # Merge complete overlaps
   n = 0
-  while(n != nrow(idx.break)){
-    n = nrow(idx.break)
+  while(n != nrow(idx.breaks)){
+    n = nrow(idx.breaks)
     # print(n)
-    idx.full.cover = which(diff(idx.break$end) <= 0) + 1
+    idx.full.cover = which(diff(idx.breaks$idx.beg) <= 0)
+    idx.full.cover = setdiff(idx.full.cover, idx.full.cover + 1)
     if(length(idx.full.cover) == 0) break
-    idx.break = idx.break[-idx.full.cover,]
+    
+    idx.breaks$cnt[idx.full.cover] = idx.breaks$cnt[idx.full.cover] + idx.breaks$cnt[idx.full.cover+1]
+    
+    idx.breaks = idx.breaks[-(idx.full.cover+1),]
+    
   }
   
-  # Merge overlaps
+  # Merge partial overlaps
   n = 0
-  while(n != nrow(idx.break)){
-    n = nrow(idx.break)
+  while(n != nrow(idx.breaks)){
+    n = nrow(idx.breaks)
     # print(n)
-    idx.over = which((idx.break$beg[-1] < idx.break$end[-n]))
-    idx.over = setdiff(idx.over, idx.over+1)
+    idx.over = which((idx.breaks$idx.beg[-1] <= idx.breaks$idx.end[-n]))
+    idx.over = setdiff(idx.over, idx.over + 1)
     
     if(length(idx.over) == 0) break
     
-    idx.break$beg[idx.over + 1] = idx.break$beg[idx.over]
-    idx.break = idx.break[-idx.over,]
+    idx.breaks$idx.beg[idx.over + 1] = idx.breaks$idx.beg[idx.over]
+    idx.breaks$cnt[idx.over + 1] = idx.breaks$cnt[idx.over + 1] + idx.breaks$cnt[idx.over]
+    
+    idx.breaks = idx.breaks[-idx.over,]
   }
   
   # Length of gaps
-  idx.break$idx = paste('gap', 1:nrow(idx.break), sep = '|')
-  idx.break$len = idx.break$end - idx.break$beg + 1
+  idx.breaks$idx = paste('gap', 1:nrow(idx.breaks), sep = '|')
+  idx.breaks$len = idx.breaks$idx.end - idx.breaks$idx.beg + 1
+  
+  if(sum(idx.breaks$cnt) != n.init) stop('Checkpoint3')
   
   
   ## ---- Get begin-end positions of gaps ----

@@ -152,8 +152,8 @@ loop.function <- function(s.comb,
     df = df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
     
     df$acc = acc
-    df$len.ann = abs(df$val.end - df$val.beg) + 1
-    df$len.comb = abs(df$idx.end - df$idx.beg) + 1
+    df$len.ann = abs(df$val.end - df$val.beg) - 1
+    df$len.comb = abs(df$idx.end - df$idx.beg) - 1
     
     idx.breaks = rbind(idx.breaks, df)
     
