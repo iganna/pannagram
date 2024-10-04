@@ -186,13 +186,6 @@ loop.function <- function(i.chr.pair,
   # TODO: Check the availability of the group before creating it
   h5createGroup(file.comb, gr.accs.e)
   
-  
-  # gr.break = 'break/'
-  # h5createGroup(file.comb, gr.break)
-  
-  idx.break = 0
-  # idx.gaps = rep(0, base.len)
-  
   for(acc in accessions){
     
     pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr, 
@@ -225,7 +218,6 @@ loop.function <- function(i.chr.pair,
     rmSafe(x)
     rmSafe(v)
     rmSafe(idx.tmp.acc)
-    # rmSafe(idx.break.acc)
     
   }
   
@@ -238,7 +230,6 @@ loop.function <- function(i.chr.pair,
   
   })
   
-  # rmSafe(idx.break)
   rmSafe(idx.gaps)
   
   H5close()

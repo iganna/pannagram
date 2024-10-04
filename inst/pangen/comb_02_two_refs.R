@@ -135,7 +135,6 @@ loop.function <- function(s.comb,
   } else {
     h5createFile(file.res)
     h5createGroup(file.res, gr.accs.e)
-    h5createGroup(file.res, gr.break.e)
     
     idx.trust = 0
   }

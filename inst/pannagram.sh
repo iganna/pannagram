@@ -1092,9 +1092,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 
 done
 
-
 source $INSTALLED_PATH/utils/chunk_step_done.sh
-
 
 # ----------------------------------------------
 # Remain only the trustable positions

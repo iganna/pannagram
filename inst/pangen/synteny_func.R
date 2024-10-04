@@ -912,6 +912,7 @@ getCorresp2BaseSign <- function(x, base.len){
     pos.corresp[abs(positions.b)] = positions.q * sign(positions.b)
     
   }
+  
   return(pos.corresp)
 }
 

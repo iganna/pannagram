@@ -93,6 +93,10 @@ loop.function <- function(s.comb,
   
   file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
   
+  suppressMessages({
+  h5createGroup(file.comb, gr.blocks)
+  })
+  
   idx.trust = h5read(file.comb, v.idx.trust)
   idx.trust = idx.trust != 0
   groups = h5ls(file.comb)
