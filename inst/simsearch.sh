@@ -146,6 +146,8 @@ pokaz_message "Prefex for the output file was changed to ${output_pref}"
 
 # Add all .fasta files from path_genome to db_files if path_genome is not empty
 if [ ! -z "$path_genome" ]; then
+
+    path_genome=$(add_symbol_if_missing "$path_genome" "/")
     db_files=()
     for genome_file in "$path_genome"/*.fasta; do
         # Get the base name of the file without path and extension
