@@ -137,7 +137,7 @@ if(num.cores == 1){
   registerDoParallel(myCluster) 
   
   tmp = foreach(acc = acc.ids, 
-                .packages=c('crayon'), 
+                .packages=c('crayon', 'ggplot2'), 
                 .verbose = F)  %dopar% { 
                   loop.function(acc,
                                 echo.loop=echo.loop)
