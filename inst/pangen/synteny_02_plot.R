@@ -5,8 +5,9 @@ source(system.file("pangen/synteny_func_plot.R", package = "pannagram"))
 source(system.file("utils/utils.R", package = "pannagram"))
 
 suppressMessages({
-  require("optparse")
-  library("parallel")
+  library(foreach)
+  library(doParallel)
+  library(optparse)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
