@@ -128,31 +128,15 @@ for(s.comb in pref.combinations){
       next
     }
 
-    # command <- paste("wc -l", file.aln)
-    # result <- system(command, intern = TRUE)
-    # num.lines <- as.integer(strsplit(result, " ")[[1]][1])
-    # if(num.lines < 2) {
-    #   idx.skip = c(idx.skip, i)
-    #   next
-    # }
-
+    if (grepl("_aligned2", mafft.res$file[i])) {
+      remove.flank = F
+    } else {
+      remove.flank = T
+    }
     
-    # pokaz(file.aln, file=file.log.main, echo=echo.main)
+    
+    
     aln.seq = readFasta(file.aln)
-    
-    # # ---  
-    # # REFINEMENT:
-    # mx.aln = aln2mx(aln.seq)
-    # res = refineMafft(mx.aln, n.flank = n.flank)
-    # # res.mx = res$mx
-    # # for(xxx in 1:n.flank){
-    # #   res.mx = cbind('A', res.mx)
-    # #   res.mx = cbind(res.mx, 'T')
-    # # }
-    # # aln.seq = mx2aln(res.mx)
-    # 
-    # mafft.aln.pos[[i]] = res$pos
-    # # ---
     
     # ---
     # WITHOUT REFINEMENT
@@ -168,13 +152,12 @@ for(s.comb in pref.combinations){
     for (i.seq in 1:length(aln.seq)) {
       tmp = strsplit(aln.seq[i.seq], "")[[1]]
       tmp.nongap = which(tmp != '-')
-      # tmp[tail(tmp.nongap, (n.flank) )] = '-'
-      # tmp[tmp.nongap[1:(n.flank) ]] = '-'
-      # aln.mx[i, ] <- tmp
-
-      tmp.nongap = tmp.nongap[-(1:(n.flank))]
-      tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]
-
+      
+      if(remove.flank){
+        tmp.nongap = tmp.nongap[-(1:(n.flank))]
+        tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]  
+      }
+      
       p1 = pos.aln[1, i.seq]
       p2 = pos.aln[2, i.seq]
       pos.tmp = p1:p2
