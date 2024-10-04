@@ -119,7 +119,8 @@ for(s.comb in pref.combinations){
   for(i in 1:nrow(mafft.res)){
     
 
-    pokaz('Aln', i, file=file.log.main, echo=echo.main)
+    pokaz('Aln', i, mafft.res[i], file=file.log.main, echo=echo.main)
+    
     file.aln = paste0(path.mafft.out, mafft.res$file[i])
     
     if(!file.exists(file.aln)) {
