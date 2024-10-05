@@ -1079,6 +1079,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 
         with_level 1 pokaz_attention "Combine two references: ${ref0} and ${ref1}.."  # SHOULD BE INSIDE THE LOOP
         
+
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs.R \
                 --path.cons ${path_cons} \
                 --ref0 ${ref0} \
@@ -1119,70 +1120,44 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# # ----------------------------------------------
-# # Common gaps
-# with_level 1 pokaz_stage "Step ${step_num}. Find Positions of Common Gaps in the Reference-Free Multiple Genome Alignment.."
+# ----------------------------------------------
+# Create sequences to run MAFFT and perform some small alignments
 
-# # Logs
-# step_name="step${step_num}_comb_03_find_gaps"
-# step_file="${path_log}${step_name}_done"
-# path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
+with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
 
-# # Start
-# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+# Logs
+step_name="step${step_num}_comb_04_prepare_aln"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
 
-#     Rscript $INSTALLED_PATH/pangen/comb_03_find_gaps.R \
-#             --path.cons ${path_cons} \
-#             --cores ${cores} \
-#             --path.log ${path_log_step} \
-#             --log.level ${log_level} \
-#             --max.len.gap ${max_len_gap}
+# Paths for MAFFT, common for the next code too
+path_mafft_in="${path_inter}mafft_in/"
+path_mafft_out="${path_inter}mafft_out/"
+if [ ! -d "$path_mafft_in" ]; then
+    mkdir -p "$path_mafft_in"
+fi
+if [ ! -d "$path_mafft_out" ]; then
+    mkdir -p "$path_mafft_out"
+fi
 
-#     # Done
-#     touch "${step_file}"
-# fi
+# Start
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-# source $INSTALLED_PATH/utils/chunk_step_done.sh
+    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
+            --path.cons "${path_cons}" \
+            --cores "${cores}" \
+            --path.chromosomes "${path_chrom}" \
+            --path.mafft.in "${path_mafft_in}" \
+            --path.log "${path_log_step}" \
+            --log.level "${log_level}" \
+            --max.len.gap "${max_len_gap}"
 
-# # ----------------------------------------------
-# # Create sequences to run MAFFT and perform some small alignments
+    # Done
+    touch "${step_file}"
+fi
 
-# with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
-
-# # Logs
-# step_name="step${step_num}_comb_04_prepare_aln"
-# step_file="${path_log}${step_name}_done"
-# path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
-
-# # Paths for MAFFT, common for the next code too
-# path_mafft_in="${path_inter}mafft_in/"
-# path_mafft_out="${path_inter}mafft_out/"
-# if [ ! -d "$path_mafft_in" ]; then
-#     mkdir -p "$path_mafft_in"
-# fi
-# if [ ! -d "$path_mafft_out" ]; then
-#     mkdir -p "$path_mafft_out"
-# fi
-
-# # Start
-# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-#     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
-#             --path.cons "${path_cons}" \
-#             --cores "${cores}" \
-#             --path.chromosomes "${path_chrom}" \
-#             --path.mafft.in "${path_mafft_in}" \
-#             --path.log "${path_log_step}" \
-#             --log.level "${log_level}" \
-#             --max.len.gap "${max_len_gap}"
-
-#     # Done
-#     touch "${step_file}"
-# fi
-
-# source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # # ----------------------------------------------
 # # Run MAFFT

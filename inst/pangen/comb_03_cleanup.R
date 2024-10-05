@@ -121,7 +121,7 @@ loop.function <- function(s.comb,
     
     v.idx = v.idx[v != 0]
     v = v[v != 0]
-    v.r = rank(v)
+    v.r = rank(abs(v))
     v.r[v < 0] = v.r[v < 0] * (-1)
     v.b = findRuns(v.r)
     

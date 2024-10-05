@@ -191,6 +191,7 @@ for(s.comb in pref.combinations){
   
   # Check inversions
   if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
+  # To test: which(rowSums(sign(v.beg * v.end) < 0) > 0)
   
   # Check direction
   if (any(sign(v.end - v.beg) < 0)) stop('Checkpoint5')
@@ -203,6 +204,7 @@ for(s.comb in pref.combinations){
   
   # ---- Check lengths ----
   v.len = v.end - v.beg - 1
+  v.len[zero.mask] = 0
   
   if (any(v.len < 0)) stop('Checkpoint6')
   v.len[zero.mask] = 0
@@ -231,14 +233,15 @@ for(s.comb in pref.combinations){
   
   # ---- Subdivide into categories ----
   
+  idx.breaks$single = rowSums(v.len != 0)
   idx.breaks$len.acc = rowMax(v.len)
-  idx.singl = which(idx.breaks$cnt == 1)
-  idx.small = which((idx.breaks$cnt != 1) & (idx.breaks$len.acc <= len.short))
-  idx.large = which((idx.breaks$cnt != 1) & (idx.breaks$len.acc > len.short) & (idx.breaks$len.acc <= len.large))
-  idx.extra = which((idx.breaks$cnt != 1) & (idx.breaks$len.acc > len.large))
+  idx.singl = which(idx.breaks$single == 1)
+  idx.short = which((idx.breaks$single != 1) & (idx.breaks$len.acc <= len.short))
+  idx.large = which((idx.breaks$single != 1) & (idx.breaks$len.acc > len.short) & (idx.breaks$len.acc <= len.large))
+  idx.extra = which((idx.breaks$single != 1) & (idx.breaks$len.acc > len.large))
   
   if(sum(length(idx.singl) + 
-         length(idx.small) + 
+         length(idx.short) + 
          length(idx.large) + 
          length(idx.extra)) != nrow(idx.breaks)) stop('Chrckpoint7')
   
@@ -260,6 +263,8 @@ for(s.comb in pref.combinations){
                ref.pos = idx.breaks[idx.singl, c('idx.beg', 'idx.end')]), paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
   ## ---- Save Long and Keep short ----
+  aln.seqs <- vector("list", length = nrow(idx.breaks))
+  aln.pos <- vector("list", length = nrow(idx.breaks))
   for(acc in accessions){
     
     # Read the chromosome
@@ -274,7 +279,6 @@ for(s.comb in pref.combinations){
     s.flank.end = rep('T', n.flank)
     
     getSeq <- function(irow, for.mafft = F){
-      if(v.beg[irow, acc] == 0) next
       
       if(v.beg[irow, acc] > 0){
         s.strand = '+'
@@ -301,48 +305,63 @@ for(s.comb in pref.combinations){
         seq = c(s.flank.beg, seq, s.flank.end)
       }
       
-      seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')  
-      name(seq) = seq.name
+      seq = nt2seq(seq)
       
-      return(seq)
+      seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')  
+      names(seq) = seq.name
+      
+      return(list(seq = seq, pos = pos))
     }
     
     ### ---- MAFFT ----
     for(irow in idx.large){
-      seq = getSeq(irow)
+      if(v.beg[irow, acc] == 0) next
+      
+      res = getSeq(irow)
+      seq = res$seq
       
       # Write to the fasta file
-      writeFasta(seq, 
-                 paste0(path.mafft.in, idx.breaks$file[irow]),
-                 append = T)
+      file.out = paste0(path.mafft.in, idx.breaks$file[irow])
+      if(file.exists(file.out)){
+        writeFasta(seq, file.out, append = T)
+      } else {
+        writeFasta(seq, file.out)
+      }
+      
     }
     
     ### ---- Short sequences ----
-    aln.seqs <- vector("list", length = nrow(idx.break))
-    aln.pos <- vector("list", length = nrow(idx.break))
-    for(irow in idx.large){
-      seq = getSeq(irow)
+    for(irow in idx.short){
+      if(v.beg[irow, acc] == 0) next
+      
+      res = getSeq(irow)
+      seq = res$seq
+      pos = res$pos
 
       # Save to the further slignment
-      aln.seqs[[irow]][seq.name] = nt2seq(seq)
-      aln.pos[[irow]][[seq.name]] = pos
+      aln.seqs[[irow]][acc] = seq
+      aln.pos[[irow]][[acc]] = pos
     }
     
-    ### ---- Extra sequences ----
-    aln.seqs <- vector("list", length = nrow(idx.break))
-    aln.pos <- vector("list", length = nrow(idx.break))
-    for(irow in idx.large){
-      seq = getSeq(irow)
-      
-      # Save to the further alignment
-      aln.seqs[[irow]][seq.name] = nt2seq(seq)
-      aln.pos[[irow]][[seq.name]] = pos
-    }
+    # ### ---- Extra sequences ----
+    # aln.seqs <- vector("list", length = nrow(idx.breaks))
+    # aln.pos <- vector("list", length = nrow(idx.breaks))
+    # for(irow in idx.large){
+    #   seq = getSeq(irow)
+    #   
+    #   # Save to the further alignment
+    #   aln.seqs[[irow]][seq.name] = nt2seq(seq)
+    #   aln.pos[[irow]][[seq.name]] = pos
+    # }
     
   }
 
   # ---- Align Short sequences ----
   if(echo) pokaz('Align short seqs')
+  
+  # Checkuip the numer of sequences in alignments
+  tmp = unlist(lapply(aln.seqs, length))
+  if(sum(tmp == 1) > 0) stop('Checkup-short1')
   
   # Core core for the short alignmgnets
   CODE_ALN_SHORT <- function(echo=F){
@@ -381,7 +400,7 @@ for(s.comb in pref.combinations){
       irow = idx.short[i.tmp]
       seqs = aln.seqs[[irow]]
       pos.idx = aln.pos[[irow]]
-      idx.gap.pos = idx.break$beg[irow]
+      idx.gap.pos = idx.breaks$idx.beg[irow]
       
       res.msa[[i.tmp]] = CODE_ALN_SHORT()
     }
@@ -390,7 +409,7 @@ for(s.comb in pref.combinations){
     pokaz('Parallel computing: short sequences')
     res.msa <- foreach(seqs = aln.seqs[idx.short],
                        pos.idx = aln.pos[idx.short],
-                       idx.gap.pos = idx.break$beg[idx.short],
+                       idx.gap.pos = idx.breaks$idx.beg[idx.short],
                        .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
                          return(CODE_ALN_SHORT()) 
                        }
@@ -399,7 +418,7 @@ for(s.comb in pref.combinations){
   saveRDS(list(aln = res.msa,
                seqs = aln.seqs[idx.short], 
                pos.idx = aln.pos[idx.short],
-               ref.pos = idx.break[idx.short, c('beg', 'end')]), paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+               ref.pos = idx.breaks[idx.short, c('idx.beg', 'idx.end')]), paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
   
 
   
@@ -422,16 +441,11 @@ warnings()
 # ---- Manual testing ----
 
 if(F){
+
   library(rhdf5)
-source(system.file("utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/p27/chromosomes/'
-  
-  
-  library(rhdf5)
-source(system.file("/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/pannagram/utils/utils.R", package = "pannagram"))
-  path.cons = '/Volumes/Samsung_T5/vienn/alignment/new/consensus/'
-  path.chromosomes = '/Volumes/Samsung_T5/vienn/pb_chromosomes/'
+  path.cons = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/consensus/'
+  path.mafft.in = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/mafft_in/'
+  path.chromosomes = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/chromosomes/'
   
 }
 
