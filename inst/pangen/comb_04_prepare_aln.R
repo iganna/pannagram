@@ -43,6 +43,7 @@ opt = parse_args(opt_parser, args = args);
 
 #TODO: SHOULD BE PARAMATERS
 len.short = 50
+# len.large = 40000
 n.flank = 30
 
 # print(opt)
@@ -63,7 +64,7 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 if (is.null(opt$max.len.gap)) {
   stop("Error: max.len.gap is NULL")
 } else {
-  max.len.gap <- opt$max.len.gap
+  len.large <- opt$max.len.gap
 }
 
 # Number of cores for parallel processing
@@ -113,47 +114,54 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
   
-  # # For testing
-  # v = c()
-  # for(acc in accessions){
-  #   v.acc = h5read(file.comb, paste0(gr.accs.e, acc))
-  #   v = cbind(v, v.acc)
-  # }
+  # ---- Read Breaks  ----
+  file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
+  idx.breaks = readRDS(file.breaks)
   
   # ---- Merge coverages ----
-  file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
-  idx.break = readRDS(file.breaks)
+  n.init = nrow(idx.breaks)
+  idx.breaks = idx.breaks[,c('idx.beg', 'idx.end')]
   
-  # Merge full coverages 
-  idx.break = idx.break[order(-idx.break$end),]
-  idx.break = idx.break[order(idx.break$beg),]
+  idx.breaks = idx.breaks[order(-idx.breaks$idx.end),]
+  idx.breaks = idx.breaks[order(idx.breaks$idx.beg),]
   
-  n = 0
-  while(n != nrow(idx.break)){
-    n = nrow(idx.break)
-    # print(n)
-    idx.full.cover = which(diff(idx.break$end) <= 0) + 1
-    if(length(idx.full.cover) == 0) break
-    idx.break = idx.break[-idx.full.cover,]
-  }
+  idx.breaks$id = 1:nrow(idx.breaks)
+  idx.breaks = idx.breaks[!duplicated(idx.breaks[, c('idx.beg', 'idx.end')]),]
+  idx.breaks$cnt = c(idx.breaks$id[-1], n.init+1) - idx.breaks$id
+  if(!(sum(idx.breaks$cnt) == n.init)) stop('Checkpoint1')
+  if (any(idx.breaks$cnt < 0)) stop('Checkpoint2')
+  
+  # 
+  # pos = rep(0, 40000000)
+  # for(irow in 1:nrow(idx.breaks)){
+  #   pos[idx.breaks$idx.beg[irow]:idx.breaks$idx.end[irow]] = irow
+  # }
+  # sum(pos == 0)
+  
+  idx.breaks <- idx.breaks[order(-idx.breaks$idx.end), ]
+  idx.breaks <- idx.breaks[order(idx.breaks$idx.beg), ]
   
   # Merge overlaps
   n = 0
-  while(n != nrow(idx.break)){
-    n = nrow(idx.break)
-    # print(n)
-    idx.over = which((idx.break$beg[-1] < idx.break$end[-n]))
-    idx.over = setdiff(idx.over, idx.over+1)
+  while (n != nrow(idx.breaks)) {
+    n = nrow(idx.breaks)
     
-    if(length(idx.over) == 0) break
+    idx_full_cover = which(idx.breaks$idx.beg[-1] <= idx.breaks$idx.end[-nrow(idx.breaks)])
+    idx_full_cover = setdiff(idx_full_cover, idx_full_cover + 1)
     
-    idx.break$beg[idx.over + 1] = idx.break$beg[idx.over]
-    idx.break = idx.break[-idx.over,]
+    if (length(idx_full_cover) == 0) break
+    
+    idx.breaks$cnt[idx_full_cover] = idx.breaks$cnt[idx_full_cover] + idx.breaks$cnt[idx_full_cover + 1]
+    idx.breaks$idx.end[idx_full_cover] = pmax(idx.breaks$idx.end[idx_full_cover], idx.breaks$idx.end[idx_full_cover + 1])
+    
+    idx.breaks = idx.breaks[-(idx_full_cover + 1), ]
   }
   
   # Length of gaps
-  idx.break$idx = paste('gap', 1:nrow(idx.break), sep = '|')
-  idx.break$len = idx.break$end - idx.break$beg + 1
+  idx.breaks$idx = paste('gap', 1:nrow(idx.breaks), sep = '|')
+  idx.breaks$len = idx.breaks$idx.end - idx.breaks$idx.beg + 1
+  
+  if(sum(idx.breaks$cnt) != n.init) stop('Checkpoint3')
   
   
   ## ---- Get begin-end positions of gaps ----
@@ -163,123 +171,109 @@ for(s.comb in pref.combinations){
     pokaz(acc)
     
     x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
-    blocks.acc = h5read(file.comb, paste0(gr.blocks, acc))
+    b.acc = h5read(file.comb, paste0(gr.blocks, acc))
     
-    # ### ---- Find prev and next ----
-    # n = nrow(x.acc)
-    # for(i.tmp in 1:2){
-    #   if(echo) pokaz('Accession', acc, 'fill prev/next', i.tmp)
-    #   v.acc = x.acc
-    #   if(i.tmp == 2) {
-    #     v.acc = rev(v.acc)
-    #   }
-    #   v.rank = rank(v.acc)
-    #   v.rank[v.acc == 0] = 0
-    #   
-    #   v.zero.beg = which((v.acc[-1] == 0) & (v.acc[-n] != 0)) + 1
-    #   v.zero.end = which((v.acc[-1] != 0) & (v.acc[-n] == 0)) 
-    #   if(v.acc[1] == 0) v.zero.end = v.zero.end[-1]
-    #   if(v.acc[n] == 0) v.zero.end = c(v.zero.end, n)
-    #   
-    #   # ..... WITHIN ONE STRATCH BLOCK .....
-    #   idx = which(abs(v.rank[v.zero.beg-1] - v.rank[v.zero.end+1]) != 1)
-    #   v.zero.beg = v.zero.beg[-idx]
-    #   v.zero.end = v.zero.end[-idx]
-    #   # .....
-    #   
-    #   tmp = rep(0, n)
-    #   tmp[v.zero.beg] = v.acc[v.zero.beg-1]
-    #   tmp[v.zero.end] = -v.acc[v.zero.beg-1]
-    #   tmp[v.zero.end[v.zero.beg == v.zero.end]] = 0
-    #   tmp = cumsum(tmp)
-    #   tmp[v.zero.end] = v.acc[v.zero.beg-1]
-    #   
-    #   if(i.tmp == 1){
-    #     v.prev = x.acc + tmp
-    #   } else {
-    #     tmp = rev(tmp)
-    #     v.next = x.acc + tmp
-    #   }
-    # }
-    # 
-    # v.beg = cbind(v.beg, v.prev[idx.break$beg] * (v.prev[idx.break$beg+1] != 0))
-    # v.end = cbind(v.end, v.next[idx.break$end] * (v.next[idx.break$end-1] != 0))
-    # v = cbind(v, v.acc)
+    x.beg = fillPrev(x.acc)[idx.breaks$idx.beg]
+    x.end = fillNext(x.acc)[idx.breaks$idx.end]
     
-    b.acc.beg = blocks.acc[idx.break$beg]
-    b.acc.end = blocks.acc[idx.break$end]
-    idx.same.bl = (b.acc.beg == b.acc.end) * 1
+    idx.no.zero = (x.beg != 0) & (x.end != 0)
+    idx.no.zero[idx.no.zero] = b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
+  
+    x.beg[!idx.no.zero] = 0
+    x.end[!idx.no.zero] = 0
     
-    
-    # v.beg = cbind(v.beg, x.acc[idx.break$beg] )
-    # v.end = cbind(v.end, x.acc[idx.break$end] )
-    
-    v.beg = cbind(v.beg, fillPrev(x.acc)[idx.break$beg] * idx.same.bl )
-    v.end = cbind(v.end, fillNext(x.acc)[idx.break$end] * idx.same.bl )
-    # 
-    
-    # print(cbind(v.beg[!idx.same.bl,ncol(v.beg)], v.end[!idx.same.bl,ncol(v.beg)]))
+    v.beg = cbind(v.beg, x.beg)
+    v.end = cbind(v.end, x.end)
     
   }
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
   
-  ## ---- Check lengths ----
-  v.len = v.end - v.beg -1
-  v.len[v.end == 0] = 0
-  v.len[v.beg == 0] = 0
+  # Check inversions
+  if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
   
-  v.len[sign(v.beg * v.end) < 0] = 0
+  # Check direction
+  if (any(sign(v.end - v.beg) < 0)) stop('Checkpoint5')
   
-  if(echo) pokaz('Amount of long fragments', sum(v.len > max.len.gap))
-  v.len[v.len > max.len.gap] = 0
+  # ---- Zero-positions mask ----
+
+  zero.mask = (v.end == 0) | (v.beg == 0)
+  v.end[zero.mask] = 0
+  v.beg[zero.mask] = 0
+  
+  # ---- Check lengths ----
+  v.len = v.end - v.beg - 1
+  
+  if (any(v.len < 0)) stop('Checkpoint6')
+  v.len[zero.mask] = 0
+  
+  zero.len.mask = (v.len == 0)
+  v.end[zero.len.mask] = 0
+  v.beg[zero.len.mask] = 0
+  
+  if(echo) pokaz('Amount of long fragments', sum(v.len > len.large))
+  
+  # ---- Checkups for duplicates ----
   for(icol in 1:ncol(v.len)){
-    idx.dup = v.beg[duplicated(v.beg[,icol]),icol]
-    if(echo) pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.beg[,icol] %in% idx.dup, icol] != 0))
-    v.len[v.beg[,icol] %in% idx.dup, icol] = 0
-    idx.dup = v.end[duplicated(v.end[,icol]),icol]
-    if(echo) pokaz('Duplicated in column', icol, ', amount:', sum(v.len[v.end[,icol] %in% idx.dup, icol] != 0))
-    v.len[v.end[,icol] %in% idx.dup, icol] = 0
+    idx.dup = unique(v.beg[duplicated(v.beg[,icol]),icol])
+    if(length(setdiff(idx.dup, 0)) != 0) {
+      stop(paste('Duplicated in column', icol, 'in v.beg, amount:', length(idx.dup) - 1))
+    }
+    # v.len[v.beg[,icol] %in% idx.dup, icol] = 0
+    
+    idx.dup = unique(v.end[duplicated(v.end[,icol]),icol])
+    if(length(setdiff(idx.dup, 0)) != 0) {
+      stop(paste('Duplicated in column', icol, 'in v.end, amount:', length(idx.dup) - 1))
+    }
+    # v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
-  v.beg[v.len == 0] = 0
-  v.end[v.len == 0] = 0
+
   
-  # ---- Check direction ----
-  idx.wrong.dir = sign(v.end - v.beg) < 0
-  v.end[idx.wrong.dir] = 0
-  v.beg[idx.wrong.dir] = 0
+  # ---- Subdivide into categories ----
   
-  # ---- Get sequences for the alignment, but not singletons ----
-  idx.singletons = which(rowSums(v.len != 0) == 1)  # don't have to align
-  idx.aln = which(rowSums(v.len != 0) > 1)  # have to align
+  idx.breaks$len.acc = rowMax(v.len)
+  idx.singl = which(idx.breaks$cnt == 1)
+  idx.small = which((idx.breaks$cnt != 1) & (idx.breaks$len.acc <= len.short))
+  idx.large = which((idx.breaks$cnt != 1) & (idx.breaks$len.acc > len.short) & (idx.breaks$len.acc <= len.large))
+  idx.extra = which((idx.breaks$cnt != 1) & (idx.breaks$len.acc > len.large))
   
-  # Distinguish long (MAFFT) and short(muscle) alignments
-  max.len = apply(v.len, 1, max)
-  idx.add.flank = max.len > len.short
-  s.flank.beg = rep('A', n.flank)
-  s.flank.end = rep('T', n.flank)
+  if(sum(length(idx.singl) + 
+         length(idx.small) + 
+         length(idx.large) + 
+         length(idx.extra)) != nrow(idx.breaks)) stop('Chrckpoint7')
   
-  # Names of breaks
-  n.digits <- nchar(as.character(nrow(idx.break)))
+  # Names of files
+  n.digits <- nchar(as.character(nrow(idx.breaks)))
   format.digits <- paste0("%0", n.digits, "d")
-  s.break = paste('Gap', s.comb, 
-                  sprintf(format.digits, 1:nrow(idx.break)), 
-                  idx.break$beg, idx.break$end,
-                  sep = '_')
+  idx.breaks$file = paste0('Gap_', s.comb,  '_',
+                  sprintf(format.digits, 1:nrow(idx.breaks)), '_',
+                  idx.breaks$idx.beg, '_',
+                  idx.breaks$idx.end, '_flank_', n.flank, '.fasta')
   
-  # Get sequences
-  aln.seqs <- vector("list", length = nrow(idx.break))
-  aln.pos <- vector("list", length = nrow(idx.break))
+  # Save breaks
+  file.breaks.merged = paste0(path.cons, 'breaks_merged_', s.comb,'.rds')
+  saveRDS(idx.breaks, file.breaks.merged)
+  
+  ## ---- Save singletons ----
+  saveRDS(list(pos.beg = v.beg[idx.singl,],
+               pos.end = v.end[idx.singl,],
+               ref.pos = idx.breaks[idx.singl, c('idx.beg', 'idx.end')]), paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
+  
+  ## ---- Save Long and Keep short ----
   for(acc in accessions){
-    if(echo) pokaz('Accession', acc)
-    # read the genome and chromosome
+    
+    # Read the chromosome
     file.chromosome = paste(path.chromosomes, 
                             acc, 
                             '_chr', q.chr, '.fasta', sep = '')
-    genome = readFastaMy(file.chromosome)
+    genome = readFasta(file.chromosome)
     genome = seq2nt(genome)
     
-    for(irow in idx.aln){
+    ### ---- Get sequences ----
+    s.flank.beg = rep('A', n.flank)
+    s.flank.end = rep('T', n.flank)
+    
+    getSeq <- function(irow, for.mafft = F){
       if(v.beg[irow, acc] == 0) next
       
       if(v.beg[irow, acc] > 0){
@@ -287,8 +281,7 @@ for(s.comb in pref.combinations){
         p1 = v.beg[irow, acc] + 1
         p2 = v.end[irow, acc] - 1
         if(p2 < p1) {
-          print(irow)
-          stop('wrong direction, +')
+          stop(paste('Wrong direction in strand (+) in row', irow))
         }
         seq = genome[p1:p2]
         pos = p1:p2
@@ -297,36 +290,59 @@ for(s.comb in pref.combinations){
         p1 = -v.end[irow, acc] + 1
         p2 = -v.beg[irow, acc] - 1
         if(p2 < p1)  {
-          print(irow)
-          stop('wrong direction, -')
+          stop(paste('Wrong direction in strand (-) in row', irow))
         }
         seq = genome[p1:p2]
         seq = revCompl(seq)
         pos = (-p2):(-p1)
       }
       
-      # Add flanking sequence, if to MAFFT
-      if(idx.add.flank[irow]){
+      if(for.mafft){
         seq = c(s.flank.beg, seq, s.flank.end)
-        seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')
-      } else {
-        seq.name = acc
       }
       
-      # seq.name = paste(s.break[irow], acc, q.chr, p1, p2, s.strand, p2 - p1 + 1, sep = '|')
-      # seq.name = acc
+      seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')  
+      name(seq) = seq.name
+      
+      return(seq)
+    }
+    
+    ### ---- MAFFT ----
+    for(irow in idx.large){
+      seq = getSeq(irow)
+      
+      # Write to the fasta file
+      writeFasta(seq, 
+                 paste0(path.mafft.in, idx.breaks$file[irow]),
+                 append = T)
+    }
+    
+    ### ---- Short sequences ----
+    aln.seqs <- vector("list", length = nrow(idx.break))
+    aln.pos <- vector("list", length = nrow(idx.break))
+    for(irow in idx.large){
+      seq = getSeq(irow)
+
+      # Save to the further slignment
       aln.seqs[[irow]][seq.name] = nt2seq(seq)
       aln.pos[[irow]][[seq.name]] = pos
     }
+    
+    ### ---- Extra sequences ----
+    aln.seqs <- vector("list", length = nrow(idx.break))
+    aln.pos <- vector("list", length = nrow(idx.break))
+    for(irow in idx.large){
+      seq = getSeq(irow)
+      
+      # Save to the further alignment
+      aln.seqs[[irow]][seq.name] = nt2seq(seq)
+      aln.pos[[irow]][[seq.name]] = pos
+    }
+    
   }
-  
-  
-  # ---- Align short ----
-  idx.short = idx.aln[!idx.add.flank[idx.aln]]
-  
-  
+
+  # ---- Align Short sequences ----
   if(echo) pokaz('Align short seqs')
-  
   
   # Core core for the short alignmgnets
   CODE_ALN_SHORT <- function(echo=F){
@@ -367,9 +383,8 @@ for(s.comb in pref.combinations){
       pos.idx = aln.pos[[irow]]
       idx.gap.pos = idx.break$beg[irow]
       
-      res.msa[[irow]] = CODE_ALN_SHORT() # --- COMMON CODE, one core ----
+      res.msa[[i.tmp]] = CODE_ALN_SHORT()
     }
-    res.msa = res.msa[idx.short]
   } else {
     # Many cores
     pokaz('Parallel computing: short sequences')
@@ -377,9 +392,7 @@ for(s.comb in pref.combinations){
                        pos.idx = aln.pos[idx.short],
                        idx.gap.pos = idx.break$beg[idx.short],
                        .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
-                         
-                         return(CODE_ALN_SHORT()) # --- COMMON CODE, many cores ----
-                         
+                         return(CODE_ALN_SHORT()) 
                        }
   }
   
@@ -388,42 +401,11 @@ for(s.comb in pref.combinations){
                pos.idx = aln.pos[idx.short],
                ref.pos = idx.break[idx.short, c('beg', 'end')]), paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
   
-  saveRDS(list(pos.beg = v.beg[idx.singletons,],
-               pos.end = v.end[idx.singletons,],
-               ref.pos = idx.break[idx.singletons, c('beg', 'end')]), paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
+
   
-  # ---- Create files for mafft ----
-  
-  if(echo) pokaz('Prepare seqs for mafft')
-  
-  idx.long = idx.aln[idx.add.flank[idx.aln]]
+  # ---- Extra alignments ----
   
   
-  
-  if(num.cores == 1){
-    pokaz('No parallel computing: long sequences')
-    for (i.tmp in idx.long) {
-      seqs <- aln.seqs[[i.tmp]]
-      pos.idx <- aln.pos[[i.tmp]]
-      s.aln <- s.break[[i.tmp]]
-      
-      f.pref <- paste0(path.mafft.in, s.aln, '_flank_', n.flank, '.fasta')
-      
-      writeFastaMy(seqs, f.pref)
-    }
-    
-  } else {
-    pokaz('Parallel computing: long sequences')
-    tmp <- foreach(seqs = aln.seqs[idx.long], 
-                       pos.idx = aln.pos[idx.long], 
-                       s.aln = s.break[idx.long],
-                       .packages=c('muscle'))  %dopar% {
-                         
-                         f.pref = paste(path.mafft.in, s.aln,
-                                        '_flank_', n.flank,'.fasta', sep = '')
-                         writeFastaMy(seqs, f.pref)
-                       }
-  }
   H5close()
   gc()
 }
