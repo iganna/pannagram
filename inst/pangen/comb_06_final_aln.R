@@ -134,8 +134,6 @@ for(s.comb in pref.combinations){
       remove.flank = T
     }
     
-    
-    
     aln.seq = readFasta(file.aln)
     
     # ---
@@ -221,7 +219,7 @@ for(s.comb in pref.combinations){
     n.pos = single.res$len[i] - 2
     fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
   }
-  
+
   # Short
   fp.short = list()
   for(i in 1:length(msa.res$len)){
@@ -232,9 +230,16 @@ for(s.comb in pref.combinations){
   # Check short
   for(i in 1:length(msa.res$len)){
     if(is.null(msa.res$aln[[i]])) next
-    if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])) stop(i)
+    if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
+      
+      
+      file.ws = "tmp_workspace.RData"
+      all.local.objects <- ls()
+      save(list = all.local.objects, file = file.ws)
+      
+      stop(paste0('Short', i)) 
+    }
   }
-  
   
   # Long
   fp.long = list()
@@ -242,7 +247,6 @@ for(s.comb in pref.combinations){
     n.pos = ncol(mafft.aln.pos[[i]])
     fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
   }
-  
   
   pos.beg.all = list(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
   pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)

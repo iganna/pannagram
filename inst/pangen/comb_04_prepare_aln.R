@@ -250,7 +250,9 @@ for(s.comb in pref.combinations){
   ## ---- Save singletons ----
   saveRDS(list(pos.beg = v.beg[idx.singl,],
                pos.end = v.end[idx.singl,],
-               ref.pos = breaks[idx.singl, c('idx.beg', 'idx.end')]), paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
+               ref.pos = data.frame(beg = breaks$idx.beg[idx.singl],
+                                    end = breaks$idx.end[idx.singl]) ), 
+          paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
   ## ---- Save Long and Keep short ----
   aln.seqs <- vector("list", length = nrow(breaks))
@@ -307,7 +309,7 @@ for(s.comb in pref.combinations){
     for(irow in idx.large){
       if(v.beg[irow, acc] == 0) next
       
-      res = getSeq(irow)
+      res = getSeq(irow, for.mafft = T)
       seq = res$seq
       
       # Write to the fasta file
@@ -408,19 +410,11 @@ for(s.comb in pref.combinations){
   saveRDS(list(aln = res.msa,
                seqs = aln.seqs[idx.short], 
                pos.idx = aln.pos[idx.short],
-               ref.pos = breaks[idx.short, c('idx.beg', 'idx.end')]), paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+               ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
+                                    end = breaks$idx.end[idx.short]) ),
+          paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
   
 
-  
-  # ---- Extra alignments ----
-  for(irow in idx.extra){
-    pos.b = breaks$idx.beg[irow]
-    pos.e = breaks$idx.end[irow]
-    
-    idx.tmp = idx.breaks.init[(idx.breaks.init$idx.beg >= pos.b) & (idx.breaks.init$idx.end <= pos.e),]
-    idx.tmp = idx.tmp[order(idx.tmp$idx.beg),]
-  }
-  
   
   H5close()
   gc()
