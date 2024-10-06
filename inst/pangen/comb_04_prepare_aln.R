@@ -142,6 +142,9 @@ for(s.comb in pref.combinations){
   
   if((sum(breaks$cnt) + nrow(breaks.extra)) != n.init) stop('Checkout length')
   
+  file.breaks.extra = paste0(path.cons, 'breaks_extra_', s.comb,'.rds')
+  saveRDS(breaks.extra, file.breaks.extra)
+  
   ## ---- Get begin-end positions of gaps ----
   v.beg = c()
   v.end = c()
