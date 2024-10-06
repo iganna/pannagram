@@ -28,7 +28,7 @@ if (!is.null(path.log) & !is.null(log.level)) {
   
   # Remove old log files
   log_files <- list.files(path = path.log, pattern = "\\.log$", full.names = TRUE)
-  file.remove(log_files)
+  # file.remove(log_files)
   
   file.log.main <- paste0(path.log, 'script.log')
   invisible(file.create(file.log.main))

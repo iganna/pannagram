@@ -84,14 +84,18 @@ loop.function <- function(s.comb,
     invisible(file.create(file.log.loop))
   }
   
-  # # ---- Check log Done ----
-  # if(checkDone(file.log.loop)){
-  #   return()
-  # }
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
   
   # --- --- --- --- --- --- --- --- --- --- ---
   
   file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
+  
+  if(!file.exists(file.comb)){
+    stop('File with combined references doesn’t exist')
+  }
   
   suppressMessages({
   h5createGroup(file.comb, gr.blocks)
