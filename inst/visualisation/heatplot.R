@@ -24,7 +24,8 @@ heatplot <- function(tbl,
                      c.name = 'lila',
                      xlab=NULL,
                      ylab=NULL,
-                     fill.lab=NULL
+                     fill.lab=NULL,
+                     cord.fix = F
                      ) {
   
   cols.list = list('lila'     = c('#F5EDED', '#CB80AB', '#8967B3', '#624E88'),
@@ -34,7 +35,8 @@ heatplot <- function(tbl,
                    
                    'div1' = c("#399918", "#88D66C", "#ECFFE6", "#FFAAAA", "#FF7777"),
                    'div2' = c('#439A97', '#91DDCF', '#F7F9F2', '#F19ED2', '#CD6688'),
-                   'div3' = c('#439A97', '#96CEB4', '#FFF7D1', '#FFAD60', '#A66E38'))
+                   'div3' = c('#439A97', '#96CEB4', '#FFF7D1', '#FFAD60', '#A66E38'),
+                   'dot' = c("#CE1F6A", 'white', '#27374D'))
     
   if(is.null(cols)){
     if(c.name %in% names(cols.list)){
@@ -60,12 +62,24 @@ heatplot <- function(tbl,
   
   p <- ggplot(df, aes(Var2, Var1, fill = value)) +
     geom_tile() +
-    scale_fill_gradientn(colors = cols) +
     theme_minimal() +
     labs(x = xlab, y = ylab, fill = fill.lab) +
     scale_x_discrete(expand = c(0, 0)) +   
     scale_y_discrete(expand = c(0, 0))
-  p
+  
+  if(c.name == 'dot'){
+    wsize = max(abs(df$value))
+    p = p + scale_fill_gradient2(low = "#CE1F6A", mid = "white", high = "#27374D",
+                                 breaks = c(-wsize, 0, wsize))
+  } else {
+    p = p + scale_fill_gradientn(colors = cols)
+  }
+  
+  if(cord.fix){
+    p = p + coord_fixed()
+  }
+  
+  
   return(p)
 }
 
