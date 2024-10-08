@@ -69,12 +69,14 @@ if (is.null(opt$max.len.gap)) {
 }
 
 # Number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-if(num.cores > 1){
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster)
-}
+num.cores = opt$cores
+if(is.null(num.cores)) stop('Whong number of cores: NULL')
+# num.cores.max = 10
+# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+# if(num.cores > 1){
+#   myCluster <- makeCluster(num.cores, type = "PSOCK") 
+#   registerDoParallel(myCluster)
+# }
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -228,9 +230,11 @@ for(s.comb in pref.combinations){
   
   idx.singl = which(breaks$single == 1)
   idx.short = which((breaks$single != 1) & (breaks$len.acc <= len.short))
-  idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.acc <= len.large))
-  idx.extra = which((breaks$single != 1) & (breaks$len.acc > len.large))
   
+  # Prev
+  # idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.acc <= len.large))
+  # idx.extra = which((breaks$single != 1) & (breaks$len.acc > len.large))
+  # 
   # New
   v.len[v.len == 0] <- NA
   breaks$len.mean = rowMeans(v.len)
@@ -240,6 +244,14 @@ for(s.comb in pref.combinations){
   
   idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.mean <= len.large.mafft))
   idx.extra = which((breaks$single != 1) & (breaks$len.mean > len.large.mafft))
+  
+  pokaz('Lengths singl/shor/large/extra',
+        length(idx.singl), 
+          length(idx.short), 
+          length(idx.large), 
+          length(idx.extra))
+  
+  # ----
   
   if(sum(length(idx.singl) + 
          length(idx.short) + 
@@ -320,7 +332,7 @@ for(s.comb in pref.combinations){
     
     ### ---- MAFFT ----
     
-    CODE_RWITE_MAFFT <- function(echo=F){
+    CODE_WRITE_MAFFT <- function(echo=F){
       if(v.beg[irow, acc] == 0) next
       
       res = getSeq(irow, for.mafft = T)
@@ -335,38 +347,41 @@ for(s.comb in pref.combinations){
       }
     }
     
+    if(echo) pokaz('Write sequences for MAFFT..')
     if(num.cores == 1){
+      if(echo) pokaz('.. no parallel')
       for(irow in 1:length(idx.large)){
-        CODE_RWITE_MAFFT()
+        CODE_WRITE_MAFFT()
       }
     } else {
       # Many cores
-      pokaz('Parallel computing: short sequences')
+      if(echo) pokaz('.. with parallel')
       res.msa <- foreach(irow = idx.large,
                          .packages=c('crayon'))  %dopar% {
-                           return(CODE_RWITE_MAFFT()) 
+                           return(CODE_WRITE_MAFFT()) 
                          }
     }
-    
+    if(echo) pokaz('.. done!')
     
     ### ---- Extra large ----
-    for(irow in idx.large){
-      if(v.beg[irow, acc] == 0) next
-      
-      res = getSeq(irow, for.mafft = T)
-      seq = res$seq
-      
-      # Write to the fasta file
-      file.out = paste0(path.mafft.in, breaks$file[irow])
-      if(file.exists(file.out)){
-        writeFasta(seq, file.out, append = T)
-      } else {
-        writeFasta(seq, file.out)
+    if(echo) pokaz('Write sequences for Estra large')
+    if(num.cores == 1){
+      if(echo) pokaz('.. no parallel')
+      for(irow in 1:length(idx.extra)){
+        CODE_WRITE_MAFFT()
       }
-      
+    } else {
+      # Many cores
+      if(echo) pokaz('.. with parallel')
+      res.msa <- foreach(irow = idx.extra,
+                         .packages=c('crayon'))  %dopar% {
+                           return(CODE_WRITE_MAFFT()) 
+                         }
     }
+    if(echo) pokaz('.. done!')
     
     ### ---- Short sequences ----
+    if(echo) pokaz('Save sequences for Short alignments..')
     for(irow in idx.short){
       if(v.beg[irow, acc] == 0) next
       
@@ -378,6 +393,7 @@ for(s.comb in pref.combinations){
       aln.seqs[[irow]][acc] = seq
       aln.pos[[irow]][[acc]] = pos
     }
+    if(echo) pokaz('.. done!')
     
   }
 
