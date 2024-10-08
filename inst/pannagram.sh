@@ -1186,68 +1186,13 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# ----------------------------------------------
-# Additional MAFFT
-
-with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
-
-# Logs
-step_name="step${step_num}_comb_05_mafft2"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
-            --cores ${cores} \
-            --path.mafft.in ${path_mafft_in} \
-            --path.mafft.out ${path_mafft_out} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level}
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# ----------------------------------------------
-# Combine all together
-
-with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
-
-# Logs
-step_name="step${step_num}_comb_06"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
-
-    Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
-            --cores ${cores} \
-            --path.mafft.out ${path_mafft_out} \
-            --path.cons ${path_cons} \
-            --path.out ${path_out} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level}
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
 # # ----------------------------------------------
-# # Get synteny blocks
+# # Additional MAFFT
 
-# with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+# with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 
 # # Logs
-# step_name="step${step_num}_analys_01_blocks"
+# step_name="step${step_num}_comb_05_mafft2"
 # step_file="${path_log}${step_name}_done"
 # path_log_step="${path_log}${step_name}/"
 # make_dir ${path_log_step}
@@ -1255,10 +1200,12 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # # Start
 # if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-#     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
-#             --path.cons ${path_out} \
-#             --ref.pref  ${ref0} \
-#             --cores ${cores}
+#     Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
+#             --cores ${cores} \
+#             --path.mafft.in ${path_mafft_in} \
+#             --path.mafft.out ${path_mafft_out} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level}
 
 #     # Done
 #     touch "${step_file}"
@@ -1266,12 +1213,65 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# with_level 1 pokaz_message "* The pipeline is done."
+# # ----------------------------------------------
+# # Combine all together
 
-# # if [ $start_step -eq 0 ]; then
-# #     rm -f "$FLAG_DIR"/.*
-# #     echo "Script completed successfully"
+# with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
+
+# # Logs
+# step_name="step${step_num}_comb_06"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
+
+# # Start
+# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+#     Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
+#             --cores ${cores} \
+#             --path.mafft.out ${path_mafft_out} \
+#             --path.cons ${path_cons} \
+#             --path.out ${path_out} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level}
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # # ----------------------------------------------
+# # # Get synteny blocks
+
+# # with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+
+# # # Logs
+# # step_name="step${step_num}_analys_01_blocks"
+# # step_file="${path_log}${step_name}_done"
+# # path_log_step="${path_log}${step_name}/"
+# # make_dir ${path_log_step}
+
+# # # Start
+# # if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+
+# #     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+# #             --path.cons ${path_out} \
+# #             --ref.pref  ${ref0} \
+# #             --cores ${cores}
+
+# #     # Done
+# #     touch "${step_file}"
 # # fi
+
+# # source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# # with_level 1 pokaz_message "* The pipeline is done."
+
+# # # if [ $start_step -eq 0 ]; then
+# # #     rm -f "$FLAG_DIR"/.*
+# # #     echo "Script completed successfully"
+# # # fi
 
 
 
