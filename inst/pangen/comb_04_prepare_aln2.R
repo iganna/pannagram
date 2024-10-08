@@ -319,7 +319,8 @@ for(s.comb in pref.combinations){
     }
     
     ### ---- MAFFT ----
-    for(irow in idx.large){
+    
+    CODE_RWITE_MAFFT <- function(echo=F){
       if(v.beg[irow, acc] == 0) next
       
       res = getSeq(irow, for.mafft = T)
@@ -332,8 +333,21 @@ for(s.comb in pref.combinations){
       } else {
         writeFasta(seq, file.out)
       }
-      
     }
+    
+    if(num.cores == 1){
+      for(irow in 1:length(idx.large)){
+        CODE_RWITE_MAFFT()
+      }
+    } else {
+      # Many cores
+      pokaz('Parallel computing: short sequences')
+      res.msa <- foreach(irow = idx.large,
+                         .packages=c('crayon'))  %dopar% {
+                           return(CODE_RWITE_MAFFT()) 
+                         }
+    }
+    
     
     ### ---- Extra large ----
     for(irow in idx.large){
@@ -364,17 +378,6 @@ for(s.comb in pref.combinations){
       aln.seqs[[irow]][acc] = seq
       aln.pos[[irow]][[acc]] = pos
     }
-    
-    # ### ---- Extra sequences ----
-    # aln.seqs <- vector("list", length = nrow(idx.breaks))
-    # aln.pos <- vector("list", length = nrow(idx.breaks))
-    # for(irow in idx.large){
-    #   seq = getSeq(irow)
-    #   
-    #   # Save to the further alignment
-    #   aln.seqs[[irow]][seq.name] = nt2seq(seq)
-    #   aln.pos[[irow]][[seq.name]] = pos
-    # }
     
   }
 
