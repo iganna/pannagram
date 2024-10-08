@@ -69,14 +69,12 @@ if (is.null(opt$max.len.gap)) {
 }
 
 # Number of cores for parallel processing
-num.cores = opt$cores
-if(is.null(num.cores)) stop('Whong number of cores: NULL')
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-# if(num.cores > 1){
-#   myCluster <- makeCluster(num.cores, type = "PSOCK") 
-#   registerDoParallel(myCluster)
-# }
+num.cores.max = 10
+num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster)
+}
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -134,6 +132,7 @@ for(s.comb in pref.combinations){
   if(sum(breaks$cnt) != nrow(breaks.init)) stop('Checkpoint3')
   
   # ---- Solve long ----
+  
   idx.rem.init = solveLong(breaks, breaks.init, len.large)
   if(length(idx.rem.init) > 0){
     breaks.extra = rbind(breaks.extra, breaks.init[idx.rem.init,])
@@ -220,38 +219,16 @@ for(s.comb in pref.combinations){
     }
     # v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
+
   
   # ---- Subdivide into categories ----
   
   breaks$single = rowSums(v.len != 0)
   breaks$len.acc = rowMax(v.len)
-  
-  
-  
   idx.singl = which(breaks$single == 1)
   idx.short = which((breaks$single != 1) & (breaks$len.acc <= len.short))
-  
-  # Prev
-  # idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.acc <= len.large))
-  # idx.extra = which((breaks$single != 1) & (breaks$len.acc > len.large))
-  # 
-  # New
-  v.len[v.len == 0] <- NA
-  breaks$len.mean = rowMeans(v.len)
-  breaks$len.mean <- rowMeans(v.len, na.rm = TRUE)
-  
-  len.large.mafft = 15000
-  
-  idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.mean <= len.large.mafft))
-  idx.extra = which((breaks$single != 1) & (breaks$len.mean > len.large.mafft))
-  
-  pokaz('Lengths singl/shor/large/extra',
-        length(idx.singl), 
-          length(idx.short), 
-          length(idx.large), 
-          length(idx.extra))
-  
-  # ----
+  idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.acc <= len.large))
+  idx.extra = which((breaks$single != 1) & (breaks$len.acc > len.large))
   
   if(sum(length(idx.singl) + 
          length(idx.short) + 
@@ -265,8 +242,6 @@ for(s.comb in pref.combinations){
                   sprintf(format.digits, 1:nrow(breaks)), '_',
                   breaks$idx.beg, '_',
                   breaks$idx.end, '_flank_', n.flank, '.fasta')
-  
-  breaks$file[idx.extra] = sub('.fasta', '_extra.fasta', breaks$file[idx.extra])
   
   # Save breaks
   file.breaks.merged = paste0(path.cons, 'breaks_merged_', s.comb,'.rds')
@@ -331,8 +306,7 @@ for(s.comb in pref.combinations){
     }
     
     ### ---- MAFFT ----
-    
-    CODE_WRITE_MAFFT <- function(echo=F){
+    for(irow in idx.large){
       if(v.beg[irow, acc] == 0) next
       
       res = getSeq(irow, for.mafft = T)
@@ -345,43 +319,10 @@ for(s.comb in pref.combinations){
       } else {
         writeFasta(seq, file.out)
       }
+      
     }
-    
-    if(echo) pokaz('Write sequences for MAFFT..')
-    if(num.cores == 1){
-      if(echo) pokaz('.. no parallel')
-      for(irow in 1:length(idx.large)){
-        CODE_WRITE_MAFFT()
-      }
-    } else {
-      # Many cores
-      if(echo) pokaz('.. with parallel')
-      res.msa <- foreach(irow = idx.large,
-                         .packages=c('crayon'))  %dopar% {
-                           return(CODE_WRITE_MAFFT()) 
-                         }
-    }
-    if(echo) pokaz('.. done!')
-    
-    ### ---- Extra large ----
-    if(echo) pokaz('Write sequences for Estra large')
-    if(num.cores == 1){
-      if(echo) pokaz('.. no parallel')
-      for(irow in 1:length(idx.extra)){
-        CODE_WRITE_MAFFT()
-      }
-    } else {
-      # Many cores
-      if(echo) pokaz('.. with parallel')
-      res.msa <- foreach(irow = idx.extra,
-                         .packages=c('crayon'))  %dopar% {
-                           return(CODE_WRITE_MAFFT()) 
-                         }
-    }
-    if(echo) pokaz('.. done!')
     
     ### ---- Short sequences ----
-    if(echo) pokaz('Save sequences for Short alignments..')
     for(irow in idx.short){
       if(v.beg[irow, acc] == 0) next
       
@@ -393,7 +334,17 @@ for(s.comb in pref.combinations){
       aln.seqs[[irow]][acc] = seq
       aln.pos[[irow]][[acc]] = pos
     }
-    if(echo) pokaz('.. done!')
+    
+    # ### ---- Extra sequences ----
+    # aln.seqs <- vector("list", length = nrow(idx.breaks))
+    # aln.pos <- vector("list", length = nrow(idx.breaks))
+    # for(irow in idx.large){
+    #   seq = getSeq(irow)
+    #   
+    #   # Save to the further alignment
+    #   aln.seqs[[irow]][seq.name] = nt2seq(seq)
+    #   aln.pos[[irow]][[seq.name]] = pos
+    # }
     
   }
 
