@@ -72,6 +72,7 @@ if (is.null(opt$max.len.gap)) {
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
 
+pokaz('Number of cores', num.cores)
 if(num.cores > 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
@@ -352,38 +353,21 @@ for(s.comb in pref.combinations){
       }
     }
     
-    pokaz('Write sequences for MAFFT..')
+    pokaz('Write sequences for MAFFT and Extra large..')
     if(num.cores == 1){
       pokaz('.. no parallel')
-      for(irow in 1:length(idx.large)){
+      for(irow in c(idx.large, idx.extra)){
         CODE_WRITE_MAFFT()
       }
-    } else {
-      # Many cores
+    } else { # Many cores
       pokaz('.. with parallel')
-      res.msa <- foreach(irow = idx.large,
-                         .packages=c('crayon'))  %dopar% {
-                           return(CODE_WRITE_MAFFT()) 
-                         }
+      foreach(irow = c(idx.large, idx.extra),
+              .packages=c('crayon'))  %dopar% {
+                CODE_WRITE_MAFFT()
+              }
     }
     if(echo) pokaz('.. done!')
     
-    ### ---- Extra large ----
-    pokaz('Write sequences for Estra large')
-    if(num.cores == 1){
-      pokaz('.. no parallel')
-      for(irow in 1:length(idx.extra)){
-        CODE_WRITE_MAFFT()
-      }
-    } else {
-      # Many cores
-      pokaz('.. with parallel')
-      res.msa <- foreach(irow = idx.extra,
-                         .packages=c('crayon'))  %dopar% {
-                           return(CODE_WRITE_MAFFT()) 
-                         }
-    }
-    pokaz('.. done!')
     
     ### ---- Short sequences ----
     pokaz('Save sequences for Short alignments..')
@@ -399,6 +383,8 @@ for(s.comb in pref.combinations){
       aln.pos[[irow]][[acc]] = pos
     }
     pokaz('.. done!')
+    
+    rm(genome)
     
   }
 
