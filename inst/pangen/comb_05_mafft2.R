@@ -42,8 +42,9 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+# num.cores.max = 10
+# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+num.cores = opt$cores
 
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out

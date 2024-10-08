@@ -1186,60 +1186,60 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# # ----------------------------------------------
-# # Additional MAFFT
+# ----------------------------------------------
+# Additional MAFFT
 
-# with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
+with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 
-# # Logs
-# step_name="step${step_num}_comb_05_mafft2"
-# step_file="${path_log}${step_name}_done"
-# path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
+# Logs
+step_name="step${step_num}_comb_05_mafft2"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
 
-# # Start
-# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+# Start
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-#     Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
-#             --cores ${cores} \
-#             --path.mafft.in ${path_mafft_in} \
-#             --path.mafft.out ${path_mafft_out} \
-#             --path.log ${path_log_step} \
-#             --log.level ${log_level}
+    Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
+            --cores ${cores} \
+            --path.mafft.in ${path_mafft_in} \
+            --path.mafft.out ${path_mafft_out} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
 
-#     # Done
-#     touch "${step_file}"
-# fi
+    # Done
+    touch "${step_file}"
+fi
 
-# source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# # ----------------------------------------------
-# # Combine all together
+# ----------------------------------------------
+# Combine all together
 
-# with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
+with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 
-# # Logs
-# step_name="step${step_num}_comb_06"
-# step_file="${path_log}${step_name}_done"
-# path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
+# Logs
+step_name="step${step_num}_comb_06"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
 
-# # Start
-# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+# Start
+if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
 
-#     Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
-#             --cores ${cores} \
-#             --path.mafft.out ${path_mafft_out} \
-#             --path.cons ${path_cons} \
-#             --path.out ${path_out} \
-#             --path.log ${path_log_step} \
-#             --log.level ${log_level}
+    Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
+            --cores ${cores} \
+            --path.mafft.out ${path_mafft_out} \
+            --path.cons ${path_cons} \
+            --path.out ${path_out} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
 
-#     # Done
-#     touch "${step_file}"
-# fi
+    # Done
+    touch "${step_file}"
+fi
 
-# source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # # # ----------------------------------------------
 # # # Get synteny blocks
