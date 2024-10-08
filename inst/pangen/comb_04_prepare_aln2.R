@@ -223,11 +223,23 @@ for(s.comb in pref.combinations){
   
   breaks$single = rowSums(v.len != 0)
   breaks$len.acc = rowMax(v.len)
-  breaks$len.mean = rowMax(v.len)
+  
+  
+  
   idx.singl = which(breaks$single == 1)
   idx.short = which((breaks$single != 1) & (breaks$len.acc <= len.short))
   idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.acc <= len.large))
   idx.extra = which((breaks$single != 1) & (breaks$len.acc > len.large))
+  
+  # New
+  v.len[v.len == 0] <- NA
+  breaks$len.mean = rowMeans(v.len)
+  breaks$len.mean <- rowMeans(v.len, na.rm = TRUE)
+  
+  len.large.mafft = 15000
+  
+  idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.mean <= len.large.mafft))
+  idx.extra = which((breaks$single != 1) & (breaks$len.mean > len.large.mafft))
   
   if(sum(length(idx.singl) + 
          length(idx.short) + 
@@ -241,6 +253,8 @@ for(s.comb in pref.combinations){
                   sprintf(format.digits, 1:nrow(breaks)), '_',
                   breaks$idx.beg, '_',
                   breaks$idx.end, '_flank_', n.flank, '.fasta')
+  
+  breaks$file[idx.extra] = sub('.fasta', '_extra.fasta', breaks$file[idx.extra])
   
   # Save breaks
   file.breaks.merged = paste0(path.cons, 'breaks_merged_', s.comb,'.rds')
@@ -305,6 +319,23 @@ for(s.comb in pref.combinations){
     }
     
     ### ---- MAFFT ----
+    for(irow in idx.large){
+      if(v.beg[irow, acc] == 0) next
+      
+      res = getSeq(irow, for.mafft = T)
+      seq = res$seq
+      
+      # Write to the fasta file
+      file.out = paste0(path.mafft.in, breaks$file[irow])
+      if(file.exists(file.out)){
+        writeFasta(seq, file.out, append = T)
+      } else {
+        writeFasta(seq, file.out)
+      }
+      
+    }
+    
+    ### ---- Extra large ----
     for(irow in idx.large){
       if(v.beg[irow, acc] == 0) next
       
