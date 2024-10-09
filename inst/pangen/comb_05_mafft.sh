@@ -131,7 +131,10 @@ export -f mafft_task
 export path_mafft_out
 
 # Run tasks in parallel, using a number of parallel jobs equal to the number of cores
-find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | parallel -j $cores mafft_task {}  ${log_path}
+# find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | parallel -j $cores mafft_task {}  ${log_path}
+
+find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" ! -name "*_extra.fasta" | parallel -j $cores mafft_task {} ${log_path}
+
 
 
 echo "  Done!"

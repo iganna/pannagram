@@ -17,8 +17,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list <- list(
   make_option(c("--path.chr"), type="character", default=NULL, 
               help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("--path.blast"), type="character", default=NULL, 
-              help="path to blast results", metavar="character"),
   make_option(c("--path.aln"), type="character", default=NULL, 
               help="path to the output directory with alignments", metavar="character"),
   make_option(c("--ref"), type="character", default=NULL, 
@@ -38,6 +36,10 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+# TODO:
+max.len = 10^6
+len.blast = 50
+
 # print(opt)
 
 # ***********************************************************************
@@ -51,7 +53,6 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
 path.chr      <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop('Folder with chromosomes is not specified'))
-path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
 path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, stop('Folder with Gaps is not specified'))
@@ -63,25 +64,25 @@ if(!dir.exists(path.gaps)) dir.create(path.gaps)
 # ***********************************************************************
 # ---- Preparation ----
 
-max.len = 10^6
-len.blast = 50
+files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
+pokaz('Number of alignment files:', length(files.maj), file=file.log.main, echo=echo.main)
+# if(length(files.maj) == 0) stop('No alignment files provided')
 
-files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
-
-pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, echo=echo.main)
-if(length(files.blast) == 0) stop('No BLAST files provided')
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(f.blast, 
+loop.function <- function(f.maj, 
                           echo.loop=T, 
                           file.log.loop=NULL){
+  
+  # Remove extensions
+  pref.comb <- sub("\\maj.rds$", "", f.maj)
   
   # Log files
   if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_file_', 
-                           sub("\\.[^.]*$", "", basename(f.blast)),
+                           pref.comb,
                            '.log')
     invisible(file.create(file.log.loop))
   }
@@ -92,9 +93,6 @@ loop.function <- function(f.blast,
   }
 
   # --- --- --- --- --- --- --- --- --- --- ---
-  
-  # Remove the '.txt' extension
-  pref.comb <- sub("\\.txt$", "", f.blast)
   
   # Parser for BLAST-result file
   parts <- strsplit(pref.comb, "_")[[1]]
@@ -130,13 +128,10 @@ loop.function <- function(f.blast,
   query.len = length(query.fas.chr)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
-  # Output files
-  file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
-  
   # if(T){   
-  if(!file.exists(file.aln.pre)) return()
+  if(!file.exists(f.maj)) return()
 
-  x = readRDS(file.aln.pre)
+  x = readRDS(f.maj)
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
@@ -452,11 +447,8 @@ loop.function <- function(f.blast,
 
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
-  for(f.blast in files.blast){
-    loop.function(f.blast,
-                  # file.log.loop = file.log.loop, 
+  for(f.maj in files.maj){
+    loop.function(f.maj,
                   echo.loop=echo.loop)
   }
 } else {
@@ -464,10 +456,10 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(f.blast = files.blast, 
+  tmp = foreach(f.maj = files.maj, 
                 .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
-                  loop.function(f.blast,
+                  loop.function(f.maj,
                                 echo.loop=echo.loop)
                 }
   stopCluster(myCluster)

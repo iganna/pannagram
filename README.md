@@ -13,10 +13,10 @@ Additionally, Pannagram contains useful functions for visualization. The manual 
 ### Linux users
 Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) or [Mamba](https://github.com/mamba-org/mamba) installed. To create and activate the package environment run:
 ```sh
-conda env create -f environment.yml
+conda env create -f pannagram.yaml
 conda activate pannagram
 # OR
-mamba env create -f environment.yml
+mamba env create -f pannagram.yaml
 mamba activate pannagram
 ```
 The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/), [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html) and others.

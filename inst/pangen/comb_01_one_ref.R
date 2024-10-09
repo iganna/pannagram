@@ -4,6 +4,8 @@
 #'     /accs              0 H5I_DATASET    FLOAT 28940631
 #'     /accs          10002 H5I_DATASET    FLOAT 28940631
 #'     /accs          10015 H5I_DATASET    FLOAT 28940631
+#'     
+#' In combo-files the reference accession column will not have zeros, because it will participate further lika a function.
 
 suppressMessages({
   library(foreach)
@@ -24,19 +26,19 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.chr.len"), type="character", default=NULL, 
+  make_option(c("--path.chr.len"), type="character", default=NULL,
               help="file with lengths of chromosomes", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
+  make_option(c("--path.cons"), type="character", default=NULL,
               help="path to consensus directory", metavar="character"),
-  make_option(c("--path.aln"), type="character", default=NULL, 
+  make_option(c("--path.aln"), type="character", default=NULL,
               help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--pref"), type="character", default=NULL, 
+  make_option(c("--pref"), type="character", default=NULL,
               help="prefix of the reference file", metavar="character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
+  make_option(c("--cores"), type = "integer", default = 1,
               help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.chr"), type="character", default=NULL, 
+  make_option(c("--path.chr"), type="character", default=NULL,
               help="path to the reference file", metavar="character"),
-  make_option(c("--type"), type="character", default=NULL, 
+  make_option(c("--type"), type="character", default=NULL,
               help="type of fasta files", metavar="character"),
   make_option(c("--path.log"), type = "character", default = NULL,
               help = "Path for log files", metavar = "character"),
@@ -44,17 +46,19 @@ option_list = list(
               help = "Level of log to be shown on the screen", metavar = "character")
 )
 
-
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
-
 
 # ***********************************************************************
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
 # ---- Values of parameters ----
 
 # print(opt)
@@ -144,7 +148,6 @@ pokaz('Chromosomal lengths:', chr.len, file=file.log.main, echo=echo.main)
 # ----  Combine correspondence  ----
 
 pokaz('Reference:', base.acc.ref, file=file.log.main, echo=echo.main)
-max.len.gap = 20000
 
 
 # ***********************************************************************
@@ -175,21 +178,13 @@ loop.function <- function(i.chr.pair,
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
-  file.comb = paste0(path.cons, 'comb_', query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5')
+  file.comb = paste0(path.cons, aln.type.ref, query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5')
   if (file.exists(file.comb)) file.remove(file.comb)
   h5createFile(file.comb)
   
   # Path to accessions chunks
-  gr.accs <- "accs/"
   # TODO: Check the availability of the group before creating it
-  h5createGroup(file.comb, gr.accs)
-  
-  
-  # gr.break = 'break/'
-  # h5createGroup(file.comb, gr.break)
-  
-  idx.break = 0
-  # idx.gaps = rep(0, base.len)
+  h5createGroup(file.comb, gr.accs.e)
   
   for(acc in accessions){
     
@@ -215,7 +210,7 @@ loop.function <- function(i.chr.pair,
     
     # Write into file
     suppressMessages({
-      h5write(x.corr, file.comb, paste0(gr.accs, '', acc))
+      h5write(x.corr, file.comb, paste0(gr.accs.e, '', acc))
     })
     
     
@@ -223,20 +218,18 @@ loop.function <- function(i.chr.pair,
     rmSafe(x)
     rmSafe(v)
     rmSafe(idx.tmp.acc)
-    # rmSafe(idx.break.acc)
     
   }
   
   suppressMessages({
-    # h5write(idx.break, file.comb, 'breaks_all')
-    # h5write(idx.gaps, file.comb, 'gaps_all')
-    h5write(base.acc.ref, file.comb, 'ref')
     
-    h5write(1:base.len, file.comb, paste0(gr.accs, '', base.acc.ref))
-    # h5write(NULL, file.comb, paste0(gr.break, base.acc.ref))
+    h5write(base.acc.ref, file.comb, v.ref.name)
+    h5write(base.len, file.comb, v.len)
+    
+    h5write(1:base.len, file.comb, paste0(gr.accs.e, '', base.acc.ref))
+  
   })
   
-  # rmSafe(idx.break)
   rmSafe(idx.gaps)
   
   H5close()

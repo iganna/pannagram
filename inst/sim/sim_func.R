@@ -98,6 +98,8 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     idx.one = sort(unique(c(idx.one,idx.one+1)))
     v.rest = v.rest[idx.one,,drop=F]
     
+    if(nrow(v.rest) == 0) next
+    
     v.rest = v.rest[order(-v.rest$V5),]
     v.rest = v.rest[order(v.rest$V4),]
     v.rest = v.rest[order(v.rest$V8),]
@@ -138,6 +140,8 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     idx.one = sort(unique(c(idx.one,idx.one+1)))
     v.rest = v.rest[idx.one,]
     
+    if(nrow(v.rest) == 0) next
+    
     v.rest = v.rest[order(-v.rest$V3),]
     v.rest = v.rest[order(v.rest$V2),]
     v.rest = v.rest[order(v.rest$V8),]
@@ -153,6 +157,8 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
       if(length(idx.nested) == 0) next
       v.rest = v.rest[-idx.nested,]  
     }
+    
+    if(nrow(v.rest) == 0) next
     
     v.rest$cover = v.rest$V3 - v.rest$V2 + 1
     v.rest$overlap1 = c(v.rest$V2[-1] - v.rest$V3[-nrow(v.rest)] - 1, 0)

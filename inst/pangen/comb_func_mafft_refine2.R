@@ -105,7 +105,7 @@ refineAlignment <- function(seqs.clean, path.work){
   for(i.merge in which(df.merge$cl > max(clusters))){
     pokaz(i.merge, df.merge$cl[i.merge])
     
-    # if(i.merge == 27) stop()
+    # if(i.merge == 23) stop()
     
     i.cl1 = df.merge$id1[i.merge]
     i.cl2 = df.merge$id2[i.merge]
@@ -118,7 +118,7 @@ refineAlignment <- function(seqs.clean, path.work){
     # seq1 = mx2aln(alignments[[i.cl1]])
     # seq2 = mx2aln(alignments[[i.cl2]])
     
-    # # Reduce the number of sequences
+    # Reduce the number of sequences
     seq1 = mx2aln(mx2cons(alignments[[i.cl1]], amount = 3))
     seq2 = mx2aln(mx2cons(alignments[[i.cl2]], amount = 3))
     
@@ -136,8 +136,10 @@ refineAlignment <- function(seqs.clean, path.work){
     mafft.mx[1, pos.mx[1,] != 0] = toupper(seq2nt(s1))
     mafft.mx[2, pos.mx[2,] != 0] = toupper(seq2nt(s2))
     
+    # msaplot(mafft.mx)
+    
     irow_support = c()
-    cnunk.min.len = 50
+    cnunk.min.len = 25
     sim.score = 0.9
     for(irow in 1:nrow(result)){
       if(result$len[irow] < min(c(nchar(s1)/3, nchar(s2)/3, cnunk.min.len))) next
@@ -598,17 +600,17 @@ calсDistAln <- function(seqs.mx) {
 
 
 calcDistKmer <- function(seqs.clean){
-  library("kmer")
   
   wsize = 7
   seqs.clean <- toupper(seqs.clean)
   
   nts <- c('A', 'C', 'G', 'T')
   combinations <- expand.grid(rep(list(nts), wsize))
+  combinations = apply(combinations, 1, paste0, collapse = '')
   
   start <- Sys.time()
   
-  df <- setNames(data.frame(matrix(0, nrow = length(seqs.clean), ncol = nrow(combinations))), apply(combinations, 1, paste0, collapse = ''))
+  df <- setNames(data.frame(matrix(0, nrow = length(seqs.clean), ncol = length(combinations))), combinations)
   
   for (i in 1:length(seqs.clean)) {
     seq = seqs.clean[i]
@@ -616,6 +618,7 @@ calcDistKmer <- function(seqs.clean){
     k.mx.cnt <- table(kmers)
     df[i, names(k.mx.cnt)] <- as.numeric(k.mx.cnt)
   }
+  df = df[,combinations]
   df <- df[, colSums(df) > 0]
   
   dist.mx <- as.matrix(dist(df, method = "manhattan"))

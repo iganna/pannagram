@@ -287,3 +287,5 @@ plotSynAllChr <- function(path.aln,
              color = "#7D7D7D")
   return(synteny.plot)
 }
+
+

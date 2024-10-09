@@ -23,8 +23,6 @@ option_list <- list(
               help="path to the output directory with alignments", metavar="character"),
   make_option(c("--ref"), type="character", default=NULL, 
               help="name of the reference genome", metavar="character"),
-  make_option(c("--path.gaps"), type="character", default=NULL, 
-              help="path tothe directory with gaps", metavar="character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--one2one"), type = "logical", default = F, 
@@ -54,11 +52,9 @@ path.chr      <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop('Folder with 
 path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
-path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, stop('Folder with Gaps is not specified'))
 
 # Create folders for the alignment results
 if(!dir.exists(path.aln)) dir.create(path.aln)
-if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
 # ***********************************************************************
 # ---- Preparation ----

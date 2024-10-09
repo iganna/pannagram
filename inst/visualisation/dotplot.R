@@ -1,4 +1,4 @@
-# Dotplot
+# Dotplots
 
 #' Create a Dotplot for Two Nucleotide Sequences
 #'
@@ -77,7 +77,6 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   return(p )
 }
 
-
 #'  Create a Dotplot for Two Nucleotide Sequences
 #'
 #' @description
@@ -85,8 +84,93 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
 #' 
 #' @export
 #'
-dotplot.s <- function(seq1, seq2, wsize, nmatch) {
-  return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch))
+dotplot.s <- function(seq1, seq2, wsize, nmatch, ...) {
+  return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
+}
+
+#' Generate a Dotplot for One Nucleotide Sequence
+#' 
+#' @description
+#' `dotself` creates a dotplot to visualize the self-comparison of a single nucleotide sequence.
+#' The plot consists of two triangles: forward and reverse-complement.
+#' 
+#' @param seq A character vector representing the nucleotide sequence.
+#' @param wsize Window size for the comparison (an integer). 
+#' @param nmatch Minimum number of matches required within the window (an integer). 
+#' 
+#' @return A ggplot object representing the self-comparison dotplot.
+#' 
+#' @examples
+#' # Example usage:
+#' seq <- c("A", "C", "G", "T", "A", "C", "G", "T", "A", "C", "G", "T")
+#' p <- dotself(seq, wsize = 3, nmatch = 2)
+#' p
+#' 
+#' @export
+
+dotself <- function(seq, wsize, nmatch, return.mx=F) {
+  
+  if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  # Remove gaps
+  seq = seq[seq != '-']
+  seq.rc = revCompl(seq)
+  seq.len = length(seq)
+  
+  mx = toupper(seq2mx(seq, wsize))
+  mx.rc = toupper(seq2mx(seq.rc, wsize))
+  
+  result = mxComp(mx, mx, wsize, nmatch)
+  result.rc = mxComp(mx, mx.rc, wsize, nmatch)
+  
+  result.rc$values = -result.rc$values
+  result.rc$col = seq.len - result.rc$col - wsize + 2
+  
+  result = result[result$row >= result$col,]
+  result.rc = result.rc[result.rc$row < result.rc$col,]
+  
+  result = rbind(result.rc, result)
+  axis.lim = seq.len-wsize + 1
+  
+  if(return.mx){
+    return(list(val = result, dim=axis.lim))
+  }
+  
+  p = invisible(
+    ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
+      geom_tile(width = 1, height = 1, linewidth = 0.5) +
+      xlab(NULL) + ylab(NULL) +
+      # xlim(c(0, len1)) +
+      # ylim(c(0, len2)) +
+      theme_minimal() + coord_fixed() +
+      scale_x_continuous(expand = c(0, 0), limits = c(0, axis.lim+1)) + #
+      scale_y_continuous(expand = c(0, 0), limits = c(0, axis.lim+1)) + #, limits = c(0, seq.len-wsize+2)
+      scale_fill_gradient2(low = "#CE1F6A", mid = "white", high = "#27374D",
+                           breaks = c(-wsize, 0, wsize)) +
+      scale_color_gradient2(low = "#CE1F6A", mid = "white", high = "#27374D",
+                            breaks = c(-wsize, 0, wsize)) +
+      theme(panel.border = element_rect(colour = "grey", fill = NA, size = 1)) +
+      guides(fill = FALSE, color = FALSE) + 
+      annotate('text', x = axis.lim/2, y = axis.lim, 
+               label = paste('(',wsize,',',nmatch, ')', sep = ''), 
+               vjust = 1.2, hjust = 0.5)
+  )
+  
+  
+  return(p )
+}
+
+
+#'  Generate a Dotplot for One Nucleotide Sequence
+#'
+#' @description
+#' The same as `dotself` but the sequence can be provided as a string
+#' 
+#' @export
+#'
+#'
+dotself.s <- function(seq, wsize, nmatch, ...) {
+  return(dotself(seq2nt(seq), wsize, nmatch, ...))
 }
 
 #' Dotplot for Sequences and Their Reverse Complements

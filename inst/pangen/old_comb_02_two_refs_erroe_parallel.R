@@ -104,139 +104,69 @@ pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(s.comb,
+loop.function <- function(s.comb, acc, 
+                          # file.comb0, file.comb1, idx01, f01,
                           echo.loop=T, 
                           file.log.loop=NULL){
   
-  # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref0,'.h5')
-  file.comb1 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref1,'.h5')
-  
-  # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste0(path.cons, aln.type.comb, s.comb, '.h5')
-  if(file.exists(file.res)){
-    
-    if(v.idx.trust %in% h5ls(file.comb0)$name) {
-      file.comb0 = file.res
-    } else {
-      # TODO delete file
-    }
-    
-  } else {
-    h5createFile(file.res)
-    h5createGroup(file.res, gr.accs.e)
-  }
-  
-  pokaz(file.comb0)
-  pokaz(file.comb1)
-  
-  # Get the corresponsing function between two references
-  
-  s.ref1 = paste0(gr.accs.e, '', ref1)
-  f01 <- h5read(file.comb0, s.ref1)
-  idx01.b = f01 != 0
-  idx01 = which(idx01.b)  # idx which we trust
-  f01 = f01[idx01]
-  
-  # Get accessions to combine
-  groups0 = h5ls(file.comb0)
-  groups1 = h5ls(file.comb1)
-  
-  accessions = intersect(groups0$name[groups0$group == gr.accs.b], 
-                         groups1$name[groups1$group == gr.accs.b])  # full name of accessions
-  
-  pokaz(accessions)
-  for(acc in accessions){
-    
-    # Log files
+  # Log files
+  if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_file_', 
-                           s.comb, '_', acc, '_',
+                           s.comb,
                            '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
-    
-    # ---- Check log Done ----
-    if(checkDone(file.log.loop)){
-      next
-    }
-    
-    # --- --- --- --- --- --- --- --- --- --- ---
-    pokaz('Accession', acc)
-    pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
-    s = paste0('/',gr.accs.e, acc)
-    
-    # Data from the main reference
-    v0 = h5read(file.comb0, s)
-
-    v.final = v0
-    v.final[idx01] = 0 
-    v0 = v0[idx01]
-    pokaz('Vector of meaningfull positions', length(v0), file=file.log.loop, echo=echo.loop)
-    
-    
-    # Data from the second reference
-    v1 = h5read(file.comb1, s)
-    v.final[v.final %in% v1] = 0
-    pokaz('Vector in the ref1 file', length(v1), file=file.log.loop, echo=echo.loop)
-    pokaz('Length of function', length(f01), file=file.log.loop, echo=echo.loop)
-    v01 = v1[abs(f01)] * sign(f01)
-    
-    
-    v0[(v0 != v01) & (v01 != 0)] = 0
-    
-    pokaz('Length of resultant correspondence', length(v01), file=file.log.loop, echo=echo.loop)
-    pokaz('Sum of matches', sum(v01 != 0), file=file.log.loop, echo=echo.loop)
-    
-    v.final[idx01] = v0
-    
-    dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
-    if(length(dup.value > 0)){
-      v.final[v.final %in% dup.value] == 0
-      pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
-    }
-    
-    pokaz('Length of saved vector', length(v.final), file=file.log.loop, echo=echo.loop)
-    
-    suppressMessages({
-      h5write(v.final, file.res, s)
-    })
-    
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
-    
+    invisible(file.create(file.log.loop))
   }
   
-  # Update Idx trust
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return()
+  }
+  
+  # if(acc == ref0) next
+  # if(acc == ref1) next
+  
+  pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
+  s = paste0('/',gr.accs.e, acc)
+  
+  # Data from the main reference
+  v0 = h5read(file.comb0, s)
+  
+  v.final = v0
+  v.final[idx01] = 0 
+  v0 = v0[idx01]
+  pokaz('Vector of meaningfull positions', length(v0), file=file.log.loop, echo=echo.loop)
+  
+  
+  # Data from the second reference
+  v1 = h5read(file.comb1, s)
+  v.final[v.final %in% v1] = 0
+  pokaz('Vector in the ref1 file', length(v1), file=file.log.loop, echo=echo.loop)
+  pokaz('Length of function', length(f01), file=file.log.loop, echo=echo.loop)
+  v01 = v1[abs(f01)] * sign(f01)
+  
+  v0[(v0 != v01) & (v01 != 0)] = 0
+  
+  pokaz('Length of resultant correspondence', length(v01), file=file.log.loop, echo=echo.loop)
+  pokaz('Sum of matches', sum(v01 != 0), file=file.log.loop, echo=echo.loop)
+  
+  v.final[idx01] = v0
+  
+  dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
+  if(length(dup.value > 0)){
+    v.final[v.final %in% dup.value] == 0
+    pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
+  }
+  
+  pokaz('Length of saved vector', length(v.final), file=file.log.loop, echo=echo.loop)
+  
   suppressMessages({
-    
-    if(v.idx.trust %in% h5ls(file.res)$name) {
-      idx.trust = h5read(file.res, v.idx.trust)
-      
-      pokaz('length prev', length(idx.trust) )
-      pokaz('length new', length(idx01.b))
-      if(length(idx.trust) == length(idx01.b)){
-        
-        idx.trust = idx.trust + idx01.b * 1
-        h5write(idx.trust, file.res, v.idx.trust)
-        
-      } else {
-        file.remove(file.res)
-        pokazAttention('This step has an error, run again!')
-        log_files <- list.files(path = path.log, pattern = "\\.log$", full.names = TRUE)
-        file.remove(log_files)
-        stop('Wring length of trust positions')
-      }
-    } else {
-      idx.trust = 0
-      idx.trust = idx.trust + idx01.b * 1
-      h5write(idx.trust, file.res, v.idx.trust)
-    }
-    
+    h5write(v.final, file.res, s)
   })
   
   H5close()
   gc()
   
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
 
@@ -246,26 +176,76 @@ loop.function <- function(s.comb,
 # ---- Loop  ----
 
 
-if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
-  for(s.comb in pref.combinations){
-    loop.function(s.comb,
-                  # file.log.loop = file.log.loop, 
-                  echo.loop=echo.loop)
-  }
-} else {
-  # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
+for(s.comb in pref.combinations){
   
-  tmp = foreach(s.comb = pref.combinations, 
-                .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                  loop.function(s.comb,
-                                echo.loop=echo.loop)
-                }
-  stopCluster(myCluster)
+  file.comb0 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref0,'.h5')
+  file.comb1 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref1,'.h5')
+  
+  # Combined file. If it exists, then use it for the growing correspondence
+  file.res = paste0(path.cons, aln.type.comb, s.comb, '.h5')
+  if(file.exists(file.res)){
+    file.comb0 = file.res
+    
+    # idx.trust
+    idx.trust = h5read(file.comb0, v.idx.trust)
+  } else {
+    h5createFile(file.res)
+    h5createGroup(file.res, gr.accs.e)
+    
+    idx.trust = 0
+  }
+  
+  # Get the corresponding function between two references
+  
+  s.ref1 = paste0(gr.accs.e, '', ref1)
+  f01 <- h5read(file.comb0, s.ref1)
+  idx01.b = f01 != 0
+  idx01 = which(idx01.b)  # idx which we trust
+  f01 = f01[idx01]
+
+  
+  # Get accessions to combine
+  groups0 = h5ls(file.comb0)
+  groups1 = h5ls(file.comb1)
+  
+  accessions = intersect(groups0$name[groups0$group == gr.accs.b], 
+                         groups1$name[groups1$group == gr.accs.b])  # full name of accessions
+  
+  ## ---- Parallel loop on accessions ----
+  if(num.cores == 1){
+    for(acc in accessions){
+      loop.function(s.comb, acc, #file.comb0, file.comb1, idx01, f01,
+                    echo.loop=echo.loop)
+    }
+  } else {
+    # Set the number of cores for parallel processing
+    myCluster <- makeCluster(num.cores, type = "PSOCK") 
+    registerDoParallel(myCluster) 
+    
+    tmp = foreach(acc = accessions, 
+                  .packages=c('rhdf5', 'crayon'))  %dopar% { 
+                    loop.function(s.comb, acc, # file.comb0, file.comb1,idx01, f01,
+                                  echo.loop=echo.loop)
+                  }
+    stopCluster(myCluster)
+  }
+  
+  
+  
+  # Update Idx trust
+  suppressMessages({
+    idx.trust = idx.trust + idx01.b * 1
+    h5write(idx.trust, file.res, v.idx.trust)
+  })
+  
+  
 }
+
+
+
+
+
+
 
 warnings()
 
