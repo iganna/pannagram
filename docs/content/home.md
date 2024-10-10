@@ -2,7 +2,7 @@
 # Pannagram
 
 Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
-Additionally, Pannagram contains useful functions for visualization. The manual is available in the [examples](./examples) folder.
+Additionally, Pannagram contains useful functions for visualization. The manual is available [here](https://iganna.github.io/pannagram/).
 
 ## Installation
 
@@ -27,7 +27,7 @@ brew install coreutils
 to make sure all the needed shell commands are installed.
 
 ### Windows users
-Can try running code from this repo under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (as Bash and `/` path separator are used extensively in the code). Nevertheless it was never tested in such environment, so good luck.
+Can try running code from this repo under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (as Bash and `/` path separator are used extensively in the code). However, it was never tested in such environment..
 
 ## Acknowledgements
 
