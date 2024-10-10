@@ -1,0 +1,92 @@
+:root {
+    --main-bg-color: #243642;    /* Основной цвет фона */
+    --submenu-bg-color: #135D66; /* Цвет фона подменю */
+    --text-color: white;         /* Основной цвет текста */
+    --hover-text-color: #FF9EAA; /* Цвет текста при наведении */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--main-bg-color);
+    padding-top: 20px;
+    height: 100vh;
+    position: fixed;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    text-align: left;
+}
+
+.sidebar ul li a {
+    padding: 10px;
+    text-decoration: none;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+    position: relative;  /* Добавляем относительное позиционирование */
+}
+
+.sidebar ul li a:hover {
+    color: var(--hover-text-color);
+}
+
+.dropdown-container {
+    display: none;
+    background-color: var(--submenu-bg-color);
+    padding-left: 10px; /* Отступ для всего контейнера */
+}
+
+.dropdown-container a {
+    padding: 10px;
+    margin-left: 20px; /* Добавляем явный отступ слева для пунктов подменю */
+    color: var(--text-color);
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-container a:hover {
+    background-color: var(--hover-bg-color); /* Можно задать hover фон для наглядности */
+    color: var(--hover-text-color); 
+}
+
+
+/* Галочка для заголовков меню рядом с текстом */
+.dropdown-btn:after {
+    content: '\25B6'; /* Символ треугольника (галочка) */
+    font-size: 12px;
+    margin-left: 10px; /* Отступ слева от текста */
+    transition: transform 0.3s;
+}
+
+.dropdown-btn.active:after {
+    transform: rotate(90deg); /* Поворачиваем треугольник при раскрытии */
+}
+
+.content {
+    margin-left: 260px;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+}

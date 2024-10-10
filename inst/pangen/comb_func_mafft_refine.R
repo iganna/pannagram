@@ -446,7 +446,7 @@ refineAlignment <- function(seqs, path.work, n.flank = 30){
   
   # # ---- Distance matrix ----
   # 
-  # dist.mx = calсDistAln(seqs.mx)
+  # dist.mx = calcDistAln(seqs.mx)
   dist.mx = calcDistKmer(seqs.clean)
   # 
   # # ---- Clustering ----
@@ -994,7 +994,7 @@ blastTwoSeqs2 <- function(s1, s2, path.work){
 #' @return A symmetric matrix of pairwise distances between the sequences.
 #' @export
 #'
-calсDistAln <- function(seqs.mx) {
+calcDistAln <- function(seqs.mx) {
   
   n.seqs = nrow(seqs.mx)
   

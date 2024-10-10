@@ -15,9 +15,9 @@
 # Builder mode:
 1. Shell:
     ```sh
-    conda env create -n pannagram_build -c conda-forge conda-build
+    conda create -n pannagram_build conda-build -c conda-forge
     conda activate pannagram_build
-    conda-build -c bioconda -c conda-forge . --output-folder ./build [--no-test]
+    conda-build -c bioconda -c conda-forge . --output-folder ./build --no-test
     zip -r build.zip build/
     ```
 2. Now `build.zip` archive is ready to be shared.

@@ -115,8 +115,6 @@ refineAlignment <- function(seqs.clean, path.work){
     # dotplot.s(s1, s2, 15, 14)
     
     ## ---- Mafft add alignments ----
-    # seq1 = mx2aln(alignments[[i.cl1]])
-    # seq2 = mx2aln(alignments[[i.cl2]])
     
     # Reduce the number of sequences
     seq1 = mx2aln(mx2cons(alignments[[i.cl1]], amount = 3))
@@ -383,7 +381,7 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
   
   # Merge sequences into the input file
   file.seqs.merge = paste0(path.work, 'seqs_tmp_merge.fasta')
-  writeFastaMy(c(seq1, seq2), file.seqs.merge)
+  writeFasta(c(seq1, seq2), file.seqs.merge)
   
   # File for storing MAFFT alignment output
   file.mafft = paste0(path.work, 'seqs_tmp_mafft.fasta')
@@ -569,7 +567,7 @@ blastTwoSeqs2 <- function(s1, s2, path.work){
 #' @return A symmetric matrix of pairwise distances between the sequences.
 #' @export
 #'
-calсDistAln <- function(seqs.mx) {
+calcDistAln <- function(seqs.mx) {
   
   n.seqs = nrow(seqs.mx)
   

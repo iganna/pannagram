@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Multiple Files as Dropdown</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="fileLoader.js"></script> <!-- Подключаем файл с функцией -->
+    <link rel="stylesheet" href="style.css"> <!-- Подключаем внешний файл стилей -->
+</head>
+<body>
+    <div class="container">
+        <!-- Левая колонка -->
+        <nav class="sidebar">
+            <ul>
+                <li>
+                    <a href="#" class="clickable" data-file="content/home.md" data-content="fileContent1" id="homeLink">Home</a>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-btn clickable">Alignment</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/file1.txt" data-content="fileContent1">SV-calling</a>
+                        <a href="#" class="clickable" data-file="content/file2.txt" data-content="fileContent2">SNP-calling</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-btn clickable">Visualisation</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/file3.txt" data-content="fileContent1">Pangenome</a>
+                        <a href="#" class="clickable" data-file="content/file4.txt" data-content="fileContent2">SV-graph</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Правая колонка -->
+        <div class="content">
+            <div id="fileContent1" class="fileContent"></div>
+            <div id="fileContent2" class="fileContent" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Привязываем клики ко всем элементам с классом 'clickable'
+        document.querySelectorAll('.clickable').forEach(element => {
+            element.addEventListener('click', (event) => {
+                event.preventDefault(); // Предотвращаем переход по ссылке
+
+                // Получаем файл и контейнер для отображения
+                const file = event.target.getAttribute('data-file');
+                const contentId = event.target.getAttribute('data-content');
+
+                // Скрываем все контейнеры с контентом
+                document.querySelectorAll('.fileContent').forEach(content => {
+                    content.style.display = 'none';
+                });
+
+                // Загружаем файл в нужный контейнер и показываем его
+                loadFile(file, contentId);
+                document.getElementById(contentId).style.display = 'block';
+            });
+        });
+
+        // Функция для раскрытия подменю
+        var dropdownBtns = document.getElementsByClassName("dropdown-btn");
+        for (var i = 0; i < dropdownBtns.length; i++) {
+            dropdownBtns[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var dropdownContent = this.nextElementSibling;
+                if (dropdownContent.style.display === "block") {
+                    dropdownContent.style.display = "none";
+                } else {
+                    dropdownContent.style.display = "block";
+                }
+            });
+        }
+
+        // Загрузка Home по умолчанию при открытии страницы
+        window.onload = function() {
+            loadFile('content/home.md', 'fileContent1');
+            document.getElementById('fileContent1').style.display = 'block';
+            document.getElementById('fileContent2').style.display = 'none';
+        };
+    </script>
+</body>
+</html>

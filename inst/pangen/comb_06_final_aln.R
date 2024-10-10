@@ -19,8 +19,6 @@ option_list = list(
               help="path to directory, where to mafft results are", metavar="character"),
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to directory with the consensus", metavar="character"),
-  make_option(c("--path.out"), type="character", default=NULL, 
-              help="path to directory with MSA output", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
@@ -34,11 +32,6 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-# TODO: SHOULD BE PARAMETERS
-
-n.flank = 30
-max.block.elemnt = 3 * 10^ 6
-
 # ***********************************************************************
 # ---- Logging ----
 
@@ -48,6 +41,18 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
+# ***********************************************************************
+
+# TODO: SHOULD BE PARAMETERS ?
+
+aln.type.in = aln.type.comb
+aln.type.out = aln.type.pre
+
+n.flank = 30
+max.block.elemnt = 3 * 10^ 6
+
+# ***********************************************************************
+
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
@@ -56,16 +61,15 @@ num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores
 
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if (!is.null(opt$path.out)) path.out <- opt$path.out
 
 
 # ***********************************************************************
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
+s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
+pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
@@ -84,7 +88,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
-  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
+  file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -287,7 +291,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.out, aln.type.msa, s.comb,'.h5')
+  file.res = paste0(path.cons, aln.type.out, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
