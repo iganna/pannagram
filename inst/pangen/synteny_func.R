@@ -578,7 +578,7 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, visit.info
     visit.info$d.to[jrow[j]] = d[j]
     visit.info$v.prev[jrow[j]] = irow
     
-    if(x.tmp$V5[jrow[j]] > y.top){  # Продвижение вперед
+    if(x.tmp$V5[jrow[j]] > y.top){ 
       # New window
       w.beg.next = y.top
       w.end.next = x.tmp$V4[jrow[j]]

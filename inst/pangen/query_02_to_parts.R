@@ -29,6 +29,8 @@ option_list <- list(
               help = "flag to keep or not repeats", metavar = "character"),
   make_option(c("--rev"), type = "character", default = NULL, 
               help = "flag make the reverce sequences", metavar = "character"),
+  make_option(c("--accessions"), type = "character", default = NULL,
+              help = "Files with accessions to analyze", metavar = "character"),
   make_option(c("--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--path.log"), type = "character", default = NULL,
@@ -63,21 +65,29 @@ if(all.chr){
   pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 }
 
+# Accessions to analyse
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- tmp[,1]
+pokaz('Names of genomes for the analysis:', accessions, 
+      file=file.log.main, echo=echo.main)
 
 # Set chromosome and parts paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
 path.parts <- ifelse(!is.null(opt$path.parts), opt$path.parts, stop("The parts path 'path.parts' must be specified!"))
 if(!dir.exists(path.parts)) dir.create(path.parts)
 
-# Common attributes
+# ---- Common attributes ----
+
+# Length of parts
 len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
 
+# Length of steps
 if(!is.null(opt$part.step)){
   len.step = as.numeric(opt$part.step)
 } else {
   len.step = NULL
 }
-# len.step <- ifelse(!is.null(opt$part.step), as.numeric(opt$part.step), NULL)
 
 # Purge repeats by the complexity
 if(is.null(opt$purge.reps)){
@@ -87,7 +97,7 @@ if(is.null(opt$purge.reps)){
   if(is.na(purge.reps)) stop('Wrong flag for purging repeats')
 }
 
-
+# Mirror universe
 flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
 
 if(flag.rev == 1){
@@ -96,19 +106,7 @@ if(flag.rev == 1){
 }
 
 # ***********************************************************************
-# ---- Preparation ----
-
-pokaz('Path with chromosomes:', path.chr, 
-      file=file.log.main, echo=echo.main)
-files.query = list.files(path = path.chr, pattern = paste0('\\.', 'fasta', '$', collapse = '') )
-files.query <- sub("\\.fasta$", "", files.query)
-query.name = unique(sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]))
-pokaz('Names of genomes for the analysis:', query.name, 
-      file=file.log.main, echo=echo.main)
-
-if(length(query.name) == 0){
-  stop('Wrong names of chromosomal files or files are not provided')
-}
+# ---- Prepare combinations ----
 
 if(all.chr){
   combinations = data.frame(acc = sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]),
@@ -131,7 +129,9 @@ loop.function <- function(i.comb,
   # Log files
   if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
-    invisible(file.create(file.log.loop))
+    if(!file.exists(file.log.loop)){
+      invisible(file.create(file.log.loop))
+    }
   }
   
   # Files

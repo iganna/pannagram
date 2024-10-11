@@ -53,8 +53,6 @@ do
     esac
 done
 
-
-
 # -penalty -2 -gapopen 10 -gapextend 2 -max_hsps 5
 
 penalty="${penalty:--2}"

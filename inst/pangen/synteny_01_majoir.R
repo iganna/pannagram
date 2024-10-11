@@ -79,7 +79,9 @@ loop.function <- function(f.blast,
     file.log.loop = paste0(path.log, 'loop_file_', 
                            sub("\\.[^.]*$", "", basename(f.blast)),
                            '.log')
-    invisible(file.create(file.log.loop))
+    if(!file.exists(file.log.loop)){
+      invisible(file.create(file.log.loop))
+    }
   }
   
   # --- --- --- --- --- --- --- --- --- --- ---

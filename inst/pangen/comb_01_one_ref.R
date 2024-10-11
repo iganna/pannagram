@@ -166,7 +166,9 @@ loop.function <- function(i.chr.pair,
     file.log.loop = paste0(path.log, 'loop_file_', 
                            query.chr, '_', base.chr,
                            '.log')
-    invisible(file.create(file.log.loop))
+    if(!file.exists(file.log.loop)){
+      invisible(file.create(file.log.loop))
+    }
   }
   
   # ---- Check log Done ----

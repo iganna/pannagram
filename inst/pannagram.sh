@@ -69,7 +69,6 @@ do
         -p_ident_gap)   p_ident=$2;  shift 2 ;;  # percent of identity
         -max_len_gap)  max_len_gap=$2; shift 2 ;;  # Max length that can be aligned with MAFFT
 
-        -sort_by_len) sort_chr_len="T"; shift 1 ;;  # flag whether to sort chromosomes by length or not
         -one2one)     one2one="T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
         -all2all)     one2one="F";      shift 1 ;;  # compare chromosomes all-to-all or not (default in PRE mode)
         -purge_reps | -purge_repeats ) purge_reps="T";    shift 1 ;;  # filtration of repeats, default - not
@@ -216,14 +215,67 @@ mkdir -p "${path_chrom}"
 mkdir -p "${path_parts}"
 
 # ----------------------------------------------
-# Number pf chromosomes
+# Handling accessions
+# Specify the accessions file for the analysis
+file_accessions="${path_inter}accessions.txt"
+
+# All accessions from the folder
+acc_set=()
+for ext in "${genome_extensions[@]}"; do
+    for file in "$path_in"/*."$ext"; do
+        if [[ -f "$file" ]]; then
+            basename=$(basename "$file" ".$ext")
+            acc_set+=("$basename")
+        fi
+    done
+done
+
+acc_target=()
+if [ -n "${acc_file}" ] && [ -f "${acc_file}" ]; then
+    # Read names from the file into an array
+    while IFS= read -r name; do
+        acc_target+=("$name")
+    done < "$acc_file"
+fi
+
+# Check if acc_target is empty
+if [ ${#acc_target[@]} -eq 0 ]; then
+    # If acc_target is empty, write all acc_set elements to the file
+    printf "%s\n" "${acc_set[@]}" > "${file_accessions}"
+else
+    # If ref_name is not already in acc_target, add it
+    if [[ ! " ${acc_target[@]} " =~ " ${ref_name} " ]]; then
+        acc_target+=("$ref_name")
+    fi
+
+    # Array for the intersection of acc_set and acc_target
+    intersected=()
+
+    # Perform intersection between acc_set and acc_target
+    for acc in "${acc_set[@]}"; do
+        for target in "${acc_target[@]}"; do
+            if [[ "$acc" == "$target" ]]; then
+                intersected+=("$acc")
+            fi
+        done
+    done
+
+    # Replace acc_set with the intersected array
+    acc_set=("${intersected[@]}")
+
+    # Write the intersection result to the file
+    printf "%s\n" "${intersected[@]}" > "${file_accessions}"
+fi
+
+# ----------------------------------------------
+# Number of chromosomes
 
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
     pokaz_stage "Define the number of chromosomes"
 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
-        option_nchr=" --all.chr T"
+        option_nchr=" --all.chr T "
         option_nchr_ref=" --all.chr T "
     else   # REF and MSA mode
         # Define from files
@@ -289,15 +341,12 @@ else
     exit 1
 fi
 
-
-
 if [ -z "${flag_rev}" ]; then
     option_mirror=" "
 else
     path_parts="${path_inter}parts_mirror/"
     option_mirror=" --purge.reps T"
 fi
-
 
 # Reverse parts
 if [ -z "${rev}" ]; then
@@ -315,17 +364,18 @@ else
     option_combinations=" --combinations ${comb_file}"
 fi
 
-if [ -z "${acc_file}" ]; then
-    option_accessions=" "
-else
-    option_accessions=" --accessions ${acc_file} "
-fi
+# if [ -z "${acc_file}" ]; then
+#     option_accessions=" "
+# else
+#     option_accessions=" --accessions ${file_accessions}"
+# fi
+
+option_accessions=" --accessions ${file_accessions}"
 
 # ----------------------------------------------
 # Number of Cores
 
 cores="${cores:-1}"  # Number of cores
-
 
 
 # ----------------------------------------------------------------------------
@@ -412,8 +462,18 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
 
 
     # ----------------------------------------------
-    # Get names of all genomes form the input folder
-    acc_set=($(find "$path_in" -type f -exec bash -c 'basename "$1" .${1##*.}' _ {} \;))
+    # Get names of all genomes form the input folder. 
+    # !!!!! acc_set was fedined before
+
+    # acc_set=()
+    # for ext in "${genome_extensions[@]}"; do
+    #     for file in "$path_in"/*."$ext"; do
+    #         basename=$(basename "$file" ".$ext")
+    #         acc_set+=("$basename")
+    #     done
+    # done
+
+    # acc_set=($(find "$path_in" -type f -exec bash -c 'basename "$1" .${1##*.}' _ {} \;))
 
     # If a file with accessions is provided - read all and intersect
     if [ -n "${acc_file}" ]; then
@@ -493,7 +553,6 @@ if [[ ! -f "$file_params" ]]; then
     echo "prev_path_in=${path_in}" >> "$file_params"
     echo "prev_part_len=${part_len}" >> "$file_params"
     echo "prev_purge_reps=${purge_reps}" >> "$file_params"
-    echo "prev_nchr=${nchr}" >> "$file_params"
     echo "prev_p_ident=${p_ident}" >> "$file_params"
     echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
 else
@@ -504,8 +563,7 @@ else
           "$prev_part_len" != "$part_len" || \
           "$prev_p_ident_gap" != "$p_ident_gap" || \
           "$prev_purge_reps" != "$purge_reps" || \
-          "$prev_p_ident" != "$p_ident" || \
-          "$prev_nchr" != "$nchr" ]]; then
+          "$prev_p_ident" != "$p_ident"  ]]; then
         pokaz_error "Error: One or more parameters have been changed!"
         
         [[ "$prev_path_in" != "$path_in" ]] && pokaz_attention "path_in: $prev_path_in -> $path_in"
@@ -513,7 +571,6 @@ else
         [[ "$prev_p_ident_gap" != "$p_ident_gap" ]] && pokaz_attention "p_ident_gap: $prev_p_ident_gap -> $p_ident_gap"
         [[ "$prev_purge_reps" != "$purge_reps" ]] && pokaz_attention "purge_reps: $prev_purge_reps -> $purge_reps"
         [[ "$prev_p_ident" != "$p_ident" ]] && pokaz_attention "p_ident: $prev_p_ident -> $p_ident"
-        [[ "$prev_nchr" != "$nchr" ]] && pokaz_attention "nchr: $prev_nchr -> $nchr"
         
         exit 1
     fi
@@ -566,11 +623,12 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-
 # ----------------------------------------------
 # If to find ORFs
 
 if [ ! -z "${flag_orf}" ]; then
+
+    ((step_num = step_num - 1))
 
     with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
@@ -607,6 +665,8 @@ if [ ! -z "${flag_orf}" ]; then
 
 fi
 
+
+
 # ----------------------------------------------
 # Split query chromosomes into parts
 
@@ -631,6 +691,7 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
             --path.parts ${path_parts} \
             --part.len $part_len \
             --cores ${cores} \
+            ${option_accessions} \
             ${option_purge_reps} ${option_rev} \
             ${option_nchr} \
             ${option_mirror} \
@@ -642,6 +703,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+exit 0
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │                         REFERENCE-BASED                                   │

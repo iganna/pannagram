@@ -61,40 +61,14 @@ if(all.chr){
 pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
 
 # Accessions to analyse
-acc.anal <- opt$accessions
-if(!is.null(acc.anal)){
-  if(acc.anal == 'NULL'){
-    acc.anal <- NULL
-  } else {
-    if (!file.exists(acc.anal)) {
-      pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.', 
-                     file=file.log.main, echo=echo.main)
-      acc.anal <- NULL
-    } else {
-      tmp <- read.table(acc.anal, stringsAsFactors = F)
-      acc.anal <- tmp[,1]
-    }
-  }
-}
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- tmp[,1]
 
 # Set input and output paths
 path.query <- ifelse(!is.null(opt$path.in), opt$path.in, stop("The input path 'path.in' must be specified!"))
 path.chr   <- ifelse(!is.null(opt$path.out), opt$path.out, stop("The chromosome-out path 'path.out' must be specified!"))
 if(!dir.exists(path.chr)) dir.create(path.chr)
-
-# Decide whether to sort by length based on provided input or default to FALSE
-sort.by.lengths <- ifelse(!is.null(opt$sort), as.logical(opt$sort), FALSE)
-
-# ***********************************************************************
-# ---- Sort chromosomal lengths ----
-
-# if(!sort.by.lengths){
-#   msg = 'If you use -one2one option: please be sure that all chromosomes in files are sorted in the same order' # or use \"-s T\" flag'
-#   pokazAttention(msg, file=file.log.main, echo=echo.main)
-# } else {
-#   msg = 'Chromosomes will be sorted by their length'
-#   pokazAttention(msg, file=file.log.main, echo=echo.main)
-# }
 
 # ***********************************************************************
 # ---- Preparation ----
@@ -106,41 +80,21 @@ pokaz('Path with genomes:', path.query, file=file.log.main, echo=echo.main)
 query.types <- c('fasta', 'fna', 'fa', 'fas') #  'ffn', 'faa', 'frn'
 pokazAttention('Only the following extensions will be considered:', query.types, file=file.log.main, echo=echo.main)
 
-# List and filter genome files in the specified path based on the accepted file types
-search.pattern <- paste0(".*\\.(?:", paste(query.types, collapse="|"), ")$")
-query.name <- basename(list.files(path.query, pattern = search.pattern, full.names = TRUE))
-if(length(query.name) == 0) stop('No accessions is provided for the analysys.')
-query.name <- data.frame(file=query.name, acc=gsub("(\\.[^.]+)$", "", query.name), stringsAsFactors = F)
-
-# Optional: Filter based on a list of accession numbers, if provided
-if(!is.null(acc.anal)){
-  # acc.anal <- gsub("(\\.[^.]+)$", "", basename(acc.anal))
-  # pokaz('Accessions in the folder', query.name, file=file.log.main, echo=echo.main)
-  # pokaz('Accessions in the filtration file', acc.anal, file=file.log.main, echo=echo.main)
-  query.name <- query.name[query.name$acc %in% acc.anal,,drop=F]
-}
-
-# Final check and display of genome names for analysis
-if((nrow(query.name) == 0) || (length(query.name) == 0)) stop('No accessions is provided for the analysys.')
-pokaz('Names of genomes for the analysis:', query.name$acc, 
-      file=file.log.main, echo=echo.main)
-
-
 # ***********************************************************************
 # ---- MAIN program body ----
 
 file.log.pref <- ''
 
-loop.function <- function(i.acc, 
+loop.function <- function(acc, 
                           echo.loop=T, 
                           file.log.loop=NULL){
-  
-  acc = query.name$acc[i.acc]
   
   # Log files
   if (is.null(file.log.loop)){
     file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
-    invisible(file.create(file.log.loop))
+    if(!file.exists(file.log.loop)){
+      invisible(file.create(file.log.loop))
+    }
   }
   
   # Don't run if the chromosomal files exist
@@ -166,10 +120,19 @@ loop.function <- function(i.acc,
   # ***********************************
   # When no chromosome-files were produced before
   
+  file.genome = c()
+  for(s.ext in query.types){
+    file.genome = paste0(path.query, acc, '.', s.ext, collapse = '')
+    if(file.exists(file.genome)) break
+  }
+  if(!file.exists(file.genome)){
+    return(NULL)
+  }
+
   pokaz('Accession', acc,
         file=file.log.loop, echo=echo.loop)
-  q.fasta = readFastaMy(paste0(path.query, query.name$file[i.acc], collapse = ''))
   
+  q.fasta = readFastaMy(file.genome)
   
   if(all.chr){ # if to analyse all chromosomes
     n.chr = length(q.fasta)
@@ -189,13 +152,6 @@ loop.function <- function(i.acc,
                               name = gsub(" ", "_", names(q.fasta)))
   df.chr.lengths = df.chr.lengths[1:n.chr,]
   write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
-  
-  
-  if(sort.by.lengths){
-    q.len = sapply(q.fasta, nchar)
-    pokaz('Lengths', q.len)
-    q.fasta = q.fasta[order(-q.len)]
-  }
   
   pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed',
                  file=file.log.loop, echo=echo.loop)
@@ -231,23 +187,19 @@ loop.function <- function(i.acc,
 
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
-  for(i.acc in 1:nrow(query.name)){
-    loop.function(i.acc, 
-                  # file.log.loop = file.log.loop, 
-                  echo.loop=echo.loop)
+ 
+  for(acc in accessions){
+    loop.function(acc, echo.loop=echo.loop)
   }
 } else {
-  # Set the number of cores for parallel processing
+  
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(i.acc = 1:nrow(query.name), 
+  tmp = foreach(acc = accessions, 
                 .packages=c('crayon'),
                 .export = c('n.chr')) %dopar% {
-                                     loop.function(i.acc, 
-                                                   echo.loop=echo.loop)
+                                     loop.function(acc, echo.loop=echo.loop)
                                    }
   stopCluster(myCluster)
 }

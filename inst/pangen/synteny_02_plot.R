@@ -79,7 +79,9 @@ loop.function <- function(acc,
     file.log.loop = paste0(path.log, 'loop_file_', 
                            acc,
                            '.log')
-    invisible(file.create(file.log.loop))
+    if(!file.exists(file.log.loop)){
+      invisible(file.create(file.log.loop))
+    }
   }
   
   # ---- Check log Done ----
