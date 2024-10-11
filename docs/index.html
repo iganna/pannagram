@@ -54,6 +54,16 @@
         overflow-x: auto;
     }
 
+    /* Настраиваем цитаты */
+    .markdown-body blockquote {
+        color: #7D9D9C; /* более светлый текст внутри цитат */
+        border-left: 5px solid #B2D3BE;
+    }
+
+    /* Настраиваем блоки кода внутри цитат */
+    .markdown-body blockquote code {
+        color: #7D9D9C; /* цвет текста кода */
+    }
 
 
 </style>
@@ -73,6 +83,7 @@
                     <div class="dropdown-container">
                         <a href="#" class="clickable" data-file="content/analys_sv.md" data-content="fileContent1">SV-calling</a>
                         <a href="#" class="clickable" data-file="content/analys_snp.md" data-content="fileContent2">SNP-calling</a>
+                        <a href="#" class="clickable" data-file="content/analys_genes.md" data-content="fileContent2">Gene annotation</a>
                     </div>
                 </li>
                 <li>
@@ -81,6 +92,9 @@
                         <a href="#" class="clickable" data-file="content/visual_pangen.md" data-content="fileContent1">Pangenome</a>
                         <a href="#" class="clickable" data-file="content/visual_r.md" data-content="fileContent2">SV-graph</a>
                     </div>
+                </li>
+                <li>
+                    <a href="#" class="clickable" data-file="content/simsearch.md" data-content="fileContent1" id="homeLink">Simsearch</a>
                 </li>
             </ul>
         </nav>
