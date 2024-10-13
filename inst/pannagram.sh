@@ -267,6 +267,9 @@ else
     printf "%s\n" "${intersected[@]}" > "${file_accessions}"
 fi
 
+# Set the option for accessions! This file contains 
+option_accessions=" --accessions ${file_accessions}"
+
 # ----------------------------------------------
 # Number of chromosomes
 
@@ -321,6 +324,26 @@ else  # Both are defined
     option_nchr_ref=" --n.chr ${nchr_ref} "
 fi
 
+
+# ----------------------------------------------
+# File with combinations
+
+if [ -z "${comb_file}" ]; then
+    option_combinations=" "
+else
+    option_combinations=" --combinations ${comb_file}"
+fi
+
+# if [ -z "${acc_file}" ]; then
+#     option_accessions=" "
+# else
+#     option_accessions=" --accessions ${file_accessions}"
+# fi
+
+
+
+# ----------------------------------------------
+
 # ----------------------------------------------
 # Handling parts
 
@@ -355,24 +378,7 @@ else
     option_rev=" --rev "
 fi
 
-# ----------------------------------------------
-# Files for Filtration
 
-if [ -z "${comb_file}" ]; then
-    option_combinations=" "
-else
-    option_combinations=" --combinations ${comb_file}"
-fi
-
-# if [ -z "${acc_file}" ]; then
-#     option_accessions=" "
-# else
-#     option_accessions=" --accessions ${file_accessions}"
-# fi
-
-option_accessions=" --accessions ${file_accessions}"
-
-# ----------------------------------------------
 # Number of Cores
 
 cores="${cores:-1}"  # Number of cores

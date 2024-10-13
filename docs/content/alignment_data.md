@@ -40,6 +40,37 @@ REF_NAME=GCA_000005845.2
 ```
 Additionally, specify the file with accessions for analysis:
 ```
-ACC_FILE="${PATH_DATA}ecoli_good.txt"
-echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042692195.1\nGCA_042259155.1\nGCA_042189615.1" > "${ACC_FILE}"
+FILE_ACC="${PATH_DATA}ecoli_good.txt"
+echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042692195.1\nGCA_042259155.1\nGCA_042189615.1" > "${FILE_ACC}"
 ```
+
+# Run Pannagram
+
+## Preliminary mode
+```
+conda activate pannagram
+${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -ref ${REF_NAME} -cores 8
+```
+The refults are in the folder:
+```
+cd "${PATH_OUT}plots/plots_${REF_NAME}/"
+```
+
+## Reference-free mode
+
+In the case of the *E. coli* test example, the first sequence is the chromosome, while the others are plasmids. To analyze only the chromosome, specify `-nchr 1`. To analyze the chromosome and the first plasmid, use `-nchr 2`, and so on (but please ensure that the homologous plasmids are located in the same order).
+```
+conda activate pannagram
+${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -accessions ${FILE_ACC} -ref ${REF_NAME} -cores 8 -nchr 1
+```
+The results are in the folder:
+```
+PATH_ALN="${PATH_OUT}"
+ls -lrt ${PATH_ALN}msa*
+```
+
+
+
+
+
+
