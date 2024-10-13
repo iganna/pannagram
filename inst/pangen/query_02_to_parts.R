@@ -116,7 +116,6 @@ if(all.chr){
 }
 
 
-
 # ***********************************************************************
 # ---- MAIN program body ----
 loop.function <- function(i.comb, 
