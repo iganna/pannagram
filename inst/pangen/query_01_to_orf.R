@@ -100,17 +100,14 @@ pokazAttention('Only the following extensions will be considered:', query.types,
 file.log.pref <- ''
 
 loop.function <- function(acc, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
   }
-  
+
   # ---- Check log Done ----
   if(checkDone(file.log.loop)){
     return(NULL)

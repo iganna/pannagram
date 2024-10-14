@@ -129,19 +129,12 @@ elif [[ ${#one2one} -eq 0 ]]; then
     fi
 fi
 
-if [[ "${one2one}" == 'T' ]]; then
-    option_one2one=" -one2one "
-    option_one2one_r=" --one2one T "
-else
-    option_one2one=" "
-fi
-
 # ----------------------------------------------------------------------------
 #            PARAMETERS: checking
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------
-# Required parameters
+# Required PATHS
 if [ -z "${path_in}" ]; then
     pokaz_error "Error: The path to the genomes folder (-path_in) is not specified"
     exit 1
@@ -155,58 +148,17 @@ fi
 path_in=$(add_symbol_if_missing "$path_in" "/")
 path_out=$(add_symbol_if_missing "$path_out" "/")
 
-# ----------------------------------------------
-# Check the input folder
-
-genome_extensions=('fasta' 'fna' 'fa' 'fas')
-
-# If the input folder exists
-if [ -d "${path_in}" ]; then
-    found_files=false
-    for ext in "${genome_extensions[@]}"; do
-        if ls "${path_in}"/*.${ext} > /dev/null 2>&1; then
-            found_files=true
-            break
-        fi
-    done
-
-    if [ "$found_files" = false ]; then
-        pokaz_error "Error: No files with the specified extensions found in ${path_in}. Checked extensions: ${genome_extensions[*]}"
-        exit 1
-    fi
-
-else
-    pokaz_error "Error: Directory ${path_in} does not exist."
-    exit 1
-fi
-
-
-# ----------------------------------------------
 # Optional paths paths
-
 path_ref="${path_ref:-${path_in}}"
 path_ref=$(add_symbol_if_missing "$path_ref" "/")
 
-# path_cons="${path_cons:-${path_out}consensus/}"
-# path_cons=$(add_symbol_if_missing "$path_cons" "/")
-
-# path_chrom="${path_chrom:-${path_out}chromosomes/}"
-# path_chrom=$(add_symbol_if_missing "$path_chrom" "/")
-
-# path_parts="${path_parts:-${path_out}parts/}"
-# path_parts=$(add_symbol_if_missing "$path_parts" "/")
-
-
 path_plots="${path_out}plots/"
-
 path_inter="${path_out}intermediate/"
 path_cons="${path_inter}consensus/"
 path_chrom="${path_inter}chromosomes/"
 path_parts="${path_inter}parts/"
 
-# ----------------------------------------------
 # Make folders
-
 mkdir -p "${path_out}"
 mkdir -p "${path_plots}"
 mkdir -p "${path_inter}"
@@ -216,8 +168,12 @@ mkdir -p "${path_parts}"
 
 # ----------------------------------------------
 # Handling accessions
-# Specify the accessions file for the analysis
-file_accessions="${path_inter}accessions.txt"
+genome_extensions=('fasta' 'fna' 'fa' 'fas')
+
+if [ ! -d "${path_in}" ]; then
+    pokaz_error "Error: Directory ${path_in} does not exist."
+    exit 1
+fi
 
 # All accessions from the folder
 acc_set=()
@@ -230,6 +186,13 @@ for ext in "${genome_extensions[@]}"; do
     done
 done
 
+# Check the input folder
+if [ ${#acc_set[@]} -eq 0 ]; then
+    pokaz_error "Error: No files with the specified extensions found in ${path_in}. Checked extensions: ${genome_extensions[*]}"
+    exit 1
+fi
+
+# Target accessions from the file
 acc_target=()
 if [ -n "${acc_file}" ] && [ -f "${acc_file}" ]; then
     # Read names from the file into an array
@@ -238,63 +201,140 @@ if [ -n "${acc_file}" ] && [ -f "${acc_file}" ]; then
     done < "$acc_file"
 fi
 
-# Check if acc_target is empty
-if [ ${#acc_target[@]} -eq 0 ]; then
-    # If acc_target is empty, write all acc_set elements to the file
-    printf "%s\n" "${acc_set[@]}" > "${file_accessions}"
-else
-    # If ref_name is not already in acc_target, add it
-    if [[ ! " ${acc_target[@]} " =~ " ${ref_name} " ]]; then
-        acc_target+=("$ref_name")
-    fi
-
-    # Array for the intersection of acc_set and acc_target
-    intersected=()
-
-    # Perform intersection between acc_set and acc_target
-    for acc in "${acc_set[@]}"; do
-        for target in "${acc_target[@]}"; do
-            if [[ "$acc" == "$target" ]]; then
-                intersected+=("$acc")
-            fi
-        done
+# Check if acc_target is not empty
+if [ ${#acc_target[@]} -ne 0 ]; then
+    # Find common elements between acc_set and acc_target
+    common_acc=()
+    for acc in "${acc_target[@]}"; do
+        if [[ " ${acc_set[@]} " =~ " ${acc} " ]]; then
+            common_acc+=("$acc")
+        else
+            pokaz_attention "Warning: ${acc} from acc_target is not found in acc_set"
+        fi
     done
 
-    # Replace acc_set with the intersected array
-    acc_set=("${intersected[@]}")
-
-    # Write the intersection result to the file
-    printf "%s\n" "${intersected[@]}" > "${file_accessions}"
+    # Update acc_set with common elements
+    acc_set=("${common_acc[@]}")
 fi
 
-# Set the option for accessions! This file contains 
-option_accessions=" --accessions ${file_accessions}"
+# Check Intersecton
+if [ ${#acc_set[@]} -eq 0 ]; then
+    pokaz_error "Error: No fcommon accessions in ${acc_file} file and ${path_in} folder"
+    exit 1
+fi
+
+# ----------------------------------------------
+# Handling reference genomes in PRE and REF modes
+
+if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
+
+    # Chech that the reference-genome folder exists
+    if [ ! -d "${path_ref}" ]; then
+        pokaz_error "Error: Directory ${path_ref} does not exist."
+        exit 1
+    fi
+
+    # Check that the reference file exists
+    file_found=false
+    for ext in "${genome_extensions[@]}"; do
+        if [ -f "${path_ref}${ref_name}.${ext}" ]; then
+            pokaz_attention "EXIST"
+            pokaz_attention "${path_ref}${ref_name}.${ext}"
+            file_found=true
+            break
+        fi
+    done
+
+    if [ "$file_found" = false ]; then
+        pokaz_error "Error: No reference genome ${ref_name} was found in ${path_ref}."
+        exit 1  
+    fi
+
+    refs_all=("${ref_name}")
+    
+fi
+
+# ----------------------------------------------
+# Handling reference genomes in MSA modes
+if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+
+    # ----------------------------------------------
+    # Check the number of reference genomes for randomisation
+
+    if [ -z "${ref_num}" ]; then
+        ref_num=2
+    fi
+
+    if ! [[ "$ref_num" =~ ^[0-9]+$ ]]; then
+        with_level 0 pokaz_error "Error: Number of reference genomes is not a number."
+        exit 1
+    fi
+    with_level 2 pokaz_message "Number of genomes for randomisation: ${ref_num}"
+
+    # ----------------------------------------------
+    # Check if ref_num is greater than the number of genomes in acc_set
+    if (( ref_num > ${#acc_set[@]} )); then
+        with_level 0 pokaz_error "Error: ref_num ($ref_num) is greater than the number of available genomes (${#acc_set[@]}) in acc_set."
+        exit 1
+    fi
+
+    # ----------------------------------------------
+    # Check if reference genomes are set up
+    if [[ -z "$ref_set" ]]; then
+        # Take the first ref_num genomes
+        refs_all=("${acc_set[@]:0:$ref_num}")
+    else 
+        # Split the value of ref_set into separate words
+        IFS=',' read -ra refs_all <<< "$ref_set"
+
+        # Check if the number of reference genomes is sufficient
+        if (( ${#refs_all[@]} < ref_num )); then
+            genomes_needed=$((ref_num - ${#refs_all[@]}))
+            with_level 1 pokaz_attention "Not enough reference genomes. Adding $genomes_needed genome(s)."
+
+            # Add genomes from acc_set to refs_all to satisfy the number of ref_num, ensuring no repeats
+            for genome in "${acc_set[@]}"; do
+                if (( ${#refs_all[@]} >= ref_num )); then
+                    break
+                fi
+                if [[ ! " ${refs_all[@]} " =~ " ${genome} " ]]; then
+                    refs_all+=("$genome")
+                fi
+            done
+        fi
+
+    fi
+
+    # Print the selected reference genomes for verification
+    with_level 2 pokaz_message "Names of genomes for randomisation: $(IFS=,; echo "${refs_all[*]}")"
+
+fi
 
 # ----------------------------------------------
 # Number of chromosomes
 
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
-    pokaz_stage "Define the number of chromosomes"
+    pokaz_stage "Define the number of chromosomes..."
 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
-        option_nchr=" --all.chr T "
-        option_nchr_ref=" --all.chr T "
+        nchr=0
+        nchr_ref=0
     else   # REF and MSA mode
         # Define from files
-
-        # Initialize an array to hold the counts
+        # Count the number of chromosomes in files
         counts=()
-
-        # Loop through all extensions
+        pokaz_message "Acc\tChrNum"
         for ext in "${genome_extensions[@]}"; do
-            # Find all files with the current extension
-            for file in "$path_in"/*."$ext"; do
+            # Loop over each element in acc_set
+            for acc in "${acc_set[@]}"; do
+                # Find the file with the current acc and extension
+                file="$path_in/${acc}.${ext}"
+                
                 # Check if the file exists
                 if [[ -f "$file" ]]; then
-                    # Count the number of lines starting with >
                     count=$(grep -c '^>' "$file")
-                    # Append the count to the array
+                    pokaz_message "${acc}  ${count}"
                     counts+=("$count")
                 fi
             done
@@ -303,8 +343,7 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
         # If the number of chromosomes in genomes vary, raise an error
         if [[ $(echo "${counts[@]}" | tr ' ' '\n' | uniq | wc -l) -eq 1 ]]; then
             nchr=${counts[0]}
-            option_nchr=" --n.chr ${nchr} "
-            option_nchr_ref=" --n.chr ${nchr} "
+            nchr_ref=${nchr}
         else
             pokaz_error "Genomes have different number of chromosomes. Please change files or specify the number -nchr."
             exit 1
@@ -312,35 +351,68 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
     fi
 
 elif [ -z "${nchr}" ] && [ ! -z "${nchr_ref}" ]; then  # nchr_ref is defined.
-    pokaz_error "Error: -nchr should be defined."
+    pokaz_error "Error: -nchr  defined."
     exit 1
-
 elif [ ! -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # nchr is defined.
-    option_nchr=" --n.chr ${nchr} "
-    option_nchr_ref=" --n.chr ${nchr} "
-
-else  # Both are defined
-    option_nchr=" --n.chr ${nchr} "
-    option_nchr_ref=" --n.chr ${nchr_ref} "
+    nchr_ref=${nchr}
 fi
-
 
 # ----------------------------------------------
 # File with combinations
+file_combinations="${path_inter}combinations.txt"
+
+# Free up this file
+> ${file_combinations}
 
 if [ -z "${comb_file}" ]; then
-    option_combinations=" "
+
+    if [[ "${one2one}" == 'T' ]]; then
+        if [ "$nchr" != "$nchr_ref" ]; then
+            pokaz_error "Error: ${nchr} and ${nchr_ref} should be equal"
+            exit 1
+        fi
+
+        # Write combinations
+        if [ "$nchr" -ne 0 ]; then
+            # Write combinations
+            for N in $(seq 1 $nchr); do
+                echo -e "${N}\t${N}" >> ${file_combinations}
+            done
+        fi
+
+    else
+
+        # Write combinations
+        if [ "$nchr" -ne 0 ] && [ "$nchr_ref" -ne 0 ]; then
+            for N in $(seq 1 $nchr); do
+                for M in $(seq 1 $nchr_ref); do
+                    echo -e "${N}\t${M}" >> ${file_combinations}
+                done
+            done
+        fi
+    fi
+
+    option_combinations=" --combinations ${file_combinations}"
 else
-    option_combinations=" --combinations ${comb_file}"
+    cp ${comb_file}  ${file_combinations}
+    option_combinations=" --combinations ${file_combinations}"
 fi
 
-# if [ -z "${acc_file}" ]; then
-#     option_accessions=" "
-# else
-#     option_accessions=" --accessions ${file_accessions}"
-# fi
+# ----------------------------------------------
+# File with accessions
 
+file_accessions="${path_inter}accessions.txt"
+echo ${file_accessions}
+printf "%s\n" "${acc_set[@]}" > "${file_accessions}"
 
+# Add reference is it's in path_in, but not in accessions file.
+if [[ "$path_ref" == "$path_in" ]]; then
+    for s in "${ref_names[@]}"; do
+        if [[ ! " ${ass_set[@]} " =~ " $s " ]]; then
+            printf "%s\n" "$s" >> "${file_accessions}"
+        fi
+    done
+fi
 
 # ----------------------------------------------
 
@@ -375,7 +447,7 @@ fi
 if [ -z "${rev}" ]; then
     option_rev=" "
 else
-    option_rev=" --rev "
+    option_rev=" --rev T "
 fi
 
 
@@ -446,107 +518,6 @@ fi
 with_level 2 pokaz_message "Number of chromosomes ${nchr}"
 with_level 2 pokaz_message "Number of cores ${cores}"
 
-# ----------------------------------------------------------------------------
-#            Check reference genomes for MSA
-# ----------------------------------------------------------------------------
-
-
-if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
-
-    # ----------------------------------------------
-    # Check the number of reference genomes for randomisation
-
-    if [ -z "${ref_num}" ]; then
-        ref_num=2
-    fi
-
-    if ! [[ "$ref_num" =~ ^[0-9]+$ ]]; then
-        with_level 0 pokaz_error "Error: Number of reference genomes is not a number."
-        exit 1
-    fi
-    with_level 2 pokaz_message "Number of genomes for randomisation: ${ref_num}"
-
-
-    # ----------------------------------------------
-    # Get names of all genomes form the input folder. 
-    # !!!!! acc_set was fedined before
-
-    # acc_set=()
-    # for ext in "${genome_extensions[@]}"; do
-    #     for file in "$path_in"/*."$ext"; do
-    #         basename=$(basename "$file" ".$ext")
-    #         acc_set+=("$basename")
-    #     done
-    # done
-
-    # acc_set=($(find "$path_in" -type f -exec bash -c 'basename "$1" .${1##*.}' _ {} \;))
-
-    # If a file with accessions is provided - read all and intersect
-    if [ -n "${acc_file}" ]; then
-        # Read the accessions from the file, remove spaces, and create an array
-        mapfile -t acc_file_array < <(grep -o '^[^[:space:]]*' "$acc_file")
-
-        # Intersection of arrays acc_set and acc_file_array
-        acc_set=($(comm -12 <(printf '%s\n' "${acc_set[@]}" | sort) <(printf '%s\n' "${acc_file_array[@]}" | sort)))
-    fi
-
-    # # Print the genomes for verification
-    # echo "Accessions after the intersection"
-    # for ref in "${acc_set[@]}"; do
-    #     echo "$ref"
-    # done
-
-    # Check if ref_num is greater than the number of genomes in acc_set
-    if (( ref_num > ${#acc_set[@]} )); then
-        with_level 0 pokaz_error "Error: ref_num ($ref_num) is greater than the number of available genomes (${#acc_set[@]}) in acc_set."
-        exit 1
-    fi
-
-    # ----------------------------------------------
-    # Check if reference genomes are set up
-    if [[ -z "$ref_set" ]]; then
-
-        # Take the first ref_num genomes
-        refs_all=("${acc_set[@]:0:$ref_num}")
-
-    else 
-        # Split the value of ref_set into separate words
-        IFS=',' read -ra refs_all <<< "$ref_set"
-
-        # Check if the number of reference genomes is sufficient
-        if (( ${#refs_all[@]} < ref_num )); then
-            genomes_needed=$((ref_num - ${#refs_all[@]}))
-            with_level 1 pokaz_attention "Not enough reference genomes. Adding $genomes_needed genome(s)."
-
-            # Add genomes from acc_set to refs_all to satisfy the number of ref_num, ensuring no repeats
-            for genome in "${acc_set[@]}"; do
-                if (( ${#refs_all[@]} >= ref_num )); then
-                    break
-                fi
-                if [[ ! " ${refs_all[@]} " =~ " ${genome} " ]]; then
-                    refs_all+=("$genome")
-                fi
-            done
-        fi
-
-        # if (( ${#refs_all[@]} > ref_num )); then
-        #     with_level 1 pokaz_attention "Parameter -nref is ignored; it doesn't match number of genome in -refs"
-        # fi
-    fi
-
-    # Print the selected reference genomes for verification
-    with_level 2 pokaz_message "Names of genomes for randomisation: $(IFS=,; echo "${refs_all[*]}")"
-
-    # Check that all of the genomes are in the folder
-    for ref in "${refs_all[@]}"; do
-        if [[ ! " ${acc_set[@]} " =~ " ${ref} " ]]; then
-            with_level 0 pokaz_attention "Error: Genome ${ref} is not in ${path_in}"
-            exit 1
-        fi
-    done
-else
-    refs_all=("${ref_name}")
-fi
 
 # ----------------------------------------------------------------------------
 #            Check previous command
@@ -556,6 +527,7 @@ file_params="${path_log}command.log"
 
 if [[ ! -f "$file_params" ]]; then
     # Saving initial parameters
+    echo "prev_mode_pangen=${mode_pangen}" >> "$file_params"
     echo "prev_path_in=${path_in}" >> "$file_params"
     echo "prev_part_len=${part_len}" >> "$file_params"
     echo "prev_purge_reps=${purge_reps}" >> "$file_params"
@@ -564,6 +536,10 @@ if [[ ! -f "$file_params" ]]; then
 else
     # Loading previous parameters
     source "$file_params"
+
+    if [[ "${prev_mode_pangen} != ${mode_pangen}" ]]; then
+        rm -f ${path_log}/*_done
+    fi
 
     if [[ "$prev_path_in" != "$path_in" || \
           "$prev_part_len" != "$part_len" || \
@@ -617,8 +593,8 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
     # Run the step
     Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R --path.in ${path_in} --path.out ${path_chrom} \
             --cores ${cores}  \
-            ${option_nchr} \
-            ${option_accessions} \
+            --n.chr ${nchr}  \
+            --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
 
@@ -659,8 +635,8 @@ if [ ! -z "${flag_orf}" ]; then
         # Run the step
         Rscript $INSTALLED_PATH/pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
                 --cores ${cores}  \
-                ${option_nchr} \
-                ${option_accessions} \
+                --n.chr ${nchr}  \
+                --accessions ${file_accessions} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done
@@ -697,10 +673,10 @@ if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
             --path.parts ${path_parts} \
             --part.len $part_len \
             --cores ${cores} \
-            ${option_accessions} \
-            ${option_purge_reps} ${option_rev} \
-            ${option_nchr} \
-            ${option_mirror} \
+            --accessions ${file_accessions} \
+            --n.chr ${nchr}  \
+            ${option_purge_reps}  \
+            ${option_mirror}  ${option_rev}  \
             --path.log ${path_log_step} --log.level ${log_level}
 
     # Done
@@ -744,7 +720,7 @@ if [[ "${path_in}" != "$path_ref" ]]; then
                     --path.in ${path_ref} --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --accessions ${file_acc_ref} \
-                    ${option_nchr_ref} \
+                    --n.chr ${nchr_ref}  \
                     --path.log ${path_log_step} --log.level ${log_level}
 
             # Remove the temporary file
@@ -820,7 +796,6 @@ for ref0 in "${refs_all[@]}"; do
                 -path_parts ${path_parts} \
                 -path_result ${path_blast_parts} \
                 -ref ${ref0} \
-                ${option_one2one} \
                 -p_ident ${p_ident} \
                 -cores ${cores} \
                 -log_path ${path_log_step}
@@ -877,7 +852,6 @@ for ref0 in "${refs_all[@]}"; do
                 --ref ${ref0}   \
                 --path.chr ${path_chrom} \
                 --cores ${cores} \
-                ${option_one2one_r} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done
@@ -977,7 +951,6 @@ for ref0 in "${refs_all[@]}"; do
                 --path.gaps  ${path_gaps} \
                 --path.chr ${path_chrom} \
                 --cores ${cores} \
-                ${option_one2one_r} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done

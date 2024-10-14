@@ -1,10 +1,4 @@
-# Useful options
-
-## Format of the output files
-
-In the default case, the names of the output files contain combinations of `N_N`, where `N` represents the chromosome numbers that are aligned together. 
-This implies that all chromosomes in genomes are sorted in the corresponding order, and all first chromosomes, all second chromosomes, and so on are aligned separately.
-
+# Auxiliary options
 
 ## Number of chromosomes
 By default, if the maximum number of chromosomes is not specified (i.e., `-nchr N` is not provided), the genomes of the query accessions in `PATH_DATA` are scanned to determine the number of chromosomes. If all genomes have the same number of chromosomes, `N` is set to this number. Otherwise, an error will occur, and it's recommended to provide `-nchr N`.

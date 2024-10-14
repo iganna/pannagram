@@ -78,4 +78,7 @@ ls -lrt msa*
 > By default, two random reference genomes are chosen, and the first genome is used to sort the positions in the final alignment.
 > You can specify the number of references to use with the `-nref` flag or directly provide specific references using the `-refs` flag.
 
+## Format of the output files
 
+In the default case, the names of the output files contain combinations of `N_N`, where `N` represents the chromosome numbers that are aligned together. 
+This implies that all chromosomes in genomes are sorted in the corresponding order, and all first chromosomes, all second chromosomes, and so on are aligned separately.

@@ -13,31 +13,22 @@ source(system.file("utils/utils.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--all.chr"), type = "logical", default = FALSE, 
-              help = "Flag to use all chromosomes, not only the provided number", metavar = "logical"),
-  make_option(c("--n.chr"), type = "character", default = NULL, 
-              help = "number of chromosomes", metavar = "character"),
-  make_option(c("--part.len"), type = "character", default = NULL, 
-              help = "number of base pairs in the part file", metavar = "character"),
-  make_option(c("--part.step"), type = "character", default = NULL, 
-              help = "number of base pairs as a step", metavar = "character"),
-  make_option(c("--path.chr"), type = "character", default = NULL, 
-              help = "pathway to the chromosome directory", metavar = "character"),
-  make_option(c("--path.parts"), type = "character", default = NULL, 
-              help = "pathway to the parts directory", metavar = "character"),
-  make_option(c("--purge.reps"), type = "character", default = NULL, 
-              help = "flag to keep or not repeats", metavar = "character"),
-  make_option(c("--rev"), type = "character", default = NULL, 
-              help = "flag make the reverce sequences", metavar = "character"),
-  make_option(c("--accessions"), type = "character", default = NULL,
-              help = "Files with accessions to analyze", metavar = "character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+  make_option(c("--path.chr"),   type = "character", default = NULL, help = "Path to the chromosome directory"),
+  make_option(c("--path.parts"), type = "character", default = NULL, help = "Path to the parts directory"),
+  make_option(c("--accessions"), type = "character", default = NULL, help = "File containing accessions to analyze"),
+  
+  make_option(c("--n.chr"),      type = "integer", default = 0,    help = "Number of chromosomes"),
+  make_option(c("--part.len"),   type = "integer", default = 5000, help = "Length of each part file in bp"),
+  make_option(c("--part.step"),  type = "integer", default = 0,    help = "Step size in bp between parts"),
+  
+  make_option(c("--purge.reps"), type = "logical", default = FALSE, help = "Flag to specify whether to remove repeats"),
+  make_option(c("--rev"),        type = "logical", default = FALSE, help = "Flag to reverse sequences"),
+  
+  make_option(c("--cores"),     type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option(c("--path.log"),  type = "character", default = NULL, help = "Path for the log files"),
+  make_option(c("--log.level"), type = "integer", default = NULL, help = "Logging level to display on screen")
 )
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -51,18 +42,20 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 # ---- Values of parameters ----
 
+# Set chromosome and parts paths
+path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
+path.parts <- ifelse(!is.null(opt$path.parts), opt$path.parts, stop("The parts path 'path.parts' must be specified!"))
+if(!dir.exists(path.parts)) dir.create(path.parts)
+
 # Number of cores
-num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
+num.cores <- opt$cores
 
 # Ensure the number of chromosomes is specified and set it
-all.chr <- ifelse(!is.null(opt$all.chr), as.logical(opt$all.chr), F)
-if(all.chr){
-  n.chr <- NULL
-  pokaz('Number of chromosomes: ALL', file=file.log.main, echo=echo.main)
+n.chr <- opt$n.chr  
+if(n.chr == 0){
+  pokaz("All chromosomes are considered", file=file.log.main, echo=echo.main)
 } else {
-  n.chr <- ifelse(!is.null(opt$n.chr), as.numeric(opt$n.chr), 
-                  stop("The input number of chromosomes 'n.chr' must be specified!"))  
-  pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)
+  pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)  
 }
 
 # Accessions to analyse
@@ -72,49 +65,40 @@ accessions <- tmp[,1]
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)
 
-# Set chromosome and parts paths
-path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The chromosome path 'path.chr' must be specified!"))
-path.parts <- ifelse(!is.null(opt$path.parts), opt$path.parts, stop("The parts path 'path.parts' must be specified!"))
-if(!dir.exists(path.parts)) dir.create(path.parts)
-
 # ---- Common attributes ----
 
 # Length of parts
-len.parts <- ifelse(!is.null(opt$part.len), as.numeric(opt$part.len), 5000)
-
-# Length of steps
-if(!is.null(opt$part.step)){
-  len.step = as.numeric(opt$part.step)
-} else {
-  len.step = NULL
-}
+len.parts <- opt$part.len
+len.step <- opt$part.step
 
 # Purge repeats by the complexity
-if(is.null(opt$purge.reps)){
-  purge.reps = F
-} else {
-  purge.reps = as.logical(opt$purge.reps)
-  if(is.na(purge.reps)) stop('Wrong flag for purging repeats')
-}
+purge.reps = opt$purge.reps
 
 # Mirror universe
-flag.rev <- as.numeric(ifelse(!is.null(opt$rev), opt$rev, 0))
-
-if(flag.rev == 1){
-  pokaz("Mirror universe", 
+flag.rev <- opt$rev
+if(flag.rev){
+  pokaz("Mirror universe!!!", 
         file=file.log.main, echo=echo.main)
 }
 
 # ***********************************************************************
 # ---- Prepare combinations ----
 
-if(all.chr){
-  combinations = data.frame(acc = sapply(files.query, function(s) strsplit(s, '_chr')[[1]][1]),
-                            i.chr = sapply(files.query, function(s) strsplit(s, '_chr')[[1]][2]))
+if(n.chr == 0){
+  # for every accession read the "length" file and cound the nu,ber of chromosomes
+  combinations = c()
+  for(acc in accessions){
+    file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+    acc.len = read.table(file.acc.len, header = 1)
+    
+    combinations = rbind(combinations,
+                         data.frame(acc = acc, i.chr = 1:nrow(acc.len)))
+  }
 } else {
-  combinations <- expand.grid(acc = query.name, i.chr = 1:n.chr)  
+  combinations <- expand.grid(acc = accessions, i.chr = 1:n.chr)  
 }
 
+print(combinations)
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -126,29 +110,26 @@ loop.function <- function(i.comb,
   i.chr <- combinations$i.chr[i.comb]
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_acc_', acc, '_chr', i.chr, '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
+  }
+  
+  # Check log Done
+  if(checkDone(file.log.loop)){
+    return(NULL)
   }
   
   # Files
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
   file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
   
-  # ---- Check log Done ----
-  if( file.exists(file.out)) {
-    if(checkDone(file.log.loop)){
-      return(NULL)
-    }
-  }
-  pokaz('File:', file.in, 
+  pokaz('File chromosomal:', file.in, 
         file=file.log.loop, echo=echo.loop)
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
   
-  if(flag.rev == 1){  # Mirror universe
+  if(flag.rev){  # Mirror universe
     q.fasta = nt2seq(rev(seq2nt(q.fasta)))
   }
   
