@@ -98,8 +98,6 @@ if(n.chr == 0){
   combinations <- expand.grid(acc = accessions, i.chr = 1:n.chr)  
 }
 
-print(combinations)
-
 # ***********************************************************************
 # ---- MAIN program body ----
 loop.function <- function(i.comb, 
@@ -119,6 +117,9 @@ loop.function <- function(i.comb,
   if(checkDone(file.log.loop)){
     return(NULL)
   }
+  
+  # ***********************************
+  pokaz('New attempt:', file=file.log.loop, echo=echo.loop)
   
   # Files
   file.in = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
@@ -204,12 +205,8 @@ loop.function <- function(i.comb,
 # ---- Loop  ----
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
   for(i.comb in 1:nrow(combinations)){
-    loop.function(i.comb, 
-                  # file.log.loop = file.log.loop, 
-                  echo.loop=echo.loop)
+    loop.function(i.comb, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -220,8 +217,7 @@ if(num.cores == 1){
                        .packages=c('crayon',
                                    'stringi'),  # for purging repeats
                        .export = c('n.chr')) %dopar% {
-    loop.function(i.comb,
-                  echo.loop=echo.loop)
+    loop.function(i.comb, echo.loop=echo.loop)
   }
   stopCluster(myCluster)
 }

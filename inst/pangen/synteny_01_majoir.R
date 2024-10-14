@@ -15,28 +15,29 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.chr"), type="character", default=NULL, 
-              help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("--path.blast"), type="character", default=NULL, 
-              help="path to blast results", metavar="character"),
-  make_option(c("--path.aln"), type="character", default=NULL, 
-              help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--ref"), type="character", default=NULL, 
-              help="name of the reference genome", metavar="character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--one2one"), type = "logical", default = F, 
-              help = "One to one chromosomes or not", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+  make_option(c("--path.blast"),    type = "character", default = NULL, help = "Path to blast results"),
+  make_option(c("--path.aln"),      type = "character", default = NULL, help = "Path to the output directory with alignments"),
+  
+  make_option(c("--ref"),           type = "character", default = NULL, help = "Name of the reference genome"),
+  make_option(c("--accessions"),    type = "character", default = NULL, help = "File containing accessions to analyze"),
+  make_option(c("--combinations"),  type = "character", default = NULL, help = "File containing combinations to analyze"),
+  
+  make_option(c("--cores"),         type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option(c("--path.log"),      type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),     type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
+
+# ***********************************************************************
+# ---- Variables ----
+
+max.len = 10^6
+len.blast = 50
 
 # ***********************************************************************
 # ---- Logging ----
@@ -48,24 +49,49 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # Number of cores
 num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
 
-path.chr      <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop('Folder with chromosomes is not specified'))
-path.blast.res <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
+path.blast    <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
 
 # Create folders for the alignment results
 if(!dir.exists(path.aln)) dir.create(path.aln)
 
+# Accessions
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- tmp[,1]
+pokaz('Names of genomes for the analysis:', accessions, 
+      file=file.log.main, echo=echo.main)
+
 # ***********************************************************************
-# ---- Preparation ----
+# ---- Combinations ----
 
-max.len = 10^6
-len.blast = 50
+file.combinations <- ifelse(!is.null(opt$combinations), opt$combinations, stop("File with combinations are not specified"))
+if (length(readLines(file.combinations)) == 0) {
+  files.blast <- list.files(path.blast, pattern = "\\.txt$", full.names = F)
 
-files.blast <- list.files(path.blast.res, pattern = "\\.txt$")
+  # Filter files that start with one of the values in accessions
+  files.blast <- files.blast[sapply(files.blast, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+  
+  pokaz('All blast files', length(files.blast), file=file.log.main, echo=echo.main)
+} else {
+  combinations = read.table(file.combinations)
+  files.blast = c()
+  for(acc in accessions){
+    for(i.comb in 1:nrow(combinations)){
+      file.tmp = paste0(acc, '_', 
+                        combinations[i.comb,1], '_',
+                        combinations[i.comb,2], '.txt')
+      if(!file.exists(paste0(path.blast, file.tmp))) stop(paste0('NO FILE', file.tmp))
+      
+      files.blast = c(files.blast, file.tmp)
+    }
+  }
+}
 
-pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, echo=echo.main)
 if(length(files.blast) == 0) stop('No BLAST files provided')
+pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, echo=echo.main)
+
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -74,20 +100,24 @@ loop.function <- function(f.blast,
                           file.log.loop=NULL,
                           echo.loop=T){
   
+  # Output file
+  pref.comb <- sub("\\.[^.]*$", "", basename(f.blast))
+  file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
+  
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           sub("\\.[^.]*$", "", basename(f.blast)),
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         pref.comb, # remove the extensions
+                         '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
   }
   
+  # ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    return(NULL)
+  }
+
   # --- --- --- --- --- --- --- --- --- --- ---
-  
-  # Remove the '.txt' extension
-  pref.comb <- sub("\\.txt$", "", f.blast)
   
   # Parser for BLAST-result file
   parts <- strsplit(pref.comb, "_")[[1]]
@@ -97,55 +127,17 @@ loop.function <- function(f.blast,
   parts = parts[-c(length(parts) - 1, length(parts))]
   acc <- paste0(parts, collapse = '_')
   
-  pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
-  
-  # file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
-  # if(file.exists(file.aln.postgap3)){
-  #   pokaz('Done.', file=file.log.loop, echo=echo.loop, file=file.log.loop, echo=echo.loop)
-  #   return(NULL)
-  # }
-  
-  # ---- Read genomes ----
-  # # Read reference sequences
-  # base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
-  # pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  # base.fas.fw = readFastaMy(paste0(path.chr, base.file))
-  # base.fas.fw = seq2nt(base.fas.fw)
-  # base.fas.bw = revCompl(base.fas.fw)
-  # base.len = length(base.fas.bw)
-  # pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
-  # 
-  # # Read query sequences
-  # query.file = paste0(acc, '_chr',query.chr, '.fasta')
-  # pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
-  # query.fas.chr = readFastaMy(paste0(path.chr, query.file))
-  # query.fas.chr = seq2nt(query.fas.chr)
-  # query.len = length(query.fas.chr)
-  # pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
-  
-  # ---- Maj alignment ----
-  # Output files
-  file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
-  
-  # ---- Check log Done ----
-  if(file.exists(file.aln.pre)){
-    if(checkDone(file.log.loop)){
-      next
-    }
-  }
-  
   pokaz('Alignment:', acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   
   # ---- Read blast results ----
-  pokaz(paste0(path.blast.res, f.blast), file=file.log.loop, echo=echo.loop)
-  # x = read.table(paste0(path.blast.res, f.blast), stringsAsFactors = F, header = F)
-  x = readBlast(paste0(path.blast.res, f.blast))
+  # pokaz(paste0(path.blast, f.blast))
+  x = readBlast(paste0(path.blast, f.blast))
   if(is.null(x)){
     pokaz('Done.', file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   
-  pokaz('Read blast results finished, numer of rows is', nrow(x), file=file.log.loop, echo=echo.loop)
+  pokaz('Read blast results finished, number of rows is', nrow(x), file=file.log.loop, echo=echo.loop)
   
   ## ---- Pre-processing ----
   # Save true base coordinate
@@ -156,21 +148,9 @@ loop.function <- function(f.blast,
   start.pos = as.numeric(sapply(strsplit(x[,1], "\\|"), "[", 4)) - 1
   x[,2:3] = x[,2:3] + start.pos
   
-  # # Check - could be removed:
-  # checkCorrespToGenome(x = setDir(x, base.len = base.len), 
-  #                      query.fas = query.fas.chr,
-  #                      base.fas.fw = base.fas.fw,
-  #                      base.fas.bw = base.fas.bw)
-  
   # Set direction
   x$dir = (x$V4 > x$V5) * 1
-  # x = glueZero(x)
-  
-  # # Check - could be removed:
-  # checkCorrespToGenome(x = setDir(x, base.len = base.len),
-  #                      query.fas = query.fas.chr,
-  #                      base.fas.fw = base.fas.fw,
-  #                      base.fas.bw = base.fas.bw)
+  # x = glueZero(x)  # DO NOT DO IT
   
   # Set past id
   x$part.id = cumsum(c(T, diff(as.numeric(as.factor(x$V1))) != 0))
@@ -280,12 +260,6 @@ loop.function <- function(f.blast,
     x = cutSmallOverlaps(x)
   }
   
-  # # ---- Check sequences after cuts ----
-  # checkCorrespToGenome(x=setDir(x, base.len = base.len), 
-  #                      query.fas = query.fas.chr,
-  #                      base.fas.fw = base.fas.fw,
-  #                      base.fas.bw = base.fas.bw)
-  
   # ---- Check uniquness of occupancy ----
   # pos.q.occup = rep(0, base.len)
   # for(irow in 1:nrow(x)){
@@ -300,7 +274,6 @@ loop.function <- function(f.blast,
   
   # Save
   saveRDS(x, file.aln.pre, compress = F)
-  
   
   rmSafe(x)
   rmSafe(x.major)
@@ -318,12 +291,9 @@ loop.function <- function(f.blast,
 
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
+
   for(f.blast in files.blast){
-    loop.function(f.blast,
-                  # file.log.loop = file.log.loop, 
-                  echo.loop=echo.loop)
+    loop.function(f.blast, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -333,8 +303,7 @@ if(num.cores == 1){
   tmp = foreach(f.blast = files.blast, 
                 .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
-                  loop.function(f.blast,
-                                echo.loop=echo.loop)
+                  loop.function(f.blast, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
@@ -346,10 +315,5 @@ pokaz('Done.', file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- Manual testing ----
 
-if(F){
-source(system.file("pangen/synteny_func.R", package = "pannagram"))
-source(system.file("utils/utils.R", package = "pannagram"))
-  
-}
 
 

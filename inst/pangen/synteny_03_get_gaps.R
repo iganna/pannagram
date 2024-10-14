@@ -15,23 +15,19 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.chr"), type="character", default=NULL, 
-              help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("--path.aln"), type="character", default=NULL, 
-              help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--ref"), type="character", default=NULL, 
-              help="name of the reference genome", metavar="character"),
-  make_option(c("--path.gaps"), type="character", default=NULL, 
-              help="path tothe directory with gaps", metavar="character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--one2one"), type = "logical", default = F, 
-              help = "One to one chromosomes or not", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+  make_option(c("--path.chr"),    type = "character", default = NULL, help = "Path to query chromosome fasta files"),
+  make_option(c("--path.aln"),    type = "character", default = NULL, help = "Path to the output directory with alignments"),
+  make_option(c("--path.gaps"),   type = "character", default = NULL, help = "Path to the directory with gaps"),
+  
+  make_option(c("--ref"),         type = "character", default = NULL, help = "Name of the reference genome"),
+  make_option(c("--accessions"),    type = "character", default = NULL, help = "File containing accessions to analyze"),
+  make_option(c("--combinations"),  type = "character", default = NULL, help = "File containing combinations to analyze"),
+  
+  make_option(c("--cores"),       type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option(c("--path.log"),    type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),   type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -61,32 +57,59 @@ path.gaps     <- ifelse(!is.null(opt$path.gaps), opt$path.gaps, stop('Folder wit
 if(!dir.exists(path.aln)) dir.create(path.aln)
 if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
+# Accessions
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- tmp[,1]
+pokaz('Names of genomes for the analysis:', accessions, 
+      file=file.log.main, echo=echo.main)
+
 # ***********************************************************************
-# ---- Preparation ----
+# ---- Combinations ----
 
-files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
-pokaz('Number of alignment files:', length(files.maj), file=file.log.main, echo=echo.main)
-# if(length(files.maj) == 0) stop('No alignment files provided')
+file.combinations <- ifelse(!is.null(opt$combinations), opt$combinations, stop("File with combinations are not specified"))
+if (length(readLines(file.combinations)) == 0) {
+  files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
+  
+  # Filter files that start with one of the values in accessions
+  files.maj <- files.blast[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+  
+  pokaz('All blast files', length(files.blast), file=file.log.main, echo=echo.main)
+} else {
+  combinations = read.table(file.combinations)
+  files.maj = c()
+  for(acc in accessions){
+    for(i.comb in 1:nrow(combinations)){
+      file.tmp = paste0(acc, '_', 
+                        combinations[i.comb,1], '_',
+                        combinations[i.comb,2], '_maj.rds')
+      if(file.exists(paste0(path.aln, file.tmp))){
+        files.maj = c(files.maj, file.tmp)  
+      }
+    }
+  }
+}
 
+pokaz(files.maj)
+
+if(length(files.maj) == 0) stop('No alignments provided')
+pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
 loop.function <- function(f.maj, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   # Remove extensions
-  pref.comb <- sub("\\maj.rds$", "", f.maj)
+  pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           pref.comb,
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         pref.comb,
+                         '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
   }
   
   # ---- Check log Done ----
@@ -106,12 +129,6 @@ loop.function <- function(f.maj,
   
   pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   
-  # file.aln.postgap3 <- paste(path.aln, paste0(pref.comb,  '_postgap3.rds', collapse = ''), sep = '')
-  # if(file.exists(file.aln.postgap3)){
-  #   pokaz('Done.', file=file.log.loop, echo=echo.loop, file=file.log.loop, echo=echo.loop)
-  #   return(NULL)
-  # }
-  
   # Read reference sequences
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
@@ -130,10 +147,7 @@ loop.function <- function(f.maj,
   query.len = length(query.fas.chr)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
-  # if(T){   
-  if(!file.exists(f.maj)) return()
-
-  x = readRDS(f.maj)
+  x = readRDS(paste0(path.aln, f.maj))
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
@@ -450,8 +464,7 @@ loop.function <- function(f.maj,
 
 if(num.cores == 1){
   for(f.maj in files.maj){
-    loop.function(f.maj,
-                  echo.loop=echo.loop)
+    loop.function(f.maj, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -461,8 +474,7 @@ if(num.cores == 1){
   tmp = foreach(f.maj = files.maj, 
                 .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
-                  loop.function(f.maj,
-                                echo.loop=echo.loop)
+                  loop.function(f.maj, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }

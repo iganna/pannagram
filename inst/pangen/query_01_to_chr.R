@@ -87,6 +87,7 @@ loop.function <- function(acc, echo.loop=T){
   }
  
   # ***********************************
+  pokaz('New attempt:', file=file.log.loop, echo=echo.loop)
   
   # Get the genome file
   file.genome = c()

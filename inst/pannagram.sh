@@ -29,18 +29,20 @@ purge_reps="F"
 
 unrecognized_options=()
 
-start_step=100
+step_start=0
+step_end=100
 while [ $# -gt 0 ]
 do
     # echo $1
     case $1 in
         -h) print_usage_short; print_examples; exit ;;
         -help ) print_usage_detailed; print_examples; exit ;;
-        -s | -stage ) start_step="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
+        -s | -stage ) step_start="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
+        -e | -end ) pokaz_attention "Be very careful with -e/-end option!";  step_end="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -log)         log_level=$2;    shift 2 ;;  # path to the output
         -cores)       cores=$2;        shift 2 ;;
         -clean_dir)   clean_dir="T"    shift 1 ;;
-        -one_step)    one_step="T"    shift 1 ;;
+        -one_step)    one_step="T"     shift 1 ;;
         
         # Required
         -path_out) path_out=$2; shift 2 ;;  # path to the output
@@ -238,8 +240,6 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
     file_found=false
     for ext in "${genome_extensions[@]}"; do
         if [ -f "${path_ref}${ref_name}.${ext}" ]; then
-            pokaz_attention "EXIST"
-            pokaz_attention "${path_ref}${ref_name}.${ext}"
             file_found=true
             break
         fi
@@ -324,7 +324,7 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
         # Define from files
         # Count the number of chromosomes in files
         counts=()
-        pokaz_message "Acc\tChrNum"
+        pokaz_message "Acc ChrNum"
         for ext in "${genome_extensions[@]}"; do
             # Loop over each element in acc_set
             for acc in "${acc_set[@]}"; do
@@ -351,11 +351,50 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
     fi
 
 elif [ -z "${nchr}" ] && [ ! -z "${nchr_ref}" ]; then  # nchr_ref is defined.
-    pokaz_error "Error: -nchr  defined."
+    pokaz_error "Error: -nchr not defined, when -nchr_ref is defined ."
     exit 1
 elif [ ! -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # nchr is defined.
     nchr_ref=${nchr}
 fi
+
+# Check the number of chromosomes in the reference genome
+if [[ ${nchr_ref} -ne 0 ]]; then
+    for ref_name in "${refs_all[@]}"; do
+        for ext in "${genome_extensions[@]}"; do
+            # Find the file with the current acc and extension
+            file="${path_ref}/${ref_name}.${ext}"
+            
+            # Check if the file exists
+            if [[ -f "$file" ]]; then
+                count=$(grep -c '^>' "$file")
+                if [[ ${count} -lt ${nchr} ]]; then
+                    pokaz_error "Error: Number of chromosomes in the reference genome ${ref_name} is ${count}. Must be at least ${nchr_ref}."
+                    exit 1
+                fi
+            fi
+        done
+    done
+fi
+
+# Check the number of chromosomes in the accessions genome
+if [[ ${nchr} -ne 0 ]]; then
+    for acc_name in "${acc_set[@]}"; do
+        for ext in "${genome_extensions[@]}"; do
+            # Find the file with the current acc and extension
+            file="${path_in}/${acc_name}.${ext}"
+            
+            # Check if the file exists
+            if [[ -f "$file" ]]; then
+                count=$(grep -c '^>' "$file")
+                if [[ ${count} -lt ${nchr} ]]; then
+                    pokaz_error "Error: Number of chromosomes in the reference genome ${acc_name} is ${count}. Must be at least ${nchr}."
+                    exit 1
+                fi
+            fi
+        done
+    done
+fi
+
 
 # ----------------------------------------------
 # File with combinations
@@ -525,19 +564,12 @@ with_level 2 pokaz_message "Number of cores ${cores}"
 
 file_params="${path_log}command.log"
 
-if [[ ! -f "$file_params" ]]; then
-    # Saving initial parameters
-    echo "prev_mode_pangen=${mode_pangen}" >> "$file_params"
-    echo "prev_path_in=${path_in}" >> "$file_params"
-    echo "prev_part_len=${part_len}" >> "$file_params"
-    echo "prev_purge_reps=${purge_reps}" >> "$file_params"
-    echo "prev_p_ident=${p_ident}" >> "$file_params"
-    echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
-else
+if [[ -f "$file_params" ]]; then
+
     # Loading previous parameters
     source "$file_params"
 
-    if [[ "${prev_mode_pangen} != ${mode_pangen}" ]]; then
+    if [[ "${prev_mode_pangen}" != "${mode_pangen}" ]]; then
         rm -f ${path_log}/*_done
     fi
 
@@ -556,7 +588,67 @@ else
         
         exit 1
     fi
+fi
 
+echo "prev_mode_pangen=${mode_pangen}" > "$file_params"
+echo "prev_path_in=${path_in}" >> "$file_params"
+echo "prev_part_len=${part_len}" >> "$file_params"
+echo "prev_purge_reps=${purge_reps}" >> "$file_params"
+echo "prev_p_ident=${p_ident}" >> "$file_params"
+echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
+
+
+# ----------------------------------------------------------------------------
+#            Check Steps
+# ----------------------------------------------------------------------------
+
+# Define the log directory
+step_files=$(find "${path_log}" -type f -name "step*_done")
+
+if [[ $step_start -eq 0 ]]; then
+
+    # If there is at least one matching file
+    if [[ -n "$step_files" ]]; then
+        
+        max_step=0  # Initialize to 0 
+        for file in $step_files; do
+            # Extract the number immediately following "step"
+            step_num=$(echo "$file" | sed -n 's/.*step\([0-9]\{1,\}\)_.*/\1/p')
+
+            # Check if the extracted number is the highest found so far
+            if [[ $step_num -gt $max_step ]]; then
+                max_step=$step_num
+            fi
+        done
+
+        # Assign the maximum found value to step_start
+        step_start=$((max_step + 1))
+    else
+        step_start=1
+    fi
+
+else
+    # Remove all done files between stert and end
+    if [[ -n "$step_files" ]]; then
+        for file in $step_files; do
+            
+            step_num=$(echo "$file" | sed -n 's/.*step\([0-9]\{1,\}\)_.*/\1/p')
+
+            if [[ $step_num -ge $step_start && $step_num -le $step_end ]]; then
+                echo ${file}
+                rm ${file}
+            fi
+        done
+
+    fi 
+fi
+
+echo "Start End ${step_start} ${step_end}"
+
+# Check start and end
+if [ "$step_start" -gt "$step_end" ]; then
+    echo "Error: step_start ($step_start) is greater than step_end ($step_end)"
+    exit 1  # Exit the script with error status 1
 fi
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗  /\_/\  
@@ -583,7 +675,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
     # Clean up the output folders
     if   [ "$clean_dir" = "T" ]; then 
@@ -606,98 +698,13 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
-# If to find ORFs
-
-if [ ! -z "${flag_orf}" ]; then
-
-    ((step_num = step_num - 1))
-
-    with_level 1 pokaz_stage "Additional step. Get all ORFs."
-
-    # Logs
-    step_name="step${step_num}_query_01_orf"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
-
-    # Start
-    if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
-
-        # Make ORF folder
-        path_orf="${path_inter}orf/"
-        mkdir -p "${path_orf}"
-
-        # Clean up the output folders
-        if   [ "$clean_dir" = "T" ]; then 
-            rm -f ${path_orf}*fasta
-        fi
-
-        # Run the step
-        Rscript $INSTALLED_PATH/pangen/query_01_to_orf.R --path.in ${path_in} --path.orf ${path_orf} \
-                --cores ${cores}  \
-                --n.chr ${nchr}  \
-                --accessions ${file_accessions} \
-                --path.log ${path_log_step} --log.level ${log_level}
-
-        # Done
-        touch "${step_file}"
-    fi
-
-    source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-fi
-
-
-
-# ----------------------------------------------
-# Split query chromosomes into parts
-
-with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
-
-# Logs
-step_name="step${step_num}_query_02"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-
-# Start
-if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
-
-    # Clean up the output folders
-    if   [ "$clean_dir" = "T" ]; then 
-        rm -f ${path_parts}*fasta
-    fi
-
-    # Run the step
-    Rscript $INSTALLED_PATH/pangen/query_02_to_parts.R --path.chr ${path_chrom} \
-            --path.parts ${path_parts} \
-            --part.len $part_len \
-            --cores ${cores} \
-            --accessions ${file_accessions} \
-            --n.chr ${nchr}  \
-            ${option_purge_reps}  \
-            ${option_mirror}  ${option_rev}  \
-            --path.log ${path_log_step} --log.level ${log_level}
-
-    # Done
-    touch "${step_file}"
-
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-exit 0
-
-# ┌───────────────────────────────────────────────────────────────────────────┐
-# │                         REFERENCE-BASED                                   │
-# └───────────────────────────────────────────────────────────────────────────┘
-
-# ----------------------------------------------
 # Split reference fasta into chromosomes if additionally needed
 
 if [[ "${path_in}" != "$path_ref" ]]; then
 
-    with_level 1 pokaz_stage "Step ${step_num}. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
+    ((step_num = step_num - 1))
+
+    with_level 1 pokaz_stage "Additional step. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
     for ref0 in "${refs_all[@]}"; do
 
         # Logs
@@ -707,7 +714,7 @@ if [[ "${path_in}" != "$path_ref" ]]; then
         make_dir ${path_log_step}
 
         # Start
-        if [ $start_step -le ${step_num} ] || [ ! -f ${step_file} ]; then
+        if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
             with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -735,6 +742,92 @@ if [[ "${path_in}" != "$path_ref" ]]; then
 fi
 
 # ----------------------------------------------
+# ORF-Finder
+
+if [ ! -z "${flag_orf}" ]; then
+
+    ((step_num = step_num - 1))
+
+    with_level 1 pokaz_stage "Additional step. Get all ORFs."
+
+    # Logs
+    step_name="step${step_num}_query_01_orf"
+    step_file="${path_log}${step_name}_done"
+    path_log_step="${path_log}${step_name}/"
+    make_dir ${path_log_step}
+
+    # Start
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+
+        # Make ORF folder
+        path_orf="${path_inter}orf/"
+        mkdir -p "${path_orf}"
+
+        # Clean up the output folders
+        if   [ "$clean_dir" = "T" ]; then 
+            rm -f ${path_orf}*fasta
+            rm -f ${path_log_step}*
+        fi
+
+        # Run the step
+        Rscript $INSTALLED_PATH/pangen/query_01_to_orf.R  \
+                --path.chr ${path_chrom}  \
+                --path.orf ${path_orf} \
+                --cores ${cores}  \
+                --n.chr ${nchr}  \
+                --accessions ${file_accessions} \
+                --path.log ${path_log_step} --log.level ${log_level}
+
+        # Done
+        touch "${step_file}"
+    fi
+
+    source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+fi
+
+# ----------------------------------------------
+# Split query chromosomes into parts
+
+with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
+
+# Logs
+step_name="step${step_num}_query_02"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+
+    # Clean up the output folders
+    if   [ "$clean_dir" = "T" ]; then 
+        rm -f ${path_parts}*fasta
+    fi
+
+    # Run the step
+    Rscript $INSTALLED_PATH/pangen/query_02_to_parts.R --path.chr ${path_chrom} \
+            --path.parts ${path_parts} \
+            --part.len $part_len \
+            --cores ${cores} \
+            --accessions ${file_accessions} \
+            --n.chr ${nchr}  \
+            ${option_purge_reps}  \
+            ${option_mirror}  ${option_rev}  \
+            --path.log ${path_log_step} --log.level ${log_level}
+
+    # Done
+    touch "${step_file}"
+
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                         REFERENCE-BASED                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
+
+# ----------------------------------------------
 # Blast parts on the reference genome
 
 with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
@@ -750,7 +843,7 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -795,10 +888,12 @@ for ref0 in "${refs_all[@]}"; do
                 -path_chrom ${path_chrom} \
                 -path_parts ${path_parts} \
                 -path_result ${path_blast_parts} \
+                -combinations ${file_combinations} \
+                -accessions ${file_accessions} \
                 -ref ${ref0} \
                 -p_ident ${p_ident} \
                 -cores ${cores} \
-                -log_path ${path_log_step}
+                -path_log ${path_log_step}
 
         # Done
         touch "${step_file}"
@@ -837,7 +932,7 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -848,11 +943,15 @@ for ref0 in "${refs_all[@]}"; do
         fi    
         
         # Run the step
-        Rscript $INSTALLED_PATH/pangen/synteny_01_majoir.R --path.blast ${path_blast_parts} --path.aln ${path_alignment} \
+        Rscript $INSTALLED_PATH/pangen/synteny_01_majoir.R  \
+                --path.blast ${path_blast_parts} \
+                --path.aln ${path_alignment} \
                 --ref ${ref0}   \
-                --path.chr ${path_chrom} \
+                --combinations ${file_combinations} \
+                --accessions ${file_accessions} \
                 --cores ${cores} \
-                --path.log ${path_log_step} --log.level ${log_level}
+                --path.log ${path_log_step} \
+                --log.level ${log_level}
 
         # Done
         touch "${step_file}"
@@ -871,7 +970,7 @@ done
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
-# Step 6: Plotting
+# Plotting
 
 with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 for ref0 in "${refs_all[@]}"; do
@@ -886,16 +985,16 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
         Rscript $INSTALLED_PATH/pangen/synteny_02_plot.R \
                 --ref ${ref0} \
-                --path_ref ${path_ref} \
-                --path_chr ${path_chrom} \
-                --path_out ${path_plots} \
-                --algn_path ${path_alignment} \
+                --path.chr ${path_chrom} \
+                --path.plot ${path_plots} \
+                --path.aln ${path_alignment} \
+                --accessions ${file_accessions} \
                 --path.log ${path_log_step} \
                 --log.level ${log_level} \
                 --cores ${cores}
@@ -940,16 +1039,18 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
         # Run
         Rscript $INSTALLED_PATH/pangen/synteny_03_get_gaps.R \
-                --path.aln ${path_alignment} \
-                --ref ${ref0}   \
-                --path.gaps  ${path_gaps} \
                 --path.chr ${path_chrom} \
+                --path.aln ${path_alignment} \
+                --path.gaps  ${path_gaps} \
+                --ref ${ref0}   \
+                --accessions ${file_accessions} \
+                --combinations ${file_combinations} \
                 --cores ${cores} \
                 --path.log ${path_log_step} --log.level ${log_level}
 
@@ -962,6 +1063,8 @@ for ref0 in "${refs_all[@]}"; do
 done
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+exit 0
 
 # ----------------------------------------------
 # Blast regions between synteny blocks
@@ -980,7 +1083,7 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -1018,7 +1121,7 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -1060,7 +1163,7 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -1117,7 +1220,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
     make_dir ${path_log_step}
         
     # Start
-    if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1 pokaz_attention "Combine two references: ${ref0} and ${ref1}.."  # SHOULD BE INSIDE THE LOOP
         
@@ -1148,7 +1251,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
             --path.cons ${path_cons} \
@@ -1184,7 +1287,7 @@ if [ ! -d "$path_mafft_out" ]; then
 fi
 
 # Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
             --path.cons "${path_cons}" \
@@ -1213,7 +1316,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir "${path_log_step}"
 
 # Start
-if [ "$start_step" -le "${step_num}" ] || [ ! -f "$step_file" ]; then
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
     "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
             -cores "${cores}" \
@@ -1240,7 +1343,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
             --cores ${cores} \
@@ -1267,7 +1370,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
             --cores ${cores} \
@@ -1301,7 +1404,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # make_dir ${path_log_step}
 
 # # Start
-# if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+# if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
 #     Rscript $INSTALLED_PATH/pangen/comb_07_extra_seqs.R  \
 #             --cores ${cores} \
@@ -1331,7 +1434,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # # make_dir ${path_log_step}
 
 # # # Start
-# # if [ $start_step -le ${step_num} ] || [ ! -f "$step_file" ]; then
+# # if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
 
 # #     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
 # #             --path.cons ${path_out} \
@@ -1346,7 +1449,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # # with_level 1 pokaz_message "* The pipeline is done."
 
-# # # if [ $start_step -eq 0 ]; then
+# # # if [ $step_start -eq 0 ]; then
 # # #     rm -f "$FLAG_DIR"/.*
 # # #     echo "Script completed successfully"
 # # # fi
