@@ -12,12 +12,13 @@ The flag `-cores` specifies the number of CPU cores to use for parallel processi
 
 If the run is interrupted or stops unexpectedly, restarting **the same command again** will resume execution from where it was interrupted.
 
-> 🧨 **Risky Tip:** You can manually specify the steps to execute.  
+> 🧨 **Risky Tips:** You can manually specify the steps to execute.  
 > But this is **not recommended** unless you are sure you need to do so.
-> 
 > - Start at step `N`: use `-s N`.
 > - Run only step `N`: use `-s N -one_step`.
 > - Run from step `N` to `M`: use `-s N -e M`.
+>
+> If you want to clean up the output files from the previous run, add the `-clean` flag.
 
 ## Logging
 

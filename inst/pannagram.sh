@@ -23,7 +23,7 @@ aln_type_comb='comb_'
 mode_pre="F"
 mode_ref="F"
 mode_msa="F"
-clean_dir="F"
+clean="F"
 one_step="F"
 purge_reps="F"
 
@@ -38,11 +38,11 @@ do
         -h) print_usage_short; print_examples; exit ;;
         -help ) print_usage_detailed; print_examples; exit ;;
         -s | -stage ) step_start="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
-        -e | -end ) pokaz_attention "Be very careful with -e/-end option!";  step_end="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
+        -e | -end )   step_end="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -log)         log_level=$2;    shift 2 ;;  # path to the output
         -cores)       cores=$2;        shift 2 ;;
-        -clean_dir)   clean_dir="T"    shift 1 ;;
-        -one_step)    one_step="T"     shift 1 ;;
+        -clean)       clean="T";       shift 1 ;;
+        -one_step | -1s)    one_step="T";    shift 1 ;;
         
         # Required
         -path_out) path_out=$2; shift 2 ;;  # path to the output
@@ -83,7 +83,6 @@ do
         *) unrecognized_options+=("$1"); shift 1 ;;
     esac
 done
-
 
 # Output of Unrecognized Parameters
 if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
@@ -441,7 +440,7 @@ fi
 # File with accessions
 
 file_accessions="${path_inter}accessions.txt"
-echo ${file_accessions}
+# pokaz_message "Accession file: ${file_accessions}"
 printf "%s\n" "${acc_set[@]}" > "${file_accessions}"
 
 # Add reference is it's in path_in, but not in accessions file.
@@ -471,7 +470,7 @@ if [ "${purge_reps}" == "F" ]; then
 elif [ "${purge_reps}" == "T" ]; then
     option_purge_reps=" --purge.reps T"
 else
-    echo "Error: purge_reps must be either 'F' or 'T'."
+    pokaz_error "Error: purge_reps must be either 'F' or 'T'."
     exit 1
 fi
 
@@ -628,14 +627,21 @@ if [[ $step_start -eq 0 ]]; then
     fi
 
 else
-    # Remove all done files between stert and end
+    # Remove all done files between start and end
     if [[ -n "$step_files" ]]; then
+        # If the previous tep does not exist - error
+        step_prev=$((step_start - 1))
+        if ! ls "${path_log}step${step_prev}"*done 1> /dev/null 2>&1; then
+            pokaz_error "Error: Step ${step_prev} was not done."
+            exit 1
+        fi
+
         for file in $step_files; do
             
             step_num=$(echo "$file" | sed -n 's/.*step\([0-9]\{1,\}\)_.*/\1/p')
 
             if [[ $step_num -ge $step_start && $step_num -le $step_end ]]; then
-                echo ${file}
+                # echo ${file}
                 rm ${file}
             fi
         done
@@ -643,13 +649,23 @@ else
     fi 
 fi
 
-echo "Start End ${step_start} ${step_end}"
+if [ "$step_end" -ne 100 ]; then
+    pokaz_attention "Attention: the pipeline runs until step ${step_end}";
+fi
+
+if [ "$one_step" == "T" ]; then
+    pokaz_attention "Attention: running only one step!";
+    step_end=${step_start}
+fi
+
+pokaz_message "Start End ${step_start} ${step_end}"
 
 # Check start and end
 if [ "$step_start" -gt "$step_end" ]; then
     echo "Error: step_start ($step_start) is greater than step_end ($step_end)"
     exit 1  # Exit the script with error status 1
 fi
+
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗  /\_/\  
 # ║                                                                                   ║ ( o.o ) 
@@ -675,11 +691,13 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Clean up the output folders
-    if   [ "$clean_dir" = "T" ]; then 
+    if   [ "$clean" == "T" ]; then 
         rm -f ${path_chrom}*fasta
+        rm -f ${path_chrom}*txt
+        rm -f ${path_log_step}*
     fi
 
     # Run the step
@@ -714,7 +732,7 @@ if [[ "${path_in}" != "$path_ref" ]]; then
         make_dir ${path_log_step}
 
         # Start
-        if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+        if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
             with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -757,14 +775,14 @@ if [ ! -z "${flag_orf}" ]; then
     make_dir ${path_log_step}
 
     # Start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         # Make ORF folder
         path_orf="${path_inter}orf/"
         mkdir -p "${path_orf}"
 
         # Clean up the output folders
-        if   [ "$clean_dir" = "T" ]; then 
+        if   [ "$clean" == "T" ]; then 
             rm -f ${path_orf}*fasta
             rm -f ${path_log_step}*
         fi
@@ -798,11 +816,12 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Clean up the output folders
-    if   [ "$clean_dir" = "T" ]; then 
+    if   [ "$clean" == "T" ]; then 
         rm -f ${path_parts}*fasta
+        rm -f ${path_log_step}*
     fi
 
     # Run the step
@@ -843,7 +862,7 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
@@ -854,8 +873,9 @@ for ref0 in "${refs_all[@]}"; do
         fi
     
         # ---- Clean up the output folders ----
-        if   [ "$clean_dir" = "T" ]; then 
+        if   [ "$clean" == "T" ]; then 
             rm -f ${path_blast_parts}*txt
+            rm -f ${path_log_step}*
         fi    
 
         # ---- Create a database on the reference genome ----
@@ -932,14 +952,14 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
         # Clean up the output folders
-        if   [ "$clean_dir" = "T" ]; then 
-            rm -f "${path_alignment}*rds"
-            rm -f "${path_gaps}*fasta"
+        if   [ "$clean" == "T" ]; then 
+            rm -f ${path_alignment}*rds
+            rm -f ${path_log_step}*
         fi    
         
         # Run the step
@@ -977,6 +997,8 @@ for ref0 in "${refs_all[@]}"; do
 
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
+    path_plots_ref=${path_plots}plots_${ref0}/
+    make_dir ${path_plots_ref}
     
     # Logs
     step_name="step${step_num}_synteny_02_plot_${ref0}"
@@ -985,14 +1007,21 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
+        # ---- Clean up the output folders ----
+        if [ "$clean" == "T" ]; then 
+            rm -f ${path_plots_ref}*pdf
+            rm -f ${path_log_step}*
+        fi    
+
+        # Run the step
         Rscript $INSTALLED_PATH/pangen/synteny_02_plot.R \
                 --ref ${ref0} \
                 --path.chr ${path_chrom} \
-                --path.plot ${path_plots} \
+                --path.plot ${path_plots_ref} \
                 --path.aln ${path_alignment} \
                 --accessions ${file_accessions} \
                 --path.log ${path_log_step} \
@@ -1006,6 +1035,7 @@ for ref0 in "${refs_all[@]}"; do
 
     # Remove reference-dependent variables
     unset path_alignment
+    unset path_plots_ref
 
 done
 
@@ -1039,9 +1069,15 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
+
+        # ---- Clean up the output folders ----
+        if  [ "$clean" == "T" ]; then 
+            rm -f ${path_gaps}*fasta
+            rm -f ${path_log_step}*
+        fi  
 
         # Run
         Rscript $INSTALLED_PATH/pangen/synteny_03_get_gaps.R \
@@ -1083,9 +1119,15 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
+
+        # ---- Clean up the output folders ----
+        if   [ "$clean" == "T" ]; then 
+            rm -f ${path_gaps}*out
+            rm -f ${path_log_step}*
+        fi  
 
         # Run BLAST for gaps
         $INSTALLED_PATH/pangen/synteny_04_blast_gaps.sh \
@@ -1121,10 +1163,17 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
+        # ---- Clean up the output folders ----
+        if   [ "$clean" == "T" ]; then 
+            rm -f ${path_alignment}*full.rds
+            rm -f ${path_log_step}*
+        fi  
+
+        # Run the step
         Rscript $INSTALLED_PATH/pangen/synteny_05_merge_gaps.R --ref ${ref0} \
                 --path.aln ${path_alignment}  --path.chr ${path_chrom}\
                 --path.gaps ${path_gaps}   \
@@ -1163,10 +1212,17 @@ for ref0 in "${refs_all[@]}"; do
     make_dir ${path_log_step}
 
     # Step start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1  pokaz_attention "Reference ${ref0}"
 
+        # ---- Clean up the output folders ----
+        if   [ "$clean" == "T" ]; then 
+            rm -f ${path_cons}ref*h5
+            rm -f ${path_log_step}*
+        fi  
+
+        # Run the step
         Rscript $INSTALLED_PATH/pangen/comb_01_one_ref.R \
                 --path.cons ${path_cons} \
                 --path.aln ${path_alignment} \
@@ -1220,7 +1276,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
     make_dir ${path_log_step}
         
     # Start
-    if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         with_level 1 pokaz_attention "Combine two references: ${ref0} and ${ref1}.."  # SHOULD BE INSIDE THE LOOP
         
@@ -1251,7 +1307,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
             --path.cons ${path_cons} \
@@ -1287,7 +1343,7 @@ if [ ! -d "$path_mafft_out" ]; then
 fi
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
             --path.cons "${path_cons}" \
@@ -1316,7 +1372,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir "${path_log_step}"
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
             -cores "${cores}" \
@@ -1343,7 +1399,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
             --cores ${cores} \
@@ -1370,7 +1426,7 @@ path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
 # Start
-if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
             --cores ${cores} \
@@ -1404,7 +1460,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # make_dir ${path_log_step}
 
 # # Start
-# if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+# if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
 #     Rscript $INSTALLED_PATH/pangen/comb_07_extra_seqs.R  \
 #             --cores ${cores} \
@@ -1434,7 +1490,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # # make_dir ${path_log_step}
 
 # # # Start
-# # if [ "${step_num}" -ge "${step_start}" ] && [ "${step_num}" -le "${step_end}" ] || [ ! -f ${step_file} ]; then
+# # if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
 # #     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
 # #             --path.cons ${path_out} \

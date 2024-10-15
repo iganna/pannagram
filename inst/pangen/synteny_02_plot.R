@@ -46,10 +46,6 @@ path.aln <- opt$path.aln
 ref <- opt$ref
 num.cores <- opt$cores
 
-
-path.plot.ref <- normalizePath(file.path(path.plot, paste0("plots_", ref)), mustWork = FALSE)
-dir.create(path.plot.ref, showWarnings = FALSE, recursive = TRUE)
-
 # ***********************************************************************
 # ---- Accessions ----
 
@@ -110,7 +106,7 @@ loop.function <- function(acc,
   
   # Save
   pdf.name <- paste0(ref, "-", id)
-  savePDF(p, path = path.plot.ref, name = pdf.name)
+  savePDF(p, path = path.plot, name = pdf.name)
   
 }
 
