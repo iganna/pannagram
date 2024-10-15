@@ -15,7 +15,6 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.mafft.in",  type = "character", default = NULL, help = "Path to directory where to combine fasta files for mafft runs"),
   make_option("--path.mafft.out", type = "character", default = NULL, help = "Path to directory where mafft results are"),
   make_option("--cores",          type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option("--path.log",       type = "character", default = NULL, help = "Path for log files"),
@@ -41,21 +40,15 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 num.cores = opt$cores
 
 # Paths
-if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 
 # ***********************************************************************
 # ---- Preparation ----
 
-files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
-files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
-files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
+files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", full.names = F)
 
-path.mafft.in.tmp = paste0(path.mafft.in, 'tmp/')
-
-if (!file.exists(path.mafft.in.tmp)) {
-  dir.create(path.mafft.in.tmp)
-}
+# ***********************************************************************
+# ---- MAIN program body ----
 
 loop.function <- function(f.in, 
                           echo.loop=T){
@@ -72,23 +65,41 @@ loop.function <- function(f.in,
     return()
   }
   
-  seqs = readFasta(paste0(path.mafft.in, f.in))
-  seqs.clean = seq2clean(seqs,n.flank)
+  seqs = readFasta(paste0(path.mafft.out, f.in))
+  mx = aln2mx(s)
+  
+  len.aln = ncol(mx)
+  
+  mx = toupper(mx)
+  pos.profile = mx2profile(mx)
+  seq.cons = mx2cons(mx)
+  pos.variation = (colSums(pos.profile == 0) != 3) * 1
+  
+  # Define blocks, were the alignment non well
+  blocks.all = c()
+  for(i.seq in 1:nrow(mx)){
+    s = mx[i.seq,]
+    blocks = findOnes((s != '-') *1)
+    blocks$len = blocks$end - blocks$beg + 1
+    if(nrow(blocks) == 0) next
+    
+    # Estimate diversity within each block
+    blocks$pi = 0
+    blocks$acc = rownames(mx)[i.seq]
+    for(irow in 1:nrow(blocks)){
+      idx.block = blocks$beg[irow]:blocks$end[irow]
+      blocks$pi[irow] = sum(pos.variation[idx.block]) / blocks$len[irow]
+    }
+    blocks.all = rbind(blocks.all, blocks)
+  }
+  
+  sim.cutoff = 0.2
+  blocks.all = blocks.all[blocks.all$pi > sim.cutoff,, drop=F]
   
   
-  path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
-  pokaz(path.work)
-  res = refineAlignment(seqs.clean, path.work)
-  
-  alignments = res$aln
-  
-  alignment = alignments[[length(alignments)]]
-  
-  alignment.seq = mx2aln(alignment)
-  
-  
-  file.out = paste0(path.mafft.out, sub('.fasta', '', basename(f.in)), "_aligned2.fasta")
-  writeFasta(alignment.seq, file.out)
+  if(nrow(blocks.all) > 0){
+    pokaz('Bad alignment', f.in)
+  }
   
 }
 

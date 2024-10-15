@@ -14,87 +14,77 @@ source(system.file("utils/utils.R", package = "pannagram"))
 
 args = commandArgs(trailingOnly=TRUE)
 
-
-option_list = list(
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to consensus directory", metavar="character"),
-  make_option(c("-p", "--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--aln.type"), type="character", default="default", 
-              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
-); 
+option_list <- list(
+  make_option("--path.cons", type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--ref",       type = "character", default = "", help = "Prefix of the reference file"),
+  make_option("--cores",     type = "integer",   default = 1,    help = "Number of cores to use for parallel processing")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+max.len.gap = 20000
+
 # print(opt)
 
-# Set the number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
+# ***********************************************************************
+# ---- Logging ----
 
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+aln.type = aln.type.msa
+
+# ***********************************************************************
+# ---- Values of parameters ----
+
+# Set the number of cores for parallel processing
+num.cores <- opt$cores
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)  
+}
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
 # Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
-} else {
-  ref.pref <- opt$ref.pref
-}
-
-
-# Alignment prefix
-if (!is.null(opt$aln.type)) {
-  aln.type = opt$aln.type
-} else {
-  aln.type = 'msa_'
-}
+ref.name <- opt$ref
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-# path.cons = './'
-# ref.pref = '0'
-# library(rhdf5)
-# source("../../../pannagram/utils/utils.R")
+s.pattern <- paste0("^", aln.type)
+s.combinations <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+s.combinations = gsub(aln.type, "", s.combinations)
+s.combinations = gsub(".h5", "", s.combinations)
 
-
-s.pattern <- paste0("^", aln.type, ".*", '_ref_', ref.pref)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type, "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
-pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
-
-pokaz('Reference:', ref.pref)
-if(length(pref.combinations) == 0){
-  stop('No Combinations found.')
+if(ref.name != ""){
+  ref.suff = paste0('_', ref.name)
+  
+  pokaz('Reference:', ref.name)
+  s.combinations <- s.combinations[grep(ref.suff, s.combinations)]
+  s.combinations = gsub(ref.suff, "", s.combinations)
+  
 } else {
-  pokaz('Combinations', pref.combinations)  
+  ref.suff = ''
 }
 
-# ----  Combine correspondence  ----
-
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-max.len.gap = 20000
-
-gr.blocks = 'blocks/'
-
+if(length(s.combinations) == 0){
+  stop('No Combinations found.')
+} else {
+  pokaz('Combinations', s.combinations)  
+}
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
 loop.function <- function(s.comb, echo = T){
   
-  file.comb = paste0(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5')
+  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -104,7 +94,6 @@ loop.function <- function(s.comb, echo = T){
     h5createGroup(file.comb, gr.blocks)
   })
 
-  
   # ---- Define coverage of blocks for every position  and put NA between blocks----
   idx.blocks = 0
   for(acc in accessions){
@@ -222,15 +211,13 @@ loop.function <- function(s.comb, echo = T){
 }
 
 
-
-
 # ***********************************************************************
 # ---- Loop  ----
 
 
 if(num.cores == 1){
   list.blocks = list()
-  for(s.comb in pref.combinations){
+  for(s.comb in s.combinations){
     list.blocks[[s.comb]] = loop.function(s.comb)
   }
 } else {
@@ -238,7 +225,7 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+  list.blocks = foreach(s.comb = s.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
     tmp = loop.function(s.comb)
     return(tmp)
   }
@@ -249,10 +236,8 @@ if(num.cores == 1){
 # columns:   pan.b    pan.e    own.b    own.e   acc chr dir
 
 df.blocks = do.call(rbind, list.blocks)
-file.blocks = paste0(path.cons, aln.type,'blocks_ref_',ref.pref,'.rds')
+file.blocks = paste0(path.cons, aln.type,'blocks',ref.suff,'.rds')
 saveRDS(df.blocks, file.blocks, compress = F)
-
-
 
 warnings()
 

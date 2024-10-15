@@ -1522,37 +1522,35 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
 
-# # # ----------------------------------------------
-# # # Get synteny blocks
+# ----------------------------------------------
+# Get synteny blocks
 
-# # with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
 
-# # # Logs
-# # step_name="step${step_num}_analys_01_blocks"
-# # step_file="${path_log}${step_name}_done"
-# # path_log_step="${path_log}${step_name}/"
-# # make_dir ${path_log_step}
+# Logs
+step_name="step${step_num}_analys_01_blocks"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
 
-# # # Start
-# # if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-# #     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
-# #             --path.cons ${path_out} \
-# #             --ref.pref  ${ref0} \
-# #             --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+            --path.cons ${path_cons} \
+            --cores ${cores}
+    # Done
+    touch "${step_file}"
+fi
 
-# #     # Done
-# #     touch "${step_file}"
-# # fi
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# # source $INSTALLED_PATH/utils/chunk_step_done.sh
+with_level 1 pokaz_message "* The pipeline is done."
 
-# # with_level 1 pokaz_message "* The pipeline is done."
-
-# # # if [ $step_start -eq 0 ]; then
-# # #     rm -f "$FLAG_DIR"/.*
-# # #     echo "Script completed successfully"
-# # # fi
+# if [ $step_start -eq 0 ]; then
+#     rm -f "$FLAG_DIR"/.*
+#     echo "Script completed successfully"
+# fi
 
 
 

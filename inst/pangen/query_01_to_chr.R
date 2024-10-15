@@ -115,7 +115,7 @@ loop.function <- function(acc, echo.loop=T){
     return(NULL)
   }
 
-  pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
+  pokaz('Accession', acc, file=file.log.main, echo=echo.loop)
   
   # Read the genome file
   q.fasta = readFastaMy(file.genome)
@@ -127,7 +127,7 @@ loop.function <- function(acc, echo.loop=T){
   if(length(q.fasta) < n.chr){
     pokazAttention('Accession', acc, 'was not analysed, not enough chromosomes in the genome.\n
                    Exist:', length(q.fasta), 'Requeired:', n.chr, 
-                   file=file.log.loop, echo=echo.loop)
+                   file=file.log.main, echo=echo.loop)
     return(NULL)
   }
   
@@ -140,11 +140,11 @@ loop.function <- function(acc, echo.loop=T){
   write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
   
   pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed',
-                 file=file.log.loop, echo=echo.loop)
+                 file=file.log.main, echo=echo.loop)
   
   if(length(q.fasta) > n.chr){
     pokaz('Chromosomes', names(q.fasta)[(n.chr+1):length(q.fasta)], 'will NOT be processed',
-                   file=file.log.loop, echo=echo.loop)
+                   file=file.log.main, echo=echo.loop)
   }
   
   # Write every chromosome to a separate file

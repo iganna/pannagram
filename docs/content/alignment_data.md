@@ -8,7 +8,7 @@ The test dataset comprises bacterial genomes (Escherichia coli) from [NCBI](http
 
 ```bash
 echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042692195.1\nGCA_042259155.1\nGCA_042189615.1" > "${PATH_DATA}ecoli.txt"
-echo -e "GCA_042192135.1\nGCA_042192365.1\nGCA_042161425.1\nGCA_042138005.1\nGCA_964264615.1" >> "${PATH_DATA}ecoli.txt"
+echo -e "GCA_042192135.1\nGCA_042192365.1\nGCA_042161425.1\nGCA_042138005.1" >> "${PATH_DATA}ecoli.txt"
 echo -e "GCA_042016495.1\nGCA_042017145.1\nGCA_042017895.1\nGCA_040964775.2\nGCA_041950585.1" >> "${PATH_DATA}ecoli.txt"
 echo -e "GCA_041954705.1\nGCA_041927255.1\nGCA_041897545.1\nGCA_002853715.1\nGCA_000013265.1" >> "${PATH_DATA}ecoli.txt"
 echo -e "GCA_003697165.2\nGCA_000210475.1\nGCA_000010385.1\nGCA_000019645.1\nGCA_003018455.1" >> "${PATH_DATA}ecoli.txt"
@@ -61,7 +61,7 @@ cd "${PATH_OUT}plots/plots_${REF_NAME}/"
 In the case of the *E. coli* test example, the first sequence is the chromosome, while the others are plasmids. To analyze only the chromosome, specify `-nchr 1`. To analyze the chromosome and the first plasmid, use `-nchr 2`, and so on (but please ensure that the homologous plasmids are located in the same order).
 ```
 conda activate pannagram
-${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -accessions ${FILE_ACC} -ref ${REF_NAME} -cores 8 -nchr 1
+${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -accessions ${FILE_ACC} -cores 8 -nchr 1
 ```
 The results are in the folder:
 ```

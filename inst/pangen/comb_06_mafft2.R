@@ -64,6 +64,9 @@ if (!file.exists(path.mafft.in.tmp)) {
   dir.create(path.mafft.in.tmp)
 }
 
+# ***********************************************************************
+# ---- MAIN program body ----
+
 loop.function <- function(f.in, 
                           echo.loop=T, 
                           file.log.loop=NULL){

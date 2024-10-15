@@ -14,23 +14,21 @@ source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("--path.mafft.out"), type="character", default=NULL, 
-              help="path to directory, where to mafft results are", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to directory with the consensus", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
-); 
+option_list <- list(
+  make_option("--path.mafft.out", type = "character", default = NULL, help = "Path to directory where mafft results are"),
+  make_option("--path.cons",      type = "character", default = NULL, help = "Path to directory with the consensus"),
+  make_option("--cores",          type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",       type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",      type = "character", default = NULL, help = "Level of log to be shown on the screen")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
+
+n.flank = 30
+max.block.elemnt = 3 * 10^ 6
 
 # ***********************************************************************
 # ---- Logging ----
@@ -41,27 +39,17 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
-# ***********************************************************************
-
-# TODO: SHOULD BE PARAMETERS ?
-
-aln.type.in = aln.type.comb
-aln.type.out = aln.type.pre
-
-n.flank = 30
-max.block.elemnt = 3 * 10^ 6
+aln.type.in = aln.type.clean
+aln.type.out = aln.type.msa
 
 # ***********************************************************************
-
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+num.cores <- opt$cores
 
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-
 
 # ***********************************************************************
 
