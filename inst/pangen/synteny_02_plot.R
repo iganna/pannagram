@@ -46,12 +46,17 @@ path.aln <- opt$path.aln
 ref <- opt$ref
 num.cores <- opt$cores
 
+pokaz('Reference genome:', ref, 
+      file=file.log.main, echo=echo.main)
+
+
 # ***********************************************************************
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
 tmp <- read.table(file.acc, stringsAsFactors = F)
 accessions <- tmp[,1]
+accessions = setdiff(accessions, ref)
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)
 
@@ -98,6 +103,14 @@ loop.function <- function(acc,
     }
   }
   
+  # ---- Testing ----
+  # file.ws = "tmp_workspace.RData"
+  # all.local.objects <- ls()
+  # save(list = all.local.objects, file = file.ws)
+  # pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+  # stop('Enough..')
+  
+  # ---- Plot ----
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
                      acc=acc,

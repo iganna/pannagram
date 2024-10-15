@@ -26,6 +26,7 @@ mode_msa="F"
 clean="F"
 one_step="F"
 purge_reps="F"
+rm_inter="F"  # remove intermediate files
 
 unrecognized_options=()
 
@@ -41,17 +42,18 @@ do
         -e | -end )   step_end="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -log)         log_level=$2;    shift 2 ;;  # path to the output
         -cores)       cores=$2;        shift 2 ;;
-        -clean)       clean="T";       shift 1 ;;
-        -one_step | -1s)    one_step="T";    shift 1 ;;
+        -clean    | -cleanup) clean="T";       shift 1 ;;
+        -one_step | -1s)      one_step="T";    shift 1 ;;
+        -rm_inter)            rm_inter="T";    shift 1 ;;
         
         # Required
         -path_out) path_out=$2; shift 2 ;;  # path to the output
         -path_in)  path_in=$2;  shift 2 ;;  # path with all genomes in fasta format
 
         # REF-based
-        -pre)      mode_pre="T"; shift 1 ;;  # shitch to the preliminary mode
+        -pre)                   mode_pre="T"; shift 1 ;;  # shitch to the preliminary mode
         -ref)      ref_name=$2; mode_ref="T"; shift 2 ;;  # name of the reference genome
-        -path_ref) path_ref=$2; shift 2 ;;  # dont provide if it's the same folder as the path with query genomes
+        -path_ref) path_ref=$2;               shift 2 ;;  # dont provide if it's the same folder as the path with query genomes
 
         # MSA
         -refs) ref_set="$2"; mode_msa="T"; shift 2 ;;
@@ -255,7 +257,7 @@ fi
 
 # ----------------------------------------------
 # Handling reference genomes in MSA modes
-if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+if [ "${mode_pangen}" = "${name_mode_msa}" ]; then
 
     # ----------------------------------------------
     # Check the number of reference genomes for randomisation
@@ -268,12 +270,13 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
         with_level 0 pokaz_error "Error: Number of reference genomes is not a number."
         exit 1
     fi
-    with_level 2 pokaz_message "Number of genomes for randomisation: ${ref_num}"
+
+    pokaz_message "Number of genomes for randomisation: ${ref_num}"
 
     # ----------------------------------------------
     # Check if ref_num is greater than the number of genomes in acc_set
     if (( ref_num > ${#acc_set[@]} )); then
-        with_level 0 pokaz_error "Error: ref_num ($ref_num) is greater than the number of available genomes (${#acc_set[@]}) in acc_set."
+        pokaz_error "Error: ref_num ($ref_num) is greater than the number of available genomes (${#acc_set[@]}) in acc_set."
         exit 1
     fi
 
@@ -305,7 +308,7 @@ if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
     fi
 
     # Print the selected reference genomes for verification
-    with_level 2 pokaz_message "Names of genomes for randomisation: $(IFS=,; echo "${refs_all[*]}")"
+    pokaz_message "Names of genomes for randomisation: $(IFS=,; echo "${refs_all[*]}")"
 
 fi
 
@@ -362,11 +365,10 @@ if [[ ${nchr_ref} -ne 0 ]]; then
         for ext in "${genome_extensions[@]}"; do
             # Find the file with the current acc and extension
             file="${path_ref}/${ref_name}.${ext}"
-            
             # Check if the file exists
             if [[ -f "$file" ]]; then
                 count=$(grep -c '^>' "$file")
-                if [[ ${count} -lt ${nchr} ]]; then
+                if [[ ${count} -lt ${nchr_ref} ]]; then
                     pokaz_error "Error: Number of chromosomes in the reference genome ${ref_name} is ${count}. Must be at least ${nchr_ref}."
                     exit 1
                 fi
@@ -393,6 +395,7 @@ if [[ ${nchr} -ne 0 ]]; then
         done
     done
 fi
+
 
 
 # ----------------------------------------------
@@ -1100,8 +1103,6 @@ done
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-exit 0
-
 # ----------------------------------------------
 # Blast regions between synteny blocks
 
@@ -1124,8 +1125,10 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1  pokaz_attention "Reference ${ref0}"
 
         # ---- Clean up the output folders ----
-        if   [ "$clean" == "T" ]; then 
-            rm -f ${path_gaps}*out
+        if 
+            [ "$clean" == "T" ]; then 
+            rm -f ${path_gaps}db/*
+            rm -f ${path_gaps}*out.txt
             rm -f ${path_log_step}*
         fi  
 
@@ -1168,15 +1171,19 @@ for ref0 in "${refs_all[@]}"; do
         with_level 1  pokaz_attention "Reference ${ref0}"
 
         # ---- Clean up the output folders ----
-        if   [ "$clean" == "T" ]; then 
+        if [ "$clean" == "T" ]; then 
             rm -f ${path_alignment}*full.rds
             rm -f ${path_log_step}*
         fi  
 
         # Run the step
-        Rscript $INSTALLED_PATH/pangen/synteny_05_merge_gaps.R --ref ${ref0} \
-                --path.aln ${path_alignment}  --path.chr ${path_chrom}\
+        Rscript $INSTALLED_PATH/pangen/synteny_05_merge_gaps.R  \
+                --path.chr ${path_chrom}\
+                --path.aln ${path_alignment} \
                 --path.gaps ${path_gaps}   \
+                --ref ${ref0} \
+                --accessions ${file_accessions} \
+                --combinations ${file_combinations} \
                 --cores ${cores} \
                 --path.log ${path_log_step} \
                 --log.level ${log_level}
@@ -1218,7 +1225,7 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Clean up the output folders ----
         if   [ "$clean" == "T" ]; then 
-            rm -f ${path_cons}ref*h5
+            rm -f ${path_cons}ref*${ref0}_.h5
             rm -f ${path_log_step}*
         fi  
 
@@ -1226,9 +1233,11 @@ for ref0 in "${refs_all[@]}"; do
         Rscript $INSTALLED_PATH/pangen/comb_01_one_ref.R \
                 --path.cons ${path_cons} \
                 --path.aln ${path_alignment} \
-                --pref ${ref0}  \
-                --cores ${cores} \
                 --path.chr ${path_chrom} \
+                --ref ${ref0}  \
+                --accessions ${file_accessions} \
+                --combinations ${file_combinations} \
+                --cores ${cores} \
                 --path.log ${path_log_step} \
                 --log.level ${log_level}
 
@@ -1280,6 +1289,11 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
 
         with_level 1 pokaz_attention "Combine two references: ${ref0} and ${ref1}.."  # SHOULD BE INSIDE THE LOOP
         
+        # ---- Clean up the output folders ----
+        if   [ "$clean" == "T" ]; then 
+            rm -f ${path_cons}comb*h5
+            rm -f ${path_log_step}*
+        fi  
 
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs.R \
                 --path.cons ${path_cons} \
@@ -1308,6 +1322,12 @@ make_dir ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        rm -f ${path_cons}clean*h5
+        rm -f ${path_log_step}*
+    fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
             --path.cons ${path_cons} \
@@ -1345,6 +1365,12 @@ fi
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        rm -f ${path_mafft_in}*fasta
+        rm -f ${path_log_step}*
+    fi  
+
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
             --path.cons "${path_cons}" \
             --cores "${cores}" \
@@ -1374,6 +1400,12 @@ make_dir "${path_log_step}"
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        rm -f ${path_mafft_out}*aligned.fasta
+        rm -f ${path_log_step}*
+    fi
+
     "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
             -cores "${cores}" \
             -path_mafft_in "${path_mafft_in}" \
@@ -1393,7 +1425,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 
 # Logs
-step_name="step${step_num}_comb_05_mafft2"
+step_name="step${step_num}_comb_06_mafft2"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
@@ -1401,7 +1433,13 @@ make_dir ${path_log_step}
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    Rscript $INSTALLED_PATH/pangen/comb_05_mafft2.R \
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        rm -f ${path_mafft_out}*aligned2.fasta
+        rm -f ${path_log_step}*
+    fi
+
+    Rscript $INSTALLED_PATH/pangen/comb_06_mafft2.R \
             --cores ${cores} \
             --path.mafft.in ${path_mafft_in} \
             --path.mafft.out ${path_mafft_out} \
@@ -1420,7 +1458,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 
 # Logs
-step_name="step${step_num}_comb_06"
+step_name="step${step_num}_comb_07"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
@@ -1428,7 +1466,13 @@ make_dir ${path_log_step}
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    Rscript $INSTALLED_PATH/pangen/comb_06_final_aln.R  \
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        rm -f ${path_cons}msa*h5
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_07_final_aln.R  \
             --cores ${cores} \
             --path.mafft.out ${path_mafft_out} \
             --path.cons ${path_cons} \
@@ -1454,7 +1498,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # fi
 
 # # Logs
-# step_name="step${step_num}_comb_07"
+# step_name="step${step_num}_comb_08"
 # step_file="${path_log}${step_name}_done"
 # path_log_step="${path_log}${step_name}/"
 # make_dir ${path_log_step}
@@ -1462,7 +1506,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # # Start
 # if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-#     Rscript $INSTALLED_PATH/pangen/comb_07_extra_seqs.R  \
+#     Rscript $INSTALLED_PATH/pangen/comb_08_extra_seqs.R  \
 #             --cores ${cores} \
 #             --path.chromosomes "${path_chrom}" \
 #             --path.extra ${path_extra} \

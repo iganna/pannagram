@@ -953,3 +953,30 @@ remainLastN <- function(x, n){
 }
 
 
+#' Extract information from a preference combination string
+#'
+#' This function takes a string in the format `accName_queryChr_baseChr` and 
+#' splits it into its components, returning the accession (`acc`), 
+#' the query chromosome (`query.chr`), and the base chromosome (`base.chr`).
+#'
+#' @param pref.comb A character string in the format `acc_queryChr_baseChr`.
+#'
+#' @return A list with the following components:
+#'   \describe{
+#'     \item{acc}{The accession prefix, everything before the last two parts of the string.}
+#'     \item{query.chr}{The query chromosome, the second to last part of the string.}
+#'     \item{base.chr}{The base chromosome, the last part of the string.}
+#'   }
+pref2info <- function(pref.comb){
+  parts <- strsplit(pref.comb, "_")[[1]]
+  
+  query.chr <- parts[length(parts) - 1]
+  base.chr <- parts[length(parts)]
+  parts = parts[-c(length(parts) - 1, length(parts))]
+  acc <- paste0(parts, collapse = '_')
+  return(list(acc = acc,
+              query.chr = query.chr,
+              base.chr = base.chr))
+}
+
+

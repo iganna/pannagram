@@ -18,33 +18,25 @@ suppressMessages({
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/synteny_func.R", package = "pannagram"))
 
-# pokazStage('Step 7. Combine reference-based alignments by chromosomes')
-
 # ***********************************************************************
 # ---- Command line arguments ----
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("--path.chr.len"), type="character", default=NULL,
-              help="file with lengths of chromosomes", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL,
-              help="path to consensus directory", metavar="character"),
-  make_option(c("--path.aln"), type="character", default=NULL,
-              help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--pref"), type="character", default=NULL,
-              help="prefix of the reference file", metavar="character"),
-  make_option(c("--cores"), type = "integer", default = 1,
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.chr"), type="character", default=NULL,
-              help="path to the reference file", metavar="character"),
-  make_option(c("--type"), type="character", default=NULL,
-              help="type of fasta files", metavar="character"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+option_list <- list(
+  make_option(c("--path.cons"),     type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option(c("--path.aln"),      type = "character", default = NULL, help = "Path to the output directory with alignments"),
+  make_option(c("--path.chr"),      type = "character", default = NULL, help = "Path to the reference file"),
+  
+  make_option(c("--ref"),          type = "character", default = NULL, help = "Prefix of the reference file"),
+  make_option(c("--accessions"),   type = "character", default = NULL, help = "File containing accessions to analyze"),
+  make_option(c("--combinations"), type = "character", default = NULL, help = "File containing combinations to analyze"),
+  
+  make_option(c("--cores"),        type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option(c("--path.log"),     type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),    type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -64,111 +56,82 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 # print(opt)
 
 # Number of cores
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+num.cores <- opt$cores
 
-# Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) system(paste0('mkdir ', path.cons))
+# Reference accessions
+if (!is.null(opt$ref)) base.acc.ref <- opt$ref
+pokaz('Reference genome', base.acc.ref)
 
-# File with chromosomal lengths, which should be in the consensus dir
-path.chr.len = ifelse(!is.null(opt$path.chr.len), opt$path.chr.len, 'chr_len/')
-path.chr.len = paste0(path.cons, path.chr.len)
-if(!dir.exists(path.chr.len)) system(paste0('mkdir ', path.chr.len))
-
+# Paths
 if (!is.null(opt$path.chr)) path.chr <- opt$path.chr  # to know the chromosomal lengths
-if (!is.null(opt$pref)) base.acc.ref <- opt$pref
+if (!is.null(opt$path.aln)) path.aln <- opt$path.aln # Path with alignments
+if (!is.null(opt$path.cons)) path.cons <- opt$path.cons # Path with the consensus output
 
-# Path with alignments
-if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
+# Create directories
+if(!dir.exists(path.cons)) system(paste0('mkdir ', path.cons))
 
 # ***********************************************************************
 
-# ---- Get accession names ----
+# Accessions
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- tmp[,1]
+pokaz('Names of genomes for the analysis:', accessions, 
+      file=file.log.main, echo=echo.main)
 
-aln.suff <- "_full.rds"
-aln.files <- list.files(path.aln)
+# ***********************************************************************
+# ---- Combinations ----
 
-pokaz('Paths with alignments', path.aln, file=file.log.main, echo=echo.main)
-# pokaz('Files', aln.files, file=file.log.main, echo=echo.main)
+# Available combinations
 
-aln.files <- aln.files[grep(paste0(aln.suff, "$"), aln.files)]
-# pokaz(aln.files)
+files.aln <- list.files(path = path.aln, pattern = "_full.rds$")
+files.aln <- files.aln[sapply(files.aln, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+files.aln = gsub("_full.rds", "", files.aln)
 
-accessions <- sapply(aln.files, function(filename){
-  parts <- unlist(strsplit(filename, "_", fixed = TRUE))
-  name <- paste(parts[1:(length(parts) - 3)], collapse = "_")
-  return(name)})
-names(accessions) = NULL
+chromosome.pairs = unique(sapply(files.aln, function(s){
+  info = pref2info(s)
+  return(paste(info$query.chr, info$base.chr, sep = '_'))
+}))
 
-accessions <- sort(unique(accessions))
-pokaz('Accessions:', accessions, file=file.log.main, echo=echo.main)
-
-# ---- Combinations of chromosomes query-base to create the alignments ----
-
-chromosome.pairs <- unique(do.call(rbind, lapply(aln.files, function(filename){
-  parts <- unlist(strsplit(filename, "_", fixed = TRUE))
-  s.comb <- c(as.numeric(parts[length(parts) - 2]),
-              as.numeric(parts[length(parts) - 1]))
-  return(s.comb)})))
-
-pokaz('Combinations:', paste(chromosome.pairs[,1], chromosome.pairs[,2], sep = '_'), file=file.log.main, echo=echo.main)
-
-# ---- Length of reference chromosomes ----
-
-file.chr.len = paste0(path.chr.len, base.acc.ref, '_len.rds')
-pokaz('File with chromosomal lengths', file.chr.len, file=file.log.main, echo=echo.main)
-if(!file.exists(file.chr.len)){
-  chr.len = c()
+file.combinations <- ifelse(!is.null(opt$combinations), opt$combinations, stop("File with combinations are not specified"))
+if (length(readLines(file.combinations)) != 0) {
+  combinations.filter = read.table(file.combinations)
   
-  # Define the number of chromosomes in the reference genome by the number of files in the folder, 
-  # which match the reference genome name.
-  pattern <- paste0("^", base.acc.ref, "_chr(\\d+)\\.fasta$")
-  files.ref.chr <- list.files(path = path.chr, pattern = pattern)
-  n.chr.ref = length(files.ref.chr)
+  # String format
+  combinations.filter.str <- apply(combinations.filter, 1, paste, collapse = "_")
   
-  for(i.chr in 1:n.chr.ref){
-    acc = base.acc.ref
-    # print(c(i.chr, acc))
-    
-    # Read base chromosome
-    base.file = paste0(base.acc.ref, '_chr', i.chr , '.fasta', collapse = '')
-    # pokaz('Base:', base.file)
-    base.fas.fw = readFastaMy(paste0(path.chr, base.file))
-    base.fas.fw = seq2nt(base.fas.fw)
-    chr.len = c(chr.len, length(base.fas.fw))
-  }
-  saveRDS(chr.len, file.chr.len)
-} else {
-  chr.len = readRDS(file.chr.len)
+  # Intersect
+  chromosome.pairs <- intersect(chromosome.pairs, combinations.filter.str)
 }
 
+pokaz('Combinations:', chromosome.pairs, file=file.log.main, echo=echo.main)
+
+# ***********************************************************************
+# ---- Length of reference chromosomes ----
+
+file.chr.len = paste0(path.chr, base.acc.ref, '_chr_len.txt')
+if(!file.exists(file.chr.len)) stop('File with chromosomes does not exist')
+chr.len = read.table(file.chr.len, stringsAsFactors = F, header = 1)
+chr.len = chr.len$len
+
 pokaz('Chromosomal lengths:', chr.len, file=file.log.main, echo=echo.main)
-
-# ----  Combine correspondence  ----
-
-pokaz('Reference:', base.acc.ref, file=file.log.main, echo=echo.main)
-
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(i.chr.pair, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+loop.function <- function(s.comb, 
+                          echo.loop=T){
   
-  
-  query.chr = chromosome.pairs[i.chr.pair, 1]
-  base.chr = chromosome.pairs[i.chr.pair, 2]
+  s.comb = strsplit(s.comb, '_')[[1]]
+  query.chr = as.numeric(s.comb[1])
+  base.chr = as.numeric(s.comb[2])
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           query.chr, '_', base.chr,
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         query.chr, '_', base.chr, '_', base.acc.ref,
+                         '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
   }
   
   # ---- Check log Done ----
@@ -176,11 +139,11 @@ loop.function <- function(i.chr.pair,
     return()
   }
   
-  pokaz('Combination', query.chr, base.chr, file=file.log.loop, echo=echo.loop)
+  pokaz('Combination:', query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
-  file.comb = paste0(path.cons, aln.type.ref, query.chr, '_', base.chr,'_ref_',base.acc.ref,'.h5')
+  file.comb = paste0(path.cons, aln.type.ref, query.chr, '_', base.chr, '_', base.acc.ref,'.h5')
   if (file.exists(file.comb)) file.remove(file.comb)
   h5createFile(file.comb)
   
@@ -229,7 +192,6 @@ loop.function <- function(i.chr.pair,
     h5write(base.len, file.comb, v.len)
     
     h5write(1:base.len, file.comb, paste0(gr.accs.e, '', base.acc.ref))
-  
   })
   
   rmSafe(idx.gaps)
@@ -241,16 +203,14 @@ loop.function <- function(i.chr.pair,
   return(NULL)
 }
 
-
 # ***********************************************************************
 # ---- Loop  ----
-
 
 if(num.cores == 1){
   # file.log.loop = paste0(path.log, 'loop_all.log')
   # invisible(file.create(file.log.loop))
-  for(i.chr.pair in 1:nrow(chromosome.pairs)){
-    loop.function(i.chr.pair,
+  for(s.comb in chromosome.pairs){
+    loop.function(s.comb,
                   # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
@@ -259,9 +219,9 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(i.chr.pair = 1:nrow(chromosome.pairs), 
+  tmp = foreach(s.comb = chromosome.pairs, 
                 .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                  loop.function(i.chr.pair,
+                  loop.function(s.comb,
                                 echo.loop=echo.loop)
                 }
   stopCluster(myCluster)

@@ -21,42 +21,37 @@ source(system.file("pangen/comb_func.R", package = "pannagram"))
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to consensus directory", metavar="character"),
-  make_option(c("--path.chromosomes"), type="character", default=NULL, 
-              help="path to directory with chromosomes", metavar="character"),
-  make_option(c("--path.mafft.in"), type="character", default=NULL, 
-              help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character"),
-  make_option(c("--max.len.gap"), type = "integer", default = NULL,
-              help = "Max len of the gap", metavar = "character")
-); 
+option_list <- list(
+  make_option("--path.cons",        type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--path.chromosomes", type = "character", default = NULL, help = "Path to directory with chromosomes"),
+  make_option("--path.mafft.in",    type = "character", default = NULL, help = "Path to directory where to combine fasta files for mafft runs"),
+  
+  make_option("--max.len.gap",      type = "integer",   default = NULL, help = "Max length of the gap"),
+  
+  make_option("--cores",            type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",         type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
-
 
 #TODO: SHOULD BE PARAMATERS
 len.short = 50
 # len.large = 40000
 n.flank = 30
+len.large.mafft = 15000
 
 # print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
-
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- HDF5 ----
-
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+aln.type.in = aln.type.clean
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -97,9 +92,9 @@ if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
+s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
+pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
@@ -117,7 +112,7 @@ for(s.comb in pref.combinations){
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
-  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
+  file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -245,9 +240,6 @@ for(s.comb in pref.combinations){
   v.len[v.len == 0] <- NA
   breaks$len.mean = rowMeans(v.len)
   breaks$len.mean <- rowMeans(v.len, na.rm = TRUE)
-  
-  len.large.mafft = 15000
-  
   idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.mean <= len.large.mafft))
   idx.extra = which((breaks$single != 1) & (breaks$len.mean > len.large.mafft))
   

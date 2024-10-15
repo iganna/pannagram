@@ -75,19 +75,34 @@ pokazAttention('Only the following extensions will be considered:', query.types,
 
 loop.function <- function(acc, echo.loop=T){
   
-  # ---- Log files ----
-  file.log.loop = paste0(path.log, 'loop_acc_', acc,'.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
-  }
-
-  # Check log Done
-  if(checkDone(file.log.loop)){
-    return(NULL)
+  
+  # Check log-files
+  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+  if(file.exists(file.acc.len)){
+    chr.len = read.table(file.acc.len, stringsAsFactors = F, header = 1)
+    if(n.chr == 0){
+      n.log.files = nrow(chr.len)
+    } else {
+      n.log.files = n.chr
+    }
+    
+    flag.exist = 0
+    for(i.chr in 1:n.log.files){
+      file.log.loop = paste0(path.log, 'loop_acc_', acc,'_', i.chr, '.log')
+      if(file.exists(file.log.loop)){
+        if(checkDone(file.log.loop)){
+          flag.exist = flag.exist +1
+        }
+      }
+    }
+    
+    if(flag.exist == n.log.files){
+      return(NULL)
+    }
+    
   }
  
   # ***********************************
-  pokaz('New attempt:', file=file.log.loop, echo=echo.loop)
   
   # Get the genome file
   file.genome = c()
@@ -117,7 +132,6 @@ loop.function <- function(acc, echo.loop=T){
   }
   
   # Save chromosomal lengths
-  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
   df.chr.lengths = data.frame(acc = acc,
                               chr = 1:length(q.fasta),
                               len = nchar(q.fasta), 
@@ -135,6 +149,19 @@ loop.function <- function(acc, echo.loop=T){
   
   # Write every chromosome to a separate file
   for(i.chr in 1:n.chr){
+    
+    # ---- Log files ----
+    file.log.loop = paste0(path.log, 'loop_acc_', acc,'_', i.chr, '.log')
+    if(!file.exists(file.log.loop)){
+      invisible(file.create(file.log.loop))
+    }
+    
+    # Check log Done
+    if(checkDone(file.log.loop)){
+      next
+    }
+    
+    # ---- Write chromosome ----
     file.out = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
 
     pokaz('File out:', file.out,
@@ -143,12 +170,13 @@ loop.function <- function(acc, echo.loop=T){
     writeFastaMy(toupper(q.fasta[i.chr]), 
                  file=file.out, append=F, 
                  seq.names = paste0(acc, '_Chr', i.chr ))
+    
+    pokaz('Done.',
+          file=file.log.loop, echo=echo.loop)
+    
   }
   
   rm(q.fasta)
-  
-  pokaz('Done.',
-        file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
   

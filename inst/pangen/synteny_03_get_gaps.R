@@ -46,7 +46,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- Values of parameters ----
 
 # Number of cores
-num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
+num.cores <- opt$cores
 
 path.chr      <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop('Folder with chromosomes is not specified'))
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
@@ -119,13 +119,11 @@ loop.function <- function(f.maj,
 
   # --- --- --- --- --- --- --- --- --- --- ---
   
-  # Parser for BLAST-result file
-  parts <- strsplit(pref.comb, "_")[[1]]
-  
-  base.chr <- parts[length(parts)]
-  query.chr <- parts[length(parts) - 1]
-  parts = parts[-c(length(parts) - 1, length(parts))]
-  acc <- paste0(parts, collapse = '_')
+  # Parser prefix of the result file
+  info <- pref2info(pref.comb)
+  query.chr <- info$query.chr
+  base.chr <- info$base.chr
+  acc <- info$acc
   
   pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   

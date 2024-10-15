@@ -47,7 +47,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- Values of parameters ----
 
 # Number of cores
-num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
+num.cores <- opt$cores
 
 path.blast    <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
@@ -67,26 +67,21 @@ pokaz('Names of genomes for the analysis:', accessions,
 # ---- Combinations ----
 
 file.combinations <- ifelse(!is.null(opt$combinations), opt$combinations, stop("File with combinations are not specified"))
-if (length(readLines(file.combinations)) == 0) {
-  files.blast <- list.files(path.blast, pattern = "\\.txt$", full.names = F)
+files.blast <- list.files(path.blast, pattern = "\\.txt$", full.names = F)
+files.blast <- files.blast[sapply(files.blast, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 
-  # Filter files that start with one of the values in accessions
-  files.blast <- files.blast[sapply(files.blast, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
-  
-  pokaz('All blast files', length(files.blast), file=file.log.main, echo=echo.main)
-} else {
+if (length(readLines(file.combinations)) != 0) {
   combinations = read.table(file.combinations)
-  files.blast = c()
+  files.blast.filter = c()
   for(acc in accessions){
     for(i.comb in 1:nrow(combinations)){
       file.tmp = paste0(acc, '_', 
                         combinations[i.comb,1], '_',
                         combinations[i.comb,2], '.txt')
-      if(!file.exists(paste0(path.blast, file.tmp))) stop(paste0('NO FILE', file.tmp))
-      
-      files.blast = c(files.blast, file.tmp)
+      files.blast.filter = c(files.blast.filter, file.tmp)
     }
   }
+  files.blast = intersect(files.blast, files.blast.filter)
 }
 
 if(length(files.blast) == 0) stop('No BLAST files provided')
@@ -119,13 +114,11 @@ loop.function <- function(f.blast,
 
   # --- --- --- --- --- --- --- --- --- --- ---
   
-  # Parser for BLAST-result file
-  parts <- strsplit(pref.comb, "_")[[1]]
-  
-  base.chr <- parts[length(parts)]
-  query.chr <- parts[length(parts) - 1]
-  parts = parts[-c(length(parts) - 1, length(parts))]
-  acc <- paste0(parts, collapse = '_')
+  # Parser prefix of the result file
+  info <- pref2info(pref.comb)
+  query.chr <- info$query.chr
+  base.chr <- info$base.chr
+  acc <- info$acc
   
   pokaz('Alignment:', acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   

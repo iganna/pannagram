@@ -9,23 +9,19 @@ suppressMessages({
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
-# source("pangen/synteny_funcs.R")
+# source(system.file("pangen/synteny_funcs.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Command line arguments ----
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to consensus directory", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
-); 
+option_list <- list(
+  make_option("--path.cons",  type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--cores",      type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",   type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",  type = "character", default = NULL, help = "Level of log to be shown on the screen")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -36,12 +32,13 @@ max.len.gap = 100000  # This should be a parameter!!!
 
 # ***********************************************************************
 # ---- Logging ----
-
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- HDF5 ----
-
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+aln.type.in = aln.type.comb
+aln.type.out = aln.type.clean
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -57,10 +54,9 @@ if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
+s.pattern <- paste0("^", aln.type.in, ".*\\.*h5$")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
-# pref.combinations <- sub("_ref.*$", "", pref.combinations)
+pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
@@ -73,17 +69,14 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 loop.function <- function(s.comb,
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           s.comb,
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         s.comb,
+                         '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
   }
   
   # ---- Check log Done ----
@@ -93,19 +86,23 @@ loop.function <- function(s.comb,
   
   # --- --- --- --- --- --- --- --- --- --- ---
   
-  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
+  file.comb.in = paste0(path.cons, aln.type.in, s.comb,'.h5')
+  file.comb.out = paste0(path.cons, aln.type.out, s.comb,'.h5')
   
-  if(!file.exists(file.comb)){
+  if(!file.exists(file.comb.in)){
     stop('File with combined references doesn’t exist')
   }
   
+  # Create the output file
   suppressMessages({
-  h5createGroup(file.comb, gr.blocks)
+    h5createFile(file.comb.out)
+    h5createGroup(file.comb.out, gr.blocks)
+    h5createGroup(file.comb.out, gr.accs.e)
   })
   
-  idx.trust = h5read(file.comb, v.idx.trust)
+  idx.trust = h5read(file.comb.in, v.idx.trust)
   idx.trust = idx.trust != 0
-  groups = h5ls(file.comb)
+  groups = h5ls(file.comb.in)
   accessions = groups$name[groups$group == gr.accs.b]
   
   idx.breaks = c()
@@ -113,12 +110,12 @@ loop.function <- function(s.comb,
   for(acc in accessions){
     pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
-    v = h5read(file.comb, s.acc)
+    v = h5read(file.comb.in, s.acc)
     v = v[idx.trust]
       
     suppressMessages({
-      h5delete(file.comb, s.acc)
-      h5write(v, file.comb, s.acc)
+      # h5delete(file.comb, s.acc)
+      h5write(v, file.comb.out, s.acc)
     })
     
     v.init = v
@@ -137,16 +134,23 @@ loop.function <- function(s.comb,
     v.b$i.beg = v.idx[v.b$beg]
     v.b$i.end = v.idx[v.b$end]
     
-    blocks.acc = rep(0, max(v))
+    # if(acc == "GCA_042692195.1"){
+    #   file.ws = "tmp_workspace.RData"
+    #   all.local.objects <- ls()
+    #   save(list = all.local.objects, file = file.ws)
+    #   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+    #   stop('Enough..')
+    # }
+    
+    blocks.acc = rep(0, max(abs(v)))
     for(irow in 1:nrow(v.b)){
       blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
     }
     
     suppressMessages({
       s.acc = paste0(gr.blocks, acc)
-      h5write(blocks.acc, file.comb, s.acc)
+      h5write(blocks.acc, file.comb.out, s.acc)
     })
-    
     
     # Find breaks
     i.br.acc = which(abs(diff(v)) != 1)
@@ -167,13 +171,12 @@ loop.function <- function(s.comb,
   
   # Update index to trust
   suppressMessages({
-    idx.trust = h5read(file.comb, v.idx.trust)
+    idx.trust = h5read(file.comb.in, v.idx.trust)
     idx.trust = idx.trust[idx.trust != 0]
     
-    h5delete(file.comb, v.idx.trust)
-    h5write(idx.trust, file.comb, v.idx.trust)
+    # h5delete(file.comb, v.idx.trust)
+    h5write(idx.trust, file.comb.out, v.idx.trust)
   })
-  
   
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   saveRDS(idx.breaks, file.breaks)
@@ -187,17 +190,12 @@ loop.function <- function(s.comb,
   return(NULL)
 }
 
-
 # ***********************************************************************
 # ---- Loop  ----
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
   for(s.comb in pref.combinations){
-    loop.function(s.comb,
-                  # file.log.loop = file.log.loop, 
-                  echo.loop=echo.loop)
+    loop.function(s.comb, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -206,7 +204,7 @@ if(num.cores == 1){
   
   tmp = foreach(s.comb = pref.combinations, 
                 .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                  loop.function(s.comb,echo.loop=echo.loop)
+                  loop.function(s.comb, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }

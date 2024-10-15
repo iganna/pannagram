@@ -19,21 +19,19 @@ source(system.file("pangen/synteny_func_gap.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.chr"), type="character", default=NULL, 
-              help="path to query chomosome fasta files", metavar="character"),  
-  make_option(c("--path.aln"), type="character", default=NULL, 
-              help="path to the output directory with alignments", metavar="character"),
-  make_option(c("--ref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
-  make_option(c("--path.gaps"), type="character", default=NULL, 
-              help="prefix of the directory with gaps", metavar="character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
+  make_option(c("--path.chr"),     type = "character", default = NULL, help = "Path to query chromosome fasta files"),
+  make_option(c("--path.aln"),     type = "character", default = NULL, help = "Path to the output directory with alignments"),
+  make_option(c("--path.gaps"),    type = "character", default = NULL, help = "Path to the directory with blast of gaps"),
+  
+  make_option(c("--ref"),          type = "character", default = NULL, help = "Name of the reference genome"),
+  make_option(c("--accessions"),   type = "character", default = NULL, help = "File containing accessions to analyze"),
+  make_option(c("--combinations"), type = "character", default = NULL, help = "File containing combinations to analyze"),
+  
+  make_option(c("--cores"),        type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option(c("--path.log"),     type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),    type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -48,46 +46,71 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- Values of parameters ----
 
 # Number of cores
-num.cores <- ifelse(!is.null(opt$cores), opt$cores, 30)
+num.cores <- opt$cores
 
+# Reference genome
+if (!is.null(opt$ref)) base.acc <- opt$ref
 
+# Paths
 if (!is.null(opt$path.chr)) path.chr <- opt$path.chr
 if (!is.null(opt$path.aln)) path.aln <- opt$path.aln
-if (!is.null(opt$ref)) base.acc <- opt$ref
 if (!is.null(opt$path.gaps)) path.gaps <- opt$path.gaps
-
 
 if(!dir.exists(path.aln)) dir.create(path.aln)
 if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
+# Accessions
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- tmp[,1]
+pokaz('Names of genomes for the analysis:', accessions, 
+      file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
-# ---- Preparation ----
+# ---- Combinations ----
 
+file.combinations <- ifelse(!is.null(opt$combinations), opt$combinations, stop("File with combinations are not specified"))
 files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
-pokaz('Number of alignment files:', length(files.maj), file=file.log.main, echo=echo.main)
-# if(length(files.maj) == 0) stop('No alignment files provided')
 
+# Filter files that start with one of the values in accessions
+files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+
+# Additional filtration when combinations are provided
+if (length(readLines(file.combinations)) != 0) {
+  combinations = read.table(file.combinations)
+  files.maj.comb = c()
+  for(acc in accessions){
+    for(i.comb in 1:nrow(combinations)){
+      file.tmp = paste0(acc, '_', 
+                        combinations[i.comb,1], '_',
+                        combinations[i.comb,2], '_maj.rds')
+      if(file.exists(paste0(path.aln, file.tmp))){
+        files.maj.comb = c(files.maj.comb, file.tmp)  
+      }
+    }
+  }
+  files.maj = intersect(files.maj, files.maj.comb)
+}
+
+if(length(files.maj) == 0) stop('No alignments provided')
+pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
 
 loop.function <- function(f.maj,
-                          echo.loop=T,
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   # Remove extensions
-  pref.comb <- sub("\\maj.rds$", "", f.maj)
+  pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           pref.comb,
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         pref.comb,
+                         '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
   }
   
   # ---- Check log Done ----
@@ -95,54 +118,44 @@ loop.function <- function(f.maj,
     return()
   }
   
-  # Parser for BLAST-result file
-  parts <- strsplit(pref.comb, "_")[[1]]
+  # --- --- --- --- --- --- --- --- --- --- ---
+  # Parser prefix of the result file
+  info <- pref2info(pref.comb)
+  query.chr <- info$query.chr
+  base.chr <- info$base.chr
+  acc <- info$acc
   
-  base.chr <- parts[length(parts) - 1]
-  query.chr <- parts[length(parts)]
-  parts = parts[-c(length(parts) - 1, length(parts))]
-  acc <- paste0(parts, collapse = '_')
-  
-  pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
-  
-  pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
+  # Files: in and out
+  file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
+  file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
   
   # If the previous file was not created - next
-  file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
   if(!file.exists(file.aln.pre)) {
     pokaz('No file', file.aln.pre, file=file.log.loop, echo=echo.loop)
     pokaz('Done.', file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   
-  # If the full file has been already created - next
-  file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
-  if(file.exists(file.aln.full)) {
-    pokaz('File exist', file.aln.full, file=file.log.loop, echo=echo.loop)
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
-    return(NULL)
-  }
-  
   pokaz('Alignment:', acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   
-  # # ---- Read genomes ----
-  # 
-  # # Read reference sequences
-  # base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
-  # pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  # base.fas.fw = readFastaMy(paste0(path.chr, base.file))
-  # base.fas.fw = seq2nt(base.fas.fw)
-  # base.fas.bw = revCompl(base.fas.fw)
-  # base.len = length(base.fas.bw)
-  # 
-  # # Read query sequences
-  # query.file = paste0(acc, '_chr',query.chr, '.fasta')
-  # pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
-  # 
-  # query.fas.chr = readFastaMy(paste0(path.chr, query.file))
-  # query.fas.chr = seq2nt(query.fas.chr)
-  # query.len = length(query.fas.chr)
-  
+  # ---- Read genomes ----
+
+  # Read reference sequences
+  base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
+  pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
+  base.fas.fw = readFastaMy(paste0(path.chr, base.file))
+  base.fas.fw = seq2nt(base.fas.fw)
+  base.fas.bw = revCompl(base.fas.fw)
+  base.len = length(base.fas.bw)
+
+  # Read query sequences
+  query.file = paste0(acc, '_chr',query.chr, '.fasta')
+  pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
+
+  query.fas.chr = readFastaMy(paste0(path.chr, query.file))
+  query.fas.chr = seq2nt(query.fas.chr)
+  query.len = length(query.fas.chr)
+
   # ---- Read Major ----
   
   pokaz('Read the skeleton alignment..', file=file.log.loop, echo=echo.loop)
@@ -440,11 +453,11 @@ loop.function <- function(f.maj,
   sum(pos.q.occup > 1)
   sum(pos.q.occup)
   
-  # ---- Check genomes ---- 
-  # x.dir = setDir(x.comb, base.len = base.len)
-  # checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-  #                      base.fas.fw = base.fas.fw,
-  #                      base.fas.bw = base.fas.bw)
+  # ---- Check genomes ----
+  x.dir = setDir(x.comb, base.len = base.len)
+  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                       base.fas.fw = base.fas.fw,
+                       base.fas.bw = base.fas.bw)
   
   saveRDS(object = x.comb, file = file.aln.full) 
   
@@ -462,8 +475,7 @@ loop.function <- function(f.maj,
 
 if(num.cores == 1){
   for(f.maj in files.maj){
-    loop.function(f.maj,
-                  echo.loop=echo.loop)
+    loop.function(f.maj, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
@@ -472,8 +484,7 @@ if(num.cores == 1){
   
   tmp = foreach(f.maj = files.maj, 
                 .packages=c('crayon'))  %dopar% { 
-                  loop.function(f.maj, 
-                                echo.loop=echo.loop)
+                  loop.function(f.maj, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
@@ -506,4 +517,11 @@ pokaz('Done.',
 #   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
 #   stop('Enough..')
 # }
+
+
+# file.ws = "tmp_workspace.RData"
+# all.local.objects <- ls()
+# save(list = all.local.objects, file = file.ws)
+# pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+# stop('Enough..')
 

@@ -323,11 +323,18 @@ for(s.comb in pref.combinations){
     # Add short
     for(i in 1:length(msa.res$len)){
       if(acc %in% colnames(msa.res$aln[[i]])){
-        
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('2: Duplicated positions in short alignments')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
+      
+      file.ws = "tmp_workspace.RData"
+      all.local.objects <- ls()
+      save(list = all.local.objects, file = file.ws)
+      stop('Enough..')
+      
+      stop('2: Duplicated positions in short alignments')
+    } 
     
     # add long
     for(i in 1:length(mafft.aln.pos)){
