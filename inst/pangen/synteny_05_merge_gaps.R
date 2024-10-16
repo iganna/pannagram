@@ -466,6 +466,11 @@ loop.function <- function(f.maj,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
   
+  file.ws = "tmp_workspace.RData"
+  all.local.objects <- ls()
+  save(list = all.local.objects, file = file.ws)
+  stop('Enough..')
+  
   saveRDS(object = x.comb, file = file.aln.full) 
   
   suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
