@@ -227,6 +227,14 @@ loop.function <- function(f.maj,
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
+    pokaz('before1')
+    x.dir = setDir(x.gap, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+    pokaz('after1')
+    
+    
     x.gap = glueZero(x.gap)
     x.gap$idx = 1:nrow(x.gap)
     
@@ -461,13 +469,14 @@ loop.function <- function(f.maj,
   sum(pos.q.occup)
   
   # ---- Check genomes ----
-  x.dir = setDir(x.comb, base.len = base.len)
+  
   
   file.ws = "tmp_workspace.RData"
   all.local.objects <- ls()
   save(list = all.local.objects, file = file.ws)
   stop('Enough..')
   
+  x.dir = setDir(x.comb, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
