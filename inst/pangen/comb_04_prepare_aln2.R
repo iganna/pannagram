@@ -279,8 +279,8 @@ for(s.comb in pref.combinations){
           paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
   
-  save(list = ls(), file = "tmp_workspace.RData")
-  stop('Enough..')
+  # save(list = ls(), file = "tmp_workspace.RData")
+  # stop('Enough..')
   
   ## ---- Analyse by portions ----
   
@@ -293,10 +293,10 @@ for(s.comb in pref.combinations){
     idx.tmp = idx.remained[which(idx.cum.len == i.k)]
   
     aln.seqs <- vector("list", length = nrow(breaks))
-    aln.pos <- vector("list", length = nrow(breaks))
-    
+    aln.seqs.names <- vector("list", length = nrow(breaks))
     
     for(acc in accessions){
+      pokaz(acc)
       
       file.chromosome = paste(path.chromosomes, 
                               acc, 
@@ -304,296 +304,79 @@ for(s.comb in pref.combinations){
       genome = readFasta(file.chromosome)
       genome = seq2nt(genome)
       
+      getSeq <- function(p1, p2, for.mafft = F){
+        
+        if(p1 > 0){
+          s.strand = '+'
+          p1 = p1 + 1
+          p2 = p2 - 1
+          if(p2 < p1) {
+            stop(paste('Wrong direction in strand (+) in row', irow))
+          }
+          seq = genome[p1:p2]
+          pos = p1:p2
+        } else {
+          s.strand = '-'
+          tmp = p1
+          p1 = -p2 + 1
+          p2 = -tmp - 1
+          if(p2 < p1)  {
+            stop(paste('Wrong direction in strand (-) in row', irow))
+          }
+          seq = genome[p1:p2]
+          seq = revCompl(seq)
+          pos = (-p2):(-p1)
+        }
+        
+        if(for.mafft){
+          seq = c(s.flank.beg, seq, s.flank.end)
+        }
+        
+        seq = nt2seq(seq)
+        
+        seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')
+        names(seq) = seq.name
+        
+        return(seq = seq)
+      }
+      
       p1 = v.beg[idx.tmp, acc]
       p2 = v.end[idx.tmp, acc]
       idx.acc = (p1 != 0) & (p2 != 0)
       idx.tmp.acc = idx.tmp[idx.acc]
-      p1 = p1[idx.acc] + 1
-      p2 = p2[idx.acc] - 1
+      p1 = p1[idx.acc]
+      p2 = p2[idx.acc]
       
-      subsets <- mapply(function(b, e) genome[b:e], p1, p2)
+      subsets <- mapply(function(b, e) getSeq(b, e), p1, p2)
       
+      
+      aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
+      aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
+      
+      rm(genome)
     }
-      
-      
     
-    # 
-    # for(acc in accessions){
-    #   
-    #   # Read the chromosome
-    #   file.chromosome = paste(path.chromosomes, 
-    #                           acc, 
-    #                           '_chr', q.chr, '.fasta', sep = '')
-    #   genome = readFasta(file.chromosome)
-    #   genome = seq2nt(genome)
-    #   
-    #   ### ---- Get sequences ----
-    # 
-    #   
-    #   getSeq <- function(irow, for.mafft = F){
-    #     
-    #     if(v.beg[irow, acc] > 0){
-    #       s.strand = '+'
-    #       p1 = v.beg[irow, acc] + 1
-    #       p2 = v.end[irow, acc] - 1
-    #       if(p2 < p1) {
-    #         stop(paste('Wrong direction in strand (+) in row', irow))
-    #       }
-    #       seq = genome[p1:p2]
-    #       pos = p1:p2
-    #     } else {
-    #       s.strand = '-'
-    #       p1 = -v.end[irow, acc] + 1
-    #       p2 = -v.beg[irow, acc] - 1
-    #       if(p2 < p1)  {
-    #         stop(paste('Wrong direction in strand (-) in row', irow))
-    #       }
-    #       seq = genome[p1:p2]
-    #       seq = revCompl(seq)
-    #       pos = (-p2):(-p1)
-    #     }
-    #     
-    #     if(for.mafft){
-    #       seq = c(s.flank.beg, seq, s.flank.end)
-    #     }
-    #     
-    #     seq = nt2seq(seq)
-    #     
-    #     seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')  
-    #     names(seq) = seq.name
-    #     
-    #     return(list(seq = seq, pos = pos))
-    #   }
-    #   
-    #   
-    #   ### ---- Short sequences ----
-    #   pokaz('Save sequences for Short alignments..')
-    #   
-    #     if(v.beg[irow, acc] == 0) next
-    #     
-    #     res = getSeq(irow)
-    #     seq = res$seq
-    #     pos = res$pos
-    #     
-    #     # Save to the further slignment
-    #     aln.seqs[[irow]][acc] = seq
-    #     aln.pos[[irow]][[acc]] = pos
-    #   }
-    #   pokaz('.. done!')
-    #   
-    #   rm(genome)
-    #   
-    # }
+    if(num.cores == 1){
+     for(i in idx.tmp){
+       writeFasta(aln.seqs[[i]], 
+                  file = breaks$file[i], 
+                  seq.names = aln.seqs.names[[i]])
+     }
+    } else { # Many cores
+      pokaz('.. with parallel')
+      foreach(i = idx.tmp,
+              .packages=c('crayon'))  %dopar% {
+                 writeFasta(aln.seqs[[i]], 
+                  file = breaks$file[i], 
+                  seq.names = aln.seqs.names[[i]])
+              }
+    }
+    if(echo) pokaz('.. done!')
+    
+    rm(aln.seqs)
+    rm(aln.seqs.names)
   }
-  # }
-  # 
-  # ### ---- MAFFT ----
-  # 
-  # CODE_WRITE_MAFFT <- function(echo=F){
-  #   if(v.beg[irow, acc] == 0) return()
-  #   
-  #   res = getSeq(irow, for.mafft = T)
-  #   seq = res$seq
-  #   
-  #   # Write to the fasta file
-  #   file.out = paste0(path.mafft.in, breaks$file[irow])
-  #   if(file.exists(file.out)){
-  #     writeFasta(seq, file.out, append = T)
-  #   } else {
-  #     writeFasta(seq, file.out)
-  #   }
-  # }
-  # 
-  # pokaz('Write sequences for MAFFT and Extra large..')
-  # if(num.cores == 1){
-  #   pokaz('.. no parallel')
-  #   for(irow in c(idx.large, idx.extra)){
-  #     CODE_WRITE_MAFFT()
-  #   }
-  # } else { # Many cores
-  #   pokaz('.. with parallel')
-  #   foreach(irow = c(idx.large, idx.extra),
-  #           .packages=c('crayon'))  %dopar% {
-  #             CODE_WRITE_MAFFT()
-  #           }
-  # }
-  # if(echo) pokaz('.. done!')
-  # 
-  # 
-  
-  
-  
-  # 
-  # ## ---- Save Long and Keep short ----
-  # 
-  # for(acc in accessions){
-  #   
-  #   # Read the chromosome
-  #   file.chromosome = paste(path.chromosomes, 
-  #                           acc, 
-  #                           '_chr', q.chr, '.fasta', sep = '')
-  #   genome = readFasta(file.chromosome)
-  #   genome = seq2nt(genome)
-  #   
-  #   ### ---- Get sequences ----
-  #   s.flank.beg = rep('A', n.flank)
-  #   s.flank.end = rep('T', n.flank)
-  #   
-  #   getSeq <- function(irow, for.mafft = F){
-  #     
-  #     if(v.beg[irow, acc] > 0){
-  #       s.strand = '+'
-  #       p1 = v.beg[irow, acc] + 1
-  #       p2 = v.end[irow, acc] - 1
-  #       if(p2 < p1) {
-  #         stop(paste('Wrong direction in strand (+) in row', irow))
-  #       }
-  #       seq = genome[p1:p2]
-  #       pos = p1:p2
-  #     } else {
-  #       s.strand = '-'
-  #       p1 = -v.end[irow, acc] + 1
-  #       p2 = -v.beg[irow, acc] - 1
-  #       if(p2 < p1)  {
-  #         stop(paste('Wrong direction in strand (-) in row', irow))
-  #       }
-  #       seq = genome[p1:p2]
-  #       seq = revCompl(seq)
-  #       pos = (-p2):(-p1)
-  #     }
-  #     
-  #     if(for.mafft){
-  #       seq = c(s.flank.beg, seq, s.flank.end)
-  #     }
-  #     
-  #     seq = nt2seq(seq)
-  #     
-  #     seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')  
-  #     names(seq) = seq.name
-  #     
-  #     return(list(seq = seq, pos = pos))
-  #   }
-  #   
-  #   ### ---- MAFFT ----
-  #   
-  #   CODE_WRITE_MAFFT <- function(echo=F){
-  #     if(v.beg[irow, acc] == 0) return()
-  #     
-  #     res = getSeq(irow, for.mafft = T)
-  #     seq = res$seq
-  #     
-  #     # Write to the fasta file
-  #     file.out = paste0(path.mafft.in, breaks$file[irow])
-  #     if(file.exists(file.out)){
-  #       writeFasta(seq, file.out, append = T)
-  #     } else {
-  #       writeFasta(seq, file.out)
-  #     }
-  #   }
-  #   
-  #   pokaz('Write sequences for MAFFT and Extra large..')
-  #   if(num.cores == 1){
-  #     pokaz('.. no parallel')
-  #     for(irow in c(idx.large, idx.extra)){
-  #       CODE_WRITE_MAFFT()
-  #     }
-  #   } else { # Many cores
-  #     pokaz('.. with parallel')
-  #     foreach(irow = c(idx.large, idx.extra),
-  #             .packages=c('crayon'))  %dopar% {
-  #               CODE_WRITE_MAFFT()
-  #             }
-  #   }
-  #   if(echo) pokaz('.. done!')
-  #   
-  #   
-  #   ### ---- Short sequences ----
-  #   pokaz('Save sequences for Short alignments..')
-  #   for(irow in idx.short){
-  #     if(v.beg[irow, acc] == 0) next
-  #     
-  #     res = getSeq(irow)
-  #     seq = res$seq
-  #     pos = res$pos
-  # 
-  #     # Save to the further slignment
-  #     aln.seqs[[irow]][acc] = seq
-  #     aln.pos[[irow]][[acc]] = pos
-  #   }
-  #   pokaz('.. done!')
-  #   
-  #   rm(genome)
-  #   
-  # }
-  # 
-  # # ---- Align Short sequences ----
-  # if(echo) pokaz('Align short seqs')
-  # 
-  # # Checkuip the numer of sequences in alignments
-  # tmp = unlist(lapply(aln.seqs, length))
-  # if(sum(tmp == 1) > 0) stop('Checkup-short1')
-  # 
-  # # Core core for the short alignmgnets
-  # CODE_ALN_SHORT <- function(echo=F){
-  #   
-  #   set = DNAStringSet(seqs)
-  #   aln = muscle(set, quiet = T)
-  #   
-  #   set = as.character(aln)
-  #   n.pos = nchar(set[1])
-  #   
-  #   if(echo & (n.pos > 10)){
-  #     if(echo) pokaz('Iteration', irow)
-  #     print(aln)
-  #   }
-  #   
-  #   val.acc.pos = matrix(0, nrow=n.pos, ncol=n.acc)
-  #   colnames(val.acc.pos) = accessions
-  #   for(s.acc in names(set)){
-  #     s = strsplit(set[[s.acc]],'')[[1]]
-  #     val.acc.pos[s != '-',s.acc] = pos.idx[[s.acc]]
-  #   }
-  #   
-  #   rm(aln)
-  #   rm(set)
-  #   gc()
-  #   
-  #   return(val.acc.pos)
-  # }
-  # 
-  # # Two possible loops depending on the number of cores
-  # if(num.cores == 1){
-  #   pokaz('No parallel computing: short sequences')
-  #   # One core
-  #   res.msa = list()
-  #   for(i.tmp in 1:length(idx.short)){
-  #     irow = idx.short[i.tmp]
-  #     seqs = aln.seqs[[irow]]
-  #     pos.idx = aln.pos[[irow]]
-  #     idx.gap.pos = breaks$idx.beg[irow]
-  #     
-  #     res.msa[[i.tmp]] = CODE_ALN_SHORT()
-  #   }
-  # } else {
-  #   # Many cores
-  #   pokaz('Parallel computing: short sequences')
-  #   res.msa <- foreach(seqs = aln.seqs[idx.short],
-  #                      pos.idx = aln.pos[idx.short],
-  #                      idx.gap.pos = breaks$idx.beg[idx.short],
-  #                      .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
-  #                        return(CODE_ALN_SHORT()) 
-  #                      }
-  # }
-  # 
-  # saveRDS(list(aln = res.msa,
-  #              seqs = aln.seqs[idx.short], 
-  #              pos.idx = aln.pos[idx.short],
-  #              ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
-  #                                   end = breaks$idx.end[idx.short]) ),
-  #         paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
-  # 
-
-  
+    
   H5close()
   gc()
 }
