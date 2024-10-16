@@ -295,6 +295,13 @@ loop.function <- function(f.maj,
                                dimnames = list(NULL, colnames(x.sk))))
   }
   
+  pokaz('before2')
+  checkCorrespToGenome(setDir(x.res, base.len = base.len), 
+                       query.fas = query.fas.chr,
+                       base.fas.fw = base.fas.fw,
+                       base.fas.bw = base.fas.bw)
+  pokaz('after2')
+  
   
   # ---- Read additional alignments ----
   
@@ -306,6 +313,8 @@ loop.function <- function(f.maj,
     # Read blast results on "between blocks"
     pokaz('Read blast of "bad" gaps..', file.gaps.out, file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)    
+    
+    
   }
 
   
@@ -322,6 +331,14 @@ loop.function <- function(f.maj,
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
     # plotSynDot(x.tmp)
+    
+    
+    pokaz('before3')
+    checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
+                         query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+    pokaz('after3')
 
     # Find the correspondence between x.gap and x.tmp
     id.corresp = c()
