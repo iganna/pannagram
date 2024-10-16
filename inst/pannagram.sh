@@ -1371,7 +1371,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln.R \
+    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln2.R \
             --path.cons "${path_cons}" \
             --cores "${cores}" \
             --path.chromosomes "${path_chrom}" \
