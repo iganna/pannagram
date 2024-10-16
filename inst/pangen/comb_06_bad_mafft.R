@@ -27,6 +27,7 @@ opt = parse_args(opt_parser, args = args);
 # print(opt)
 
 n.flank = 30
+sim.cutoff = 0.2
 
 # ***********************************************************************
 # ---- Logging ----
@@ -66,7 +67,7 @@ loop.function <- function(f.in,
   }
   
   seqs = readFasta(paste0(path.mafft.out, f.in))
-  mx = aln2mx(s)
+  mx = aln2mx(seqs)
   
   len.aln = ncol(mx)
   
@@ -93,7 +94,7 @@ loop.function <- function(f.in,
     blocks.all = rbind(blocks.all, blocks)
   }
   
-  sim.cutoff = 0.2
+  
   blocks.all = blocks.all[blocks.all$pi > sim.cutoff,, drop=F]
   
   
