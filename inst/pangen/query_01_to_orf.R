@@ -52,7 +52,7 @@ if(n.chr == 0){
 # Accessions to analyse
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
 tmp <- read.table(file.acc, stringsAsFactors = F)
-accessions <- tmp[,1]
+accessions <- as.character(tmp[,1])
 
 # Set input and output paths
 path.chr <- ifelse(!is.null(opt$path.chr), opt$path.chr, stop("The input path 'path.in' must be specified!"))

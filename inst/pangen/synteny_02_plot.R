@@ -55,7 +55,7 @@ pokaz('Reference genome:', ref,
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
 tmp <- read.table(file.acc, stringsAsFactors = F)
-accessions <- tmp[,1]
+accessions <- as.character(tmp[,1])
 accessions = setdiff(accessions, ref)
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)

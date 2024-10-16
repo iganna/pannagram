@@ -118,7 +118,6 @@ refineMafft <- function(seqs, n.flank = 30){
       pos.variation[idx.block] = (colSums(pos.profile[,idx.block,drop = F] == 0) != 3) * 1
     }
     
-    
     # # Optional
     # for(irow in 1:nrow(blocks)){
     #   idx.block = blocks$beg[irow]:blocks$end[irow]
@@ -129,8 +128,6 @@ refineMafft <- function(seqs, n.flank = 30){
     #     blocks$remove[irow] = 1
     #   } 
     # }
-    
-    
     
     # Remove blocks with very high diversity
     for(irow in 1:nrow(blocks)){
