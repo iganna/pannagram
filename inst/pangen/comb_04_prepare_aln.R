@@ -415,36 +415,36 @@ for(s.comb in pref.combinations){
     return(val.acc.pos)
   }
   
-  # # Two possible loops depending on the number of cores
-  # if(num.cores == 1){
-  #   pokaz('No parallel computing: short sequences')
-  #   # One core
-  #   res.msa = list()
-  #   for(i.tmp in 1:length(idx.short)){
-  #     irow = idx.short[i.tmp]
-  #     seqs = aln.seqs[[irow]]
-  #     pos.idx = aln.pos[[irow]]
-  #     idx.gap.pos = breaks$idx.beg[irow]
-  #     
-  #     res.msa[[i.tmp]] = CODE_ALN_SHORT()
-  #   }
-  # } else {
-  #   # Many cores
-  #   pokaz('Parallel computing: short sequences')
-  #   res.msa <- foreach(seqs = aln.seqs[idx.short],
-  #                      pos.idx = aln.pos[idx.short],
-  #                      idx.gap.pos = breaks$idx.beg[idx.short],
-  #                      .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
-  #                        return(CODE_ALN_SHORT()) 
-  #                      }
-  # }
-  # 
-  # saveRDS(list(aln = res.msa,
-  #              seqs = aln.seqs[idx.short], 
-  #              pos.idx = aln.pos[idx.short],
-  #              ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
-  #                                   end = breaks$idx.end[idx.short]) ),
-  #         paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+  # Two possible loops depending on the number of cores
+  if(num.cores == 1){
+    pokaz('No parallel computing: short sequences')
+    # One core
+    res.msa = list()
+    for(i.tmp in 1:length(idx.short)){
+      irow = idx.short[i.tmp]
+      seqs = aln.seqs[[irow]]
+      pos.idx = aln.pos[[irow]]
+      idx.gap.pos = breaks$idx.beg[irow]
+      
+      res.msa[[i.tmp]] = CODE_ALN_SHORT()
+    }
+  } else {
+    # Many cores
+    pokaz('Parallel computing: short sequences')
+    res.msa <- foreach(seqs = aln.seqs[idx.short],
+                       pos.idx = aln.pos[idx.short],
+                       idx.gap.pos = breaks$idx.beg[idx.short],
+                       .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
+                         return(CODE_ALN_SHORT()) 
+                       }
+  }
+  
+  saveRDS(list(aln = res.msa,
+               seqs = aln.seqs[idx.short], 
+               pos.idx = aln.pos[idx.short],
+               ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
+                                    end = breaks$idx.end[idx.short]) ),
+          paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
   
 
   
