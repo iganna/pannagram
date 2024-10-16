@@ -1408,7 +1408,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_mafft_in}fake_file.fasta
         touch ${path_log_step}fake.log
 
-        rm -f ${path_mafft_in}*fasta
+        find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
+        # rm -f ${path_mafft_in}*fasta
         rm -f ${path_log_step}*
     fi  
 
@@ -1446,7 +1447,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_mafft_out}fake_aligned.fasta
         touch ${path_log_step}fake.log
 
-        rm -f ${path_mafft_out}*aligned.fasta
+        find ${path_mafft_in} -name "*aligned.fasta" -type f -exec rm -f {} +
+        # rm -f ${path_mafft_out}*aligned.fasta
         rm -f ${path_log_step}*
     fi
 
