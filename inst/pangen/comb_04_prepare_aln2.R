@@ -356,7 +356,7 @@ for(s.comb in pref.combinations){
     if(num.cores == 1){
      for(i in idx.tmp.acc){
        writeFasta(aln.seqs[[i]], 
-                  file = breaks$file[i], 
+                  file = paste0(path.mafft.in,breaks$file[i]), 
                   seq.names = aln.seqs.names[[i]],
                   append = T)
      }
@@ -365,7 +365,7 @@ for(s.comb in pref.combinations){
       foreach(i = idx.tmp.acc,
               .packages=c('crayon'))  %dopar% {
                  writeFasta(aln.seqs[[i]], 
-                  file = breaks$file[i], 
+                            file = paste0(path.mafft.in,breaks$file[i]), 
                   seq.names = aln.seqs.names[[i]],
                   append = T)
               }
