@@ -254,6 +254,11 @@ loop.function <- function(f.maj,
     for(i in 1:length(cnt)){
       if(i %% 100 == 0) pokaz('Pgress: Number of analysed gaps', i, file=file.log.loop, echo=echo.loop)
       
+      if(i == 476){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('Enough..')
+      }
+      
       # name of the node
       s = names(cnt)[i]
       x.tmp = x.gap[x.gap$pref1 == s,]
@@ -273,6 +278,7 @@ loop.function <- function(f.maj,
       
       # Transform positions to positive
       
+
       pokaz('before12', i)
       checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
                            query.fas = query.fas.chr,
@@ -585,3 +591,12 @@ pokaz('Done.',
 # pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
 # stop('Enough..')
 
+
+
+# save(list = ls(), file = "tmp_workspace.RData")
+# stop('Enough..')
+
+# 
+# checkCorrespToGenome(setDir(x.comb, base.len = base.len), query.fas = query.fas.chr,
+#                      base.fas.fw = base.fas.fw,
+#                      base.fas.bw = base.fas.bw)
