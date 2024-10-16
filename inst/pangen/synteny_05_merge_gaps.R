@@ -238,6 +238,13 @@ loop.function <- function(f.maj,
     x.gap = glueZero(x.gap)
     x.gap$idx = 1:nrow(x.gap)
     
+    pokaz('before11')
+    checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
+                         query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+    pokaz('after11')
+    
     if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
     if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
     
@@ -266,6 +273,13 @@ loop.function <- function(f.maj,
       
       # Transform positions to positive
       
+      pokaz('before12')
+      checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
+                           query.fas = query.fas.chr,
+                           base.fas.fw = base.fas.fw,
+                           base.fas.bw = base.fas.bw)
+      pokaz('after12')
+      
       df.gap = transform_positions(x.tmp)
       
       ## ---- Greedy loop ----
@@ -282,6 +296,14 @@ loop.function <- function(f.maj,
       x.res = x.gap[idx.good,]  
       # Clean overlaps from both (base and query) sides
       x.res = cleanOverlaps(x.res)
+      
+      pokaz('before13')
+      checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
+                           query.fas = query.fas.chr,
+                           base.fas.fw = base.fas.fw,
+                           base.fas.bw = base.fas.bw)
+      pokaz('after13')
+      
     } else {
       # Create empty
       x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
@@ -487,10 +509,7 @@ loop.function <- function(f.maj,
   
   # ---- Check genomes ----
   
-  
-  file.ws = "tmp_workspace.RData"
-  all.local.objects <- ls()
-  save(list = all.local.objects, file = file.ws)
+  save(list = ls(), file = "tmp_workspace.RData")
   stop('Enough..')
   
   x.dir = setDir(x.comb, base.len = base.len)
