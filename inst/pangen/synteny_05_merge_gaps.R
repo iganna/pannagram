@@ -349,15 +349,6 @@ loop.function <- function(f.maj,
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
     # plotSynDot(x.tmp)
-    
-    pokaz('before3')
-    
-    
-    checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
-                         query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)
-    pokaz('after3')
 
     # Find the correspondence between x.gap and x.tmp
     id.corresp = c()
@@ -397,7 +388,6 @@ loop.function <- function(f.maj,
     }
     id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
     
-    
     # Remain only those, that have the intersection in numbers
     num.q = sapply(x.tmp$V1, function(s) strsplit(s, '_')[[1]][8:9])
     num.r = sapply(x.tmp$V10, function(s) strsplit(s, '_')[[1]][8:9])
@@ -408,7 +398,6 @@ loop.function <- function(f.maj,
               (num.q[2,] == num.r[2,]))
     
     x.tmp = x.tmp[idx.remain,]
-    
     
     # Clean the overlap
     x.tmp = cleanOverlaps(x.tmp)
@@ -452,6 +441,14 @@ loop.function <- function(f.maj,
     x.bw = x.gap[idx.bw,]
     x.bw = glueZero(x.bw)
     x.bw = cleanOverlaps(x.bw)
+    
+    pokaz('before3')
+    
+    checkCorrespToGenome(setDir(x.bw, base.len = base.len),
+                         query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+    pokaz('after3')
     
   } else {
     
