@@ -354,7 +354,7 @@ for(s.comb in pref.combinations){
     }
     
     if(num.cores == 1){
-     for(i in idx.tmp){
+     for(i in idx.tmp.acc){
        writeFasta(aln.seqs[[i]], 
                   file = breaks$file[i], 
                   seq.names = aln.seqs.names[[i]],
