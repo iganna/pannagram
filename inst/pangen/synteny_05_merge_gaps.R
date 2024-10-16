@@ -234,11 +234,12 @@ loop.function <- function(f.maj,
                          base.fas.bw = base.fas.bw)
     pokaz('after1')
     
+    save(list = ls(), file = "tmp_workspace.RData")
+    
     x.gap = glueZero(x.gap)
     x.gap$idx = 1:nrow(x.gap)
     
     pokaz('before11')
-    save(list = ls(), file = "tmp_workspace.RData")
     checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
                          query.fas = query.fas.chr,
                          base.fas.fw = base.fas.fw,
