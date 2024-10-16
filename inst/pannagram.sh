@@ -698,6 +698,10 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Clean up the output folders
     if   [ "$clean" == "T" ]; then 
+        touch ${path_chrom}fake.fasta
+        touch ${path_chrom}fake.txt
+        touch ${path_log_step}fake.log
+
         rm -f ${path_chrom}*fasta
         rm -f ${path_chrom}*txt
         rm -f ${path_log_step}*
@@ -786,6 +790,9 @@ if [ ! -z "${flag_orf}" ]; then
 
         # Clean up the output folders
         if   [ "$clean" == "T" ]; then 
+            touch ${path_orf}fake.fasta
+            touch ${path_log_step}fake.log
+
             rm -f ${path_orf}*fasta
             rm -f ${path_log_step}*
         fi
@@ -823,6 +830,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Clean up the output folders
     if   [ "$clean" == "T" ]; then 
+        touch ${path_parts}fake.fasta
+        touch ${path_log_step}fake.log
+
         rm -f ${path_parts}*fasta
         rm -f ${path_log_step}*
     fi
@@ -877,6 +887,9 @@ for ref0 in "${refs_all[@]}"; do
     
         # ---- Clean up the output folders ----
         if   [ "$clean" == "T" ]; then 
+            touch ${path_blast_parts}fake.txt
+            touch ${path_log_step}fake.log
+
             rm -f ${path_blast_parts}*txt
             rm -f ${path_log_step}*
         fi    
@@ -961,6 +974,9 @@ for ref0 in "${refs_all[@]}"; do
 
         # Clean up the output folders
         if   [ "$clean" == "T" ]; then 
+            touch ${path_alignment}fake.rds
+            touch ${path_log_step}fake.log
+
             rm -f ${path_alignment}*rds
             rm -f ${path_log_step}*
         fi    
@@ -1016,6 +1032,9 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Clean up the output folders ----
         if [ "$clean" == "T" ]; then 
+            touch ${path_plots_ref}fake.pdf
+            touch ${path_log_step}fake.log
+
             rm -f ${path_plots_ref}*pdf
             rm -f ${path_log_step}*
         fi    
@@ -1078,6 +1097,9 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Clean up the output folders ----
         if  [ "$clean" == "T" ]; then 
+            touch ${path_gaps}fake.fasta
+            touch ${path_log_step}fake.log
+
             rm -f ${path_gaps}*fasta
             rm -f ${path_log_step}*
         fi  
@@ -1127,6 +1149,10 @@ for ref0 in "${refs_all[@]}"; do
         # ---- Clean up the output folders ----
         if 
             [ "$clean" == "T" ]; then 
+            touch ${path_gaps}db/fake.db
+            touch ${path_gaps}fake_out.txt
+            touch ${path_log_step}fake.log
+
             rm -f ${path_gaps}db/*
             rm -f ${path_gaps}*out.txt
             rm -f ${path_log_step}*
@@ -1172,6 +1198,9 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Clean up the output folders ----
         if [ "$clean" == "T" ]; then 
+            touch ${path_alignment}fake_full.rds
+            touch ${path_log_step}fake.log
+
             rm -f ${path_alignment}*full.rds
             rm -f ${path_log_step}*
         fi  
@@ -1225,6 +1254,9 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Clean up the output folders ----
         if   [ "$clean" == "T" ]; then 
+            touch ${path_cons}ref_fake_${ref0}_.h5
+            touch ${path_log_step}fake.log
+
             rm -f ${path_cons}ref*${ref0}_.h5
             rm -f ${path_log_step}*
         fi  
@@ -1291,6 +1323,9 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         
         # ---- Clean up the output folders ----
         if   [ "$clean" == "T" ]; then 
+            touch ${path_cons}comb_fake.h5
+            touch ${path_log_step}fake.log
+
             rm -f ${path_cons}comb*h5
             rm -f ${path_log_step}*
         fi  
@@ -1325,6 +1360,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
+        touch ${path_cons}clean_fake.h5
+        touch ${path_log_step}fake.log
+
         rm -f ${path_cons}clean*h5
         rm -f ${path_log_step}*
     fi  
@@ -1366,7 +1404,10 @@ fi
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
-    if   [ "$clean" == "T" ]; then 
+    if [ "$clean" == "T" ]; then 
+        touch ${path_mafft_in}fake_file.fasta
+        touch ${path_log_step}fake.log
+
         rm -f ${path_mafft_in}*fasta
         rm -f ${path_log_step}*
     fi  
@@ -1402,6 +1443,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
+        touch ${path_mafft_out}fake_aligned.fasta
+        touch ${path_log_step}fake.log
+
         rm -f ${path_mafft_out}*aligned.fasta
         rm -f ${path_log_step}*
     fi
@@ -1435,6 +1479,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
+        touch ${path_mafft_out}fake_aligned2.fasta
+        touch ${path_log_step}fake.log
+
         rm -f ${path_mafft_out}*aligned2.fasta
         rm -f ${path_log_step}*
     fi
@@ -1468,6 +1515,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
+        touch ${path_cons}msa_fake_h5
+        touch ${path_log_step}fake.log
+
         rm -f ${path_cons}msa*h5
         rm -f ${path_log_step}*
     fi  
