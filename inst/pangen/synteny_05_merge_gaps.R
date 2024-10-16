@@ -320,7 +320,6 @@ loop.function <- function(f.maj,
   
   pokaz('after2')
   
-  
   # ---- Read additional alignments ----
   
   file.gaps.out = paste0(path.gaps,

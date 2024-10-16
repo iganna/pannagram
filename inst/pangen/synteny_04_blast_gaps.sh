@@ -60,11 +60,13 @@ fi
 #                 FUNC: CREATE DATABASE
 # ----------------------------------------------------------------------------
 
+export path_gaps
+export path_db
+export log_path
+export p_ident
+
 function process_db {
     query_file_path="$1"
-    path_gaps="$2"
-    path_db="$3"
-    log_path=${4}
 
     # Extract the file name from the full file path.
     query_file=$(basename "$query_file_path")
@@ -73,7 +75,7 @@ function process_db {
 
 
     # If log file exists and has the word "Done" - then don't run the blast again
-    file_log="${log_path}${p_filename}_${ref_chr}_db.log"
+    file_log="${log_path}${query_file}_db.log"
     if [ -f "$file_log" ]; then
         if grep -q "Done" "$file_log"; then
             echo "Over." >> "$file_log"
@@ -100,10 +102,6 @@ function process_db {
 
 function process_blast_normal {
     query_file_path="$1"
-    path_gaps="$2"
-    path_db="$3"
-    log_path="$4"
-    p_ident="$5"
 
     query_file=$(basename "$query_file_path")
     base_file="${query_file/query/base}"
@@ -146,10 +144,6 @@ function process_blast_normal {
 # BLAST search in "cross" mode
 function process_blast_cross {
     query_file_path="$1"
-    path_gaps="$2"
-    path_db="$3"
-    log_path="$4"
-    p_ident="$5"
 
     query_file=$(basename "$query_file_path")
     base_file="${query_file/query/base}"
@@ -200,10 +194,18 @@ export -f process_db
 #                 MAIN
 # ----------------------------------------------------------------------------
 
+files_acc=($(find ${path_gaps} -name '*query*.fasta'))
 
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_db {} $path_gaps $path_db ${log_path}
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast_normal {} $path_gaps $path_db ${log_path} ${p_ident}
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast_cross {} $path_gaps $path_db ${log_path} ${p_ident}
+echo "${files_acc[@]}"
+
+parallel -j ${cores} process_db ::: ${files_acc[@]}
+parallel -j ${cores}  process_blast_normal ::: "${files_acc[@]}" 
+parallel -j ${cores}  process_blast_cross ::: "${files_acc[@]}" 
+
+
+# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_db {} $path_gaps $path_db ${log_path}
+# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast_normal {} $path_gaps $path_db ${log_path} ${p_ident}
+# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast_cross {} $path_gaps $path_db ${log_path} ${p_ident}
 
 
 # pokaz_message "Done!"
