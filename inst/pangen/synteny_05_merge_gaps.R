@@ -311,10 +311,13 @@ loop.function <- function(f.maj,
   }
   
   pokaz('before2')
-  checkCorrespToGenome(setDir(x.res, base.len = base.len), 
-                       query.fas = query.fas.chr,
-                       base.fas.fw = base.fas.fw,
-                       base.fas.bw = base.fas.bw)
+  if(nrow(x.res) > 0){
+    checkCorrespToGenome(setDir(x.res, base.len = base.len), 
+                         query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)  
+  }
+  
   pokaz('after2')
   
   
