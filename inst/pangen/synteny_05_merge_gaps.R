@@ -238,6 +238,7 @@ loop.function <- function(f.maj,
     x.gap$idx = 1:nrow(x.gap)
     
     pokaz('before11')
+    save(list = ls(), file = "tmp_workspace.RData")
     checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
                          query.fas = query.fas.chr,
                          base.fas.fw = base.fas.fw,
