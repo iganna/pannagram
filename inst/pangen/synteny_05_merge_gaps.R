@@ -327,10 +327,9 @@ loop.function <- function(f.maj,
     pokaz('Read blast of "bad" gaps..', file.gaps.out, file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)    
     
-    
   }
 
-  
+
   if(!is.null(x.gap)) {
     
     ## ---- Change positions ----
@@ -369,13 +368,6 @@ loop.function <- function(f.maj,
         id.corresp = rbind(id.corresp, c(irow, tmp))
         next
       } else if(length(tmp) > 1){
-        
-        file.ws = "tmp_workspace.RData"
-        all.local.objects <- ls()
-        save(list = all.local.objects, file = file.ws)
-        pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-        stop('Enough..')
-        
         stop('Something is wrong with coordinates 1')
       } 
       
@@ -500,15 +492,13 @@ loop.function <- function(f.maj,
   
   # ---- Check genomes ----
   
-  save(list = ls(), file = "tmp_workspace.RData")
-  stop('Enough..')
+  # save(list = ls(), file = "tmp_workspace.RData")
+  # stop('Enough..')
   
   x.dir = setDir(x.comb, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
-  
-
   
   saveRDS(object = x.comb, file = file.aln.full) 
   
