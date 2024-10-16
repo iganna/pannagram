@@ -35,6 +35,19 @@ glueZero_old <- function(x){
 #' @export
 glueZero <- function(x.all){
   
+  # Check if input is NULL
+  if (is.null(x.all)) stop("Error: x.all cannot be NULL")
+  
+  # Check if input is a data frame
+  if (!is.data.frame(x.all)) stop("Error: x.all must be a data frame")
+  
+  # Check if necessary columns exist in the data frame
+  required_columns <- c("dir", "V2", "V3", "V4", "V5", "V7", "V8", "V9")
+  missing_columns <- setdiff(required_columns, colnames(x.all))
+  if (length(missing_columns) > 0) {
+    stop(paste("Error: Missing required columns:", paste(missing_columns, collapse = ", ")))
+  }
+  
   x.all.idx = 1:nrow(x.all)
   x.new = c()
   for(dir.val in 0:1){
@@ -55,7 +68,9 @@ glueZero <- function(x.all){
           if(jrow > x.nrow) break
         }
         if(jrow > x.nrow) break
-        if((abs(x$V2[jrow] - x$V3[irow]) == 1) && (abs(x$V4[jrow] - x$V5[irow]) == 1)){
+        d1 = x$V2[jrow] - x$V3[irow]
+        d2 = x$V4[jrow] - x$V5[irow]
+        if((abs(d1) == 1) && (d1 == d2)){
           x$V2[jrow] = x$V2[irow]
           x$V4[jrow] = x$V4[irow]
           
@@ -75,7 +90,7 @@ glueZero <- function(x.all){
     
     x.new = rbind(x.new, x)
   }
-
+  
   return(x.new)
 }
 
@@ -225,7 +240,7 @@ cutSmallOverlapsQuery <- function(x.df){
       aln.adjust = which(seq != '-')[n.symbols]
       x.df$V8[irow] = substr(x.df$V8[irow], (aln.adjust+1), nchar(x.df$V8[irow]))
       x.df$V9[irow] = substr(x.df$V9[irow], (aln.adjust+1), nchar(x.df$V9[irow]))
-
+      
       # Adjust positions - query
       s.q.cut = seq2nt(x.df$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
@@ -340,7 +355,7 @@ defineOverlapps <- function(x.df){
   #   x.df[order(x.df[,new.col.name]),]
   #   x.df = x.df[,colnames(x.df) != new.col.name]
   # }
-
+  
   
   return(x.df)
 }
@@ -426,7 +441,7 @@ cutSmallOverlaps <- function(x.sk){
       x.sk$V9[irow] = substr(x.sk$V9[irow], 1, (aln.adjust-1))
       
       # Adjust positions
-     
+      
       s.q.cut = seq2nt(x.sk$V8[irow])
       adjustment.q = sum(s.q.cut != '-') - 1
       x.sk$V3[irow] = x.sk$V2[irow] + adjustment.q
@@ -504,6 +519,29 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
       stop('Checking the base was not passed')
     }
   }
+  
+  checkLengths(x)
+}
+
+#' Check the length consistency of sequences in a data frame
+checkLengths <- function(x.gap) {
+  for(igap in 1:nrow(x.gap)) {
+    s1 = x.gap[igap, 9]
+    s1 = seq2nt(s1)
+    s1 = s1[s1 != '-']
+    n.s1 = length(s1)
+    n.s2 = abs(x.gap$V5[igap] - x.gap$V4[igap]) + 1
+    if(n.s1 != n.s2) stop(paste("Mismatch in BASE at row", igap, ": n.s1 =", n.s1, "n.s2 =", n.s2))
+  }
+  
+  for(igap in 1:nrow(x.gap)) {
+    s1 = x.gap[igap, 8]
+    s1 = seq2nt(s1)
+    s1 = s1[s1 != '-']
+    n.s1 = length(s1)
+    n.s2 = abs(x.gap$V3[igap] - x.gap$V2[igap]) + 1
+    if(n.s1 != n.s2) stop(paste("Mismatch in QUERY at row", igap, ": n.s1 =", n.s1, "n.s2 =", n.s2))
+  }
 }
 
 
@@ -558,9 +596,9 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, visit.info
     x.over = x.top - x.tmp$V2[jrow.add]
     max.over = pmax(ifelse(x.over > 0, x.over, 0), y.over)
     w.pure = x.tmp$w[jrow.add] - 2 * max.over
-
+    
     d.add = visit.info$d.to[irow] + (-x.over + max.over) - w.pure + max.over*2
-
+    
     jrow = c(jrow, jrow.add)
     d = c(d, d.add)
   }
@@ -600,11 +638,11 @@ graphTraverseWnd <- function(x.tmp, irow, x.top, y.top, w.beg, w.end, visit.info
     }
     
     visit.info = graphTraverseWnd(x.tmp, jrow[j], 
-                                 x.tmp$V3[jrow[j]], 
-                                 max(x.tmp$V5[jrow[j]], y.top), 
-                                 w.beg.next, 
-                                 w.end.next, 
-                                 visit.info)
+                                  x.tmp$V3[jrow[j]], 
+                                  max(x.tmp$V5[jrow[j]], y.top), 
+                                  w.beg.next, 
+                                  w.end.next, 
+                                  visit.info)
   }
   return(visit.info)
 }
@@ -865,14 +903,14 @@ pathUpPlus <- function(x.tmp){
   x.tmp$V5[idx.dir] = tmp
   x.tmp$dir = 0
   x.tmp$dir[idx.dir] = 1
-   
+  
   # Run the traverse
   visit.info = initVisitInfo(nrow(x.tmp))
   visit.info = graphTraverseWnd(x.tmp, 1, x.tmp$V3[1], x.tmp$V5[1], 0, 0, visit.info)
   idx.visit = reconstructTraverse(visit.info$v.prev)  # Reconstruct the optimal path
   idx.visit = idx.visit[-c(1, length(idx.visit))]
   # idx.visit = idx.visit[-c(length(idx.visit))]  # Remain the anchor
-
+  
   
   # Return previous order
   idx.visit = x.tmp$ord[idx.visit]
@@ -978,5 +1016,4 @@ pref2info <- function(pref.comb){
               query.chr = query.chr,
               base.chr = base.chr))
 }
-
 

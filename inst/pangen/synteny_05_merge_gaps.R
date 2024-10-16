@@ -234,7 +234,6 @@ loop.function <- function(f.maj,
                          base.fas.bw = base.fas.bw)
     pokaz('after1')
     
-    
     x.gap = glueZero(x.gap)
     x.gap$idx = 1:nrow(x.gap)
     
@@ -254,11 +253,6 @@ loop.function <- function(f.maj,
     for(i in 1:length(cnt)){
       if(i %% 100 == 0) pokaz('Pgress: Number of analysed gaps', i, file=file.log.loop, echo=echo.loop)
       
-      if(i == 476){
-        save(list = ls(), file = "tmp_workspace.RData")
-        stop('Enough..')
-      }
-      
       # name of the node
       s = names(cnt)[i]
       x.tmp = x.gap[x.gap$pref1 == s,]
@@ -277,15 +271,6 @@ loop.function <- function(f.maj,
       } 
       
       # Transform positions to positive
-      
-
-      pokaz('before12', i)
-      checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
-                           query.fas = query.fas.chr,
-                           base.fas.fw = base.fas.fw,
-                           base.fas.bw = base.fas.bw)
-      pokaz('after12')
-      
       df.gap = transform_positions(x.tmp)
       
       ## ---- Greedy loop ----

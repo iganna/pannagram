@@ -99,6 +99,7 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
 }
 
 
+#' @export
 plotSynDot <- function(..., alpha = 1) {
   pokazAttention('Please use plotSynteny(..., show.dot=T)')
   p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
@@ -111,11 +112,12 @@ plotSynDot <- function(..., alpha = 1) {
 #' This function is an alias for the \code{\link{plotSynteny}} function and 
 #' generates a ggplot2-based visualization of synteny in the alignment. 
 #' 
+#' @export
 plotSyntenyBlocks <- function(...) {
   plotSynteny(...)
 }
 
-
+#' @export
 plotPanAcc <- function(file.msa, acc){
   
   # Setup
