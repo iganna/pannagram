@@ -273,7 +273,7 @@ loop.function <- function(f.maj,
       
       # Transform positions to positive
       
-      pokaz('before12')
+      pokaz('before12', i)
       checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
                            query.fas = query.fas.chr,
                            base.fas.fw = base.fas.fw,
