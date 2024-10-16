@@ -70,7 +70,7 @@ glueZero <- function(x.all){
         if(jrow > x.nrow) break
         d1 = x$V2[jrow] - x$V3[irow]
         d2 = x$V4[jrow] - x$V5[irow]
-        if((abs(d1) == 1) && (d1 == d2)){
+        if((d1 == d2) && ((d1 == 1 & dir.val == 0) | (d1 == -1 & dir.val == 1))) {
           x$V2[jrow] = x$V2[irow]
           x$V4[jrow] = x$V4[irow]
           

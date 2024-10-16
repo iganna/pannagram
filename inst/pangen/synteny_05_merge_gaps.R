@@ -228,8 +228,8 @@ loop.function <- function(f.maj,
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
     pokaz('before1')
-    x.dir = setDir(x.gap, base.len = base.len)
-    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+    checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
+                         query.fas = query.fas.chr,
                          base.fas.fw = base.fas.fw,
                          base.fas.bw = base.fas.bw)
     pokaz('after1')
