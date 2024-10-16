@@ -462,14 +462,17 @@ loop.function <- function(f.maj,
   
   # ---- Check genomes ----
   x.dir = setDir(x.comb, base.len = base.len)
-  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-                       base.fas.fw = base.fas.fw,
-                       base.fas.bw = base.fas.bw)
   
   file.ws = "tmp_workspace.RData"
   all.local.objects <- ls()
   save(list = all.local.objects, file = file.ws)
   stop('Enough..')
+  
+  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                       base.fas.fw = base.fas.fw,
+                       base.fas.bw = base.fas.bw)
+  
+
   
   saveRDS(object = x.comb, file = file.aln.full) 
   
