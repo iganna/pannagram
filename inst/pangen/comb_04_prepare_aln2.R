@@ -285,19 +285,17 @@ for(s.comb in pref.combinations){
   ## ---- Analyse by portions ----
   
   idx.remained = setdiff(1:nrow(breaks), idx.singl)
-  idx.cum.len = cumsum(breaks$len.mean[idx.remained])
   
-  k = 10 ** 6
-  idx.cum.len = round(idx.cum.len / k)
-  for(i.k in min(idx.cum.len):max(idx.cum.len)){
-    idx.tmp = idx.remained[which(idx.cum.len == i.k)]
+  k = 10
+  order.acc = ceiling(1:length(accessions) / k)
+  for(i.k in min(order.acc):max(order.acc)){
+    accessions.tmp = accessions[which(order.acc == i.k)]
   
     aln.seqs <- vector("list", length = nrow(breaks))
     aln.seqs.names <- vector("list", length = nrow(breaks))
     
-    for(acc in accessions){
+    for(acc in accessions.tmp){
       pokaz(acc)
-      
       file.chromosome = paste(path.chromosomes, 
                               acc, 
                               '_chr', q.chr, '.fasta', sep = '')
@@ -340,15 +338,14 @@ for(s.comb in pref.combinations){
         return(seq = seq)
       }
       
-      p1 = v.beg[idx.tmp, acc]
-      p2 = v.end[idx.tmp, acc]
+      p1 = v.beg[idx.remained, acc]
+      p2 = v.end[idx.remained, acc]
       idx.acc = (p1 != 0) & (p2 != 0)
-      idx.tmp.acc = idx.tmp[idx.acc]
+      idx.tmp.acc = idx.remained[idx.acc]
       p1 = p1[idx.acc]
       p2 = p2[idx.acc]
       
       subsets <- mapply(function(b, e) getSeq(b, e), p1, p2)
-      
       
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
@@ -360,7 +357,8 @@ for(s.comb in pref.combinations){
      for(i in idx.tmp){
        writeFasta(aln.seqs[[i]], 
                   file = breaks$file[i], 
-                  seq.names = aln.seqs.names[[i]])
+                  seq.names = aln.seqs.names[[i]],
+                  append = T)
      }
     } else { # Many cores
       pokaz('.. with parallel')
@@ -368,7 +366,8 @@ for(s.comb in pref.combinations){
               .packages=c('crayon'))  %dopar% {
                  writeFasta(aln.seqs[[i]], 
                   file = breaks$file[i], 
-                  seq.names = aln.seqs.names[[i]])
+                  seq.names = aln.seqs.names[[i]],
+                  append = T)
               }
     }
     if(echo) pokaz('.. done!')
