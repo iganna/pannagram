@@ -166,7 +166,7 @@ loop.function <- function(f.maj,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
   
-  
+  print('after skeleton')
   
   # TODO: put real lengths, not approximations
   max.chr.len = max(max(x.sk$V4), max(x.sk$V5)) + 10^6
