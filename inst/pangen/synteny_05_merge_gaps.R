@@ -344,7 +344,7 @@ loop.function <- function(f.maj,
     x.gap[,4:5] = x.gap[,4:5] + pos.shift$r[x.gap$V10,]$shift
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
-    save(list = ls(), file = "tmp_workspace.RData")
+    # save(list = ls(), file = "tmp_workspace.RData")
     
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
@@ -504,7 +504,7 @@ loop.function <- function(f.maj,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
   
-  saveRDS(object = x.comb, file = file.aln.full) 
+  saveRDS(object = x.comb, file = file.aln.full)
   
   suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
   gc()
