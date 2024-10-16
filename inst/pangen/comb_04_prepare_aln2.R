@@ -362,7 +362,7 @@ for(s.comb in pref.combinations){
      }
     } else { # Many cores
       pokaz('.. with parallel')
-      foreach(i = idx.tmp,
+      foreach(i = idx.tmp.acc,
               .packages=c('crayon'))  %dopar% {
                  writeFasta(aln.seqs[[i]], 
                   file = breaks$file[i], 
