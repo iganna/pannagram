@@ -196,8 +196,6 @@ export -f process_db
 
 files_acc=($(find ${path_gaps} -name '*query*.fasta'))
 
-echo "${files_acc[@]}"
-
 parallel -j ${cores} process_db ::: ${files_acc[@]}
 parallel -j ${cores}  process_blast_normal ::: "${files_acc[@]}" 
 parallel -j ${cores}  process_blast_cross ::: "${files_acc[@]}" 

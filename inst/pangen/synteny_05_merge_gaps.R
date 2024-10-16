@@ -342,14 +342,17 @@ loop.function <- function(f.maj,
     
     x.gap[,2:3] = x.gap[,2:3] + pos.shift$q[x.gap$V1,]$shift
     x.gap[,4:5] = x.gap[,4:5] + pos.shift$r[x.gap$V10,]$shift
-    
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    
+    save(list = ls(), file = "tmp_workspace.RData")
+    
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
     # plotSynDot(x.tmp)
     
-    
     pokaz('before3')
+    
+    
     checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
                          query.fas = query.fas.chr,
                          base.fas.fw = base.fas.fw,
