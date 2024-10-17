@@ -346,7 +346,7 @@ for(s.comb in pref.combinations){
       p2 = p2[idx.acc]
       
       # Get sequences
-      subsets <- mapply(function(b, e) getSeq(b, e), p1, p2)
+      subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), p1, p2, idx.tmp.acc %in% c(idx.large, idx.extra))
       
       # Save sequences
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
