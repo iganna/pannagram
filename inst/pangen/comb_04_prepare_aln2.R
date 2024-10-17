@@ -380,10 +380,12 @@ for(s.comb in pref.combinations){
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)
     
-    rm(aln.seqs)
-    rm(aln.seqs.names)
+
   }
-    
+  
+  rm(aln.seqs)
+  rm(aln.seqs.names)
+  
   H5close()
   gc()
 }
