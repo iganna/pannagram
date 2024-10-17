@@ -1416,12 +1416,63 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 # ----------------------------------------------
-# Create sequences to run MAFFT and perform some small alignments
+# Create sequences
 
-with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
+with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for alignments."
 
 # Logs
-step_name="step${step_num}_comb_04_prepare_aln"
+step_name="step${step_num}_comb_04_prepare_seqs"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Paths for MAFFT, common for the next code too
+path_mafft_in="${path_inter}mafft_in/"
+path_mafft_out="${path_inter}mafft_out/"
+if [ ! -d "$path_mafft_in" ]; then
+    mkdir -p "$path_mafft_in"
+fi
+if [ ! -d "$path_mafft_out" ]; then
+    mkdir -p "$path_mafft_out"
+fi
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if [ "$clean" == "T" ]; then 
+        touch ${path_mafft_in}fake_file.fasta
+        touch ${path_log_step}fake.log
+        touch ${path_cons}small_ws_fake.RData
+
+        find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
+        # rm -f ${path_mafft_in}*fasta
+        rm -f ${path_log_step}*
+        rm -f ${path_cons}small_ws_*.RData
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_seqs.R \
+            --path.cons "${path_cons}" \
+            --cores "${cores}" \
+            --path.chromosomes "${path_chrom}" \
+            --path.mafft.in "${path_mafft_in}" \
+            --path.log "${path_log_step}" \
+            --log.level "${log_level}" \
+            --max.len.gap "${max_len_gap}"
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# ----------------------------------------------
+# Perform some small alignments
+
+with_level 1 pokaz_stage "Step ${step_num}. Align short sequences."
+
+# Logs
+step_name="step${step_num}_comb_05_small"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
@@ -1449,7 +1500,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_aln2.R \
+    Rscript $INSTALLED_PATH/pangen/comb_05_small.R \
             --path.cons "${path_cons}" \
             --cores "${cores}" \
             --path.chromosomes "${path_chrom}" \
@@ -1463,7 +1514,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
-
 
 # ----------------------------------------------
 # Run MAFFT
