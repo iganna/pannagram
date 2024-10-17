@@ -383,6 +383,9 @@ for(s.comb in pref.combinations){
 
   }
   
+  saveRDS(aln.seqs, paste0(path.cons, 'seq_small_', s.comb, '.rds'))
+  saveRDS(aln.seqs.names, paste0(path.cons, 'seq_small_names_', s.comb, '.rds'))
+  
   rm(aln.seqs)
   rm(aln.seqs.names)
   
