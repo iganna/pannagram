@@ -1380,6 +1380,42 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
+# Prepare breaks
+
+with_level 1 pokaz_stage "Step ${step_num}. Prepare breakes for an additional alignment"
+
+# Logs
+step_name="step${step_num}_comb_04_prepare_breaks"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if [ "$clean" == "T" ]; then 
+        touch ${path_cons}breaks_ws_fake.RData
+        touch ${path_log_step}fake.log
+
+        rm -f  ${path_cons}breaks_ws_*.RData
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_breaks.R \
+            --path.cons "${path_cons}" \
+            --cores "${cores}" \
+            --path.chromosomes "${path_chrom}" \
+            --path.log "${path_log_step}" \
+            --log.level "${log_level}" \
+            --max.len.gap "${max_len_gap}"
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+# ----------------------------------------------
 # Create sequences to run MAFFT and perform some small alignments
 
 with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for MAFFT."
@@ -1427,6 +1463,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
 
 # ----------------------------------------------
 # Run MAFFT
