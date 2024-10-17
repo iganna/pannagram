@@ -286,14 +286,13 @@ for(s.comb in pref.combinations){
   
   idx.remained = setdiff(1:nrow(breaks), idx.singl)
   
+  aln.seqs <- vector("list", length = nrow(breaks))
+  aln.seqs.names <- vector("list", length = nrow(breaks))
+  
   k = 10
   order.acc = ceiling(1:length(accessions) / k)
   for(i.k in min(order.acc):max(order.acc)){
     accessions.tmp = accessions[which(order.acc == i.k)]
-  
-    aln.seqs <- vector("list", length = nrow(breaks))
-    aln.seqs.names <- vector("list", length = nrow(breaks))
-    
     for(acc in accessions.tmp){
       pokaz(acc)
       file.chromosome = paste(path.chromosomes, 
@@ -338,6 +337,7 @@ for(s.comb in pref.combinations){
         return(seq = seq)
       }
       
+      # Get only those breaks where the accession is not empty
       p1 = v.beg[idx.remained, acc]
       p2 = v.end[idx.remained, acc]
       idx.acc = (p1 != 0) & (p2 != 0)
@@ -345,16 +345,21 @@ for(s.comb in pref.combinations){
       p1 = p1[idx.acc]
       p2 = p2[idx.acc]
       
+      # Get sequences
       subsets <- mapply(function(b, e) getSeq(b, e), p1, p2)
       
+      # Save sequences
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
       
       rm(genome)
     }
+    idx.save = c(idx.large, idx.extra)
+    idx.save = idx.save[!is.null(aln.seqs[idx.save])]
+    
     
     if(num.cores == 1){
-     for(i in idx.tmp.acc){
+     for(i in idx.save){
        writeFasta(aln.seqs[[i]], 
                   file = paste0(path.mafft.in,breaks$file[i]), 
                   seq.names = aln.seqs.names[[i]],
@@ -362,7 +367,7 @@ for(s.comb in pref.combinations){
      }
     } else { # Many cores
       pokaz('.. with parallel')
-      foreach(i = idx.tmp.acc,
+      foreach(i = idx.save,
               .packages=c('crayon'))  %dopar% {
                  writeFasta(aln.seqs[[i]], 
                             file = paste0(path.mafft.in,breaks$file[i]), 
@@ -371,6 +376,9 @@ for(s.comb in pref.combinations){
               }
     }
     if(echo) pokaz('.. done!')
+    
+    aln.seqs[idx.save] <- list(NULL)
+    aln.seqs.names[idx.save] <- list(NULL)
     
     rm(aln.seqs)
     rm(aln.seqs.names)
