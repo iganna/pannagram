@@ -209,7 +209,7 @@ for(s.comb in pref.combinations){
     # v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
   
-  all.local.objects <- ls("breaks", v.end, v.beg)
+  all.local.objects <- c("breaks", "v.end", "v.beg")
   file.ws = paste0(path.cons, 'breaks_ws_', s.comb, '.RData')
   save(list = all.local.objects, file = file.ws)
   
