@@ -209,6 +209,14 @@ for(s.comb in pref.combinations){
     # v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
   
+  # ---- Subdivide into categories ----
+  
+  breaks$single = rowSums(v.len != 0)
+  breaks$len.acc = rowMax(v.len)
+  v.len[v.len == 0] <- NA
+  breaks$len.mean = rowMeans(v.len)
+  breaks$len.mean <- rowMeans(v.len, na.rm = TRUE)
+  
   all.local.objects <- c("breaks", "v.end", "v.beg")
   file.ws = paste0(path.cons, 'breaks_ws_', s.comb, '.RData')
   save(list = all.local.objects, file = file.ws)

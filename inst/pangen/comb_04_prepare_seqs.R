@@ -118,19 +118,11 @@ for(s.comb in pref.combinations){
   file.ws = paste0(path.cons, 'breaks_ws_', s.comb, '.RData')
   load(file.ws)
   
-  # ---- Subdivide into categories ----
-  
-  breaks$single = rowSums(v.len != 0)
-  breaks$len.acc = rowMax(v.len)
-  
   # Define indexes for short and singletons
   idx.singl = which(breaks$single == 1)
   idx.short = which((breaks$single != 1) & (breaks$len.acc <= len.short))
   
   # Define indexes for long sequences
-  v.len[v.len == 0] <- NA
-  breaks$len.mean = rowMeans(v.len)
-  breaks$len.mean <- rowMeans(v.len, na.rm = TRUE)
   idx.large = which((breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.mean <= len.large.mafft))
   idx.extra = which((breaks$single != 1) & (breaks$len.mean > len.large.mafft))
   
