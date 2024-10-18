@@ -217,7 +217,7 @@ for(s.comb in pref.combinations){
   breaks$len.mean = rowMeans(v.len)
   breaks$len.mean <- rowMeans(v.len, na.rm = TRUE)
   
-  all.local.objects <- c("breaks", "v.end", "v.beg")
+  all.local.objects <- c("breaks", "v.end", "v.beg", "accessions")
   file.ws = paste0(path.cons, 'breaks_ws_', s.comb, '.RData')
   save(list = all.local.objects, file = file.ws)
   

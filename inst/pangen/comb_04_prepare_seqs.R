@@ -264,6 +264,8 @@ for(s.comb in pref.combinations){
     
   }
   
+  pokaz(sum(!is.null(aln.seqs)), length(idx.short))
+  
   all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names")
   file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
   save(list = all.local.objects, file = file.ws)
