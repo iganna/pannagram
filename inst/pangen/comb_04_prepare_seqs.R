@@ -75,12 +75,6 @@ if(num.cores > 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
 }
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-# if(num.cores > 1){
-#   myCluster <- makeCluster(num.cores, type = "PSOCK") 
-#   registerDoParallel(myCluster)
-# }
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -174,6 +168,7 @@ for(s.comb in pref.combinations){
   k = 10
   order.acc = ceiling(1:length(accessions) / k)
   for(i.k in min(order.acc):max(order.acc)){
+    
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
       pokaz(acc)
@@ -237,10 +232,12 @@ for(s.comb in pref.combinations){
       rm(genome)
     }
     idx.save = c(idx.large, idx.extra)
-    idx.save = idx.save[!is.null(aln.seqs[idx.save])]
+    idx.save = idx.save[sapply(idx.save, function(x) !is.null(aln.seqs[[x]]))]
     
+    if(length(intersect(idx.save, idx.short)) > 0) stop('Wrong idx are saved')
     
     if(num.cores == 1){
+      pokaz('Save sequences...')
       for(i in idx.save){
         writeFasta(aln.seqs[[i]], 
                    file = paste0(path.mafft.in,breaks$file[i]), 
@@ -248,7 +245,7 @@ for(s.comb in pref.combinations){
                    append = T)
       }
     } else { # Many cores
-      pokaz('.. with parallel')
+      pokaz('Save sequences with parallel...')
       foreach(i = idx.save,
               .packages=c('crayon'))  %dopar% {
                 writeFasta(aln.seqs[[i]], 
@@ -262,11 +259,15 @@ for(s.comb in pref.combinations){
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)
     
+    n.null <- sum(sapply(aln.seqs, Negate(is.null)))
+    
   }
   
-  pokaz(sum(!is.null(aln.seqs)), length(idx.short))
+  n.null <- sum(sapply(aln.seqs, Negate(is.null)))
+  pokaz(n.null, length(idx.short))
+  if(n.null != length(idx.short)) stop('Wrong number of short')
   
-  all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names")
+  all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names", "idx.short", "accessions")
   file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
   save(list = all.local.objects, file = file.ws)
   

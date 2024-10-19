@@ -1441,11 +1441,13 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
-        touch ${path_mafft_in}fake_file.fasta
+        touch ${path_mafft_in}fake.fasta
+        touch ${path_mafft_in}fake.tree
         touch ${path_log_step}fake.log
         touch ${path_cons}small_ws_fake.RData
 
         find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
+        find ${path_mafft_in} -name "*.tree" -type f -exec rm -f {} +
         # rm -f ${path_mafft_in}*fasta
         rm -f ${path_log_step}*
         rm -f ${path_cons}small_ws_*.RData
@@ -1477,34 +1479,18 @@ step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
 
-# Paths for MAFFT, common for the next code too
-path_mafft_in="${path_inter}mafft_in/"
-path_mafft_out="${path_inter}mafft_out/"
-if [ ! -d "$path_mafft_in" ]; then
-    mkdir -p "$path_mafft_in"
-fi
-if [ ! -d "$path_mafft_out" ]; then
-    mkdir -p "$path_mafft_out"
-fi
-
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
-        touch ${path_mafft_in}fake_file.fasta
         touch ${path_log_step}fake.log
-
-        find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
-        # rm -f ${path_mafft_in}*fasta
         rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_05_small.R \
             --path.cons "${path_cons}" \
             --cores "${cores}" \
-            --path.chromosomes "${path_chrom}" \
-            --path.mafft.in "${path_mafft_in}" \
             --path.log "${path_log_step}" \
             --log.level "${log_level}" \
             --max.len.gap "${max_len_gap}"
@@ -1514,6 +1500,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+exit
 
 # ----------------------------------------------
 # Run MAFFT
