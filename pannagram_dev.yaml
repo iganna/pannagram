@@ -1,4 +1,4 @@
-name: pannagram
+name: pannagram_dev
 channels:
   - bioconda
   - conda-forge
