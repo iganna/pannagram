@@ -83,7 +83,7 @@ for(acc in accessions){
   chr.acc.blocked = c()
   corresp = c()
   for(i.chr.ref in 1:n.ref){
-    pokaz(i.chr.ref)
+    # pokaz(i.chr.ref)
     idx.tmp = grep(paste0("_", i.chr.ref, "_maj\\.rds$"), files.aln)
     idx.corr = idx.tmp[which.max(files.sizes[idx.tmp])]
     i.chr.acc = result[idx.corr,1]
@@ -93,7 +93,7 @@ for(acc in accessions){
       next
     }
     file.aln = paste0(path.aln, files.aln[idx.corr])
-    pokaz(file.aln)
+    # pokaz(file.aln)
     x = readRDS(file.aln)
     pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
     
@@ -117,7 +117,7 @@ for(acc in accessions){
     next
   }
   
-  file.resort = paste0(path.resort, base.acc, acc, '.rds')  
+  file.resort = paste0(path.resort, acc, '.rds')  
   saveRDS(corresp, file.resort)
   
 }
