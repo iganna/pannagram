@@ -67,9 +67,10 @@ for(f in files.aln){
 # ---- Correspondence ----
 
 for(acc in accessions){
+  pokaz('Accession', acc)
   files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
-  files.sizes <- file.size(files.blast)
-  combinations = sub(paste0(acc, "_"), "", files.blast)
+  files.sizes <- file.size(files.aln)
+  combinations = sub(paste0(acc, "_"), "", files.aln)
   combinations = sub("_maj.rds", "", combinations)
   
   result <- (do.call(rbind, strsplit(combinations, "_")))
@@ -82,11 +83,11 @@ for(acc in accessions){
   corresp = c()
   for(i.chr.ref in 1:n.ref){
     pokaz(i.chr.ref)
-    idx.tmp = grep(paste0("_", i.chr.ref, "_maj\\.rds$"), files.blast)
+    idx.tmp = grep(paste0("_", i.chr.ref, "_maj\\.rds$"), files.aln)
     idx.corr = idx.tmp[which.max(files.sizes[idx.tmp])]
     i.chr.acc = result[idx.corr,1]
     
-    x = readRDS(paste0(path.aln,files.blast[idx.corr]))
+    x = readRDS(paste0(path.aln,files.aln[idx.corr]))
     pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
     
     pos.minus = sum((x$V3 - x$V2 + 1) * x$dir)
