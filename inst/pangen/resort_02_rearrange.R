@@ -103,7 +103,7 @@ file.genome = paste0(path.genomes, base.acc, ".fasta")
 file.genome.new = paste0(path.new, base.acc, '.fasta')
 
 pokaz(file.genome, file.genome.new)
-res.copy = file.copy(file.genome, file.genome.new)
+res.copy = file.copy(file.genome, file.genome.new, overwrite = TRUE, copy.mode = TRUE)
 pokaz(res.copy)
 
 
