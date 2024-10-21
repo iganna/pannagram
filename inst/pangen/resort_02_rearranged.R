@@ -68,7 +68,9 @@ pokaz('Accessions:', accessions)
 # ---- Correspondence ----
 
 for(acc in accessions){
+  pokaz('Accession', acc)
   
+  pokaz('Reading...')
   file.resort = paste0(path.resort, acc, '.rds')  
   corresp = readRDS(file.resort)
   corresp = corresp[or]
@@ -89,6 +91,7 @@ for(acc in accessions){
   }
   names(genome.new) = paste0('Chr', 1:length(genome.new), "_reodered")
   
+  pokaz('Writing...')
   file.genome.new = paste0(path.new, acc, '.fasta')
   writeFasta(genome.new, file.genome.new)
   
