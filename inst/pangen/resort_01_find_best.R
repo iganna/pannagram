@@ -15,7 +15,6 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.blast"),    type = "character", default = NULL, help = "Path to blast results"),
   make_option(c("--path.aln"),      type = "character", default = NULL, help = "Path to the output directory with alignments"),
   make_option(c("--path.resort"),   type = "character", default = NULL, help = "Path to the output directory with alignments"),
   
@@ -26,7 +25,6 @@ option_list <- list(
   make_option(c("--path.log"),      type = "character", default = NULL, help = "Path for log files"),
   make_option(c("--log.level"),     type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
-
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -49,7 +47,6 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # Number of cores
 num.cores <- opt$cores
 
-path.blast    <- ifelse(!is.null(opt$path.blast), opt$path.blast, stop('Folder with BLAST results is not specified'))
 path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
 path.resort   <- ifelse(!is.null(opt$path.resort), opt$path.resort, stop('Folder combinations to resort the genomes'))
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
@@ -67,12 +64,8 @@ pokaz('Names of genomes for the analysis:', accessions,
 # ***********************************************************************
 # ---- Correspondence ----
 
-
-path.blast = "/users/anna.igolkina/work/sources/output/b_juncea/alignments_GCA_018703725_1/"
-acc = "GCA_015484525_1"
-
 for(acc in accessions){
-  files.blast <- list.files(path.blast, pattern = paste0(acc,".*\\.rds$"), full.names = F)
+  files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
   files.sizes <- file.size(files.blast)
   combinations = sub(paste0(acc, "_"), "", files.blast)
   combinations = sub("_maj.rds", "", combinations)
@@ -91,7 +84,7 @@ for(acc in accessions){
     idx.corr = idx.tmp[which.max(files.sizes[idx.tmp])]
     i.chr.acc = result[idx.corr,1]
     
-    x = readRDS(paste0(path.blast,files.blast[idx.corr]))
+    x = readRDS(paste0(path.aln,files.blast[idx.corr]))
     pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
     
     pos.minus = sum((x$V3 - x$V2 + 1) * x$dir)
