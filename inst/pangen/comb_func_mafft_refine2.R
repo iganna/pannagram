@@ -56,12 +56,12 @@ refineAlignment <- function(seqs.clean, path.work){
     seqs.cl.fasta = paste0(path.work, 'seqs_', i.cl, '.fasta')
     aln.fasta = paste0(path.work, 'aln_', i.cl, '.fasta')
     
-    writeFastaMy(seqs.tmp, seqs.cl.fasta)
+    writeFasta(seqs.tmp, seqs.cl.fasta)
     
     #--op 3 --ep 0.1
     system(paste('mafft  --quiet --maxiterate 100 ', seqs.cl.fasta, '>', aln.fasta,  sep = ' '))
     
-    seqs.cl.aln = readFastaMy(aln.fasta)
+    seqs.cl.aln = readFasta(aln.fasta)
     seqs.cl.mx = aln2mx(seqs.cl.aln)
     
     pos.cl.mx = matrix(0,nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
@@ -390,7 +390,7 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
   system(paste('mafft --op 3  --ep 0.1 --quiet --merge', file.table, file.seqs.merge, '>', file.mafft, sep = ' '))
   
   # Read the aligned sequences
-  xx = readFastaMy(file.mafft)
+  xx = readFasta(file.mafft)
   mafft.mx = aln2mx(xx)
   
   # p = msaplot(mafft.mx)
@@ -450,7 +450,7 @@ blastTwoSeqs <- function(s1, s2, path.work){
   
   # Write the sequences to a temporary FASTA file
   file.seqs.tmp = paste0(path.work, 'seqs_tmp.fasta')
-  writeFastaMy(c(s1, s2), file.seqs.tmp)
+  writeFasta(c(s1, s2), file.seqs.tmp)
   
   # Define the output file for BLAST results
   file.blast.cons = paste0(file.seqs.tmp, '.out')
@@ -462,14 +462,14 @@ blastTwoSeqs <- function(s1, s2, path.work){
   system(paste0('blastn -db ',file.seqs.tmp,' -query ',file.seqs.tmp,
                 ' -num_alignments 50 ',
                 ' -out ',file.blast.cons,
-                ' -outfmt "7 qseqid qstart qend sstart send pident length sseqid"'))
+                ' -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid"'))
   
   # Read the BLAST output into a data frame
   x = readBlast(file.blast.cons)
   if(is.null(x)) {
     return(data.frame(tmp=numeric()))
   }
-  x = x[x$V1 != x$V8,,drop=F] # Remove self-alignments
+  x = x[x$V1 != x$V10,,drop=F] # Remove self-alignments
   
   # Split data into two groups: alignments starting from sequence 1 and sequence 2
   idx1 = x$V1 %in% names(s1)
@@ -517,10 +517,10 @@ blastTwoSeqs2 <- function(s1, s2, path.work){
   
   # Write the sequences to a temporary FASTA file
   file.seqs.tmp1 = paste0(path.work, 'seqs_tmp1.fasta')
-  writeFastaMy(s1, file.seqs.tmp1)
+  writeFasta(s1, file.seqs.tmp1)
   
   file.seqs.tmp2 = paste0(path.work, 'seqs_tmp2.fasta')
-  writeFastaMy(s2, file.seqs.tmp2)
+  writeFasta(s2, file.seqs.tmp2)
   
   # Define the output file for BLAST results
   file.blast1 = paste0(file.seqs.tmp1, '.out')

@@ -67,40 +67,43 @@ pokaz('Accessions:', accessions)
 # ***********************************************************************
 # ---- Correspondence ----
 
-for(acc in accessions){
-  pokaz('Accession', acc)
-  
-  file.resort = paste0(path.resort, acc, '.rds')  
-  corresp = readRDS(file.resort)
-  corresp = corresp[order(corresp[,1]),]
-  print(corresp)
-  
-  pokaz('Reading...')
-  file.genome = paste0(paste0(path.genomes, acc, ".fasta"))
-  pokaz(file.genome)
-  genome = readFasta(file.genome)
-  
-  genome.new = rep(NA, nrow(corresp))
-  for(irow in 1:nrow(corresp)){
-    idx = corresp[irow,2]
-    pokaz(idx)
-    if(idx < 0){
-      idx = abs(idx)
-      genome.new[irow] = revComplSeq(genome[idx])
-    } else {
-      genome.new[irow] = genome[idx]
-    }
-  }
-  names(genome.new) = paste0('Chr', 1:length(genome.new), "_reodered")
-  
-  pokaz('Writing...')
-  file.genome.new = paste0(path.new, acc, '.fasta')
-  writeFasta(genome.new, file.genome.new)
-  
-}
+# for(acc in accessions){
+#   pokaz('Accession', acc)
+#   
+#   file.resort = paste0(path.resort, acc, '.rds')  
+#   corresp = readRDS(file.resort)
+#   corresp = corresp[order(corresp[,1]),]
+#   print(corresp)
+#   
+#   pokaz('Reading...')
+#   file.genome = paste0(paste0(path.genomes, acc, ".fasta"))
+#   pokaz(file.genome)
+#   genome = readFasta(file.genome)
+#   
+#   genome.new = rep(NA, nrow(corresp))
+#   for(irow in 1:nrow(corresp)){
+#     idx = corresp[irow,2]
+#     pokaz(idx)
+#     if(idx < 0){
+#       idx = abs(idx)
+#       genome.new[irow] = revComplSeq(genome[idx])
+#     } else {
+#       genome.new[irow] = genome[idx]
+#     }
+#   }
+#   names(genome.new) = paste0('Chr', 1:length(genome.new), "_reodered")
+#   
+#   pokaz('Writing...')
+#   file.genome.new = paste0(path.new, acc, '.fasta')
+#   writeFasta(genome.new, file.genome.new)
+#   
+# }
 
-file.genome = paste0(paste0(path.genomes, base.acc, ".fasta"))
+file.genome = paste0(path.genomes, base.acc, ".fasta")
 file.genome.new = paste0(path.new, base.acc, '.fasta')
-file.copy(file.genome, file.genome.new)
+
+pokaz(file.genome, file.genome.new)
+res.copy = file.copy(file.genome, file.genome.new)
+pokaz(res.copy)
 
 

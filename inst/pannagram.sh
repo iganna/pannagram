@@ -1501,8 +1501,6 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-exit
-
 # ----------------------------------------------
 # Run MAFFT
 

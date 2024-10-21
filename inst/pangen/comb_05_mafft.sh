@@ -4,7 +4,7 @@ INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-source $INSTALLED_PATH/utils/chunk_error_control.sh
+# source $INSTALLED_PATH/utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
@@ -116,10 +116,10 @@ mafft_task() {
     # Run MAFFT
     # timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
     { 
-        timeout --foreground 60 mafft --quiet --op 3  --ep 0.1 --treeout  "${input_file}" > "${output_file}"  
+        timeout --foreground 60 mafft --quiet --op 3  --ep 0.1 --treeout  "${input_file}" > "${output_file}"  2>/dev/null
     } || {
         rm "${output_file}"
-        echo "MAFFT command failed for $input_file, but continuing with other files."
+        # echo "MAFFT command failed for $input_file, but continuing with other files."
     }
 
     if [ -d "$log_path" ]; then

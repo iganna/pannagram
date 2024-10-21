@@ -6,9 +6,9 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
-  # library(msa)
-  # library(muscle)  #BiocManager::install("muscle")
-  # library(Biostrings)
+  library(msa)
+  library(muscle)  #BiocManager::install("muscle")
+  library(Biostrings)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
@@ -124,8 +124,8 @@ for(s.comb in pref.combinations){
   CODE_ALN_BATCH <- function(i.batch, echo=F){
     idx.use = idx.batches[[i.batch]]
     
-    file.in = paste0(path.tmp, 'batch_',i.batch, '.fasta')
-    file.out = paste0(path.tmp, 'batch_',i.batch, '_aligned.fasta')
+    # file.in = paste0(path.tmp, 'batch_',i.batch, '.fasta')
+    # file.out = paste0(path.tmp, 'batch_',i.batch, '_aligned.fasta')
     
     mx.list = vector("list", length = length(idx.use))
     
@@ -136,8 +136,10 @@ for(s.comb in pref.combinations){
       names(seqs) = aln.seqs.names[[idx.aln]]
       
       seqs <- DNAStringSet(seqs)
-      alignment <- msa(seqs, method = "ClustalW")
+      # alignment <- msa(seqs, method = "ClustalOmega")
+      # aln = as.character(alignment)
       
+      alignment = muscle(seqs, quiet = T)
       aln = as.character(alignment)
       
       n.pos = nchar(aln[1])
@@ -177,9 +179,16 @@ for(s.comb in pref.combinations){
     
     pokaz('Parallel computing: short sequences')
     res.msa <- foreach(i.batch = 1:num.cores,
-                       .packages=c('Biostrings', 'crayon'))  %dopar% {
+                       .packages=c('Biostrings', 'crayon', 'msa', 'muscle'))  %dopar% {
                          return(CODE_ALN_BATCH(i.batch)) 
                        }
+    
+    res = list()
+    for(i.batch in 1:num.cores){
+      res[idx.batches[[i.batch]]] = res.msa[[i.batch]]
+    }
+    
+    res.msa = res
   }
   
   saveRDS(list(aln = res.msa,
