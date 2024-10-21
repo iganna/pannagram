@@ -4,10 +4,8 @@ suppressMessages({
   library(foreach)
   library(doParallel)
   library(optparse)
+  library(pannagram)
 })
-
-source(system.file("utils/utils.R", package = "pannagram"))
-source(system.file("pangen/synteny_func.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -19,7 +17,6 @@ option_list <- list(
   make_option(c("--path.resort"),   type = "character", default = NULL, help = "Path to the output directory with alignments"),
   
   make_option(c("--ref"),           type = "character", default = NULL, help = "Name of the reference genome"),
-  make_option(c("--accessions"),    type = "character", default = NULL, help = "File containing accessions to analyze"),
   
   make_option(c("--cores"),         type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option(c("--path.log"),      type = "character", default = NULL, help = "Path for log files"),
@@ -55,11 +52,16 @@ base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is no
 if(!dir.exists(path.resort)) dir.create(path.resort)
 
 # Accessions
-file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
-accessions <- as.character(tmp[,1])
-pokaz('Names of genomes for the analysis:', accessions, 
-      file=file.log.main, echo=echo.main)
+files.aln <- list.files(path.aln, pattern = ".*\\.rds$", full.names = F)
+files.aln = sub("_maj.rds", "", files.aln)
+accessions = c()
+for(f in files.aln){
+  s = strsplit(f, '_')[[1]]
+  s = s[-(length(s)-(0:1))]
+  s = paste0(s, collapse = '_')
+  accessions = c(accessions, s)
+  accessions = unique(accessions)
+}
 
 # ***********************************************************************
 # ---- Correspondence ----
