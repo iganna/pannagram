@@ -70,7 +70,7 @@ for(acc in accessions){
   pokaz('Accession', acc)
   files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
   # pokaz(files.aln)
-  files.sizes <- file.size(files.aln)
+  files.sizes <- file.size(paste0(path.aln, files.aln))
   combinations = sub(paste0(acc, "_"), "", files.aln)
   combinations = sub("_maj.rds", "", combinations)
   
@@ -87,9 +87,11 @@ for(acc in accessions){
     idx.tmp = grep(paste0("_", i.chr.ref, "_maj\\.rds$"), files.aln)
     idx.corr = idx.tmp[which.max(files.sizes[idx.tmp])]
     i.chr.acc = result[idx.corr,1]
-    pokaz(idx.corr)
-    pokaz(files.aln[idx.corr])
-    pokaz(len(files.aln))
+    
+    if(length(i.chr.acc) == 0){
+      pokazAttention("Cannot get the correspondence for chromosome", i.chr.ref)
+      next
+    }
     file.aln = paste0(path.aln, files.aln[idx.corr])
     pokaz(file.aln)
     x = readRDS(file.aln)
