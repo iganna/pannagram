@@ -98,6 +98,8 @@ for(acc in accessions){
   
 }
 
-
+file.genome = paste0(paste0(path.genomes, base.acc, ".fasta"))
+file.genome.new = paste0(path.new, base.acc, '.fasta')
+file.copy(file.genome, file.genome.new)
 
 
