@@ -48,6 +48,8 @@ path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with 
 path.resort   <- ifelse(!is.null(opt$path.resort), opt$path.resort, stop('Folder combinations to resort the genomes'))
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
 
+pokaz('path resort', path.resort)
+
 # Create folders for the alignment results
 if(!dir.exists(path.resort)) dir.create(path.resort)
 
