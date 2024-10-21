@@ -77,6 +77,7 @@ for(acc in accessions){
   
   pokaz('Reading...')
   file.genome = paste0(paste0(path.genomes, acc, ".fasta"))
+  pokaz(file.genome)
   genome = readFasta(file.genome)
   
   genome.new = rep(NA, nrow(corresp))
