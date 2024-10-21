@@ -52,7 +52,7 @@ path.resort   <- ifelse(!is.null(opt$path.resort), opt$path.resort, stop('Folder
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
 
 # Create folders for the alignment results
-if(!dir.exists(path.aln)) dir.create(path.aln)
+if(!dir.exists(path.resort)) dir.create(path.resort)
 
 # Accessions
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
