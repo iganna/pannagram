@@ -6,8 +6,8 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
-  library(msa)
-  library(muscle)  #BiocManager::install("muscle")
+  # library(msa)
+  # library(muscle)  #BiocManager::install("muscle")
   # library(Biostrings)
 })
 
@@ -177,7 +177,7 @@ for(s.comb in pref.combinations){
     
     pokaz('Parallel computing: short sequences')
     res.msa <- foreach(i.batch = 1:num.cores,
-                       .packages=c('muscle', 'Biostrings', 'crayon'))  %dopar% {
+                       .packages=c('Biostrings', 'crayon'))  %dopar% {
                          return(CODE_ALN_BATCH(i.batch)) 
                        }
   }
