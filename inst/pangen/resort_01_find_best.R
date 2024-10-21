@@ -87,7 +87,9 @@ for(acc in accessions){
     idx.tmp = grep(paste0("_", i.chr.ref, "_maj\\.rds$"), files.aln)
     idx.corr = idx.tmp[which.max(files.sizes[idx.tmp])]
     i.chr.acc = result[idx.corr,1]
-    
+    pokaz(idx.corr)
+    pokaz(files.aln[idx.corr])
+    pokaz(len(files.aln))
     file.aln = paste0(path.aln, files.aln[idx.corr])
     pokaz(file.aln)
     x = readRDS(file.aln)
