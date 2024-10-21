@@ -70,12 +70,12 @@ pokaz('Accessions:', accessions)
 for(acc in accessions){
   pokaz('Accession', acc)
   
-  pokaz('Reading...')
   file.resort = paste0(path.resort, acc, '.rds')  
   corresp = readRDS(file.resort)
   corresp = corresp[order(corresp[,1]),]
   print(corresp)
   
+  pokaz('Reading...')
   file.genome = paste0(paste0(path.genomes, acc, ".fasta"))
   genome = readFasta(file.genome)
   
