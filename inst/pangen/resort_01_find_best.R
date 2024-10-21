@@ -69,7 +69,7 @@ for(f in files.aln){
 for(acc in accessions){
   pokaz('Accession', acc)
   files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
-  pokaz(files.aln)
+  # pokaz(files.aln)
   files.sizes <- file.size(files.aln)
   combinations = sub(paste0(acc, "_"), "", files.aln)
   combinations = sub("_maj.rds", "", combinations)
@@ -88,7 +88,9 @@ for(acc in accessions){
     idx.corr = idx.tmp[which.max(files.sizes[idx.tmp])]
     i.chr.acc = result[idx.corr,1]
     
-    x = readRDS(paste0(path.aln, files.aln[idx.corr]))
+    file.aln = paste0(path.aln, files.aln[idx.corr])
+    pokaz(file.aln)
+    x = readRDS(file.aln)
     pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
     
     pos.minus = sum((x$V3 - x$V2 + 1) * x$dir)
