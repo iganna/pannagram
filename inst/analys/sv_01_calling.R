@@ -15,24 +15,30 @@ pokazAttention('Be sure, that consensus sequence for the pangenome chromosomes h
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to directory with the consensus", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--aln.type"), type="character", default="default", 
-              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character"),
-  make_option(c("--acc.anal"), type = "character", default = NULL,
-              help = "files with accessions to analyze", metavar = "character"),
-  make_option(c("--stat.only"), type = "character", default = NULL,
-              help = "files with accessions to analyze", metavar = "character")
-); 
+  make_option(c("--ref.pref"),  type = "character", default = NULL, help = "prefix of the reference file"),
+  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing"),
+  make_option(c("--aln.type"),  type = "character", default = "default", help = "type of alignment ('msa_', 'comb_', 'v_', etc)"),
+  make_option(c("--acc.anal"),  type = "character", default = NULL, help = "files with accessions to analyze"),
+  make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze")
+);
 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+
+# ***********************************************************************
+# ---- Logging ----
+
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+
+# ***********************************************************************
 
 # If only the statistics is needed
 if (!is.null(opt$stat.only)) {
@@ -59,15 +65,16 @@ if(!is.null(acc.anal)){
 if (!is.null(opt$aln.type)) {
   aln.type = opt$aln.type
 } else {
-  aln.type = 'msa_'
+  aln.type = aln.type.msa
 }
 
 # Reference genome
-if (is.null(opt$ref.pref) || (opt$ref.pref == 'NULL')) {
-  ref.pref = NULL
-  # stop("ref.pref is NULL")
+if (is.null(opt$ref.pref) || (opt$ref.pref == "NULL")) {
+  ref.pref <- ""
+  ref.suff = ""
 } else {
   ref.pref <- opt$ref.pref
+  ref.suff <- paste0('_ref_', ref.pref)
 }
 
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -87,45 +94,22 @@ cutoff = 0.90
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-if(is.null(ref.pref)){
-  
-  # pokaz('Reference genome:', ref.pref)
-  
-  s.pattern <- paste0("^",aln.type,"\\d+_\\d+[^.]*\\.h5$")
-  files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-  
-  # Extract reference names
-  files.suff <- sapply(files, function(filename) {
-    matches <- regmatches(filename, regexec(paste(aln.type, "\\d+_\\d+([^.]*)\\.h5", sep =""), filename))
-    return(matches[[1]][2])  
-  })
-  if(length(unique(files.suff)) != 1){
-    stop('Specify the genome, which was used for sorting')
-  }
+s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
+pokaz(s.pattern)
+pokaz(path.cons)
+files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 
-  pref.combinations <- sapply(files, function(filename) {
-    matches <- regmatches(filename, regexec(paste(aln.type, "(\\d+)_(\\d+)[^.]*\\.h5", sep = ''), filename))
-    return(paste(matches[[1]][2], matches[[1]][3], sep = "_"))
-  })
-  names(pref.combinations) = NULL
-  
-} else {
-  pokaz('Genome for sorting:', ref.pref)
-  # Old working version
-  s.pattern <- paste0("^", aln.type, ".*", '_ref_', ref.pref)
-  files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-  pref.combinations = gsub(aln.type, "", files)
-  pref.combinations <- sub("_ref.*$", "", pref.combinations)
-  pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
-  
-}
+pokaz(files)
+
+pref.combinations = gsub(aln.type, "", files)
+pref.combinations <- sub(ref.suff, "", pref.combinations)
+pref.combinations <- sub(".h5", "", pref.combinations)
 
 if(length(pref.combinations) == 0){
   stop('No Combinations found.')
 } else {
-  pokaz('Combinations:', pref.combinations)  
+  pokaz('Combinations', pref.combinations)  
 }
-
 
 # ---- Positions of SVs ----
 
@@ -138,14 +122,8 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb)
   
   # Get file for the combination
-  if(!is.null(ref.pref)){
-    file.comb = paste0(path.cons, aln.type, s.comb,'_ref_',ref.pref,'.h5')
-  } else {
-    s.pattern.comb <- paste0("^",aln.type,s.comb,"[^.]*\\.h5$")
-    file.comb <- list.files(path = path.cons, pattern = s.pattern.comb, full.names = FALSE)
-    file.comb = paste0(path.cons, file.comb)
-    pokaz(file.comb)
-  }
+  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
+  pokaz(file.comb)
   
   # Get accessions
   groups = h5ls(file.comb)

@@ -1,0 +1,138 @@
+---
+title: "Pannagram demonstration"
+output: null_document
+---
+
+# Setup
+## Libraries
+```{r}
+
+library(ggplot2)
+library(pannagram)
+
+```
+
+## Paths
+```{r}
+
+path.work = '/Volumes/Samsung_T5/vienn/test/labmeeting/'
+path.data = paste0(path.work, '01_data/')
+path.figures = paste0(path.work, '03_figures/')
+
+```
+
+# Data
+```{r}
+seqs = readFasta(paste0(path.data, 'test_sequences.fasta'))
+```
+
+# Dotplot visualisation
+```{r}
+s1 = seqs[1]
+s2 = seqs[5]
+```
+
+## One seq
+```{r}
+s1 = seqs[2]
+dotplot.s(s1, s1, 15, 12)
+
+dotself.s(s1, 15, 10)
+```
+
+
+```{r}
+s1 = seqs[1]
+s2 = seqs[2]
+
+dotplot.s(s1, s2, 15, 12)
+```
+
+
+```{r}
+s3 = seqs[5]
+dotplot.s(s3, s3, 15, 12)
+```
+
+# ORF finder
+```{r}
+
+res.orf = orfFinder(s1)
+
+orfplot(res.orf$pos)
+
+res.orf$orf[1]
+
+```
+
+# MSA plot visualisation
+## Simple MSA plot
+### Example 1
+```{r}
+file.msa = 'Gap_1_1_0622_1395308_1415357_flank_30_extra_aligned2.fasta'
+aln.my = readFasta(paste0(path.data, file.msa))
+mx.my = aln2mx(aln.my)
+
+
+file.mafft = 'Gap_1_1_0622_1395308_1415357_flank_30_extra_mafft.fasta'
+aln.mafft = readFasta(paste0(path.data, file.mafft))
+mx.mafft = aln2mx(aln.mafft)
+mx.mafft = mx.mafft[rownames(mx.my),]  # the same order
+
+p.my = msaplot(mx.my)
+p.mafft = msaplot(mx.mafft)
+
+p.my
+p.mafft
+
+```
+### Example 2
+```{r}
+file.msa = 'test_my.fasta'
+aln.my = readFasta(paste0(path.data, file.msa))
+mx.my = aln2mx(aln.my)
+
+
+file.mafft = 'aln_1.fasta'
+aln.mafft = readFasta(paste0(path.data, file.mafft))
+mx.mafft = aln2mx(aln.mafft)
+mx.mafft = mx.mafft[rownames(mx.my),]  # the same order
+
+p.my = msaplot(mx.my)
+p.mafft = msaplot(mx.mafft)
+
+p.my
+p.mafft
+
+```
+
+## Show differences
+```{r}
+
+p.my.d = msadiff(mx.my)
+p.mafft.d = msadiff(mx.mafft)
+
+p.my.d
+p.mafft.d
+
+```
+## Annotate
+```{r}
+
+p1 = 1
+p2 = 10000
+
+s.color = '#3B1E54'
+p = p.my.d + 
+  annotate("rect", xmin = p1, xmax = p2, 
+           ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = s.color) +
+  annotate("rect", xmin = p1, xmax = p2, 
+           ymin = 0, ymax = 0.5,  
+           fill = s.color)
+
+p
+
+
+```
+

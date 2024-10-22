@@ -121,6 +121,8 @@ traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F,
 #'
 #' @return A list of connected components, where each component is represented
 #' as a vector of vertex indices.
+#' 
+#' @export
 getGraphComponents <- function(edges){
   g <- igraph::simplify(igraph::make_graph(t(edges), directed = T))
   g.comp <- igraph::components(g)
@@ -173,7 +175,7 @@ getGraphComponents <- function(edges){
 #'     \item{node.traits}{A data frame representing traits associated with nodes.}
 #'     \term{nestedness}{A dataframe resulting from the nestedness detection procedure.}
 #'   }
-#' 
+#' @export
 getGraphFromBlast <- function(bl.res = NULL, 
                               res.nest = NULL,
                               sim.cutoff = 0.85, 

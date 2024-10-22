@@ -86,7 +86,7 @@ while [ $# -gt 0 ]; do
         -snp)    run_snp=true; shift;;  # Get VSF file with SNPs
         # -sv)     run_sv=true; shift;;
 
-        -sv_call)   run_sv_call=true; shift;;               # SV calling from the alignment
+        -sv_call | -sv)   run_sv_call=true; shift;;               # SV calling from the alignment
         -sv_sim) run_sv_sim=true; set_file="$2"; shift 2;;   # File to compare SVs againts set of seequences
         -sv_graph)  run_sv_graph=true; shift;;              # Construction of a graph on SVs
         -sim) similarity_value=$2; shift 2;;                # Similarity value
@@ -130,6 +130,7 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
+    pokaz_stage "Get blocks."
     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -138,6 +139,7 @@ if [ "$run_blocks" = true ]; then
 fi
 
 if [ "$run_seq" = true ]; then
+    pokaz_stage "Get consensus sequences."
     Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -147,6 +149,7 @@ if [ "$run_seq" = true ]; then
 fi
 
 if [ "$run_aln" = true ]; then
+    pokaz_stage "Get sequences of alignment."
     Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -157,6 +160,7 @@ fi
 
 
 if [ "$run_snp" = true ]; then
+    pokaz_stage "Get SNPs."
     Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -171,7 +175,7 @@ fi
 # -------------------------------------------------
 # Sv calling
 if [ "$run_sv_call" = true ]; then
-
+    pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
     # So, sonsensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
@@ -217,8 +221,9 @@ fi
 
 # -------------------------------------------------
 # SV on SVs
-if [ "$sv_graph" = true ]; then
+if [ "$run_sv_graph" = true ]; then
 
+    pokaz_stage "Graph on SVs"
     if [ -z "${similarity_value}" ]; then
         pokaz_message "Simirarity value is 85% (default)"
         similarity_value=85

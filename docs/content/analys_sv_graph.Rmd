@@ -1,0 +1,176 @@
+---
+title: "SV analysis"
+output: md_document
+---
+
+# Setup
+## Functions
+```{r}
+library(ggplot2)
+library(cowplot)
+library(rhdf5)
+library(pannagram)
+library(igraph)
+library(ggnet)
+library(network)
+
+```
+
+## Paths
+```{r}
+path.out = "/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/"
+
+
+path.cons = paste(path.out, 'intermediate/consensus/', sep = '')  # the result of pannagram
+path.figures = paste(path.out, 'figures/', sep = '')
+
+path.sv = paste0(path.cons, 'sv/')
+```
+
+## Variables
+```{r}
+n.chr = 1
+aln.type = 'msa_'
+sim.cutoff = 0.85
+```
+
+# SV-graph
+# Reading and constructing
+```{r}
+
+res.cover.file = 'seq_sv_big_on_sv_cover.rds'
+res.nest = readRDS(paste(path.sv, res.cover.file, sep = ''))
+g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, collapse = F)
+
+```
+
+
+# Plot simple graph
+```{r}
+
+g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+b.graph.names = network.vertex.names(g.part)
+set.seed(239)
+p.refined <- ggnet2(g, label = F, edge.color = "black",
+            # node.size = g.nodes.cnt[b.graph.names],
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            # color = g.nodes.fam[b.graph.names],
+            # palette = fam.palette,
+            # mode = "kamadakawai"
+            )
+
+p.refined
+```
+
+### Binning
+```{r}
+
+bins <- c(0, 100, 200, 400, 800, 1000, 1500, 3000, 5000, 7000, Inf)
+labels <- c("0-100", "100-200", "200-400", "400-800", "800-1000", "1000-1500", "1500-3000", "3000-5000", "5000-7000", "7000+")
+
+
+color.pal <- c("0-100" = "#1f77b4", "100-200" = "#50B498", "200-400" = "#2ca02c", 
+            "400-800" = "#bcbd22", "800-1000" = "#ff7f0e", "1000-1500" = "#d62728", "1500-3000" = "#9467bd",
+            "3000-5000" = "#e377c2", "5000-7000" = "#8c564b", "7000+" = "#7f7f7f")
+
+
+```
+
+### With labels
+```{r}
+
+g.names = network.vertex.names(g)
+
+g.comp <- getGraphComponents(g.content$edges)
+memb.comp = g.comp$membership
+memb.comp = memb.comp[g.comp$csize[memb.comp] >= 5]
+memb.comp = memb.comp[!duplicated(memb.comp)]
+
+g.label = rep('', length(g.names))
+names(g.label) = g.names
+g.label[names(memb.comp)] = as.character(memb.comp)
+
+
+g %v% "labels" = g.label
+
+g.names.len = as.numeric(sapply(g.names, function(s) strsplit(s, '\\|')[[1]][2]))
+g.names.len.bin <- as.character(cut(g.names.len, breaks = bins, right = FALSE, labels = labels))
+g %v% "colors" = as.character(g.names.len.bin)
+
+
+p <- ggnet2(g, label = 'labels', edge.color = "grey70", 
+            # node.size = g.content$nodes.traits[g.part.sub.big.names,]$cnt, 
+            # color = g.content$nodes.traits[g.part.sub.big.names,]$type,
+            # mode = 'kamadakawai',
+            node.size = 1,
+            color = 'colors',
+            palette = color.pal
+            ) + 
+  # theme(legend.position = "none") +
+  guides(size = F)
+p
+
+# pdf(paste(path.figures, 'graph_all_svs_all_small_comp_label.pdf', sep = ''), width = 6, height = 5)
+# print(p)     # Plot 1 --> in the first page of PDF
+# dev.off()
+
+```
+
+# Get sequences from every component
+## Read sequence
+```{r}
+seqs = readFasta(paste0(path.sv, 'seq_sv_big.fasta'))
+```
+
+
+```{r}
+
+
+g.comp$membership[g.comp$membership == 1]
+
+seqs.target = seqs[names(memb.comp)]
+
+writeFasta(seqs.target, paste0(path.sv, 'seq_sv_big_target.fasta'))
+
+i.comp = 12
+i.seq = which(memb.comp == i.comp)
+s = seqs.target[i.seq]
+dotself.s(s, 15, 8)
+```
+# ORF
+```{r}
+
+
+orf.res = orfFinder(s)
+
+orfplot(orf.res$pos)
+
+head(orf.res$orf)
+
+
+```
+
+
+# Short sequences from the first component
+```{r}
+
+s1 = seqs[names(g.comp$membership[g.comp$membership == 1])]
+
+s1 = s1[nchar(s1) < 200]
+
+s1 = s1[nchar(s1) > 100]
+
+i.s = 1
+s = s1[i.s]
+
+dotself.s(s, 15, 12)
+
+mx = aln2mx(s)
+msaplot(mx)
+
+
+```
+
+

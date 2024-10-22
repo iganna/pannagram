@@ -404,6 +404,24 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
   return(list(df.plot, gr.col))
 }
 
+#' ggSynteny - Visualization of synteny blocks along genomes
+#'
+#' This function visualizes synteny blocks along the specified chromosome with optional centromere positions. 
+#' It generates a ggplot object showing synteny blocks between accessions, coloring blocks based on their 
+#' relative orientation and positions.
+#'
+#' @param idx.break Data frame with information on the breakpoints between syntenic blocks.
+#' @param i.chr The chromosome number or identifier for which synteny blocks will be plotted.
+#' @param accessions A character vector with the names or identifiers of the accessions to be included in the plot.
+#' @param i.order Optional, an integer vector specifying the order in which accessions will be plotted.
+#' @param wnd.size Numeric, window size for splitting synteny blocks for visualization, default is 1000000.
+#' @return A ggplot object showing synteny blocks, their positions, and optionally centromeric regions.
+#' 
+#' @examples
+#' # Example usage:
+#' ggSynteny(idx.break, i.chr = 1, accessions = c("Acc1", "Acc2"), i.order = c(1, 2))
+#'
+#' @export
 ggSynteny <- function(idx.break, i.chr, accessions, i.order=NULL, file.cen.pos=NULL, file.acc.len=NULL, 
                       gap.len = 100000, wnd.size = 1000000){
   

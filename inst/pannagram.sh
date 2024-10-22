@@ -661,7 +661,7 @@ if [ "$one_step" == "T" ]; then
     step_end=${step_start}
 fi
 
-pokaz_message "Start End ${step_start} ${step_end}"
+pokaz_message "Start End: ${step_start} ${step_end}"
 
 # Check start and end
 if [ "$step_start" -gt "$step_end" ]; then

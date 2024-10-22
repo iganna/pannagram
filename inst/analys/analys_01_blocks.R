@@ -57,7 +57,7 @@ ref.name <- opt$ref
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type)
+s.pattern <- paste0("^", aln.type, ".*h5")
 s.combinations <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 s.combinations = gsub(aln.type, "", s.combinations)
 s.combinations = gsub(".h5", "", s.combinations)
