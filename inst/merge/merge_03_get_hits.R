@@ -1,8 +1,6 @@
 # This script gets gff file and the genome and return the set of candidate sequences for merging
 
-path.pannagram = ""
-source(paste(path.pannagram, 'utils/utils.R', sep = ''))
-
+source(system.file("utils/utils.R", package = "pannagram"))
 
 pokazStage('Combine results..')
 

@@ -2,8 +2,7 @@
 
 library(optparse)
 
-path.pannagram = ""
-source(paste(path.pannagram, 'utils/utils.R', sep = ''))
+source(system.file("utils/utils.R", package = "pannagram"))
 
 pokazStage('Extract candidates for merging..')
 
