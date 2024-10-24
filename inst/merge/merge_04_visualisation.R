@@ -3,8 +3,6 @@
 library(ggplot2)
 library(pannagram)
 
-pokazStage('Combine results..')
-
 library(optparse)
 
 option_list = list(
