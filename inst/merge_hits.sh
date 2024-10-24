@@ -205,7 +205,6 @@ do
 done
 
 if ! grep -q '^>' ${file_merged_seqs_fixed}; then
-    pokaz_message "Nothing to merge"
     exit 0
 fi
 
