@@ -160,6 +160,8 @@ m.df <- data.frame(
 
 file.merged.gff = paste0(path.res, 'simsearch.GCA_028009825_80_95.gff')
 
+pokaz('File with results:', file.merged.gff)
+
 gff.merge = read.table(file.merged.gff, stringsAsFactors = F)
 idx.suspicious = c()
 
