@@ -64,7 +64,7 @@ tbl.cnt = tbl.cnt[tbl.cnt$total >= 4,]
 pokaz("Number#1:", dim(tbl.cnt))
 
 # Genome
-genome = readFasta(file.gff)
+genome = readFasta(file.genome)
 genome.list = lapply(genome, seq2nt)
 names(genome.list) = sapply(names(genome), function(s) strsplit(s, ' ')[[1]][1])
 
@@ -189,8 +189,6 @@ if(length(idx.suspicious) > 0){
 
 # ---- Number of merged ----
 
-head(m.df)
-
 idx.merge = list()
 for(i.m in 1:nrow(m.df)){
   idx.merge[[i.m]] = which((gff$chr == m.df$chr[i.m]) & (gff$V4 >= m.df$beg[i.m]) & (gff$V5 <= m.df$end[i.m]))
@@ -199,7 +197,6 @@ for(i.m in 1:nrow(m.df)){
 m.df$n = unlist(lapply(idx.merge, length))
 
 table(m.df$n)
-
 
 df <- as.data.frame(table(m.df$n))
 df$Var1 = factor(df$Var1, levels = sort(unique(df$Var1)))
