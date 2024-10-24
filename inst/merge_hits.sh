@@ -146,7 +146,7 @@ fi
 # ----------------------------------------
 # Read the gff file, and get sequences
 
-file_merged_seqs="${path_out}merged_seqs_1.fasta"
+# file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
 # Rscript $INSTALLED_PATH/merge/merge_01_extract_hits.R \
 #         --file.gff=${file_gff} \
@@ -155,10 +155,10 @@ file_merged_seqs="${path_out}merged_seqs_1.fasta"
 #         --patterns=${patterns} \
 #         --len.gap=${distance}
 
-# ----------------------------------------
-# Simrearch and Merge
+# # ----------------------------------------
+# # Simrearch and Merge
 
-file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
+# file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
 # for ((i=1; i<=max_rounds; i++))
 # do
@@ -204,12 +204,12 @@ file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
 # done
 
-if ! grep -q '^>' ${file_merged_seqs_fixed}; then
-    exit 0
-fi
+# if ! grep -q '^>' ${file_merged_seqs_fixed}; then
+#     exit 0
+# fi
 
 
-file_fix_seqs="${path_out}seqs_fix.fasta"
+# file_fix_seqs="${path_out}seqs_fix.fasta"
 
 # Rscript $INSTALLED_PATH/merge/merge_03_get_hits.R \
 #     --path.out ${path_out} \
