@@ -1,7 +1,7 @@
 # This script gets gff file and the genome and return the set of candidate sequences for merging
 
 library(ggplot2)
-source(system.file("utils/utils.R", package = "pannagram"))
+library(pannagram)
 
 pokazStage('Combine results..')
 
@@ -41,8 +41,12 @@ file.gff = opt$file.gff
 
 path.figures = paste0(path.out, 'figures/')
 path.figures.m = paste0(path.figures, 'merges/')
-dir.create(path.figures)
-dir.create(path.figures.m)
+if (!dir.exists(path.figures)) {
+  dir.create(path.figures)
+}
+if (!dir.exists(path.figures.m)) {
+  dir.create(path.figures.m)
+}
 
 path.res = paste0(path.out, 'simseqrch_seqs_fix/')
 
@@ -51,10 +55,15 @@ file.cnt = paste0(path.res, 'simsearch.GCA_028009825_80_95.cnt')
 # path for Mafft
 path.work = paste0(path.out, 'tmp/')
 dir.create(path.work)
+if (!dir.exists(path.work)) {
+  dir.create(path.work)
+}
 
 path.gff.out = paste0(path.out, 'gff_out/')
 dir.create(path.gff.out)
-
+if (!dir.exists(path.gff.out)) {
+  dir.create(path.gff.out)
+}
 
 # ---- Read ----
 
@@ -217,10 +226,6 @@ dev.off()
 
 # ---- Visualisation ----
 
-
-path.figures.m = paste0(path.figures, 'merged/')
-dir.create(path.figures.m)
-
 colors <- colorRampPalette(c('#117554','#6EC207', "#FFEB00", "#4379F2"))
 # colors <- colorRampPalette(c("#F87474", "#3AB0FF"))
 
@@ -229,10 +234,6 @@ check.again.out = c()
 for(i.m in which(m.df$n > 1)){
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
-  
-  pokaz(m.df$chr[i.m])
-  print(names(genome.list))
-  pokaz(length(genome.list))
   
   seqs = nt2seq(genome.list[[m.df$chr[i.m]]][m.df$beg[i.m]:m.df$end[i.m]])
   seqs.names = c('init')
