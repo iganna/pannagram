@@ -231,6 +231,10 @@ for(i.m in which(m.df$n > 1)){
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
   
+  pokaz(m.df$chr[i.m])
+  print(names(genome.list))
+  pokaz(length(genome.list))
+  
   seqs = nt2seq(genome.list[[m.df$chr[i.m]]][m.df$beg[i.m]:m.df$end[i.m]])
   seqs.names = c('init')
   for(irow in 1:nrow(gff.tmp)){
