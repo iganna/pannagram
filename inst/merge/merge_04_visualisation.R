@@ -212,14 +212,14 @@ p = ggplot(df, aes(x = Var1, y = Freq)) +
 
 p
 
-pdf(paste(path.figures.type, 'n_merged.pdf', sep = ''), width = 5, height = 4)
+pdf(paste(path.figures, 'n_merged.pdf', sep = ''), width = 5, height = 4)
 print(p)     # Plot 1 --> in the first page of PDF
 dev.off()
 
 # ---- Visualisation ----
 
 
-path.figures.m = paste0(path.figures.type, 'merged/')
+path.figures.m = paste0(path.figures, 'merged/')
 dir.create(path.figures.m)
 
 colors <- colorRampPalette(c('#117554','#6EC207', "#FFEB00", "#4379F2"))
