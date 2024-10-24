@@ -42,6 +42,7 @@ file.fix.seqs = opt$file.fix.seqs
 # ---- Read the merged sequences
 # file.fix = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/tebagra/tair12_data/simsearch_90/merged_seqs_fixed.txt'
 
+pokaz("File name", file.fix)
 x = read.table(file.fix, stringsAsFactors = F)
 # print(paste0('Number of rows in x', nrow(x)))
 
