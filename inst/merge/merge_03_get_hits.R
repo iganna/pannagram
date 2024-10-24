@@ -7,12 +7,9 @@ pokazStage('Combine results..')
 library(optparse)
 
 option_list = list(
-  make_option(c("--path.out"), type="character", default="", 
-              help="Path to the output folder", metavar="character"),
-  make_option(c("--file.fix"), type="character", default="", 
-              help="Path to the sequences file", metavar="character"),
-  make_option(c("--file.fix.seqs"), type="character", default="", 
-              help="Path to the sequences file", metavar="character")
+  make_option("--path.out",      type="character", default="", help="Path to the output folder"),
+  make_option("--file.fix",      type="character", default="", help="Path to the sequences file"),
+  make_option("--file.fix.seqs", type="character", default="", help="Path to the sequences file")
 );
 
 opt_parser = OptionParser(option_list=option_list);
