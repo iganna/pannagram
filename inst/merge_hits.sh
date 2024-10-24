@@ -204,6 +204,11 @@ do
 
 done
 
+if ! grep -q '^>' ${file_merged_seqs_fixed}; then
+    pokaz_message "Nothing to merge"
+    exit 0
+fi
+
 
 file_fix_seqs="${path_out}seqs_fix.fasta"
 
