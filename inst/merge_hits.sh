@@ -230,7 +230,7 @@ fi
 # fi
 
 
-Rscript $INSTALLED_PATH/merge/merge_04_visualisation \
+Rscript $INSTALLED_PATH/merge/merge_04_visualisation.R \
         --path.out  ${path_out} \
         --file.genome ${file_genome} \
         --file.gff=${file_gff}
