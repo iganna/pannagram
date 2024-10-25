@@ -370,4 +370,96 @@ for(i.m in which(m.df$n > 1)){
 
 saveRDS(m.df, paste0(path.gff.out, 'm_df.rds'))
 
+# ---- Form the GFF ----
 
+
+
+m.df$id = 1:nrow(m.df)
+
+idx.merge = list()
+for(i.m in 1:nrow(m.df)){
+  idx.merge[[i.m]] = which((gff$chr == m.df$chr[i.m]) & (gff$V4 >= m.df$beg[i.m]) & (gff$V5 <= m.df$end[i.m]))
+}
+
+
+idx.remove = which((m.df$check != 0) & (m.df$n == 2))
+idx.remain = setdiff(which(m.df$check != 0), idx.remove)
+for(i.m in idx.remain){
+  idx.tmp = idx.merge[[i.m]]
+  if(m.df$check[i.m] == 1){
+    idx.tmp = idx.tmp[-1]
+  } else {
+    idx.tmp = idx.tmp[-length(idx.tmp)]
+  }
+  idx.merge[[i.m]] = idx.tmp
+  gff.tmp = gff[idx.tmp,]
+  
+  beg.new = min(gff.tmp$V4)
+  end.new = max(gff.tmp$V5)
+  
+  if(m.df$check[i.m] == 1){
+    if(beg.new == m.df$beg[i.m]) stop("Wrong begin 1")
+    if(end.new != m.df$end[i.m]) stop("Wrong end 1")
+  } else {
+    if(beg.new != m.df$beg[i.m]) stop("Wrong begin 2")
+    if(end.new == m.df$end[i.m]) stop("Wrong end 2")
+  } 
+  m.df$beg[i.m] = beg.new
+  m.df$end[i.m] = end.new
+}
+
+m.df = m.df[-idx.remove,]
+m.df = m.df[m.df$check != 3,]
+rownames(m.df) = NULL
+
+
+
+m.df$pref = ''
+m.df$type = ''
+m.df$dir = ''
+for(i.m in 1:nrow(m.df)){
+  idx.tmp = idx.merge[[i.m]]
+  gff.tmp = gff[idx.tmp,]
+  
+  info = unname(sapply(gff.tmp$V9, function(s) sub("Name=", "", strsplit(s, ';')[[1]][2])))
+  info = unique(info)
+  info = sort(info)
+  # if(length(info) != 1) stop()
+  m.df$pref[i.m] = paste0(info, collapse = '|')
+  
+  # Type
+  info = unique(gff.tmp$V3)
+  info = sort(info)
+  # if(length(info) != 1) stop()
+  m.df$type[i.m] = paste0(info, collapse = '|')
+  
+  
+  # Direction
+  info = unique(gff.tmp$V7)
+  info = sort(info)
+  # if(length(info) != 1) stop()
+  m.df$dir[i.m] = paste0(info, collapse = '|')
+}
+
+m.df$type[m.df$type == "Gypsy_LTR_retrotransposon|LTR_retrotransposon"] = "LTR_retrotransposon"
+m.df$dir[m.df$dir %in% c('-', '+')] = '.'
+pokaz('Unique types:', unique(m.df$type))
+
+genome.names = names(genome.list)
+
+m.gff = data.frame(V1 = genome.names[m.df$chr],
+                   V2 = 'merging', 
+                   V3 = m.df$type,
+                   V4 = m.df$beg,
+                   V5 = m.df$end,
+                   V6 = m.df$n,
+                   V7 = m.df$dir,
+                   V8 = '.',
+                   V9 = paste0('Name=', m.df$pref))
+
+write.table(m.gff, 
+            file = paste0(path.gff.out, 'gff_merged.gff'),
+            quote = F,
+            row.names = F,
+            col.names = F,
+            sep = '\t')
