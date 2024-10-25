@@ -158,7 +158,7 @@ fi
 # # ----------------------------------------
 # # Simrearch and Merge
 
-# file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
+file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
 # for ((i=1; i<=max_rounds; i++))
 # do
@@ -204,9 +204,9 @@ fi
 
 # done
 
-# if ! grep -q '^>' ${file_merged_seqs_fixed}; then
-#     exit 0
-# fi
+if ! grep -q '^>' ${file_merged_seqs_fixed}; then
+    exit 0
+fi
 
 
 # file_fix_seqs="${path_out}seqs_fix.fasta"
