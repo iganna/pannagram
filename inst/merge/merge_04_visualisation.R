@@ -240,6 +240,9 @@ for(i.m in which(m.df$n > 1)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
   print(gff.tmp)
   
+  all.local.objects <- ls()
+  save(list = all.local.objects, file = "tmp_workspace.RData")
+
   idx.tmp = idx.merge[[i.m]]
   pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
   
