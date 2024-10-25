@@ -52,13 +52,11 @@ file.cnt = paste0(path.res, 'simsearch.GCA_028009825_80_95.cnt')
 
 # path for Mafft
 path.work = paste0(path.out, 'tmp/')
-dir.create(path.work)
 if (!dir.exists(path.work)) {
   dir.create(path.work)
 }
 
 path.gff.out = paste0(path.out, 'gff_out/')
-dir.create(path.gff.out)
 if (!dir.exists(path.gff.out)) {
   dir.create(path.gff.out)
 }
@@ -228,7 +226,7 @@ colors <- colorRampPalette(c('#117554','#6EC207', "#FFEB00", "#4379F2"))
 # colors <- colorRampPalette(c("#F87474", "#3AB0FF"))
 
 check.again.out = c()
-
+m.df$check = 0
 for(i.m in which(m.df$n > 1)){
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
@@ -266,11 +264,40 @@ for(i.m in which(m.df$n > 1)){
   pos.aln = rep(0, ncol(aln.mx))
   pos.aln[aln.mx[1,] != '-'] = 1:nchar(seqs[1])
   
+  # ---- Check positions ----
+  pref = ""
+  for(jrow in c(1,length(idx.tmp))){
+    
+    pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
+    pre2 = gff$V5[idx.tmp[jrow]] - min(pos) + 1
+    
+    p1 = which(pos.aln == pre1)
+    p2 = which(pos.aln == pre2)
+    
+    aln.mx.annot = aln.mx[,p1:p2]
+    aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
+    n.gap = colSums(aln.mx.annot == '-')
+    p.gap = colSums(aln.mx.annot == '-') / nrow(aln.mx) 
+    tot.gap = sum( p.gap > 0.5) / length(p.gap)
+    pokaz(i.m, jrow, tot.gap)
+    if(tot.gap > 0.8) {
+      pref = 'check_'
+      check.again.out = c(check.again.out, i.m)
+      if(jrow == 1){
+        m.df$check[i.m] = m.df$check[i.m] + 1
+      } else {
+        m.df$check[i.m] = m.df$check[i.m] + 2
+      }
+      
+    }
+  }
+  
+  # ---- Visualisation ----
+  
   # Vertical annotation
   idx.tmp = idx.merge[[i.m]]
   gradient_colors <- colors(length(idx.tmp))
   pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
-  
   
   s = seqs[1]
   p.dot = dotplot.s(s, s, 15, 12)
@@ -307,26 +334,7 @@ for(i.m in which(m.df$n > 1)){
                          collapse = '\n')) + 
     theme(plot.title = element_text(size = 10)) 
   
-  pref = ""
-  for(jrow in c(1,length(idx.tmp))){
-    
-    pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
-    pre2 = gff$V5[idx.tmp[jrow]] - min(pos) + 1
-    
-    p1 = which(pos.aln == pre1)
-    p2 = which(pos.aln == pre2)
-    
-    aln.mx.annot = aln.mx[,p1:p2]
-    aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
-    n.gap = colSums(aln.mx.annot == '-')
-    p.gap = colSums(aln.mx.annot == '-') / nrow(aln.mx) 
-    tot.gap = sum( p.gap > 0.5) / length(p.gap)
-    pokaz(i.m, jrow, tot.gap)
-    if(tot.gap > 0.8) {
-      pref = 'check_'
-      check.again.out = c(check.again.out, i.m)
-    }
-  }
+  
   
   png(paste(path.figures.m, pref,  'aln_',i.m,'_msadiff.png', sep = ''), 
       width = 8, height = 6, units = "in", res = 300)
@@ -344,9 +352,6 @@ for(i.m in which(m.df$n > 1)){
   dev.off()
   
 }
-
-m.df$check = 0
-m.df$check[check.again.out] = 1
 
 # ---- Save ----
 
