@@ -1540,3 +1540,31 @@ checkDone <- function(file.log) {
   }
 }
 
+
+#' Find the Longest Common Prefix of Strings
+#'
+#' @param info A character vector of strings
+#'
+#' @return A character string representing the longest common prefix of all input strings 
+#' 
+#' @export
+commonPrefix <- function(info){
+  if(length(info) == 1){
+    return(info)
+  }
+  s.pref = seq2nt(info[1])
+  for(i in 2:length(info)){
+    s = seq2nt(info[i])
+    for(j in 1:length(s.pref)){
+      if(s[j] != s.pref[j]){
+        if(j == 1){
+          return('')
+        }
+        s.pref = s.pref[1:(j-1)]
+        break
+      }
+    }
+  }
+  return(paste0(s.pref, collapse = ''))
+}
+
