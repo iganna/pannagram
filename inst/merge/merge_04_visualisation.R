@@ -239,9 +239,6 @@ for(i.m in which(m.df$n > 1)){
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
   print(gff.tmp)
-  
-  all.local.objects <- ls()
-  save(list = all.local.objects, file = "tmp_workspace.RData")
 
   idx.tmp = idx.merge[[i.m]]
   pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
@@ -280,6 +277,8 @@ for(i.m in which(m.df$n > 1)){
   # Positions in the alignment
   pos.aln = rep(0, ncol(aln.mx))
   pos.aln[aln.mx[1,] != '-'] = 1:nchar(seqs[1])
+  
+  save(list = ls(), file = "tmp_workspace.RData")
   
   # ---- Check positions ----
   pref = ""
