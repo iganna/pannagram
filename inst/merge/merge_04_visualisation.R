@@ -256,13 +256,15 @@ for(i.m in which(m.df$n > 1)){
   }
   names(seqs) = seqs.names
   
-  file.clean = paste0(path.work, 'seqs_clean_',i.m,'.fasta')
+  file.clean = paste0(path.work, 'seqs_clean_', i.m, '.fasta')
   writeFasta(seqs, file.clean)
   
-  aln.fasta = paste0(path.work, 'aln_',i.m,'.fasta')
+  aln.fasta = paste0(path.work, 'aln_', i.m, '.fasta')
   
   if(!file.exists(aln.fasta)){
     system(paste('mafft  --quiet --op 3  --ep 0.1 --treeout ', file.clean, '>', aln.fasta,  sep = ' '))
+  } else {
+    pokaz('aln exist')
   }
   
   aln.mx = aln2mx(readFasta(aln.fasta))
