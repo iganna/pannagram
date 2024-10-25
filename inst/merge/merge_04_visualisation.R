@@ -441,6 +441,7 @@ for(i.m in 1:nrow(m.df)){
 }
 
 m.df$type[m.df$type == "Gypsy_LTR_retrotransposon|LTR_retrotransposon"] = "LTR_retrotransposon"
+pokaz(unique(m.df$dir))
 m.df$dir[m.df$dir %in% c('-', '+')] = '.'
 pokaz('Unique types:', unique(m.df$type))
 
