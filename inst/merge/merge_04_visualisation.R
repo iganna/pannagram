@@ -8,7 +8,8 @@ library(optparse)
 option_list = list(
   make_option("--path.out",      type="character", default="", help="Path to the output folder"),
   make_option("--file.genome",   type="character", default="", help="File with the reference genome"),
-  make_option("--file.gff",      type="character", default="", help="Initial gff file")
+  make_option("--file.gff",      type="character", default="", help="Initial gff file"),
+  make_option("--plot",          type="logical", default=TRUE, help="Enable plotting")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -34,6 +35,11 @@ if (is.null(opt$file.gff)) {
 path.out = opt$path.out
 file.genome = opt$file.genome
 file.gff = opt$file.gff
+to.plot = opt$plot
+
+if(!to.plot){
+  pokaz("Visualisation is not needed")
+}
 
 # ---- Paths . Files ----
 
@@ -253,7 +259,9 @@ for(i.m in which(m.df$n > 1)){
   
   aln.fasta = paste0(path.work, 'aln_',i.m,'.fasta')
   
-  system(paste('mafft  --quiet --op 3  --ep 0.1 --treeout ', file.clean, '>', aln.fasta,  sep = ' '))
+  if(!file.exists(aln.fasta)){
+    system(paste('mafft  --quiet --op 3  --ep 0.1 --treeout ', file.clean, '>', aln.fasta,  sep = ' '))
+  }
   
   aln.mx = aln2mx(readFasta(aln.fasta))
   
@@ -292,6 +300,9 @@ for(i.m in which(m.df$n > 1)){
     }
   }
   
+  if(!to.plot){
+    next
+  }
   # ---- Visualisation ----
   
   # Vertical annotation
