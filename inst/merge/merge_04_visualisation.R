@@ -237,6 +237,7 @@ for(i.m in which(m.df$n > 1)){
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
   idx.tmp = idx.merge[[i.m]]
+  pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
   
   seqs = nt2seq(genome.list[[m.df$chr[i.m]]][m.df$beg[i.m]:m.df$end[i.m]])
   seqs.names = c('init')
@@ -307,13 +308,13 @@ for(i.m in which(m.df$n > 1)){
   if(!to.plot){
     next
   }
+  
   # ---- Visualisation ----
   
   # Vertical annotation
-  
   gradient_colors <- colors(length(idx.tmp))
-  pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
-  
+
+  # Dotplot
   s = seqs[1]
   p.dot = dotplot.s(s, s, 15, 12)
   
