@@ -276,12 +276,15 @@ for(i.m in which(m.df$n > 1)){
   # ---- Check positions ----
   pref = ""
   for(jrow in c(1,length(idx.tmp))){
+    pokaz(jrow)
     
     pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
     pre2 = gff$V5[idx.tmp[jrow]] - min(pos) + 1
     
     p1 = which(pos.aln == pre1)
     p2 = which(pos.aln == pre2)
+    
+    pokaz(pre1, pre2, p1, p2)
     
     aln.mx.annot = aln.mx[,p1:p2]
     aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
