@@ -146,88 +146,88 @@ fi
 # ----------------------------------------
 # Read the gff file, and get sequences
 
-# file_merged_seqs="${path_out}merged_seqs_1.fasta"
+file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
-# Rscript $INSTALLED_PATH/merge/merge_01_extract_hits.R \
-#         --file.gff=${file_gff} \
-#         --file.genome=${file_genome} \
-#         --file.seqs=${file_merged_seqs} \
-#         --patterns=${patterns} \
-#         --len.gap=${distance}
+Rscript $INSTALLED_PATH/merge/merge_01_extract_hits.R \
+        --file.gff=${file_gff} \
+        --file.genome=${file_genome} \
+        --file.seqs=${file_merged_seqs} \
+        --patterns=${patterns} \
+        --len.gap=${distance}
 
 # # ----------------------------------------
 # # Simrearch and Merge
 
 file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
-# for ((i=1; i<=max_rounds; i++))
-# do
-# 	file_merged_seqs="${path_out}merged_seqs_${i}.fasta"
+for ((i=1; i<=max_rounds; i++))
+do
+	file_merged_seqs="${path_out}merged_seqs_${i}.fasta"
 
-# 	if [ ! -f "${file_merged_seqs}" ]; then
-#         break
-#     fi
+	if [ ! -f "${file_merged_seqs}" ]; then
+        break
+    fi
     
-#     path_simsearch="${path_out}simseqrch_seqs_${i}/"
+    path_simsearch="${path_out}simseqrch_seqs_${i}/"
 
-# 	# Run simsearch
+	# Run simsearch
 
-# 	$INSTALLED_PATH/simsearch.sh \
-#     -in_seq ${file_merged_seqs}    \
-#     -on_genome ${file_genome} \
-#     -out "${path_out}simseqrch_seqs_${i}/" \
-#     -sim ${sim_sutoff} \
-#     -cov ${covegare} \
-#     ${keepblast}
+	$INSTALLED_PATH/simsearch.sh \
+    -in_seq ${file_merged_seqs}    \
+    -on_genome ${file_genome} \
+    -out "${path_out}simseqrch_seqs_${i}/" \
+    -sim ${sim_sutoff} \
+    -cov ${covegare} \
+    ${keepblast}
     
 
-# 	# Get Collapsed sequences - neighbours only
+	# Get Collapsed sequences - neighbours only
 
-#     file_merged_seqs_next="${path_out}merged_seqs_$((i+1)).fasta"
+    file_merged_seqs_next="${path_out}merged_seqs_$((i+1)).fasta"
 
-#     file_cnt=$(find ${path_simsearch} -type f -name "*${sim_sutoff}_${covegare}.cnt")
+    file_cnt=$(find ${path_simsearch} -type f -name "*${sim_sutoff}_${covegare}.cnt")
 
-#     if [ -z "$file_cnt" ]; then
-#         echo "Error: No file ending with ${sim_sutoff}_${covegare}.cnt found." >&2
-#         exit 1
-#     elif [ $(echo "$file_cnt" | wc -l) -ne 1 ]; then
-#         echo "Error: More than one file matching the pattern *${sim_sutoff}_${covegare}.cnt found." >&2
-#         exit 1
-#     fi
+    if [ -z "$file_cnt" ]; then
+        echo "Error: No file ending with ${sim_sutoff}_${covegare}.cnt found." >&2
+        exit 1
+    elif [ $(echo "$file_cnt" | wc -l) -ne 1 ]; then
+        echo "Error: More than one file matching the pattern *${sim_sutoff}_${covegare}.cnt found." >&2
+        exit 1
+    fi
 
-#     Rscript $INSTALLED_PATH/merge/merge_02_new_hits.R \
-#         --file.cnt ${file_cnt} \
-#         --file.genome ${file_genome} \
-#         --file.seqs ${file_merged_seqs_next} \
-#         --file.fix ${file_merged_seqs_fixed} \
-#         --copy.number=${copy_number}
+    Rscript $INSTALLED_PATH/merge/merge_02_new_hits.R \
+        --file.cnt ${file_cnt} \
+        --file.genome ${file_genome} \
+        --file.seqs ${file_merged_seqs_next} \
+        --file.fix ${file_merged_seqs_fixed} \
+        --copy.number=${copy_number}
 
-# done
+done
 
 if ! grep -q '^>' ${file_merged_seqs_fixed}; then
     exit 0
 fi
 
 
-# file_fix_seqs="${path_out}seqs_fix.fasta"
+file_fix_seqs="${path_out}seqs_fix.fasta"
 
-# Rscript $INSTALLED_PATH/merge/merge_03_get_hits.R \
-#     --path.out ${path_out} \
-#     --file.fix ${file_merged_seqs_fixed} \
-#     --file.fix.seqs=${file_fix_seqs}
+Rscript $INSTALLED_PATH/merge/merge_03_get_hits.R \
+    --path.out ${path_out} \
+    --file.fix ${file_merged_seqs_fixed} \
+    --file.fix.seqs=${file_fix_seqs}
 
 
-# if grep -q "^>" ${file_fix_seqs}; then
-#     $INSTALLED_PATH/simsearch.sh \
-#         -in_seq ${file_fix_seqs}    \
-#         -on_genome ${file_genome} \
-#         -out "${path_out}simseqrch_seqs_fix/" \
-#         -sim ${sim_sutoff} \
-#         -cov ${covegare} \
-#         ${keepblast}
-# else
-#     echo "Nothing to merge"
-# fi
+if grep -q "^>" ${file_fix_seqs}; then
+    $INSTALLED_PATH/simsearch.sh \
+        -in_seq ${file_fix_seqs}    \
+        -on_genome ${file_genome} \
+        -out "${path_out}simseqrch_seqs_fix/" \
+        -sim ${sim_sutoff} \
+        -cov ${covegare} \
+        ${keepblast}
+else
+    echo "Nothing to merge"
+fi
 
 
 Rscript $INSTALLED_PATH/merge/merge_04_visualisation.R \
