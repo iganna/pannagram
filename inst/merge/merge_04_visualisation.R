@@ -238,6 +238,8 @@ for(i.m in which(m.df$n > 1)){
   pokaz(i.m)
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
+  print(gff.tmp)
+  
   idx.tmp = idx.merge[[i.m]]
   pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
   
