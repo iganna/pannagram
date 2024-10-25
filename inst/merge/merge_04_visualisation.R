@@ -220,7 +220,6 @@ p = ggplot(df, aes(x = Var1, y = Freq)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   expand_limits(y = max(df$Freq) * 1.1) 
 
-p
 
 pdf(paste(path.figures, 'n_merged.pdf', sep = ''), width = 5, height = 4)
 print(p)     # Plot 1 --> in the first page of PDF
@@ -289,7 +288,7 @@ for(i.m in which(m.df$n > 1)){
     n.gap = colSums(aln.mx.annot == '-')
     p.gap = colSums(aln.mx.annot == '-') / nrow(aln.mx) 
     tot.gap = sum( p.gap > 0.5) / length(p.gap)
-    pokaz(i.m, jrow, tot.gap)
+    # pokaz(i.m, jrow, tot.gap)
     if(tot.gap > 0.8) {
       pref = 'check_'
       check.again.out = c(check.again.out, i.m)
