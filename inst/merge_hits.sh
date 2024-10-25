@@ -148,12 +148,12 @@ fi
 
 file_merged_seqs="${path_out}merged_seqs_1.fasta"
 
-Rscript $INSTALLED_PATH/merge/merge_01_extract_hits.R \
-        --file.gff=${file_gff} \
-        --file.genome=${file_genome} \
-        --file.seqs=${file_merged_seqs} \
-        --patterns=${patterns} \
-        --len.gap=${distance}
+# Rscript $INSTALLED_PATH/merge/merge_01_extract_hits.R \
+#         --file.gff=${file_gff} \
+#         --file.genome=${file_genome} \
+#         --file.seqs=${file_merged_seqs} \
+#         --patterns=${patterns} \
+#         --len.gap=${distance}
 
 # # ----------------------------------------
 # # Simrearch and Merge
@@ -204,10 +204,13 @@ file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
 # done
 
+echo ${file_merged_seqs_fixed}
+
 if ! grep -q '^>' ${file_merged_seqs_fixed}; then
     exit 0
 fi
 
+echo "Hene"
 
 file_fix_seqs="${path_out}seqs_fix.fasta"
 
