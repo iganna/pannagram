@@ -146,11 +146,9 @@ gff$idx.sort = 1:nrow(gff)
 gff = gff[order(gff$V5),]
 gff = gff[order(gff$V4),]
 gff = gff[order(gff$V1),]
-is.unsorted(gff$idx.sort)
+# is.unsorted(gff$idx.sort)
 
-which(diff(gff$idx.sort) != 1)
 gff$idx.sort = NULL
-
 gff$idx = 1:nrow(gff)
 
 # Chromosome ID
@@ -232,7 +230,12 @@ colors <- colorRampPalette(c('#117554','#6EC207', "#FFEB00", "#4379F2"))
 
 check.again.out = c()
 m.df$check = 0
+
+
+print(m.df)
+
 for(i.m in which(m.df$n > 1)){
+  pokaz(i.m)
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
   idx.tmp = idx.merge[[i.m]]
@@ -276,13 +279,13 @@ for(i.m in which(m.df$n > 1)){
   # ---- Check positions ----
   pref = ""
   for(jrow in c(1,length(idx.tmp))){
-
-        pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
+    
+    pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
     pre2 = gff$V5[idx.tmp[jrow]] - min(pos) + 1
     
     p1 = which(pos.aln == pre1)
     p2 = which(pos.aln == pre2)
-
+    
     aln.mx.annot = aln.mx[,p1:p2]
     aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
     n.gap = colSums(aln.mx.annot == '-')
@@ -309,7 +312,7 @@ for(i.m in which(m.df$n > 1)){
   
   # Vertical annotation
   gradient_colors <- colors(length(idx.tmp))
-
+  
   # Dotplot
   s = seqs[1]
   p.dot = dotplot.s(s, s, 15, 12)
