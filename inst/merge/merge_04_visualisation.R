@@ -263,8 +263,6 @@ for(i.m in which(m.df$n > 1)){
   
   if(!file.exists(aln.fasta)){
     system(paste('mafft  --quiet --op 3  --ep 0.1 --treeout ', file.clean, '>', aln.fasta,  sep = ' '))
-  } else {
-    pokaz('aln exist')
   }
   
   aln.mx = aln2mx(readFasta(aln.fasta))
