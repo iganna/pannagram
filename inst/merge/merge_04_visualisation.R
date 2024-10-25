@@ -236,6 +236,7 @@ m.df$check = 0
 for(i.m in which(m.df$n > 1)){
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
+  idx.tmp = idx.merge[[i.m]]
   
   seqs = nt2seq(genome.list[[m.df$chr[i.m]]][m.df$beg[i.m]:m.df$end[i.m]])
   seqs.names = c('init')
@@ -306,7 +307,7 @@ for(i.m in which(m.df$n > 1)){
   # ---- Visualisation ----
   
   # Vertical annotation
-  idx.tmp = idx.merge[[i.m]]
+  
   gradient_colors <- colors(length(idx.tmp))
   pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
   
