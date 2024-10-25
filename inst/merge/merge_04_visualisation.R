@@ -269,6 +269,8 @@ for(i.m in which(m.df$n > 1)){
     system(paste('mafft  --quiet --op 3  --ep 0.1 --treeout ', file.clean, '>', aln.fasta,  sep = ' '))
   }
   
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   aln.mx = aln2mx(readFasta(aln.fasta))
   
   p = msadiff(aln.mx) 
@@ -277,8 +279,6 @@ for(i.m in which(m.df$n > 1)){
   # Positions in the alignment
   pos.aln = rep(0, ncol(aln.mx))
   pos.aln[aln.mx[1,] != '-'] = 1:nchar(seqs[1])
-  
-  save(list = ls(), file = "tmp_workspace.RData")
   
   # ---- Check positions ----
   pref = ""
