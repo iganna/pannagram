@@ -290,6 +290,9 @@ for(i.m in which(m.df$n > 1)){
     p1 = which(pos.aln == pre1)
     p2 = which(pos.aln == pre2)
     
+    
+    pokaz(pre1, pre2, p1, p2)
+    
     aln.mx.annot = aln.mx[,p1:p2]
     aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
     n.gap = colSums(aln.mx.annot == '-')
