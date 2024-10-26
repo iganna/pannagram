@@ -269,7 +269,7 @@ for(i.m in which(m.df$n > 1)){
     system(paste('mafft  --quiet --op 3  --ep 0.1 --treeout ', file.clean, '>', aln.fasta,  sep = ' '))
   }
   
-  save(list = ls(), file = "tmp_workspace.RData")
+  save(list = ls(), file = "tmp_workspace1.RData")
   
   aln.mx = aln2mx(readFasta(aln.fasta))
   
