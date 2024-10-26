@@ -22,8 +22,8 @@ opt = parse_args(opt_parser)
 if (is.null(opt$path.out)) {
   stop("Error: --path.out is required.")
 }
-if (is.null(opt$file.genome)) {
-  stop("Error: --file.genome is required.")
+if (is.null(opt$file.gff)) {
+  stop("Error: --file.gff is required.")
 }
 
 if (is.null(opt$file.gff.parent)) {

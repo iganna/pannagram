@@ -231,9 +231,6 @@ colors <- colorRampPalette(c('#117554','#6EC207', "#FFEB00", "#4379F2"))
 check.again.out = c()
 m.df$check = 0
 
-
-print(m.df)
-
 for(i.m in which(m.df$n > 1)){
   pokaz(i.m)
   # for(i.m in 1:nrow(m.df)){
