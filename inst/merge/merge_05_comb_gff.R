@@ -65,7 +65,7 @@ for(i.m in 1:nrow(gff.merge)){
 }
 
 gff.out = rbind(gff[,1:9], gff.merge[,1:9])
-gff.out = gff.out[order(gff.out$V5),]
+gff.out = gff.out[order(-gff.out$V5),]
 gff.out = gff.out[order(gff.out$V4),]
 gff.out = gff.out[order(gff.out$V1),]
 
