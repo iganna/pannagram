@@ -35,12 +35,18 @@ path.out = opt$path.out
 file.gff = opt$file.gff
 file.gff.parent = opt$file.gff.parent
 
+
+pokaz('Initial GFF', basename(file.gff))
+pokaz('Parents GFF', basename(file.gff.parent))
+
 gff = read.table(file.gff, stringsAsFactors = F)
 
-gff.merge = read.table(file.gff, stringsAsFactors = F)
+gff.merge = read.table(file.gff.parent, stringsAsFactors = F)
 gff.merge = gff.merge[order(gff.merge$V5),]
 gff.merge = gff.merge[order(gff.merge$V4),]
 gff.merge = gff.merge[order(gff.merge$V1),]
+
+pokaz(nrow(gff.merge))
 
 n.register = nchar(as.character(nrow(gff.merge)))
 
@@ -48,11 +54,11 @@ id.merge = paste0('TE_merge_', sprintf(paste0("%0", n.register, "d"), 1:nrow(gff
 
 gff.merge$V9 = paste0("ID=", id.merge, ';', gff.merge$V9)
 
-
 for(i.m in 1:nrow(gff.merge)){
   idx.merge = which((gff$V1 == gff.merge$V1[i.m]) & 
                       (gff$V4 >= gff.merge$V4[i.m]) & 
                       (gff$V5 <= gff.merge$V5[i.m]))
+  if(length(idx.merge) < 2) stop(paste0("something is wrong with", i.m))
   
   gff$V9[idx.merge] = sub("Name=", paste0("Parent=", id.merge[i.m], ';Name='), gff$V9[idx.merge])
   
