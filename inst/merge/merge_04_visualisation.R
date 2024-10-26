@@ -283,7 +283,7 @@ for(i.m in which(m.df$n > 1)){
   # ---- Check positions ----
   pref = ""
   for(jrow in c(1,length(idx.tmp))){
-    
+    pokaz('jrow', jrow)
     pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
     pre2 = gff$V5[idx.tmp[jrow]] - min(pos) + 1
     
@@ -314,6 +314,8 @@ for(i.m in which(m.df$n > 1)){
   if(!to.plot){
     next
   }
+  
+  pokaz('Visualisation')
   
   # ---- Visualisation ----
   
