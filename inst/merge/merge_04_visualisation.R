@@ -321,6 +321,7 @@ for(i.m in which(m.df$n > 1)){
   pokaz(to.plot)
   
   if(!to.plot){
+    pokaz(8)
     next
   }
   
@@ -392,6 +393,7 @@ saveRDS(m.df, paste0(path.gff.out, 'm_df.rds'))
 
 # ---- Form the GFF ----
 
+pokaz(9)
 
 
 m.df$id = 1:nrow(m.df)
@@ -401,6 +403,8 @@ for(i.m in 1:nrow(m.df)){
   idx.merge[[i.m]] = which((gff$chr == m.df$chr[i.m]) & (gff$V4 >= m.df$beg[i.m]) & (gff$V5 <= m.df$end[i.m]))
 }
 
+
+pokaz(10)
 
 idx.remove = which((m.df$check != 0) & (m.df$n == 2))
 idx.remain = setdiff(which(m.df$check != 0), idx.remove)
