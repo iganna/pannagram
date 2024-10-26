@@ -283,27 +283,18 @@ for(i.m in which(m.df$n > 1)){
   # ---- Check positions ----
   pref = ""
   for(jrow in c(1,length(idx.tmp))){
-    pokaz('jrow', jrow)
+    
     pre1 = gff$V4[idx.tmp[jrow]] - min(pos) + 1
     pre2 = gff$V5[idx.tmp[jrow]] - min(pos) + 1
     
     p1 = which(pos.aln == pre1)
     p2 = which(pos.aln == pre2)
     
-    
-    pokaz(pre1, pre2, p1, p2)
-    
     aln.mx.annot = aln.mx[,p1:p2]
-    pokaz(1)
     aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
-    pokaz(2)
     n.gap = colSums(aln.mx.annot == '-')
-    pokaz(3)
     p.gap = colSums(aln.mx.annot == '-') / nrow(aln.mx) 
-    pokaz(4)
     tot.gap = sum( p.gap > 0.5) / length(p.gap)
-    pokaz(5)
-    # pokaz(i.m, jrow, tot.gap)
     if(tot.gap > 0.8) {
       pref = 'check_'
       check.again.out = c(check.again.out, i.m)
@@ -312,16 +303,10 @@ for(i.m in which(m.df$n > 1)){
       } else {
         m.df$check[i.m] = m.df$check[i.m] + 2
       }
-      
     }
-    pokaz(6)
   }
-  pokaz(7)
-  
-  pokaz(to.plot)
   
   if(!to.plot){
-    pokaz(8)
     next
   }
   
@@ -362,13 +347,10 @@ for(i.m in which(m.df$n > 1)){
     
   }
   
-  
   p = p + ggtitle(paste0(c(paste(i.m, m.df$chr[i.m], m.df$beg[i.m], m.df$end[i.m] ),
                            paste(gff$id[idx.tmp], gff$chr[idx.tmp],gff$V4[idx.tmp], gff$V5[idx.tmp], sep = ' ')),
                          collapse = '\n')) + 
     theme(plot.title = element_text(size = 10)) 
-  
-  
   
   png(paste(path.figures.m, pref,  'aln_',i.m,'_msadiff.png', sep = ''), 
       width = 8, height = 6, units = "in", res = 300)
@@ -393,18 +375,12 @@ saveRDS(m.df, paste0(path.gff.out, 'm_df.rds'))
 
 # ---- Form the GFF ----
 
-pokaz(9)
-
-
 m.df$id = 1:nrow(m.df)
 
 idx.merge = list()
 for(i.m in 1:nrow(m.df)){
   idx.merge[[i.m]] = which((gff$chr == m.df$chr[i.m]) & (gff$V4 >= m.df$beg[i.m]) & (gff$V5 <= m.df$end[i.m]))
 }
-
-
-pokaz(10)
 
 idx.remove = which((m.df$check != 0) & (m.df$n == 2))
 idx.remain = setdiff(which(m.df$check != 0), idx.remove)
@@ -432,7 +408,9 @@ for(i.m in idx.remain){
   m.df$end[i.m] = end.new
 }
 
-m.df = m.df[-idx.remove,]
+if(length(idx.remove) > 0){
+  m.df = m.df[-idx.remove,]  
+}
 m.df = m.df[m.df$check != 3,]
 rownames(m.df) = NULL
 
