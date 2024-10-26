@@ -314,7 +314,11 @@ for(i.m in which(m.df$n > 1)){
       }
       
     }
+    pokaz(6)
   }
+  pokaz(7)
+  
+  pokaz(to.plot)
   
   if(!to.plot){
     next
