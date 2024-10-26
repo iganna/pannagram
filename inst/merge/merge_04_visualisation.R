@@ -443,14 +443,16 @@ for(i.m in 1:nrow(m.df)){
 
 m.df$type[m.df$type == "Gypsy_LTR_retrotransposon|LTR_retrotransposon"] = "LTR_retrotransposon"
 pokaz(unique(m.df$dir))
-m.df$dir[m.df$dir %in% c('-', '+')] = '.'
+m.df$dir[!(m.df$dir %in% c('-', '+'))] = '.'
 pokaz('Unique types:', unique(m.df$type))
 
 saveRDS(m.df, paste0(path.gff.out, 'm_df.rds'))
 
 genome.names = names(genome.list)
 
-m.gff = data.frame(V1 = genome.names[m.df$chr],
+m.gff = data.frame(
+                   # V1 = genome.names[m.df$chr],
+                   V1 = paste0('Chr', m.df$chr),
                    V2 = 'merging', 
                    V3 = m.df$type,
                    V4 = m.df$beg,
