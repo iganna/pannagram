@@ -63,8 +63,11 @@ gff.out = gff.out[order(gff.out$V5),]
 gff.out = gff.out[order(gff.out$V4),]
 gff.out = gff.out[order(gff.out$V1),]
 
+
+pokaz(basename(file.gff))
+
 write.table(gff.out, 
-            file = paste0(path.out, sub('.gff', '_merges.gff', file.gff)),
+            file = paste0(path.out, sub('.gff', '_merges.gff', basename(file.gff))),
             quote = F,
             row.names = F,
             col.names = F,
