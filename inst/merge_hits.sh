@@ -204,8 +204,7 @@ file_merged_seqs_fixed="${path_out}merged_seqs_fixed.txt"
 
 # done
 
-echo ${file_merged_seqs_fixed}
-
+# echo ${file_merged_seqs_fixed}
 if [ ! -s ${file_merged_seqs_fixed} ];  then
     exit 0
 fi

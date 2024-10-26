@@ -238,7 +238,6 @@ for(i.m in which(m.df$n > 1)){
   pokaz(i.m)
   # for(i.m in 1:nrow(m.df)){
   gff.tmp = gff.merge[grepl(m.df$name[i.m], gff.merge$V9, fixed = TRUE),]
-  print(gff.tmp)
 
   idx.tmp = idx.merge[[i.m]]
   pos = sort(c(gff$V4[idx.tmp], gff$V5[idx.tmp]))
@@ -415,7 +414,6 @@ m.df = m.df[m.df$check != 3,]
 rownames(m.df) = NULL
 
 
-
 m.df$pref = ''
 m.df$type = ''
 m.df$dir = ''
@@ -447,6 +445,8 @@ m.df$type[m.df$type == "Gypsy_LTR_retrotransposon|LTR_retrotransposon"] = "LTR_r
 pokaz(unique(m.df$dir))
 m.df$dir[m.df$dir %in% c('-', '+')] = '.'
 pokaz('Unique types:', unique(m.df$type))
+
+saveRDS(m.df, paste0(path.gff.out, 'm_df.rds'))
 
 genome.names = names(genome.list)
 
