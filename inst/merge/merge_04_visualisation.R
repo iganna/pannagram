@@ -271,7 +271,7 @@ for(i.m in which(m.df$n > 1)){
   
   aln.mx = aln2mx(readFasta(aln.fasta))
   
-  save(list = ls(), file = "tmp_workspace2.RData")
+  # save(list = ls(), file = "tmp_workspace2.RData")
   
   p = msadiff(aln.mx) 
   p.nt = msaplot(aln.mx) 
@@ -294,10 +294,15 @@ for(i.m in which(m.df$n > 1)){
     pokaz(pre1, pre2, p1, p2)
     
     aln.mx.annot = aln.mx[,p1:p2]
+    pokaz(1)
     aln.mx.annot = aln.mx.annot[,aln.mx.annot[1,] != '-', drop = F]
+    pokaz(2)
     n.gap = colSums(aln.mx.annot == '-')
+    pokaz(3)
     p.gap = colSums(aln.mx.annot == '-') / nrow(aln.mx) 
+    pokaz(4)
     tot.gap = sum( p.gap > 0.5) / length(p.gap)
+    pokaz(5)
     # pokaz(i.m, jrow, tot.gap)
     if(tot.gap > 0.8) {
       pref = 'check_'
