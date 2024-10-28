@@ -867,6 +867,7 @@ for ref0 in "${refs_all[@]}"; do
 
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
+    make_dir ${path_blast_parts}
     
     # Logs
     step_name="step${step_num}_query_03_blast_${ref0}"
@@ -960,6 +961,7 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
     path_alignment=${path_inter}alignments_${ref0}/
+    make_dir ${path_alignment}
 
     # Logs
     step_name="step${step_num}_synteny_01_maj_${ref0}"
@@ -1083,6 +1085,7 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_gaps=${path_inter}blast_gaps_${ref0}/
+    make_dir ${path_gaps}
 
     # Logs
     step_name="step${step_num}_synteny_03_get_gaps_${ref0}"
@@ -1134,6 +1137,7 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_gaps=${path_inter}blast_gaps_${ref0}/
+    make_dir "${path_log_step}db/"
 
     # Logs
     step_name="step${step_num}_synteny_04_blast_gaps_${ref0}"

@@ -17,6 +17,5 @@ Rscript -e 'devtools::install()'
 
 # Linking executable scripts to PATH
 ln -sf $PREFIX/lib/R/library/pannagram/analys.sh $PREFIX/bin/analys
-ln -sf $PREFIX/lib/R/library/pannagram/merge_hits.sh $PREFIX/bin/merge-hits
 ln -sf $PREFIX/lib/R/library/pannagram/pannagram.sh $PREFIX/bin/pannagram
 ln -sf $PREFIX/lib/R/library/pannagram/simsearch.sh $PREFIX/bin/simsearch
