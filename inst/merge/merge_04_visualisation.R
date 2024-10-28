@@ -1,6 +1,7 @@
 # This script gets gff file and the genome and return the set of candidate sequences for merging
 
 library(ggplot2)
+library(crayon)
 library(pannagram)
 
 library(optparse)
