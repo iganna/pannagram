@@ -644,8 +644,8 @@ else
             step_num=$(echo "$file" | sed -n 's/.*step\([0-9]\{1,\}\)_.*/\1/p')
 
             if [[ $step_num -ge $step_start && $step_num -le $step_end ]]; then
-                echo ${file}
-                # rm ${file}
+                # echo ${file}
+                rm ${file}
             fi
         done
 
