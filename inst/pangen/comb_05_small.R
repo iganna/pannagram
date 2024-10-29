@@ -163,6 +163,9 @@ for(s.comb in pref.combinations){
     return(mx.list)
   }
   
+  save(list = ls(), file = "tmp_workspace_s.RData")
+  stop()
+  
   # Two possible loops depending on the number of cores
   if(num.cores == 1){
     pokaz('No parallel computing: short sequences')
