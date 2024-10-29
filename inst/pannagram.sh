@@ -645,7 +645,7 @@ else
 
             if [[ $step_num -ge $step_start && $step_num -le $step_end ]]; then
                 # echo ${file}
-                rm ${file}
+                # rm ${file}
             fi
         done
 

@@ -222,8 +222,6 @@ for(s.comb in pref.combinations){
     v.len = v.len[-idx.zero,]
   }
   
-  
-  
   # ---- Subdivide into categories ----
   
   breaks$single = rowSums(v.len != 0)
