@@ -263,6 +263,9 @@ for(s.comb in pref.combinations){
     
   }
   
+    
+  save(list = ls(), file = "tmp_workspace.RData")
+
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
   pokaz(n.null, length(idx.short))
   if(n.null != length(idx.short)) stop('Wrong number of short')
@@ -286,12 +289,3 @@ warnings()
 
 # ***********************************************************************
 # ---- Manual testing ----
-
-if(F){
-  
-  library(rhdf5)
-  path.cons = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/consensus/'
-  path.mafft.in = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/mafft_in/'
-  path.chromosomes = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/chromosomes/'
-  
-}
