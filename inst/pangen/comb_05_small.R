@@ -130,7 +130,7 @@ for(s.comb in pref.combinations){
     mx.list = vector("list", length = length(idx.use))
     
     for(i.aln in 1:length(idx.use)){
-      pokaz(i.aln)
+      # pokaz(i.aln)
 
       idx.aln = idx.use[i.aln]
       seqs = aln.seqs[[idx.aln]]
@@ -180,7 +180,6 @@ for(s.comb in pref.combinations){
     
     idx.batches <- list(idx.short)  # do not remove
     res.msa = CODE_ALN_BATCH(1)
-    res.msa = res.msa[idx.short]
     
   } else {
     # Many cores
@@ -200,6 +199,9 @@ for(s.comb in pref.combinations){
     }
     
     res.msa = res
+    
+    if(length(res.msa) != max(idx.short)) stop('Something is wrong with indexes')
+    res.msa = res.msa[idx.short]
   }
   
   
