@@ -43,7 +43,7 @@
 # ---- Manual Testing ----
 
 if(F){
-
+  
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
 source(system.file("analys_func.R", package = "pannagram"))
@@ -86,33 +86,21 @@ source(system.file("analys_func.R", package = "pannagram"))
 #   dir.create(path.res, recursive = TRUE)
 # } 
 
-library(optparse)
+ref.pref = '0'
+aln.type = 'v_'
 
-# Define command-line options
-option_list <- list(
-  make_option(c("--ref.pref"),   type = "character", default = NULL, help = "Reference prefix"),
-  make_option(c("--aln.type"),   type = "character", default = NULL, help = "Alignment type"),
-  make_option(c("--path.msa"),   type = "character", default = NULL, help = "Path to MSA files"),
-  make_option(c("--path.annot"), type = "character", default = NULL, help = "Path to annotation files"),
-  make_option(c("--path.res"),   type = "character", default = NULL, help = "Path to result files"),
-  make_option(c("--s.chr"),      type = "character", default = NULL, help = "Chromosome name format")
-)
+path.msa = '/Volumes/Samsung_T5/vienn/msa/'
+path.annot = '/Volumes/Samsung_T5/vienn/annotation/'
+path.res = '/Volumes/Samsung_T5/vienn/annotation_common/'
+if (!dir.exists(path.res)) {
+  dir.create(path.res, recursive = TRUE)
+} 
 
-# Parse options
-opt <- parse_args(OptionParser(option_list = option_list))
 
-# Create results directory if it does not exist
-if (!dir.exists(opt$path.res)) {
-  dir.create(opt$path.res, recursive = TRUE)
-}
+# ---- Chromosome name format to extract the chromosome number ----
+s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
+# s.chr = '_' # in this case the pattern is "*_X", where X is the number
 
-# Display parameters for verification
-print(paste("ref.pref:", opt$ref.pref))
-print(paste("aln.type:", opt$aln.type))
-print(paste("path.msa:", opt$path.msa))
-print(paste("path.annot:", opt$path.annot))
-print(paste("path.res:", opt$path.res))
-print(paste("s.chr:", opt$s.chr))
 # ---- Accessions ----
 files.gff <- list.files(path = path.annot, pattern = "\\.gff$", full.names = FALSE)
 

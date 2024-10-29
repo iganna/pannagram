@@ -1138,7 +1138,7 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_gaps=${path_inter}blast_gaps_${ref0}/
-    make_dir "${path_log_step}db/"
+    make_dir "${path_gaps}db/"
 
     # Logs
     step_name="step${step_num}_synteny_04_blast_gaps_${ref0}"

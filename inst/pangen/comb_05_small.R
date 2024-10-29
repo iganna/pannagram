@@ -98,7 +98,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = F
+echo = Е
 for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
@@ -202,6 +202,20 @@ for(s.comb in pref.combinations){
     res.msa = res
   }
   
+  
+  ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
+                       end = breaks$idx.end[idx.short]) 
+  
+  if(length(res.msa) != nrow(ref.pos)){
+    
+    pokaz(length(res.msa), nrow(ref.pos))
+    
+    file.ws = "tmp_workspace_x.RData"
+    all.local.objects <- ls()
+    save(list = all.local.objects, file = file.ws)
+  }
+    
+    
   saveRDS(list(aln = res.msa,
                ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
                                     end = breaks$idx.end[idx.short]) ),
