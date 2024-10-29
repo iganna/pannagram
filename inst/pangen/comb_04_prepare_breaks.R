@@ -134,10 +134,6 @@ for(s.comb in pref.combinations[3]){
   file.breaks.extra = paste0(path.cons, 'breaks_extra_', s.comb,'.rds')
   saveRDS(breaks.extra, file.breaks.extra)
   
-  save(list = ls(), file = "tmp_workspace.RData")
-  stop('Enough..')
-  
-  
   ## ---- Get begin-end positions of gaps ----
   v.beg = c()
   v.end = c()
@@ -162,6 +158,10 @@ for(s.comb in pref.combinations[3]){
   }
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  stop('Enough..')
+  
   
   # Filter "extra" breaks
   for(acc in accessions){
