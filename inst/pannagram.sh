@@ -824,6 +824,7 @@ step_name="step${step_num}_query_02"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
+make_dir ${path_parts}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then

@@ -131,11 +131,7 @@ for(s.comb in pref.combinations){
     
     for(i.aln in 1:length(idx.use)){
       pokaz(i.aln)
-      
-      if(i.aln == 3){
-        save(list = ls(), file = "tmp_workspace_s.RData")
-        # stop()
-      }
+
       idx.aln = idx.use[i.aln]
       seqs = aln.seqs[[idx.aln]]
       names(seqs) = aln.seqs.names[[idx.aln]]
@@ -146,6 +142,12 @@ for(s.comb in pref.combinations){
       
       alignment = muscle(seqs, quiet = T)
       aln = as.character(alignment)
+      
+      
+      if(i.aln == 3){
+        save(list = ls(), file = "tmp_workspace_s.RData")
+        # stop()
+      }
       
       n.pos = nchar(aln[1])
       
