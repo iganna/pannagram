@@ -215,6 +215,7 @@ for(s.comb in pref.combinations){
     file.ws = "tmp_workspace_x.RData"
     all.local.objects <- ls()
     save(list = all.local.objects, file = file.ws)
+    stop('Lengths dont match')
   }
     
     
