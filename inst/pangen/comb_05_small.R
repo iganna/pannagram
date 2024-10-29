@@ -144,10 +144,10 @@ for(s.comb in pref.combinations){
       aln = as.character(alignment)
       
       
-      if(i.aln == 3){
-        save(list = ls(), file = "tmp_workspace_s.RData")
-        # stop()
-      }
+      # if(i.aln == 3){
+      #   save(list = ls(), file = "tmp_workspace_s.RData")
+      #   # stop()
+      # }
       
       n.pos = nchar(aln[1])
       
@@ -204,7 +204,7 @@ for(s.comb in pref.combinations){
   saveRDS(list(aln = res.msa,
                ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
                                     end = breaks$idx.end[idx.short]) ),
-          paste0(path.cons, 'aln_short_',s.comb,'2.rds'), compress = F)
+          paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
   
 }
 

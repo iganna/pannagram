@@ -110,7 +110,7 @@ for(s.comb in pref.combinations){
   for(i in 1:nrow(mafft.res)){
     
 
-    pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
+    # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
     
     file.aln = paste0(path.mafft.out, mafft.res$file[i])
     
@@ -190,6 +190,8 @@ for(s.comb in pref.combinations){
   # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
   single.res$extra[single.res$extra < 0] = 0
   
+  pokaz(1)
+  
   # ---- Analysis of positions ----
   # Here I wouls like fo find function of positions corresponcences between 4 things: 
   # old coordinates, long, short and singleton coordinates
@@ -203,6 +205,8 @@ for(s.comb in pref.combinations){
   
   fp.main = (1:base.len) + n.shift
   
+  pokaz(2)
+  
   # -- 
   # Singletons
   fp.single = list()
@@ -211,12 +215,16 @@ for(s.comb in pref.combinations){
     fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
   }
 
+  pokaz(3)
+  
   # Short
   fp.short = list()
   for(i in 1:length(msa.res$len)){
     n.pos = msa.res$len[i]
     fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
   }
+  
+  pokaz(4)
   
   # Check short
   for(i in 1:length(msa.res$len)){
@@ -231,6 +239,8 @@ for(s.comb in pref.combinations){
       stop(paste0('Short', i)) 
     }
   }
+  
+  pokaz(5)
   
   # Long
   fp.long = list()

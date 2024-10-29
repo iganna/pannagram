@@ -54,17 +54,7 @@ files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", fu
 loop.function <- function(f.in, 
                           echo.loop=T){
   
-  pokaz(f.in)
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         sub("\\.[^.]*$", "", basename(f.in)),
-                         '.log')
-  invisible(file.create(file.log.loop))
-
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
-    return()
-  }
+  # pokaz(f.in)
   
   seqs = readFasta(paste0(path.mafft.out, f.in))
   mx = aln2mx(seqs)
@@ -99,7 +89,21 @@ loop.function <- function(f.in,
   
   if(nrow(blocks.all) > 0){
     pokaz('Bad alignment', f.in)
+    
+    p = msaplot(mx[,9188:9249])
+    
+    pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '.pdf'), width = 5, height = 4)
+    print(p)     # Plot 1 --> in the first page of PDF
+    dev.off()
+    
+    p = msadiff(mx)
+    
+    pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '_diff.pdf'), width = 5, height = 4)
+    print(p)     # Plot 1 --> in the first page of PDF
+    dev.off()
   }
+  
+  
   
 }
 
@@ -108,7 +112,7 @@ loop.function <- function(f.in,
 # ---- Loop  ----
 
 if(num.cores == 1){
-  for(f.in in files.extra){
+  for(f.in in files.out){
     loop.function(f.in, echo.loop=echo.loop)
   }
 } else {
@@ -116,7 +120,7 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  tmp = foreach(f.in = files.extra, 
+  tmp = foreach(f.in = files.out, 
                 .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
                   loop.function(f.in, echo.loop=echo.loop)
