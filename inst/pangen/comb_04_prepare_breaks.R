@@ -93,7 +93,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = F
+echo = T
 for(s.comb in pref.combinations[3]){
   
   if(echo) pokaz('* Combination', s.comb)
