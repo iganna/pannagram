@@ -104,7 +104,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations[3]){
+for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
@@ -264,7 +264,7 @@ for(s.comb in pref.combinations[3]){
   }
   
     
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
 
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
   pokaz(n.null, length(idx.short))

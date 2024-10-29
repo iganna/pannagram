@@ -94,7 +94,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations[3]){
+for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
@@ -159,8 +159,8 @@ for(s.comb in pref.combinations[3]){
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
   
-  save(list = ls(), file = "tmp_workspace.RData")
-  stop('Enough..')
+  # save(list = ls(), file = "tmp_workspace.RData")
+  # stop('Enough..')
   
   
   # Filter "extra" breaks
@@ -212,6 +212,17 @@ for(s.comb in pref.combinations[3]){
     }
     # v.len[v.end[,icol] %in% idx.dup, icol] = 0
   }
+  
+  idx.zero = which(rowSums(v.beg != 0) == 0)
+  if(length(idx.zero) != 0){
+    pokaz('Number of zero-breaks is length(idx.zero)')
+    v.beg = v.beg[-idx.zero,]
+    v.end = v.end[-idx.zero,]
+    breaks = breaks[-idx.zero,]
+    v.len = v.len[-idx.zero,]
+  }
+  
+  
   
   # ---- Subdivide into categories ----
   
