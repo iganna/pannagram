@@ -94,7 +94,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = F
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[3]){
   
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
@@ -133,6 +133,10 @@ for(s.comb in pref.combinations){
   
   file.breaks.extra = paste0(path.cons, 'breaks_extra_', s.comb,'.rds')
   saveRDS(breaks.extra, file.breaks.extra)
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  stop('Enough..')
+  
   
   ## ---- Get begin-end positions of gaps ----
   v.beg = c()

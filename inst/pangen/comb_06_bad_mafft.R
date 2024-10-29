@@ -97,7 +97,6 @@ loop.function <- function(f.in,
   
   blocks.all = blocks.all[blocks.all$pi > sim.cutoff,, drop=F]
   
-  
   if(nrow(blocks.all) > 0){
     pokaz('Bad alignment', f.in)
   }
