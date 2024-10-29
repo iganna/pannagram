@@ -156,9 +156,9 @@ for(s.comb in pref.combinations){
 
       mx.pos = matrix(0, nrow=n.pos, ncol=n.acc, dimnames = list(NULL, accessions))
       for(i.s in 1:nrow(aln.info)){
-        acc = aln.info$V1[i.s]
+        acc = as.character(aln.info$V1[i.s])
         s = seq2nt(aln[i.s])
-        mx.pos[s != '-',acc] = aln.info$V3[i.s]:aln.info$V4[i.s]
+        mx.pos[s != '-', acc] = aln.info$V3[i.s]:aln.info$V4[i.s]
       }
       mx.list[[i.aln]] = mx.pos
       rm(aln.info)
