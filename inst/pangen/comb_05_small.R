@@ -178,8 +178,9 @@ for(s.comb in pref.combinations){
     pokaz('No parallel computing: short sequences')
     # One core
     
-    idx.batches <- list(idx.short)
+    idx.batches <- list(idx.short)  # do not remove
     res.msa = CODE_ALN_BATCH(1)
+    res.msa = res.msa[idx.short]
     
   } else {
     # Many cores
