@@ -215,7 +215,7 @@ for(s.comb in pref.combinations){
   
   idx.zero = which(rowSums(v.beg != 0) == 0)
   if(length(idx.zero) != 0){
-    pokaz('Number of zero-breaks is length(idx.zero)')
+    pokaz('Number of zero-breaks is', length(idx.zero))
     v.beg = v.beg[-idx.zero,]
     v.end = v.end[-idx.zero,]
     breaks = breaks[-idx.zero,]

@@ -130,7 +130,7 @@ for(s.comb in pref.combinations){
     mx.list = vector("list", length = length(idx.use))
     
     for(i.aln in 1:length(idx.use)){
-      # pokaz(i.aln)
+      pokaz(i.aln)
       idx.aln = idx.use[i.aln]
       seqs = aln.seqs[[idx.aln]]
       names(seqs) = aln.seqs.names[[idx.aln]]
