@@ -266,7 +266,7 @@ if [ "$run_annogroup" = true ]; then
     path_annot_res=${path_consensus}annotation/
     mkdir -p ${path_annot_res}
 
-    Rscript $INSTALLED_PATH/analys/analys_05_annogroups.R \
+    Rscript $INSTALLED_PATH/analys/analys_05_annogroups_easier.R \
             --path.msa ${path_consensus} \
             --path.annot ${path_annot} \
             --path.res ${path_annot_res} \

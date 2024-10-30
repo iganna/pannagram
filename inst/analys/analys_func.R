@@ -74,7 +74,8 @@ gff2gff <- function(path.cons,
                     aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                     echo=T,
                     pangenome.name='Pangen',
-                    s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
+                    s.chr = '_Chr', # in this case the pattern is "*_ChrX", where X is the number
+                    remain=F
                     ){
   
   # Set of names of accettions, which can be used to specify pangenomes coordinates
@@ -93,6 +94,10 @@ gff2gff <- function(path.cons,
   gff1 =  extractChrByFormat(gff1, s.chr)
   gff1 = gff1[order(gff1$chr),]
   
+  # Fitler out blocks
+  gff1 = filterBlocks(acc1, gff1, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
+  
+  # Construct 2
   colnames.1.to.9 = colnames(gff1)[1:9]
   colnames(gff1)[1:9] = paste0('V', 1:9)
   # Prepare new annotation
@@ -157,7 +162,7 @@ gff2gff <- function(path.cons,
     
   }
   
-  idx.wrong.blocks = sign(gff2$V4 * gff2$V5) != 1
+  idx.wrong.blocks = (sign(gff2$V4 * gff2$V5) != 1)
   # gff2[idx.wrong.blocks, c('V4', 'V5')] = 0
   gff2.loosing = gff2[idx.wrong.blocks,]
   gff2.remain = gff2[!idx.wrong.blocks,]
@@ -171,6 +176,16 @@ gff2gff <- function(path.cons,
   gff2.remain$V5[idx.neg] = tmp
   gff2.remain$V7[idx.neg] = s.strand[gff2.remain$V7[idx.neg]]
   
+  idx.trans = which(gff2.remain$V4 > gff2.remain$V5)
+  if(length(idx.trans) > 0){
+    gff2.remain = gff2.remain[-idx.trans,]
+  }
+  
+  # Fitler out blocks
+  gff2.remain = filterBlocks(acc2, gff2.remain, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
+  
+  
+  # Prepare results
   gff2.remain$len.new = gff2.remain$V5 - gff2.remain$V4 + 1
   gff2.remain$V9 = paste0(gff2.remain$V9, ';len_new=', gff2.remain$len.new)  # add new length
   gff2.remain$V9 = paste(gff2.remain$V9, ';len_ratio=', 
@@ -178,7 +193,13 @@ gff2gff <- function(path.cons,
   
   colnames(gff2.loosing)[1:9] = colnames.1.to.9
   colnames(gff2.remain)[1:9] = colnames.1.to.9
-  return(gff2.remain = gff2.remain[,1:9])
+  
+  
+  if(remain){
+    return(gff2.remain = gff2.remain)
+  }else {
+    return(gff2.remain = gff2.remain[,1:9])
+  }
 }
 
 
@@ -408,17 +429,18 @@ getMxFragment <- function(path.cons,
 fillBegEnd <- function(len.acc, gff){
   g = rep(0, len.acc)
   
-  gff[gff$end <= len.acc,] # remove genes which are over the aligned regions
+  gff = gff[gff$end <= len.acc,] # remove genes which are over the aligned regions
+  gff = gff[order(gff$beg),]
   
   # Check for the overlap
   diff = gff$beg[-1] < gff$end[-nrow(gff)]
   if(sum(diff) > 0) {
-    pokazAttention(gff[min(which(diff)) + (0:1),])
+    print(gff[min(which(diff)) + (0:1),])
     stop(paste('Overlap in GFF, accession', acc)) 
   }
   
   if(!('idx' %in% colnames(gff))){
-    gff$idx = 1:nrow(idx)
+    gff$idx = 1:nrow(gff)
   }
   g[gff$beg] = gff$idx
   g[gff$end] = gff$idx * (-1)
@@ -610,6 +632,74 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
 }
 
 
+defineBlocks <- function(v){
 
+  v.idx = 1:length(v)
+  
+  v.idx = v.idx[v != 0]
+  v = v[v != 0]
+  v.r = rank(abs(v))
+  v.r[v < 0] = v.r[v < 0] * (-1)
+  v.b = findRuns(v.r)
+  
+  v.b$v.beg = v[v.b$beg]
+  v.b$v.end = v[v.b$end]
+  
+  v.b$i.beg = v.idx[v.b$beg]
+  v.b$i.end = v.idx[v.b$end]
+  
+  blocks.acc = rep(0, max(abs(v)))
+  for(irow in 1:nrow(v.b)){
+    blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+  }
+  
+  return(blocks.acc)
+}
 
-
+filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e) {
+  # Convert pangenome.names to lowercase once for efficiency
+  pangenome.names <- tolower(pangenome.names)
+  
+  # Initialize an empty vector for indices to remove
+  idx.remove <- c()
+  if (!(tolower(acc) %in% pangenome.names)) {
+    # Loop over each chromosome
+    for (i.chr in 1:n.chr) {
+      # Find indices for the current chromosome
+      idx.chr <- which(gff$chr == i.chr)
+      gff.chr <- gff[idx.chr, ]
+      
+      # Generate the MSA file name
+      file.msa <- paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+      
+      # Check if the MSA file exists before reading
+      if (file.exists(file.msa)) {
+        # Read MSA data
+        v <- h5read(file.msa, paste0(gr.accs.e, acc))
+        
+        # Define blocks and get start and end for each block
+        v.blocks <- defineBlocks(v)
+        
+        # Check block boundaries within v.blocks
+        bl.beg <- v.blocks[gff.chr$beg]
+        bl.end <- v.blocks[gff.chr$end]
+        
+        # Append indices where block starts and ends do not match
+        idx.remove <- c(idx.remove, idx.chr[which(bl.beg != bl.end)])
+        # Append indices where block start or end is NA
+        idx.remove <- c(idx.remove, idx.chr[which(is.na(bl.beg) | is.na(bl.end))])
+      } else {
+        message(paste("File not found:", file.msa))
+      }
+    }
+  }
+  
+  # Remove rows from gff based on idx.remove if there are any indices
+  if (length(idx.remove) > 0) {
+    idx.remove <- unique(idx.remove)
+    gff <- gff[-idx.remove, ]
+  }
+  
+  # Return the filtered gff
+  return(gff)
+}

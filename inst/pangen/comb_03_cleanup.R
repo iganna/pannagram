@@ -133,15 +133,7 @@ loop.function <- function(s.comb,
     
     v.b$i.beg = v.idx[v.b$beg]
     v.b$i.end = v.idx[v.b$end]
-    
-    # if(acc == "GCA_042692195.1"){
-    #   file.ws = "tmp_workspace.RData"
-    #   all.local.objects <- ls()
-    #   save(list = all.local.objects, file = file.ws)
-    #   pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-    #   stop('Enough..')
-    # }
-    
+
     blocks.acc = rep(0, max(abs(v)))
     for(irow in 1:nrow(v.b)){
       blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow

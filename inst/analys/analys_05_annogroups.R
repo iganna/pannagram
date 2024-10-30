@@ -96,14 +96,14 @@ pokaz('  ', accessions)
 
 # ***********************************************************************
 # Accessions 220011
-acc.new = "22001_mod"
-acc.prev = "220011"
-for(i.chr in 1:5){
-  file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
-  print(h5ls(file.msa))
-  # v = h5read(file.msa, paste0(gr.accs.e, acc.new))
-  # h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
-}
+# acc.new = "22001_mod"
+# acc.prev = "220011"
+# for(i.chr in 1:5){
+#   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
+#   # print(h5ls(file.msa))
+#   # v = h5read(file.msa, paste0(gr.accs.e, acc.new))
+#   # h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
+# }
 
 # ***********************************************************************
 # ---- Merge all GFF files into a common structure ----
@@ -148,7 +148,6 @@ if(!file.exists(file.gff.main)){
     res.p = findIncludeAndOverlap(gff.p)
     res.m = findIncludeAndOverlap(gff.m)
     
-    
     idx.parental = rbind(res.p$idx.include,
                          res.m$idx.include)
     
@@ -166,12 +165,15 @@ if(!file.exists(file.gff.main)){
 
 # ***********************************************************************
 # ---- Convert of initial of GFF files ----
+idx.remain = c()
 for(acc in accessions){
   file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
   file.raw.txt = paste0(path.res, acc,'_pangen_raw.txt')
   if(file.exists(file.raw.gff) & file.exists(file.raw.txt)) next
   pokaz('Conversion of accession', acc)
   gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
+  gff.acc = gff.main[gff.main$acc == acc,]
+  gff.acc$idx.main = gff.acc$idx
   
   gff.acc.pan = gff2gff(path.cons = path.msa,
                         gff.acc,
@@ -179,7 +181,10 @@ for(acc in accessions){
                         acc2 = s.pannagram,
                         n.chr = 5,
                         aln.type = aln.type,
-                        s.chr = s.chr)
+                        s.chr = s.chr,
+                        remain = T)
+  
+  idx.remain = c(idx.remain, gff.acc.pan$idx.main)
   
   write.table(gff.acc.pan, file.raw.txt,
               row.names = F, col.names = T, quote = F, sep = '\t')
@@ -188,6 +193,15 @@ for(acc in accessions){
               row.names = F, col.names = F, quote = F, sep = '\t')
   
 }
+
+file.gff.main.idx.remain = paste0(path.res, 'gff_main_idx_remain.rds')
+if(length(idx.remain) != 0){
+  saveRDS(idx.remain, file.gff.main.idx.remain)  
+} else {
+  idx.remain = readRDS(file.gff.main.idx.remain)
+}
+
+gff.main = gff.main[gff.main$idx %in% idx.remain,]
 
 # ***********************************************************************
 
@@ -206,7 +220,6 @@ for(i.chr in 1:5){
   msa.lens = as.numeric(groups$dim[groups$group == gr.accs.b])
   len.pan = unique(msa.lens)
   if(length(len.pan) != 1) stop('something is wrong with the alignment LENGTHs')
-  
   
   # ---- Gene Minus and gene Plus ----
 
@@ -255,7 +268,6 @@ for(i.chr in 1:5){
         g.mins[idx.change] = g.tmp  
       }
       
-      
       # Check that no split of genes
       g.id.split = setdiff(intersect(g.plus, g.mins), 0)
       if(length(g.id.split) > 0){
@@ -264,7 +276,6 @@ for(i.chr in 1:5){
         g.mins[g.mins %in% g.id.split] = 0
       }
       pokazAttention('Total number of lost genes', length(setdiff(gff.acc$idx, c(g.plus, g.mins))))
-      
       
       # Blocks of genes
       g.plus.blocks = getGeneBlocks(g.plus, len.pan, v.acc)
@@ -277,7 +288,6 @@ for(i.chr in 1:5){
       # Save it for Annogroups
       gene.plus = gene.plus + (gene.plus.add != 0) * 1
       gene.mins = gene.mins + (gene.mins.add != 0) * 1
-      
       
       # Save begin-end for split annogroups
       g.plus.blocks$strand = '+'
@@ -296,8 +306,13 @@ for(i.chr in 1:5){
     load(file.gene.blocks)
   }
   
+  
+  # save(list = ls(), file = "tmp_workspace_here.RData")
+  # stop()
 
   # ----   Groups  ----
+  
+  pokaz('Groups')
   
   an.blocks.all = list()
   n.an = 0
@@ -331,11 +346,12 @@ for(i.chr in 1:5){
       # Define vector to determine splits
       gr.len = an.blocks$end[i.gr] - an.blocks$beg[i.gr] + 1
      
-      
       # Get genes within this block
       genes.gr = gene.blocks.s[gene.blocks.s$annogr == i.gr,]
       genes.gr$beg = genes.gr$beg - an.blocks$beg[i.gr] + 1
       genes.gr$end = genes.gr$end - an.blocks$beg[i.gr] + 1
+      
+      genes.gr$len = genes.gr$end - genes.gr$beg
       # orfplot(genes.gr)
       
       # Define accessions having at least two genes
@@ -345,8 +361,10 @@ for(i.chr in 1:5){
         genes.gr.acc = genes.gr[genes.gr$acc == acc.tmp,]
         for(irow in 1:(nrow(genes.gr.acc) - 1)){
           # pokaz(acc.tmp, genes.gr.acc$end[irow],genes.gr.acc$beg[irow+1])
-          pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] = 
-            pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] + 1
+          if((genes.gr.acc$end[irow]+1) != genes.gr.acc$beg[irow+1]) {
+            pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] = 
+              pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] + 1
+          }
         }
       }
 
@@ -362,7 +380,9 @@ for(i.chr in 1:5){
       
     
       pos.cover = gene.list[[s.s]][an.blocks$beg[i.gr]:an.blocks$end[i.gr]]
-      if(max((pos.cover + pos.split)) > length(accessions)) stop('Problem with the split')
+      if(max((pos.cover + pos.split)) > length(accessions)) {
+        pokazAttention('Problem with the split')
+      }
       
       
       # ***********************************************************************
@@ -370,6 +390,9 @@ for(i.chr in 1:5){
       # Forth
       mx.increase = which(colSums((mx.cover[,-1] > mx.cover[,-ncol(mx.cover)]) * 1) != 0)
       mx.decrease = which(colSums((mx.cover[,-1] < mx.cover[,-ncol(mx.cover)]) * 1) != 0)
+      
+      if(length(mx.increase) == 0) next
+      if(length(mx.decrease) == 0) next
       
       mx = rbind(cbind(mx.increase, 1),
                  cbind(mx.decrease, -1))
@@ -439,16 +462,6 @@ for(i.chr in 1:5){
       
       # ***********************************************************************
       if(nrow(an.blocks.split) > 1){
-        
-        # xx = nrow(an.blocks.split)
-        # yy = sum((pal$V1 == 'PanGen_Chr_1') & (pal$V7 == '+') & 
-        #             (pal$V4 >= an.blocks$beg[i.gr])& 
-        #             (pal$V5 <= an.blocks$end[i.gr]))
-        # pokaz(xx, yy)
-        
-        # if(!(i.gr %in% c(1748, 1861, 1866, 1995, 2007, 2027, 2144))){
-        #   if(xx != yy) stop()
-        # }
         
         an.blocks.split = an.blocks.split + an.blocks$beg[i.gr] +1
         an.blocks$end[i.gr] = an.blocks.split$end[1]

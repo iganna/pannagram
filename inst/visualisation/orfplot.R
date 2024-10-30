@@ -20,6 +20,7 @@
 #' @export
 orfplot <- function(df, optimal = F, 
                     s.color = 'strand', 
+                    y = NULL,
                     show.legend = F,
                     arrow.size = 0.05){
   
@@ -58,6 +59,10 @@ orfplot <- function(df, optimal = F,
     }
   } else {
     df$row.number = 1:nrow(df)
+  }
+  
+  if(!is.null(y)){
+    df$row.number = y
   }
   
   # Plot ORFs 

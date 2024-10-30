@@ -101,6 +101,8 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 echo = T
 for(s.comb in pref.combinations){
   
+  initial.vars <- ls()
+  
   if(echo) pokaz('* Combination', s.comb)
   
   # -------------------------------------
@@ -109,7 +111,6 @@ for(s.comb in pref.combinations){
   load(file.ws)
   
   n.acc = length(accessions)
-  
   
   path.tmp = '/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/intermediate/consensus/'
   
@@ -218,11 +219,17 @@ for(s.comb in pref.combinations){
     stop('Lengths dont match')
   }
     
-    
   saveRDS(list(aln = res.msa,
                ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
                                     end = breaks$idx.end[idx.short]) ),
           paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+  
+  # Cleanup variables
+  final.vars <- ls()
+  new.vars <- setdiff(final.vars, initial.vars)
+  pokaz('Veriables to remove', new.vars)
+  rm(list = new.vars)
+  gc()
   
 }
 
