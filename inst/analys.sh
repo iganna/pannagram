@@ -140,9 +140,7 @@ if [ "$run_blocks" = true ]; then
     pokaz_stage "Get blocks."
     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
         --path.cons ${path_consensus} \
-        --ref  ${ref_pref} \
-        --cores ${cores} \
-        --aln.type ${aln_type}
+        --cores ${cores}
 fi
 
 if [ "$run_seq" = true ]; then
