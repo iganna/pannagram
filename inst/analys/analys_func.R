@@ -67,8 +67,8 @@ extractChrByFormat <- function(gff, s.chr){
 gff2gff <- function(path.cons, 
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
-                    ref.acc='0', 
-                    n.chr = 5,
+                    n.chr,
+                    ref.acc='',
                     exact.match=T, 
                     gr.accs.e = "accs/",
                     aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
@@ -80,14 +80,18 @@ gff2gff <- function(path.cons,
   # Set of names of accettions, which can be used to specify pangenomes coordinates
   pangenome.names = unique(c(pangenome.name, 'Pangen', 'Pangenome', 'Pannagram'))
   
+  if(ref.acc == ''){
+    ref.suff = ref.acc
+  } else {
+    ref.suff = paste0('_ref_', ref.acc)
+  }
+  
   if(acc1 == acc2) stop('Accessions provided are identical')
   
   gff1$idx = 1:nrow(gff1)
-  # Get chromosome number from the first column of the gff file
-  # if(!('chr' %in% colnames(gff1))){
-    gff1 =  extractChrByFormat(gff1, s.chr)
-    gff1 = gff1[order(gff1$chr),]
-  # }
+  # Get chromosomes by format
+  gff1 =  extractChrByFormat(gff1, s.chr)
+  gff1 = gff1[order(gff1$chr),]
   
   colnames.1.to.9 = colnames(gff1)[1:9]
   colnames(gff1)[1:9] = paste0('V', 1:9)
@@ -100,7 +104,6 @@ gff2gff <- function(path.cons,
   gff2$V5 = -1
   gff2$V1 = gsub(acc1, acc2, gff2$V1)
   
-  
   for(i.chr in 1:n.chr){
     
     # ---
@@ -110,7 +113,7 @@ gff2gff <- function(path.cons,
     # ---
     
     if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5')
+    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
     
     if(tolower(acc1) %in% tolower(pangenome.names)){
       v = h5read(file.msa, paste0(gr.accs.e, acc2))
@@ -137,7 +140,6 @@ gff2gff <- function(path.cons,
     # Get correspondence between two accessions
     v.corr = rep(0, max.chr.len)
     v.corr[v[,1]] = v[,2]
-    
     
     if(echo) pokaz('Number of annotations:', length(idx.chr))
     

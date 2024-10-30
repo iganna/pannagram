@@ -351,7 +351,9 @@ for(s.comb in pref.combinations){
       h5write(v.aln, file.res, paste0(gr.accs.e, acc))
       
       stat.comb <- rbind(stat.comb, 
-                         data.frame(comb = acc, coverage = sum(v.aln != 0)))
+                         data.frame(acc = acc, 
+                                    coverage = sum(v.aln != 0),
+                                    comb = s.comb))
       
     })
     
@@ -363,7 +365,7 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste0(path.cons, 'stat', s.comb,'.rds'))
+saveRDS(stat.comb, paste0(path.cons, 'stat_coverage.rds'))
 
 
 # ***********************************************************************

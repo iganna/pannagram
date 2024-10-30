@@ -41,6 +41,7 @@ Options:
     -sv_sim                     Compare SVs with a dataset of sequences
     -sv_graph                   Create the Graph of SVs
 
+    -annogroup                  Create the consensus annotation groups
 
     -aln_type ALN_TYPE          Set the type of alignment (default: 'msa_').
     -path_cons PATH_CONS        Specify the path to the consensus folder (has the default value).
@@ -69,35 +70,41 @@ run_snp=false
 run_sv_call=false
 run_sv_sim=false
 run_sv_graph=false
+run_annogroup=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
     case $1 in
-        -h|-help) print_usage; exit 0;;
-        -cores) cores=$2; shift 2 ;;
+        -h|-help)        print_usage;            exit 0;;
+        -cores)          cores=$2;               shift 2;;
 
-        -path_msa) path_consensus=$2; shift 2;;
-        -ref) ref_pref=$2; shift 2;;
-        -path_chr) path_chromosomes=$2; shift 2 ;;
+        -path_msa)       path_consensus=$2;      shift 2;;
+        -ref)            ref_pref=$2;            shift 2;;
+        -path_chr)       path_chromosomes=$2;    shift 2;;
         
-        -blocks) run_blocks=true; shift;;  # Get position sof synteny blocks between accessions
-        -seq)    run_seq=true; shift;;  # Get consencuc seqeunce
-        -aln)    run_aln=true; shift;;  # Produce fasta file with the pangenome alignment
-        -snp)    run_snp=true; shift;;  # Get VSF file with SNPs
-        # -sv)     run_sv=true; shift;;
+        -blocks)         run_blocks=true;        shift;;           # Get position of synteny blocks between accessions
+        -seq)            run_seq=true;           shift;;           # Get consensus sequence
+        -aln)            run_aln=true;           shift;;           # Produce fasta file with the pangenome alignment
+        -snp)            run_snp=true;           shift;;           # Get VCF file with SNPs
+        # -sv)           run_sv=true;            shift;;
 
-        -sv_call | -sv)   run_sv_call=true; shift;;               # SV calling from the alignment
-        -sv_sim) run_sv_sim=true; set_file="$2"; shift 2;;   # File to compare SVs againts set of seequences
-        -sv_graph)  run_sv_graph=true; shift;;              # Construction of a graph on SVs
-        -sim) similarity_value=$2; shift 2;;                # Similarity value
+        -sv_call|-sv)    run_sv_call=true;       shift;;           # SV calling from the alignment
+        -sv_sim)         set_file="$2";                            # File to compare SVs against set of sequences
+                         run_sv_sim=true;        shift 2;;         
+        -sv_graph)       run_sv_graph=true;      shift;;           # Construction of a graph on SVs
+        -sim)            similarity_value=$2;    shift 2;;         # Similarity value
 
-        -sv_acc) acc_anal=$2; shift ;;  # file with accessions to analyse
+        -sv_acc)         acc_anal=$2;            shift 2;;         # File with accessions to analyse
 
-        -aln_type) aln_type=$2; shift 2;;
-        -path_cons) path_consensus=$2; shift 2;;
-        *) print_usage; exit 1;;
+        -annogroup)      path_annot="$2"                           # Path with annotation
+                         run_annogroup=true;     shift 2;;
+
+        -aln_type)       aln_type=$2;            shift 2;;
+        -path_cons)      path_consensus=$2;      shift 2;;
+        *)               print_usage;            exit 1;;
     esac
 done
+
 
 # Check if path_chromosomes is empty while any of run_seq, run_aln, or run_snp are set to true
 if [ -z "$path_chromosomes" ] && ([ "$run_seq" = true ] || [ "$run_aln" = true ] || [ "$run_snp" = true ]); then
@@ -111,7 +118,7 @@ ref_pref="${ref_pref:-NULL}"   # Set of accessions to analyse
 
 pokaz_message "Number of cores: ${cores}"
 
-# check_missing_variable "ref_pref"
+check_missing_variable "ref_pref"
 # check_missing_variable "pref_global"
 # pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
@@ -248,5 +255,23 @@ if [ "$run_sv_graph" = true ]; then
     rm "$file_sv_big".nin
     rm "$file_sv_big".nhr
     rm "$file_sv_big".nsq
+
+fi
+
+
+# -------------------------------------------------
+# Annotation groups
+if [ "$run_annogroup" = true ]; then
+
+    pokaz_stage "Annotation groups"
+
+    path_annot_res=${path_consensus}annotation/
+    mkdir -p ${path_annot_res}
+
+    Rscript $INSTALLED_PATH/analys/analys_05_annogroups.R \
+            --path.msa ${path_consensus} \
+            --path.annot ${path_annot} \
+            --path.res ${path_annot_res} \
+            --aln.type ${aln_type}
 
 fi
