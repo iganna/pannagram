@@ -99,7 +99,6 @@ loop.function <- function(f.in,
   
   alignment.seq = mx2aln(alignment)
   
-  
   file.out = paste0(path.mafft.out, sub('.fasta', '', basename(f.in)), "_aligned2.fasta")
   writeFasta(alignment.seq, file.out)
   
@@ -133,3 +132,26 @@ warnings()
 pokaz('Done.', file=file.log.main, echo=echo.main)
 
 
+
+# 
+# for(f.in in files.in){
+#   pokaz(f.in)
+#   seqs = readFasta(paste0(path.mafft.in, f.in))
+#   seqs.clean = seq2clean(seqs,n.flank)
+#   
+#   
+#   path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
+#   pokaz(path.work)
+#   res = refineAlignment(seqs.clean, path.work)
+#   
+#   alignments = res$aln
+#   
+#   alignment = alignments[[length(alignments)]]
+#   
+#   alignment.seq = mx2aln(alignment)
+#   
+#   pdf(paste(path.fig, f.in, '_v2.pdf', sep = ''), width = 6, height = 4)
+#   print(msaplot(alignment))     # Plot 1 --> in the first page of PDF
+#   dev.off()
+#   
+# }

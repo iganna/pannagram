@@ -36,6 +36,8 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+pos.beg.info = 2  # Position in sequence's name, where the genome's begin is started
+
 # print(opt)
 
 # ***********************************************************************
@@ -166,7 +168,7 @@ loop.function <- function(f.maj,
                        base.fas.fw = base.fas.fw,
                        base.fas.bw = base.fas.bw)
   
-  print('after skeleton')
+  pokaz('after skeleton')
   
   # TODO: put real lengths, not approximations
   max.chr.len = max(max(x.sk$V4), max(x.sk$V5)) + 10^6
@@ -212,8 +214,6 @@ loop.function <- function(f.maj,
   }  # KOSTYL
   
   if(!is.null(x.gap)){  # KOSTYL
-    
-    pos.beg.info = 2  # Position in sequence's name, where the genome's begin is started
     
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
