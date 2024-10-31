@@ -332,8 +332,8 @@ loop.function <- function(f.maj,
     
   }
 
-  pokaz('Saving..')
-  save(list = ls(), file = "tmp_workspace.RData")
+  
+  # save(list = ls(), file = "tmp_workspace.RData")
 
   if(!is.null(x.gap)) {
     
@@ -345,7 +345,8 @@ loop.function <- function(f.maj,
     x.gap[,4:5] = x.gap[,4:5] + pos.shift$r[x.gap$V10,]$shift
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
-    # save(list = ls(), file = "tmp_workspace.RData")
+    pokaz('Saving..')
+    save(list = ls(), file = "tmp_workspace.RData")
     
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
