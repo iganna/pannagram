@@ -191,9 +191,6 @@ loop.function <- function(f.maj,
     x.gap = NULL
   }
   
-  pokaz('Saving..')
-  save(list = ls(), file = "tmp_workspace.RData")
-  
   # To catch possible bugs
   # if(file.gaps.out == 'your_filename.txt'){
   #   file.ws = "tmp_workspace.RData"
@@ -330,12 +327,13 @@ loop.function <- function(f.maj,
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
   x.gap = NULL
   if(file.exists(file.gaps.out)){
-    # Read blast results on "between blocks"
     pokaz('Read blast of "bad" gaps..', file.gaps.out, file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)    
     
   }
 
+  pokaz('Saving..')
+  save(list = ls(), file = "tmp_workspace.RData")
 
   if(!is.null(x.gap)) {
     
