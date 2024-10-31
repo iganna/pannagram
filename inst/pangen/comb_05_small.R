@@ -167,7 +167,11 @@ for(s.comb in pref.combinations){
       rm(mx.pos)
       rm(alignment)
       rm(seqs)
+      gc()
     }
+    
+    gc()
+    
     return(mx.list)
   }
   

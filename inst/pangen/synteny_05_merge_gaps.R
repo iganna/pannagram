@@ -400,7 +400,12 @@ loop.function <- function(f.maj,
               (num.q[2,] == num.r[2,]))
     
     x.tmp = x.tmp[idx.remain,]
+  } else {
+    x.tmp = data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
+                            dimnames = list(NULL, colnames(x.sk))))
+  }
     
+  if(nrow(x.tmp) > 0){
     # Clean the overlap
     x.tmp = cleanOverlaps(x.tmp)
     if(nrow(x.tmp) == 1){
