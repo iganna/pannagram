@@ -191,9 +191,8 @@ loop.function <- function(f.maj,
     x.gap = NULL
   }
   
-  if(file.gaps.out == '/groups/nordborg/projects/the1001genomesplus/prev_data/08_lyrata/pannagram_v10/intermediate/blast_gaps_MN47/acc_10002_qchr_1_bchr_5_residual_out.txt'){
-    save(list = ls(), file = "tmp_workspace.RData")
-  }
+  pokaz('Saving..')
+  save(list = ls(), file = "tmp_workspace.RData")
   
   # To catch possible bugs
   # if(file.gaps.out == 'your_filename.txt'){
