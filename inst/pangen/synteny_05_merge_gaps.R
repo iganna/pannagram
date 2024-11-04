@@ -500,6 +500,9 @@ loop.function <- function(f.maj,
   x.sk1 = x.comb
   # x.sk1 = x.res
   # x.sk1 = x.bw
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   for(irow in 1:nrow(x.sk1)){
     pp = x.sk1$V4[irow]:x.sk1$V5[irow]
     if(sum(pos.q.occup[pp]) > 0) {
