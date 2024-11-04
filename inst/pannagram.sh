@@ -1196,6 +1196,11 @@ for ref0 in "${refs_all[@]}"; do
     path_log_step="${path_log}${step_name}/"
     make_dir ${path_log_step}
 
+    if [ ! -f ${step_file} ]; then
+        echo ${step_file}
+        echo "whaaaaat"
+    fi
+
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
