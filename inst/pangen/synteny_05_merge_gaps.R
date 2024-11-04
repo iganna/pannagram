@@ -343,7 +343,7 @@ loop.function <- function(f.maj,
     x.gap = unique(x.gap)
   }
 
-  # save(list = ls(), file = "tmp_workspace.RData")
+  save(list = ls(), file = "tmp_workspace1.RData")
 
   if(!is.null(x.gap)) {
     
@@ -496,20 +496,22 @@ loop.function <- function(f.maj,
   # }
   
   # ---- Check uniqueness ---- 
-  pos.q.occup = rep(0, max.chr.len)
+  
   x.sk1 = x.comb
   # x.sk1 = x.res
   # x.sk1 = x.bw
   
   save(list = ls(), file = "tmp_workspace.RData")
   
+  pos.q.occup = rep(0, max.chr.len)
   for(irow in 1:nrow(x.sk1)){
     pp = x.sk1$V4[irow]:x.sk1$V5[irow]
     if(sum(pos.q.occup[pp]) > 0) {
       pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
       stop('non-unique') 
     }
-    pos.q.occup[pp] = pos.q.occup[pp] + 1
+    # pos.q.occup[pp] = pos.q.occup[pp] + 1
+    pos.q.occup[pp] = irow
   }
   sum(pos.q.occup > 1)
   sum(pos.q.occup)
