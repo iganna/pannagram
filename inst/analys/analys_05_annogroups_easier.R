@@ -116,6 +116,7 @@ pokaz('  ', accessions)
 # ---- Convert of initial of GFF files ----
 
 gff.main.pan = c()
+gff.main.init = c()
 for(acc in accessions){
   pokaz('Accession', acc)
   file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
@@ -126,6 +127,8 @@ for(acc in accessions){
     pokaz('Conversion of accession', acc)
     # gff.acc = gff.main[gff.main$acc == acc,]
     gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
+    gff.acc$acc = acc
+    gff.acc$idx.init = 1:nrow(gff.acc)
     # gff.acc = gff.acc[gff.acc$V3 == 'gene',]
     
     gff.acc.pan = gff2gff(path.cons = path.msa,
@@ -135,11 +138,12 @@ for(acc in accessions){
                           n.chr = 5,
                           aln.type = aln.type,
                           s.chr = s.chr,
-                          exact.match = T)
+                          exact.match = T,
+                          remain = T)
     
     # Save GFF
-    write.table(gff.acc.pan[,1:9], file.raw.gff,
-                row.names = F, col.names = F, quote = F, sep = '\t')
+    # write.table(gff.acc.pan[,1:9], file.raw.gff, row.names = F, col.names = F, quote = F, sep = '\t')
+    write.table(gff.acc.pan, file.raw.gff, row.names = F, col.names = F, quote = F, sep = '\t')
   }
   gff.acc.pan$acc = acc
   gff.main.pan = rbind(gff.main.pan, gff.acc.pan[gff.acc.pan$V3 == 'gene',])
@@ -207,14 +211,17 @@ for(i.chr in 1:5){
     }
     tmp = findOnes(pos)
     if(nrow(tmp) != length(unique(gff.tmp$group))) stop('Groups are wrongly defined')
-     
+    
   }
 }
 
 if(sum(gff.main.pan$group == 0) > 0) stop('Zero-groups gound')
 
+save(list = ls(), file = "tmp_workspace_anno2.RData")
+
+
 # ***********************************************************************
-# Confusing groups
+# ---- Confusing groups ----
 
 # Confusing groups
 gff.main.pan$group = paste0('gr_', gff.main.pan$group)
@@ -330,29 +337,166 @@ for(s.gr in gr.confusing){
   
   
   # ***********************************************************************
- 
-  p = orfplot(gff.gr, y = gff.gr$acc) +
-    annotate("rect", xmin = an.blocks.split$beg, xmax = an.blocks.split$end,
-             ymin = -Inf, ymax = Inf, alpha = 0.2, fill = 'blue')
   
-  path.figures = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/figures/'
-  png(paste(path.figures,'gr_', s.gr, '.png', sep = ''), 
-      width = 6, height = 6, units = "in", res = 300)
-  print(p)     # Plot 1 --> in the first page of PDF
-  dev.off()
-  
-  
+  # # Visualise
+  # p = orfplot(gff.gr, y = gff.gr$acc) +
+  #   annotate("rect", xmin = an.blocks.split$beg, xmax = an.blocks.split$end,
+  #            ymin = -Inf, ymax = Inf, alpha = 0.2, fill = 'blue')
+  # 
+  # path.figures = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/figures/'
+  # png(paste(path.figures,'gr_', s.gr, '.png', sep = ''),
+  #     width = 6, height = 6, units = "in", res = 300)
+  # print(p)     # Plot 1 --> in the first page of PDF
+  # dev.off()
+  # 
+  # ***********************************************************************
+
   an.blocks.split$beg = an.blocks.split$beg + pos.shift
   an.blocks.split$end = an.blocks.split$end + pos.shift
-  an.blocks.split$chr = gff.tmp$chr[1]
-  an.blocks.split$group = gff.tmp$group[1]
-  an.blocks.split$strand = gff.tmp$V7[1]
+  an.blocks.split$chr = gff.gr$chr[1]
+  an.blocks.split$group = gff.gr$group[1]
+  an.blocks.split$strand = gff.gr$strand[1]
   
   an.blocks = rbind(an.blocks, an.blocks.split)
   
 }
 
+an.blocks.init = an.blocks
 
+
+# ***********************************************************************
+# ---- Non-confusing groups ----
+
+idx.good = !(gff.main.pan$group %in% gr.confusing)
+pos.good.beg = tapply(gff.main.pan$V4[idx.good], gff.main.pan$group[idx.good], min)
+pos.good.end = tapply(gff.main.pan$V5[idx.good], gff.main.pan$group[idx.good], max)
+strand.good = tapply(gff.main.pan$V7[idx.good], gff.main.pan$group[idx.good], unique)
+chr.good = tapply(gff.main.pan$chr[idx.good], gff.main.pan$group[idx.good], unique)
+gr.good = group=names(pos.good.beg)
+
+an.blocks.good = data.frame(beg = pos.good.beg[gr.good], 
+                            end = pos.good.end[gr.good],
+                            chr = strand.good[gr.good],
+                            group = gr.good,
+                            strand = strand.good[gr.good])
+
+an.blocks.all = rbind(an.blocks, 
+                      an.blocks.good)
+
+# ***********************************************************************
+# Check that groups are not overlapped
+
+for(ichr in 1:5){
+  for(s.s in s.strand){
+    tmp = an.blocks.all[(an.blocks.all$chr == i.chr) &
+                          (an.blocks.all$strand == s.s),]
+    tot.len = sum(tmp$end - tmp$beg + 1)
+    pos.blocks = fillBegEnd(len.pan[i.chr], tmp)
+    
+    if(sum(pos.blocks != 0) != tot.len) stop('Overlap')
+  }
+}
+
+
+# ***********************************************************************
+# ---- Exons ----
+
+gff.exons.pan = c()
+for(acc in accessions){
+  pokaz('Accession', acc)
+  file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
+  
+  gff.acc.pan = read.table(file.raw.gff, stringsAsFactors = F)
+  gff.acc.pan$acc = acc
+  
+  gff.acc.pan$acc = acc
+  gff.exons.pan = rbind(gff.exons.pan, gff.acc.pan[gff.acc.pan$V3 == 'CDS',])
+}
+gff.exons.pan$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.exons.pan$V1))
+
+
+
+# ***********************************************************************
+# ---- Assign exons to annotation groups and form gene genes ----
+for(i.chr in 1:5){
+  for(s.s in s.strand){
+    for(acc in accessions){
+      # Reading
+      gff.exons = gff.exons.pan[(gff.exons.pan$chr == i.chr) & 
+                                (gff.exons.pan$acc == acc) &
+                                (gff.exons.pan$V7 == s.s),]
+      
+      an.blocks.tmp = an.blocks.all[(an.blocks.all$chr == i.chr) &
+                            (an.blocks.all$strand == s.s),]
+      pos.blocks = fillBegEnd(len.pan[i.chr], an.blocks.tmp)
+
+      gff.exons$an.beg = pos.blocks[gff.exons$V4]
+      gff.exons$an.end = pos.blocks[gff.exons$V5]
+      
+      # To extend annotation
+      # gff.exons$an.end[gff.exons$an.end == 0] = gff.exons$an.beg[gff.exons$an.end == 0]
+      # gff.exons$an.beg[gff.exons$an.beg == 0] = gff.exons$an.end[gff.exons$an.beg == 0]
+      
+      gff.exons = gff.exons[gff.exons$an.beg != 0,]
+      gff.exons = gff.exons[gff.exons$an.end != 0,]
+      gff.exons = gff.exons[gff.exons$an.beg == gff.exons$an.end,]
+      
+      gff.exons = gff.exons[order(gff.exons$V4),]
+      # checkTranslocations(gff.exons$an.beg)
+      
+      # Create a new GFF annotation
+      
+      # Genious counts of IDs
+      gff.exons$exon.id <- ave(gff.exons$an.beg, gff.exons$an.beg, FUN = seq_along)
+      
+      # Gff for exons - the same for both annotations
+      gff.exons$V9 = paste('ID=',
+                             'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                             '.', acc,
+                             '.exon', sprintf("%02.0f",  gff.exons$exon.id),
+                             ';Parent=' ,
+                             'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                             '.', acc,
+                             sep = '')
+      gff.exons$V2 = s.pannagram
+      
+      gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
+      gff.mrna = data.frame(V1 = gff.exons$V1[1],
+                            V2 = s.pannagram,
+                            V3 = 'gene',
+                            V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
+                            V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
+                            V6 = '.',
+                            V7 = s.s,
+                            V8 = '.',
+                            V9 = paste('ID=',
+                                       'AT',i.chr,'Gr',which(s.strand == s.s),
+                                       sprintf("%07.0f", gff.mrna.an.gr),
+                                       '.', acc,
+                                       sep = ''))
+      
+      
+      gff.own = rbind(gff.mrna[,1:9], gff.exons[,1:9])
+      gff.own = gff.own[order(gff.own$V4),]
+      
+      gff.mrna$V3 = 'mrna'
+      gff.mrna$V9 = paste('ID=',
+                          'AT',i.chr,'Gr',which(s.strand == s.s),
+                          sprintf("%07.0f", gff.mrna.an.gr),
+                          '.', acc,
+                          ';Parent=' ,
+                          'AT',i.chr,'Gr',which(s.strand == s.s),
+                          sprintf("%07.0f", gff.mrna.an.gr),
+                          sep = '')
+      
+      gff.pan = rbind(gff.mrna[,1:9], gff.exons[,1:9])
+      gff.pan = gff.pan[order(gff.pan$V4),]
+      
+    }
+    
+    
+  }
+}
 
 
 

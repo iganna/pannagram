@@ -80,6 +80,7 @@ gff2gff <- function(path.cons,
   
   # Set of names of accettions, which can be used to specify pangenomes coordinates
   pangenome.names = unique(c(pangenome.name, 'Pangen', 'Pangenome', 'Pannagram'))
+  colnames.full1 = colnames(gff1)
   
   if(ref.acc == ''){
     ref.suff = ref.acc
@@ -196,9 +197,9 @@ gff2gff <- function(path.cons,
   
   
   if(remain){
-    return(gff2.remain = gff2.remain)
+    return(gff2.remain[,colnames.full1])
   }else {
-    return(gff2.remain = gff2.remain[,1:9])
+    return(gff2.remain[,1:9])
   }
 }
 

@@ -104,6 +104,8 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 loop.function <- function(f.maj,
                           echo.loop=T){
   
+  initial.vars <- ls()
+  
   # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
@@ -135,6 +137,12 @@ loop.function <- function(f.maj,
   if(!file.exists(file.aln.pre)) {
     pokaz('No file', file.aln.pre, file=file.log.loop, echo=echo.loop)
     pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    
+    final.vars <- ls()
+    new.vars <- setdiff(final.vars, initial.vars)
+    rm(list = new.vars)
+    gc()
+    
     return(NULL)
   }
   
@@ -513,8 +521,15 @@ loop.function <- function(f.maj,
   
   saveRDS(object = x.comb, file = file.aln.full)
   
-  suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
+  # Cleanup variables
+  
+  # suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
+
+  final.vars <- ls()
+  new.vars <- setdiff(final.vars, initial.vars)
+  rm(list = new.vars)
   gc()
+  
   
   pokaz('Done.', file=file.log.loop, echo=echo.loop)
   return(NULL)
