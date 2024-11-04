@@ -122,6 +122,8 @@ loop.function <- function(f.maj,
     return()
   }
   
+  pokaz(file.log.loop)
+  
   # --- --- --- --- --- --- --- --- --- --- ---
   # Parser prefix of the result file
   info <- pref2info(pref.comb)
@@ -341,7 +343,7 @@ loop.function <- function(f.maj,
   }
 
   
-  # save(list = ls(), file = "tmp_workspace.RData")
+  save(list = ls(), file = "tmp_workspace.RData")
 
   if(!is.null(x.gap)) {
     

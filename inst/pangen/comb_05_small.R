@@ -66,10 +66,6 @@ if (is.null(opt$max.len.gap)) {
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
 pokaz('Number of cores', num.cores)
-if(num.cores > 1){
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-}
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -188,6 +184,8 @@ for(s.comb in pref.combinations){
     
   } else {
     # Many cores
+    myCluster <- makeCluster(num.cores, type = "PSOCK") 
+    registerDoParallel(myCluster) 
     
     # Split the vector of shotp positions into n.core batches
     idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
@@ -207,6 +205,10 @@ for(s.comb in pref.combinations){
     
     if(length(res.msa) != max(idx.short)) stop('Something is wrong with indexes')
     res.msa = res.msa[idx.short]
+    
+    # Stop clusters
+    stopCluster(myCluster)
+    
   }
   
   
@@ -238,9 +240,6 @@ for(s.comb in pref.combinations){
 }
 
 
-if(num.cores > 1){
-  stopCluster(myCluster)
-}
 
 warnings()
 
