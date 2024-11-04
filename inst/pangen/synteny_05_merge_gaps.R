@@ -343,7 +343,7 @@ loop.function <- function(f.maj,
     x.gap = unique(x.gap)
   }
 
-  # save(list = ls(), file = "tmp_workspace1.RData")
+  save(list = ls(), file = "tmp_workspace1.RData")
 
   if(!is.null(x.gap)) {
     
@@ -356,7 +356,7 @@ loop.function <- function(f.maj,
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
     # pokaz('Saving..')
-    # save(list = ls(), file = "tmp_workspace.RData")
+    save(list = ls(), file = "tmp_workspace.RData")
     
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
@@ -394,7 +394,7 @@ loop.function <- function(f.maj,
         next
       } else if(length(tmp) > 1){
       
-        pokaz('Something is wrong with coordinates 2')
+        stop('Something is wrong with coordinates 2')
         id.corresp = rbind(id.corresp, cbind(irow, tmp))
       } 
     }

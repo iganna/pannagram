@@ -116,21 +116,21 @@ pokaz('  ', accessions)
 # ---- Convert of initial of GFF files ----
 
 gff.main.pan = c()
-gff.main.init = c()
+gff.main.own = c()
 for(acc in accessions){
   pokaz('Accession', acc)
-  file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
-  if(file.exists(file.raw.gff)){
-    gff.acc.pan = read.table(file.raw.gff, stringsAsFactors = F)
+  file.pan.gff = paste0(path.res, acc,'_pangen_raw.gff')
+  file.acc.gff = paste0(path.annot, acc,'.gff')
+  
+  gff.acc = read.table(file.acc.gff, stringsAsFactors = F)
+  gff.acc$acc = acc
+  gff.acc$idx.init = 1:nrow(gff.acc)
+  
+  if(file.exists(file.pan.gff)){
+    gff.acc.pan = read.table(file.pan.gff, stringsAsFactors = F)
     gff.acc.pan$acc = acc
   } else {
     pokaz('Conversion of accession', acc)
-    # gff.acc = gff.main[gff.main$acc == acc,]
-    gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
-    gff.acc$acc = acc
-    gff.acc$idx.init = 1:nrow(gff.acc)
-    # gff.acc = gff.acc[gff.acc$V3 == 'gene',]
-    
     gff.acc.pan = gff2gff(path.cons = path.msa,
                           gff.acc,
                           acc1 = acc,
@@ -143,12 +143,17 @@ for(acc in accessions){
     
     # Save GFF
     # write.table(gff.acc.pan[,1:9], file.raw.gff, row.names = F, col.names = F, quote = F, sep = '\t')
-    write.table(gff.acc.pan, file.raw.gff, row.names = F, col.names = F, quote = F, sep = '\t')
+    write.table(gff.acc.pan, file.pan.gff, row.names = F, col.names = F, quote = F, sep = '\t')
   }
-  gff.acc.pan$acc = acc
-  gff.main.pan = rbind(gff.main.pan, gff.acc.pan[gff.acc.pan$V3 == 'gene',])
+  gff.main.pan = rbind(gff.main.pan, gff.acc.pan)
+  gff.main.own = rbind(gff.main.own, gff.acc)
 }
+
 gff.main.pan$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.main.pan$V1))
+gff.main.own$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.main.own$V1))
+
+save(list = c("gff.main.pan", "gff.main.own"), file = "tmp_workspace_gff.RData")
+stop()
 
 # ***********************************************************************
 # Get length of pangenome coordinates
