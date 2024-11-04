@@ -521,17 +521,15 @@ loop.function <- function(f.maj,
   
   saveRDS(object = x.comb, file = file.aln.full)
   
-  # Cleanup variables
-  
-  # suppressWarnings(rm(list = c("x.sk", "x.res", "x.bw", "base.fas.bw", "base.fas.fw", "query.fas.chr")))
 
+  # Done
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  
+  # Cleanup variables
   final.vars <- ls()
   new.vars <- setdiff(final.vars, initial.vars)
   rm(list = new.vars)
   gc()
-  
-  
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
   
