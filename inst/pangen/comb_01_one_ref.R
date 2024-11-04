@@ -122,6 +122,8 @@ pokaz('Chromosomal lengths:', chr.len, file=file.log.main, echo=echo.main)
 loop.function <- function(s.comb, 
                           echo.loop=T){
   
+  initial.vars <- ls()
+  
   s.comb = strsplit(s.comb, '_')[[1]]
   query.chr = as.numeric(s.comb[1])
   base.chr = as.numeric(s.comb[2])
@@ -194,7 +196,11 @@ loop.function <- function(s.comb,
     h5write(1:base.len, file.comb, paste0(gr.accs.e, '', base.acc.ref))
   })
   
-  rmSafe(idx.gaps)
+  
+  final.vars <- ls()
+  new.vars <- setdiff(final.vars, initial.vars)
+  rm(list = new.vars)
+  gc()
   
   H5close()
   gc()
