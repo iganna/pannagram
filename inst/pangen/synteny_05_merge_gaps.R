@@ -197,6 +197,7 @@ loop.function <- function(f.maj,
   if(file.exists(file.gaps.out)){
     pokaz('Read blast of good gaps..', file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)
+    x.gap = unique(x.gap)
   } else {
     x.gap = NULL
   }
@@ -338,12 +339,11 @@ loop.function <- function(f.maj,
   x.gap = NULL
   if(file.exists(file.gaps.out)){
     pokaz('Read blast of "bad" gaps..', file.gaps.out, file=file.log.loop, echo=echo.loop)
-    x.gap = readBlast(file.gaps.out)    
-    
+    x.gap = readBlast(file.gaps.out)
+    x.gap = unique(x.gap)
   }
 
-  
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
 
   if(!is.null(x.gap)) {
     
@@ -368,10 +368,10 @@ loop.function <- function(f.maj,
       
       if(x.gap$dir[irow] == 0){
         tmp = which((x.tmp$V2 == x.gap$V2[irow]) & (x.gap$V3[irow] == x.tmp$V3) & 
-                      (x.tmp$V4 == x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5))  
+                      (x.tmp$V4 == x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5) & (x.tmp$dir == 0))  
       } else {
         tmp = which((x.tmp$V2 == x.gap$V2[irow]) & (x.gap$V3[irow] == x.tmp$V3) & 
-                      (x.tmp$V5 == x.gap$V5[irow]) & (x.gap$V4[irow] == x.tmp$V4))
+                      (x.tmp$V5 == x.gap$V5[irow]) & (x.gap$V4[irow] == x.tmp$V4)  & (x.tmp$dir != 0))
       }
       
       if(length(tmp) == 1){
