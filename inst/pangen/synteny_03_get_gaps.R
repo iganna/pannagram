@@ -465,16 +465,30 @@ if(num.cores == 1){
     loop.function(f.maj, echo.loop=echo.loop)
   }
 } else {
-  # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
+  batch.size <- 2 * num.cores  # Define the batch size
   
-  tmp = foreach(f.maj = files.maj, 
-                .packages=c('crayon'), 
-                .verbose = F)  %dopar% { 
-                  loop.function(f.maj, echo.loop=echo.loop)
-                }
-  stopCluster(myCluster)
+  # Initialize a temporary list to store results
+  tmp <- list()
+  
+  # Loop through files in batches
+  for (start in seq(1, length(files.maj), by = batch.size)) {
+    
+    end <- min(start + batch.size - 1, length(files.maj))  # Define the end of the current batch
+    batch.files <- files.maj[start:end]  # Subset files for the current batch
+    
+    # Create and register a new cluster for the current batch
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
+    # Run parallel loop for files in the current batch
+    batch.results <- foreach(f.maj = batch.files, .packages = c('crayon'), .verbose = FALSE) %dopar% {
+      loop.function(f.maj, echo.loop = echo.loop)
+    }
+    
+    tmp <- c(tmp, batch.results)  # Store the batch results in the main list
+    
+    stopCluster(myCluster)  # Stop the cluster after completing the batch
+  }
 }
 
 warnings()

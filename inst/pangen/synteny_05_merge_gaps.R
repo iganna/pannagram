@@ -558,8 +558,8 @@ if(num.cores == 1){
   # Loop through files.maj in batches
   tmp <- list()
   for (start in seq(1, length(files.maj), by = batch.size)) {
-    # Define the end of the current batch
-    end <- min(start + batch.size - 1, length(files.maj))
+    
+    end <- min(start + batch.size - 1, length(files.maj))  # Define the end of the current batch
     batch.files <- files.maj[start:end]
     
     # Create and register a new cluster for the current batch
@@ -570,12 +570,9 @@ if(num.cores == 1){
     batch.results <- foreach(f.maj = batch.files, .packages = c('crayon')) %dopar% {
       loop.function(f.maj, echo.loop = echo.loop)
     }
-    
-    # Append the current batch results to tmp
     tmp <- c(tmp, batch.results)
     
-    # Stop the cluster after completing the batch
-    stopCluster(myCluster)
+    stopCluster(myCluster)  # Stop the cluster after completing the batch
   }
 }
 
