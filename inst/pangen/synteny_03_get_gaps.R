@@ -101,6 +101,7 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 loop.function <- function(f.maj, 
                           echo.loop=T){
   
+  pokaz(f.maj)
   # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
@@ -176,6 +177,9 @@ loop.function <- function(f.maj,
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   if((sum(pos.q.free > 1) != 0)) stop('Coverage query is wrong')
   if((sum(pos.b.free > 1) != 0)) stop('Coverage base is wrong')
   
