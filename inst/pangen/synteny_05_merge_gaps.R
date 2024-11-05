@@ -3,6 +3,7 @@ suppressMessages({
   library(doParallel)
   library(optparse)
   library(crayon)
+  library(pryr)
 })
 
 
@@ -580,6 +581,10 @@ if(num.cores == 1){
     tmp <- c(tmp, batch.results)
     
     stopCluster(myCluster)  # Stop the cluster after completing the batch
+    
+    pokaz('Memory', mem_used())
+    gc()
+    pokaz('Memory after gc', mem_used())
   }
 }
 
