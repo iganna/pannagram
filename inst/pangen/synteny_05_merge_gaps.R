@@ -358,7 +358,7 @@ loop.function <- function(f.maj,
     x.gap = unique(x.gap)
   }
 
-  # save(list = ls(), file = "tmp_workspace1.RData")
+  save(list = ls(), file = "tmp_workspace1.RData")
 
   if(!is.null(x.gap)) {
     
