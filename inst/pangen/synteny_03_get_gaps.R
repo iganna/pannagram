@@ -147,6 +147,7 @@ loop.function <- function(f.maj,
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
   x = readRDS(paste0(path.aln, f.maj))
+  x = cleanOverlaps(x)
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
@@ -174,6 +175,7 @@ loop.function <- function(f.maj,
   pos.q.free = rep(0, query.len)  # free positions in query
   pos.b.free = rep(0, base.len)  # free positions in base
   for(irow in 1:nrow(x)){
+    if(sum(pos.b.free[x$V4[irow]:x$V5[irow]]) > 0) stop()
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }

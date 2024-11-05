@@ -172,6 +172,7 @@ loop.function <- function(f.maj,
   
   pokaz('Read the skeleton alignment..', file=file.log.loop, echo=echo.loop)
   x.sk = readRDS(file.aln.pre)
+  x = cleanOverlaps(x)
   
   x.dir = setDir(x.sk, base.len = base.len)
   checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
