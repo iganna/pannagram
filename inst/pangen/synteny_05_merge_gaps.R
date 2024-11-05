@@ -343,7 +343,7 @@ loop.function <- function(f.maj,
     x.gap = unique(x.gap)
   }
 
-  save(list = ls(), file = "tmp_workspace1.RData")
+  # save(list = ls(), file = "tmp_workspace1.RData")
 
   if(!is.null(x.gap)) {
     
@@ -383,19 +383,18 @@ loop.function <- function(f.maj,
       
       if(x.gap$dir[irow] == 0){
         tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
-                      (x.tmp$V4 <= x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5))  
+                      (x.tmp$V4 <= x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5) & (x.tmp$dir == 0))  
       } else {
         tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
-                      (x.tmp$V5 <= x.gap$V5[irow]) & (x.gap$V4[irow] <= x.tmp$V4))
+                      (x.tmp$V5 <= x.gap$V5[irow]) & (x.gap$V4[irow] <= x.tmp$V4) & (x.tmp$dir != 0))  
       }
       
       if(length(tmp) == 1){
         id.corresp = rbind(id.corresp, c(irow, tmp))
         next
       } else if(length(tmp) > 1){
-      
-        save(list = ls(), file = "tmp_workspace2.RData")
-        stop('Something is wrong with coordinates 2')
+        # save(list = ls(), file = "tmp_workspace2.RData")
+        pokaz('Something is wrong with coordinates 2')
         id.corresp = rbind(id.corresp, cbind(irow, tmp))
       } 
     }
