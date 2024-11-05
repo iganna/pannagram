@@ -111,6 +111,7 @@ cleanOverlaps <- function(x.df, rm.threshold = 0.5) {
   previous_rows <- nrow(x.df)
   
   repeat {
+    # pokaz(nrow(x.df))
     x.df <- cleanOverlapsPre(x.df, rm.threshold = rm.threshold)
     current_rows <- nrow(x.df)
     
