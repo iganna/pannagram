@@ -198,7 +198,6 @@ loop.function <- function(f.maj,
                          '_qchr_', query.chr, '_bchr_', base.chr, '_out.txt', collapse = '')
   
   pokaz('gap file', file.gaps.out, file=file.log.loop, echo=echo.loop)
-  
 
   if(file.exists(file.gaps.out)){
     pokaz('Read blast of good gaps..', file=file.log.loop, echo=echo.loop)
@@ -244,8 +243,8 @@ loop.function <- function(f.maj,
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
+    pokaz('before1')
     if(check.genomes){
-      pokaz('before1')
       checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
                            query.fas = query.fas.chr,
                            base.fas.fw = base.fas.fw,
@@ -258,8 +257,8 @@ loop.function <- function(f.maj,
     x.gap = glueZero(x.gap)
     x.gap$idx = 1:nrow(x.gap)
     
+    pokaz('before11')
     if(check.genomes){
-      pokaz('before11')
       checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
                            query.fas = query.fas.chr,
                            base.fas.fw = base.fas.fw,
@@ -311,8 +310,8 @@ loop.function <- function(f.maj,
       # Clean overlaps from both (base and query) sides
       x.res = cleanOverlaps(x.res)
       
+      pokaz('before13')
       if(check.genomes){
-        pokaz('before13')
         checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
                              query.fas = query.fas.chr,
                              base.fas.fw = base.fas.fw,
@@ -334,9 +333,9 @@ loop.function <- function(f.maj,
   }
   
   
+  pokaz('before2')
   if(nrow(x.res) > 0){
     if(check.genomes){
-      pokaz('before2')
       checkCorrespToGenome(setDir(x.res, base.len = base.len), 
                            query.fas = query.fas.chr,
                            base.fas.fw = base.fas.fw,
@@ -464,8 +463,8 @@ loop.function <- function(f.maj,
     x.bw = glueZero(x.bw)
     x.bw = cleanOverlaps(x.bw)
     
+    pokaz('before3')
     if(check.genomes){
-      pokaz('before3')
       checkCorrespToGenome(setDir(x.bw, base.len = base.len),
                            query.fas = query.fas.chr,
                            base.fas.fw = base.fas.fw,
