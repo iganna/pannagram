@@ -72,9 +72,9 @@ if (length(readLines(file.combinations)) == 0) {
   files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
   
   # Filter files that start with one of the values in accessions
-  files.maj <- files.blast[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+  files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
   
-  pokaz('All blast files', length(files.blast), file=file.log.main, echo=echo.main)
+  pokaz('All blast files', length(files.maj), file=file.log.main, echo=echo.main)
 } else {
   combinations = read.table(file.combinations)
   files.maj = c()
@@ -147,7 +147,9 @@ loop.function <- function(f.maj,
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
   x = readRDS(paste0(path.aln, f.maj))
+  pokaz('Clean before')
   x = cleanOverlaps(x)
+  pokaz('Clean after')
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
@@ -175,7 +177,6 @@ loop.function <- function(f.maj,
   pos.q.free = rep(0, query.len)  # free positions in query
   pos.b.free = rep(0, base.len)  # free positions in base
   for(irow in 1:nrow(x)){
-    if(sum(pos.b.free[x$V4[irow]:x$V5[irow]]) > 0) stop()
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
@@ -494,6 +495,7 @@ if(num.cores == 1){
     tmp <- c(tmp, batch.results)  # Store the batch results in the main list
     
     stopCluster(myCluster)  # Stop the cluster after completing the batch
+    gc()
   }
 }
 

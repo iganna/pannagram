@@ -152,8 +152,11 @@ for(acc in accessions){
 gff.main.pan$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.main.pan$V1))
 gff.main.own$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.main.own$V1))
 
+save(list = ls(), file = "tmp_workspace_all.RData")
+
 save(list = c("gff.main.pan", "gff.main.own"), file = "tmp_workspace_gff.RData")
 stop()
+
 
 # ***********************************************************************
 # Get length of pangenome coordinates
