@@ -402,8 +402,8 @@ loop.function <- function(f.maj,
     
   if(nrow(x.tmp) > 0){
     # Clean the overlap
-    x.tmp = cleanOverlaps(x.tmp)
     
+    x.tmp = cleanOverlaps(x.tmp)
    
     id.corresp = c()
     for(irow in 1:nrow(x.tmp)){
@@ -422,7 +422,7 @@ loop.function <- function(f.maj,
     
     # IDX
     if(nrow(x.tmp) == 1){
-      idx.bw = unique(id.corresp$init[id.corresp$new %in% x.tmp$idx])  # UNIQUE
+      idx.bw = unique(id.corresp$init[id.corresp$new == 1])  # UNIQUE
     } else {
       
       # ---- The same greedy as before ----
