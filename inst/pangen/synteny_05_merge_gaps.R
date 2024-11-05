@@ -100,7 +100,7 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 # ***********************************************************************
 # ---- MAIN program body ----
 
-check.genomes = T
+check.genomes = F
 
 loop.function <- function(f.maj,
                           echo.loop=T){
