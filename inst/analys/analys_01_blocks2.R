@@ -84,7 +84,7 @@ if(length(s.combinations) == 0){
 # aln.type = aln.type.ref
 # ref.suff = '_0'
 
-loop.function <- function(s.comb, echo = T){
+for(s.comb in s.combinations){
   
   i.chr = as.numeric(strsplit(s.comb, '_')[[1]][1])
   pokaz('Chromosome', i.chr)
@@ -95,8 +95,11 @@ loop.function <- function(s.comb, echo = T){
   groups = h5ls(file.comb.in)
   accessions = groups$name[groups$group == gr.accs.b]
   
-  idx.breaks = c()
-  for(acc in accessions){
+  myCluster <- makeCluster(num.cores, type = "PSOCK") 
+  registerDoParallel(myCluster) 
+  
+  list.blocks = foreach(acc = accessions, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+
     initial.vars <- ls()
     pokaz('Accession', acc)
     s.acc = paste0(gr.accs.e, acc)
@@ -126,42 +129,27 @@ loop.function <- function(s.comb, echo = T){
                         chr = i.chr,
                         dir = (1 - sign(v.b$v.beg)) / 2)
     
-    idx.breaks = rbind(idx.breaks,
-                       df.res)
+    
+    file.blocks = paste0(path.cons, aln.type, 'bl_', s.comb, ref.suff, '_', acc, '.rds')
+    saveRDS(df.res, file.blocks, compress = F)
     
     # Cleanup variables
     final.vars <- ls()
     new.vars <- setdiff(final.vars, initial.vars)
     rm(list = new.vars)
     gc()
+    
+    return(NULL)
   }
   
-  file.blocks = paste0(path.cons, aln.type, 'bl_', s.comb, ref.suff, '.rds')
-  saveRDS(idx.breaks, file.blocks, compress = F)
-  
-  rm(idx.breaks)
+  stopCluster(myCluster)
+  gc()
   
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
-
-if(num.cores == 1){
-  for(s.comb in s.combinations){
-    loop.function(s.comb)
-  }
-} else {
-  # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  list.blocks = foreach(s.comb = s.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
-    loop.function(s.comb)
-    return(tmp)
-  }
-  stopCluster(myCluster)
-}
 
 
 warnings()
