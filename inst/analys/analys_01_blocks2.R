@@ -136,7 +136,7 @@ loop.function <- function(s.comb, echo = T){
     gc()
   }
   
-  file.blocks = paste0(path.cons, aln.type, 'bl_', comb, ref.suff, '.rds')
+  file.blocks = paste0(path.cons, aln.type, 'bl_', s.comb, ref.suff, '.rds')
   saveRDS(idx.breaks, file.blocks, compress = F)
   
   rm(idx.breaks)
