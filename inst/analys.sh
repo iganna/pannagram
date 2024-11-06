@@ -62,6 +62,7 @@ aln_type='msa_'
 
 # Simple analysis
 run_blocks=false
+run_blocks2=false
 run_seq=false
 run_aln=false
 run_snp=false
@@ -83,6 +84,7 @@ while [ $# -gt 0 ]; do
         -path_chr)       path_chromosomes=$2;    shift 2;;
         
         -blocks)         run_blocks=true;        shift;;           # Get position of synteny blocks between accessions
+        -blocks2)        run_blocks2=true;        shift;;           # Get position of synteny blocks between accessions
         -seq)            run_seq=true;           shift;;           # Get consensus sequence
         -aln)            run_aln=true;           shift;;           # Produce fasta file with the pangenome alignment
         -snp)            run_snp=true;           shift;;           # Get VCF file with SNPs
@@ -101,7 +103,7 @@ while [ $# -gt 0 ]; do
 
         -aln_type)       aln_type=$2;            shift 2;;
         -path_cons)      path_consensus=$2;      shift 2;;
-        *)               print_usage;            exit 1;;
+        *)               print_usage; echo "Wrong parameter ${1}";            exit 1;;
     esac
 done
 
@@ -141,6 +143,15 @@ if [ "$run_blocks" = true ]; then
     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
         --path.cons ${path_consensus} \
         --cores ${cores}
+fi
+
+if [ "$run_blocks2" = true ]; then
+    pokaz_stage "Get blocks 2."
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks2.R \
+        --path.cons ${path_consensus} \
+        --cores ${cores} \
+        --ref  ${ref_pref} \
+        --aln.type ${aln_type} 
 fi
 
 if [ "$run_seq" = true ]; then
