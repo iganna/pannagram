@@ -203,7 +203,12 @@ loop.function <- function(f.maj,
   if(file.exists(file.gaps.out)){
     pokaz('Read blast of good gaps..', file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)
+    
+    save(list = ls(), file = "tmp_workspace_good.RData")
+    
     x.gap = unique(x.gap)
+    
+    
   } else {
     x.gap = NULL
   }
