@@ -106,7 +106,25 @@ glueZero <- function(x.all){
 #'
 #' @return A data frame cleaned of both big and small overlaps.
 #'
-cleanOverlaps <- function(x.df, rm.threshold = 0.5){
+
+cleanOverlaps <- function(x.df, rm.threshold = 0.5) {
+  previous_rows <- nrow(x.df)
+  
+  repeat {
+    # pokaz(nrow(x.df))
+    x.df <- cleanOverlapsPre(x.df, rm.threshold = rm.threshold)
+    current_rows <- nrow(x.df)
+    
+    if (current_rows == previous_rows) {
+      break
+    }
+    previous_rows <- current_rows
+  }
+  return(x.df)
+}
+
+
+cleanOverlapsPre <- function(x.df, rm.threshold = 0.5){
   
   # Remove short overlaps: twice, because from "both sides"
   for(i.tmp in 1:2){

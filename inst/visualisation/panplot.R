@@ -404,7 +404,7 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
   return(list(df.plot, gr.col))
 }
 
-#' ggSynteny - Visualization of synteny blocks along genomes
+#' Visualization of synteny blocks along genomes
 #'
 #' This function visualizes synteny blocks along the specified chromosome with optional centromere positions. 
 #' It generates a ggplot object showing synteny blocks between accessions, coloring blocks based on their 
@@ -422,11 +422,14 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
 #' ggSynteny(idx.break, i.chr = 1, accessions = c("Acc1", "Acc2"), i.order = c(1, 2))
 #'
 #' @export
-ggSynteny <- function(idx.break, i.chr, accessions, i.order=NULL, file.cen.pos=NULL, file.acc.len=NULL, 
+panplot <- function(idx.break, i.chr, accessions=NULL, i.order=NULL, file.cen.pos=NULL, file.acc.len=NULL, 
                       gap.len = 100000, wnd.size = 1000000){
   
+  if(is.null(accessions)){
+    accessions = unique(idx.break$acc)
+  }
   if(is.null(i.order)){
-    i.order = 1:length(unique(idx.break$acc))
+    i.order = 1:length(accessions)
   }
   # Change position with respect to centromeric position
   res = prepareBlocks(idx.break, file.cen.pos, file.acc.len)
@@ -493,4 +496,14 @@ ggSynteny <- function(idx.break, i.chr, accessions, i.order=NULL, file.cen.pos=N
   return(p)
   
 }
+
+#' Visualization of synteny blocks along genomes
+#' (the same as panplot)
+#' @export
+ggSynteny <- function(...) {
+  pokazAttention('Please exchange ggSynteny to panplot')
+  panplot(...)
+}
+
+
 

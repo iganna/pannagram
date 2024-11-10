@@ -248,10 +248,7 @@ loop.function <- function(f.blast,
   # saveRDS(x, file.aln.pre, compress = F)
   
   # ---- Remove short overlaps: twice, because from "both sides" ----
-  for(i.tmp in 1:2){
-    x = cleanBigOverlaps(x)
-    x = cutSmallOverlaps(x)
-  }
+  x = cleanBigOverlaps(x)
   
   # ---- Check uniquness of occupancy ----
   # pos.q.occup = rep(0, base.len)

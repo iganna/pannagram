@@ -78,7 +78,7 @@ orfplot <- function(df, optimal = F,
     }
     
     if(sum(unique(df[,s.color]) %in% c('+', '-')) == 2){
-      p.orf = p.orf +scale_colour_manual(values = c('-' = '#40679E', '+' = '#FF407D')) 
+      p.orf = p.orf + scale_colour_manual(values = c('-' = '#40679E', '+' = '#FF407D')) 
     }
     
   } else {

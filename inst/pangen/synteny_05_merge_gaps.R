@@ -3,6 +3,7 @@ suppressMessages({
   library(doParallel)
   library(optparse)
   library(crayon)
+  library(pryr)
 })
 
 
@@ -100,6 +101,7 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 # ***********************************************************************
 # ---- MAIN program body ----
 
+check.genomes = F
 
 loop.function <- function(f.maj,
                           echo.loop=T){
@@ -152,31 +154,36 @@ loop.function <- function(f.maj,
   
   # ---- Read genomes ----
 
-  # Read reference sequences
-  base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
-  pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  base.fas.fw = readFastaMy(paste0(path.chr, base.file))
-  base.fas.fw = seq2nt(base.fas.fw)
-  base.fas.bw = revCompl(base.fas.fw)
-  base.len = length(base.fas.bw)
-
-  # Read query sequences
-  query.file = paste0(acc, '_chr',query.chr, '.fasta')
-  pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
-
-  query.fas.chr = readFastaMy(paste0(path.chr, query.file))
-  query.fas.chr = seq2nt(query.fas.chr)
-  query.len = length(query.fas.chr)
-
+  if(check.genomes){
+    # Read reference sequences
+    base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
+    pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
+    base.fas.fw = readFastaMy(paste0(path.chr, base.file))
+    base.fas.fw = seq2nt(base.fas.fw)
+    base.fas.bw = revCompl(base.fas.fw)
+    base.len = length(base.fas.bw)
+    
+    # Read query sequences
+    query.file = paste0(acc, '_chr',query.chr, '.fasta')
+    pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
+    
+    query.fas.chr = readFastaMy(paste0(path.chr, query.file))
+    query.fas.chr = seq2nt(query.fas.chr)
+    query.len = length(query.fas.chr)
+  }
+  
   # ---- Read Major ----
   
   pokaz('Read the skeleton alignment..', file=file.log.loop, echo=echo.loop)
   x.sk = readRDS(file.aln.pre)
+  x.sk = cleanOverlaps(x.sk)
   
-  x.dir = setDir(x.sk, base.len = base.len)
-  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-                       base.fas.fw = base.fas.fw,
-                       base.fas.bw = base.fas.bw)
+  if(check.genomes){
+    x.dir = setDir(x.sk, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+  }
   
   pokaz('after skeleton')
   
@@ -192,12 +199,16 @@ loop.function <- function(f.maj,
                          '_qchr_', query.chr, '_bchr_', base.chr, '_out.txt', collapse = '')
   
   pokaz('gap file', file.gaps.out, file=file.log.loop, echo=echo.loop)
-  
 
   if(file.exists(file.gaps.out)){
     pokaz('Read blast of good gaps..', file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)
+    
+    save(list = ls(), file = "tmp_workspace_good.RData")
+    
     x.gap = unique(x.gap)
+    
+    
   } else {
     x.gap = NULL
   }
@@ -239,11 +250,13 @@ loop.function <- function(f.maj,
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
     
     pokaz('before1')
-    checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
-                         query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)
-    pokaz('after1')
+    if(check.genomes){
+      checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
+                           query.fas = query.fas.chr,
+                           base.fas.fw = base.fas.fw,
+                           base.fas.bw = base.fas.bw)
+      pokaz('after1')
+    }
     
     # save(list = ls(), file = "tmp_workspace.RData")
     
@@ -251,11 +264,13 @@ loop.function <- function(f.maj,
     x.gap$idx = 1:nrow(x.gap)
     
     pokaz('before11')
-    checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
-                         query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)
-    pokaz('after11')
+    if(check.genomes){
+      checkCorrespToGenome(setDir(x.gap, base.len = base.len), 
+                           query.fas = query.fas.chr,
+                           base.fas.fw = base.fas.fw,
+                           base.fas.bw = base.fas.bw)
+      pokaz('after11')
+    }
     
     if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
     if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
@@ -302,11 +317,13 @@ loop.function <- function(f.maj,
       x.res = cleanOverlaps(x.res)
       
       pokaz('before13')
-      checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
-                           query.fas = query.fas.chr,
-                           base.fas.fw = base.fas.fw,
-                           base.fas.bw = base.fas.bw)
-      pokaz('after13')
+      if(check.genomes){
+        checkCorrespToGenome(setDir(x.tmp, base.len = base.len), 
+                             query.fas = query.fas.chr,
+                             base.fas.fw = base.fas.fw,
+                             base.fas.bw = base.fas.bw)
+        pokaz('after13')
+      }
       
     } else {
       # Create empty
@@ -321,15 +338,19 @@ loop.function <- function(f.maj,
                                dimnames = list(NULL, colnames(x.sk))))
   }
   
+  
   pokaz('before2')
   if(nrow(x.res) > 0){
-    checkCorrespToGenome(setDir(x.res, base.len = base.len), 
-                         query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)  
+    if(check.genomes){
+      checkCorrespToGenome(setDir(x.res, base.len = base.len), 
+                           query.fas = query.fas.chr,
+                           base.fas.fw = base.fas.fw,
+                           base.fas.bw = base.fas.bw)  
+      pokaz('after2')
+    }
   }
   
-  pokaz('after2')
+  
   
   # ---- Read additional alignments ----
   
@@ -343,7 +364,7 @@ loop.function <- function(f.maj,
     x.gap = unique(x.gap)
   }
 
-  # save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace1.RData")
 
   if(!is.null(x.gap)) {
     
@@ -361,48 +382,15 @@ loop.function <- function(f.maj,
     x.tmp = glueZero(x.gap)
     x.tmp$idx = 1:nrow(x.tmp)
     # plotSynDot(x.tmp)
-
-    # Find the correspondence between x.gap and x.tmp
-    id.corresp = c()
-    for(irow in 1:nrow(x.gap)){
-      
-      if(x.gap$dir[irow] == 0){
-        tmp = which((x.tmp$V2 == x.gap$V2[irow]) & (x.gap$V3[irow] == x.tmp$V3) & 
-                      (x.tmp$V4 == x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5) & (x.tmp$dir == 0))  
-      } else {
-        tmp = which((x.tmp$V2 == x.gap$V2[irow]) & (x.gap$V3[irow] == x.tmp$V3) & 
-                      (x.tmp$V5 == x.gap$V5[irow]) & (x.gap$V4[irow] == x.tmp$V4)  & (x.tmp$dir != 0))
-      }
-      
-      if(length(tmp) == 1){
-        id.corresp = rbind(id.corresp, c(irow, tmp))
-        next
-      } else if(length(tmp) > 1){
-        stop('Something is wrong with coordinates 1')
-      } 
-      
-      if(x.gap$dir[irow] == 0){
-        tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
-                      (x.tmp$V4 <= x.gap$V4[irow]) & (x.gap$V5[irow] <= x.tmp$V5))  
-      } else {
-        tmp = which((x.tmp$V2 <= x.gap$V2[irow]) & (x.gap$V3[irow] <= x.tmp$V3) & 
-                      (x.tmp$V5 <= x.gap$V5[irow]) & (x.gap$V4[irow] <= x.tmp$V4))
-      }
-      
-      if(length(tmp) == 1){
-        id.corresp = rbind(id.corresp, c(irow, tmp))
-        next
-      } else if(length(tmp) > 1){
-      
-        pokaz('Something is wrong with coordinates 2')
-        id.corresp = rbind(id.corresp, cbind(irow, tmp))
-      } 
-    }
-    id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
     
-    # Remain only those, that have the intersection in numbers
-    num.q = sapply(x.tmp$V1, function(s) strsplit(s, '_')[[1]][8:9])
-    num.r = sapply(x.tmp$V10, function(s) strsplit(s, '_')[[1]][8:9])
+    # ---- Remain only those, that have the intersection in numbers ----
+    getConnectingBlocks <- function(s){
+      s = strsplit(s, '_connect_')[[1]][2] 
+      s = strsplit(s, '_')[[1]][1:2]
+      return(s)
+    }
+    num.q = sapply(x.tmp$V1, getConnectingBlocks)
+    num.r = sapply(x.tmp$V10, getConnectingBlocks)
     
     idx.remain = ((num.q[1,] == num.r[1,]) | 
               (num.q[1,] == num.r[2,]) | 
@@ -410,6 +398,9 @@ loop.function <- function(f.maj,
               (num.q[2,] == num.r[2,]))
     
     x.tmp = x.tmp[idx.remain,]
+    rownames(x.tmp) = NULL
+    
+    # plotSynDot(x.tmp)
   } else {
     x.tmp = data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
                             dimnames = list(NULL, colnames(x.sk))))
@@ -417,9 +408,27 @@ loop.function <- function(f.maj,
     
   if(nrow(x.tmp) > 0){
     # Clean the overlap
+    
     x.tmp = cleanOverlaps(x.tmp)
+   
+    id.corresp = c()
+    for(irow in 1:nrow(x.tmp)){
+      if(x.tmp$dir[irow] == 0){
+        tmp = which((x.tmp$V2[irow] <= x.gap$V3) & (x.gap$V2 <= x.tmp$V3[irow]) & 
+                      (x.tmp$V4[irow] <= x.gap$V5) & (x.gap$V4 <= x.tmp$V5[irow]) & (x.gap$dir == 0))  
+      } else {
+        tmp = which((x.tmp$V2[irow] <= x.gap$V3) & (x.gap$V2 <= x.tmp$V3[irow]) & 
+                      (x.tmp$V5[irow] <= x.gap$V4) & (x.gap$V5 <= x.tmp$V4[irow]) & (x.gap$dir != 0))  
+      }
+      if(length(tmp) == 0) stop('Wrong, no correspondence')
+      id.corresp = rbind(id.corresp, cbind(tmp, irow))
+    }
+    id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
+    
+    
+    # IDX
     if(nrow(x.tmp) == 1){
-      idx.bw = unique(id.corresp$init[id.corresp$new %in% x.tmp$idx])  # UNIQUE
+      idx.bw = unique(id.corresp$init[id.corresp$new == 1])  # UNIQUE
     } else {
       
       # ---- The same greedy as before ----
@@ -432,40 +441,42 @@ loop.function <- function(f.maj,
       overlap.cutoff = 0.2
       idx.remain = greedy_loop(df.gap, overlap.cutoff)
       
-      idx.bw = unique(id.corresp$init[id.corresp$new %in% df.gap$idx[idx.remain]])  # UNIQUE
+      idx.bw = unique(id.corresp$init[id.corresp$new %in% idx.remain])  # UNIQUE
     }
     
     # ---- Remaining ----
     
-    # Change positions back
-    x.gap[,2:3] = x.gap[,2:3] - pos.shift$q[x.gap$V1,]$shift
-    x.gap[,4:5] = x.gap[,4:5] - pos.shift$r[x.gap$V10,]$shift
-    
-    # Shift positions to the initial
-    x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
-    x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
-    
-    x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
-    x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
-    
-    x.gap$V2 = x.gap$V2 + x.gap$q.beg
-    x.gap$V3 = x.gap$V3 + x.gap$q.beg
-    x.gap$V4 = x.gap$V4 + x.gap$b.beg
-    x.gap$V5 = x.gap$V5 + x.gap$b.beg
-    x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
-    
     idx.bw = unique(idx.bw)   # UNIQUE
     x.bw = x.gap[idx.bw,]
+    
+    # Change positions back
+    x.bw[,2:3] = x.bw[,2:3] - pos.shift$q[x.bw$V1,]$shift
+    x.bw[,4:5] = x.bw[,4:5] - pos.shift$r[x.bw$V10,]$shift
+    
+    # Shift positions to the initial
+    x.bw$q.beg = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    x.bw$b.beg = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    
+    x.bw$q.end = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    x.bw$b.end = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    
+    x.bw$V2 = x.bw$V2 + x.bw$q.beg
+    x.bw$V3 = x.bw$V3 + x.bw$q.beg
+    x.bw$V4 = x.bw$V4 + x.bw$b.beg
+    x.bw$V5 = x.bw$V5 + x.bw$b.beg
+    x.bw$dir = (x.bw$V4 > x.bw$V5) * 1
+    
     x.bw = glueZero(x.bw)
     x.bw = cleanOverlaps(x.bw)
     
     pokaz('before3')
-    
-    checkCorrespToGenome(setDir(x.bw, base.len = base.len),
-                         query.fas = query.fas.chr,
-                         base.fas.fw = base.fas.fw,
-                         base.fas.bw = base.fas.bw)
-    pokaz('after3')
+    if(check.genomes){
+      checkCorrespToGenome(setDir(x.bw, base.len = base.len),
+                           query.fas = query.fas.chr,
+                           base.fas.fw = base.fas.fw,
+                           base.fas.bw = base.fas.bw)
+      pokaz('after3')
+    }
     
   } else {
     
@@ -496,20 +507,23 @@ loop.function <- function(f.maj,
   # }
   
   # ---- Check uniqueness ---- 
-  pos.q.occup = rep(0, max.chr.len)
+  
   x.sk1 = x.comb
   # x.sk1 = x.res
   # x.sk1 = x.bw
   
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
   
+  rownames(x.sk1) = NULL
+  pos.q.occup = rep(0, max.chr.len)
   for(irow in 1:nrow(x.sk1)){
     pp = x.sk1$V4[irow]:x.sk1$V5[irow]
     if(sum(pos.q.occup[pp]) > 0) {
       pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
       stop('non-unique') 
     }
-    pos.q.occup[pp] = pos.q.occup[pp] + 1
+    # pos.q.occup[pp] = pos.q.occup[pp] + 1
+    pos.q.occup[pp] = irow
   }
   sum(pos.q.occup > 1)
   sum(pos.q.occup)
@@ -519,10 +533,12 @@ loop.function <- function(f.maj,
   # save(list = ls(), file = "tmp_workspace.RData")
   # stop('Enough..')
   
-  x.dir = setDir(x.comb, base.len = base.len)
-  checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
-                       base.fas.fw = base.fas.fw,
-                       base.fas.bw = base.fas.bw)
+  if(check.genomes){
+    x.dir = setDir(x.comb, base.len = base.len)
+    checkCorrespToGenome(x.dir, query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+  }
   
   saveRDS(object = x.comb, file = file.aln.full)
   
@@ -555,8 +571,8 @@ if(num.cores == 1){
   # Loop through files.maj in batches
   tmp <- list()
   for (start in seq(1, length(files.maj), by = batch.size)) {
-    # Define the end of the current batch
-    end <- min(start + batch.size - 1, length(files.maj))
+    
+    end <- min(start + batch.size - 1, length(files.maj))  # Define the end of the current batch
     batch.files <- files.maj[start:end]
     
     # Create and register a new cluster for the current batch
@@ -567,12 +583,13 @@ if(num.cores == 1){
     batch.results <- foreach(f.maj = batch.files, .packages = c('crayon')) %dopar% {
       loop.function(f.maj, echo.loop = echo.loop)
     }
-    
-    # Append the current batch results to tmp
     tmp <- c(tmp, batch.results)
     
-    # Stop the cluster after completing the batch
-    stopCluster(myCluster)
+    stopCluster(myCluster)  # Stop the cluster after completing the batch
+    
+    pokaz('Memory', mem_used())
+    gc()
+    pokaz('Memory after gc', mem_used())
   }
 }
 

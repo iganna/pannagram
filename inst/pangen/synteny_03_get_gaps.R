@@ -72,9 +72,9 @@ if (length(readLines(file.combinations)) == 0) {
   files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
   
   # Filter files that start with one of the values in accessions
-  files.maj <- files.blast[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+  files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
   
-  pokaz('All blast files', length(files.blast), file=file.log.main, echo=echo.main)
+  pokaz('All blast files', length(files.maj), file=file.log.main, echo=echo.main)
 } else {
   combinations = read.table(file.combinations)
   files.maj = c()
@@ -101,6 +101,7 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 loop.function <- function(f.maj, 
                           echo.loop=T){
   
+  pokaz(f.maj)
   # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
@@ -146,6 +147,7 @@ loop.function <- function(f.maj,
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
   x = readRDS(paste0(path.aln, f.maj))
+  x = cleanOverlaps(x)
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
@@ -176,6 +178,9 @@ loop.function <- function(f.maj,
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   if((sum(pos.q.free > 1) != 0)) stop('Coverage query is wrong')
   if((sum(pos.b.free > 1) != 0)) stop('Coverage base is wrong')
   
@@ -465,16 +470,31 @@ if(num.cores == 1){
     loop.function(f.maj, echo.loop=echo.loop)
   }
 } else {
-  # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
+  batch.size <- 2 * num.cores  # Define the batch size
   
-  tmp = foreach(f.maj = files.maj, 
-                .packages=c('crayon'), 
-                .verbose = F)  %dopar% { 
-                  loop.function(f.maj, echo.loop=echo.loop)
-                }
-  stopCluster(myCluster)
+  # Initialize a temporary list to store results
+  tmp <- list()
+  
+  # Loop through files in batches
+  for (start in seq(1, length(files.maj), by = batch.size)) {
+    
+    end <- min(start + batch.size - 1, length(files.maj))  # Define the end of the current batch
+    batch.files <- files.maj[start:end]  # Subset files for the current batch
+    
+    # Create and register a new cluster for the current batch
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
+    # Run parallel loop for files in the current batch
+    batch.results <- foreach(f.maj = batch.files, .packages = c('crayon'), .verbose = FALSE) %dopar% {
+      loop.function(f.maj, echo.loop = echo.loop)
+    }
+    
+    tmp <- c(tmp, batch.results)  # Store the batch results in the main list
+    
+    stopCluster(myCluster)  # Stop the cluster after completing the batch
+    gc()
+  }
 }
 
 warnings()

@@ -634,7 +634,7 @@ else
     if [[ -n "$step_files" ]]; then
         # If the previous tep does not exist - error
         step_prev=$((step_start - 1))
-        if ! ls "${path_log}step${step_prev}"*done 1> /dev/null 2>&1; then
+        if [[ $step_prev -ne 0 ]] && ! ls "${path_log}step${step_prev}"*done 1> /dev/null 2>&1; then
             pokaz_error "Error: Step ${step_prev} was not done."
             exit 1
         fi

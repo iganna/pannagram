@@ -196,16 +196,15 @@ loop.function <- function(s.comb,
     h5write(1:base.len, file.comb, paste0(gr.accs.e, '', base.acc.ref))
   })
   
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  
+  H5close()
   
   final.vars <- ls()
   new.vars <- setdiff(final.vars, initial.vars)
   rm(list = new.vars)
   gc()
   
-  H5close()
-  gc()
-  
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
 
