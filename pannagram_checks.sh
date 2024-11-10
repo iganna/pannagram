@@ -28,15 +28,15 @@ fi
 # Remove old installation of pannagram
 Rscript -e "
 if (requireNamespace('$PACKAGE_NAME', quietly = TRUE)){
-    cat('\n\033[34mOld installation of $PACKAGE_NAME has been found in R environment.\nReinstalling...\n\033[0m\n')
-    remove.packages('$PACKAGE_NAME')
+    cat('[1/6] \033[34mOld installation of $PACKAGE_NAME has been found in R environment. Reinstalling...\n\033[0m')
+    suppressMessages(remove.packages('$PACKAGE_NAME'))
 } else {
-    cat('\n\033[34mPackage $PACKAGE_NAME has not been found in R environment.\nInstalling...\033[0m\n')
+    cat('[1/6] \033[34mPackage $PACKAGE_NAME has not been found in R environment. Installing...\n\033[0m')
 }
 "
 
 # Updating symlinks for R package exports
-echo -e "\n\033[34mForce symlinks update\033[0m\n"
+echo -e "[2/6] \033[34mForce R symlinks update\033[0m"
 rm -fr R/
 mkdir R
 
@@ -47,7 +47,14 @@ find inst -type f -name "*.R" -exec sh -c '
     fi
   done
 ' sh {} +
-echo -e "\n\033[34mSymlinks created\033[0m\n"
+echo -e "[3/6] \033[34mSymlinks created\033[0m"
 
 # Remove old manuals directory
 rm -rf man/
+
+
+# Scripts force linking to Conda env
+echo -e "[4/6] \033[34mForce scripts symlinks update\033[0m"
+ln -sf "$(realpath ./inst/analys.sh)" "$CONDA_PREFIX/bin/analys"
+ln -sf "$(realpath ./inst/pannagram.sh)" "$CONDA_PREFIX/bin/pannagram"
+ln -sf "$(realpath ./inst/simsearch.sh)" "$CONDA_PREFIX/bin/simsearch"
