@@ -13,20 +13,16 @@ else
 fi
 
 
-# Quick installation: no documentation
-echo -e "[5/6] \033[34mR package installation\033[0m"
+# Full installation: documentation + R package
+echo -e "[5/6] \033[34mR package + documentation installation\033[0m"
+
 Rscript -e "
-devtools::install(
-  quick=TRUE,
-  force = FALSE,
-  upgrade = 'never',
-  build_vignettes = FALSE,
-  dependencies=FALSE,
-  quiet=TRUE
-)
+suppressMessages(devtools::document(quiet=TRUE))
+suppressMessages(devtools::install(quiet=TRUE))
 "
 
 END_TIME=$(date +%s.%N)
 ELAPSED_TIME=$(awk "BEGIN {printf \"%.1f\", $END_TIME - $START_TIME}")
 
-echo -e "[6/6] \033[32mDeveloper mode: Package $PACKAGE_NAME check and (re)installation process completed in $ELAPSED_TIME seconds.\033[0m"
+# Format elapsed time in seconds
+echo -e "[6/6] \033[32mUser mode: Package $PACKAGE_NAME check and (re)installation process completed in $ELAPSED_TIME seconds.\033[0m"
