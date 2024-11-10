@@ -204,10 +204,7 @@ loop.function <- function(f.maj,
     pokaz('Read blast of good gaps..', file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)
     
-    save(list = ls(), file = "tmp_workspace_good.RData")
-    
-    x.gap = unique(x.gap)
-    
+    # save(list = ls(), file = "tmp_workspace_good.RData")
     
   } else {
     x.gap = NULL
@@ -231,6 +228,7 @@ loop.function <- function(f.maj,
     x.gap$pref1 = sapply(x.gap$V1, function(s) strsplit(s, '_query')[[1]][1])
     x.gap$pref2 = sapply(x.gap$V10, function(s) strsplit(s, '_base')[[1]][1])
     x.gap = x.gap[x.gap$pref1 == x.gap$pref2,]
+    x.gap = unique(x.gap)  # UNIQUE
     pokaz('nrow', nrow(x.gap), file=file.log.loop, echo=echo.loop)
     if(nrow(x.gap) == 0) x.gap = NULL
   }  # KOSTYL
@@ -540,7 +538,7 @@ loop.function <- function(f.maj,
                          base.fas.bw = base.fas.bw)
   }
   
-  saveRDS(object = x.comb, file = file.aln.full)
+  # saveRDS(object = x.comb, file = file.aln.full)
   
 
   # Done
