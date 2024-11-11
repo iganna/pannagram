@@ -139,7 +139,9 @@ loop.function <- function(f.maj,
   base.len = length(base.fas.bw)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
   
+  pokaz(memory.size())
   gc()
+  pokaz(memory.size())
   
   # Read query sequences
   query.file = paste0(acc, '_chr',query.chr, '.fasta')
@@ -150,7 +152,12 @@ loop.function <- function(f.maj,
   query.len = length(query.fas.chr)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
+  pokaz(memory.size())
   gc()
+  pokaz(memory.size())
+  
+  
+  Sys.sleep(600) 
   
   x = readRDS(paste0(path.aln, f.maj))
   x = cleanOverlaps(x)
