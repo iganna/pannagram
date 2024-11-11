@@ -434,12 +434,14 @@ gff.exons.own = gff.main.own[gff.main.own$V3 == 'exon',]
 
 # ***********************************************************************
 # ---- Assign exons to annotation groups and form gene genes ----
-
-gff.exons.pan$group = 0
+gff.new.pan = c()
+gff.new.own = c()
 
 for(i.chr in 1:5){
   for(s.s in s.strand){
     for(acc in accessions){
+      
+      pokaz(i.chr, s.s, acc)
       # Reading
       gff.exons = gff.exons.pan[(gff.exons.pan$chr == i.chr) & 
                                 (gff.exons.pan$acc == acc) &
@@ -468,6 +470,8 @@ for(i.chr in 1:5){
       # Genious counts of IDs
       gff.exons$exon.id <- ave(gff.exons$an.beg, gff.exons$an.beg, FUN = seq_along)
       
+      # ---- Form pan annotation ----
+      
       # Gff for exons - the same for both annotations
       gff.exons$V9 = paste('ID=',
                              'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
@@ -482,7 +486,7 @@ for(i.chr in 1:5){
       gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
       gff.mrna = data.frame(V1 = gff.exons$V1[1],
                             V2 = s.pannagram,
-                            V3 = 'gene',
+                            V3 = 'mRNA',
                             V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
                             V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
                             V6 = '.',
@@ -494,22 +498,50 @@ for(i.chr in 1:5){
                                        '.', acc,
                                        sep = ''))
       
+      gff.tmp = rbind(gff.mrna, gff.exons[,1:9])
+      gff.tmp = gff.tmp[order(gff.tmp$V4),]
       
-      gff.own = rbind(gff.mrna[,1:9], gff.exons[,1:9])
-      gff.own = gff.own[order(gff.own$V4),]
+      gff.new.pan = rbind(gff.new.pan, gff.tmp)
+    
+      # ---- Form the own genomes annotation
+     
       
-      gff.mrna$V3 = 'mrna'
-      gff.mrna$V9 = paste('ID=',
-                          'AT',i.chr,'Gr',which(s.strand == s.s),
-                          sprintf("%07.0f", gff.mrna.an.gr),
-                          '.', acc,
-                          ';Parent=' ,
-                          'AT',i.chr,'Gr',which(s.strand == s.s),
-                          sprintf("%07.0f", gff.mrna.an.gr),
-                          sep = '')
+      indices <- match(gff.exons$idx.init, gff.exons.own$idx.init)
+      gff.acc = gff.exons.own[indices,]
+      gff.acc$exon.id = gff.exons$exon.id
+      gff.acc$an.beg = gff.exons$an.beg
       
-      gff.pan = rbind(gff.mrna[,1:9], gff.exons[,1:9])
-      gff.pan = gff.pan[order(gff.pan$V4),]
+      gff.exons = gff.acc
+      
+      gff.exons$V9 = paste('ID=',
+                           'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                           '.', acc,
+                           '.exon', sprintf("%02.0f",  gff.exons$exon.id),
+                           ';Parent=' ,
+                           'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                           '.', acc,
+                           sep = '')
+      gff.exons$V2 = s.pannagram
+      
+      gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
+      gff.mrna = data.frame(V1 = gff.exons$V1[1],
+                            V2 = s.pannagram,
+                            V3 = 'mRNA',
+                            V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
+                            V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
+                            V6 = '.',
+                            V7 = s.s,
+                            V8 = '.',
+                            V9 = paste('ID=',
+                                       'AT',i.chr,'Gr',which(s.strand == s.s),
+                                       sprintf("%07.0f", gff.mrna.an.gr),
+                                       '.', acc,
+                                       sep = ''))
+      
+      gff.tmp = rbind(gff.mrna, gff.exons[,1:9])
+      gff.tmp = gff.tmp[order(gff.tmp$V4),]
+      
+      gff.new.own = rbind(gff.new.own, gff.tmp)
       
     }
     

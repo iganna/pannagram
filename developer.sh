@@ -18,10 +18,10 @@ echo -e "[5/6] \033[34mR package installation\033[0m"
 Rscript -e "
 devtools::install(
   quick=TRUE,
-  force = FALSE,
-  upgrade = 'never',
-  build_vignettes = FALSE,
-  dependencies=FALSE,
+  # force = FALSE,
+  # upgrade = 'never',
+  # build_vignettes = FALSE,
+  # dependencies=FALSE,
   quiet=TRUE
 )
 "
