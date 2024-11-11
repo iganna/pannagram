@@ -139,6 +139,8 @@ loop.function <- function(f.maj,
   base.len = length(base.fas.bw)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
   
+  gc()
+  
   # Read query sequences
   query.file = paste0(acc, '_chr',query.chr, '.fasta')
   pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
@@ -147,6 +149,8 @@ loop.function <- function(f.maj,
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
+  
+  gc()
   
   x = readRDS(paste0(path.aln, f.maj))
   x = cleanOverlaps(x)
@@ -464,15 +468,45 @@ loop.function <- function(f.maj,
 }
 
 # ***********************************************************************
-# ---- Loop  ----
 
+# ---- Check which files are already done ----
+files.maj.todo = c()
+for(f.maj in files.maj){
+  
+  # Remove extensions
+  pref.comb <- sub("\\_maj.rds$", "", f.maj)
+  
+  # Log files
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         pref.comb,
+                         '.log')
+  if(!file.exists(file.log.loop)){
+    invisible(file.create(file.log.loop))
+  }
+  
+  ## ---- Check log Done ----
+  if(checkDone(file.log.loop)){
+    next
+  }
+  files.maj.todo = c(files.maj.todo, f.maj)
+}
+files.maj = files.maj.todo
+
+if(length(files.maj) == 0){
+  pokaz('All files are done')
+  return()
+} 
+
+
+# ---- Loop  ----
 
 if(num.cores == 1){
   for(f.maj in files.maj){
     loop.function(f.maj, echo.loop=echo.loop)
   }
 } else {
-  batch.size <- 1 * num.cores  # Define the batch size
+  
+  batch.size <- 2 * num.cores  # Define the batch size
   
   # Initialize a temporary list to store results
   tmp <- list()
@@ -486,6 +520,8 @@ if(num.cores == 1){
     # Create and register a new cluster for the current batch
     myCluster <- makeCluster(num.cores, type = "PSOCK")
     registerDoParallel(myCluster)
+    
+    pokaz(batch.files)
     
     # Run parallel loop for files in the current batch
     batch.results <- foreach(f.maj = batch.files, .packages = c('crayon'), .verbose = FALSE) %dopar% {
