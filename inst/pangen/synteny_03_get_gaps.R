@@ -38,7 +38,6 @@ len.blast = 50
 
 gc()
 pokaz('check1')
-Sys.sleep(10) 
 
 # print(opt)
 
@@ -143,9 +142,9 @@ loop.function <- function(f.maj,
   base.len = length(base.fas.bw)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
   
-  gc()
+  pokaz(gc())
   pokaz('check')
-  Sys.sleep(10) 
+  
   
   # Read query sequences
   query.file = paste0(acc, '_chr',query.chr, '.fasta')
@@ -157,7 +156,7 @@ loop.function <- function(f.maj,
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
 
-  gc()
+  pokaz(gc())
   pokaz('check')
   Sys.sleep(600) 
   
