@@ -502,7 +502,7 @@ files.maj = files.maj.todo
 
 if(length(files.maj) == 0){
   pokaz('All files are done')
-  return()
+  quit(save = "no")
 } 
 
 
