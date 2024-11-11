@@ -36,6 +36,10 @@ opt = parse_args(opt_parser, args = args);
 max.len = 10^6
 len.blast = 50
 
+gc()
+pokaz('check1')
+Sys.sleep(10) 
+
 # print(opt)
 
 # ***********************************************************************
