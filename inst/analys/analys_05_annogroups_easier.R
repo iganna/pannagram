@@ -128,7 +128,7 @@ for(acc in accessions){
   
   if(file.exists(file.pan.gff)){
     gff.acc.pan = read.table(file.pan.gff, stringsAsFactors = F)
-    gff.acc.pan$acc = acc
+    # gff.acc.pan$acc = acc
   } else {
     pokaz('Conversion of accession', acc)
     gff.acc.pan = gff2gff(path.cons = path.msa,
@@ -149,14 +149,28 @@ for(acc in accessions){
   gff.main.own = rbind(gff.main.own, gff.acc)
 }
 
+colnames(gff.main.pan) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "acc", "idx.init")
+colnames(gff.main.own) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "acc", "idx.init")
+
+gff.main.pan$acc = as.character(gff.main.pan$acc)
+gff.main.own$acc = as.character(gff.main.own$acc)
+
 gff.main.pan$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.main.pan$V1))
-gff.main.own$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.main.own$V1))
 
-save(list = ls(), file = "tmp_workspace_all.RData")
+idx.chr = grep(s.chr, gff.main.own$V1)
+gff.main.own = gff.main.own[idx.chr,]
 
-save(list = c("gff.main.pan", "gff.main.own"), file = "tmp_workspace_gff.RData")
-stop()
+gff.main.own$chr = NA
+for(acc in accessions){
+  pokaz('Accession', acc)
+  pattern.acc = paste0(acc, s.chr)
+  
+  idx.acc = gff.main.own$acc == acc
+  gff.main.own$chr[idx.acc] = as.numeric(sub(pattern.acc, '', gff.main.own$V1[idx.acc]))
+}
+if(sum(is.na(gff.main.own$chr)) > 0) stop('Something is wrong with chromosomes')
 
+# save(list = ls(), file = "tmp_workspace_all.RData")
 
 # ***********************************************************************
 # Get length of pangenome coordinates
@@ -174,21 +188,23 @@ for(i.chr in 1:5){
   }
 }
 
-save(list = ls(), file = "tmp_workspace_easy.RData")
-stop()
+# save(list = ls(), file = "tmp_workspace_easy.RData")
+# stop()
 
 
 # ***********************************************************************
 # Groups
+gff.gene.pan = gff.main.pan[gff.main.pan$V3 == 'gene',]
+gff.gene.pan$group = 0
+gff.gene.pan$idx = 1:nrow(gff.gene.pan)
 
-gff.main.pan$idx = 1:nrow(gff.main.pan)
-gff.main.pan$group = 0
 
 gr.shift = 0
 for(i.chr in 1:5){
   for(s.s in s.strand){
-    idx.tmp = (gff.main.pan$V7 == s.s) & (gff.main.pan$chr == i.chr)
-    gff.tmp = gff.main.pan[idx.tmp,]
+    pokaz('Chr', i.chr, s.s)
+    idx.tmp = (gff.gene.pan$V7 == s.s) & (gff.gene.pan$chr == i.chr)
+    gff.tmp = gff.gene.pan[idx.tmp,]
     
     gff.tmp = gff.tmp[order(gff.tmp$V4),]
     
@@ -207,7 +223,7 @@ for(i.chr in 1:5){
     gff.tmp$group = gff.tmp$group + gr.shift
     gr.shift = max(gff.tmp$group)
     
-    gff.main.pan$group[gff.tmp$idx] = gff.tmp$group
+    gff.gene.pan$group[gff.tmp$idx] = gff.tmp$group
     
     if(min(gff.tmp$group) == 0) stop('Groups with 0 index')
     pokaz('Number of groups', length(unique(gff.tmp$group)))
@@ -223,17 +239,18 @@ for(i.chr in 1:5){
   }
 }
 
-if(sum(gff.main.pan$group == 0) > 0) stop('Zero-groups gound')
+if(sum(gff.gene.pan$group == 0) > 0) stop('Zero-groups gound')
 
-save(list = ls(), file = "tmp_workspace_anno2.RData")
+
+# save(list = ls(), file = "tmp_workspace_anno2.RData")
 
 
 # ***********************************************************************
 # ---- Confusing groups ----
 
 # Confusing groups
-gff.main.pan$group = paste0('gr_', gff.main.pan$group)
-gr.acc.cnt = tapply(gff.main.pan$acc, gff.main.pan$group, 
+gff.gene.pan$group = paste0('gr_', gff.gene.pan$group)
+gr.acc.cnt = tapply(gff.gene.pan$acc, gff.gene.pan$group, 
                     function(x){
                       x.tbl <- table(x)
                       n.dup <- sum(x.tbl > 1)
@@ -244,7 +261,7 @@ gr.confusing = names(gr.acc.cnt)[gr.acc.cnt != 0]
 
 an.blocks = c()
 for(s.gr in gr.confusing){
-  gff.gr = gff.main.pan[gff.main.pan$group == s.gr, , drop=F]
+  gff.gr = gff.gene.pan[gff.gene.pan$group == s.gr, , drop=F]
   colnames(gff.gr)[1:9] = c('V1', 'V2', 'type', 'beg', 'end', 'V6', 'strand', 'V8', 'info')
   
   pos.beg = min(gff.gr$beg)
@@ -375,16 +392,16 @@ an.blocks.init = an.blocks
 # ***********************************************************************
 # ---- Non-confusing groups ----
 
-idx.good = !(gff.main.pan$group %in% gr.confusing)
-pos.good.beg = tapply(gff.main.pan$V4[idx.good], gff.main.pan$group[idx.good], min)
-pos.good.end = tapply(gff.main.pan$V5[idx.good], gff.main.pan$group[idx.good], max)
-strand.good = tapply(gff.main.pan$V7[idx.good], gff.main.pan$group[idx.good], unique)
-chr.good = tapply(gff.main.pan$chr[idx.good], gff.main.pan$group[idx.good], unique)
+idx.good = !(gff.gene.pan$group %in% gr.confusing)
+pos.good.beg = tapply(gff.gene.pan$V4[idx.good], gff.gene.pan$group[idx.good], min)
+pos.good.end = tapply(gff.gene.pan$V5[idx.good], gff.gene.pan$group[idx.good], max)
+strand.good = tapply(gff.gene.pan$V7[idx.good], gff.gene.pan$group[idx.good], unique)
+chr.good = tapply(gff.gene.pan$chr[idx.good], gff.gene.pan$group[idx.good], unique)
 gr.good = group=names(pos.good.beg)
 
 an.blocks.good = data.frame(beg = pos.good.beg[gr.good], 
                             end = pos.good.end[gr.good],
-                            chr = strand.good[gr.good],
+                            chr = chr.good[gr.good],
                             group = gr.good,
                             strand = strand.good[gr.good])
 
@@ -396,6 +413,7 @@ an.blocks.all = rbind(an.blocks,
 
 for(ichr in 1:5){
   for(s.s in s.strand){
+    pokaz('Chr', i.chr, s.s)
     tmp = an.blocks.all[(an.blocks.all$chr == i.chr) &
                           (an.blocks.all$strand == s.s),]
     tot.len = sum(tmp$end - tmp$beg + 1)
@@ -409,23 +427,16 @@ for(ichr in 1:5){
 # ***********************************************************************
 # ---- Exons ----
 
-gff.exons.pan = c()
-for(acc in accessions){
-  pokaz('Accession', acc)
-  file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
-  
-  gff.acc.pan = read.table(file.raw.gff, stringsAsFactors = F)
-  gff.acc.pan$acc = acc
-  
-  gff.acc.pan$acc = acc
-  gff.exons.pan = rbind(gff.exons.pan, gff.acc.pan[gff.acc.pan$V3 == 'CDS',])
-}
-gff.exons.pan$chr = as.numeric(sub(paste0(s.pannagram, s.chr), '', gff.exons.pan$V1))
+gff.exons.pan = gff.main.pan[gff.main.pan$V3 == 'exon',]
+gff.exons.own = gff.main.own[gff.main.own$V3 == 'exon',]
 
 
 
 # ***********************************************************************
 # ---- Assign exons to annotation groups and form gene genes ----
+
+gff.exons.pan$group = 0
+
 for(i.chr in 1:5){
   for(s.s in s.strand){
     for(acc in accessions){

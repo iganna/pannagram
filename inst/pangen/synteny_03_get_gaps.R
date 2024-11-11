@@ -101,6 +101,8 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 loop.function <- function(f.maj, 
                           echo.loop=T){
   
+  initial.vars <- ls()
+  
   pokaz(f.maj)
   # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
@@ -152,14 +154,14 @@ loop.function <- function(f.maj,
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
     
-    rmSafe(x)
-    rmSafe(x.major)
-    rmSafe(base.fas.bw)
-    rmSafe(base.fas.fw)
-    rmSafe(query.fas.chr)
-    gc()
-    
+    # Done
     pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    
+    # Cleanup variables
+    final.vars <- ls()
+    new.vars <- setdiff(final.vars, initial.vars)
+    rm(list = new.vars)
+    gc()
     return(NULL)
   }
   
@@ -450,14 +452,14 @@ loop.function <- function(f.maj,
     }
   }
   
-  rmSafe(x)
-  rmSafe(x.major)
-  rmSafe(base.fas.bw)
-  rmSafe(base.fas.fw)
-  rmSafe(query.fas.chr)
-  gc()
-  
+  # Done
   pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  
+  # Cleanup variables
+  final.vars <- ls()
+  new.vars <- setdiff(final.vars, initial.vars)
+  rm(list = new.vars)
+  gc()
   return(NULL)
 }
 
@@ -470,7 +472,7 @@ if(num.cores == 1){
     loop.function(f.maj, echo.loop=echo.loop)
   }
 } else {
-  batch.size <- 2 * num.cores  # Define the batch size
+  batch.size <- 1 * num.cores  # Define the batch size
   
   # Initialize a temporary list to store results
   tmp <- list()
