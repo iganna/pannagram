@@ -85,6 +85,7 @@ pokaz('Names of genomes for the analysis:', accessions,
 # Available combinations
 
 files.aln <- list.files(path = path.aln, pattern = "_full.rds$")
+pokaz('Full files:', files.aln)
 files.aln <- files.aln[sapply(files.aln, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 files.aln = gsub("_full.rds", "", files.aln)
 

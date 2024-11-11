@@ -193,7 +193,7 @@ loop.function <- function(f.maj,
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
   
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
   
   if((sum(pos.q.free > 1) != 0)) stop('Coverage query is wrong')
   if((sum(pos.b.free > 1) != 0)) stop('Coverage base is wrong')
@@ -502,7 +502,7 @@ files.maj = files.maj.todo
 
 if(length(files.maj) == 0){
   pokaz('All files are done')
-  return()
+  quit(save = "no")
 } 
 
 

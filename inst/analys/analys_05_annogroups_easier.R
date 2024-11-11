@@ -549,5 +549,18 @@ for(i.chr in 1:5){
   }
 }
 
+write.table(gff.new.own, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_own.gff', 
+            row.names = F,
+            col.names = F,
+            sep = '\t',
+            quote = F)
+
+
+write.table(gff.new.pan, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_pan.gff', 
+            row.names = F,
+            col.names = F,
+            sep = '\t',
+            quote = F)
+
 
 
