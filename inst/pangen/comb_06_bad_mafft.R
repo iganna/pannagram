@@ -4,7 +4,8 @@ suppressMessages({
 library('foreach')
 library(doParallel)
 library("optparse")
-source(system.file("utils/utils.R", package = "pannagram"))
+  library(pannagram)
+# source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func_mafft_refine2.R", package = "pannagram"))
 source(system.file("pangen/synteny_func.R", package = "pannagram"))
 })
@@ -47,7 +48,7 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 # ---- Preparation ----
 
 files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", full.names = F)
-pokaz(files.out)
+pokaz('Number of MAFFT alignments', length(files.out))
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -55,7 +56,7 @@ pokaz(files.out)
 loop.function <- function(f.in, 
                           echo.loop=T){
   
-  pokaz(f.in)
+  # pokaz(f.in)
   
   seqs = readFasta(paste0(path.mafft.out, f.in))
   
@@ -64,16 +65,12 @@ loop.function <- function(f.in,
   mx = aln2mx(seqs)
   
   len.aln = ncol(mx)
-  
-  pokaz(1)
-  
+
   mx = toupper(mx)
   pos.profile = mx2profile(mx)
   seq.cons = mx2cons(mx)
   pos.variation = (colSums(pos.profile == 0) != 3) * 1
-  
-  pokaz(2)
-  
+
   save(list = ls(), file = "tmp_workspace_good.RData")
   # Define blocks, were the alignment non well
   blocks.all = c()
@@ -93,27 +90,23 @@ loop.function <- function(f.in,
     blocks.all = rbind(blocks.all, blocks)
   }
   
-  pokaz(3)
-  
   blocks.all = blocks.all[blocks.all$pi > sim.cutoff,, drop=F]
   
   if(nrow(blocks.all) > 0){
     
-    f.in.bad <- sub("_aligned.fasta$", "_aligned_bad.fasta", file)
+    f.in.bad <- sub("_aligned.fasta$", "_aligned_bad.fasta", f.in)
     
-    file.rename(f.in, f.in.bad)
+    pokaz(f.in, f.in.bad)
     
-    p = msaplot(mx)
+    file.rename(paste0(path.mafft.out,f.in),
+                paste0(path.mafft.out, f.in.bad))
     
-    pdf(paste0(path.mafft.out, f.in, '.pdf'), width = 5, height = 4)
-    print(p)     # Plot 1 --> in the first page of PDF
-    dev.off()
-    # 
     # p = msadiff(mx)
     # 
-    # pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '_diff.pdf'), width = 5, height = 4)
-    # print(p)     # Plot 1 --> in the first page of PDF
+    # png(paste0(path.mafft.out, "PNG", f.in, '.png'), width = 5, height = 4, units = "in", res = 300)
+    # print(p)   
     # dev.off()
+    
   }
   
   return()
@@ -134,7 +127,7 @@ if(num.cores == 1){
   registerDoParallel(myCluster) 
   
   tmp = foreach(f.in = files.out, 
-                .packages=c('crayon'), 
+                .packages=c('crayon', 'pannagram'), 
                 .verbose = F)  %dopar% { 
                   loop.function(f.in, echo.loop=echo.loop)
                 }
@@ -142,6 +135,10 @@ if(num.cores == 1){
 }
 
 warnings()
+
+
+files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", full.names = F)
+pokaz('Number of remained MAFFT alignments', length(files.out))
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 
