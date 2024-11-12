@@ -140,6 +140,10 @@ for(s.comb in pref.combinations){
   for(acc in accessions){
     pokaz(acc)
     
+    # if(acc == 'ml4'){
+    #   save(list = ls(), file = "tmp_workspace_ml4.RData")
+    #   stop()
+    # }
     x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
     b.acc = h5read(file.comb, paste0(gr.blocks, acc))
     
@@ -159,7 +163,7 @@ for(s.comb in pref.combinations){
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
   
-  # save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace1.RData")
   # stop('Enough..')
   
   
@@ -178,6 +182,7 @@ for(s.comb in pref.combinations){
   if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
   # To test: which(rowSums(sign(v.beg * v.end) < 0) > 0)
   
+  save(list = ls(), file = "tmp_workspace_good.RData")
   # Check direction
   if (any(sign(v.end - v.beg) < 0)) stop('Checkpoint5')
   

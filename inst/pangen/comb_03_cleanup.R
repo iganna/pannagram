@@ -108,15 +108,16 @@ loop.function <- function(s.comb,
   idx.breaks = c()
  
   for(acc in accessions){
+    
+    # if(acc == 'ml4'){
+    #   save(list = ls(), file = "tmp_workspace_ml4_b.RData")
+    #   stop()
+    # }
+    
     pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.in, s.acc)
     v = v[idx.trust]
-      
-    suppressMessages({
-      # h5delete(file.comb, s.acc)
-      h5write(v, file.comb.out, s.acc)
-    })
     
     v.init = v
     
@@ -144,6 +145,12 @@ loop.function <- function(s.comb,
         v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
       }
     }
+    
+    suppressMessages({
+      # h5delete(file.comb, s.acc)
+      h5write(v.init, file.comb.out, s.acc)
+    })
+    
     
     v.b = v.b[order(abs(v.b$v.beg)),]
     
