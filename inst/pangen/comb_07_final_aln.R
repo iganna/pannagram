@@ -93,8 +93,7 @@ for(s.comb in pref.combinations){
                              pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned\\.fasta$')),
                   list.files(path = path.mafft.out, 
                              pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$')))
-  mafft.res = data.frame(file = list.files(path = path.mafft.out, 
-                                           pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned.*\\.fasta$')))
+  mafft.res = data.frame(file = files.mafft)
   
   
   y = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]][1:6])
