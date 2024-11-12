@@ -563,4 +563,41 @@ write.table(gff.new.pan, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consen
             quote = F)
 
 
+for(acc in accessions){
+  x = read.table(paste0('/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/1001Gplus/01_data/04_annotation/02_pannagram/genes_v05/genes_v05_',acc,'.gff'))
+  y = gff.new.own[grep(acc, gff.new.own$V1),]
+  
+  y = y[y$V3 == 'mRNA',]
+  x = x[x$V3 == 'mRNA',]  
+  pokaz()
+}
+
+
+
+tmp = y[,4:5]
+pos.y = rep(0, 40000000)
+for(irow in 1:nrow(tmp)){
+  pos.y[tmp$V4[irow]:tmp$V5[irow]] = 1
+}
+
+
+tmp = x[,4:5]
+# pos.x = rep(0, 40000000)
+idx = c()
+for(irow in 1:nrow(tmp)){
+  # pos.x[tmp$V4[irow]:tmp$V5[irow]] = 1
+  
+  m = mean(pos.y[tmp$V4[irow]:tmp$V5[irow]])
+  if(m != 1){
+    idx = rbind(idx, c(irow, m))  
+    # stop()
+  }
+  
+}
+
+
+table(pos.x, pos.y)
+
+
+
 

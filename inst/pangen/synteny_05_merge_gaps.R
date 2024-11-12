@@ -538,7 +538,7 @@ loop.function <- function(f.maj,
                          base.fas.bw = base.fas.bw)
   }
   
-  # saveRDS(object = x.comb, file = file.aln.full)
+  saveRDS(object = x.comb, file = file.aln.full)
   
 
   # Done
