@@ -119,20 +119,34 @@ loop.function <- function(s.comb,
     })
     
     v.init = v
+    
     # Define blocks
-    v.idx = 1:length(v)
+    for(i in 1:2){
+      v = v.init
     
-    v.idx = v.idx[v != 0]
-    v = v[v != 0]
-    v.r = rank(abs(v))
-    v.r[v < 0] = v.r[v < 0] * (-1)
-    v.b = findRuns(v.r)
+      v.idx = 1:length(v)
+      
+      v.idx = v.idx[v != 0]
+      v = v[v != 0]
+      v.r = rank(abs(v))
+      v.r[v < 0] = v.r[v < 0] * (-1)
+      v.b = findRuns(v.r)
+      
+      v.b$v.beg = v[v.b$beg]
+      v.b$v.end = v[v.b$end]
+      
+      v.b$i.beg = v.idx[v.b$beg]
+      v.b$i.end = v.idx[v.b$end]
+      
+      v.b.remove = v.b[v.b$len <= 100,]
+      if(nrow(v.b.remove) == 0) break
+      for(irow in 1:nrow(v.b.remove)){
+        v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
+      }
+    }
     
-    v.b$v.beg = v[v.b$beg]
-    v.b$v.end = v[v.b$end]
+    v.b = v.b[order(abs(v.b$v.beg)),]
     
-    v.b$i.beg = v.idx[v.b$beg]
-    v.b$i.end = v.idx[v.b$end]
 
     blocks.acc = rep(0, max(abs(v)))
     for(irow in 1:nrow(v.b)){

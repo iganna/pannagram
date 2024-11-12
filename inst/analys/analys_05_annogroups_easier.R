@@ -5,9 +5,7 @@
 # ---- Libraries and dependencies ----
 library(crayon)
 library(rhdf5)
-source(system.file("utils/utils.R", package = "pannagram"))
-source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("analys/analys_func.R", package = "pannagram"))
+library(pannagram)
 
 # ***********************************************************************
 # ---- Setup ----
@@ -498,6 +496,8 @@ for(i.chr in 1:5){
                                        '.', acc,
                                        sep = ''))
       
+      max(gff.mrna$V5 - gff.mrna$V4 + 1)
+      
       gff.tmp = rbind(gff.mrna, gff.exons[,1:9])
       gff.tmp = gff.tmp[order(gff.tmp$V4),]
       
@@ -505,9 +505,10 @@ for(i.chr in 1:5){
     
       # ---- Form the own genomes annotation
      
-      
-      indices <- match(gff.exons$idx.init, gff.exons.own$idx.init)
-      gff.acc = gff.exons.own[indices,]
+      gff.exons.own.acc = gff.exons.own[gff.exons.own$acc == acc,]
+      indices <- match(gff.exons$idx.init, gff.exons.own.acc$idx.init)
+      if(length(indices) != nrow(gff.exons)) stop('Some initial indexes are not found')
+      gff.acc = gff.exons.own.acc[indices,]
       gff.acc$exon.id = gff.exons$exon.id
       gff.acc$an.beg = gff.exons$an.beg
       
@@ -536,7 +537,10 @@ for(i.chr in 1:5){
                                        'AT',i.chr,'Gr',which(s.strand == s.s),
                                        sprintf("%07.0f", gff.mrna.an.gr),
                                        '.', acc,
+                                       ';Parent=' ,
+                                       'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.mrna.an.gr),
                                        sep = ''))
+      
       
       gff.tmp = rbind(gff.mrna, gff.exons[,1:9])
       gff.tmp = gff.tmp[order(gff.tmp$V4),]
@@ -563,16 +567,29 @@ write.table(gff.new.pan, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consen
             quote = F)
 
 
+
+gff.new.own = read.table('/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_own.gff', 
+                         stringsAsFactors = F)
+gff.new.pan = read.table('/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_pan.gff', 
+                         stringsAsFactors = F)
+
+
 for(acc in accessions){
   x = read.table(paste0('/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/1001Gplus/01_data/04_annotation/02_pannagram/genes_v05/genes_v05_',acc,'.gff'))
-  y = gff.new.own[grep(acc, gff.new.own$V1),]
+  y = gff.new.own[grep(paste0(acc, '_Chr'), gff.new.own$V1),]
   
   y = y[y$V3 == 'mRNA',]
-  x = x[x$V3 == 'mRNA',]  
-  pokaz()
+  x = x[x$V3 == 'mRNA',]
+  pokaz(acc, nrow(x), nrow(y))
 }
 
+x.init = x
+y.init = y
 
+i.chr = 2
+y = y.init[y.init$V1 == paste0(acc, '_Chr', i.chr),]
+x = x.init[x.init$V1 == paste0(acc, '_Chr', i.chr),]
+pokaz(acc, nrow(x), nrow(y))
 
 tmp = y[,4:5]
 pos.y = rep(0, 40000000)
@@ -582,10 +599,10 @@ for(irow in 1:nrow(tmp)){
 
 
 tmp = x[,4:5]
-# pos.x = rep(0, 40000000)
+pos.x = rep(0, 40000000)
 idx = c()
 for(irow in 1:nrow(tmp)){
-  # pos.x[tmp$V4[irow]:tmp$V5[irow]] = 1
+  pos.x[tmp$V4[irow]:tmp$V5[irow]] = 1
   
   m = mean(pos.y[tmp$V4[irow]:tmp$V5[irow]])
   if(m != 1){
@@ -597,6 +614,50 @@ for(irow in 1:nrow(tmp)){
 
 
 table(pos.x, pos.y)
+
+
+pos.x.d = pos.x
+pos.x.d[pos.y > 0] = 0
+
+tmp = x[,4:5]
+idx = c()
+for(irow in 1:nrow(tmp)){
+  m = mean(pos.x.d[tmp$V4[irow]:tmp$V5[irow]])
+  if(m > 0){
+    idx = rbind(idx, c(irow, m))
+  }
+  
+}
+
+idx.d = 352
+
+x.d = x[idx.d,]
+
+path.msa = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/'
+aln.type = aln.type.msa
+file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
+v = h5read(file.msa, paste0(gr.accs.e, acc))
+v.p = v[(v != 0) & !(is.na(v))]
+
+sum(v %in% (x.d$V4:x.d$V5))
+
+p.prev = max(v.p[v.p <x.d$V4])
+p.next = min(v.p[v.p >x.d$V5])
+
+which(v == p.prev)
+which(v == p.next)
+
+
+v.diff = diff(v.p)
+idx = which(abs(v.diff)!= 1)
+
+v.p[unique(sort(c(idx, idx+1)))]
+
+
+
+
+
+
 
 
 
