@@ -89,6 +89,10 @@ for(s.comb in pref.combinations){
   
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
+  files.mafft = c(list.files(path = path.mafft.out, 
+                             pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned\\.fasta$')),
+                  list.files(path = path.mafft.out, 
+                             pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$')))
   mafft.res = data.frame(file = list.files(path = path.mafft.out, 
                                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned.*\\.fasta$')))
   
