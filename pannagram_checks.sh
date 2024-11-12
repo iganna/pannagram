@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # Exit if script is run directly (not sourced)
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && {
     echo -e "\n\033[31mDo not run '${0}' directly!\033[0m"
@@ -26,17 +24,15 @@ if [[ "$R_PATH" != "$CONDA_PREFIX/bin/R" ]]; then
 fi
 
 # Remove old installation of pannagram
+echo -e "[1] \033[34mRemoving any potential old installations of $PACKAGE_NAME\033[0m"
 Rscript -e "
-if (requireNamespace('$PACKAGE_NAME', quietly = TRUE)){
-    cat('[1/6] \033[34mOld installation of $PACKAGE_NAME has been found in R environment. Reinstalling...\n\033[0m')
-    suppressMessages(remove.packages('$PACKAGE_NAME'))
-} else {
-    cat('[1/6] \033[34mPackage $PACKAGE_NAME has not been found in R environment. Installing...\n\033[0m')
-}
+invisible(suppressMessages(tryCatch(remove.packages('$PACKAGE_NAME'), error = function(e) NULL)))
 "
+rm -fr $CONDA_PREFIX/lib/R/library/$PACKAGE_NAME # double take
+
 
 # Updating symlinks for R package exports
-echo -e "[2/6] \033[34mForce R symlinks update\033[0m"
+echo -e "[2] \033[34mUpdating symlinks for exported R functions\033[0m"
 rm -fr R/
 mkdir R
 
@@ -47,14 +43,13 @@ find inst -type f -name "*.R" -exec sh -c '
     fi
   done
 ' sh {} +
-echo -e "[3/6] \033[34mSymlinks created\033[0m"
 
 # Remove old manuals directory
 rm -rf man/
 
 
 # Scripts force linking to Conda env
-echo -e "[4/6] \033[34mForce scripts symlinks update\033[0m"
+echo -e "[3] \033[34mUpdating symlinks for Bash scripts\033[0m"
 ln -sf "$(realpath ./inst/analys.sh)" "$CONDA_PREFIX/bin/analys"
 ln -sf "$(realpath ./inst/pannagram.sh)" "$CONDA_PREFIX/bin/pannagram"
 ln -sf "$(realpath ./inst/simsearch.sh)" "$CONDA_PREFIX/bin/simsearch"
