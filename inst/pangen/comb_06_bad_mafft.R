@@ -57,6 +57,9 @@ loop.function <- function(f.in,
   # pokaz(f.in)
   
   seqs = readFasta(paste0(path.mafft.out, f.in))
+  
+  if(nchar(seqs[1]) < 1000) return()
+  
   mx = aln2mx(seqs)
   
   len.aln = ncol(mx)
@@ -88,19 +91,22 @@ loop.function <- function(f.in,
   blocks.all = blocks.all[blocks.all$pi > sim.cutoff,, drop=F]
   
   if(nrow(blocks.all) > 0){
-    pokaz('Bad alignment', f.in)
     
-    p = msaplot(mx[,9188:9249])
+    f.in.bad <- sub("_aligned.fasta$", "_aligned_bad.fasta", file)
     
-    pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '.pdf'), width = 5, height = 4)
-    print(p)     # Plot 1 --> in the first page of PDF
-    dev.off()
+    file.rename(f.in, f.in.bad)
     
-    p = msadiff(mx)
+    # p = msaplot(mx[,9188:9249])
     
-    pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '_diff.pdf'), width = 5, height = 4)
-    print(p)     # Plot 1 --> in the first page of PDF
-    dev.off()
+    # pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '.pdf'), width = 5, height = 4)
+    # print(p)     # Plot 1 --> in the first page of PDF
+    # dev.off()
+    # 
+    # p = msadiff(mx)
+    # 
+    # pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '_diff.pdf'), width = 5, height = 4)
+    # print(p)     # Plot 1 --> in the first page of PDF
+    # dev.off()
   }
   
   

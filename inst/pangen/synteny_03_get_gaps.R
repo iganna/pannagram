@@ -36,8 +36,6 @@ opt = parse_args(opt_parser, args = args);
 max.len = 10^6
 len.blast = 50
 
-gc()
-pokaz('check1')
 
 # print(opt)
 
@@ -142,10 +140,6 @@ loop.function <- function(f.maj,
   base.len = length(base.fas.bw)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
   
-  pokaz(gc())
-  pokaz('check')
-  
-  
   # Read query sequences
   query.file = paste0(acc, '_chr',query.chr, '.fasta')
   pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
@@ -154,11 +148,6 @@ loop.function <- function(f.maj,
   query.fas.chr = seq2nt(query.fas.chr)
   query.len = length(query.fas.chr)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
-  
-
-  pokaz(gc())
-  pokaz('check')
-  Sys.sleep(600) 
   
   x = readRDS(paste0(path.aln, f.maj))
   x = cleanOverlaps(x)

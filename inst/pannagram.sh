@@ -1544,6 +1544,39 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
+# Remove bad Mafft alignments
+
+with_level 1 pokaz_stage "Step ${step_num}. Remove bad mafft."
+
+# Logs
+step_name="step${step_num}_comb_06_bad_mafft"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_log_step}fake.log
+        rm -f ${path_log_step}*
+    fi
+
+    Rscript $INSTALLED_PATH/pangen/comb_06_bad_mafft.R \
+            --cores ${cores} \
+            --path.mafft.out ${path_mafft_out} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+# ----------------------------------------------
 # Additional MAFFT
 
 with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
