@@ -488,14 +488,13 @@ for(f.maj in files.maj){
   file.log.loop = paste0(path.log, 'loop_file_', 
                          pref.comb,
                          '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
+  if(file.exists(file.log.loop)){
+    ## ---- Check log Done ----
+    if(checkDone(file.log.loop)){
+      next
+    }  
   }
   
-  ## ---- Check log Done ----
-  if(checkDone(file.log.loop)){
-    next
-  }
   files.maj.todo = c(files.maj.todo, f.maj)
 }
 files.maj = files.maj.todo
