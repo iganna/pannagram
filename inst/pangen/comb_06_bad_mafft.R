@@ -47,6 +47,7 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 # ---- Preparation ----
 
 files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", full.names = F)
+pokaz(files.out)
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -54,7 +55,7 @@ files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", fu
 loop.function <- function(f.in, 
                           echo.loop=T){
   
-  # pokaz(f.in)
+  pokaz(f.in)
   
   seqs = readFasta(paste0(path.mafft.out, f.in))
   
@@ -64,11 +65,16 @@ loop.function <- function(f.in,
   
   len.aln = ncol(mx)
   
+  pokaz(1)
+  
   mx = toupper(mx)
   pos.profile = mx2profile(mx)
   seq.cons = mx2cons(mx)
   pos.variation = (colSums(pos.profile == 0) != 3) * 1
   
+  pokaz(2)
+  
+  save(list = ls(), file = "tmp_workspace_good.RData")
   # Define blocks, were the alignment non well
   blocks.all = c()
   for(i.seq in 1:nrow(mx)){
@@ -87,6 +93,7 @@ loop.function <- function(f.in,
     blocks.all = rbind(blocks.all, blocks)
   }
   
+  pokaz(3)
   
   blocks.all = blocks.all[blocks.all$pi > sim.cutoff,, drop=F]
   
@@ -96,11 +103,11 @@ loop.function <- function(f.in,
     
     file.rename(f.in, f.in.bad)
     
-    # p = msaplot(mx[,9188:9249])
+    p = msaplot(mx)
     
-    # pdf(paste0("/Volumes/Samsung_T5/vienn/test/mafft_figures/", f.in, '.pdf'), width = 5, height = 4)
-    # print(p)     # Plot 1 --> in the first page of PDF
-    # dev.off()
+    pdf(paste0(path.mafft.out, f.in, '.pdf'), width = 5, height = 4)
+    print(p)     # Plot 1 --> in the first page of PDF
+    dev.off()
     # 
     # p = msadiff(mx)
     # 
@@ -109,7 +116,7 @@ loop.function <- function(f.in,
     # dev.off()
   }
   
-  
+  return()
   
 }
 

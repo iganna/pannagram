@@ -585,9 +585,9 @@ if(num.cores == 1){
     
     stopCluster(myCluster)  # Stop the cluster after completing the batch
     
-    pokaz('Memory', mem_used())
-    gc()
-    pokaz('Memory after gc', mem_used())
+    # pokaz('Memory', mem_used())
+    # gc()
+    # pokaz('Memory after gc', mem_used())
   }
 }
 
