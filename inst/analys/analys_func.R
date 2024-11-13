@@ -64,6 +64,7 @@ extractChrByFormat <- function(gff, s.chr){
 #' # Example of function usage:
 #' gff_data <- gffgff("path/to/consensus/", "acc1", "acc2", gff1)
 #' 
+#' @export
 gff2gff <- function(path.cons, 
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 

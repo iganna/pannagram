@@ -100,8 +100,8 @@ pokaz('  ', accessions)
 # for(i.chr in 1:5){
 #   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
 #   print(h5ls(file.msa))
-#   # v = h5read(file.msa, paste0(gr.accs.e, acc.new))
-#   # h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
+#   v = h5read(file.msa, paste0(gr.accs.e, acc.new))
+#   h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
 # }
 
 # ***********************************************************************
@@ -566,11 +566,14 @@ write.table(gff.new.pan, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consen
             sep = '\t',
             quote = F)
 
+stop()
+
+# ---- Manual testing ----
 
 
-gff.new.own = read.table('/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_own.gff', 
+gff.new.own = read.table(paste0(path.msa, 'gff_own.gff'), 
                          stringsAsFactors = F)
-gff.new.pan = read.table('/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_pan.gff', 
+gff.new.pan = read.table(paste0(path.msa,'gff_pan.gff'), 
                          stringsAsFactors = F)
 
 
