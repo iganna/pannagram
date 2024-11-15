@@ -29,7 +29,7 @@ extractChrByFormat <- function(gff, s.chr){
   if(sum(is.na(gff$chr)) > 0) stop('Check the chromosome formats (#3)')
   
   if(nrow(gff) != n.gff){
-    pokazAttention('Not all the gff records were recognized, only',nrow(gff), 'out of', n.gff)
+    pokazAttention('Not all the gff records were recognized by chromosomal format, only',nrow(gff), 'out of', n.gff)
   }
   
   return(gff)
@@ -471,7 +471,6 @@ fillBegEnd <- function(len.acc, gff){
 #' the modified input data frame with includes and overlaps removed.
 #'
 #' @export
-
 findIncludeAndOverlap <- function(gff, echo = F){
   
   gff.cut = gff
@@ -678,6 +677,7 @@ filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, 
       if (file.exists(file.msa)) {
         # Read MSA data
         v <- h5read(file.msa, paste0(gr.accs.e, acc))
+        v[is.na(v)] = 0
         
         # Define blocks and get start and end for each block
         v.blocks <- defineBlocks(v)

@@ -113,6 +113,8 @@ pokaz('  ', accessions)
 # ***********************************************************************
 # ---- Convert of initial of GFF files ----
 
+save(list = ls(), file = paste0(path.msa,"tmp_workspace_all.RData"))
+
 gff.main.pan = c()
 gff.main.own = c()
 for(acc in accessions){
@@ -130,7 +132,7 @@ for(acc in accessions){
   } else {
     pokaz('Conversion of accession', acc)
     gff.acc.pan = gff2gff(path.cons = path.msa,
-                          gff.acc,
+                          gff1 = gff.acc,
                           acc1 = acc,
                           acc2 = s.pannagram,
                           n.chr = 5,
@@ -553,14 +555,14 @@ for(i.chr in 1:5){
   }
 }
 
-write.table(gff.new.own, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_own.gff', 
+write.table(gff.new.own, paste0(path.msa, 'gff_own.gff'), 
             row.names = F,
             col.names = F,
             sep = '\t',
             quote = F)
 
 
-write.table(gff.new.pan, '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/annotation_new/gff_pan.gff', 
+write.table(gff.new.pan, paste0(path.msa,'gff_pan.gff'),
             row.names = F,
             col.names = F,
             sep = '\t',

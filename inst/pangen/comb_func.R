@@ -249,6 +249,7 @@ solveLong <- function(breaks, breaks.init, len.large) {
 #' @param v A numeric vector to analyze.
 #' 
 findBreaks <- function(v) {
+  v[is.na(v)] = 0
   # Remove zeros and retain indices
   v.idx <- 1:length(v)
   i.rm = v != 0

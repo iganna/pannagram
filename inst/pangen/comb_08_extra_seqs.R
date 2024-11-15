@@ -107,7 +107,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = F
+echo = T
 for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
@@ -125,14 +125,12 @@ for(s.comb in pref.combinations){
     pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
+    v[is.na(v)] = 0
     breaks.acc = findBreaks(v)
     breaks.init = rbind(breaks.init, breaks.acc)
   }
   
-  # Fix the borders
-  breaks.init$idx.beg = breaks.init$idx.beg
-  breaks.init$idx.end = breaks.init$idx.end
-  
+  # Sort and IDs
   breaks.init = breaks.init[order(-breaks.init$idx.end),]
   breaks.init = breaks.init[order(breaks.init$idx.beg),]
   breaks.init$id = 1:nrow(breaks.init)
@@ -142,8 +140,21 @@ for(s.comb in pref.combinations){
   breaks <- mergeOverlaps(breaks.init)
   n.digits <- nchar(as.character(nrow(breaks)))
   format.digits <- paste0("%0", n.digits, "d")
+  breaks$gr = 1:nrow(breaks)
   
-  # Get the consensus sequences ans save then into files
+  # Assign initial breaks to groups
+  breaks.init$gr = 0
+  for (i.b in 1:nrow(breaks)) {
+    pos.b <- breaks$idx.beg[i.b]
+    pos.e <- breaks$idx.end[i.b]
+    breaks.init[(breaks.init$idx.beg >= pos.b) & (breaks.init$idx.end <= pos.e),]$gr = i.b
+  }
+  
+  if(sum(breaks.init$gr == 0) > 0) stop('Some groups were wrongly defined')
+
+  
+  # Get the consensus sequences and save then into files
+  breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_', sprintf(format.digits, i.b)))
   
   seqs.add = c()
   for(acc in accessions){
@@ -158,6 +169,7 @@ for(s.comb in pref.combinations){
     # Read the alignment
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
+    v[is.na(v)] = 0
     
     for(i.b in 1:nrow(breaks)){
       
@@ -171,11 +183,12 @@ for(s.comb in pref.combinations){
       if(length(idx.rc) > 0){
         s.b[idx.rc] = justCompl(s.b[idx.rc])
       }
+      
       s.b = nt2seq(s.b)
       s.b = setNames(s.b, 
-                     paste0('acc_', acc, '_br_', i.b))
+                     paste0('acc_', acc, '_', breaks$id.s[i.b]))
       
-      file.br.fasta = paste0(path.extra, 'break_', sprintf(format.digits, i.b), '.fasta')
+      file.br.fasta = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
       if(!file.exists(file.br.fasta)){
         writeFasta(s.b, file.br.fasta)  
       } else {
@@ -196,16 +209,60 @@ for(s.comb in pref.combinations){
         s.b[idx.rc] = justCompl(s.b[idx.rc])
       }
       s.b = nt2seq(s.b)
-      s.b.name = paste0('break_id_', breaks.init$id[i.b])
+      s.b.name = paste0('acc_', acc, '_', breaks$id.s[i.b], '|', pos.b, '|', pos.e)
       s.b = setNames(s.b, s.b.name)
       
       seqs.add = c(seqs.add, s.b)
+      
+      file.br.fasta = paste0(path.extra, breaks$id.s[breaks.init$gr[i.b]], '_add.fasta')
+      if(!file.exists(file.br.fasta)){
+        writeFasta(s.b, file.br.fasta)  
+      } else {
+        writeFasta(s.b, file.br.fasta, append=T)
+      }
+      
     }
-    
   }
   
-  if(length(seqs.add) != nrow(breaks.init)) stop('Not all of the sequences were created')
 
+  if(length(seqs.add) != nrow(breaks.init)) stop('Not all of the sequences were created')
+  
+  # ---- TMP ----
+
+  
+  
+  # ---- BLAST alignments ----
+  for (i.b in 1:nrow(breaks)) {
+    file.br.fasta = paste0(path.extra,  breaks$id.s[i.b], '_group.fasta')
+    aln = readFasta(file.br.fasta)
+    aln = aln2mx(aln)
+    s.cons = nt2seq(mx2cons(aln))
+    names(s.cons) = paste0('cons_', breaks$id.s[i.b])
+    
+    file.br.fasta = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
+    writeFasta(s.cons, file.br.fasta)  
+  }
+  
+  
+  for(i.b in 1:nrow(breaks)){
+    file.br.cons = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
+    file.br.add = paste0(path.extra, breaks$id.s[i.b], '_add.fasta')
+    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.txt')
+    
+    system(paste0('makeblastdb -in ', file.br.cons,' -dbtype nucl  > /dev/null'))
+    
+    # Run BLASTn alignment between the sequences in the temporary file
+    system(paste0('blastn -db ',file.br.cons,' -query ',file.br.add,
+                  ' -num_alignments 50 ',
+                  ' -out ',file.br.out,
+                  ' -outfmt "7 qseqid qstart qend sstart send pident length sseqid"'))
+    
+    # Read the BLAST output into a data frame
+    x = readBlast(file.br.out)
+  }
+  
+  
+  
   # ---- Additional alignments ----
   
   for (i.b in 1:nrow(breaks)) {

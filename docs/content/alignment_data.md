@@ -9,10 +9,10 @@ The test dataset comprises bacterial genomes (Escherichia coli) from [NCBI](http
 ```bash
 echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042189615.1" > "${PATH_DATA}ecoli.txt"
 echo -e "GCA_042016495.1\nGCA_042017145.1\nGCA_042017895.1" >> "${PATH_DATA}ecoli.txt"
-echo -e "GCA_041954705.1\nGCA_000013265.1" >> "${PATH_DATA}ecoli.txt"
-echo -e "GCA_000210475.1\nGCA_000010385.1\nGCA_000019645.1" >> "${PATH_DATA}ecoli.txt"
-echo -e "GCA_027925825.1\nGCA_027925745.1" >> "${PATH_DATA}ecoli.txt"
-echo -e "GCA_027925805.1\nGCA_027925765.1\nGCA_027925785.1\nGCA_027925565.1\nGCA_027925845.1" >> "${PATH_DATA}ecoli.txt"
+echo -e "GCA_041954705.1\nGCA_000013265.1\nGCA_000210475.1" >> "${PATH_DATA}ecoli.txt"
+echo -e "GCA_000010385.1\nGCA_000019645.1\nGCA_027925825.1" >> "${PATH_DATA}ecoli.txt"
+echo -e "GCA_027925745.1\nGCA_027925805.1\nGCA_027925765.1" >> "${PATH_DATA}ecoli.txt"
+echo -e "GCA_027925785.1\nGCA_027925565.1\nGCA_027925845.1" >> "${PATH_DATA}ecoli.txt"
 ```
 
 2. Specify the folder `PATH_TOOLS` where the download helper [poputils](https://github.com/iganna/poputils) will be cloned and clone the repo:

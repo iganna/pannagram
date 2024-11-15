@@ -85,7 +85,7 @@ loop.function <- function(s.comb,
   }
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  pokaz('Combination', s.comb)
+  
   file.comb.in = paste0(path.cons, aln.type.in, s.comb,'.h5')
   file.comb.out = paste0(path.cons, aln.type.out, s.comb,'.h5')
   
@@ -105,13 +105,16 @@ loop.function <- function(s.comb,
   groups = h5ls(file.comb.in)
   accessions = groups$name[groups$group == gr.accs.b]
   
-  
+  idx.breaks = c()
  
-  # ---- Cleanup ----
-  idx.nonzero = 0
   for(acc in accessions){
-    pokaz(acc)
     
+    # if(acc == 'ml4'){
+    #   save(list = ls(), file = "tmp_workspace_ml4_b.RData")
+    #   stop()
+    # }
+    
+    pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.in, s.acc)
     v = v[idx.trust]
@@ -144,67 +147,14 @@ loop.function <- function(s.comb,
     }
     
     suppressMessages({
+      # h5delete(file.comb, s.acc)
       h5write(v.init, file.comb.out, s.acc)
     })
-  
-    idx.nonzero = idx.nonzero + (v.init > 0) * 1
-  }
-  
-  # ---- Remove zeros ----
-  pokaz('Remove zeros')
-  idx.nonzero = idx.nonzero > 0
-  
-  pokaz(length(idx.nonzero), sum(idx.nonzero))
-  
-  for(acc in accessions){
     
-    pokaz(acc)
-    s.acc = paste0(gr.accs.e, acc)
-    v = h5read(file.comb.out, s.acc)
-    v = v[idx.nonzero]
-    
-    # Rewrite  
-    pokaz('Rewrite')
-    suppressMessages({
-      h5delete(file.comb.out, s.acc)
-      h5write(v, file.comb.out, s.acc)
-    })
-  
-  }
-  
-  # ---- Breaks ----
-  pokaz('Find breaks')
-  idx.breaks = c()
-  for(acc in accessions){
-    
-    # if(acc == 'ml4'){
-    #   save(list = ls(), file = "tmp_workspace_ml4_b.RData")
-    #   stop()
-    # }
-    
-    pokaz(acc)
-    s.acc = paste0(gr.accs.e, acc)
-    v = h5read(file.comb.out, s.acc)
-    
-    # Define blocks
-    
-    v.idx = 1:length(v)
-    
-    v.idx = v.idx[v != 0]
-    v = v[v != 0]
-    v.r = rank(abs(v))
-    v.r[v < 0] = v.r[v < 0] * (-1)
-    v.b = findRuns(v.r)
-    
-    v.b$v.beg = v[v.b$beg]
-    v.b$v.end = v[v.b$end]
-    
-    v.b$i.beg = v.idx[v.b$beg]
-    v.b$i.end = v.idx[v.b$end]
     
     v.b = v.b[order(abs(v.b$v.beg)),]
     
-    
+
     blocks.acc = rep(0, max(abs(v)))
     for(irow in 1:nrow(v.b)){
       blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
@@ -232,6 +182,14 @@ loop.function <- function(s.comb,
     
   }
   
+  # Update index to trust
+  suppressMessages({
+    idx.trust = h5read(file.comb.in, v.idx.trust)
+    idx.trust = idx.trust[idx.trust != 0]
+    
+    # h5delete(file.comb, v.idx.trust)
+    h5write(idx.trust, file.comb.out, v.idx.trust)
+  })
   
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   saveRDS(idx.breaks, file.breaks)
