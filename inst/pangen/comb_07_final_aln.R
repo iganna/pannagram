@@ -206,6 +206,9 @@ for(s.comb in pref.combinations){
   n.shift[single.res$ref.pos$end] = single.res$extra # Singletons extra
   n.shift = cumsum(n.shift)
   
+  
+  save(list = ls(), file = paste0("tmp_workspace1.RData"))
+  
   fp.main = (1:base.len) + n.shift
   
   pokaz(2)
@@ -256,6 +259,8 @@ for(s.comb in pref.combinations){
   pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
   
   pos.delete.all = 0
+  
+  save(list = ls(), file = paste0("tmp_workspace2.RData"))
   for(i.pos in 1:3){
     pos.beg = pos.beg.all[[i.pos]]
     pos.end = pos.end.all[[i.pos]]

@@ -6,7 +6,9 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
-  library(muscle)  #BiocManager::install("muscle")
+  # library(muscle)  #BiocManager::install("muscle")
+  library(pannagram)
+  library(igraph)
   # library(Biostrings)
 })
 
@@ -153,10 +155,9 @@ for(s.comb in pref.combinations){
   if(sum(breaks.init$gr == 0) > 0) stop('Some groups were wrongly defined')
 
   
-  # Get the consensus sequences and save then into files
+  # ---- Get the consensus sequences and save then into files ----
   breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_', sprintf(format.digits, i.b)))
-  
-  seqs.add = c()
+  breaks.init$seq = ''
   for(acc in accessions){
     
     # Read the chromosome
@@ -212,7 +213,7 @@ for(s.comb in pref.combinations){
       s.b.name = paste0('acc_', acc, '_', breaks$id.s[i.b], '|', pos.b, '|', pos.e)
       s.b = setNames(s.b, s.b.name)
       
-      seqs.add = c(seqs.add, s.b)
+      breaks.init$seq[i.b] = s.b
       
       file.br.fasta = paste0(path.extra, breaks$id.s[breaks.init$gr[i.b]], '_add.fasta')
       if(!file.exists(file.br.fasta)){
@@ -223,49 +224,15 @@ for(s.comb in pref.combinations){
       
     }
   }
-  
 
-  if(length(seqs.add) != nrow(breaks.init)) stop('Not all of the sequences were created')
-  
-  # ---- TMP ----
-
-  
-  
-  # ---- BLAST alignments ----
-  for (i.b in 1:nrow(breaks)) {
-    file.br.fasta = paste0(path.extra,  breaks$id.s[i.b], '_group.fasta')
-    aln = readFasta(file.br.fasta)
-    aln = aln2mx(aln)
-    s.cons = nt2seq(mx2cons(aln))
-    names(s.cons) = paste0('cons_', breaks$id.s[i.b])
-    
-    file.br.fasta = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
-    writeFasta(s.cons, file.br.fasta)  
-  }
-  
-  
-  for(i.b in 1:nrow(breaks)){
-    file.br.cons = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
-    file.br.add = paste0(path.extra, breaks$id.s[i.b], '_add.fasta')
-    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.txt')
-    
-    system(paste0('makeblastdb -in ', file.br.cons,' -dbtype nucl  > /dev/null'))
-    
-    # Run BLASTn alignment between the sequences in the temporary file
-    system(paste0('blastn -db ',file.br.cons,' -query ',file.br.add,
-                  ' -num_alignments 50 ',
-                  ' -out ',file.br.out,
-                  ' -outfmt "7 qseqid qstart qend sstart send pident length sseqid"'))
-    
-    # Read the BLAST output into a data frame
-    x = readBlast(file.br.out)
-  }
-  
-  
-  
   # ---- Additional alignments ----
   
   for (i.b in 1:nrow(breaks)) {
+    
+    file.br.group = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
+    file.br.cons = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
+    file.br.add = paste0(path.extra, breaks$id.s[i.b], '_add.fasta')
+    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.txt')
 
     pos.b <- breaks$idx.beg[i.b]
     pos.e <- breaks$idx.end[i.b]
@@ -276,8 +243,8 @@ for(s.comb in pref.combinations){
     # Sort by length (starting from the largest)
     breaks.tmp <- breaks.tmp[order(breaks.tmp$len.comb),]
 
-    file.br.fasta = paste0(path.extra, 'break_', sprintf(format.digits, i.b), '.fasta')
-    aln = readFasta(file.br.fasta)
+    # Read the group alignment
+    aln = readFasta(file.br.group)
     aln = aln2mx(aln)
 
     mx.cons = mx2cons(aln, amount = 3)
@@ -289,13 +256,11 @@ for(s.comb in pref.combinations){
 
     for(irow in 1:nrow(breaks.tmp)){
       pokaz(irow)
-      s.b.name = paste0('break_id_', breaks.tmp$id[irow])
-      s.b = seqs.add[s.b.name]
+      s.b = breaks.tmp$seq[irow]
       
       pos.acc = (breaks.tmp$val.beg[irow]+1):(breaks.tmp$val.end[irow]-1)
       
       if(nchar(s.b) != length(pos.acc)) stop('Mismatch sequence and positions')
-      
       
       i.beg = which(idx.cons[1,] == breaks.tmp$idx.beg[irow])
       i.end = which(idx.cons[1,] == breaks.tmp$idx.end[irow])
@@ -586,4 +551,92 @@ if(F){
 
 
 
+## ---- Cluster break by the 80% overlap ----
+# edges = c()
+# threshold = 0.9
+# for(i in 1:nrow(breaks.tmp)){
+#   edges = rbind(edges, c(i,i))
+#   for(j in 1:nrow(breaks.tmp)){
+#     if(j <= i) next
+#     
+#     L <- max(breaks.tmp$idx.beg[i], breaks.tmp$idx.beg[j])
+#     R <- min(breaks.tmp$idx.end[i], breaks.tmp$idx.end[j])
+#     
+#     if (L <= R) {
+#       d = R - L + 1
+#       p.i = d / breaks.tmp$len.comb[i]
+#       p.j = d / breaks.tmp$len.comb[j]
+#       
+#       d.i = breaks.tmp$len.comb[i] - d
+#       d.j = breaks.tmp$len.comb[j] - d
+#       if((p.i >= threshold) && (p.j >= threshold) && (d.i <= 500) && (d.j <= 500)){
+#         edges = rbind(edges, c(i, j))  
+#       }
+#     } 
+#   }
+# }
+# 
+# g <- graph_from_data_frame(edges, directed = FALSE)
+# comp <- components(g)
 
+## ---- Align within every cluster ----
+
+# idx.comp = 1:ncol(mx.cons)
+# for(i.comp in 1:comp$no){
+#   
+#   breaks.comp = breaks.tmp[comp$membership == i.comp,]
+#   
+#   p.beg = min(breaks.comp$idx.beg)
+#   p.end = max(breaks.comp$idx.end)
+#   
+# }
+
+
+
+# 
+# # ---- BLAST alignments ----
+# for (i.b in 1:nrow(breaks)) {
+#   file.br.fasta = paste0(path.extra,  breaks$id.s[i.b], '_group.fasta')
+#   aln = readFasta(file.br.fasta)
+#   aln = aln2mx(aln)
+#   s.cons = nt2seq(mx2cons(aln))
+#   names(s.cons) = paste0('cons_', breaks$id.s[i.b])
+#   
+#   file.br.fasta = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
+#   writeFasta(s.cons, file.br.fasta)  
+# }
+# 
+# 
+# for(i.b in 1:nrow(breaks)){
+#   file.br.cons = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
+#   file.br.add = paste0(path.extra, breaks$id.s[i.b], '_add.fasta')
+#   file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.txt')
+#   
+#   system(paste0('makeblastdb -in ', file.br.cons,' -dbtype nucl  > /dev/null'))
+#   
+#   # Run BLASTn alignment between the sequences in the temporary file
+#   system(paste0('blastn -db ',file.br.cons,' -query ',file.br.add,
+#                 ' -num_alignments 50 ',
+#                 ' -out ',file.br.out,
+#                 ' -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid"'))
+#   
+#   # Read the BLAST output into a data frame
+#   x = readBlast(file.br.out)
+#   
+#   y = x[x$V1 == unique(x$V1)[7],]
+#   y$dir = (y$V4 > y$V5) * 1
+#   y = glueZero(y)
+#   plotSynDot(y)
+#   
+#   
+#   ## ---- Greedy loop ----
+#   
+#   df.gap = transform_positions(y)
+#   overlap.cutoff = 0.2
+#   idx.remain = greedy_loop(df.gap, overlap.cutoff)
+#   
+#   plotSynDot(df.gap)
+#   
+#   
+# }
+# 

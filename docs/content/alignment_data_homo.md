@@ -65,6 +65,22 @@ echo -e "GCA_028984075.1\nGCA_029001895.1" >> "${PATH_DATA}peris_mannii.txt"
 
 
 
+```bash
+echo -e "GCA_036321655.1\nGCA_036321645.1" >> "${PATH_DATA}oak.txt"
+
+echo -e "GCA_030490815.1\nGGCA_030979865.1" >> "${PATH_DATA}maple_sugar.txt"
+
+echo -e "GCA_030490815.1\nGGCA_030979865.1" >> "${PATH_DATA}maple_sugar.txt"
+echo -e "GCA_030490815.1\nGCA_035582765.1\nGCA_008009225.1\nGCA_954870605.1\nGCA_030979865.1\nGCA_025594385.1" >> "${PATH_DATA}maple.txt"
+
+
+echo -e "GCA_001540865.1\nGCA_902162155.2\nCA_029339315.1" >> "${PATH_DATA}ananas.txt"
+
+```
+
+apple
+
+
 
 
 2. Specify the folder `PATH_TOOLS` where the download helper [poputils](https://github.com/iganna/poputils) will be cloned and clone the repo:
