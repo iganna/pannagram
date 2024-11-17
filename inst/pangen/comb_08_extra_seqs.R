@@ -8,7 +8,6 @@ suppressMessages({
   library(rhdf5)
   # library(muscle)  #BiocManager::install("muscle")
   library(pannagram)
-  library(igraph)
   # library(Biostrings)
 })
 
@@ -54,13 +53,7 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 
 # ***********************************************************************
 
-#TODO: SHOULD BE PARAMATERS ?
-
-len.short = 50
-# len.large = 40000
-n.flank = 30
-
-aln.type.in = aln.type.pre
+aln.type.in = aln.type.msa
 aln.type.out = aln.type.extra
 
 # ***********************************************************************
@@ -84,13 +77,18 @@ if(num.cores > 1){
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn???t exist')
+if(!dir.exists(path.cons)) stop('Consensus folder does not exist')
 
 # Path to chromosomes
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 
 # Path to mafft input
 if (!is.null(opt$path.extra)) path.extra <- opt$path.extra
+
+path.work = paste0(path.extra, 'tmp/')
+if (!dir.exists(path.work)) {
+  dir.create(path.work)
+}
 
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -186,8 +184,8 @@ for(s.comb in pref.combinations){
       }
       
       s.b = nt2seq(s.b)
-      s.b = setNames(s.b, 
-                     paste0('acc_', acc, '_', breaks$id.s[i.b]))
+      s.b.name = paste0('acc_', acc, '_', breaks$id.s[i.b])
+      s.b = setNames(s.b, s.b.name)
       
       file.br.fasta = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
       if(!file.exists(file.br.fasta)){
@@ -196,6 +194,12 @@ for(s.comb in pref.combinations){
         writeFasta(s.b, file.br.fasta, append=T)
       }
       
+      # TODO
+      file.br.idx = paste0(path.extra, breaks$id.s[i.b], '_group.txt')
+      line <- paste(c(s.b.name, v.b), collapse = "\t")
+      writeLines(line, con = file.br.idx, sep = "\n", useBytes = TRUE, 
+                 append = file.exists(file.br.idx))
+
     }
     
     for(i.b in which(breaks.init$acc == acc)){
@@ -230,9 +234,8 @@ for(s.comb in pref.combinations){
   for (i.b in 1:nrow(breaks)) {
     
     file.br.group = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
-    file.br.cons = paste0(path.extra, breaks$id.s[i.b], '_cons.fasta')
+    file.br.idx = paste0(path.extra, breaks$id.s[i.b], '_group.txt')
     file.br.add = paste0(path.extra, breaks$id.s[i.b], '_add.fasta')
-    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.txt')
 
     pos.b <- breaks$idx.beg[i.b]
     pos.e <- breaks$idx.end[i.b]
@@ -241,8 +244,13 @@ for(s.comb in pref.combinations){
     breaks.tmp <- breaks.init[(breaks.init$idx.beg >= pos.b) & (breaks.init$idx.end <= pos.e),]
 
     # Sort by length (starting from the largest)
-    breaks.tmp <- breaks.tmp[order(breaks.tmp$len.comb),]
+    breaks.tmp <- breaks.tmp[order(-breaks.tmp$len.acc),]
+    
+    breaks.tmp[,-ncol(breaks.tmp)]
 
+    # Read the group idxs
+    indexes = read.table(file.br.idx, row.names = T, col.names = F)
+    
     # Read the group alignment
     aln = readFasta(file.br.group)
     aln = aln2mx(aln)
@@ -292,7 +300,6 @@ for(s.comb in pref.combinations){
         seq1 = mx2aln(mx.add)
         seq2 = s.b
         
-        path.work = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/extra_regions/tmp/'
         mafft.res = mafftAdd(seq1, seq2, path.work)
         
         result = mafft.res$result
@@ -510,20 +517,58 @@ for(s.comb in pref.combinations){
                          idx.new, 
                          idx.cons[, idx2])
         
-        if(ncol(idx.cons) != ncol(mx.cons)) stop('Chrckpoint lengths')
+        if(ncol(idx.cons) != ncol(mx.cons)) stop('Checkpoint lengths')
         
         
       }
     }
 
-
-    # msaplot(aln)
-    # msaplot(mx.cons)
-
-
+    if(nrow(idx.cons) != (nrow(breaks.tmp) + 1)) stop('Wrong number of rows')
+    
+    
+    # ---- Combine the alignments ---- 
+    ## ---- Initialisation ----
+    msa.new = matrix('-', nrow = length(accessions), ncol = ncol(mx.cons),
+                     dimnames = list(accessions, NULL))
+    
+    idx.new = matrix(0, nrow = length(accessions), ncol = ncol(mx.cons),
+                     dimnames = list(accessions, NULL))
+    
+    ## ---- Add previous from initial alignment ----
+    # Sequences
+    idx.aln = which(idx.cons[1,] != 0) 
+    idx.aln = idx.aln[-c(1, length(idx.aln))]
+    accs = sapply(rownames(aln), function(s) strsplit(s, '_break_')[[1]][1])
+    accs <- sub("^acc_", "", accs)
+    msa.new[accs,idx.aln] = aln
+    
+    
+    # Positions
+    
+    idx.aln = which(idx.cons[1,] != 0) 
+    idx.aln = idx.aln[-c(1, length(idx.aln))]
+    accs = sapply(rownames(aln), function(s) strsplit(s, '_break_')[[1]][1])
+    accs <- sub("^acc_", "", accs)
+    idx.new[accs,idx.aln] = indexes
+    
+    ## ---- Add previous from new alignment ----
+    for(irow in 1:nrow(breaks.tmp)){
+      if(sum(msa.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != '-') > 0) stop('wrong with accessions')
+      msa.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] = seq2nt(breaks.tmp$seq[irow])
+    }
+    
+    for(irow in 1:nrow(breaks.tmp)){
+      pos.irow = breaks.tmp$val.beg[irow]:breaks.tmp$val.end[irow]
+      if(sum(idx.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != '-') > 0) stop('wrong with accessions')
+      idx.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] = pos.irow
+    }
+    
+    msaplot(aln)
+    msaplot(msa.new)
+    
+    msadiff(msa.new)
 
   }
-
  
   H5close()
   gc()
