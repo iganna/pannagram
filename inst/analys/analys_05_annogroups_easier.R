@@ -113,7 +113,7 @@ for(i.chr in 1:5){
 # ***********************************************************************
 # ---- Convert of initial of GFF files ----
 
-save(list = ls(), file = paste0(path.msa,"tmp_workspace_all.RData"))
+save(list = ls(), file = paste0(path.msa,"tmp_workspace_begin.RData"))
 
 gff.main.pan = c()
 gff.main.own = c()
@@ -568,6 +568,8 @@ write.table(gff.new.pan, paste0(path.msa,'gff_pan.gff'),
             sep = '\t',
             quote = F)
 
+save(list = ls(), file = paste0(path.msa,"tmp_workspace_end.RData"))
+pokaz('Done!')
 stop()
 
 # ---- Manual testing ----
