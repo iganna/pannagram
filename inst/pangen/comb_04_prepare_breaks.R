@@ -152,14 +152,18 @@ for(s.comb in pref.combinations){
     
     idx.no.zero = (x.beg != 0) & (x.end != 0)
     idx.no.zero[idx.no.zero] = b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
-    
+
     x.beg[!idx.no.zero] = 0
     x.end[!idx.no.zero] = 0
-    
+
     v.beg = cbind(v.beg, x.beg)
     v.end = cbind(v.end, x.end)
     
   }
+  
+  save(list = ls(), file = paste0("tmp_workspace_good_",s.comb,".RData"))
+  next
+  
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
   
@@ -182,7 +186,7 @@ for(s.comb in pref.combinations){
   if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
   # To test: which(rowSums(sign(v.beg * v.end) < 0) > 0)
   
-  save(list = ls(), file = paste0("tmp_workspace_good_",s.comb,".RData"))
+
   # Check direction
   if (any(sign(v.end - v.beg) < 0)) stop('Checkpoint5')
   
