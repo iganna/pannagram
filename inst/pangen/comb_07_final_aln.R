@@ -207,7 +207,7 @@ for(s.comb in pref.combinations){
   n.shift = cumsum(n.shift)
   
   
-  save(list = ls(), file = paste0("tmp_workspace1.RData"))
+  save(list = ls(), file = paste0("tmp_workspace1_",s.comb,".RData"))
   
   fp.main = (1:base.len) + n.shift
   
