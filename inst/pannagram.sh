@@ -1650,48 +1650,18 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
 # ----------------------------------------------
-# # Alignment of extra long fragments
+# Alignment of extra long fragments
 
-# with_level 1 pokaz_stage "Step ${step_num}. Alignment of extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Alignment of extra long fragments."
 
-# # Paths
-# path_extra="${path_inter}extra_regions/"
-# if [ ! -d "$path_extra" ]; then
-#     mkdir -p "$path_extra"
-# fi
-
-# # Logs
-# step_name="step${step_num}_comb_08"
-# step_file="${path_log}${step_name}_done"
-# path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
-
-# # Start
-# if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
-
-#     Rscript $INSTALLED_PATH/pangen/comb_08_extra_seqs.R  \
-#             --cores ${cores} \
-#             --path.chromosomes "${path_chrom}" \
-#             --path.extra ${path_extra} \
-#             --path.cons ${path_cons} \
-#             --path.log ${path_log_step} \
-#             --log.level ${log_level}
-
-#     # Done
-#     touch "${step_file}"
-# fi
-
-# source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-
-
-# ----------------------------------------------
-# Get synteny blocks
-
-with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+# Paths
+path_extra="${path_inter}extra_regions/"
+if [ ! -d "$path_extra" ]; then
+    mkdir -p "$path_extra"
+fi
 
 # Logs
-step_name="step${step_num}_analys_01_blocks"
+step_name="step${step_num}_comb_08"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 make_dir ${path_log_step}
@@ -1699,21 +1669,51 @@ make_dir ${path_log_step}
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+    Rscript $INSTALLED_PATH/pangen/comb_08_extra_seqs.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra} \
             --path.cons ${path_cons} \
-            --cores ${cores}
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
+
     # Done
     touch "${step_file}"
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-with_level 1 pokaz_message "* The pipeline is done."
 
-# if [ $step_start -eq 0 ]; then
-#     rm -f "$FLAG_DIR"/.*
-#     echo "Script completed successfully"
+
+# # ----------------------------------------------
+# # Get synteny blocks
+
+# with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+
+# # Logs
+# step_name="step${step_num}_analys_01_blocks"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
+
+# # Start
+# if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+#     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+#             --path.cons ${path_cons} \
+#             --cores ${cores}
+#     # Done
+#     touch "${step_file}"
 # fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# with_level 1 pokaz_message "* The pipeline is done."
+
+# # if [ $step_start -eq 0 ]; then
+# #     rm -f "$FLAG_DIR"/.*
+# #     echo "Script completed successfully"
+# # fi
 
 
 

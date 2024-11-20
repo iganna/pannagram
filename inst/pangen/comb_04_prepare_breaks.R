@@ -182,7 +182,7 @@ for(s.comb in pref.combinations){
   if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
   # To test: which(rowSums(sign(v.beg * v.end) < 0) > 0)
   
-  save(list = ls(), file = "tmp_workspace_good.RData")
+  save(list = ls(), file = paste0("tmp_workspace_good_",s.comb,".RData"))
   # Check direction
   if (any(sign(v.end - v.beg) < 0)) stop('Checkpoint5')
   

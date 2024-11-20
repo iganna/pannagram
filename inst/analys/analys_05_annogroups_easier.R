@@ -596,7 +596,10 @@ y.init = y
 i.chr = 2
 y = y.init[y.init$V1 == paste0(acc, '_Chr', i.chr),]
 x = x.init[x.init$V1 == paste0(acc, '_Chr', i.chr),]
+x = x[x$V7 == '+',]
+y = y[y$V7 == '+',]
 pokaz(acc, nrow(x), nrow(y))
+
 
 tmp = y[,4:5]
 pos.y = rep(0, 40000000)
@@ -622,31 +625,42 @@ for(irow in 1:nrow(tmp)){
 
 table(pos.x, pos.y)
 
-
+# Find, where x is not covered
 pos.x.d = pos.x
 pos.x.d[pos.y > 0] = 0
 
 tmp = x[,4:5]
-idx = c()
+idx = c()  # IDXs of genes, whoch were not found in the second iteration
 for(irow in 1:nrow(tmp)){
   m = mean(pos.x.d[tmp$V4[irow]:tmp$V5[irow]])
   if(m > 0){
     idx = rbind(idx, c(irow, m))
   }
-  
 }
 
-idx.d = 352
+
+# Examples
+idx.d = 233
 
 x.d = x[idx.d,]
 
-path.msa = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus/'
-aln.type = aln.type.msa
+aln.type = 'msa_'
+gr.accs.e = "accs/"
 file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
 v = h5read(file.msa, paste0(gr.accs.e, acc))
 v.p = v[(v != 0) & !(is.na(v))]
 
-sum(v %in% (x.d$V4:x.d$V5))
+idx.g = which(v %in% (x.d$V4:x.d$V5))
+sum(length(idx.g))
+plot(idx.g)
+
+
+idx.g = which(v %in% (1081974:1086755))
+sum(length(idx.g))
+plot(idx.g)
+
+
+# --
 
 p.prev = max(v.p[v.p <x.d$V4])
 p.next = min(v.p[v.p >x.d$V5])
@@ -660,12 +674,40 @@ idx = which(abs(v.diff)!= 1)
 
 v.p[unique(sort(c(idx, idx+1)))]
 
+# --
+
+gff2gff(path.cons = path.msa,
+        gff1 = x.d,
+        acc1 = acc,
+        acc2 = s.pannagram,
+        n.chr = 5,
+        aln.type = aln.type,
+        s.chr = s.chr,
+        exact.match = T,
+        remain = T)
 
 
+gff2 <- data.frame(
+  V1 = "1741_Chr2",
+  V2 = "EVM",
+  V3 = "gene",
+  V4 = 1081974,
+  V5 = 1086755,
+  V6 = ".",
+  V7 = "+",
+  V8 = ".",
+  V9 = "ID=evm.TU.1741_Chr2.237;Name=EVM%20prediction%201741_Chr2.237;OG=OG0019376;AT=AT2G03530",
+  stringsAsFactors = FALSE
+)
 
 
-
-
-
-
+gff2gff(path.cons = path.msa,
+        gff1 = gff2,
+        acc1 = acc,
+        acc2 = s.pannagram,
+        n.chr = 5,
+        aln.type = aln.type,
+        s.chr = s.chr,
+        exact.match = T,
+        remain = T)
 
