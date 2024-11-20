@@ -151,7 +151,7 @@ for(s.comb in pref.combinations){
     x.end = fillNext(x.acc)[breaks$idx.end]
     
     idx.no.zero = (x.beg != 0) & (x.end != 0)
-    idx.no.zero[idx.no.zero] = b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
+    # idx.no.zero[idx.no.zero] = b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
 
     x.beg[!idx.no.zero] = 0
     x.end[!idx.no.zero] = 0
