@@ -117,11 +117,13 @@ for(s.comb in pref.combinations){
   breaks.init = breaks
   
   # ---- Merge coverages ----
+  pokaz('Merge coverages..')
   breaks <- mergeOverlaps(breaks)
   
   if(sum(breaks$cnt) != nrow(breaks.init)) stop('Checkpoint3')
   
   # ---- Solve long ----
+  pokaz('Solve long..')
   idx.rem.init = solveLong(breaks, breaks.init, len.large)
   if(length(idx.rem.init) > 0){
     breaks.extra = rbind(breaks.extra, breaks.init[idx.rem.init,])
@@ -131,6 +133,7 @@ for(s.comb in pref.combinations){
   
   if((sum(breaks$cnt) + nrow(breaks.extra)) != n.init) stop('Checkout length')
   
+  pokaz('Save extra breaks..')
   file.breaks.extra = paste0(path.cons, 'breaks_extra_', s.comb,'.rds')
   saveRDS(breaks.extra, file.breaks.extra)
   
