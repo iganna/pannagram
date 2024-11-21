@@ -99,8 +99,8 @@ acc.new = "22001_mod"
 acc.prev = "220011"
 for(i.chr in 1:5){
   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
-  pokaz(file.msa)
-  print(h5ls(file.msa))
+  checkFile(file.msa)
+  
   v = h5read(file.msa, paste0(gr.accs.e, acc.new))
   h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
 }
@@ -124,6 +124,8 @@ for(acc in accessions){
   pokaz('Accession', acc)
   file.pan.gff = paste0(path.res, acc,'_pangen_raw.gff')
   file.acc.gff = paste0(path.annot, acc,'.gff')
+  
+  checkFile(file.acc.gff)
   
   gff.acc = read.table(file.acc.gff, stringsAsFactors = F)
   gff.acc$acc = acc

@@ -1541,6 +1541,19 @@ checkDone <- function(file.log) {
 }
 
 
+#' Check if a file exists
+#' @param file.name File name
+#' @export
+checkFile <- function(file.name) {
+  if (!file.exists(file.name)) {
+    pokazAttention("File", file.name, "does not exist.")
+    stop("File does not exist.")
+  }
+  return(NULL)
+}
+
+
+
 #' Find the Longest Common Prefix of Strings
 #'
 #' @param info A character vector of strings
