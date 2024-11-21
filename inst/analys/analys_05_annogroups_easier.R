@@ -67,6 +67,7 @@ if(is.null(aln.type)){
   aln.type = aln.type.msa
 }
 
+pokaz('Alignment type', aln.type)
 
 # Create results directory if it does not exist
 if (!dir.exists(opt$path.res)) {
@@ -113,8 +114,6 @@ for(i.chr in 1:5){
 
 # ***********************************************************************
 # ---- Convert of initial of GFF files ----
-
-pokaz('1')
 
 save(list = ls(), file = paste0(path.msa,"tmp_workspace_begin.RData"))
 
@@ -416,7 +415,7 @@ an.blocks.all = rbind(an.blocks,
 # ***********************************************************************
 # Check that groups are not overlapped
 
-for(ichr in 1:5){
+for(i.chr in 1:5){
   for(s.s in s.strand){
     pokaz('Chr', i.chr, s.s)
     tmp = an.blocks.all[(an.blocks.all$chr == i.chr) &
@@ -660,10 +659,7 @@ sum(length(idx.g))
 plot(idx.g)
 
 
-idx.g = which(v %in% (1081974:1086755))
-sum(length(idx.g))
-plot(idx.g)
-
+v[idx.g]
 
 # --
 
