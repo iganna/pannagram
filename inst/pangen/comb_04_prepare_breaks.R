@@ -140,12 +140,13 @@ for(s.comb in pref.combinations){
   for(acc in accessions){
     pokaz(acc)
     
-    # if(acc == 'ml4'){
-    #   save(list = ls(), file = "tmp_workspace_ml4.RData")
-    #   stop()
-    # }
     x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
     b.acc = h5read(file.comb, paste0(gr.blocks, acc))
+    
+    if(acc == '6220_v1.1'){
+      save(list = ls(), file = "tmp_workspace_6220.RData")
+      stop()
+    }
     
     x.beg = fillPrev(x.acc)[breaks$idx.beg]
     x.end = fillNext(x.acc)[breaks$idx.end]
