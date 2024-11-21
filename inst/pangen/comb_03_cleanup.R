@@ -105,8 +105,6 @@ loop.function <- function(s.comb,
   groups = h5ls(file.comb.in)
   accessions = groups$name[groups$group == gr.accs.b]
   
-  
- 
   # ---- Cleanup ----
   idx.nonzero = 0
   for(acc in accessions){

@@ -21,4 +21,5 @@ aln.type.clean='clean_'
 aln.type.pre='pre_'
 aln.type.extra='extra_'
 aln.type.msa='msa_'
+aln.type.add='add_'
 
