@@ -106,6 +106,8 @@ for(s.comb in pref.combinations){
   file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
   load(file.ws)
   
+  if(length(idx.short) == 0) next
+  
   n.acc = length(accessions)
   
   path.tmp = '/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/intermediate/consensus/'
