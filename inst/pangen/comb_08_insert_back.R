@@ -53,6 +53,9 @@ files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.msa, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
+pattern <- "^[0-9]+_[0-9]+$"
+pref.combinations <- pref.combinations[grep(pattern, pref.combinations)]
+
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 
@@ -97,12 +100,14 @@ for(s.comb in pref.combinations){
     idx.add = which(!(v0 %in% v1) & (v0 != 0))
     v.add = data.frame(ref.val = v.ref0[idx.add], acc.val = v0[idx.add])
     
-    pokaz('extra positions:', nrow(v.add))
+    pokaz(acc, 'extra positions:', nrow(v.add))
     
     v.add = v.add[v.add$ref.val != 0,]
     v.add = v.add[v.add$ref.val %in% v.ref1, ]
     
-    pokaz('after filtration:', nrow(v.add))
+    pokaz(acc, 'after filtration:', nrow(v.add))
+    
+    if(nrow(v.add) == 0) next
     
     v.add$idx1 = match(v.add[,1], v.ref1)
     v.add$acc.val1 = v1[v.add[,3]]

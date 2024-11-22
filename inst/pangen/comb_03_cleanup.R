@@ -176,7 +176,7 @@ loop.function <- function(s.comb,
   for(acc in accessions){
     
     # if(acc == 'ml4'){
-    #   save(list = ls(), file = "tmp_workspace_ml4_b.RData")
+      save(list = ls(), file = "tmp_workspace_acc.RData")
     #   stop()
     # }
     

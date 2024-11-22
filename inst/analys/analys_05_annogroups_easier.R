@@ -648,15 +648,14 @@ idx.d = 233
 
 x.d = x[idx.d,]
 
-aln.type = 'msa_'
+aln.type = 'clean_'
 gr.accs.e = "accs/"
 file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
 v = h5read(file.msa, paste0(gr.accs.e, acc))
 v.p = v[(v != 0) & !(is.na(v))]
 
-idx.g = which(v %in% (x.d$V4:x.d$V5))
+idx.g = which(abs(v) %in% abs(x.d$V4:x.d$V5))
 sum(length(idx.g))
-plot(idx.g)
 
 
 v[idx.g]

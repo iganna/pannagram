@@ -26,7 +26,8 @@ option_list <- list(
   
   make_option("--cores",            type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option("--path.log",         type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
+  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen"),
+  make_option("--aln.type.in",      type = "character", default = NULL, help = "Name of the alignment file")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -41,7 +42,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- HDF5 ----
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
-aln.type.in = aln.type.clean
+aln.type.in <- ifelse(is.null(opt$aln.type.in), aln.type.clean, opt$aln.type.in)
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -56,18 +57,11 @@ if (is.null(opt$max.len.gap)) {
 # Number of cores for parallel processing
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
-
 pokaz('Number of cores', num.cores)
 if(num.cores > 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
 }
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-# if(num.cores > 1){
-#   myCluster <- makeCluster(num.cores, type = "PSOCK") 
-#   registerDoParallel(myCluster)
-# }
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons

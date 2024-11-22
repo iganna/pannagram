@@ -172,6 +172,8 @@ for(s.comb in pref.combinations){
     
     for(i.b in 1:nrow(breaks)){
       
+      if((breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1) next
+      
       pos.b <- breaks$idx.beg[i.b] + 1
       pos.e <- breaks$idx.end[i.b] - 1
       
@@ -197,12 +199,16 @@ for(s.comb in pref.combinations){
       # TODO
       file.br.idx = paste0(path.extra, breaks$id.s[i.b], '_group.txt')
       line <- paste(c(s.b.name, v.b), collapse = "\t")
-      writeLines(line, con = file.br.idx, sep = "\n", useBytes = TRUE, 
-                 append = file.exists(file.br.idx))
-
+      
+      con <- file(file.br.idx, open = if (file.exists(file.br.idx)) "a" else "w")  # Open the file in append mode if needed
+      writeLines(line, con = con, sep = "\n", useBytes = TRUE)                     # Write the lines
+      close(con)                                                                   # Close the connection
+      
     }
     
     for(i.b in which(breaks.init$acc == acc)){
+      
+      # if((breaks.init$idx.end[i.b] - breaks.init$idx.beg[i.b]) == 1) next
       
       pos.b <- breaks.init$val.beg[i.b] + 1
       pos.e <- breaks.init$val.end[i.b] - 1
@@ -228,14 +234,22 @@ for(s.comb in pref.combinations){
       
     }
   }
+  
+  if(sum(breaks.init$seq == '') > 0) stop('Some sequences are empty')
 
   # ---- Additional alignments ----
   
   for (i.b in 1:nrow(breaks)) {
     
+    if((breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1){
+      pokaz('Singleton', i.b)
+      next
+    }
+    
     file.br.group = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
     file.br.idx = paste0(path.extra, breaks$id.s[i.b], '_group.txt')
     file.br.add = paste0(path.extra, breaks$id.s[i.b], '_add.fasta')
+    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
 
     pos.b <- breaks$idx.beg[i.b]
     pos.e <- breaks$idx.end[i.b]
@@ -249,7 +263,8 @@ for(s.comb in pref.combinations){
     breaks.tmp[,-ncol(breaks.tmp)]
 
     # Read the group idxs
-    indexes = read.table(file.br.idx, row.names = T, col.names = F)
+    pokaz(file.br.idx)
+    indexes = read.table(file.br.idx, row.names = 1, header = F)
     
     # Read the group alignment
     aln = readFasta(file.br.group)
@@ -258,9 +273,16 @@ for(s.comb in pref.combinations){
     mx.cons = mx2cons(aln, amount = 3)
     mx.cons = cbind('-', mx.cons)
     mx.cons = cbind(mx.cons, '-')
+    mx.cons = mx.cons[rowSums(mx.cons != '-') > 0,,drop=F]
     idx.cons = matrix((pos.b):(pos.e), nrow = 1)
 
-    if(length(idx.cons) != ncol(mx.cons)) stop('Something is wrong with lengths')
+    
+    # save(list = ls(), file ="tmp_workspace_extra.RData")
+    
+    if(length(idx.cons) != ncol(mx.cons)){
+      save(list = ls(), file ="tmp_workspace_extra.RData")
+      stop('Something is wrong with lengths')
+    } 
 
     for(irow in 1:nrow(breaks.tmp)){
       pokaz(irow)
@@ -336,7 +358,7 @@ for(s.comb in pref.combinations){
           x$idx = 1:nrow(x)
           x$dir = (x$V4 > x$V5) * 1
           x = x[x$dir == 0,]   # TODO: keep inversions
-          x = glueZero(x)
+          # x = glueZero(x)
           
           # test df lines
           for (irow in setdiff(1:nrow(df), irow_support)) {
@@ -506,7 +528,7 @@ for(s.comb in pref.combinations){
         
         s.cons = mx2cons(mx.cons)
         mx.cons[1,] = s.cons
-        mx.cons = mx.cons[1:nrow(mx.cons)-1,]
+        mx.cons = mx.cons[1:nrow(mx.cons)-1,,drop=F]
         
         idx.new = matrix(0, nrow = (nrow(idx.cons) + 1), ncol = ncol(mx.cons.new))
         idx.new[1:nrow(idx.cons), non.zero.indices.1] = idx.cons[,i.add]
@@ -540,34 +562,29 @@ for(s.comb in pref.combinations){
     idx.aln = idx.aln[-c(1, length(idx.aln))]
     accs = sapply(rownames(aln), function(s) strsplit(s, '_break_')[[1]][1])
     accs <- sub("^acc_", "", accs)
-    msa.new[accs,idx.aln] = aln
-    
-    
+    msa.new[accs, idx.aln] = aln
     # Positions
+    idx.new[accs, idx.aln] <- as.matrix(indexes)
     
-    idx.aln = which(idx.cons[1,] != 0) 
-    idx.aln = idx.aln[-c(1, length(idx.aln))]
-    accs = sapply(rownames(aln), function(s) strsplit(s, '_break_')[[1]][1])
-    accs <- sub("^acc_", "", accs)
-    idx.new[accs,idx.aln] = indexes
     
     ## ---- Add previous from new alignment ----
     for(irow in 1:nrow(breaks.tmp)){
-      if(sum(msa.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != '-') > 0) stop('wrong with accessions')
+      if(sum(msa.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != '-') > 0) stop('wrong with accessions msa')
+      if(sum(idx.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != 0) > 0) stop('wrong with accessions idx')
+      
       msa.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] = seq2nt(breaks.tmp$seq[irow])
-    }
-    
-    for(irow in 1:nrow(breaks.tmp)){
       pos.irow = breaks.tmp$val.beg[irow]:breaks.tmp$val.end[irow]
-      if(sum(idx.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != '-') > 0) stop('wrong with accessions')
+      pos.irow = pos.irow[-1]
+      pos.irow = pos.irow[-length(pos.irow)]
       idx.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] = pos.irow
     }
     
-    msaplot(aln)
-    msaplot(msa.new)
-    
-    msadiff(msa.new)
+    # msaplot(aln)
+    # msaplot(msa.new)
+    # 
+    # msadiff(msa.new)
 
+    save(list = ls("idx.new", "msa.new"), file =file.br.out)
   }
  
   H5close()
