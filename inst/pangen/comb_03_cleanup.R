@@ -184,7 +184,7 @@ loop.function <- function(s.comb,
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
     
-    save(list = ls(), file = "tmp_workspace_acc.RData")
+    # save(list = ls(), file = "tmp_workspace_acc.RData")
     # Define blocks
     
     v.idx = 1:length(v)
@@ -216,6 +216,8 @@ loop.function <- function(s.comb,
     
     # Find breaks
     i.br.acc = which(abs(diff(v)) != 1)
+    if(length(i.br.acc) == 0) next
+    
     df = data.frame(val.beg = v[i.br.acc],
                     val.end = v[i.br.acc+1],
                     idx.beg = v.idx[i.br.acc],
