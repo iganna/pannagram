@@ -233,7 +233,8 @@ for(s.comb in pref.combinations){
     }
     idx.save = c(idx.large, idx.extra)
     
-    pokaz(idx.save)
+    if(length(idx.save) == 0) next
+    
     idx.save = idx.save[sapply(idx.save, function(x) !is.null(aln.seqs[[x]]))]
     
     if(length(intersect(idx.save, idx.short)) > 0) stop('Wrong idx are saved')
