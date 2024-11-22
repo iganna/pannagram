@@ -232,6 +232,8 @@ for(s.comb in pref.combinations){
       rm(genome)
     }
     idx.save = c(idx.large, idx.extra)
+    
+    pokaz(idx.save)
     idx.save = idx.save[sapply(idx.save, function(x) !is.null(aln.seqs[[x]]))]
     
     if(length(intersect(idx.save, idx.short)) > 0) stop('Wrong idx are saved')
