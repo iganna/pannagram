@@ -176,7 +176,7 @@ loop.function <- function(s.comb,
   for(acc in accessions){
     
     # if(acc == 'ml4'){
-      save(list = ls(), file = "tmp_workspace_acc.RData")
+      
     #   stop()
     # }
     
@@ -184,6 +184,7 @@ loop.function <- function(s.comb,
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
     
+    save(list = ls(), file = "tmp_workspace_acc.RData")
     # Define blocks
     
     v.idx = 1:length(v)
