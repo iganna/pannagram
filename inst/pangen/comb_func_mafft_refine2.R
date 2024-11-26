@@ -368,7 +368,7 @@ refineAlignment <- function(seqs.clean, path.work){
 #' @param n.diff Integer specifying the maximum allowable gap between alignment blocks to be merged. Default is 5.
 #' @return A data frame with the alignment positions and lengths of the identified blocks.
 #' @export
-mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
+mafftAdd <- function(seq1, seq2, path.work, n.diff = 5, n.flank = 0){
   
   # Create a tablefile (so-called subMSAtable) for mafft 
   id1 = 1:length(seq1)
@@ -381,7 +381,20 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
   
   # Merge sequences into the input file
   file.seqs.merge = paste0(path.work, 'seqs_tmp_merge.fasta')
-  writeFasta(c(seq1, seq2), file.seqs.merge)
+  
+  if(n.flank == 0){
+    writeFasta(c(seq1, seq2), file.seqs.merge)  
+  } else {
+    s.flank.beg = nt2seq(rep('A', n.flank))
+    s.flank.end = nt2seq(rep('T', n.flank))
+    
+    seqs = c(seq1, seq2)
+    for(i in 1:length(seqs)){
+      seqs[i] = paste0(s.flank.beg, seqs[i], s.flank.end)
+    }
+    
+    writeFasta(seqs, file.seqs.merge)  
+  }
   
   # File for storing MAFFT alignment output
   file.mafft = paste0(path.work, 'seqs_tmp_mafft.fasta')
@@ -392,6 +405,19 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
   # Read the aligned sequences
   xx = readFasta(file.mafft)
   mafft.mx = aln2mx(xx)
+  
+  if(n.flank != 0){
+    for(i in 1:nrow(mafft.mx)){
+      idx.pos = which(mafft.mx[i,] != '-')
+      
+      n.first <- idx.pos[1:n.flank]
+      n.last <- idx.pos[(length(idx.pos) - n.flank + 1):length(idx.pos)]
+      mafft.mx[i,n.first] = '-'
+      mafft.mx[i,n.last] = '-'
+      
+    }
+    mafft.mx = mafft.mx[,colSums(mafft.mx != '-') > 0, drop = F]
+  }
   
   # p = msaplot(mafft.mx)
   
@@ -450,6 +476,14 @@ blastTwoSeqs <- function(s1, s2, path.work){
   
   # Write the sequences to a temporary FASTA file
   file.seqs.tmp = paste0(path.work, 'seqs_tmp.fasta')
+  
+  if(is.null(names(s1))){
+    names(s1) = 'xx'
+  }
+  
+  if(is.null(names(s2))){
+    names(s2) = 'yy'
+  }
   writeFasta(c(s1, s2), file.seqs.tmp)
   
   # Define the output file for BLAST results
@@ -478,7 +512,10 @@ blastTwoSeqs <- function(s1, s2, path.work){
   
   # Swap columns for the second group to match the first group's format
   colnames(x2)[2:5] = c('V4', 'V5', 'V2', 'V3') 
-  colnames(x2)[c(1,8)] = colnames(x2)[c(8,1)]
+  colnames(x2)[c(1,10)] = colnames(x2)[c(10,1)]
+  
+  colnames(x2)[8:9] = c('V9', 'V8') 
+
   
   # Merge both groups into a single data frame
   x = rbind(x1, x2)

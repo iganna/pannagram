@@ -95,14 +95,14 @@ for(s.comb in pref.combinations){
                              pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$')))
   mafft.res = data.frame(file = files.mafft)
   
-  
-  y = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]][1:6])
-  z = t(matrix(unlist(y), ncol = length(y)))
-  mafft.res$comb = paste(z[,2], z[,3], sep = '_')
-  mafft.res$beg = as.numeric(z[,5])
-  mafft.res$end = as.numeric(z[,6])
-  mafft.res$id = as.numeric(z[,3])
-  
+  if(nrow(mafft.res) > 0){
+    y = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]][1:6])
+    z = t(matrix(unlist(y), ncol = length(y)))
+    mafft.res$comb = paste(z[,2], z[,3], sep = '_')
+    mafft.res$beg = as.numeric(z[,5])
+    mafft.res$end = as.numeric(z[,6])
+    mafft.res$id = as.numeric(z[,3])  
+  }
   
   # ---- Get long alignment positions ----
   pokaz('Read Long alignments..', file=file.log.main, echo=echo.main)
@@ -111,8 +111,7 @@ for(s.comb in pref.combinations){
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
   for(i in 1:nrow(mafft.res)){
-    
-
+  
     # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
     
     file.aln = paste0(path.mafft.out, mafft.res$file[i])
@@ -179,20 +178,30 @@ for(s.comb in pref.combinations){
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
-  msa.res = readRDS(paste0(path.cons, 'aln_short_', s.comb, '.rds'))
-  msa.res$len = unlist(lapply(msa.res$aln, nrow))
-  msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
-  # if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
-  msa.res$extra[msa.res$extra < 0] = 0
+  file.msa.res = paste0(path.cons, 'aln_short_', s.comb, '.rds')
+  if(file.exists(file.msa.res)){
+    msa.res = readRDS(file.msa.res)
+    msa.res$len = unlist(lapply(msa.res$aln, nrow))
+    msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
+    # if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
+    msa.res$extra[msa.res$extra < 0] = 0  
+  } else {
+    msa.res = data.frame()
+  }
 
   # ---- Singletons alignments ----
   pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
-  single.res = readRDS(paste0(path.cons, 'singletons_', s.comb, '.rds'))
-  single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
-  single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
-  # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
-  single.res$extra[single.res$extra < 0] = 0
-  
+  file.single.res = paste0(path.cons, 'singletons_', s.comb, '.rds')
+  if(file.exists(file.single.res)){
+    single.res = readRDS(file.single.res)
+    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
+    single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
+    # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
+    single.res$extra[single.res$extra < 0] = 0    
+  } else {
+    single.res = data.frame()
+  }
+
   pokaz(1)
   
   # ---- Analysis of positions ----
@@ -375,66 +384,10 @@ warnings()
 
 saveRDS(stat.comb, paste0(path.cons, 'stat_coverage.rds'))
 
+pokaz('Done.', file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----
 
-
-if(F){
-
-  # ********************
-  # Help testing
-  file.comb = 'res_1_1_ref_0.h5'
-  file.comb = 'msa_1_1_ref_0.h5'
-  
-  library(rhdf5)
-  gr.accs.b <- "/accs"
-  gr.accs.e <- "accs/"
-  groups = h5ls(file.comb)
-  accessions = groups$name[groups$group == gr.accs.b]
-  v = c()
-  for(acc in accessions){
-    v.acc = h5read(file.comb, paste0(gr.accs.e, acc))
-    v = cbind(v, v.acc)
-    print(acc)
-    print(sum((v.acc != 0) & (!is.na(v.acc))))
-  }
-  
-  # ********************
-  # Tom-Greg
-  library(rhdf5)
-source(system.file("pannagram/utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-  path.mafft.out = '../mafft_out/'
-  n.flank = 30
-  
-  gr.accs.e <- "accs/"
-  gr.accs.b <- "/accs"
-  gr.break.e = 'break/'
-  gr.break.b = '/break'
-  
-  max.block.elemnt = 3 * 10^ 6
-  
-  # ********************
-  # Rhizobia
-  library(rhdf5)
-source(system.file("utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  path.chromosomes = '../chromosomes/'
-  path.mafft.out = '../mafft_out/'
-  n.flank = 30
-  
-  gr.accs.e <- "accs/"
-  gr.accs.b <- "/accs"
-  gr.break.e = 'break/'
-  gr.break.b = '/break'
-  
-  max.block.elemnt = 3 * 10^ 6
-  
-  
-}
-
-pokaz('Done.', file=file.log.main, echo=echo.main)
 
 

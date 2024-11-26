@@ -1716,7 +1716,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
             --path.extra ${path_extra} \

@@ -56,9 +56,6 @@ b$ylen = abs(b$V5 - b$V4)
 b$xd = b$xlen / 2
 b$yd = b$ylen / 2
 
-
-
-
 combinations <- t(combn(1:n, 2))
 for (k in 1:nrow(combinations)) {
   j <- combinations[k, 1]
@@ -82,7 +79,6 @@ for (k in 1:nrow(combinations)) {
   dx[i, j] <- dx[j, i] <- dx.tmp
   dy[i, j] <- dy[j, i] <- dy.tmp
  
-   
 }
 
 d = dx + dy
@@ -139,9 +135,29 @@ plotSynDot(b)
 
 
 
+# Algorithm
+```{r}
+y = x
+y = y[y$V4 < y$V5,,drop=F]
+
+```
 
 
+```{r}
+b = y[,2:5]
 
+x.min = min(c(b$V2, b$V3))
+x.max = max(c(b$V2, b$V3))
+y.min = min(c(b$V4, b$V5))
+y.max = max(c(b$V4, b$V5))
+
+b = rbind(c(x.min, x.min, y.min, y.min),
+          b,
+          c(x.max, x.max, y.max, y.max))
+
+
+plotSynDot(b)
+```
 
 
 

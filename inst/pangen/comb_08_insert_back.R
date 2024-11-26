@@ -91,6 +91,12 @@ for(s.comb in pref.combinations){
   s.ref = paste0(gr.accs.e, ref)
   v.ref0 = h5read(file.cln, s.ref)
   v.ref1 = h5read(file.msa, s.ref)
+  
+  # Save the reference genome
+  suppressMessages({
+    h5write(v.ref1, file.add, s.ref)
+  })
+  
   for(acc in accessions[-1]){
     s.acc = paste0(gr.accs.e, acc)
     v0 =  h5read(file.cln, s.acc)
