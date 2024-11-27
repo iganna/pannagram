@@ -158,7 +158,7 @@ for(s.comb in pref.combinations){
   
   # ---- Get the consensus sequences and save then into files ----
   pokaz('Get consensus sequences')
-  breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_' sprintf(format.digits, i.b)))
+  breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_', sprintf(format.digits, i.b)))
   breaks.init$seq = ''
   for(acc in accessions){
     pokaz("Accession", acc)
