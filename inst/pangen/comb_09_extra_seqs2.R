@@ -157,10 +157,11 @@ for(s.comb in pref.combinations){
   
   
   # ---- Get the consensus sequences and save then into files ----
-  breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_', sprintf(format.digits, i.b)))
+  pokaz('Get consensus sequences')
+  breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_' sprintf(format.digits, i.b)))
   breaks.init$seq = ''
   for(acc in accessions){
-    
+    pokaz("Accession", acc)
     # Read the chromosome
     file.chromosome = paste(path.chromosomes, 
                             acc, 
@@ -249,6 +250,18 @@ for(s.comb in pref.combinations){
     pokaz(i.b, nrow(breaks), colnames(breaks), breaks$idx.end[i.b], breaks$idx.beg[i.b], (breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1)
     if((breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1){
       pokaz('Singleton', i.b)
+      
+      pos.b <- breaks$idx.beg[i.b]
+      pos.e <- breaks$idx.end[i.b]
+      breaks.tmp <- breaks.init[(breaks.init$idx.beg >= pos.b) & (breaks.init$idx.end <= pos.e),]
+      breaks.single = breaks[i.b]
+      
+      data.single = list(breaks = breaks.single, 
+                         breaks.init = breaks.tmp)
+      
+      file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out_single.RData')
+      save(list = ls("data.single"), file =file.br.out)
+      
       return()
     }
     
