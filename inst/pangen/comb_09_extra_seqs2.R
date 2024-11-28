@@ -243,7 +243,7 @@ for(s.comb in pref.combinations){
   if(sum(breaks.init$seq == '') > 0) stop('Some sequences are empty')
 
   file.breaks.info = paste0(path.extra, "breaks_info.RData")
-  pokaz(file.breaks.info)
+  # pokaz(file.breaks.info)
   save(list = c("breaks.init", "breaks"), file =file.breaks.info)
   
   
@@ -252,6 +252,7 @@ for(s.comb in pref.combinations){
   
   loop.function <- function(i.b, breaks, echo.loop=T){
   # for (i.b in 1:nrow(breaks)) {
+  for (i.b in 290:nrow(breaks)) {
     
     pokaz(i.b, nrow(breaks), colnames(breaks), breaks$idx.end[i.b], breaks$idx.beg[i.b], (breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1)
     if((breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1){
@@ -260,14 +261,15 @@ for(s.comb in pref.combinations){
       pos.b <- breaks$idx.beg[i.b]
       pos.e <- breaks$idx.end[i.b]
       breaks.tmp <- breaks.init[(breaks.init$idx.beg >= pos.b) & (breaks.init$idx.end <= pos.e),]
-      breaks.single = breaks[i.b]
+      breaks.single = breaks[i.b,]
       
       data.single = list(breaks = breaks.single, 
                          breaks.init = breaks.tmp)
       
       file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out_single.RData')
       save(list = c("data.single"), file =file.br.out)
-      return()
+      next
+      # return()
     }
     
     file.br.group = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
@@ -287,10 +289,10 @@ for(s.comb in pref.combinations){
     idx.reordered = c(idx.small, setdiff(1:nrow(breaks.tmp), idx.small))
     breaks.tmp = breaks.tmp[idx.reordered,]
     
-    head(breaks.tmp[,-ncol(breaks.tmp)])
+    head(breaks.tmp[,-ncol(breaks.tmp),drop=F])
     
     # Read the group idxs
-    pokaz(file.br.idx)
+    # pokaz(file.br.idx)
     indexes = read.table(file.br.idx, row.names = 1, header = F)
     
     # Read the group alignment
@@ -310,8 +312,10 @@ for(s.comb in pref.combinations){
       stop('Something is wrong with lengths')
     } 
     
+    rownames(breaks.tmp) = NULL
     for(irow in 1:nrow(breaks.tmp)){
-      pokaz(irow)
+    # for(irow in 54:nrow(breaks.tmp)){
+      pokaz('irow', irow, '/', nrow(breaks.tmp))
       s.b = breaks.tmp$seq[irow]
       
       pos.acc = (breaks.tmp$val.beg[irow]+1):(breaks.tmp$val.end[irow]-1)
@@ -328,17 +332,17 @@ for(s.comb in pref.combinations){
         
         mx.add = matrix('-', nrow = nrow(mx.cons), ncol = n.insert)
         mx.add[1,] = seq2nt(s.b)
-        mx.cons <- cbind(mx.cons[, idx1], 
+        mx.cons <- cbind(mx.cons[, idx1, drop=F], 
                          mx.add, 
-                         mx.cons[, idx2])
+                         mx.cons[, idx2, drop=F])
         
         idx.cons = rbind(idx.cons, 0)
         idx.add = matrix(0, nrow = nrow(idx.cons), ncol = n.insert)
         idx.add[nrow(idx.add), ] = pos.acc
         
-        idx.cons = cbind(idx.cons[, idx1], 
+        idx.cons = cbind(idx.cons[, idx1, drop=F], 
                          idx.add, 
-                         idx.cons[, idx2])
+                         idx.cons[, idx2, drop=F])
         
       } else {
         i.add = (i.beg+1):(i.end - 1)
@@ -348,13 +352,13 @@ for(s.comb in pref.combinations){
         seq1 = mx2aln(mx.add)
         seq2 = s.b
         
-        pokaz('point0')
+        # pokaz('point0')
         
         ## ---- Mafft ----
         pokaz('Length1', nchar(seq1), 'Length2', nchar(seq2), ". Mafft is running")
         
         if(max(c(nchar(seq1), nchar(seq2))) < 15000){
-          mafft.res = mafftAdd(seq1, seq2, path.work, n.flank = 20)  
+          mafft.res = mafftAdd(seq1[1], seq2, path.work, n.flank = 20)  
           
           pokaz("Mafft done")
           
@@ -362,34 +366,42 @@ for(s.comb in pref.combinations){
           df = mafft.res$df
           pos.mx = mafft.res$pos.mx
           
-          pokaz('point1')
+          # pokaz('point1')
           
           ## ---- Check all the synteny chunks ----
           mafft.mx = matrix('-', nrow = 2, ncol = ncol(pos.mx))
           mafft.mx[1, pos.mx[1,] != 0] = toupper(seq2nt(seq1[1]))
           mafft.mx[2, pos.mx[2,] != 0] = toupper(seq2nt(seq2))
           
-          msaplot(mafft.mx)
+          # msaplot(mafft.mx)
           
-          result$score = 0
-          for(irow in 1:nrow(result)){
-            idx = result$beg[irow]:result$end[irow]
-            result$score[irow] = sum(mafft.mx[1,idx] == mafft.mx[2,idx]) / result$len[irow]
+          
+          if(nrow(result) > 0){
+            result$score = 0
+            
+            for(jrow in 1:nrow(result)){
+              idx = result$beg[jrow]:result$end[jrow]
+              result$score[jrow] = sum(mafft.mx[1,idx] == mafft.mx[2,idx]) / result$len[jrow]
+            }
+            cnunk.min.len = 25
+            len.cutoff = min(c(nchar(seq1[1])/3, nchar(seq2)/3, cnunk.min.len))
+            sim.score = 0.9
+            irow_support = which((result$score >= sim.score) & (result$len >= len.cutoff)) 
+            
+            result = result[,-which(colnames(result) == 'score'), drop=F]
+            
+          } else {
+            irow_support = c()
           }
-          result = result[,-which(colnames(result) == 'score'), drop=F]
-          
-          cnunk.min.len = 25
-          len.cutoff = min(c(nchar(seq1[1])/3, nchar(seq2)/3, cnunk.min.len))
-          sim.score = 0.9
-          irow_support = which((result$score >= sim.score) & (result$len >= len.cutoff)) 
-          
-          pokaz('point2')
+   
+         
+          # pokaz('point2')
           
           # save(list = ls(), file ="tmp_workspace_point2.RData")
           
           ## ---- BLAST----
           x = data.frame(tmp=numeric())   
-          if(length(irow_support) != nrow(result)){
+          if((length(irow_support) != nrow(result)) & (nrow(result) > 0) & (length(irow_support) > 0)){
             x = blastTwoSeqs(seq1[1], seq2, path.work)  
           }
           # If some BLAST
@@ -429,9 +441,7 @@ for(s.comb in pref.combinations){
               }
               
             }
-          }
-          
-          
+          } 
           
           if(length(irow_support) != 0){
             irow_support = sort(irow_support)
@@ -547,7 +557,7 @@ for(s.comb in pref.combinations){
             n1 = nchar(seq1)[1]
             n2 = nchar(seq2)[1]
             
-            pokaz(n1, n2)
+            # pokaz(n1, n2)
             
             mx.comb = matrix(0, nrow = 2, ncol = n1 + n2)
             mx.comb[1, 1:n1] = 1:n1
@@ -579,7 +589,7 @@ for(s.comb in pref.combinations){
             d = computeDistBwBlastHits(b)
             
             # Convert the matrix into a graph
-            graph <- graph_from_adjacency_matrix(d$dist, mode = "directed", weighted = TRUE)
+            graph <- graph_from_adjacency_matrix(d$dist, mode = "directed", weighted = TRUE)  # from igraph package
             
             # Shortest path
             shortest_path <- shortest_paths(graph, from = 1, to = nrow(b), weights = E(graph)$weight)
@@ -703,7 +713,7 @@ for(s.comb in pref.combinations){
             n1 = nchar(seq1)[1]
             n2 = nchar(seq2)[1]
             
-            pokaz(n1, n2)
+            # pokaz(n1, n2)
             
             mx.comb = matrix(0, nrow = 2, ncol = n1 + n2)
             mx.comb[1, 1:n1] = 1:n1
@@ -712,8 +722,7 @@ for(s.comb in pref.combinations){
           
         }
         
-        
-        pokaz('point3')
+        # pokaz('point3')
         
         non.zero.indices.1 <- mx.comb[1,] != 0
         non.zero.indices.2 <- mx.comb[2,] != 0
@@ -729,9 +738,9 @@ for(s.comb in pref.combinations){
         idx1 = 1:i.beg
         idx2 = i.end:ncol(mx.cons)
         mx.cons = rbind(mx.cons, '-')
-        mx.cons = cbind(mx.cons[,idx1],
+        mx.cons = cbind(mx.cons[,idx1,drop=F],
                         mx.cons.new,
-                        mx.cons[,idx2])
+                        mx.cons[,idx2,drop=F])
         
         s.cons = mx2cons(mx.cons)
         mx.cons[1,] = s.cons
@@ -742,9 +751,9 @@ for(s.comb in pref.combinations){
         idx.new[nrow(idx.new),non.zero.indices.2] = pos.acc
         
         idx.cons = rbind(idx.cons, 0)
-        idx.cons = cbind(idx.cons[, idx1], 
+        idx.cons = cbind(idx.cons[, idx1,drop=F], 
                          idx.new, 
-                         idx.cons[, idx2])
+                         idx.cons[, idx2,drop=F])
         
         if(ncol(idx.cons) != ncol(mx.cons)) stop('Checkpoint lengths')
         
