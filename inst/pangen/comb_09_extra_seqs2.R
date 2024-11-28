@@ -246,6 +246,7 @@ for(s.comb in pref.combinations){
   # pokaz(file.breaks.info)
   save(list = c("breaks.init", "breaks"), file =file.breaks.info)
   
+  gc()
   
   # ---- Additional alignments ----
   
