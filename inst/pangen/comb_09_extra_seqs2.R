@@ -45,6 +45,8 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
+pokaz('New version')
+
 # ***********************************************************************
 # ---- Logging ----
 
