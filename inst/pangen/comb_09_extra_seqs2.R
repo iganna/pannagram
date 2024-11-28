@@ -242,7 +242,7 @@ for(s.comb in pref.combinations){
   if(sum(breaks.init$seq == '') > 0) stop('Some sequences are empty')
   
   file.breaks.info = paste0(path.extra, "breaks_info.RData")
-  save(list = c("breaks.init", "breaks"), file =)
+  save(list = c("breaks.init", "breaks"), file =file.breaks.info)
   
   # ---- Additional alignments ----
   
