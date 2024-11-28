@@ -252,7 +252,7 @@ for(s.comb in pref.combinations){
   
   loop.function <- function(i.b, breaks, echo.loop=T){
   # for (i.b in 1:nrow(breaks)) {
-  for (i.b in 290:nrow(breaks)) {
+  for (i.b in 1:nrow(breaks)) {
     
     pokaz(i.b, nrow(breaks), colnames(breaks), breaks$idx.end[i.b], breaks$idx.beg[i.b], (breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1)
     if((breaks$idx.end[i.b] - breaks$idx.beg[i.b]) == 1){
