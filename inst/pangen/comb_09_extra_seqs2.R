@@ -45,8 +45,6 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-pokaz('New version')
-
 # ***********************************************************************
 # ---- Logging ----
 
@@ -162,6 +160,11 @@ for(s.comb in pref.combinations){
   pokaz('Get consensus sequences')
   breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_', sprintf(format.digits, i.b)))
   breaks.init$seq = ''
+  
+  file.breaks.info = paste0(path.extra, "breaks_info.RData")
+  pokaz(file.breaks.info)
+  save(list = c("breaks.init", "breaks"), file =file.breaks.info)
+  
   for(acc in accessions){
     pokaz("Accession", acc)
     # Read the chromosome
@@ -243,9 +246,6 @@ for(s.comb in pref.combinations){
   
   if(sum(breaks.init$seq == '') > 0) stop('Some sequences are empty')
   
-  file.breaks.info = paste0(path.extra, "breaks_info.RData")
-  pokaz(file.breaks.info)
-  save(list = c("breaks.init", "breaks"), file =file.breaks.info)
   
   # ---- Additional alignments ----
   
