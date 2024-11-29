@@ -149,7 +149,7 @@ gff2gff <- function(path.cons,
     v.corr = rep(0, max.chr.len)
     v.corr[v[,1]] = v[,2]
     
-    if(echo) pokaz('Number of annotations:', length(idx.chr))
+    if(echo) pokaz('Number of provided annotations:', length(idx.chr))
     
     if(exact.match){
       # Exact match of positions

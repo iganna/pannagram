@@ -1688,9 +1688,9 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
-# Alignment of extra long fragments
+# Get sequences of extra long fragments
 
-with_level 1 pokaz_stage "Step ${step_num}. Alignment of extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
 
 # Paths
 path_extra="${path_inter}extra_regions/"
@@ -1717,6 +1717,53 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra} \
+            --path.cons ${path_cons} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+
+# ----------------------------------------------
+# Align extra long fragments
+
+with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
+
+# Paths
+path_extra="${path_inter}extra_regions/"
+if [ ! -d "$path_extra" ]; then
+    mkdir -p "$path_extra"
+fi
+
+# Logs
+step_name="step${step_num}_comb_10"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra}fake_out.RData
+        touch ${path_extra}fake_len.RData
+        touch ${path_log_step}fake.log
+
+        rm -rf ${path_extra}*out.RData
+        rm -rf ${path_extra}*len.RData
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
             --path.extra ${path_extra} \
