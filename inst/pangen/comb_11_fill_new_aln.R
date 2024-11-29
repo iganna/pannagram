@@ -127,7 +127,7 @@ for(s.comb in pref.combinations){
   load(file.breaks.info)
   
   # Define Lengths
-  idx.gain = rep(0, len.comb)
+  idx.gain = rep(1, len.comb)
   
   breaks$len = breaks$idx.end - breaks$idx.beg - 1  # MINUS! because these are not posisiotns, but positions around
   breaks$len.new = 0
