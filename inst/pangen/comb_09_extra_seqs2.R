@@ -133,6 +133,11 @@ for(s.comb in pref.combinations){
     breaks.init = rbind(breaks.init, breaks.acc)
   }
   
+  len.cutoff = 100000
+  idx.extra = which(breaks.init$len.comb > len.cutoff)
+  breaks.init.extra = breaks.init[idx.extra,]
+  breaks.init = breaks.init[-idx.extra,]
+  
   # Sort and IDs
   breaks.init = breaks.init[order(-breaks.init$idx.end),]
   breaks.init = breaks.init[order(breaks.init$idx.beg),]
@@ -359,7 +364,11 @@ for(s.comb in pref.combinations){
         pokaz('Length1', nchar(seq1), 'Length2', nchar(seq2), ". Mafft is running")
         
         if(max(c(nchar(seq1), nchar(seq2))) < 15000){
-          mafft.res = mafftAdd(seq1[1], seq2, path.work, n.flank = 20)  
+          if(max(c(nchar(seq1), nchar(seq2))) < 25){
+            mafft.res = mafftAdd(seq1[1], seq2, path.work, n.flank = 0)  
+          } else {
+            mafft.res = mafftAdd(seq1[1], seq2, path.work, n.flank = 20)    
+          }
           
           pokaz("Mafft done")
           
