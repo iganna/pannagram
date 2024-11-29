@@ -86,7 +86,8 @@ gff2gff <- function(path.cons,
   if(ref.acc == ''){
     ref.suff = ref.acc
   } else {
-    ref.suff = paste0('_ref_', ref.acc)
+    # ref.suff = paste0('_ref_', ref.acc)
+    ref.suff = paste0('_', ref.acc)
   }
   
   if(acc1 == acc2) stop('Accessions provided are identical')
