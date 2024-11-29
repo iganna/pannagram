@@ -269,8 +269,8 @@ for(s.comb in pref.combinations){
       
       file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out_single.RData')
       save(list = c("data.single"), file =file.br.out)
-      next
-      # return()
+      # next
+      return()
     }
     
     file.br.group = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
