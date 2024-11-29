@@ -117,29 +117,33 @@ for(s.comb in pref.combinations){
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
+  # Accessions
+  groups = h5ls(file.comb)
+  accessions = groups$name[groups$group == gr.accs.b]
   
-  file.breaks.info = paste0(path.extra, "breaks_info.RData")
+  len.comb = as.numeric(unique(groups$dim[groups$group == gr.accs.b]))
+  
+  file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
   load(file.breaks.info)
   
   # Define Lengths
+  idx.gain = rep(0, len.comb)
+  
+  breaks$len = breaks$idx.end - breaks$idx.beg - 1  # MINUS! because these are not posisiotns, but positions around
   breaks$len.new = 0
   for (i.b in 1:nrow(breaks)) {
-    
-    file.br.out.single = paste0(path.extra, breaks$id.s[i.b], '_out_single.RData')
-    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
-    
-    if(file.exists(file.br.out.single)){
-      stop('sin')
-      load(file.br.out.single)  # data.single variable
-    } else {
-      stop('norm')
-      load(file.br.out)  # "idx.new", "msa.new"
-      
-    }
-  
-    
+    file.br.len = paste0(path.extra, breaks$id.s[i.b], '_len.RData')
+    load(file.br.len)
+    breaks$len.new[i.b] = len.aln
   }
   
+  breaks$len.plus = 0
+  
+    
+  file.br.len = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
+  load(file.br.out)
+    
+    
   # Create new h5 file with these lengths
   
   

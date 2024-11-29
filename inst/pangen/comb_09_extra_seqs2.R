@@ -121,6 +121,7 @@ for(s.comb in pref.combinations){
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
+  pokaz("Number of accessions", length(accessions))
   
   save(list = ls(), file =paste0(path.extra, "tmp_breaks.RData"))
   
@@ -179,7 +180,7 @@ for(s.comb in pref.combinations){
   pokaz('Get consensus sequences')
   breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_', sprintf(format.digits, i.b)))
   breaks.init$seq = ''
-  
+    
   for(acc in accessions){
     pokaz("Accession", acc)
     # Read the chromosome

@@ -97,7 +97,7 @@ for(s.comb in pref.combinations){
     h5write(v.ref1, file.add, s.ref)
   })
   
-  for(acc in accessions[-1]){
+  for(acc in setdiff(accessions, ref)){
     s.acc = paste0(gr.accs.e, acc)
     v0 =  h5read(file.cln, s.acc)
     v1 =  h5read(file.msa, s.acc)
@@ -113,7 +113,12 @@ for(s.comb in pref.combinations){
     
     pokaz(acc, 'after filtration:', nrow(v.add))
     
-    if(nrow(v.add) == 0) next
+    if(nrow(v.add) == 0){
+      suppressMessages({
+        h5write(v1, file.add, s.acc)
+      })
+      next
+    }
     
     v.add$idx1 = match(v.add[,1], v.ref1)
     v.add$acc.val1 = v1[v.add[,3]]

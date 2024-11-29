@@ -145,7 +145,7 @@ loop.function <- function(s.comb,
       h5write(v.init, file.comb.out, s.acc)
     })
   
-    idx.nonzero = idx.nonzero + (v.init > 0) * 1
+    idx.nonzero = idx.nonzero + (abs(v.init) > 0) * 1
   }
   
   # ---- Remove zeros ----
@@ -167,7 +167,6 @@ loop.function <- function(s.comb,
       h5delete(file.comb.out, s.acc)
       h5write(v, file.comb.out, s.acc)
     })
-  
   }
   
   # ---- Breaks ----

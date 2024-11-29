@@ -189,6 +189,7 @@ for(s.comb in pref.combinations){
     
     
     for(irow in 1:nrow(breaks.tmp)){
+      pokaz("Dim mx.cons", dim(mx.cons))
       # for(irow in 54:nrow(breaks.tmp)){
       pokaz('irow', irow, '/', nrow(breaks.tmp))
       s.b = breaks.tmp$seq[irow]
@@ -657,15 +658,16 @@ for(s.comb in pref.combinations){
     
     ## ---- Add previous from initial alignment ----
     # Sequences
-    idx.aln = which(idx.cons[1,] != 0) 
-    idx.aln = idx.aln[-c(1, length(idx.aln))]
-    accs = sapply(rownames(aln), function(s) strsplit(s, '_break_')[[1]][1])
-    accs <- sub("^acc_", "", accs)
-    msa.new[accs, idx.aln] = aln
-    # Positions
-    idx.new[accs, idx.aln] <- as.matrix(indexes)
-    
-    
+    if(file.exists(file.br.idx)){
+      idx.aln = which(idx.cons[1,] != 0) 
+      idx.aln = idx.aln[-c(1, length(idx.aln))]
+      accs = sapply(rownames(aln), function(s) strsplit(s, '_break_')[[1]][1])
+      accs <- sub("^acc_", "", accs)
+      msa.new[accs, idx.aln] = aln
+      # Positions
+      idx.new[accs, idx.aln] <- as.matrix(indexes)
+    }
+
     ## ---- Add previous from new alignment ----
     for(irow in 1:nrow(breaks.tmp)){
       if(sum(msa.new[breaks.tmp$acc[irow], idx.cons[irow + 1,] != 0] != '-') > 0) stop('wrong with accessions msa')
@@ -700,8 +702,8 @@ for(s.comb in pref.combinations){
     len.aln = len.idx
     
     # Save
-    save(list = c("len.aln"), file =file.br.len)
-    save(list = c("idx.new", "msa.new"), file =file.br.out)
+    save(list = c("len.aln"), file = file.br.len)
+    save(list = c("idx.new", "msa.new"), file = file.br.out)
     
   }
   
