@@ -101,7 +101,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations[-1]){
+for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
   
@@ -168,6 +168,9 @@ for(s.comb in pref.combinations[-1]){
       # Read the group alignment
       aln = readFasta(file.br.group)
       aln = aln2mx(aln)
+      
+      aln.non.gap = colSums(aln != '-')
+      if(min(aln.non.gap) == 0) stop('Alignment is not full')
       
       mx.cons = mx2cons(aln, amount = 3)
       mx.cons = cbind('-', mx.cons)
