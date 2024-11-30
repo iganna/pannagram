@@ -101,13 +101,15 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[-1]){
   
   if(echo) pokaz('* Combination', s.comb)
   
   # Load breaks
   file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
   load(file.breaks.info)  # "breaks.init", "breaks"
+  
+  breaks$len.true = breaks$idx.end - breaks$idx.beg - 1
   
   # Accessions
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
@@ -702,6 +704,9 @@ for(s.comb in pref.combinations){
     len.msa = ncol(msa.new)
     if(len.idx != len.msa) stop('Lwngth are different')
     len.aln = len.idx
+    
+    
+    if(len.aln < breaks$len.true[i.b]) stop(paste('The length has decreased', i.b))
     
     # Save
     save(list = c("len.aln"), file = file.br.len)
