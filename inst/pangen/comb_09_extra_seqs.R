@@ -118,6 +118,7 @@ for(s.comb in pref.combinations){
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
+  pokaz('Number of accessions', n.acc)
   
   # Get breaks
   breaks.init = c()
