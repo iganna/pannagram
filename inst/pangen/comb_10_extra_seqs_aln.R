@@ -658,6 +658,8 @@ for(s.comb in pref.combinations){
     
     ## ---- Add previous from initial alignment ----
     # Sequences
+    
+    pokaz(file.br.idx)
     if(file.exists(file.br.idx)){
       idx.aln = which(idx.cons[1,] != 0) 
       idx.aln = idx.aln[-c(1, length(idx.aln))]
