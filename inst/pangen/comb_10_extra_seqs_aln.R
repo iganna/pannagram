@@ -127,7 +127,7 @@ for(s.comb in pref.combinations){
     
     # Log files
     file.log.loop = paste0(path.log, 'loop_file_', 
-                           breaks$id.s,
+                           breaks$id.s[i.b],
                            '.log')
     if(!file.exists(file.log.loop)){
       invisible(file.create(file.log.loop))
