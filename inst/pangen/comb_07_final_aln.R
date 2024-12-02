@@ -71,7 +71,7 @@ stat.comb <- data.frame(comb = character(),
                         stringsAsFactors = FALSE)
 
 
-for(s.comb in pref.combinations[c(2,3)]){
+for(s.comb in pref.combinations{
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
@@ -223,12 +223,19 @@ for(s.comb in pref.combinations[c(2,3)]){
     single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
     single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
     
-    idx.confusing = which(single.res$extra < 0)
+    idx.confusing = which((single.res$ref.pos$end - single.res$ref.pos$beg - 1) != 0)
     if(length(idx.confusing) > 0){
-      pokazAttention("Confusing:", idx.confusing)
-    #   stop('Singletons:Wrong lengths of alignment and gaps')
+      pokazAttention('Short: Wrong lengths of alignment and gaps')
+      pokazAttention("Number of sonfusing singletons:", length(idx.confusing))
+      
+      single.res$len = single.res$len[-idx.confusing]
+      single.res$extra = single.res$extra[-idx.confusing]
+      
+      single.res$pos.beg = single.res$pos.beg[-idx.confusing, ,drop = F]
+      single.res$pos.end = single.res$pos.end[-idx.confusing, ,drop = F]
+      single.res$ref.pos = single.res$ref.pos[-idx.confusing, ,drop = F]
     }
-    single.res$extra[idx.confusing] = 0    
+      
   } else {
     single.res = data.frame()
   }

@@ -113,7 +113,7 @@ for(s.comb in pref.combinations){
   load(file.ws)
   
   # Define indexes for short and singletons
-  idx.singl = which(breaks$single == 1)
+  idx.singl = which((breaks$single == 1) & ((breaks$idx.end - breaks$idx.beg - 1) == 0))
   idx.short = which((breaks$single != 1) & (breaks$len.acc <= len.short))
   
   # Define indexes for long sequences
