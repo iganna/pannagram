@@ -225,8 +225,8 @@ for(s.comb in pref.combinations){
     
     idx.confusing = which((single.res$ref.pos$end - single.res$ref.pos$beg - 1) != 0)
     if(length(idx.confusing) > 0){
-      pokazAttention('Short: Wrong lengths of alignment and gaps')
-      pokazAttention("Number of sonfusing singletons:", length(idx.confusing))
+      pokazAttention('Singletons: Wrong lengths of alignment and gaps')
+      pokazAttention("Number of confusing singletons:", length(idx.confusing))
       
       single.res$len = single.res$len[-idx.confusing]
       single.res$extra = single.res$extra[-idx.confusing]

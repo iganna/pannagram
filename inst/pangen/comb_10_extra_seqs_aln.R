@@ -9,6 +9,7 @@ suppressMessages({
   # library(muscle)  #BiocManager::install("muscle")
   library(pannagram)
   library(igraph)
+  library(R.utils)
   # library(Biostrings)
 })
 
@@ -715,12 +716,21 @@ for(s.comb in pref.combinations){
     save(list = c("len.aln"), file = file.br.len)
     save(list = c("idx.new", "msa.new"), file = file.br.out)
     
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    return(NULL)
   }
   
-  
+  max.tile.loop = 600
   if(num.cores == 1){
     for(i.b in 1:nrow(breaks)){
-      loop.function(i.b, breaks, echo.loop=echo.loop)
+      tryCatch({
+        # Set a timeout of 600 seconds (10 minutes) for the function execution
+        withTimeout({
+          loop.function(i.b, breaks, echo.loop = echo.loop)
+        }, timeout = max.tile.loop)
+      }, TimeoutException = function(ex) {
+        pokazAttention("Timeout reached for i.b = %d. Skipping to the next iteration.", i.b)
+      })
     }
   } else {
     # Set the number of cores for parallel processing
@@ -728,8 +738,16 @@ for(s.comb in pref.combinations){
     registerDoParallel(myCluster) 
     
     tmp = foreach(i.b = 1:nrow(breaks), 
-                  .packages=c('rhdf5', 'crayon', 'igraph', 'pannagram'))  %dopar% { 
-                    loop.function(i.b, breaks, echo.loop=echo.loop)
+                  .packages=c('rhdf5', 'crayon', 'igraph', 'pannagram', 'R.utils'))  %dopar% { 
+                    tryCatch({
+                      # Set a timeout of 600 seconds (10 minutes) for each parallel task
+                      withTimeout({
+                        loop.function(i.b, breaks, echo.loop = echo.loop)
+                      }, timeout = max.tile.loop)
+                    }, TimeoutException = function(ex) {
+                      pokazAttention("Timeout reached for i.b = %d. Skipping to the next iteration.", i.b)
+                      return(NULL) # Return NULL for skipped tasks
+                    })
                   }
     stopCluster(myCluster)
   }
