@@ -28,8 +28,6 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--path.cons"), type="character", default=NULL, 
               help="path to consensus directory", metavar="character"),
-  make_option(c("--path.chromosomes"), type="character", default=NULL, 
-              help="path to directory with chromosomes", metavar="character"),
   make_option(c("--path.extra"), type="character", default=NULL, 
               help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
@@ -57,7 +55,7 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 # ***********************************************************************
 
 aln.type.in = aln.type.add
-aln.type.out = aln.type.extra
+aln.type.out = aln.type.extra1
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -117,6 +115,15 @@ for(s.comb in pref.combinations){
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
+  file.out = paste0(path.cons, aln.type.out, s.comb,'.h5')
+  
+  # Create the output file
+  suppressMessages({
+    h5createFile(file.out)
+    h5createGroup(file.out, gr.blocks)
+    h5createGroup(file.out, gr.accs.e)
+  })
+  
   # Accessions
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -126,27 +133,87 @@ for(s.comb in pref.combinations){
   file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
   load(file.breaks.info)
   
+  if(sum(breaks$idx.beg == breaks$idx.end) > 0) stop('Breaks are wrong')
+  
   # Define Lengths
   idx.gain = rep(1, len.comb)
   
   breaks$len = breaks$idx.end - breaks$idx.beg - 1  # MINUS! because these are not posisiotns, but positions around
   breaks$len.new = 0
+  idx.skip = c()
   for (i.b in 1:nrow(breaks)) {
     file.br.len = paste0(path.extra, breaks$id.s[i.b], '_len.RData')
-    load(file.br.len)
-    breaks$len.new[i.b] = len.aln
+    file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
+    if(file.exists(file.br.len) & file.exists(file.br.out)){
+      load(file.br.len)
+      breaks$len.new[i.b] = len.aln
+    } else {
+      idx.skip = c(idx.skip, i.b)
+    }
   }
   
-  breaks$len.plus = 0
+  if(length(idx.skip) > 0){
+    pokazAttention('Number of breaks to skip is', length(idx.skip))
+    breaks = breaks[-idx.skip,,drop=F]
+    pokazAttention('Number of breaks remained', nrow(breaks))
+  }
   
-    
-  file.br.len = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
-  load(file.br.out)
-    
-    
-  # Create new h5 file with these lengths
+  breaks$len.plus = breaks$len.new - breaks$len
+  idx.minus = which(breaks$len.plus < 0)
+  if(length(idx.minus) > 0){
+    stop('Reduce of the alignment')
+  }
+  
+  idx.gain[breaks$idx.beg+1] = idx.gain[breaks$idx.beg+1] + breaks$len.plus
+  new.idx = cumsum(idx.gain)
+  len.new = max(new.idx)
+  
+  if(len.new != sum(length(idx.gain) + sum(breaks$len.plus))) stop('Something if wrong with positions')
+  breaks$new.beg = new.idx[breaks$idx.beg] + 1
+  breaks$new.end = new.idx[breaks$idx.end] - 1 
+  
+  len.to.check = breaks$new.end - breaks$new.beg + 1
+  
+  if(sum(len.to.check != breaks$len.new) > 0) stop('Calculation of positions is wrong')
+  for(i.b in 1:nrow(breaks)){
+    pos = breaks$idx.beg[i.b]:breaks$idx.end[i.b]
+    pos = pos[-c(1, length(pos))]
+    if(length(pos) > 0){
+      new.idx[pos] = 0
+    }
+  }
+  
+  if((sum(new.idx != 0) + sum(breaks$len.new)) != len.new) stop('Somwthing wrong with lengths 2')
+  
+  pos.transfer = cbind(1:length(new.idx), new.idx)
+  pos.transfer = pos.transfer[pos.transfer[,2] != 0,, drop = F]
   
   
-  # Fill up the new h5 files with new alignments
+  
+  for(acc in accessions){
+    pokaz('Accessions', acc)
+    
+    s.acc = paste0(gr.accs.e, acc)
+    v = h5read(file.comb, s.acc)
+    
+    v.new = rep(0, len.new)
+    v.new[pos.transfer[,2]] = v[pos.transfer[,1]]
+    
+    for(i.b in 1:nrow(breaks)){
+      file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
+      load(file.br.out) # idx.new msa.new
+      v.new[breaks$new.beg[i.b]:breaks$new.end[i.b]] = idx.new[acc,]
+    }
+    
+    rm(idx.new)
+    rm(msa.new)
+    gc()
+    
+    pokaz('Save new...')
+    suppressMessages({
+      h5write(v.new, file.out, s.acc)
+    })
+    
+  }
   
 }

@@ -9,8 +9,13 @@ path.cons = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/consensus3/'
 i.chr = 2
 aln.type.in = 'msa_'
 
-s.comb = paste0(i.chr, '_', i.chr)
 
+path.cons = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/extra/'
+i.chr = 1
+aln.type.in = 'extra1_'
+
+
+s.comb = paste0(i.chr, '_', i.chr)
 file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
 
 groups = h5ls(file.comb)
@@ -28,14 +33,14 @@ for(acc in accessions){
   s.acc = paste0(gr.accs.e, acc)
   v = h5read(file.comb, s.acc)
   v[is.na(v)] = 0
-  idx = idx + abs(v)
+  idx = idx + (v != 0) * 1
 
-  if(pos.beg == 0){
-    pos.beg = which(v == 5469954)
-    pos.end = which(v == 5506931)
-    # stop()
-  }
-  v.mx = cbind(v.mx, v[pos.beg:pos.end])
+  # if(pos.beg == 0){
+  #   pos.beg = which(v == 5469954)
+  #   pos.end = which(v == 5506931)
+  #   # stop()
+  # }
+  # v.mx = cbind(v.mx, v[pos.beg:pos.end])
 }
 
 min(idx)
