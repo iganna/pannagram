@@ -129,6 +129,7 @@ for(s.comb in pref.combinations){
     
     aln.seq = readFasta(file.aln)
     
+    
     # ---
     # WITHOUT REFINEMENT
     n.aln.seq = length(aln.seq)
@@ -157,6 +158,11 @@ for(s.comb in pref.combinations){
     # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
     pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
     row.names(pos.mx) = name.acc
+    
+    if(min(colSums(pos.mx != 0)) == 0){
+      pokaz(mafft.res$file[i])
+      stop('Zeros in the alignment')
+    }
 
 
     mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
@@ -195,7 +201,7 @@ for(s.comb in pref.combinations){
   if(file.exists(file.single.res)){
     single.res = readRDS(file.single.res)
     single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
-    single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
+    single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
     # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
     single.res$extra[single.res$extra < 0] = 0    
   } else {
