@@ -71,7 +71,7 @@ stat.comb <- data.frame(comb = character(),
                         stringsAsFactors = FALSE)
 
 
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[c(2,3)]){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
@@ -167,19 +167,29 @@ for(s.comb in pref.combinations){
 
     mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
     # ---
-
     
   }
   
   if(length(idx.skip) > 0){
     mafft.aln.pos = mafft.aln.pos[-idx.skip]
-    mafft.res = mafft.res[-idx.skip,]
+    mafft.res = mafft.res[-idx.skip,,drop=F]
   }
   
   # warnings()
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-  # if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
+  # Skip if some are shorter than the initial aligned block
+  idx.confusing = which(mafft.res$extra < 0)
+  if(length(idx.confusing) > 0){
+    pokazAttention('Long: Wrong lengths of alignment and gaps')
+    pokazAttention("Confusing:", idx.confusing)
+    
+    mafft.res = mafft.res[-idx.confusing,,drop=F]
+    mafft.aln.pos = mafft.aln.pos[-idx.confusing]
+    mafft.res$len = mafft.res$len[-idx.confusing]
+    mafft.res$extra = mafft.res$extra[-idx.confusing]
+  } 
+  # if(min(mafft.res$extra) < 0) stop()
   mafft.res$extra[mafft.res$extra < 0] = 0
   
   # ---- Short alignments ----
@@ -189,8 +199,18 @@ for(s.comb in pref.combinations){
     msa.res = readRDS(file.msa.res)
     msa.res$len = unlist(lapply(msa.res$aln, nrow))
     msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
-    # if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
-    msa.res$extra[msa.res$extra < 0] = 0  
+    
+    idx.confusing = which(msa.res$extra < 0)
+    if(length(idx.confusing) > 0){
+      pokazAttention('Short: Wrong lengths of alignment and gaps')
+      pokazAttention("Confusing:", idx.confusing)
+      
+      msa.res$ref.pos = msa.res$ref.pos[-idx.confusing,,drop=F]
+      msa.res$aln = msa.res$aln[-idx.confusing]
+      msa.res$len = msa.res$len[-idx.confusing]
+      msa.res$extra = msa.res$extra[-idx.confusing]
+    } 
+  
   } else {
     msa.res = data.frame()
   }
@@ -202,8 +222,13 @@ for(s.comb in pref.combinations){
     single.res = readRDS(file.single.res)
     single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
     single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
-    # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
-    single.res$extra[single.res$extra < 0] = 0    
+    
+    idx.confusing = which(single.res$extra < 0)
+    if(length(idx.confusing) > 0){
+      pokazAttention("Confusing:", idx.confusing)
+    #   stop('Singletons:Wrong lengths of alignment and gaps')
+    }
+    single.res$extra[idx.confusing] = 0    
   } else {
     single.res = data.frame()
   }
@@ -275,7 +300,7 @@ for(s.comb in pref.combinations){
   
   pos.delete.all = 0
   
-  save(list = ls(), file = paste0("tmp_workspace2.RData"))
+  # save(list = ls(), file = paste0("tmp_workspace2.RData"))
   for(i.pos in 1:3){
     pos.beg = pos.beg.all[[i.pos]]
     pos.end = pos.end.all[[i.pos]]
