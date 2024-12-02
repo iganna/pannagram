@@ -58,7 +58,6 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 # ***********************************************************************
 
 aln.type.in = aln.type.add
-aln.type.out = aln.type.extra
 
 # ***********************************************************************
 # ---- Values of parameters ----
