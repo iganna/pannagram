@@ -1675,6 +1675,15 @@ make_dir ${path_log_step}
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_cons}aln_fake_h5
+        touch ${path_log_step}fake.log
+
+        rm -f ${path_cons}aln*h5
+        rm -f ${path_log_step}*
+    fi  
+
     Rscript $INSTALLED_PATH/pangen/comb_08_insert_back.R  \
             --cores ${cores} \
             --path.cons ${path_cons} \
