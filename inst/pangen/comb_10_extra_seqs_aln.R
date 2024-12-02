@@ -101,7 +101,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[4]){
   
   if(echo) pokaz('* Combination', s.comb)
   
@@ -127,7 +127,7 @@ for(s.comb in pref.combinations){
     
     # Log files
     file.log.loop = paste0(path.log, 'loop_file_', 
-                           i.b,
+                           breaks$id.s,
                            '.log')
     if(!file.exists(file.log.loop)){
       invisible(file.create(file.log.loop))
