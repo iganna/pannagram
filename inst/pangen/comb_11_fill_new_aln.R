@@ -64,18 +64,6 @@ aln.type.out = aln.type.extra1
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
 
-pokaz('Number of cores', num.cores)
-if(num.cores > 1){
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-}
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-# if(num.cores > 1){
-#   myCluster <- makeCluster(num.cores, type = "PSOCK") 
-#   registerDoParallel(myCluster)
-# }
-
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder does not exist')
@@ -109,7 +97,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[4]){
   
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
@@ -199,15 +187,42 @@ for(s.comb in pref.combinations){
     v.new = rep(0, len.new)
     v.new[pos.transfer[,2]] = v[pos.transfer[,1]]
     
-    for(i.b in 1:nrow(breaks)){
-      file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
-      load(file.br.out) # idx.new msa.new
-      v.new[breaks$new.beg[i.b]:breaks$new.end[i.b]] = idx.new[acc,]
+    if (num.cores == 1) {
+      for (i.b in 1:nrow(breaks)) {
+        pokaz(i.b)
+        file.br.out <- paste0(path.extra, breaks$id.s[i.b], '_out.RData')
+        load(file.br.out) # idx.new and msa.new
+        v.new[breaks$new.beg[i.b]:breaks$new.end[i.b]] <- idx.new[acc, ]
+      }
+    } else {
+      # Number of cores
+      myCluster <- makeCluster(num.cores, type = "PSOCK")
+      registerDoParallel(myCluster)
+      
+      # Loop
+      tmp <- foreach(i.b = 1:nrow(breaks), 
+                     .packages = c('utils')) %dopar% {
+                       file.br.out <- paste0(path.extra, breaks$id.s[i.b], '_out.RData')
+                       load(file.br.out) # idx.new and msa.new
+                       list(start = breaks$new.beg[i.b], 
+                            end = breaks$new.end[i.b], 
+                            values = idx.new[acc, ])
+                     }
+      
+      # Save results
+      for (res in tmp) {
+        v.new[res$start:res$end] <- res$values
+      }
+      
+      stopCluster(myCluster)
     }
+    
     
     rm(idx.new)
     rm(msa.new)
     gc()
+    
+    if((sum(v.new != 0) + 1) != length(unique(v.new))) stop("Duplicates are found")
     
     pokaz('Save new...')
     suppressMessages({

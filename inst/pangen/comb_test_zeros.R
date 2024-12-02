@@ -11,7 +11,7 @@ aln.type.in = 'msa_'
 
 
 path.cons = '/Volumes/Samsung_T5/vienn/test/a27/intermediate/extra/'
-i.chr = 1
+i.chr = 2
 aln.type.in = 'extra1_'
 
 
