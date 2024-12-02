@@ -1809,6 +1809,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
+        echo "TODO clean"
         # touch ${path_extra}fake_out.RData
         # touch ${path_extra}fake_len.RData
         # touch ${path_log_step}fake.log
