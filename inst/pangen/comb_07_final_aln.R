@@ -71,7 +71,7 @@ stat.comb <- data.frame(comb = character(),
                         stringsAsFactors = FALSE)
 
 
-for(s.comb in pref.combinations{
+for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
