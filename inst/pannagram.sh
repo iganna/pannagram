@@ -1721,8 +1721,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_extra}fake
         touch ${path_log_step}fake.log
 
-        # rm -rf ${path_extra}*
-        find ${path_extra} -exec rm -rf {} +
+        rm -rf ${path_extra}*
+        # find ${path_extra} -exec rm -rf {} +
         rm -f ${path_log_step}*
     fi  
 
