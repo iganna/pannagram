@@ -194,7 +194,8 @@ for(s.comb in pref.combinations){
     
     
     for(irow in 1:nrow(breaks.tmp)){
-      pokaz("Dim mx.cons", dim(mx.cons))
+      # if(irow == 152) stop()
+      pokaz("Dim mx.cons", dim(mx.cons), dim(idx.cons))
       # for(irow in 54:nrow(breaks.tmp)){
       pokaz('irow', irow, '/', nrow(breaks.tmp))
       s.b = breaks.tmp$seq[irow]
@@ -301,10 +302,10 @@ for(s.comb in pref.combinations){
             # x = glueZero(x)
             
             # test df lines
-            for (irow in setdiff(1:nrow(df), irow_support)) {
+            for (jrow in setdiff(1:nrow(df), irow_support)) {
               
-              start_df <- df$V2[irow]
-              end_df <- df$V3[irow]
+              start_df <- df$V2[jrow]
+              end_df <- df$V3[jrow]
               
               length_df <- end_df - start_df
               
@@ -319,13 +320,13 @@ for(s.comb in pref.combinations){
               
               df.tmp = x[valid_overlap,]
               
-              df.tmp[,c('V4', 'V5')] = df.tmp[,c('V4', 'V5')] - df$V4[irow] + df$V2[irow]
+              df.tmp[,c('V4', 'V5')] = df.tmp[,c('V4', 'V5')] - df$V4[jrow] + df$V2[jrow]
               
               valid_overlap2 = pmin(df.tmp$V3, df.tmp$V5) - pmax(df.tmp$V2, df.tmp$V4)
               valid_overlap2 = valid_overlap2 / df.tmp$V7
               
               if(sum(valid_overlap2 > 0.9) > 0) {
-                irow_support = c(irow_support, irow)
+                irow_support = c(irow_support, jrow)
               }
               
             }
@@ -360,9 +361,9 @@ for(s.comb in pref.combinations){
             # define ID by the order in the initial alignment
             if(nrow(result.sup.tmp) > 0){
               len.mafft.aln = ncol(pos.mx)
-              for(irow in 1:nrow(result.sup.tmp)){
-                tmp = which((result.sup.tmp$beg[irow] <= pos.mx[1,]) & (pos.mx[1,] <= result.sup.tmp$end[irow]))
-                result.sup.tmp$id[irow] = result.sup.tmp$id[irow] + (mean(tmp)) / len.mafft.aln
+              for(jrow in 1:nrow(result.sup.tmp)){
+                tmp = which((result.sup.tmp$beg[jrow] <= pos.mx[1,]) & (pos.mx[1,] <= result.sup.tmp$end[jrow]))
+                result.sup.tmp$id[jrow] = result.sup.tmp$id[jrow] + (mean(tmp)) / len.mafft.aln
               }
               result.sup = rbind(result.sup, result.sup.tmp)        
             }
@@ -383,9 +384,9 @@ for(s.comb in pref.combinations){
             # define ID by the order in the initial alignment
             if(nrow(result.sup.tmp) > 0){
               len.mafft.aln = ncol(pos.mx)
-              for(irow in 1:nrow(result.sup.tmp)){
-                tmp = which((result.sup.tmp$beg[irow] <= pos.mx[2,]) & (pos.mx[2,] <= result.sup.tmp$end[irow]))
-                result.sup.tmp$id[irow] = result.sup.tmp$id[irow] + mean(tmp) / len.mafft.aln
+              for(jrow in 1:nrow(result.sup.tmp)){
+                tmp = which((result.sup.tmp$beg[jrow] <= pos.mx[2,]) & (pos.mx[2,] <= result.sup.tmp$end[jrow]))
+                result.sup.tmp$id[jrow] = result.sup.tmp$id[jrow] + mean(tmp) / len.mafft.aln
               }
               result.sup = rbind(result.sup, result.sup.tmp)
             }
@@ -404,14 +405,14 @@ for(s.comb in pref.combinations){
             # ---- Consensus positions ----
             
             mx.comb = matrix(0, nrow = 2, ncol = result.sup$a.end[nrow(result.sup)])
-            for(irow in 1:nrow(result.sup)){
-              if(result.sup$type[irow] == 0){
-                mx.comb[,result.sup$a.beg[irow]:result.sup$a.end[irow]] = 
-                  pos.mx[,result.sup$beg[irow]:result.sup$end[irow]]
+            for(jrow in 1:nrow(result.sup)){
+              if(result.sup$type[jrow] == 0){
+                mx.comb[,result.sup$a.beg[jrow]:result.sup$a.end[jrow]] = 
+                  pos.mx[,result.sup$beg[jrow]:result.sup$end[jrow]]
               } else {
                 
-                mx.comb[result.sup$type[irow],result.sup$a.beg[irow]:result.sup$a.end[irow]] = 
-                  result.sup$beg[irow]:result.sup$end[irow]
+                mx.comb[result.sup$type[jrow],result.sup$a.beg[jrow]:result.sup$a.end[jrow]] = 
+                  result.sup$beg[jrow]:result.sup$end[jrow]
               }
             }
             
@@ -425,8 +426,8 @@ for(s.comb in pref.combinations){
             
             # stop()
             
-            for(irow in 1:2){
-              pp = mx.comb[irow,]
+            for(jrow in 1:2){
+              pp = mx.comb[jrow,]
               pp = pp[pp != 0]
               if(is.unsorted(pp)){
                 save(list = ls(), file ="tmp_workspace_ws1.RData")
@@ -498,16 +499,16 @@ for(s.comb in pref.combinations){
               if(sum(nchar(df.sup$V8) != nchar(df.sup$V9)) > 0) stop('Wrong length of sequences')
               
               # Checkup
-              for(irow in 1:nrow(df.sup)){
+              for(jrow in 1:nrow(df.sup)){
                 
-                s1 = seq2nt(df.sup$V8[irow])
-                s2 = seq2nt(df.sup$V9[irow])
+                s1 = seq2nt(df.sup$V8[jrow])
+                s2 = seq2nt(df.sup$V9[jrow])
                 
-                if(sum(s1 != '-') != (df.sup$V3[irow] - df.sup$V2[irow] + 1)){
+                if(sum(s1 != '-') != (df.sup$V3[jrow] - df.sup$V2[jrow] + 1)){
                   save(list = ls(), file ="tmp_workspace_wl1.RData")
                   stop('Wrong len 1')
                 } 
-                if(sum(s2 != '-') != (df.sup$V5[irow] - df.sup$V4[irow] + 1)) stop('Wrong len 2')
+                if(sum(s2 != '-') != (df.sup$V5[jrow] - df.sup$V4[jrow] + 1)) stop('Wrong len 2')
               }
             }
             
@@ -562,12 +563,12 @@ for(s.comb in pref.combinations){
             }
             
             mx.comb = matrix(0, nrow = 2, ncol = max(result.sup$a.end))
-            for(irow in 1:nrow(result.sup)){
-              if(result.sup$type[irow] == 0){
+            for(jrow in 1:nrow(result.sup)){
+              if(result.sup$type[jrow] == 0){
                 
-                df.irow = df.sup[result.sup$id[irow],]
+                df.irow = df.sup[result.sup$id[jrow],]
                 
-                pos = result.sup$a.beg[irow]:result.sup$a.end[irow]
+                pos = result.sup$a.beg[jrow]:result.sup$a.end[jrow]
                 pos1 = df.irow$V2:df.irow$V3
                 pos2 = df.irow$V4:df.irow$V5
                 
@@ -577,16 +578,16 @@ for(s.comb in pref.combinations){
                 mx.comb[1,pos[s1 != '-']] = pos1
                 mx.comb[2,pos[s2 != '-']] = pos2
               } else {
-                pos = result.sup$a.beg[irow]:result.sup$a.end[irow]
-                posi = result.sup$beg[irow]:result.sup$end[irow]
-                mx.comb[result.sup$type[irow],pos] = posi
+                pos = result.sup$a.beg[jrow]:result.sup$a.end[jrow]
+                posi = result.sup$beg[jrow]:result.sup$end[jrow]
+                mx.comb[result.sup$type[jrow],pos] = posi
                 
               }
             }
             
             
-            for(irow in 1:2){
-              pp = mx.comb[irow,]
+            for(jrow in 1:2){
+              pp = mx.comb[jrow,]
               pp = pp[pp != 0]
               if(is.unsorted(pp)){
                 save(list = ls(), file ="tmp_workspace_ws2.RData")
@@ -645,6 +646,8 @@ for(s.comb in pref.combinations){
                          idx.cons[, idx2,drop=F])
         
         if(ncol(idx.cons) != ncol(mx.cons)) stop('Checkpoint lengths')
+        
+        if(sum(idx.cons[nrow(idx.cons),] != 0) != length(pos.acc)) stop('Wrong length of idx.cons')
         
         
       }

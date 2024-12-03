@@ -251,6 +251,13 @@ for(s.comb in pref.combinations){
       
       breaks.init$seq[i.b] = s.b
       
+      # Check length
+      if(length(breaks.init$seq[i.b]) != breaks.init$len.acc[i.b]){
+        save(list = c(), file = "tmp_wrong.RData")
+        stop('Wrong sequence is taken')
+      }
+      
+      
       file.br.fasta = paste0(path.extra, breaks$id.s[breaks.init$gr[i.b]], '_add.fasta')
       if(!file.exists(file.br.fasta)){
         writeFasta(s.b, file.br.fasta)  
