@@ -1721,7 +1721,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_extra}fake
         touch ${path_log_step}fake.log
 
-        rm -rf ${path_extra}*
+        # rm -rf ${path_extra}*
+        find ${path_extra} -exec rm -rf {} +
         rm -f ${path_log_step}*
     fi  
 
@@ -1811,13 +1812,11 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
         echo "TODO clean"
-        # touch ${path_extra}fake_out.RData
-        # touch ${path_extra}fake_len.RData
-        # touch ${path_log_step}fake.log
+        touch ${path_cons}extra1_out.h5
+        touch ${path_log_step}fake.log
 
-        # rm -rf ${path_extra}*out.RData
-        # rm -rf ${path_extra}*len.RData
-        # rm -f ${path_log_step}*
+        rm -rf ${path_cons}extra1*.h5
+        rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
