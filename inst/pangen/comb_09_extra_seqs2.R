@@ -132,6 +132,11 @@ for(s.comb in pref.combinations){
     v = h5read(file.comb, s.acc)
     v[is.na(v)] = 0
     breaks.acc = findBreaks(v)
+    idx.bad.orientation = which(breaks.acc$val.beg > breaks.acc$val.end)
+    if(length(idx.bad.orientation) > 0){
+      pokazAttention("Wrong orientation. Number:", length(idx.bad.orientation))
+      breaks.acc = breaks.acc[-idx.bad.orientation,,drop=F]
+    }
     breaks.init = rbind(breaks.init, breaks.acc)
   }
   
