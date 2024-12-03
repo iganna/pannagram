@@ -243,7 +243,7 @@ for(s.comb in pref.combinations){
       
       # Check length
       if(length(breaks.init$seq[i.b]) != breaks.init$len.acc[i.b]){
-        save(list = c(), file = "tmp_wrong.RData")
+        save(list = ls(), file = "tmp_wrong.RData")
         stop('Wrong sequence is taken')
       }
       
