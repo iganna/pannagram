@@ -1731,7 +1731,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.extra ${path_extra} \
             --path.cons ${path_cons} \
             --path.log ${path_log_step} \
-            --log.level ${log_level}
+            --log.level ${log_level}  \
+            --len.cutoff 25000
 
     # Done
     touch "${step_file}"

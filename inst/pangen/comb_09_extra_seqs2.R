@@ -6,7 +6,7 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
-  # library(muscle)  #BiocManager::install("muscle")
+  # library(muscle) #BiocManager::install("muscle")
   library(pannagram)
   library(igraph)
   # library(Biostrings)
@@ -26,19 +26,14 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to consensus directory", metavar="character"),
-  make_option(c("--path.chromosomes"), type="character", default=NULL, 
-              help="path to directory with chromosomes", metavar="character"),
-  make_option(c("--path.extra"), type="character", default=NULL, 
-              help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
-); 
+  make_option(c("--path.cons"),        type = "character", default = NULL, help = "path to consensus directory"),
+  make_option(c("--path.chromosomes"), type = "character", default = NULL, help = "path to directory with chromosomes"),
+  make_option(c("--path.extra"),       type = "character", default = NULL, help = "path to directory, where to combine fasta files for mafft runs"),
+  make_option(c("-c", "--cores"),      type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
+  make_option(c("--path.log"),         type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),        type = "character", default = NULL, help = "Level of log to be shown on the screen"),
+  make_option(c("--len.cutoff"),       type = "integer",   default = Inf, help = "Max break considered")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -65,17 +60,8 @@ aln.type.in = aln.type.add
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
 
-pokaz('Number of cores', num.cores)
-if(num.cores > 1){
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-}
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-# if(num.cores > 1){
-#   myCluster <- makeCluster(num.cores, type = "PSOCK") 
-#   registerDoParallel(myCluster)
-# }
+# Max length of break to consider
+len.cutoff = opt$len.cutoff
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -145,11 +131,10 @@ for(s.comb in pref.combinations){
     next
   } 
   
-  len.cutoff = 100000
   idx.extra = which(breaks.init$len.comb > len.cutoff)
   if(length(idx.extra) > 0){
     breaks.init.extra = breaks.init[idx.extra,]
-    breaks.init = breaks.init[-idx.extra,]  
+    breaks.init = breaks.init[-idx.extra,] 
   }
   
   if(nrow(breaks.init) == 0){
@@ -184,7 +169,7 @@ for(s.comb in pref.combinations){
   pokaz('Get consensus sequences')
   breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_', sprintf(format.digits, i.b)))
   breaks.init$seq = ''
-    
+  
   for(acc in accessions){
     pokaz("Accession", acc)
     # Read the chromosome
@@ -221,7 +206,7 @@ for(s.comb in pref.combinations){
       
       file.br.fasta = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
       if(!file.exists(file.br.fasta)){
-        writeFasta(s.b, file.br.fasta)  
+        writeFasta(s.b, file.br.fasta) 
       } else {
         writeFasta(s.b, file.br.fasta, append=T)
       }
@@ -230,9 +215,9 @@ for(s.comb in pref.combinations){
       file.br.idx = paste0(path.extra, breaks$id.s[i.b], '_group.txt')
       line <- paste(c(s.b.name, v.b), collapse = "\t")
       
-      con <- file(file.br.idx, open = if (file.exists(file.br.idx)) "a" else "w")  # Open the file in append mode if needed
-      writeLines(line, con = con, sep = "\n", useBytes = TRUE)                     # Write the lines
-      close(con)                                                                   # Close the connection
+      con <- file(file.br.idx, open = if (file.exists(file.br.idx)) "a" else "w") # Open the file in append mode if needed
+      writeLines(line, con = con, sep = "\n", useBytes = TRUE)           # Write the lines
+      close(con)                                  # Close the connection
       
     }
     
@@ -265,7 +250,7 @@ for(s.comb in pref.combinations){
       
       file.br.fasta = paste0(path.extra, breaks$id.s[breaks.init$gr[i.b]], '_add.fasta')
       if(!file.exists(file.br.fasta)){
-        writeFasta(s.b, file.br.fasta)  
+        writeFasta(s.b, file.br.fasta) 
       } else {
         writeFasta(s.b, file.br.fasta, append=T)
       }
@@ -276,7 +261,7 @@ for(s.comb in pref.combinations){
   pokaz('Save..')
   
   if(sum(breaks.init$seq == '') > 0) stop('Some sequences are empty')
-
+  
   file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
   # pokaz(file.breaks.info)
   save(list = c("breaks.init", "breaks"), file =file.breaks.info)
