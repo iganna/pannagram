@@ -272,9 +272,5 @@ for(s.comb in pref.combinations){
 }
 
 
-if(num.cores > 1){
-  stopCluster(myCluster)
-}
-
 warnings()
 
