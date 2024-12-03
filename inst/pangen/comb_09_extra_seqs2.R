@@ -96,7 +96,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
-for(s.comb in pref.combinations){
+for(s.comb in pref.combinations[4]){
   
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
