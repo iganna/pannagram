@@ -32,7 +32,7 @@ option_list = list(
   make_option(c("-c", "--cores"),      type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
   make_option(c("--path.log"),         type = "character", default = NULL, help = "Path for log files"),
   make_option(c("--log.level"),        type = "character", default = NULL, help = "Level of log to be shown on the screen"),
-  make_option(c("--len.cutoff"),       type = "integer",   default = Inf, help = "Max break considered"),
+  make_option(c("--len.cutoff"),       type = "integer",   default = 1e+10, help = "Max break considered"),
   make_option(c("--aln.type.in"),      type = "character", default = NULL, help = "Alignment type")
 )
 
