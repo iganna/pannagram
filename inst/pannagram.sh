@@ -84,7 +84,7 @@ do
         -accessions)   acc_file=$2;  shift 2 ;;  # file with accessions to analyse
         -combinations) comb_file=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
 
-        -extra)        extra_steps="T"  shift 1 ;;  
+        -extra)        extra_steps="T";  shift 1 ;;  
     
         *) unrecognized_options+=("$1"); shift 1 ;;
     esac
