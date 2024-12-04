@@ -39,7 +39,7 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-print(opt)
+# print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -63,6 +63,7 @@ if(is.null(aln.type.out)){
   aln.type.out = aln.type.extra1  
 }
 
+pokazAttention("Prefs of in and out files:", aln.type.in, aln.type.out)
 
 # ***********************************************************************
 # ---- Values of parameters ----

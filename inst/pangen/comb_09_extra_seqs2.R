@@ -39,7 +39,7 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-# print(opt)
+print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -56,6 +56,8 @@ aln.type.in <- opt$aln.type.in
 if(is.null(aln.type.in)){
   aln.type.in = aln.type.add  
 }
+
+pokazAttention("Prefs of in files:", aln.type.in)
 
 # ***********************************************************************
 # ---- Values of parameters ----
