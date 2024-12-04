@@ -100,6 +100,7 @@ if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
     exit 1
 fi
 
+echo "Extra ${extra_steps}"
 
 # ----------------------------------------------------------------------------
 #            MODE
@@ -1702,8 +1703,6 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 
-
-echo "Extra ${extra_steps}"
 if [[ "$extra_steps" == "F" ]]; then
     exit 0
 fi
