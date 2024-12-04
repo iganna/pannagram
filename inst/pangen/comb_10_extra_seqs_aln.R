@@ -27,19 +27,15 @@ source(system.file("pangen/synteny_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to consensus directory", metavar="character"),
-  make_option(c("--path.chromosomes"), type="character", default=NULL, 
-              help="path to directory with chromosomes", metavar="character"),
-  make_option(c("--path.extra"), type="character", default=NULL, 
-              help="path to directory, where to combine fasta files for mafft runs", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
-); 
+  make_option(c("--path.cons"),        type = "character", default = NULL, help = "path to consensus directory"),
+  make_option(c("--path.chromosomes"), type = "character", default = NULL, help = "path to directory with chromosomes"),
+  make_option(c("--path.extra"),       type = "character", default = NULL, help = "path to directory, where to combine fasta files for mafft runs"),
+  make_option(c("-c", "--cores"),      type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
+  make_option(c("--path.log"),         type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),        type = "character", default = NULL, help = "Level of log to be shown on the screen"),
+  make_option(c("--aln.type.in"),      type = "character", default = NULL, help = "Alignment type")
+);
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -57,7 +53,10 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 
 # ***********************************************************************
 
-aln.type.in = aln.type.add
+aln.type.in <- opt$aln.type.in
+if(is.null(aln.type.in)){
+  aln.type.in = aln.type.add  
+}
 
 # ***********************************************************************
 # ---- Values of parameters ----

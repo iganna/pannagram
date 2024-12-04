@@ -1706,10 +1706,10 @@ if [[ "$extra_steps" == "F" ]]; then
     exit 0
 fi
 
-pokaz_message "Extra steps are running.."
+pokaz_attention "Extra steps are running.."
 
 # ----------------------------------------------
-# Get sequences of extra long fragments
+# Get sequences of extra long fragments - 1
 
 with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
 
@@ -1753,18 +1753,10 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-
-
 # ----------------------------------------------
-# Align extra long fragments
+# Align extra long fragments - 1
 
 with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
-
-# Paths
-path_extra="${path_inter}extra_regions/"
-if [ ! -d "$path_extra" ]; then
-    mkdir -p "$path_extra"
-fi
 
 # Logs
 step_name="step${step_num}_comb_10"
@@ -1802,15 +1794,9 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
 # ----------------------------------------------
-# Insert extra long fragments
+# Insert extra long fragments - 1
 
 with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
-
-# Paths
-path_extra="${path_inter}extra_regions/"
-if [ ! -d "$path_extra" ]; then
-    mkdir -p "$path_extra"
-fi
 
 # Logs
 step_name="step${step_num}_comb_11"
@@ -1837,6 +1823,136 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_cons} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+
+# ----------------------------------------------
+# Get sequences of extra long fragments - 2
+
+with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
+
+# Paths
+path_extra="${path_inter}extra_regions2/"
+if [ ! -d "$path_extra" ]; then
+    mkdir -p "$path_extra"
+fi
+
+# Logs
+step_name="step${step_num}_comb_09"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra}fake
+        touch ${path_log_step}fake.log
+
+        rm -rf ${path_extra}*
+        # find ${path_extra} -exec rm -rf {} +
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra} \
+            --path.cons ${path_cons} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}  \
+            --len.cutoff 200000 \
+            --aln.type.in 'extra1_'
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+
+# ----------------------------------------------
+# Align extra long fragments - 2
+
+with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
+
+# Logs
+step_name="step${step_num}_comb_10"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra}fake_out.RData
+        touch ${path_extra}fake_len.RData
+        touch ${path_log_step}fake.log
+
+        rm -rf ${path_extra}*out.RData
+        rm -rf ${path_extra}*len.RData
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra} \
+            --path.cons ${path_cons} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --aln.type.in 'extra1_'
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+# ----------------------------------------------
+# Insert extra long fragments - 2
+
+with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
+
+# Logs
+step_name="step${step_num}_comb_11"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+make_dir ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        echo "TODO clean"
+        touch ${path_cons}extra1_out.h5
+        touch ${path_log_step}fake.log
+
+        rm -rf ${path_cons}extra1*.h5
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
+            --cores ${cores} \
+            --path.extra ${path_extra} \
+            --path.cons ${path_cons} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --aln.type.in 'extra1_' \
+            --aln.type.out 'extra2_'
 
     # Done
     touch "${step_file}"

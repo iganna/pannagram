@@ -32,7 +32,8 @@ option_list = list(
   make_option(c("-c", "--cores"),      type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
   make_option(c("--path.log"),         type = "character", default = NULL, help = "Path for log files"),
   make_option(c("--log.level"),        type = "character", default = NULL, help = "Level of log to be shown on the screen"),
-  make_option(c("--len.cutoff"),       type = "integer",   default = Inf, help = "Max break considered")
+  make_option(c("--len.cutoff"),       type = "integer",   default = Inf, help = "Max break considered"),
+  make_option(c("--aln.type.in"),      type = "character", default = NULL, help = "Alignment type")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -51,7 +52,10 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 
 # ***********************************************************************
 
-aln.type.in = aln.type.add
+aln.type.in <- opt$aln.type.in
+if(is.null(aln.type.in)){
+  aln.type.in = aln.type.add  
+}
 
 # ***********************************************************************
 # ---- Values of parameters ----
