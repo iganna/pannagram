@@ -1808,7 +1808,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        echo "TODO clean"
         touch ${path_cons}extra1_out.h5
         touch ${path_log_step}fake.log
 
@@ -1936,7 +1935,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        echo "TODO clean"
         touch ${path_cons}extra2_out.h5
         touch ${path_log_step}fake.log
 
