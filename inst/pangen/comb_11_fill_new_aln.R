@@ -192,6 +192,10 @@ for(s.comb in pref.combinations){
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
     
+    if(acc == '220011'){
+      save(list = ls(), file =paste0(path.extra, "tmp_220011.RData"))
+    }
+    
     v.new = rep(0, len.new)
     v.new[pos.transfer[,2]] = v[pos.transfer[,1]]
     
