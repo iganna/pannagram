@@ -191,7 +191,7 @@ for(s.comb in pref.combinations){
 
     pokaz(file.comb)
     if(acc == '220011'){
-      save(list = ls(), file =paste0(path.extra, "tmp_220011.RData"))
+      next
     }
     
     s.acc = paste0(gr.accs.e, acc)
@@ -206,6 +206,9 @@ for(s.comb in pref.combinations){
         file.br.out <- paste0(path.extra, breaks$id.s[i.b], '_out.RData')
         load(file.br.out) # idx.new and msa.new
         v.new[breaks$new.beg[i.b]:breaks$new.end[i.b]] <- idx.new[acc, ]
+        
+        rm(idx.new)
+        rm(msa.new)
       }
     } else {
       # Number of cores
@@ -230,9 +233,6 @@ for(s.comb in pref.combinations){
       stopCluster(myCluster)
     }
     
-    
-    rm(idx.new)
-    rm(msa.new)
     gc()
     
     if((sum(v.new != 0) + 1) != length(unique(v.new))) stop("Duplicates are found")
