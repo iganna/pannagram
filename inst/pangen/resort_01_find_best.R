@@ -5,6 +5,7 @@ suppressMessages({
   library(doParallel)
   library(optparse)
   library(pannagram)
+  library(crayon)
 })
 
 # ***********************************************************************

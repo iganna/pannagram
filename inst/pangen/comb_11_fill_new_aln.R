@@ -184,15 +184,8 @@ for(s.comb in pref.combinations){
   pos.transfer = cbind(1:length(new.idx), new.idx)
   pos.transfer = pos.transfer[pos.transfer[,2] != 0,, drop = F]
   
-  
-  
   for(acc in accessions){
     pokaz('Accessions', acc)
-
-    pokaz(file.comb)
-    if(acc == '220011'){
-      next
-    }
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
