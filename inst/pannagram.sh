@@ -1702,6 +1702,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 
+
+echo "Extra ${extra_steps}"
 if [[ "$extra_steps" == "F" ]]; then
     exit 0
 fi
