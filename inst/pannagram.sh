@@ -28,6 +28,8 @@ one_step="F"
 purge_reps="F"
 rm_inter="F"  # remove intermediate files
 
+extra_steps="F"  # run extra steps
+
 unrecognized_options=()
 
 step_start=0
@@ -81,6 +83,8 @@ do
 
         -accessions)   acc_file=$2;  shift 2 ;;  # file with accessions to analyse
         -combinations) comb_file=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
+
+        -extra)        extra_steps="T"  shift 1 ;;  
     
         *) unrecognized_options+=("$1"); shift 1 ;;
     esac
@@ -1695,6 +1699,14 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# ----------------------------------------------
+
+if [[ "$extra_steps" == "F" ]]; then
+    exit 0
+fi
+
+pokaz_message "Extra steps are running.."
 
 # ----------------------------------------------
 # Get sequences of extra long fragments
