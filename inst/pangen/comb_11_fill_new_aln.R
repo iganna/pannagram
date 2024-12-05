@@ -232,7 +232,7 @@ for(s.comb in pref.combinations){
     if((sum(v.new != 0) + 1) != length(unique(v.new))){
       stop("Duplicates are found")
     } 
-    
+
     pokaz('Save new...')
     suppressMessages({
       h5write(v.new, file.out, s.acc)
