@@ -273,15 +273,16 @@ for(s.comb in pref.combinations){
     
   # save(list = ls(), file = "tmp_workspace.RData")
 
+  for(i in setdiff(1:length(aln.seqs), idx.short)){
+    aln.seqs[i] <- list(NULL)
+  }
+  
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
   pokaz(n.null, length(idx.short))
   if(n.null != length(idx.short)) {
-    pokazAttention('fix short')
-    for(i in setdiff(1:length(aln.seqs), idx.short)){
-      aln.seqs[i] <- list(NULL)
-    }
+    # pokazAttention('fix short')
     # save(list = ls(), file = "tmp_wrong_number_of_short.RData")
-    # stop('Wrong number of short') 
+    stop('Wrong number of short')
   }
   
   all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names", "idx.short", "accessions")
