@@ -131,7 +131,10 @@ for(s.comb in pref.combinations){
   if(sum(length(idx.singl) + 
          length(idx.short) + 
          length(idx.large) + 
-         length(idx.extra)) != nrow(breaks)) stop('Chrckpoint7')
+         length(idx.extra)) != nrow(breaks)) {
+    save(list = ls(), file = "tmp_wrong_Chrckpoint7.RData")
+    stop('Chrckpoint7')
+  } 
   
   # Names of files
   n.digits <- nchar(as.character(nrow(breaks)))
