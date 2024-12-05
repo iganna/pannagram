@@ -228,7 +228,10 @@ for(s.comb in pref.combinations){
     
     gc()
     
-    if((sum(v.new != 0) + 1) != length(unique(v.new))) stop("Duplicates are found")
+    if((sum(v.new != 0) + 1) != length(unique(v.new))){
+      save(list = ls(), file ="tmp_workspace_dup.RData")
+      stop("Duplicates are found")
+    } 
     
     pokaz('Save new...')
     suppressMessages({
