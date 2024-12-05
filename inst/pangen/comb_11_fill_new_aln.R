@@ -229,6 +229,7 @@ for(s.comb in pref.combinations){
     gc()
     
     if((sum(v.new != 0) + 1) != length(unique(v.new))){
+      pokaz('Problem...')
       save(list = ls(), file ="tmp_workspace_dup.RData")
       stop("Duplicates are found")
     } 
