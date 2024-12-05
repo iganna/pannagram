@@ -189,6 +189,7 @@ for(s.comb in pref.combinations){
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
+    v[is.na(v)] = 0
     
     v.new = rep(0, len.new)
     v.new[pos.transfer[,2]] = v[pos.transfer[,1]]
