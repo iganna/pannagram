@@ -1661,43 +1661,43 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # ----------------------------------------------
 # Add synteny positions which were lost
 
-with_level 1 pokaz_stage "Step ${step_num}. Add synteny positions which were lost."
+# with_level 1 pokaz_stage "Step ${step_num}. Add synteny positions which were lost."
 
-# Paths
-path_extra="${path_inter}extra_regions/"
-if [ ! -d "$path_extra" ]; then
-    mkdir -p "$path_extra"
-fi
+# # Paths
+# path_extra="${path_inter}extra_regions/"
+# if [ ! -d "$path_extra" ]; then
+#     mkdir -p "$path_extra"
+# fi
 
-# Logs
-step_name="step${step_num}_comb_08"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+# # Logs
+# step_name="step${step_num}_comb_08"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# make_dir ${path_log_step}
 
-# Start
-if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# # Start
+# if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # ---- Clean up the output folders ----
-    if   [ "$clean" == "T" ]; then 
-        touch ${path_cons}aln_fake_h5
-        touch ${path_log_step}fake.log
+#     # ---- Clean up the output folders ----
+#     if   [ "$clean" == "T" ]; then 
+#         touch ${path_cons}aln_fake_h5
+#         touch ${path_log_step}fake.log
 
-        rm -f ${path_cons}aln*h5
-        rm -f ${path_log_step}*
-    fi  
+#         rm -f ${path_cons}aln*h5
+#         rm -f ${path_log_step}*
+#     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_08_insert_back.R  \
-            --cores ${cores} \
-            --path.cons ${path_cons} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level}
+#     Rscript $INSTALLED_PATH/pangen/comb_08_insert_back.R  \
+#             --cores ${cores} \
+#             --path.cons ${path_cons} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level}
 
-    # Done
-    touch "${step_file}"
-fi
+#     # Done
+#     touch "${step_file}"
+# fi
 
-source $INSTALLED_PATH/utils/chunk_step_done.sh
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ----------------------------------------------
 
@@ -1744,7 +1744,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_cons} \
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
-            --len.cutoff 25000
+            --len.cutoff 25000 \
+            --aln.type.in 'msa_'
 
     # Done
     touch "${step_file}"
@@ -1783,7 +1784,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.extra ${path_extra} \
             --path.cons ${path_cons} \
             --path.log ${path_log_step} \
-            --log.level ${log_level}
+            --log.level ${log_level} \
+            --aln.type.in 'msa_'
 
     # Done
     touch "${step_file}"
@@ -1820,7 +1822,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.extra ${path_extra} \
             --path.cons ${path_cons} \
             --path.log ${path_log_step} \
-            --log.level ${log_level}
+            --log.level ${log_level} \
+            --aln.type.in 'msa_'
 
     # Done
     touch "${step_file}"
