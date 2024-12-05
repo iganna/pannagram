@@ -129,9 +129,9 @@ for(s.comb in pref.combinations){
   # ----
   
   # IMPORTANT: THERE ARE SOME BREAKS WITH LOOK LIKE SINGLETONS< BUT THEY ARE NOT
-  # if(sum(length(idx.singl) + 
-  #        length(idx.short) + 
-  #        length(idx.large) + 
+  # if(sum(length(idx.singl) +
+  #        length(idx.short) +
+  #        length(idx.large) +
   #        length(idx.extra)) != nrow(breaks)) {
   #   save(list = ls(), file = "tmp_wrong_Chrckpoint7.RData")
   #   stop('Chrckpoint7')
@@ -276,9 +276,12 @@ for(s.comb in pref.combinations){
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
   pokaz(n.null, length(idx.short))
   if(n.null != length(idx.short)) {
-    
-    save(list = ls(), file = "tmp_wrong_number_of_short.RData")
-    stop('Wrong number of short') 
+    pokazAttention('fix short')
+    for(i in setdiff(1:length(aln.seqs), idx.short)){
+      aln.seqs[i] <- list(NULL)
+    }
+    # save(list = ls(), file = "tmp_wrong_number_of_short.RData")
+    # stop('Wrong number of short') 
   }
   
   all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names", "idx.short", "accessions")
