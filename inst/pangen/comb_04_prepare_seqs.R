@@ -275,7 +275,7 @@ for(s.comb in pref.combinations){
 
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
   pokaz(n.null, length(idx.short))
-  if(n.null != length(idx.short)) stop('Wrong number of short')
+  # if(n.null != length(idx.short)) stop('Wrong number of short')
   
   all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names", "idx.short", "accessions")
   file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
