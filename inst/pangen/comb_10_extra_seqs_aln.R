@@ -723,7 +723,7 @@ for(s.comb in pref.combinations[4]){
   
   max.tile.loop = 600
   if(num.cores == 1){
-    for(i.b in 1:nrow(breaks)){
+    for(i.b in 1:nrow(breaks)[12]){
       tryCatch({
         # Set a timeout of 600 seconds (10 minutes) for the function execution
         withTimeout({
@@ -766,12 +766,4 @@ warnings()
 # ***********************************************************************
 # ---- Manual testing ----
 
-if(F){
-  
-  library(rhdf5)
-  path.cons = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/consensus/'
-  path.mafft.in = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/mafft_in/'
-  path.chromosomes = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/chromosomes/'
-  
-}
 
