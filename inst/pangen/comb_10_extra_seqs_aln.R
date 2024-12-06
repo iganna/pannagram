@@ -193,7 +193,6 @@ for(s.comb in pref.combinations[4]){
     
     
     for(irow in 1:nrow(breaks.tmp)){
-      # if(irow == 152) stop()
       pokaz("Dim mx.cons", dim(mx.cons), dim(idx.cons))
       # for(irow in 54:nrow(breaks.tmp)){
       pokaz('irow', irow, '/', nrow(breaks.tmp))
@@ -723,16 +722,23 @@ for(s.comb in pref.combinations[4]){
   
   max.tile.loop = 600
   if(num.cores == 1){
-    # for(i.b in 1:nrow(breaks)){
-    for(i.b in 12:12){
+    for(i.b in 1:nrow(breaks)){
+    # for(i.b in 12:12){
       tryCatch({
         # Set a timeout of 600 seconds (10 minutes) for the function execution
         withTimeout({
           loop.function(i.b, breaks, echo.loop = echo.loop)
         }, timeout = max.tile.loop)
-      }, TimeoutException = function(ex) {
+      }, 
+      TimeoutException = function(ex) {
+        # Handle timeout exception
         pokazAttention("Timeout reached for i.b = %d. Skipping to the next iteration.", i.b)
+      }, 
+      error = function(err) {
+        # Handle other types of errors
+        pokazAttention("An error occurred for i.b = %d: %s. Skipping to the next iteration.", i.b, err$message)
       })
+      
     }
   } else {
     # Set the number of cores for parallel processing
@@ -746,15 +752,21 @@ for(s.comb in pref.combinations[4]){
                       withTimeout({
                         loop.function(i.b, breaks, echo.loop = echo.loop)
                       }, timeout = max.tile.loop)
-                    }, TimeoutException = function(ex) {
+                    }, 
+                    TimeoutException = function(ex) {
+                      # Handle timeout exception
                       pokazAttention("Timeout reached for i.b = %d. Skipping to the next iteration.", i.b)
-                      return(NULL) # Return NULL for skipped tasks
+                      return(NULL)
+                    }, 
+                    error = function(err) {
+                      # Handle other types of errors
+                      pokazAttention("An error occurred for i.b = %d: %s. Skipping to the next iteration.", i.b, err$message)
+                      return(NULL) 
                     })
+                    
                   }
     stopCluster(myCluster)
   }
-  
-  
   
   H5close()
   gc()
