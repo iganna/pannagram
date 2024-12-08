@@ -88,6 +88,11 @@ loop.function <- function(f.in,
   seqs = readFasta(paste0(path.mafft.in, f.in))
   seqs.clean = seq2clean(seqs,n.flank)
   
+  seqs.clean = seqs.clean[nchar(seqs.clean) > 7]
+  if(length(seqs.clean) < 2) {
+    pokazAttention('Not enough sequences to align')
+    return()
+  }
   
   path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
   pokaz(path.work)
@@ -101,6 +106,8 @@ loop.function <- function(f.in,
   
   file.out = paste0(path.mafft.out, sub('.fasta', '', basename(f.in)), "_aligned2.fasta")
   writeFasta(alignment.seq, file.out)
+  
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   
 }
 

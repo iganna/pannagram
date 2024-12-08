@@ -197,8 +197,7 @@ loop.function <- function(i.comb,
   rmSafe(s)
   rmSafe(pos.beg)
   rmSafe(seqs.score)
-  pokaz('Done.',
-        file=file.log.loop, echo=echo.loop)
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
 }
 
 # ***********************************************************************
