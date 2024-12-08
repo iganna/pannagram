@@ -178,6 +178,10 @@ for(s.comb in pref.combinations){
   # warnings()
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
+  
+  
+  save(list = ls(), file ="tmp_workspace_wrong_length.RData")
+  
   # Skip if some are shorter than the initial aligned block
   idx.confusing = which(mafft.res$extra < 0)
   if(length(idx.confusing) > 0){
