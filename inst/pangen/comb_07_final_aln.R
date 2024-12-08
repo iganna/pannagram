@@ -186,12 +186,10 @@ for(s.comb in pref.combinations){
   idx.confusing = which(mafft.res$extra < 0)
   if(length(idx.confusing) > 0){
     pokazAttention('Long: Wrong lengths of alignment and gaps')
-    pokazAttention("Confusing:", idx.confusing)
+    pokazAttention("N confusing:", length(idx.confusing))
     
     mafft.res = mafft.res[-idx.confusing,,drop=F]
     mafft.aln.pos = mafft.aln.pos[-idx.confusing]
-    mafft.res$len = mafft.res$len[-idx.confusing]
-    mafft.res$extra = mafft.res$extra[-idx.confusing]
   } 
   # if(min(mafft.res$extra) < 0) stop()
   mafft.res$extra[mafft.res$extra < 0] = 0
@@ -256,9 +254,6 @@ for(s.comb in pref.combinations){
   n.shift[msa.res$ref.pos$end] = msa.res$extra  # Short extra
   n.shift[single.res$ref.pos$end] = single.res$extra # Singletons extra
   n.shift = cumsum(n.shift)
-  
-  
-  save(list = ls(), file = paste0("tmp_workspace1_",s.comb,".RData"))
   
   fp.main = (1:base.len) + n.shift
   
@@ -337,8 +332,11 @@ for(s.comb in pref.combinations){
   base.len.aln = max(fp.main)
   
   # Check-points
-  fp.add = c(unlist(fp.single),unlist(fp.short),unlist(fp.long))
-  if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) stop('Something if wrotng with positions; Point A')
+  fp.add = c(unlist(fp.single), unlist(fp.short), unlist(fp.long))
+  if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) {
+    save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
+    stop('Something if wrotng with positions; Point A')
+  } 
   # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
   
   

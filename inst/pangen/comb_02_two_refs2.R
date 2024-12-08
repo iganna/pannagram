@@ -105,10 +105,13 @@ loop.function <- function(s.comb,
     if(v.idx.trust %in% h5ls(file.comb0)$name) {
       file.comb0 = file.res
     } else {
-      # TODO delete file
+      # delete file
+      file.remove(file.res)
     }
     
-  } else {
+  } 
+  
+  if(!file.exists(file.res)){
     h5createFile(file.res)
     h5createGroup(file.res, gr.accs.e)
   }
@@ -118,11 +121,12 @@ loop.function <- function(s.comb,
   
   # Get the corresponsing function between two references
   
-  s.ref1 = paste0(gr.accs.e, '', ref1)
-  f01 <- h5read(file.comb0, s.ref1)
-  idx01.b = f01 != 0
-  idx01 = which(idx01.b)  # idx which we trust
-  f01 = f01[idx01]
+  s.ref0 = paste0(gr.accs.e, ref0)
+  s.ref1 = paste0(gr.accs.e, ref1)
+  f01 <- cbind(h5read(file.comb0, s.ref0), h5read(file.comb0, s.ref1))
+  len.aln = nrow(f01)
+  f01 = f01[f01[,1] != 0,,drop=F]
+  f01 = f01[f01[,2] != 0,,drop=F]
   
   # Get accessions to combine
   groups0 = h5ls(file.comb0)
@@ -154,26 +158,14 @@ loop.function <- function(s.comb,
     
     # Data from the main reference
     v0 = h5read(file.comb0, s)
-
-    v.final = v0
-    v.final[idx01] = 0 
-    v0 = v0[idx01]
-    pokaz('Vector of meaningfull positions', length(v0), file=file.log.loop, echo=echo.loop)
-    
-    
-    # Data from the second reference
     v1 = h5read(file.comb1, s)
-    v.final[v.final %in% v1] = 0
-    pokaz('Vector in the ref1 file', length(v1), file=file.log.loop, echo=echo.loop)
-    pokaz('Length of function', length(f01), file=file.log.loop, echo=echo.loop)
-    v01 = v1[abs(f01)] * sign(f01)
+    v.final = v0
+    v.final[f01[,1]] = 0
     
-    v0[(v0 != v01) & (v01 != 0)] = 0
-    
-    pokaz('Length of resultant correspondence', length(v01), file=file.log.loop, echo=echo.loop)
-    pokaz('Sum of matches', sum(v01 != 0), file=file.log.loop, echo=echo.loop)
-    
-    v.final[idx01] = v0
+    v0 = v0[f01[,1]]
+    v1 =  v1[abs(f01[,2])] * sign(f01[,2])
+    v0[v1 != v0] = 0
+    v.final[f01[,1]] = v0
     
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
     if(length(dup.value > 0)){
@@ -196,26 +188,12 @@ loop.function <- function(s.comb,
     
     if(v.idx.trust %in% h5ls(file.res)$name) {
       idx.trust = h5read(file.res, v.idx.trust)
-      
-      pokaz('length prev', length(idx.trust) )
-      pokaz('length new', length(idx01.b))
-      if(length(idx.trust) == length(idx01.b)){
-        
-        idx.trust = idx.trust + idx01.b * 1
-        h5write(idx.trust, file.res, v.idx.trust)
-        
-      } else {
-        file.remove(file.res)
-        pokazAttention('This step has an error, run again!')
-        log_files <- list.files(path = path.log, pattern = "\\.log$", full.names = TRUE)
-        file.remove(log_files)
-        stop('Wring length of trust positions')
-      }
     } else {
-      idx.trust = 0
-      idx.trust = idx.trust + idx01.b * 1
-      h5write(idx.trust, file.res, v.idx.trust)
+      idx.trust = rep(0, len.aln)
     }
+    
+    idx.trust[f01[,1]] = idx.trust[f01[,1]] + 1
+    h5write(idx.trust, file.res, v.idx.trust)
     
   })
   

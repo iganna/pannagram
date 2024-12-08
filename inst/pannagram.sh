@@ -1345,7 +1345,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
             rm -f ${path_log_step}*
         fi  
 
-        Rscript $INSTALLED_PATH/pangen/comb_02_two_refs.R \
+        Rscript $INSTALLED_PATH/pangen/comb_02_two_refs2.R \
                 --path.cons ${path_cons} \
                 --ref0 ${ref0} \
                 --ref1 ${ref1} \
