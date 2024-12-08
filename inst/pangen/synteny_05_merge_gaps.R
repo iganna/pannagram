@@ -190,13 +190,16 @@ loop.function <- function(f.maj,
   # Length of the base chromosome
   # max.chr.len = max(max(x.sk$V4), max(x.sk$V5)) + 10^6  # length of the reference genome
   
-  save(list = ls(), file = "tmp_workspace_chr.RData")
+  
   
   file.acc.len = paste0(path.chr, base.acc, '_chr_len.txt', collapse = '')
   if(!file.exists(file.acc.len)){
     stop('Chromosole length file is nor provided!')
   }
   chr.len = read.table(file.acc.len, stringsAsFactors = F, header = 1)
+  
+  save(list = ls(), file = "tmp_workspace_chr.RData")
+  
   max.chr.len = chr.len[as.numeric(base.chr)]
   pokaz('Length of the reference chromosome is ', max.chr.len)
   
