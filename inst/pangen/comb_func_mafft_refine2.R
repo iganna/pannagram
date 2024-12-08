@@ -19,14 +19,16 @@ refineAlignment <- function(seqs.clean, path.work){
   
   n.seqs = length(seqs.clean)
   
-  # # ---- Distance matrix ----
+  # ---- Distance matrix ----
   # 
   # dist.mx = calсDistAln(seqs.mx)
   dist.mx = calcDistKmer(seqs.clean)
-  # 
-  # # ---- Clustering ----
+  
+  save(list = ls(), file = "tmp_workspace_refine_aln.RData")
+  
+  # ---- Clustering ----
   hc = hclust(as.dist(dist.mx))
-  # 
+  
   sim.cutoff = 0.1
   clusters <- cutree(hc, h = sim.cutoff) # 0.1 was before
   
