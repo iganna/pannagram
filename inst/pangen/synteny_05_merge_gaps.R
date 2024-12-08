@@ -187,8 +187,10 @@ loop.function <- function(f.maj,
   
   pokaz('after skeleton')
   
-  # TODO: put real lengths, not approximations
+  # Length of the base chromosome
   # max.chr.len = max(max(x.sk$V4), max(x.sk$V5)) + 10^6  # length of the reference genome
+  
+  save(list = ls(), file = "tmp_workspace_chr.RData")
   
   file.acc.len = paste0(path.chr, base.acc, '_chr_len.txt', collapse = '')
   if(!file.exists(file.acc.len)){
@@ -518,7 +520,7 @@ loop.function <- function(f.maj,
   # x.sk1 = x.res
   # x.sk1 = x.bw
   
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
   
   rownames(x.sk1) = NULL
   pos.q.occup = rep(0, max.chr.len)
