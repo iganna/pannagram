@@ -24,7 +24,7 @@ refineAlignment <- function(seqs.clean, path.work){
   # dist.mx = calсDistAln(seqs.mx)
   dist.mx = calcDistKmer(seqs.clean)
   
-  save(list = ls(), file = "tmp_workspace_refine_aln.RData")
+  # save(list = ls(), file = "tmp_workspace_refine_aln.RData")
   
   # ---- Clustering ----
   hc = hclust(as.dist(dist.mx))
