@@ -5,11 +5,8 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
+  library('pannagram')
 })
-
-source(system.file("utils/utils.R", package = "pannagram"))
-
-
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -119,6 +116,15 @@ loop.function <- function(s.comb, echo = T){
   
   pokaz('* Combination', s.comb)
   
+  # Log files
+  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
+  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
+  
+  # Check log Done
+  if(checkDone(file.log.loop)) return(NULL)
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  
   # Get accessions
   file.comb = paste0(path.cons, aln.type, s.comb, ref.suff, '.h5')
   
@@ -179,6 +185,7 @@ loop.function <- function(s.comb, echo = T){
     rmSafe(idx.plus)
     rmSafe(idx.mins)
     gc()
+    
   }
   
   suppressMessages({
@@ -212,6 +219,7 @@ loop.function <- function(s.comb, echo = T){
   H5close()
   gc()
   
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
 }
 
 
@@ -228,7 +236,7 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+  foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon', 'pannagram'))  %dopar% { 
     tmp = loop.function(s.comb)
     return(tmp)
   }
