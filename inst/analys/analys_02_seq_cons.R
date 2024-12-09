@@ -65,8 +65,18 @@ if (!is.null(opt$aln.type)) {
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
+# Paths
+if(!dir.exists(path.cons)){
+  stop(paste('The consensus folder does not exist:', path.cons))
+}
+
 path.seq = paste0(path.cons, 'seq/')
-if (!dir.exists(path.seq)) dir.create(path.seq)
+if (!dir.exists(path.seq)){
+  dir.create(path.seq)
+} 
+if (!dir.exists(path.seq)){
+  stop(paste0('The output folder was not created'))
+} 
 
 # ---- Testing ----
 # 
