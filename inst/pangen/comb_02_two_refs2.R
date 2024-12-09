@@ -111,7 +111,7 @@ loop.function <- function(s.comb,
     
   } 
   
-  poka("Files", file.comb0, file.comb1)
+  pokaz("Files", file.comb0, file.comb1)
   
   if(!file.exists(file.res)){
     h5createFile(file.res)
