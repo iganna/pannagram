@@ -232,7 +232,7 @@ warnings()
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
 
-stop('TEST')
+# stop('TEST')
 
 # ***********************************************************************
 # ---- Manual testing ----
