@@ -1321,6 +1321,8 @@ with_level 1 pokaz_stage "MGA is strting..  (^>^)"
 
 with_level 1 pokaz_stage "Step ${step_num}. Randomisation of references.." 
 
+flag_first=true
+
 ref0=${refs_all[0]}
 for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
@@ -1337,12 +1339,14 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         with_level 1 pokaz_attention "Combine two references: ${ref0} and ${ref1}.."  # SHOULD BE INSIDE THE LOOP
         
         # ---- Clean up the output folders ----
-        if   [ "$clean" == "T" ]; then 
+        if [ "$clean" == "T" ] && [ "$flag_first" == "true" ]; then 
             touch ${path_cons}comb_fake.h5
             touch ${path_log_step}fake.log
 
             rm -f ${path_cons}comb*h5
             rm -f ${path_log_step}*
+
+            flag_first=false
         fi  
 
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs2.R \
