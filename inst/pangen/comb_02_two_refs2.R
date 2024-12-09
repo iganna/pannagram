@@ -101,7 +101,7 @@ loop.function <- function(s.comb,
   # Combined file. If it exists, then use it for the growing correspondence
   file.res = paste0(path.cons, aln.type.out, s.comb, '.h5')
   if(file.exists(file.res)){
-    
+    stop()
     if(v.idx.trust %in% h5ls(file.comb0)$name) {
       file.comb0 = file.res
     } else {
@@ -137,7 +137,7 @@ loop.function <- function(s.comb,
   accessions = intersect(groups0$name[groups0$group == gr.accs.b], 
                          groups1$name[groups1$group == gr.accs.b])  # full name of accessions
   
-  pokaz(accessions)
+  pokaz('Number of accessions', length(accessions))
   for(acc in accessions){
     
     # Log files
