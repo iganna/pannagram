@@ -159,7 +159,7 @@ if [ "$run_seq" = true ]; then
     Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
-        --path.chromosomes ${path_chromosomes} \
+        --path.chr ${path_chromosomes} \
         --aln.type ${aln_type} \
         --cores ${cores}
 fi

@@ -14,11 +14,11 @@ source(system.file("utils/utils.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--ref.pref"), type = "character", default = NULL, help = "prefix of the reference file"),
-  make_option(c("--path.chromosomes"), type = "character", default = NULL, help = "path to directory with chromosomes"),
-  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, help = "number of cores to use for parallel processing"),
-  make_option(c("--aln.type"), type = "character", default = "default", help = "type of alignment ('msa_', 'comb_', 'v_', etc)")
+  make_option(c("--ref.pref"),    type = "character", default = NULL, help = "prefix of the reference file"),
+  make_option(c("--path.chr"),    type = "character", default = NULL, help = "path to directory with chromosomes"),
+  make_option(c("--path.cons"),   type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option(c("-c", "--cores"), type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
+  make_option(c("--aln.type"),    type = "character", default = NULL, help = "type of alignment ('msa_', 'comb_', 'extra1_', etc)")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -60,6 +60,7 @@ if (!is.null(opt$aln.type)) {
   aln.type = opt$aln.type
 } else {
   aln.type = aln.type.msa
+  pokazAttention('The defaul anighment type is used:', aln.type)
 }
 
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
@@ -131,7 +132,6 @@ loop.function <- function(s.comb, echo = T){
   h5createFile(file.seq)
   h5createGroup(file.seq, gr.accs.e)
   
-  
   mx.consensus = NULL
   idx.negative = c()
   for(acc in accessions){
@@ -144,7 +144,11 @@ loop.function <- function(s.comb, echo = T){
     }
     
     q.chr = strsplit(s.comb, '_')[[1]][1]
-    genome = readFastaMy(paste0(path.chromosomes, acc, '_chr', q.chr, '.fasta'))
+    file.chr = paste0(path.chromosomes, acc, '_chr', q.chr, '.fasta')
+    if(!file.exists(file.chr)){
+      stop(paste0('Chromosomal file was not found', file.chr))
+    }
+    genome = readFasta(file.chr)
     genome = seq2nt(genome)
     genome = toupper(genome)
   
