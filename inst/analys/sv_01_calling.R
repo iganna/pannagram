@@ -6,11 +6,10 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
+  library(pannagram)
 })
 
-source(system.file("utils/utils.R", package = "pannagram"))
-
-pokazAttention('Be sure, that consensus sequence for the pangenome chromosomes have been generated')
+pokazAttention('Make sure that the consensus sequences for the pangenome chromosomes have been generated.')
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -93,11 +92,10 @@ cutoff = 0.90
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
-pokaz(s.pattern)
+# pokaz(s.pattern)
 pokaz(path.cons)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-
-pokaz(files)
+# pokaz(files)
 
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub(ref.suff, "", pref.combinations)
@@ -121,7 +119,8 @@ for(s.comb in pref.combinations){
   
   # Get file for the combination
   file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
-  pokaz(file.comb)
+  if(!file.exists(file.comb)) stop('Alignment file does not exist')
+  pokaz('Alignment file', file.comb)
   
   # Get accessions
   groups = h5ls(file.comb)
@@ -340,7 +339,8 @@ for(s.comb in pref.combinations){
   i.chr = comb2ref(s.comb)
   pokaz('Chromosome', i.chr)
   file.chr = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
-  s.chr = readFastaMy(file.chr)
+  if(!file.exists(file.chr)) stop(paste0('File with the consensus sequence does not exist:', file.chr))
+  s.chr = readFasta(file.chr)
   s.chr = seq2nt(s.chr)
   
   # Small sequences  
@@ -376,8 +376,8 @@ for(s.comb in pref.combinations){
   pokaz('Number of small sequences', length(seqs.small))
 }
 
-writeFastaMy(seqs.small, file.sv.small)
-writeFastaMy(seqs.big, file.sv.big)
+writeFasta(seqs.small, file.sv.small)
+writeFasta(seqs.big, file.sv.big)
 
 
 # ---- GFF densities ----

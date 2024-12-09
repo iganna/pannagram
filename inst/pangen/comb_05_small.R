@@ -106,7 +106,7 @@ for(s.comb in pref.combinations){
   # Log files
   file.log.loop = paste0(path.log, 'loop_file_', s.comb, '.log')
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop)) 
-  if(checkDone(file.log.loop)) return()    # Check log Done
+  if(checkDone(file.log.loop)) next   # Check log Done
   
   # --- --- --- --- --- --- --- --- --- --- ---
   

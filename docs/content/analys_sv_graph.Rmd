@@ -20,7 +20,6 @@ library(network)
 ```{r}
 path.out = "/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/"
 
-
 path.cons = paste(path.out, 'intermediate/consensus/', sep = '')  # the result of pannagram
 path.figures = paste(path.out, 'figures/', sep = '')
 
@@ -78,29 +77,86 @@ color.pal <- c("0-100" = "#1f77b4", "100-200" = "#50B498", "200-400" = "#2ca02c"
 
 ```
 
-### With labels
+### Remove one the biggest component and some the smallest
 ```{r}
-
-g.names = network.vertex.names(g)
 
 g.comp <- getGraphComponents(g.content$edges)
 memb.comp = g.comp$membership
-memb.comp = memb.comp[g.comp$csize[memb.comp] >= 5]
-memb.comp = memb.comp[!duplicated(memb.comp)]
+
+id.big = which.max(g.comp$csize)
+sv.name.big = names(g.comp$membership)[g.comp$membership == id.big]
+
+g.content$edges.small = g.content$edges[!(g.content$edges[,1] %in% sv.name.big),]
+
+idx.moderate = which(g.comp$csize >= 4)
+sv.name.moderate = names(g.comp$membership)[g.comp$membership %in% idx.moderate]
+
+g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.name.moderate),]
+
+
+# Only the inresesting length range
+len.max = 400
+
+sv.len.tmp = as.numeric(sapply(names(g.comp$membership), function(s) strsplit(s, '\\|')[[1]][2]))
+tmp = tapply(sv.len.tmp, g.comp$membership, max)
+
+comp.get = tmp[tmp <= len.max]
+comp.get = as.numeric(names(comp.get))
+sv.get = names(g.comp$membership)[g.comp$membership %in% comp.get]
+g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.get),]
+
+lin.min = 200
+tmp = tapply(sv.len.tmp, g.comp$membership, min)
+
+comp.get = tmp[tmp >= lin.min]
+comp.get = as.numeric(names(comp.get))
+sv.get = names(g.comp$membership)[g.comp$membership %in% comp.get]
+g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.get),]
+
+
+```
+
+#### Plot small component
+```{r}
+
+g.sm <- network(g.content$edges.small, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+b.graph.names = network.vertex.names(g.sm)
+set.seed(239)
+p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
+            # node.size = g.nodes.cnt[b.graph.names],
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            # color = g.nodes.fam[b.graph.names],
+            # palette = fam.palette,
+            # mode = "kamadakawai"
+            )
+
+p.sm
+
+```
+
+### With labels
+```{r}
+
+g.names = network.vertex.names(g.sm)
+
+g.comp <- getGraphComponents(g.content$edges.small)
+memb.comp = g.comp$membership
 
 g.label = rep('', length(g.names))
 names(g.label) = g.names
 g.label[names(memb.comp)] = as.character(memb.comp)
+g.label[duplicated(g.label)] = ''
 
-
-g %v% "labels" = g.label
+g.sm %v% "labels" = g.label
 
 g.names.len = as.numeric(sapply(g.names, function(s) strsplit(s, '\\|')[[1]][2]))
 g.names.len.bin <- as.character(cut(g.names.len, breaks = bins, right = FALSE, labels = labels))
-g %v% "colors" = as.character(g.names.len.bin)
+g.sm %v% "colors" = as.character(g.names.len.bin)
 
 
-p <- ggnet2(g, label = 'labels', edge.color = "grey70", 
+p <- ggnet2(g.sm, label = 'labels', edge.color = "grey70", 
             # node.size = g.content$nodes.traits[g.part.sub.big.names,]$cnt, 
             # color = g.content$nodes.traits[g.part.sub.big.names,]$type,
             # mode = 'kamadakawai',
@@ -112,17 +168,73 @@ p <- ggnet2(g, label = 'labels', edge.color = "grey70",
   guides(size = F)
 p
 
-# pdf(paste(path.figures, 'graph_all_svs_all_small_comp_label.pdf', sep = ''), width = 6, height = 5)
-# print(p)     # Plot 1 --> in the first page of PDF
-# dev.off()
-
 ```
+
 
 # Get sequences from every component
 ## Read sequence
 ```{r}
 seqs = readFasta(paste0(path.sv, 'seq_sv_big.fasta'))
 ```
+
+
+```{r}
+i.comp = 48
+i.seq = which(memb.comp == i.comp)
+
+names.comp = names(memb.comp)[i.seq]
+
+s = seqs[names.comp[2]]
+dotself.s(s, 15, 12)
+
+dotself.s(s, 15, 8)
+
+dotplot.s(s, s, 15, 8)
+
+```
+```{r}
+
+comp.used = unique(g.comp$membership[b.graph.names])
+
+s.ufo = c()
+
+for(i.comp in comp.used){
+  pokaz(i.comp)
+  i.seq = which(memb.comp == i.comp)
+  names.comp = names(memb.comp)[i.seq]
+  s = seqs[names.comp[1]]
+
+  s.ufo[paste0('comp', i.comp)] = s
+}
+
+writeFasta(s.ufo, paste0(path.sv, 'ufo.fasta'))
+
+
+```
+
+
+
+
+```{r}
+
+s1 = seqs[names.comp[1]]
+s2 = seqs[names.comp[2]]
+
+g.content$edges.small[g.content$edges.small[,1] %in% c(names.comp[1], names.comp[2]),]
+
+dotplot.s(s1, s2, 15, 13)
+
+```
+
+
+
+```{r}
+bl = read.table('/Volumes/Samsung_T5/vienn/test/orange/seq_sv_big_on_sv_blast.txt', stringsAsFactors = F)
+bl = bl[bl$V1 %in% c(name.s1, name.s2),]
+bl = bl[bl$V8 %in% c(name.s1, name.s2),]
+bl = bl[bl$V1 != bl$V8,]
+```
+
 
 
 ```{r}
@@ -134,15 +246,8 @@ writeFasta(seqs.target, paste0(path.sv, 'seq_sv_big_target.fasta'))
 ```
 
 
-```{r}
-i.comp = 12
-i.seq = which(memb.comp == i.comp)
-s = seqs.target[i.seq]
-dotself.s(s, 15, 8)
-```
 # ORF
 ```{r}
-
 
 orf.res = orfFinder(s)
 
