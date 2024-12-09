@@ -63,8 +63,8 @@ if (!is.null(opt$aln.type)) {
   pokazAttention('The defaul anighment type is used:', aln.type)
 }
 
-if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+path.chr <- if (!is.null(opt$path.chr)) opt$path.chr else stop("Error: 'path.chr' is NULL. Please provide a valid path.")
+path.cons <- if (!is.null(opt$path.cons)) opt$path.cons else stop("Error: 'path.cons' is NULL. Please provide a valid path.")
 
 # Paths
 if(!dir.exists(path.cons)){
@@ -84,7 +84,7 @@ if (!dir.exists(path.seq)){
 # library(rhdf5)
 # source("../../../pannagram/utils/utils.R")
 # path.cons = './'
-# path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
+# path.chr = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
 # ref.pref = '0'
 # s.nts = c('A', 'C', 'G', 'T', '-')
 
@@ -144,7 +144,7 @@ loop.function <- function(s.comb, echo = T){
     }
     
     q.chr = strsplit(s.comb, '_')[[1]][1]
-    file.chr = paste0(path.chromosomes, acc, '_chr', q.chr, '.fasta')
+    file.chr = paste0(path.chr, acc, '_chr', q.chr, '.fasta')
     if(!file.exists(file.chr)){
       stop(paste0('Chromosomal file was not found', file.chr))
     }
