@@ -219,7 +219,7 @@ loop.function <- function(s.comb, echo = T){
   H5close()
   gc()
   
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  # pokaz('Done.', file=file.log.loop, echo=echo.loop)
 }
 
 
