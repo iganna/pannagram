@@ -89,11 +89,11 @@ if (!dir.exists(path.seq)){
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
-pokaz(s.pattern)
-pokaz(path.cons)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+# pokaz(s.pattern)
 
-pokaz(files)
+pokaz('Consensus folder', path.cons)
+files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+# pokaz(files)
 
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub(ref.suff, "", pref.combinations)
@@ -212,7 +212,7 @@ loop.function <- function(s.comb, echo = T){
   
   pokaz('Saving consensus sequence...')
   names(s.cons) = paste0('PanGen_Chr', i.chr)
-  writeFastaMy(s.cons, file.seq.cons)
+  writeFasta(s.cons, file.seq.cons)
   
   rmSafe(mx.consensus)
   rmSafe(s.cons)

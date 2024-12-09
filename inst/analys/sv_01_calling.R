@@ -23,7 +23,6 @@ option_list = list(
   make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze")
 );
 
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
@@ -36,7 +35,6 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- HDF5 ----
 
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
-
 
 # ***********************************************************************
 
@@ -79,15 +77,15 @@ if (is.null(opt$ref.pref) || (opt$ref.pref == "NULL")) {
 
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
+if(!dir.exists(path.cons)) stop(paste0('Consensus folder does nto exist', path.cons))
+
 path.sv = paste0(path.cons, 'sv/')
 if (!dir.exists(path.sv)) dir.create(path.sv)
+if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.cons))
+
 path.gff = paste0(path.sv, 'gff/')
 if (!dir.exists(path.gff)) dir.create(path.gff)
-
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
+if(!dir.exists(path.gff)) stop(paste0('GFF folder does nto exist', path.cons))
 
 cutoff = 0.90
 
