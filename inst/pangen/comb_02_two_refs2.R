@@ -183,6 +183,10 @@ loop.function <- function(s.comb,
     
   }
   
+  save(list = ls(), file = "tmp_workspace_good.RData")
+  
+  
+  
   # Update Idx trust
   suppressMessages({
     
@@ -196,6 +200,8 @@ loop.function <- function(s.comb,
     h5write(idx.trust, file.res, v.idx.trust)
     
   })
+  
+  stop()
   
   H5close()
   gc()
