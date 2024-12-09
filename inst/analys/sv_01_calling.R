@@ -7,6 +7,7 @@ suppressMessages({ library(Biostrings)
   library(doParallel)
   library("optparse")
   library(pannagram)
+  library(crayon)
 })
 
 pokazAttention('Make sure that the consensus sequences for the pangenome chromosomes have been generated.')
