@@ -37,9 +37,9 @@ Options:
     -aln                        Produce a FASTA file with the pangenome alignment.
     -snp                        Get VCF file with SNPs.
     
-    -sv_call                    SV calling
-    -sv_sim                     Compare SVs with a dataset of sequences
+    -sv                         SV calling
     -sv_graph                   Create the Graph of SVs
+    -sv_sim                     Compare SVs with a dataset of sequences
 
     -annogroup                  Create the consensus annotation groups
 
