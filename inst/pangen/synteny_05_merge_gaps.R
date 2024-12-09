@@ -246,14 +246,17 @@ loop.function <- function(f.maj,
     x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     
-    x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
-    x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    # x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    # x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
     
     x.gap$V2 = x.gap$V2 + x.gap$q.beg
     x.gap$V3 = x.gap$V3 + x.gap$q.beg
     x.gap$V4 = x.gap$V4 + x.gap$b.beg
     x.gap$V5 = x.gap$V5 + x.gap$b.beg
     x.gap$dir = (x.gap$V4 > x.gap$V5) * 1
+    
+    # if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
+    # if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
     
     pokaz('before1')
     if(check.genomes){
@@ -277,9 +280,6 @@ loop.function <- function(f.maj,
                            base.fas.bw = base.fas.bw)
       pokaz('after11')
     }
-    
-    if(sum(x.gap$V3 > x.gap$q.end) > 0) stop('query')
-    if(sum(x.gap$V5 > x.gap$b.end) > 0) stop('base')
     
     cnt = table(x.gap$pref1)
     
@@ -463,8 +463,8 @@ loop.function <- function(f.maj,
     x.bw$q.beg = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     x.bw$b.beg = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
     
-    x.bw$q.end = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
-    x.bw$b.end = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    # x.bw$q.end = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
+    # x.bw$b.end = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
     
     x.bw$V2 = x.bw$V2 + x.bw$q.beg
     x.bw$V3 = x.bw$V3 + x.bw$q.beg
