@@ -111,6 +111,8 @@ loop.function <- function(s.comb,
     
   } 
   
+  poka("Files", file.comb0, file.comb1)
+  
   if(!file.exists(file.res)){
     h5createFile(file.res)
     h5createGroup(file.res, gr.accs.e)
@@ -206,6 +208,7 @@ loop.function <- function(s.comb,
 # ***********************************************************************
 # ---- Loop  ----
 
+pref.combinations = pref.combinations[1]
 
 if(num.cores == 1){
   # file.log.loop = paste0(path.log, 'loop_all.log')
@@ -233,17 +236,8 @@ warnings()
 pokaz('Done.',
       file=file.log.main, echo=echo.main)
 
-
 # ***********************************************************************
 # ---- Manual testing ----
-
-if(F){
-source(system.file("utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  ref0 = '0'
-  ref1 = '6046-v1.1'
-  library(rhdf5)
-}
 
 
 

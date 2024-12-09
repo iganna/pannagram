@@ -200,7 +200,7 @@ loop.function <- function(s.comb, echo = T){
     n.nt[idx.k] = mx.consensus[idx.k, k]
   }
   
-  if(sum(s.cons == 'N') > 0) pokazAttention('Some nucleotides are missed:', sum(s.cons == 'N'))
+  if(sum(s.cons == 'N') > 0) pokazAttention('Some nucleotides are N:', sum(s.cons == 'N'))
   s.cons = paste0(s.cons, collapse = '')
   
   pokaz('Saving consensus sequence...')
