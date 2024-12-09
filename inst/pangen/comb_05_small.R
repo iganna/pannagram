@@ -103,6 +103,13 @@ for(s.comb in pref.combinations){
   
   # -------------------------------------
   
+  # Log files
+  file.log.loop = paste0(path.log, 'loop_file_', s.comb, '.log')
+  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop)) 
+  if(checkDone(file.log.loop)) return()    # Check log Done
+  
+  # --- --- --- --- --- --- --- --- --- --- ---
+  
   file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
   load(file.ws)
   
@@ -213,7 +220,6 @@ for(s.comb in pref.combinations){
     
   }
   
-  
   ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
                        end = breaks$idx.end[idx.short]) 
   
@@ -231,6 +237,10 @@ for(s.comb in pref.combinations){
                ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
                                     end = breaks$idx.end[idx.short]) ),
           paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+  
+  
+  # Done
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   
   # Cleanup variables
   final.vars <- ls()

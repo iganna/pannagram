@@ -204,18 +204,17 @@ loop.function <- function(s.comb, echo = T){
 # ***********************************************************************
 # ---- Loop  ----
 
-
 if(num.cores == 1){
-  list.blocks = list()
+  
   for(s.comb in pref.combinations){
-    list.blocks[[s.comb]] = loop.function(s.comb)
+    loop.function(s.comb)
   }
 } else {
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
-  list.blocks = foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
+  foreach(s.comb = pref.combinations, .packages=c('rhdf5', 'crayon'))  %dopar% { 
     tmp = loop.function(s.comb)
     return(tmp)
   }
