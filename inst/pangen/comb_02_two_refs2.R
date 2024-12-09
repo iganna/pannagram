@@ -101,7 +101,7 @@ loop.function <- function(s.comb,
   # Combined file. If it exists, then use it for the growing correspondence
   file.res = paste0(path.cons, aln.type.out, s.comb, '.h5')
   if(file.exists(file.res)){
-    if(v.idx.trust %in% h5ls(file.comb0)$name) {
+    if(v.idx.trust %in% h5ls(file.res)$name) {
       file.comb0 = file.res
     } else {
       # delete file
@@ -182,11 +182,7 @@ loop.function <- function(s.comb,
     pokaz('Done.', file=file.log.loop, echo=echo.loop)
     
   }
-  
-  save(list = ls(), file = "tmp_workspace_good.RData")
-  
-  
-  
+
   # Update Idx trust
   suppressMessages({
     
@@ -200,8 +196,6 @@ loop.function <- function(s.comb,
     h5write(idx.trust, file.res, v.idx.trust)
     
   })
-  
-  stop()
   
   H5close()
   gc()
