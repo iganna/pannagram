@@ -101,14 +101,12 @@ loop.function <- function(s.comb,
   # Combined file. If it exists, then use it for the growing correspondence
   file.res = paste0(path.cons, aln.type.out, s.comb, '.h5')
   if(file.exists(file.res)){
-    stop()
     if(v.idx.trust %in% h5ls(file.comb0)$name) {
       file.comb0 = file.res
     } else {
       # delete file
       file.remove(file.res)
     }
-    
   } 
   
   pokaz("Files", file.comb0, file.comb1)
