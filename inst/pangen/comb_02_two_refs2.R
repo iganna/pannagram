@@ -206,8 +206,6 @@ loop.function <- function(s.comb,
 # ***********************************************************************
 # ---- Loop  ----
 
-pref.combinations = pref.combinations[1]
-
 if(num.cores == 1){
   # file.log.loop = paste0(path.log, 'loop_all.log')
   # invisible(file.create(file.log.loop))
