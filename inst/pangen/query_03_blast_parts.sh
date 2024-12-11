@@ -151,11 +151,66 @@ done < "${file_accessions}"
 # Count files in ${path_chrom} that start with ${ref_name}
 ref_count=$(ls "${path_chrom}" | grep "^${ref_name}.*_chr.*\.fasta$" | wc -l)
 
+# # Initialize arrays to store file paths
+# files_ref=()
+# files_acc=()
+# files_out=()
+# files_log=()
+
+# # Check if combinations file exists and is not empty
+# if [ ! -s "${file_combinations}" ]; then
+#     # All-to-all
+#     for i in "${!accessions[@]}"; do
+#         acc_name="${accessions[$i]}"
+#         count="${acc_counts[$i]}"
+#         for ((i_acc=1; i_acc<=count; i_acc++)); do
+#             for ((i_ref=1; i_ref<=ref_count; i_ref++)); do
+#                 files_ref+=("${path_chrom}${ref_name}_chr${i_ref}.fasta")
+#                 files_acc+=("${path_parts}${acc_name}_chr${i_acc}.fasta")
+#                 files_out+=("${path_blast}${acc_name}_${i_acc}_${i_ref}.txt")
+#                 files_log+=("${path_log}${acc_name}_${i_acc}_${i_ref}.txt")
+
+#                 # echo "${acc_name} ${i_acc} ${ref_name} ${i_ref}"
+#             done
+#         done
+#     done
+# else
+#     # Only combinations from file_combinations for all accessions
+#     while IFS= read -r acc_name; do
+#         if [[ "$acc_name" != "$ref_name" ]]; then
+#             # Read combinations from the file
+#             while IFS=$'\t' read -r i_acc i_ref; do
+#                 files_ref+=("${path_chrom}${ref_name}_chr${i_ref}.fasta")
+#                 files_acc+=("${path_parts}${acc_name}_chr${i_acc}.fasta")
+#                 files_out+=("${path_blast}${acc_name}_${i_acc}_${i_ref}.txt")
+#                 files_log+=("${path_log}${acc_name}_${i_acc}_${i_ref}.txt")
+
+#                 # echo "${acc_name} ${i_acc} ${ref_name} ${i_ref}"
+#             done < "${file_combinations}"
+#         fi
+#     done < "${file_accessions}"
+# fi
+
+# # Run BLAST in parallel
+# parallel -j $cores --link run_blast ::: "${files_acc[@]}" ::: "${files_ref[@]}" ::: "${files_out[@]}" ::: "${files_log[@]}"
+
+
 # Initialize arrays to store file paths
 files_ref=()
 files_acc=()
 files_out=()
 files_log=()
+
+# Temporary files for combinations
+temp_acc="${path_blast}temp_acc.txt"
+temp_ref="${path_blast}temp_ref.txt"
+temp_out="${path_blast}temp_out.txt"
+temp_log="${path_blast}temp_log.txt"
+
+> "$temp_acc"  # Clear or create the temporary files
+> "$temp_ref"
+> "$temp_out"
+> "$temp_log"
 
 # Check if combinations file exists and is not empty
 if [ ! -s "${file_combinations}" ]; then
@@ -165,12 +220,10 @@ if [ ! -s "${file_combinations}" ]; then
         count="${acc_counts[$i]}"
         for ((i_acc=1; i_acc<=count; i_acc++)); do
             for ((i_ref=1; i_ref<=ref_count; i_ref++)); do
-                files_ref+=("${path_chrom}${ref_name}_chr${i_ref}.fasta")
-                files_acc+=("${path_parts}${acc_name}_chr${i_acc}.fasta")
-                files_out+=("${path_blast}${acc_name}_${i_acc}_${i_ref}.txt")
-                files_log+=("${path_log}${acc_name}_${i_acc}_${i_ref}.txt")
-
-                # echo "${acc_name} ${i_acc} ${ref_name} ${i_ref}"
+                echo "${path_chrom}${ref_name}_chr${i_ref}.fasta" >> "$temp_ref"
+                echo "${path_parts}${acc_name}_chr${i_acc}.fasta" >> "$temp_acc"
+                echo "${path_blast}${acc_name}_${i_acc}_${i_ref}.txt" >> "$temp_out"
+                echo "${path_log}${acc_name}_${i_acc}_${i_ref}.txt" >> "$temp_log"
             done
         done
     done
@@ -180,19 +233,20 @@ else
         if [[ "$acc_name" != "$ref_name" ]]; then
             # Read combinations from the file
             while IFS=$'\t' read -r i_acc i_ref; do
-                files_ref+=("${path_chrom}${ref_name}_chr${i_ref}.fasta")
-                files_acc+=("${path_parts}${acc_name}_chr${i_acc}.fasta")
-                files_out+=("${path_blast}${acc_name}_${i_acc}_${i_ref}.txt")
-                files_log+=("${path_log}${acc_name}_${i_acc}_${i_ref}.txt")
-
-                # echo "${acc_name} ${i_acc} ${ref_name} ${i_ref}"
+                echo "${path_chrom}${ref_name}_chr${i_ref}.fasta" >> "$temp_ref"
+                echo "${path_parts}${acc_name}_chr${i_acc}.fasta" >> "$temp_acc"
+                echo "${path_blast}${acc_name}_${i_acc}_${i_ref}.txt" >> "$temp_out"
+                echo "${path_log}${acc_name}_${i_acc}_${i_ref}.txt" >> "$temp_log"
             done < "${file_combinations}"
         fi
     done < "${file_accessions}"
 fi
 
 # Run BLAST in parallel
-parallel -j $cores --link run_blast ::: "${files_acc[@]}" ::: "${files_ref[@]}" ::: "${files_out[@]}" ::: "${files_log[@]}"
+parallel -j $cores --link run_blast :::: "$temp_acc" :::: "$temp_ref" :::: "$temp_out" :::: "$temp_log"
+
+# Clean up temporary files
+rm -f "$temp_acc" "$temp_ref" "$temp_out" "$temp_log"
 
 
 
