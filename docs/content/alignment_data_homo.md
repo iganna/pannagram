@@ -81,6 +81,34 @@ echo -e "GCA_001540865.1\nGCA_902162155.2\nCA_029339315.1" >> "${PATH_DATA}anana
 apple
 
 
+```bash
+echo -e "GCA_000004075.3\nGCF_000004075.3\nGCA_016163735.1\nGCA_016161785.1" >> "${PATH_DATA}caco.txt"
+echo -e "GCA_016161805.1\nGCA_016161715.1\nGCA_016161855.1\nGCA_016161875.1" >> "${PATH_DATA}caco.txt"
+echo -e "GCA_016161885.1\nGCA_016161765.1\nGCA_016163705.1\nGCA_016163745.1" >> "${PATH_DATA}caco.txt"
+echo -e "GCA_016161775.1" >> "${PATH_DATA}cucumber.txt"
+
+```
+
+
+``` bash
+echo -e "GCA_023508825.1\nGCA_024972955.1\nGCA_024972935.1\nGCA_030292175.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_024732265.1\nGCA_045517165.1\nGCA_030607045.1\nGCA_041294695.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_022695735.1\nGCA_039880205.1\nGCA_039844365.1\nGCA_025727185.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_025727225.1\nGCA_025434915.1\nGCA_025727205.1\nGCA_026001015.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_030034845.1\nGCA_030295885.1\nGCA_026000965.1\nGCA_039851885.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_039880175.1\nGCA_039880235.1\nGCA_025727285.1\nGCA_039851725.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_039847695.1\nGCA_039905835.1\nGCA_040105025.1\nGCA_025727265.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_040747045.1\nGCA_025727305.1\nGCA_040105055.1\nGCA_025727325.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_025727145.1\nGCA_039880145.1\nGCA_025434875.1\nGCA_025434895.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_039848515.1\nGCA_040500495.1\nGCA_030034815.1\nGCA_022695695.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_022695715.1\nGCA_025727245.1\nGCA_022695675.1\nGCA_040746905.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_030866685.1\nGCA_025727165.1\nGCA_025561685.1\nGCA_043643545.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_040938635.1\nGCA_040938625.1\nGCA_040938615.1\nGCA_040938605.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_043643505.1\nGCA_023065715.1\nGCA_044089635.1\nGCA_040938645.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_022837015.1\nGCA_045016075.1\nGCA_029403705.1\nGCA_039790455.1" >> "${PATH_DATA}yeast_baker.txt"
+echo -e "GCA_022626425.2" >> "${PATH_DATA}yeast_baker.txt"
+
+```
 
 
 2. Specify the folder `PATH_TOOLS` where the download helper [poputils](https://github.com/iganna/poputils) will be cloned and clone the repo:

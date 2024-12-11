@@ -18,20 +18,47 @@ library(network)
 
 ## Paths
 ```{r}
-path.out = "/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/"
 
-path.cons = paste(path.out, 'intermediate/consensus/', sep = '')  # the result of pannagram
-path.figures = paste(path.out, 'figures/', sep = '')
+s.species = 'b_juncea'
+path.sv = '/Volumes/Samsung_T5/vienn/test/b_juncea/'
 
-path.sv = paste0(path.cons, 'sv/')
+s.species = 'b_rapa'
+path.sv = '/Volumes/Samsung_T5/vienn/test/b_rapa/'
+
+s.species = 'camelina_sativa'
+path.sv = '/Volumes/Samsung_T5/vienn/test/camelina_sativa/'
+
+s.species = 'b_nigra'
+path.sv = '/Volumes/Samsung_T5/vienn/test/b_nigra/'
+
+path.figures = paste(path.sv, 'figures/', sep = '')
+
+if (!dir.exists(path.figures)) {
+  dir.create(path.figures)
+}
+
 ```
 
 ## Variables
 ```{r}
-n.chr = 1
-aln.type = 'msa_'
 sim.cutoff = 0.85
+f.visualise = F
 ```
+
+## Binning
+```{r}
+
+bins <- c(0, 100, 200, 400, 800, 1000, 1500, 3000, 5000, 7000, Inf)
+labels <- c("0-100", "100-200", "200-400", "400-800", "800-1000", "1000-1500", "1500-3000", "3000-5000", "5000-7000", "7000+")
+
+
+color.pal <- c("0-100" = "#1f77b4", "100-200" = "#50B498", "200-400" = "#2ca02c", 
+            "400-800" = "#bcbd22", "800-1000" = "#ff7f0e", "1000-1500" = "#d62728", "1500-3000" = "#9467bd",
+            "3000-5000" = "#e377c2", "5000-7000" = "#8c564b", "7000+" = "#7f7f7f")
+
+
+```
+
 
 # SV-graph
 # Reading and constructing
@@ -46,40 +73,29 @@ g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, coll
 
 # Plot simple graph
 ```{r}
+if(f.visualise){
+  g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+  b.graph.names = network.vertex.names(g)
 
-g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-b.graph.names = network.vertex.names(g)
-set.seed(239)
-p.refined <- ggnet2(g, label = F, edge.color = "black",
-            # node.size = g.nodes.cnt[b.graph.names],
-            node.size = 1,
-            color = '#468B97',
-            arrow.gap = 0.01, arrow.size = 2,
-            # color = g.nodes.fam[b.graph.names],
-            # palette = fam.palette,
-            # mode = "kamadakawai"
-            )
-
-p.refined
-```
-
-### Binning
-```{r}
-
-bins <- c(0, 100, 200, 400, 800, 1000, 1500, 3000, 5000, 7000, Inf)
-labels <- c("0-100", "100-200", "200-400", "400-800", "800-1000", "1000-1500", "1500-3000", "3000-5000", "5000-7000", "7000+")
-
-
-color.pal <- c("0-100" = "#1f77b4", "100-200" = "#50B498", "200-400" = "#2ca02c", 
-            "400-800" = "#bcbd22", "800-1000" = "#ff7f0e", "1000-1500" = "#d62728", "1500-3000" = "#9467bd",
-            "3000-5000" = "#e377c2", "5000-7000" = "#8c564b", "7000+" = "#7f7f7f")
-
+  set.seed(239)
+  p.refined <- ggnet2(g, label = F, edge.color = "black",
+              # node.size = g.nodes.cnt[b.graph.names],
+              node.size = 1,
+              color = '#468B97',
+              arrow.gap = 0.01, arrow.size = 2,
+              # color = g.nodes.fam[b.graph.names],
+              # palette = fam.palette,
+              # mode = "kamadakawai"
+              )
+  
+  p.refined
+}
 
 ```
+
 
 ### Remove one the biggest component and some the smallest
 ```{r}
-
 g.comp <- getGraphComponents(g.content$edges)
 memb.comp = g.comp$membership
 
@@ -92,27 +108,24 @@ idx.moderate = which(g.comp$csize >= 4)
 sv.name.moderate = names(g.comp$membership)[g.comp$membership %in% idx.moderate]
 
 g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.name.moderate),]
-
+```
 
 # Only the inresesting length range
+```{r}
+
 len.max = 400
+len.min = 200
 
 sv.len.tmp = as.numeric(sapply(names(g.comp$membership), function(s) strsplit(s, '\\|')[[1]][2]))
-tmp = tapply(sv.len.tmp, g.comp$membership, max)
+tmp = tapply(sv.len.tmp, g.comp$membership, function(a) sum((a <= len.min) | (a >= len.max)))
+comp.remove = tmp[tmp != 0]
 
-comp.get = tmp[tmp <= len.max]
-comp.get = as.numeric(names(comp.get))
+comp.get = setdiff(1:g.comp$no, as.numeric(names(comp.remove)))
+
 sv.get = names(g.comp$membership)[g.comp$membership %in% comp.get]
 g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.get),]
 
-lin.min = 200
-tmp = tapply(sv.len.tmp, g.comp$membership, min)
-
-comp.get = tmp[tmp >= lin.min]
-comp.get = as.numeric(names(comp.get))
-sv.get = names(g.comp$membership)[g.comp$membership %in% comp.get]
-g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.get),]
-
+dim(g.content$edges.small)
 
 ```
 
@@ -164,9 +177,14 @@ p <- ggnet2(g.sm, label = 'labels', edge.color = "grey70",
             color = 'colors',
             palette = color.pal
             ) + 
-  # theme(legend.position = "none") +
+  theme(legend.position = "none") +
   guides(size = F)
 p
+
+
+png(paste0(path.figures, 'graph_small_', s.species,'.png', sep = ''), width = 6, height = 6, units = "in", res = 300)
+print(p)    
+dev.off()
 
 ```
 
@@ -177,21 +195,7 @@ p
 seqs = readFasta(paste0(path.sv, 'seq_sv_big.fasta'))
 ```
 
-
-```{r}
-i.comp = 48
-i.seq = which(memb.comp == i.comp)
-
-names.comp = names(memb.comp)[i.seq]
-
-s = seqs[names.comp[2]]
-dotself.s(s, 15, 12)
-
-dotself.s(s, 15, 8)
-
-dotplot.s(s, s, 15, 8)
-
-```
+## Save all components
 ```{r}
 
 comp.used = unique(g.comp$membership[b.graph.names])
@@ -207,12 +211,70 @@ for(i.comp in comp.used){
   s.ufo[paste0('comp', i.comp)] = s
 }
 
-writeFasta(s.ufo, paste0(path.sv, 'ufo.fasta'))
+names(s.ufo) = paste0(s.species, '|', names(s.ufo))
+
+writeFasta(s.ufo, paste0(path.sv, 'ufo_',s.species,'.fasta'))
 
 
 ```
 
+```{r}
+stop()
+```
 
+
+
+```{r}
+x = read.table('/Volumes/Samsung_T5/vienn/test/ufo/tmp.txt', stringsAsFactors = F)
+x$s1 = sapply(x$V1, function(s) strsplit(s, '\\|')[[1]][1])
+x$s2 = sapply(x$V10, function(s) strsplit(s, '\\|')[[1]][1])
+
+x = x[x$s1 != x$s2,]
+
+x = x[x$V7 > 200,]
+
+
+p.list = list()
+for(i in 1:nrow(x)){
+  pokaz(i)
+  s = x$V8[i]
+  p = dotplot.s(s, s, 15, 8)  
+  p.list[[i]] = p
+}
+
+library(gridExtra)
+grid.arrange(grobs = p.list, nrow = 7)
+
+
+png(paste0(path.figures, 'graph_small_', s.species,'.png', sep = ''), width = 16, height = 16, units = "in", res = 300)
+grid.arrange(grobs = p.list, nrow = 7)
+dev.off()
+
+
+
+i = 15
+p.list[[i]]
+s = x$V8[i]
+dotplot.s(s, s, 15, 13)  
+
+```
+
+
+### Separate components
+```{r}
+i.comp = 48
+i.seq = which(memb.comp == i.comp)
+
+names.comp = names(memb.comp)[i.seq]
+
+s = seqs[names.comp[2]]
+dotself.s(s, 15, 12)
+
+dotself.s(s, 15, 8)
+
+dotplot.s(s, s, 15, 8)
+
+```
 
 
 ```{r}
@@ -226,14 +288,6 @@ dotplot.s(s1, s2, 15, 13)
 
 ```
 
-
-
-```{r}
-bl = read.table('/Volumes/Samsung_T5/vienn/test/orange/seq_sv_big_on_sv_blast.txt', stringsAsFactors = F)
-bl = bl[bl$V1 %in% c(name.s1, name.s2),]
-bl = bl[bl$V8 %in% c(name.s1, name.s2),]
-bl = bl[bl$V1 != bl$V8,]
-```
 
 
 
@@ -259,26 +313,3 @@ orf.res$orf[1]
 
 
 ```
-
-
-# Short sequences from the first component
-```{r}
-
-s1 = seqs[names(g.comp$membership[g.comp$membership == 1])]
-
-s1 = s1[nchar(s1) < 200]
-
-s1 = s1[nchar(s1) > 100]
-
-i.s = 1
-s = s1[i.s]
-
-dotself.s(s, 15, 12)
-
-mx = aln2mx(s)
-msaplot(mx)
-
-
-```
-
-

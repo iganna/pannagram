@@ -88,10 +88,10 @@ function process_db {
     if [ -f "${path_gaps}${base_file}" ] && [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
         # Create BLAST database
         makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null
-    fi
 
-    if [ -d "$log_path" ]; then
-        echo "Done." >> "$file_log"
+        if [ -d "$log_path" ]; then
+            echo "Done." >> "$file_log"
+        fi
     fi
 }
 
@@ -133,10 +133,11 @@ function process_blast_normal {
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
                -max_hsps 10  >> "$file_log" 2>&1
-    fi
 
-    if [ -d "$log_path" ]; then
-        echo "Done." >> "$file_log"
+        if [ -d "$log_path" ]; then
+            echo "Done." >> "$file_log"
+        fi
+
     fi
 }
 
