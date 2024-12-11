@@ -118,14 +118,18 @@ function process_blast_normal {
             return 0
         fi
     fi
+    
     echo "New attempt:" > "$file_log"  # Create or empty the log file
 
     # Execute BLAST search
-    if [[ ! -e ${path_gaps}${out_file} ]] && \
-       [[ -e ${path_db}${base_file}.nhr ]] && \
+    if [[ -e ${path_db}${base_file}.nhr ]] && \
        [[ -e ${path_db}${base_file}.nin ]] && \
        [[ -e ${path_db}${base_file}.nsq ]] && \
        [[ -e ${path_gaps}${query_file} ]]; then
+
+        if [[ -e "${path_gaps}${out_file}" ]]; then
+            rm "${path_gaps}${out_file}"
+        fi
 
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
@@ -161,6 +165,7 @@ function process_blast_cross {
             return 0
         fi
     fi
+
     echo "New attempt:" > "$file_log"  # Create or empty the log file
 
     if [[ $query_file != *residual* ]]; then
@@ -173,18 +178,26 @@ function process_blast_cross {
         out_file="${out_file%.fasta}.txt"
     fi
 
-    if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file} ]] && [[ -e ${path_gaps}${query_file} ]]; then
+    if [[ -e ${path_db}${base_file}.nhr ]] && \
+       [[ -e ${path_db}${base_file}.nin ]] && \
+       [[ -e ${path_db}${base_file}.nsq ]] && \
+       [[ -e ${path_gaps}${query_file} ]]; then
+
+        if [[ -e "${path_gaps}${out_file}" ]]; then
+            rm "${path_gaps}${out_file}"
+        fi
+
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
                -max_hsps 5 >> "$file_log" 2>&1
+        if [ -d "$log_path" ]; then
+            echo "Done." >> "$file_log"
+        fi
     fi
 
-    if [ -d "$log_path" ]; then
-        echo "Done." >> "$file_log"
-    fi
 }
 
 export -f process_blast_normal
