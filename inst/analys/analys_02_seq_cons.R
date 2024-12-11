@@ -6,6 +6,7 @@ suppressMessages({ library(Biostrings)
   library(doParallel)
   library("optparse")
   library('pannagram')
+  library(crayon)
 })
 
 args = commandArgs(trailingOnly=TRUE)

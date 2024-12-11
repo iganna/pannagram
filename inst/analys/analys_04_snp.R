@@ -5,6 +5,7 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
+  library(crayon)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
