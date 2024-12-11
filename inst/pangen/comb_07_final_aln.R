@@ -179,9 +179,6 @@ for(s.comb in pref.combinations){
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
   
-  
-  save(list = ls(), file ="tmp_workspace_wrong_length.RData")
-  
   # Skip if some are shorter than the initial aligned block
   idx.confusing = which(mafft.res$extra < 0)
   if(length(idx.confusing) > 0){
@@ -268,6 +265,7 @@ for(s.comb in pref.combinations){
   }
 
   pokaz(3)
+  save(list = ls(), file = "tmp_workspace_3.RData")
   
   # Short
   fp.short = list()
@@ -282,12 +280,7 @@ for(s.comb in pref.combinations){
   for(i in 1:length(msa.res$len)){
     if(is.null(msa.res$aln[[i]])) next
     if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-      
-      
-      file.ws = "tmp_workspace.RData"
-      all.local.objects <- ls()
-      save(list = all.local.objects, file = file.ws)
-      
+      save(list = ls(), file = "tmp_workspace.RData")
       stop(paste0('Short', i)) 
     }
   }
@@ -383,11 +376,7 @@ for(s.comb in pref.combinations){
     }
     if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
       
-      file.ws = "tmp_workspace.RData"
-      all.local.objects <- ls()
-      save(list = all.local.objects, file = file.ws)
-      stop('Enough..')
-      
+      save(list = ls(), file = "tmp_workspace.RData")
       stop('2: Duplicated positions in short alignments')
     } 
     
