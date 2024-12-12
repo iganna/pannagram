@@ -253,7 +253,7 @@ sv.annot = paste('ID=', sv.se$gr,
                  ';presence=',sv.se$freq.max,sep = '',
                  ';len_init=', sv.se$len)
 
-save(list = ls(), file = "tmp_workspace_sv.RData")
+# save(list = ls(), file = "tmp_workspace_sv.RData")
 
 sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
                        V2 = 'pannagram',
@@ -265,17 +265,22 @@ sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
                        V10 = sv.pos.all[sv.se$gr, 'V10'])
 
 ## ---- Multiple-event ----
-sv.me = sv.pos.all[sv.pos.all$single != 1,]
+sv.me = sv.pos.all[sv.pos.all$single != 1,, drop=F]
 
-s.multi = 'multi'
-sv.me.gff = data.frame(V1 = paste0('PanGen_Chr', sv.me$chr),
-                       V2 = 'pannagram',
-                       V3 = s.multi, V4 = sv.me$beg, V5 = sv.me$end,
-                       V6 = '.', V7 = '+', V8 = '.', 
-                       V9 = paste0('ID=', sv.me$gr, ';len_init=', sv.me$len), 
-                       V10 = sv.pos.all[sv.me$gr, 'V10'])
+if(nrow(sv.me) > 0){
+  s.multi = 'multi'
+  sv.me.gff = data.frame(V1 = paste0('PanGen_Chr', sv.me$chr),
+                         V2 = 'pannagram',
+                         V3 = s.multi, V4 = sv.me$beg, V5 = sv.me$end,
+                         V6 = '.', V7 = '+', V8 = '.', 
+                         V9 = paste0('ID=', sv.me$gr, ';len_init=', sv.me$len), 
+                         V10 = sv.pos.all[sv.me$gr, 'V10'])
+  
+  sv.gff = rbind(sv.se.gff, sv.me.gff)  
+} else {
+  sv.gff = sv.se.gff
+}
 
-sv.gff = rbind(sv.se.gff, sv.me.gff)
 sv.gff = sv.gff[order(sv.gff$V10),]
 
 options(scipen = 999)
