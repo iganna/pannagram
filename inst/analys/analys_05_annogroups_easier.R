@@ -537,7 +537,7 @@ for(i.chr in 1:5){
                             V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
                             V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
                             V6 = '.',
-                            V7 = s.s,
+                            V7 = tapply(gff.exons$V7, gff.exons$an.beg, function(s) paste0(unique(s), collapse = '')),
                             V8 = '.',
                             V9 = paste('ID=',
                                        'AT',i.chr,'Gr',which(s.strand == s.s),
