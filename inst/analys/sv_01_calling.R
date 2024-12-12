@@ -253,6 +253,8 @@ sv.annot = paste('ID=', sv.se$gr,
                  ';presence=',sv.se$freq.max,sep = '',
                  ';len_init=', sv.se$len)
 
+save(list = ls(), file = "tmp_workspace_sv.RData")
+
 sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
                        V2 = 'pannagram',
                        V3 = sv.se.type, 
