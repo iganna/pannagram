@@ -355,7 +355,7 @@ for(s.comb in pref.combinations){
   idx.small = which((sv.pos.all$single == 1) & 
                       (sv.pos.all$len >= min.len) & 
                       (sv.pos.all$len < big.len) & (sv.pos.all$chr == i.chr))
-  print(head(idx.small))
+  # print(head(idx.small))
   for(irow in idx.small){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     # print('---')
@@ -372,7 +372,7 @@ for(s.comb in pref.combinations){
   idx.big = which((sv.pos.all$single == 1) & 
                     (sv.pos.all$len >= big.len) &
                     (sv.pos.all$len < max.len) & (sv.pos.all$chr == i.chr))
-  print(head(idx.big))
+  # print(head(idx.big))
   for(irow in idx.big){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     # print(sum(s.tmp == 'N'))
