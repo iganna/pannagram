@@ -478,11 +478,11 @@ for(i.chr in 1:5){
       
       # Gff for exons - the same for both annotations
       gff.exons$V9 = paste('ID=',
-                             'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                             'AT',i.chr,'SG',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
                              '.', acc,
                              '.exon', sprintf("%02.0f",  gff.exons$exon.id),
                              ';Parent=' ,
-                             'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                             'AT',i.chr,'SG',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
                              '.', acc,
                              sep = '')
       gff.exons$V2 = s.pannagram
@@ -497,7 +497,7 @@ for(i.chr in 1:5){
                             V7 = s.s,
                             V8 = '.',
                             V9 = paste('ID=',
-                                       'AT',i.chr,'Gr',which(s.strand == s.s),
+                                       'AT',i.chr,'SG',which(s.strand == s.s),
                                        sprintf("%07.0f", gff.mrna.an.gr),
                                        '.', acc,
                                        sep = ''))
@@ -521,11 +521,11 @@ for(i.chr in 1:5){
       gff.exons = gff.acc
       
       gff.exons$V9 = paste('ID=',
-                           'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                           'AT',i.chr,'SG',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
                            '.', acc,
                            '.exon', sprintf("%02.0f",  gff.exons$exon.id),
                            ';Parent=' ,
-                           'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
+                           'AT',i.chr,'SG',which(s.strand == s.s),sprintf("%07.0f", gff.exons$an.beg),
                            '.', acc,
                            sep = '')
       gff.exons$V2 = s.pannagram
@@ -540,11 +540,11 @@ for(i.chr in 1:5){
                             V7 = tapply(gff.exons$V7, gff.exons$an.beg, function(s) paste0(unique(s), collapse = '')),
                             V8 = '.',
                             V9 = paste('ID=',
-                                       'AT',i.chr,'Gr',which(s.strand == s.s),
+                                       'AT',i.chr,'SG',which(s.strand == s.s),
                                        sprintf("%07.0f", gff.mrna.an.gr),
                                        '.', acc,
                                        ';Parent=' ,
-                                       'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.mrna.an.gr),
+                                       'AT',i.chr,'SG',which(s.strand == s.s),sprintf("%07.0f", gff.mrna.an.gr),
                                        sep = ''))
       
       
