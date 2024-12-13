@@ -226,7 +226,7 @@ for db_file in "${db_files[@]}"; do
                 --out ${output_pref}.${db_name}.rds \
                 --sim $sim_threshold \
                 --use_strand $use_strand \
-                --db_file ${db_file}.fasta \
+                --db_file ${db_file_full} \
                 --coverage ${coverage}
     else
         # On a genome
