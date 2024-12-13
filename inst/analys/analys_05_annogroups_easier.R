@@ -83,6 +83,7 @@ s.strand = c('+', '-')
 # ---- Accessions ----
 
 files.gff <- list.files(path = path.annot, pattern = "\\.gff$", full.names = FALSE)
+pokaz(files.gff)
 
 accessions <- sub("\\.gff$", "", files.gff)
 
@@ -99,8 +100,11 @@ pokaz('  ', accessions)
 acc.new = "22001_mod"
 acc.prev = "220011"
 for(i.chr in 1:5){
+  pokaz('Check chromosome', i.chr)
   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
   checkFile(file.msa)
+  
+  pokaz(h5ls(file.msa))
   
   v = h5read(file.msa, paste0(gr.accs.e, acc.new))
   h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
