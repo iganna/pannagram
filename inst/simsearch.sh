@@ -217,13 +217,16 @@ for db_file in "${db_files[@]}"; do
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
         # On a set of sequences
+
+        echo "Input ${file_input}"
+
         Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
                 --in_file $file_input \
                 --res $blast_res \
                 --out ${output_pref}.${db_name}.rds \
                 --sim $sim_threshold \
                 --use_strand $use_strand \
-                --db_file $db_file \
+                --db_file ${db_file}.fasta \
                 --coverage ${coverage}
     else
         # On a genome

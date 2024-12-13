@@ -58,11 +58,13 @@ v = v[v$V6 >= sim.cutoff * 100,]
 v = v[v$V1 != v$V8,]
 
 # Lengths of query sequences
+pokaz(fasta.file)
 seqs = readFasta(fasta.file)
 q.len = nchar(seqs)
 rm(seqs)
 
 # Lengths of database sequences
+pokaz(db.fasta.file)
 if(db.fasta.file == fasta.file){
   pokaz('Search seqeunces on themselvs')
   db.len = q.len

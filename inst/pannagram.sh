@@ -1991,10 +1991,10 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # with_level 1 pokaz_message "* The pipeline is done."
 
-# # if [ $step_start -eq 0 ]; then
-# #     rm -f "$FLAG_DIR"/.*
-# #     echo "Script completed successfully"
-# # fi
+if [ $step_start -eq 0 ]; then
+    # rm -f "$FLAG_DIR"/.*
+    echo "Script completed successfully"
+fi
 
 
 

@@ -284,3 +284,5 @@ if [ "$run_annogroup" = true ]; then
             --aln.type ${aln_type}
 
 fi
+
+echo "Script completed successfully"
