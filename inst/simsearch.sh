@@ -197,6 +197,11 @@ for db_file in "${db_files[@]}"; do
         fi
     else
         # Perform BLAST search
+        echo "Echo"
+        echo ${db_file_full}
+        echo ${file_input}
+        echo ${blast_res}
+
         pokaz_stage "BLAST search in $db_file..."
         blastn  -db ${db_file_full} \
                 -query ${file_input} \
