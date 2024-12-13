@@ -906,7 +906,7 @@ pokazAttention <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('  Attention: ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#FC345C")
+  text.color <- crayon::make_style("#FC345C")
   # bg <- make_style("grey5", bg = TRUE)
   fancy <- combine_styles(text.color)
   formatted_output <- fancy(arguments)

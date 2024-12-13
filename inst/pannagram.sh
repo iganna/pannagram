@@ -25,7 +25,7 @@ mode_ref="F"
 mode_msa="F"
 clean="F"
 one_step="F"
-purge_reps="F"
+purge_reps="T"
 rm_inter="F"  # remove intermediate files
 
 extra_steps="F"  # run extra steps
@@ -78,6 +78,7 @@ do
         -one2one)     one2one="T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
         -all2all)     one2one="F";      shift 1 ;;  # compare chromosomes all-to-all or not (default in PRE mode)
         -purge_reps | -purge_repeats ) purge_reps="T";    shift 1 ;;  # filtration of repeats, default - not
+        -incl_reps | -purge_repeats ) purge_reps="F";    shift 1 ;;  # filtration of repeats, default - not
         -rev )        flag_rev="T";      shift 1 ;;  # reverce parts
         -orf )        flag_orf="T";      shift 1 ;;  # reverce parts
 

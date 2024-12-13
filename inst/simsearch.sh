@@ -176,6 +176,7 @@ for db_file in "${db_files[@]}"; do
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
     db_file_full="${path_genome}$db_file.fasta"
+    echo "Database ${db_file_full}"
     if [ ! -f "${db_file_full}.nhr" ]; then
         pokaz_stage "Creating database for $db_file..."
         makeblastdb -in  ${db_file_full} -dbtype nucl > /dev/null
