@@ -81,9 +81,9 @@ s.pannagram = 'Pannagram'
 s.strand = c('+', '-')
 
 # ---- Accessions ----
-
+pokaz('Path with annotation', path.annot)
 files.gff <- list.files(path = path.annot, pattern = "\\.gff$", full.names = FALSE)
-pokaz(files.gff)
+if(length(files.gff) == 0) stop()
 
 accessions <- sub("\\.gff$", "", files.gff)
 
