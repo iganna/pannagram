@@ -104,8 +104,6 @@ for(i.chr in 1:5){
   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
   checkFile(file.msa)
   
-  pokaz(h5ls(file.msa))
-  
   v = h5read(file.msa, paste0(gr.accs.e, acc.new))
   h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
 }
