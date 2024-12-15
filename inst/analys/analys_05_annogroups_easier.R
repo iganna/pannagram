@@ -34,14 +34,12 @@ option_list <- list(
 # Parse options
 opt <- parse_args(OptionParser(option_list = option_list))
 
-
 # ***********************************************************************
 
 # ---- HDF5 ----
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ***********************************************************************
-
 
 path.msa <- opt$path.msa
 path.annot <- opt$path.annot
@@ -207,6 +205,11 @@ gff.gene.pan$idx = 1:nrow(gff.gene.pan)
 
 gr.shift = 0
 for(i.chr in 1:5){
+  
+  if(i.chr == 4){
+    save(list = ls(), file = "tmp_workspace_easy.RData")
+  }
+  
   for(s.s in s.strand){
     pokaz('Chr', i.chr, s.s)
     idx.tmp = (gff.gene.pan$V7 == s.s) & (gff.gene.pan$chr == i.chr)
@@ -444,6 +447,7 @@ gff.new.pan = c()
 gff.new.own = c()
 
 for(i.chr in 1:5){
+  
   for(s.s in s.strand){
     for(acc in accessions){
       
@@ -491,7 +495,7 @@ for(i.chr in 1:5){
       
       gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
       gff.mrna = data.frame(V1 = gff.exons$V1[1], # PanGen_Chr
-                            V2 = 'Pannagram',
+                            V2 = 'pannagram',
                             V3 = 'mRNA',
                             V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
                             V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
@@ -534,7 +538,7 @@ for(i.chr in 1:5){
       
       gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
       gff.mrna = data.frame(V1 = gff.exons$V1[1], # PanGen_Chr
-                            V2 = 'Pannagram',
+                            V2 = 'pannagram',
                             V3 = 'mRNA',
                             V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
                             V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
