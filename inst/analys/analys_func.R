@@ -169,10 +169,13 @@ gff2gff <- function(path.cons,
     idx.noneq = (bl.beg != bl.end) *1
     idx.noneq[is.na(idx.noneq)] = 1
     
-    if(length(idx.noneq) > 0){
-      gff2$V4[idx.chr][idx.noneq] = 0
-      gff2$V5[idx.chr][idx.noneq] = 0  
+    if(sum(idx.noneq) > 0){
+      gff2$V4[idx.chr][idx.noneq == 1] = 0
+      gff2$V5[idx.chr][idx.noneq == 1] = 0  
     }
+    
+    if(sum(is.na(gff2$V4[idx.chr]) > 0)) stop('NA in gff2$V4[idx.chr]')
+    if(sum(is.na(gff2$V5[idx.chr]) > 0)) stop('NA in gff2$V5[idx.chr]')
   }
   
   idx.wrong.blocks = (sign(gff2$V4 * gff2$V5) != 1)
