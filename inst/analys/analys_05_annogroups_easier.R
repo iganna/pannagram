@@ -198,6 +198,7 @@ for(i.chr in 1:5){
 
 # ***********************************************************************
 # Groups
+pokaz('Groups')
 gff.gene.pan = gff.main.pan[gff.main.pan$V3 == 'gene',]
 gff.gene.pan$group = 0
 gff.gene.pan$idx = 1:nrow(gff.gene.pan)
@@ -206,9 +207,9 @@ gff.gene.pan$idx = 1:nrow(gff.gene.pan)
 gr.shift = 0
 for(i.chr in 1:5){
   
-  if(i.chr == 4){
-    save(list = ls(), file = "tmp_workspace_easy.RData")
-  }
+  # if(i.chr == 4){
+  #   save(list = ls(), file = "tmp_workspace_easy.RData")
+  # }
   
   for(s.s in s.strand){
     pokaz('Chr', i.chr, s.s)
@@ -259,6 +260,7 @@ if(sum(gff.gene.pan$group == 0) > 0) stop('Zero-groups gound')
 
 # ***********************************************************************
 # ---- Confusing groups ----
+pokaz('Detection of confusing groups')
 
 # Confusing groups
 gff.gene.pan$group = paste0('gr_', gff.gene.pan$group)
@@ -403,6 +405,7 @@ an.blocks.init = an.blocks
 
 # ***********************************************************************
 # ---- Non-confusing groups ----
+pokaz('Non-confusing groups')
 
 idx.good = !(gff.gene.pan$group %in% gr.confusing)
 pos.good.beg = tapply(gff.gene.pan$V4[idx.good], gff.gene.pan$group[idx.good], min)
@@ -446,6 +449,7 @@ gff.exons.own = gff.main.own[gff.main.own$V3 == 'exon',]
 
 # ***********************************************************************
 # ---- Assign exons to annotation groups and form gene genes ----
+pokaz('Assign exons to annotation groups and form gene genes')
 gff.new.pan = c()
 gff.new.own = c()
 
