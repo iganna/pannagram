@@ -221,7 +221,7 @@ for(i.chr in 1:5){
     gff.tmp$group[1] = 1
     gr.end = gff.tmp$V5[1]
     for(irow in 2:nrow(gff.tmp)){
-      if(gff.tmp$V4[irow] < gr.end){
+      if((gff.tmp$V4[irow]-1) <= gr.end){
         gff.tmp$group[irow] = gff.tmp$group[irow-1]
         gr.end = max(gr.end, gff.tmp$V5[irow])
       } else {
@@ -242,6 +242,9 @@ for(i.chr in 1:5){
     for(irow in 1:nrow(gff.tmp)){
       pos[gff.tmp$V4[irow]:gff.tmp$V5[irow]] = 1
     }
+    
+    gff.tmp = gff.tmp[order(gff.tmp$V4),]
+    
     tmp = findOnes(pos)
     if(nrow(tmp) != length(unique(gff.tmp$group))) stop('Groups are wrongly defined')
     
