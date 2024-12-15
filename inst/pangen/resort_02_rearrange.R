@@ -78,6 +78,7 @@ for(acc in accessions){
 
   pokaz('Reading...')
   file.genome = paste0(paste0(path.genomes, acc, ".fasta"))
+  if(!file.exists(file.genome)) next
   pokaz(file.genome)
   genome = readFasta(file.genome)
 
