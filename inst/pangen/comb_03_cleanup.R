@@ -174,11 +174,6 @@ loop.function <- function(s.comb,
   idx.breaks = c()
   for(acc in accessions){
     
-    # if(acc == 'ml4'){
-      
-    #   stop()
-    # }
-    
     pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)

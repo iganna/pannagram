@@ -161,8 +161,18 @@ gff2gff <- function(path.cons,
       gff2$V5[idx.chr] = w$v.prev[gff1$V5[idx.chr]]
     }
     
-    # TODO: add information about blocks
+    # Information about blocks
+    blocks = getSequntialBlocks(v[,2])
+    bl.beg = blocks[abs(gff2$V4[idx.chr])]
+    bl.end = blocks[abs(gff2$V5[idx.chr])]
     
+    idx.noneq = (bl.beg != bl.end) *1
+    idx.noneq[is.na(idx.noneq)] = 1
+    
+    if(length(idx.noneq) > 0){
+      gff2$V4[idx.chr][idx.noneq] = 0
+      gff2$V5[idx.chr][idx.noneq] = 0  
+    }
   }
   
   idx.wrong.blocks = (sign(gff2$V4 * gff2$V5) != 1)
@@ -715,7 +725,7 @@ filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, 
 #'
 #' @param x.acc A numeric vector with positions.
 #' @return A list containing two elements: 'prev' and 'next', each is a vector of calculated values.
-getPrevNext <- function(x.acc){
+getPrevNext_old <- function(x.acc){
   ### ---- Find prev and next ----
   n = length(x.acc)
   for(i.tmp in 1:2){
@@ -755,4 +765,62 @@ getPrevNext <- function(x.acc){
   return(list(v.prev = v.prev, 
               v.next = v.next))
 }
+
+
+getPrevNext <- function(x.acc){
+  
+  n = length(x.acc)
+  for(i.tmp in 1:2){
+    v.acc = x.acc
+    if(i.tmp == 2) {
+      v.acc = rev(v.acc)
+    }
+    
+    v.zero = findOnes((v.acc == 0)*1)
+    v.acc[v.acc == 0] = NA
+    for(irow in 1:nrow(v.zero)){
+      if(v.zero$beg[irow] == 1) next
+      v.acc[v.zero$beg[irow]:v.zero$end[irow]] = v.acc[v.zero$beg[irow]-1]
+    }
+    
+    if(sum(v.acc[!is.na(v.acc)] == 0) > 1) stop('Zeros were found')
+    
+    if(i.tmp == 1){
+      v.prev = v.acc
+    } else {
+      v.acc = rev(v.acc)
+      v.next = v.acc
+    }
+  }
+  
+  return(list(v.prev = v.prev, 
+              v.next = v.next))
+}
+
+
+getSequntialBlocks <- function(v){
+  v.idx = 1:length(v)
+  
+  v.idx = v.idx[v != 0]
+  v = v[v != 0]
+  v.r = rank(abs(v))
+  v.r[v < 0] = v.r[v < 0] * (-1)
+  v.b = findRuns(v.r)
+  
+  v.b$v.beg = v[v.b$beg]
+  v.b$v.end = v[v.b$end]
+  
+  v.b$i.beg = v.idx[v.b$beg]
+  v.b$i.end = v.idx[v.b$end]
+  
+  v.b = v.b[order(abs(v.b$v.beg)),]
+  
+  blocks.acc = rep(0, max(abs(v)))
+  for(irow in 1:nrow(v.b)){
+    blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+  }
+  return(blocks.acc)
+}
+
+
 

@@ -77,7 +77,7 @@ if (!dir.exists(opt$path.res)) {
 
 # ---- Variables ----
 
-s.pannagram = 'Pannagram'
+s.pannagram = 'Pangen'
 s.strand = c('+', '-')
 
 # ---- Accessions ----
@@ -490,8 +490,8 @@ for(i.chr in 1:5){
       gff.exons$V2 = s.pannagram
       
       gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
-      gff.mrna = data.frame(V1 = gff.exons$V1[1],
-                            V2 = s.pannagram,
+      gff.mrna = data.frame(V1 = gff.exons$V1[1], # PanGen_Chr
+                            V2 = 'Pannagram',
                             V3 = 'mRNA',
                             V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
                             V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
@@ -533,8 +533,8 @@ for(i.chr in 1:5){
       gff.exons$V2 = s.pannagram
       
       gff.mrna.an.gr = tapply(gff.exons$an.beg, gff.exons$an.beg, unique)
-      gff.mrna = data.frame(V1 = gff.exons$V1[1],
-                            V2 = s.pannagram,
+      gff.mrna = data.frame(V1 = gff.exons$V1[1], # PanGen_Chr
+                            V2 = 'Pannagram',
                             V3 = 'mRNA',
                             V4 = tapply(gff.exons$V4, gff.exons$an.beg, min),
                             V5 = tapply(gff.exons$V5, gff.exons$an.beg, max),
