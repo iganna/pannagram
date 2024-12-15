@@ -77,7 +77,7 @@ if (!dir.exists(opt$path.res)) {
 
 # ---- Variables ----
 
-s.pannagram = 'Pangen'
+s.pannagram = 'PanGen'
 s.strand = c('+', '-')
 
 # ---- Accessions ----
