@@ -313,7 +313,7 @@ for(s.gr in gr.confusing){
   
   if((length(mx.increase) == 0) && (length(mx.decrease) == 0)){
     pokazAttention('Group', gr, 'is considered non-confusing')
-    gr.confusing = setdiff(gr.confusing, gr)
+    gr.confusing = setdiff(gr.confusing, s.gr)
     next
   }
   
