@@ -315,8 +315,8 @@ for(s.gr in gr.confusing){
   
        
   # Previous method
-  mx.increase = which(colSums((mx.cover[,-1] > mx.cover[,-ncol(mx.cover)]) * 1) != 0)
-  mx.decrease = which(colSums((mx.cover[,-1] < mx.cover[,-ncol(mx.cover)]) * 1) != 0)
+  mx.increase = which(colSums((mx.cover[,-1, drop=F] > mx.cover[,-ncol(mx.cover), drop=F]) * 1) != 0)
+  mx.decrease = which(colSums((mx.cover[,-1, drop=F] < mx.cover[,-ncol(mx.cover), drop=F]) * 1) != 0)
   
   if((length(mx.increase) == 0) && (length(mx.decrease) == 0)){
     pokazAttention('Group', s.gr, 'is considered non-confusing')
