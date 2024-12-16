@@ -277,6 +277,10 @@ save(list = ls(), file = paste0(path.msa,"tmp_workspace_conf.RData"))
 
 an.blocks = c()
 for(s.gr in gr.confusing){
+  
+  if(s.gr == 'gr_10955'){
+    save(list = ls(), file = paste0(path.msa,"tmp_workspace_group.RData"))
+  }
   print(s.gr)
   gff.gr = gff.gene.pan[gff.gene.pan$group == s.gr, , drop=F]
   colnames(gff.gr)[1:9] = c('V1', 'V2', 'type', 'beg', 'end', 'V6', 'strand', 'V8', 'info')
