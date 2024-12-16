@@ -278,7 +278,7 @@ save(list = ls(), file = paste0(path.msa,"tmp_workspace_conf.RData"))
 an.blocks = c()
 for(s.gr in gr.confusing){
   
-  if(s.gr == 'gr_10955'){
+  if(s.gr == 'gr_11085'){
     save(list = ls(), file = paste0(path.msa,"tmp_workspace_group.RData"))
   }
   print(s.gr)
@@ -332,7 +332,9 @@ for(s.gr in gr.confusing){
   mx = mx[order(mx[,1]),, drop=F]
   diff.beg = mx[which((mx[-1,2] == 1) & (mx[-nrow(mx),2] == -1)) + 1, 1]
   
-  if(length(diff.beg) == 0)  stop('3')
+  if(length(diff.beg) == 0){
+    stop('3')
+  } 
   
   
   an.blocks.split = data.frame(beg = c(1, diff.beg), 
