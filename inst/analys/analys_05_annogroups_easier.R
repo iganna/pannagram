@@ -311,7 +311,7 @@ for(s.gr in gr.confusing){
   mx.increase = which(colSums((mx.cover[,-1] > mx.cover[,-ncol(mx.cover)]) * 1) != 0)
   mx.decrease = which(colSums((mx.cover[,-1] < mx.cover[,-ncol(mx.cover)]) * 1) != 0)
   
-  if((mx.increase == 0) && (mx.decrease == 0)){
+  if((length(mx.increase) == 0) && (length(mx.decrease) == 0)){
     pokazAttention('Group', gr, 'is considered non-confusing')
     gr.confusing = setdiff(gr.confusing, gr)
     next
