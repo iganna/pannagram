@@ -31,6 +31,12 @@ path.sv = '/Volumes/Samsung_T5/vienn/test/camelina_sativa/'
 s.species = 'b_nigra'
 path.sv = '/Volumes/Samsung_T5/vienn/test/b_nigra/'
 
+s.species = 'cucumber'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/cucumber/'
+
+s.species = 'auqilegia'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/auqilegia/'
+
 path.figures = paste(path.sv, 'figures/', sep = '')
 
 if (!dir.exists(path.figures)) {
@@ -177,7 +183,7 @@ p <- ggnet2(g.sm, label = 'labels', edge.color = "grey70",
             color = 'colors',
             palette = color.pal
             ) + 
-  theme(legend.position = "none") +
+  # theme(legend.position = "none") +
   guides(size = F)
 p
 
@@ -262,7 +268,7 @@ dotplot.s(s, s, 15, 13)
 
 ### Separate components
 ```{r}
-i.comp = 48
+i.comp = 5
 i.seq = which(memb.comp == i.comp)
 
 names.comp = names(memb.comp)[i.seq]
@@ -270,7 +276,7 @@ names.comp = names(memb.comp)[i.seq]
 s = seqs[names.comp[2]]
 dotself.s(s, 15, 12)
 
-dotself.s(s, 15, 8)
+dotself.s(s, 15, 10)
 
 dotplot.s(s, s, 15, 8)
 
