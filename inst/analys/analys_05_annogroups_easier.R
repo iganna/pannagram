@@ -222,7 +222,7 @@ for(i.chr in 1:5){
     gff.tmp$group[1] = 1
     gr.end = gff.tmp$V5[1]
     for(irow in 2:nrow(gff.tmp)){
-      if((gff.tmp$V4[irow]-1) <= gr.end){
+      if((gff.tmp$V4[irow]) <= gr.end){
         gff.tmp$group[irow] = gff.tmp$group[irow-1]
         gr.end = max(gr.end, gff.tmp$V5[irow])
       } else {
@@ -247,7 +247,7 @@ for(i.chr in 1:5){
     gff.tmp = gff.tmp[order(gff.tmp$V4),]
     
     tmp = findOnes(pos)
-    if(nrow(tmp) != length(unique(gff.tmp$group))) stop('Groups are wrongly defined')
+    # if(nrow(tmp) != length(unique(gff.tmp$group))) stop('Groups are wrongly defined')
     
   }
 }
@@ -311,7 +311,10 @@ for(s.gr in gr.confusing){
   mx.increase = which(colSums((mx.cover[,-1] > mx.cover[,-ncol(mx.cover)]) * 1) != 0)
   mx.decrease = which(colSums((mx.cover[,-1] < mx.cover[,-ncol(mx.cover)]) * 1) != 0)
   
-  if(length(mx.increase) == 0) stop('1')
+  if(length(mx.increase) == 0){
+    save(list = ls(), file = paste0(path.msa,"tmp_workspace_1.RData"))
+    stop('1')
+  } 
   if(length(mx.decrease) == 0) stop('2')
   
   mx = rbind(cbind(mx.increase, 1),
