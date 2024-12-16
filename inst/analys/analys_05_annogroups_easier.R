@@ -142,7 +142,7 @@ for(acc in accessions){
                           n.chr = 5,
                           aln.type = aln.type,
                           s.chr = s.chr,
-                          exact.match = F,
+                          exact.match = T,
                           remain = T)
     
     # Save GFF
