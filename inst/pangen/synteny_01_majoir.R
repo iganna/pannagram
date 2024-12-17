@@ -92,7 +92,6 @@ pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, 
 # ---- MAIN program body ----
 
 loop.function <- function(f.blast, 
-                          file.log.loop=NULL,
                           echo.loop=T){
   
   # Output file

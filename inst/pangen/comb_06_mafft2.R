@@ -58,6 +58,8 @@ files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names =
 files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
 files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
 
+pokaz('Number of files to align', length(files.extra))
+
 path.mafft.in.tmp = paste0(path.mafft.in, 'tmp/')
 
 if (!file.exists(path.mafft.in.tmp)) {
@@ -68,15 +70,14 @@ if (!file.exists(path.mafft.in.tmp)) {
 # ---- MAIN program body ----
 
 loop.function <- function(f.in, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   pokaz(f.in)
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           sub("\\.[^.]*$", "", basename(f.in)),
-                           '.log')
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         sub("\\.[^.]*$", "", basename(f.in)),
+                         '.log')
+  if(!file.exists(file.log.loop)){
     invisible(file.create(file.log.loop))
   }
   
