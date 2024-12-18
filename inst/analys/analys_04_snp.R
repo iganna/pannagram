@@ -119,6 +119,7 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
 
+  pokaz('Round 1: get positions of differences..')
   pos.diff = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
@@ -132,6 +133,7 @@ for(s.comb in pref.combinations){
   }
   
   # Common positions
+  pokaz('Round 2: get diffs in common positions..')
   pos = sort(unique(pos.diff))
   
   snp.matrix = s.pangen[pos]
@@ -151,21 +153,24 @@ for(s.comb in pref.combinations){
   }
   colnames(snp.val) = accessions
   
-  print(dim(snp.matrix))
-  print(length(c(s.pangen.name, accessions)))
+  # print(dim(snp.matrix))
+  # print(length(c(s.pangen.name, accessions)))
   colnames(snp.matrix) = c(s.pangen.name, accessions)
   snp.matrix = cbind(pos, snp.matrix)
 
+  pokaz('Save table...')
   file.snps = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.txt')
   write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
   
   #Save VCF-file
-  
+  pokaz('Save VCF-file...')
   file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.vcf')
   saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
 }
 
-stopCluster(myCluster)
+if(num.cores > 1){
+  stopCluster(myCluster)
+}
 
 warnings()
 

@@ -2,7 +2,7 @@
 # Pannagram
 
 Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
-Additionally, Pannagram contains useful functions for visualization. The manual is available [here](https://iganna.github.io/pannagram/).
+Additionally, Pannagram contains useful functions for visualization.
 
 ## Acknowledgements
 

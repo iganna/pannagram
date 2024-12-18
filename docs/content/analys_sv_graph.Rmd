@@ -37,6 +37,10 @@ path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/proj
 s.species = 'auqilegia'
 path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/auqilegia/'
 
+
+s.species = 'rleg'
+path.sv = '/Volumes/Samsung_T5/vienn/test/manuals/tmp/sv/'
+
 path.figures = paste(path.sv, 'figures/', sep = '')
 
 if (!dir.exists(path.figures)) {
@@ -48,6 +52,7 @@ if (!dir.exists(path.figures)) {
 ## Variables
 ```{r}
 sim.cutoff = 0.85
+sim.cutoff = 0.9
 f.visualise = F
 ```
 
@@ -67,7 +72,7 @@ color.pal <- c("0-100" = "#1f77b4", "100-200" = "#50B498", "200-400" = "#2ca02c"
 
 
 # SV-graph
-# Reading and constructing
+## Reading and constructing
 ```{r}
 
 res.cover.file = 'seq_sv_big_on_sv_cover.rds'
@@ -133,6 +138,8 @@ g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv
 
 dim(g.content$edges.small)
 
+# g.content$edges.small = g.content$edges
+
 ```
 
 #### Plot small component
@@ -179,7 +186,7 @@ p <- ggnet2(g.sm, label = 'labels', edge.color = "grey70",
             # node.size = g.content$nodes.traits[g.part.sub.big.names,]$cnt, 
             # color = g.content$nodes.traits[g.part.sub.big.names,]$type,
             # mode = 'kamadakawai',
-            node.size = 1,
+            node.size = 3,
             color = 'colors',
             palette = color.pal
             ) + 
@@ -266,19 +273,22 @@ dotplot.s(s, s, 15, 13)
 ```
 
 
-### Separate components
+# Separate components
 ```{r}
-i.comp = 5
+i.comp = 3
 i.seq = which(memb.comp == i.comp)
 
 names.comp = names(memb.comp)[i.seq]
 
-s = seqs[names.comp[2]]
-dotself.s(s, 15, 12)
+s = seqs[names.comp[1]]
+# dotself.s(s, 15, 12)
+# 
+# dotself.s(s, 15, 10)
 
-dotself.s(s, 15, 10)
+dotplot.s(s, s, 15, 12)
 
-dotplot.s(s, s, 15, 8)
+
+# s = seqs["SVgr_1_id_03982|1742"]
 
 ```
 
@@ -319,3 +329,15 @@ orf.res$orf[1]
 
 
 ```
+
+#### comp 7 comp 5
+```{r}
+
+s1 = s
+
+
+dotplot.s(s, s1, 15, 12)
+
+```
+
+

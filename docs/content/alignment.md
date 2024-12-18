@@ -3,7 +3,6 @@
 
 Before running the example, define the key working paths in the command line:
 - `PATH_DATA` - the path to the data folder
-- `PATH_PAN` - the path to the `pannagram` folder
 - `PATH_OUT` - the path to the output directory
 
 > ⚠️ **Warning:**  
@@ -17,7 +16,7 @@ To set up the reference, please define the `REF_NAME` variable (basename without
 And run Pannagram in preliminary mode:
 ```
 conda activate pannagram
-${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -ref ${REF_NAME} -pre 
+pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -ref ${REF_NAME} -pre 
 ```
 <!-- pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -nchr 1 -log 2 -ref ${REF_NAME} -accessions ${FILE_ACC} -->
 
@@ -27,8 +26,8 @@ cd "${PATH_OUT}plots/plots_${REF_NAME}/"
 ```
 
 These plots are useful for deciding in which mode Pannagram should be used:
-- `one2one`, when all chromosomes in all genomes are sorted in the same order and should be aligned one-to-one
-- `all2all`, when all chromosomes should be compared with each other.
+- `-one2one`, when all chromosomes in all genomes are sorted in the same order and should be aligned one-to-one
+- `-all2all`, when all chromosomes should be compared with each other.
 
 > 💡 **Tips:**  
 > 1. If the chromosomes are not sorted but there is a one-to-one correspondence, it is recommended to reorder the original genome-files so that the chromosomes are arranged in the correct order for more convenient further analysis.
@@ -48,7 +47,7 @@ If they differ — for instance, if the genome files contain not only chromosome
 This mode produces the alignmnet of all genomes to the reference genome:
 ```
 conda activate pannagram
-${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -ref ${REF_NAME} 
+pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -ref ${REF_NAME} 
 ```
 
 The result files are located at and called `ref_*.h5`. The prefix `ref` is crucial for the `analysis.sh` script.
@@ -63,7 +62,7 @@ ls -lrt ref*
 This mode doesn't require specification of the reference genome.
 ```
 conda activate pannagram
-${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8
+pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8
 ```
 
 The result files are located at and called `msa_*.h5`. The prefix `msa` is crucial for the `analysis.sh` script.
