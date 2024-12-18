@@ -181,7 +181,7 @@ loop.function <- function(s.comb, echo = T){
     
     rmSafe(v)
     rmSafe(v.na)
-    rmSafe(genome)
+    # rmSafe(genome)
     rmSafe(s)
     rmSafe(idx.plus)
     rmSafe(idx.mins)

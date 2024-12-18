@@ -29,7 +29,7 @@
 #' msaplot(aa_sequences, seq.type = 'aa')
 #'
 #' @export
-msaplot <- function(seqs.mx, msa.cols = NULL, seq.type='nt'){
+msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL){
   
   # Colors
   if(is.null(msa.cols)){
