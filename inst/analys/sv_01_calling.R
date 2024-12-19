@@ -237,8 +237,8 @@ file.sv.gff = paste(path.gff, 'svs_pangen_v',sprintf("%02d", sv.version),'.gff',
 sv.pos.all$V10 = 1:nrow(sv.pos.all)
 rownames(sv.pos.all) = sv.pos.all$gr
 
-save(list = ls(), file = 'tmx_workspace_sv.RData')
-stop('Enough')
+# save(list = ls(), file = 'tmx_workspace_sv.RData')
+# stop('Enough')
 
 ## ---- Single-event ----
 sv.se = sv.pos.all[sv.pos.all$single == 1,]
@@ -246,7 +246,7 @@ sv.se.type = rep('indel', nrow(sv.se))
 
 n.acc = length(accessions)
 val.insert = c(1:n.acc)[(1:n.acc) <= (0.11 * n.acc)]
-val.delet = c(1:n.acc)[(1:n.acc) >= (1 - 0.11 * n.acc)]
+val.delet = c(1:n.acc)[(1:n.acc) >= (n.acc - 0.11 * n.acc)]
 
 sv.se.type[sv.se$freq.max %in% val.insert] = 'insertion'
 sv.se.type[sv.se$freq.max %in% val.delet] = 'deletion'
