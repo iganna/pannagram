@@ -238,7 +238,7 @@ sv.pos.all$V10 = 1:nrow(sv.pos.all)
 rownames(sv.pos.all) = sv.pos.all$gr
 
 save(list = ls(), file = 'tmx_workspace_sv.RData')
-
+stop('Enough')
 
 ## ---- Single-event ----
 sv.se = sv.pos.all[sv.pos.all$single == 1,]
