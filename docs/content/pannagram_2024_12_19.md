@@ -4,14 +4,14 @@
 
 ### Download pannagram
 ```
-git clone git@github.com:iganna/pannagram.git
+git clone https://github.com/iganna/pannagram.git
+cd pannagram
 git checkout dev
 git pull
 ```
 
 Create the environment:
 ```
-cd pannagram
 conda env create -f pannagram.yaml
 ./user.sh
 ```
@@ -86,7 +86,7 @@ Run the Pannagram:
 pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -nchr 1
 ```
 
-Check the vvisualisation:
+Check the visualisation:
 ```
 cd ${PATH_OUT}plots/plot_${REF_NAME}
 ```
@@ -152,27 +152,26 @@ p.end <- p.beg + 5000
 
 Get alignment and visualise:
 ```
-aln.seq = cutAln(path.msa, 1, p, p+ 5000)
+aln.seq = cutAln(path.msa, 1, p.beg, p.end)
 msaplot(aln.seq)
 msadiff(aln.seq)
 ```
 
-
 ### gff2gff
 
 ```
-gff1 = 
-gff2 = gff2gff(path.msa, acc1 = '0', acc2 = 'pangen', gff1 = gff.tair, n.chr = 5, exact.match = F, aln.type = aln.type, s.chr = 'Chr')
+gff1 = read.table('file.gff', stringsAsFactors=F)
+gff2 = gff2gff(path.msa, 
+               acc1 = '0', 
+               acc2 = 'pangen', 
+               gff1 = gff.tair, 
+               n.chr = 5, 
+               exact.match = F, 
+               aln.type = 'msa_', 
+               s.chr = 'Chr')
 ```
 
 ## 5. Simsearch
-
-
-### Against the set of sequences
-
-```
-simsearch -in_seq ${PATH_MSA}sv/seq_sv_big.fasta -on_seq <file_with_sequences> -out ${PATH_MSA}sv/on_seq/
-```
 
 ### Against the folder with genomes
 
@@ -181,6 +180,13 @@ simsearch -in_seq "${PATH_MSA}sv/seq_sv_big.fasta" -on_path ${PATH_DATA}  -out "
 cd "${PATH_MSA}sv/on_path/"
 ls -lrt
 ```
+
+### Against the set of sequences
+
+```
+simsearch -in_seq ${PATH_MSA}sv/seq_sv_big.fasta -on_seq <file_with_sequences> -out ${PATH_MSA}sv/on_seq/
+```
+
 
 ## 6. Find new Mobile elements
 

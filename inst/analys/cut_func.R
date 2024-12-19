@@ -1,3 +1,4 @@
+#' @export
 cutAln <- function(path.msa, i.chr, p.beg, p.end, 
                    acc = NULL,
                    aln.type=NULL, ref.acc='',
