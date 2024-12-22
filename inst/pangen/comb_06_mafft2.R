@@ -126,6 +126,11 @@ if(num.cores == 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
   
+  if(length(files.extra) >= 14083 ){
+    pokaz(files.extra[14083])  
+  }
+  
+  
   tmp = foreach(f.in = files.extra, 
                 .packages=c('crayon'), 
                 .verbose = F)  %dopar% { 
