@@ -72,6 +72,11 @@ if (!file.exists(path.mafft.in.tmp)) {
 loop.function <- function(f.in, 
                           echo.loop=T){
   
+  if(f.in == 'Gap_12_12_157891_40072014_40072015_flank_30.fasta'){
+    save(list = ls(), file = 'tmx_workspace_fin.RData')
+  }
+  
+  
   pokaz(f.in)
   # Log files
   file.log.loop = paste0(path.log, 'loop_file_', 
