@@ -71,12 +71,6 @@ if (!file.exists(path.mafft.in.tmp)) {
 
 loop.function <- function(f.in, 
                           echo.loop=T){
-  
-  if(f.in == 'Gap_12_12_157891_40072014_40072015_flank_30.fasta'){
-    save(list = ls(), file = 'tmx_workspace_fin.RData')
-  }
-  
-  
   pokaz(f.in)
   # Log files
   file.log.loop = paste0(path.log, 'loop_file_', 
@@ -96,7 +90,21 @@ loop.function <- function(f.in,
   
   seqs.clean = seqs.clean[nchar(seqs.clean) > 7]
   if(length(seqs.clean) < 2) {
-    pokazAttention('Not enough sequences to align')
+    pokazAttention('Not enough sequences to align', file=file.log.loop, echo=echo.loop)
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    return()
+  }
+  
+  # cnt N
+  n.n = c()
+  for(s in seqs.clean){
+    s.tmp = seq2nt(s)
+    n.n = c(n.n, sum((s.tmp != 'N') & (s.tmp != 'n')) / length(s.tmp))
+  }
+  
+  if(min(n.n) < 0.5){
+    pokazAttention('Too mane N to align', file=file.log.loop, echo=echo.loop)
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
     return()
   }
   
@@ -130,11 +138,6 @@ if(num.cores == 1){
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
-  
-  if(length(files.extra) >= 14083 ){
-    pokaz(files.extra[14083])  
-  }
-  
   
   tmp = foreach(f.in = files.extra, 
                 .packages=c('crayon'), 
