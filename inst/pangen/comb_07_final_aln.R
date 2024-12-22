@@ -316,7 +316,10 @@ for(s.comb in pref.combinations){
   }
   pos.delete = pos.delete.all
 
-  if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)) stop('Wrong identification of positions to delete')
+  if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)){
+    save(list = ls(), file = 'tmx_workspace_step18.RData')
+    stop('Wrong identification of positions to delete')
+  } 
   
   pos.remain = pos.delete == 0
   
