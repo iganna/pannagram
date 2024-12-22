@@ -301,6 +301,12 @@ for(i.acc in 1:length(accessions)){
   df$V1 = paste0(acc, '_Chr', sv.pos.all$chr)
   df$V4 = sv.beg.all[,acc] + 1
   df$V5 = sv.end.all[,acc] - 1
+  
+  if(df$V5 < df$V4){
+    save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
+    stop()
+  }
+  
   df$V9 = paste('ID=', sv.pos.all$gr, '.', acc, 
                 ';len_init=', sv.pos.all$len,
                 ';len_acc=', abs(sv.end.all[,acc]-sv.beg.all[,acc])-1, sep = '')
