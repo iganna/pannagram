@@ -302,7 +302,7 @@ for(i.acc in 1:length(accessions)){
   df$V4 = sv.beg.all[,acc] + 1
   df$V5 = sv.end.all[,acc] - 1
   
-  if(df$V5 < df$V4){
+  if(sum(df$V5 < df$V4) > 0){
     save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
     stop()
   }
