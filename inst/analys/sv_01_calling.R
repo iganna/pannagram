@@ -213,7 +213,6 @@ for(s.comb in pref.combinations){
 
 pokaz('Saving....')
 
-
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 saveRDS(sv.pos.all, file.sv.pos)
 
@@ -222,7 +221,7 @@ if(flag.stat.only){
   quit(save="no")
 } 
 ## ---- Stop for Stat ----
-
+pokaz('Stat....')
 file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
 file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
@@ -241,7 +240,7 @@ for(acc in accessions){
 }
 
 # ---- GFF files ----
-
+pokaz('Gff files for accessions..')
 sv.version = 6
 file.sv.gff = paste(path.gff, 'svs_pangen_v',sprintf("%02d", sv.version),'.gff', sep = '')
 
@@ -252,6 +251,7 @@ rownames(sv.pos.all) = sv.pos.all$gr
 # stop('Enough')
 
 ## ---- Single-event ----
+pokaz('Single-event..')
 sv.se = sv.pos.all[sv.pos.all$single == 1,]
 sv.se.type = rep('indel', nrow(sv.se))
 
@@ -279,6 +279,7 @@ sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
                        V10 = sv.pos.all[sv.se$gr, 'V10'])
 
 ## ---- Multiple-event ----
+pokaz('Multiple-event..')
 sv.me = sv.pos.all[sv.pos.all$single != 1,, drop=F]
 
 if(nrow(sv.me) > 0){
@@ -302,8 +303,7 @@ write.table(sv.gff[,1:9], file.sv.gff, quote = F, row.names = F, col.names = F, 
 options(scipen = 0)
 
 # ---- GFF In accessions ----
-
-
+pokaz('Gff files for accessions comb..')
 for(i.acc in 1:length(accessions)){
   acc = accessions[i.acc]
   pokaz('Generate GFF for accession', acc)
