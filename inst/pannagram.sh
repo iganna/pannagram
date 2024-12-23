@@ -732,7 +732,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --f.chr.anal ${flag_chr_anal)
+            --f.chr.anal ${flag_chr_anal}
 
     # Done
     touch "${step_file}"
