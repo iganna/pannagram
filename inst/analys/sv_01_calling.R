@@ -247,7 +247,7 @@ file.sv.gff = paste(path.gff, 'svs_pangen_v',sprintf("%02d", sv.version),'.gff',
 sv.pos.all$V10 = 1:nrow(sv.pos.all)
 rownames(sv.pos.all) = sv.pos.all$gr
 
-# save(list = ls(), file = 'tmx_workspace_sv.RData')
+save(list = ls(), file = 'tmx_workspace_sv.RData')
 # stop('Enough')
 
 ## ---- Single-event ----

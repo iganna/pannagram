@@ -127,6 +127,10 @@ loop.function <- function(i.comb,
   
   pokaz('File chromosomal:', file.in, 
         file=file.log.loop, echo=echo.loop)
+  if(!file.exists(file.in)){
+    pokaz('Chr file not exist', file=file.log.loop, echo=echo.loop)
+    return(NULL)
+  }
   q.fasta = readFastaMy(file.in)[1]
   q.fasta = toupper(q.fasta)
   
