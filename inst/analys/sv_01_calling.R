@@ -228,6 +228,17 @@ file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
 
+sv.mismatch = (sv.beg.all[, accessions] * sv.end.all[,accessions])  < 0
+for(acc in accessions){
+  sv.beg.all[sv.end.all[,acc] == 0, acc] = 0
+  sv.end.all[sv.beg.all[,acc] == 0, acc] = 0
+  
+  idx = which(sv.beg.all[, acc] * sv.end.all[,acc] < 0)
+  if(length(idx) > 0){
+    sv.beg.all[idx, acc] = 0
+    sv.end.all[idx, acc] = 0
+  }
+}
 
 # ---- GFF files ----
 
@@ -302,14 +313,11 @@ for(i.acc in 1:length(accessions)){
   df$V4 = sv.beg.all[,acc] + 1
   df$V5 = sv.end.all[,acc] - 1
   
-  if(sum(df$V5 < df$V4) > 0){
-    save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
-    stop()
-  }
-  
   df$V9 = paste('ID=', sv.pos.all$gr, '.', acc, 
                 ';len_init=', sv.pos.all$len,
                 ';len_acc=', abs(sv.end.all[,acc]-sv.beg.all[,acc])-1, sep = '')
+  
+  df = df[df$V5 > df$V4,]
   
   df = df[sv.pos.all$len > 0,]
   
@@ -318,6 +326,11 @@ for(i.acc in 1:length(accessions)){
   
   df = df[df$V4 != 0,]
   df = df[df$V5 != 0,]
+  
+  if(sum(df$V5 < df$V4) > 0){
+    save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
+    stop()
+  }
   
   # Strand
   idx.strand = df$V4 < 0
