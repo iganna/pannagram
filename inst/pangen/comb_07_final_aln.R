@@ -281,7 +281,7 @@ for(s.comb in pref.combinations){
   }
 
   pokaz(3)
-  save(list = ls(), file = "tmp_workspace_3_oo.RData")
+  # save(list = ls(), file = "tmp_workspace_3_oo.RData")
   
   # Short
   fp.short = list()
