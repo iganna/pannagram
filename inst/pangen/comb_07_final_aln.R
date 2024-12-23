@@ -89,10 +89,26 @@ for(s.comb in pref.combinations){
   
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
-  files.mafft = c(list.files(path = path.mafft.out, 
-                             pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned\\.fasta$')),
-                  list.files(path = path.mafft.out, 
-                             pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$')))
+  
+  
+  files.mafft1 = list.files(path = path.mafft.out, 
+                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned\\.fasta$'))
+  files.mafft2 = list.files(path = path.mafft.out, 
+                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$'))
+  
+  files.mafft1.pref = sapply(files.mafft1, function(s) strsplit(s, '_aligned')[[1]][1])
+  files.mafft2.pref = sapply(files.mafft2, function(s) strsplit(s, '_aligned')[[1]][1])
+  
+  idx1.dup = which(files.mafft1.pref %in% files.mafft2.pref)
+  if(length(idx1.dup) > 0){
+    pokazAttention('duplicated alignments were found')
+    files.mafft1 = files.mafft1[-idx1.dup]
+  }
+  
+  files.mafft = c(files.mafft1,
+                  files.mafft2)
+  
+  
   mafft.res = data.frame(file = files.mafft)
   
   if(nrow(mafft.res) > 0){
@@ -306,13 +322,23 @@ for(s.comb in pref.combinations){
     pos.delete = rep(0, base.len)
     pos.delete[pos.beg] = 1
     # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
-    pos.delete[pos.end] = pos.delete[pos.end]-1
+    pos.delete[pos.end] = pos.delete[pos.end] - 1
     # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete = cumsum(pos.delete)
     pos.delete[pos.beg] = 0
     pos.delete[pos.end] = 0
     
     pos.delete.all = pos.delete.all + pos.delete
+    
+    # # Testing:  
+    # pos = rep(0, base.len)
+    # for(i in 1:length(pos.beg)){
+    #   if(2310393 %in% c(pos.beg[i]:pos.end[i])) pokaz(i)
+    #   
+    #   pos[pos.beg[i]:pos.end[i]] = pos[pos.beg[i]:pos.end[i]] + 1
+    #   # if(max(pos[pos.beg[i]:pos.end[i]] ) == 2) stop()
+    # }
+    
   }
   pos.delete = pos.delete.all
 
