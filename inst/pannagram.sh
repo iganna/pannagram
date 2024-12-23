@@ -691,6 +691,13 @@ fi
 # │                         CHROMOSOMES & PARTS                               │
 # └───────────────────────────────────────────────────────────────────────────┘
     
+
+if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
+    flag_chr_anal="T"
+else
+    flag_chr_anal="F"
+fi 
+
 step_num=1
 
 # ----------------------------------------------
@@ -724,7 +731,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --n.chr ${nchr}  \
             --accessions ${file_accessions} \
             --path.log ${path_log_step} \
-            --log.level ${log_level}
+            --log.level ${log_level} \
+            --f.chr.anal ${flag_chr_anal)
 
     # Done
     touch "${step_file}"

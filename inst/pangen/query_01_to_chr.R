@@ -19,6 +19,7 @@ option_list <- list(
   make_option(c("--accessions"),type = "character", default = NULL, help = "File with accessions to analyze"),
   
   make_option(c("--n.chr"),     type = "integer",   default = 0,    help = "Number of chromosomes"),
+  make_option(c("--f.chr.anal"),type = "logical",   default = F,    help = "Flag to analyse chromosomes anyway"),
   
   make_option(c("--cores"),     type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option(c("--path.log"),  type = "character", default = NULL, help = "Path for log files"),
@@ -49,6 +50,7 @@ if(n.chr == 0){
 } else {
   pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)  
 }
+f.chr.anal <- opt$f.chr.anal
 
 # Accessions to analyse
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
@@ -128,7 +130,9 @@ loop.function <- function(acc, echo.loop=T){
     pokazAttention('Accession', acc, 'was not analysed, not enough chromosomes in the genome.\n
                    Exist:', length(q.fasta), 'Requeired:', n.chr, 
                    file=file.log.main, echo=echo.loop)
-    return(NULL)
+    if(!f.chr.anal){
+      return(NULL)  
+    }
   }
   
   # Save chromosomal lengths
@@ -139,7 +143,7 @@ loop.function <- function(acc, echo.loop=T){
   df.chr.lengths = df.chr.lengths[1:n.chr,]
   write.table(df.chr.lengths, file.acc.len, sep = '\t', col.names = T, row.names = F, quote = F)
   
-  pokaz('Chromosomes', names(q.fasta)[1:(n.chr)], 'will be processed',
+  pokaz('Chromosomes', names(q.fasta)[1:min(n.chr, length(q.fasta))], 'will be processed',
                  file=file.log.main, echo=echo.loop)
   
   if(length(q.fasta) > n.chr){
