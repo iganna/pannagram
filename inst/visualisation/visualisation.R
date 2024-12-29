@@ -194,8 +194,14 @@ plotSynAllChr <- function(path.aln,
   chr.len.ref = chr.len.ref[order(chr.len.ref$chr),]
   
   # Check that all choromosomes are presented
-  if(nrow(chr.len.acc) != n.chr.acc) stop('Wrong number of chromosomes in accession')
-  if(nrow(chr.len.ref) != n.chr.ref) stop('Wrong number of chromosomes in reference')
+  if(nrow(chr.len.acc) != n.chr.acc){
+    pokaz(nrow(chr.len.acc), n.chr.acc)
+    stop('Wrong number of chromosomes in accession')
+  } 
+  if(nrow(chr.len.ref) != n.chr.ref){
+    pokaz(nrow(chr.len.ref), n.chr.ref)
+    stop('Wrong number of chromosomes in reference')
+  } 
   
   
   # === === === === Reordering === === === ===
