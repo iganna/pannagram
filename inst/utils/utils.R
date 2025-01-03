@@ -22,6 +22,10 @@ suppressMessages({
 #' @author Anna A. Igolkina 
 #' @export
 readFasta <- function(file.fasta, stop.on.error = T) {
+  
+  if(!file.exists(file.fasta)){
+    stop(paste('readFasta: File', file.fasta, 'does not exist'))
+  }
   file.content <- readLines(file.fasta)
   
   if (length(file.content) == 0) {

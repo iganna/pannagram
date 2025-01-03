@@ -173,6 +173,12 @@ fi
 
 for db_file in "${db_files[@]}"; do
 
+    file_out_cnt="${output_pref}.${db_name}.cnt"
+    if [ -f $file_out_cnt ]; then
+       echo "Counts for ${db_name} extimated."
+       continue
+    fi
+
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
     db_file_full="${path_genome}$db_file.fasta"
