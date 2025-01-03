@@ -173,7 +173,9 @@ fi
 
 for db_file in "${db_files[@]}"; do
 
-    file_out_cnt="${output_pref}.${db_name}.cnt"
+    db_pref=$(basename "$db_file")
+    db_pref=${db_pref%%.*}
+    file_out_cnt="${output_pref}.${db_pref}_${sim_threshold}_${coverage}.cnt"
     echo "File woth counts ${file_out_cnt}"
     if [ -f $file_out_cnt ]; then
        echo "Counts for ${db_name} extimated."
