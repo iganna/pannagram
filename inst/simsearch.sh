@@ -174,6 +174,7 @@ fi
 for db_file in "${db_files[@]}"; do
 
     file_out_cnt="${output_pref}.${db_name}.cnt"
+    echo "File woth counts ${file_out_cnt}"
     if [ -f $file_out_cnt ]; then
        echo "Counts for ${db_name} extimated."
        continue
