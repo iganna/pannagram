@@ -176,7 +176,7 @@ for db_file in "${db_files[@]}"; do
     db_pref=$(basename "$db_file")
     db_pref=${db_pref%%.*}
     file_out_cnt="${output_pref}.${db_pref}_${sim_threshold}_${coverage}.cnt"
-    echo "File woth counts ${file_out_cnt}"
+    echo "File with counts ${file_out_cnt}"
     if [ -f $file_out_cnt ]; then
        echo "Counts for ${db_name} extimated."
        continue
@@ -260,7 +260,8 @@ done
 if [[ -z "$file_seq" && -z "$file_genome" ]]; then
     Rscript $INSTALLED_PATH/sim/sim_in_genome_combine.R  \
             --out $output_pref \
-            --sim $sim_threshold
+            --sim $sim_threshold \
+            --coverage ${coverage}
 fi
 
 pokaz_message "Done!"
