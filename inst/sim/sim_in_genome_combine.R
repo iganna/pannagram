@@ -26,7 +26,7 @@ sim.cutoff <- ifelse(!is.null(opt$sim), opt$sim,
                      stop("Similarity threshold not specified", call. = FALSE))
 sim.cutoff = as.numeric(sim.cutoff)
 
-coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
+coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage)
 
 # ---- Testing ----
 
@@ -45,6 +45,9 @@ pokaz(output.dir, sim.cutoff, coverage)
 files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,'_', coverage,"\\.cnt$"), full.names = T)
 if(length(files) == 0) stop('No files with results')
 # print(files)
+
+
+coverage = coverage / 100
 
 total.cnt.list = list()
 total.cnt.names = c()
