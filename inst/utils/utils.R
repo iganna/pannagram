@@ -912,7 +912,7 @@ pokazAttention <- function(..., file = NULL, echo = T) {
   
   text.color <- crayon::make_style("#FC345C")
   # bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color)
+  fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)
   
   if (echo) {
@@ -984,9 +984,9 @@ pokazStage <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#FDFDFD")
+  text.color <- crayon::make_style("#FDFDFD")
   # bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color)
+  fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)
   
   if (echo) {
