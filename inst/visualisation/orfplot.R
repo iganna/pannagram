@@ -83,7 +83,7 @@ orfplot <- function(df, optimal = F,
     
   } else {
     p.orf <- ggplot(df, aes(x = beg, xend = end, y = row.number, yend = row.number, color = as.factor(row.number))) +
-      geom_segment(arrow = arrow(length = unit(0.05, "inches")), size = 1) + 
+      geom_segment(arrow = arrow(length = unit(arrow.size, "inches")), size = 1) + 
       theme_minimal() + xlab(NULL) + ylab(NULL) +  
       theme(legend.position = "none", 
             axis.text.y = element_blank(),  

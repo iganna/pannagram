@@ -4,6 +4,8 @@ cutAln <- function(path.msa, i.chr, p.beg, p.end,
                    aln.type=NULL, ref.acc='',
                    mode = 'seq'){
   
+  s.pangenome = c('pangen', 'pannagram', 'pangenome')
+  
   gr.accs.e = "accs/"
   gr.accs.b <- "/accs"
   
@@ -14,12 +16,14 @@ cutAln <- function(path.msa, i.chr, p.beg, p.end,
     ref.suff = paste0('_', ref.acc)
   }
   
+  
+  if(is.null(aln.type)) stop('Provide the alignment type')
+  file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+  
   if(mode == 'seq'){
-    if(is.null(aln.type)) aln.type = 'seq_'
-    file.msa = paste0(path.msa, 'seq/', aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.mode = paste0(path.msa, 'seq/', 'seq_', i.chr, '_', i.chr, ref.suff, '.h5')
   } else if(mode == 'pos') {
-    if(is.null(aln.type)) aln.type = 'msa_'
-    file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.mode = paste0(path.msa, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
   } else {
     stop("Mode could be either 'seq' or 'pos'")
   }
@@ -29,7 +33,15 @@ cutAln <- function(path.msa, i.chr, p.beg, p.end,
   if(!is.null(acc)){
     pokaz('Define new pos based on the accession', acc)
     
-    v = h5read(file.msa, paste0(gr.accs.e, acc))
+    if(tolower(acc) %in% s.pangenome){
+      info = h5ls(file.msa)
+      info = info[info$group == '/accs',]
+      v = 1:as.numeric(info$dim[1])
+    } else {
+      v = h5read(file.msa, paste0(gr.accs.e, acc))  
+    }
+    
+    
     p.beg.acc = which(v == p.beg)
     p.end.acc = which(v == p.end)
     
@@ -44,12 +56,12 @@ cutAln <- function(path.msa, i.chr, p.beg, p.end,
     p.end = p.end.acc
   }
   
-  groups = h5ls(file.msa)
+  groups = h5ls(file.mode)
   accessions <-  groups$name[groups$group == gr.accs.b]
   aln.mx = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
-    v = h5read(file.msa, paste0(gr.accs.e, acc))
+    v = h5read(file.mode, paste0(gr.accs.e, acc))
     aln.mx = rbind(aln.mx, v[p.beg:p.end])
   }
   rownames(aln.mx) <- accessions

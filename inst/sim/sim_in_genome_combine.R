@@ -40,12 +40,9 @@ coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage)
 
 output.dir = dirname(output.file)
 
-pokaz(output.dir, sim.cutoff, coverage)
-
 files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,'_', coverage,"\\.cnt$"), full.names = T)
 if(length(files) == 0) stop('No files with results')
 # print(files)
-
 
 coverage = coverage / 100
 

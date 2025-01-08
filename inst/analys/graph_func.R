@@ -270,8 +270,13 @@ getGraphFromBlast <- function(bl.res = NULL,
   
   nodes.mutual =     data.frame(node = paste0('N', graph.mutual.comp$membership), 
                                 name = names(graph.mutual.comp$membership))
-  nodes.rest = data.frame(node = paste('R', (1:length(names.rest)), sep = ''), 
-                          name = names.rest)
+  if(length(names.rest) > 0){
+    nodes.rest = data.frame(node = paste('R', (1:length(names.rest)), sep = ''), 
+                            name = names.rest)  
+  } else {
+    nodes.rest = c()
+  }
+  
   nodes = rbind(nodes.mutual, nodes.rest)
   rownames(nodes) = nodes$name
   
