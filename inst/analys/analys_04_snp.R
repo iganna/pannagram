@@ -173,7 +173,7 @@ for(s.comb in pref.combinations){
   snp.val.acc = snp.val[pos.acc != 0,,drop=F]
   pos.acc = pos.acc[pos.acc != 0,,drop=F]
   
-  
+  pokaz('Save Rdata')
   save(list = ls(), file = "tmp_workspace_snp.RData")
   
   pokaz('Save VCF-file for the accession', acc, '...')
