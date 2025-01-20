@@ -162,10 +162,10 @@ for(s.comb in pref.combinations){
   file.snps = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.txt')
   write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
   
-  #Save VCF-file
-  pokaz('Save VCF-file...')
-  file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.vcf')
-  saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
+  # #Save VCF-file
+  # pokaz('Save VCF-file...')
+  # file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.vcf')
+  # saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   # Create the VCF-file for the first accession, the main reference.
   acc = accessions[1]
