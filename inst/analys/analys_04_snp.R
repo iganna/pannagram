@@ -21,6 +21,7 @@ option_list = list(
   make_option(c("--ref.pref"),    type="character", default=NULL,      help="prefix of the reference file")
 ); 
 
+pokaz('Anna')
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -103,7 +104,7 @@ if(length(pref.combinations) == 0){
 flag.for = T
 for(s.comb in pref.combinations){
   
-  pokaz('* Combination', s.comb)
+  pokaz('* Combination:', s.comb)
   
   # Get Consensus
   i.chr = comb2ref(s.comb)
