@@ -21,8 +21,6 @@ option_list = list(
   make_option(c("--ref.pref"),    type="character", default=NULL,      help="prefix of the reference file")
 ); 
 
-pokaz('Anna')
-
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
@@ -104,8 +102,6 @@ if(length(pref.combinations) == 0){
 flag.for = T
 for(s.comb in pref.combinations){
   
-  pokaz('* Combination:', s.comb)
-  
   # Get Consensus
   i.chr = comb2ref(s.comb)
   file.seq.cons = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
@@ -167,16 +163,16 @@ for(s.comb in pref.combinations){
   # pokaz('Save VCF-file...')
   # file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.vcf')
   # saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
+
+  pokaz('Save Rdata')
+  save(list = ls(), file = "tmp_workspace_snp.RData")
   
   # Create the VCF-file for the first accession, the main reference.
   acc = accessions[1]
   pos.acc = h5read(file.seq, paste0(gr.accs.e, acc))
   snp.val.acc = snp.val[pos.acc != 0,,drop=F]
   pos.acc = pos.acc[pos.acc != 0,,drop=F]
-  
-  pokaz('Save Rdata')
-  save(list = ls(), file = "tmp_workspace_snp.RData")
-  
+
   pokaz('Save VCF-file for the accession', acc, '...')
   file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_',acc,'.vcf')
   saveVCF(snp.val.acc, pos.acc, chr.name=paste0(acc,'_Chr', i.chr), file.vcf = file.vcf)
