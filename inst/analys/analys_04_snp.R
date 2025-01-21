@@ -166,10 +166,10 @@ for(s.comb in pref.combinations){
   
   # Create the VCF-file for the first accession, the main reference.
   acc = accessions[1]
-  pos.acc = h5read(file.seq, paste0(gr.accs.e, acc))
+  pos.acc = h5read(file.seq.cons, paste0(gr.accs.e, acc))
   pos.acc = pos.acc[pos]
   snp.val.acc = snp.val[pos.acc != 0,,drop=F]
-  pos.acc = pos.acc[pos.acc != 0]
+  pos.acc = abs(pos.acc[pos.acc != 0])
 
   pokaz('Save VCF-file for the accession', acc, '...')
   file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_',acc,'.vcf')
