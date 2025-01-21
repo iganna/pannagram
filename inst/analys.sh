@@ -183,6 +183,24 @@ if [ "$run_snp" = true ]; then
         --path.chr ${path_chromosomes} \
         --aln.type ${aln_type} \
         --cores ${cores}
+
+    # ---------------
+    # Pi divirsity
+    pokaz_stage "Pi diversity."
+    path_snp="${path_consensus}snp/"
+    vcf_files=$(find "$path_snp" -type f -name "*.vcf")
+    if [ -z "$vcf_files" ]; then
+      echo "VCF-files are not found in $path_snp!"
+      exit 1
+    fi
+
+    # Run VCF-tools
+    for vcf_file in $vcf_files; do
+      base_name=$(basename "$vcf_file" .vcf)
+      output_file="${path_snp}${base_name}_output"
+      vcftools --vcf "$vcf_file" --site-pi --out "$output_file"
+    done
+
 fi
 
 
