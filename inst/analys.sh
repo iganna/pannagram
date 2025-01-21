@@ -187,7 +187,7 @@ if [ "$run_snp" = true ]; then
     # ---------------
     # Pi divirsity
     pokaz_stage "Pi diversity."
-    path_snp="${path_consensus}snp/"
+    path_snp="${path_consensus}snps/"
     vcf_files=$(find "$path_snp" -type f -name "*.vcf")
     if [ -z "$vcf_files" ]; then
       echo "VCF-files are not found in $path_snp!"
