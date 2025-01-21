@@ -165,8 +165,10 @@ for(s.comb in pref.combinations){
   # saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   # Create the VCF-file for the first accession, the main reference.
+  file.comb = paste0(path.comb, aln.type, s.comb, ref.suff, 'h5')
+  pokaz(file.comb)
   acc = accessions[1]
-  pos.acc = h5read(file.seq.cons, paste0(gr.accs.e, acc))
+  pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))
   pos.acc = pos.acc[pos]
   snp.val.acc = snp.val[pos.acc != 0,,drop=F]
   pos.acc = abs(pos.acc[pos.acc != 0])
