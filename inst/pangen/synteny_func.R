@@ -108,20 +108,19 @@ glueZero <- function(x.all){
 #'
 
 cleanOverlaps <- function(x.df, rm.threshold = 0.5) {
-  previous_rows <- nrow(x.df)
   
   repeat {
-    # pokaz(nrow(x.df))
+    previous_df <- x.df
     x.df <- cleanOverlapsPre(x.df, rm.threshold = rm.threshold)
-    current_rows <- nrow(x.df)
     
-    if (current_rows == previous_rows) {
+    if (identical(x.df, previous_df)) {
       break
     }
-    previous_rows <- current_rows
   }
+  
   return(x.df)
 }
+
 
 
 cleanOverlapsPre <- function(x.df, rm.threshold = 0.5){
