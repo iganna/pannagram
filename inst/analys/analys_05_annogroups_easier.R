@@ -130,6 +130,8 @@ for(acc in accessions){
   gff.acc$acc = acc
   gff.acc$idx.init = 1:nrow(gff.acc)
   
+  pokaz('File with annotation in pangen coordinates:', file.pan.gff)
+  
   if(file.exists(file.pan.gff)){
     gff.acc.pan = read.table(file.pan.gff, stringsAsFactors = F)
     # gff.acc.pan$acc = acc
