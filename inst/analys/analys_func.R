@@ -114,6 +114,9 @@ gff2gff <- function(path.cons,
   
   for(i.chr in 1:n.chr){
     
+    if(i.chr == 5){
+      save(list = ls(), file = "tmp_workspace_chr5.RData")
+    }
     # ---
     # If there some regions to annotate from the chromosome i.chr
     idx.chr = which(gff2$chr == i.chr)
