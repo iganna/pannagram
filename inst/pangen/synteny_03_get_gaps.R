@@ -152,8 +152,6 @@ loop.function <- function(f.maj,
   x = readRDS(paste0(path.aln, f.maj))
   x = cleanOverlaps(x)
   
-  save(list = ls(), file = "tmp_workspace_get_gap.RData")
-  
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
     
@@ -171,6 +169,8 @@ loop.function <- function(f.maj,
   # ---- Get gaps ----
   pokaz('Get gaps', file=file.log.loop, echo=echo.loop)
   
+  # save(list = ls(), file = "tmp_workspace_get_gap.RData")
+  
   checkCorrespToGenome(x=setDir(x, base.len = base.len),
                        query.fas = query.fas.chr, 
                        base.fas.fw = base.fas.fw, 
@@ -184,7 +184,7 @@ loop.function <- function(f.maj,
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
   
-  # save(list = ls(), file = "tmp_workspace.RData")
+  save(list = ls(), file = "tmp_workspace.RData")
   
   if((sum(pos.q.free > 1) != 0)) stop('Coverage query is wrong')
   if((sum(pos.b.free > 1) != 0)) stop('Coverage base is wrong')
