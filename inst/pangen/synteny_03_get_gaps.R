@@ -105,7 +105,6 @@ loop.function <- function(f.maj,
   initial.vars <- ls()
   
   pokaz("File", f.maj)
-  save(list = ls(), file = "tmp_workspace_get_gap.RData")
   # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
@@ -152,6 +151,8 @@ loop.function <- function(f.maj,
   
   x = readRDS(paste0(path.aln, f.maj))
   x = cleanOverlaps(x)
+  
+  save(list = ls(), file = "tmp_workspace_get_gap.RData")
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
