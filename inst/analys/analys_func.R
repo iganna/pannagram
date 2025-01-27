@@ -166,6 +166,8 @@ gff2gff <- function(path.cons,
     bl.beg = blocks[abs(gff2$V4[idx.chr])]
     bl.end = blocks[abs(gff2$V5[idx.chr])]
     
+    save(list = ls(), file = "tmp_workspace_gff2gff.RData")
+    
     idx.noneq = (bl.beg != bl.end) *1
     idx.noneq[is.na(idx.noneq)] = 1
     
@@ -585,7 +587,6 @@ getGeneBlocks <- function(g.tmp, len.pan, v.acc){
                     idx = g[idx.beg,1]))
 }
 
-
 saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   
   if(length(snp.pos) != nrow(snp.val)) stop('Dimentions of the SNP matrix and the vectop of positions should match')
@@ -644,6 +645,31 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   
   # Close the file connection
   close(file.vcf.conn)
+}
+
+
+#' Compute PI per Window
+#'
+#' This function calculates the sum of PI values per defined window length (`len.wnd`) on the result of
+#' vcftools --vcf snps.vcf --site-pi --out output
+#'
+#' @param data A data frame containing at least two columns: `POS` (positions) and `PI` (values).
+#' @param len.wnd Numeric. The length of each window. Default is 300000.
+#'
+#' @return A named numeric vector with the average PI values per window.
+#' 
+#' @export
+piVCF <- function(data, len.wnd = 300000) {
+  if (!all(c("POS", "PI") %in% names(data))) {
+    stop("The data frame must contain 'POS' and 'PI' columns.")
+  }
+  
+  data$wnd <- ceiling(data$POS / len.wnd)
+  pi.wnd <- tapply(data$PI, data$wnd, sum) / len.wnd
+  
+  df = data.frame(pi = pi.wnd, pos = ((1:length(pi.wnd)) - 1) * len.wnd)
+  
+  return(df)
 }
 
 
