@@ -150,7 +150,12 @@ loop.function <- function(f.maj,
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
   x = readRDS(paste0(path.aln, f.maj))
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   x = cleanOverlaps(x)
+  
+  save(list = ls(), file = "tmp_workspace2.RData")
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
@@ -179,12 +184,13 @@ loop.function <- function(f.maj,
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions in query
   pos.b.free = rep(0, base.len)  # free positions in base
+
   for(irow in 1:nrow(x)){
     pos.q.free[x$V2[irow]:x$V3[irow]] <- pos.q.free[x$V2[irow]:x$V3[irow]] + 1
     pos.b.free[x$V4[irow]:x$V5[irow]] <- pos.b.free[x$V4[irow]:x$V5[irow]] + 1
   }
   
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
   
   if((sum(pos.q.free > 1) != 0)) stop('Coverage query is wrong')
   if((sum(pos.b.free > 1) != 0)) stop('Coverage base is wrong')
