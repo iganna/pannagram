@@ -104,7 +104,8 @@ loop.function <- function(f.maj,
   
   initial.vars <- ls()
   
-  pokaz(f.maj)
+  pokaz("File", f.maj)
+  save(list = ls(), file = "tmp_workspace_get_gap.RData")
   # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
