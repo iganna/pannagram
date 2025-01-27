@@ -101,7 +101,7 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 
 loop.function <- function(f.maj, 
                           echo.loop=T){
-  
+  echo.loop = T
   initial.vars <- ls()
   
   pokaz("File", f.maj)
