@@ -140,9 +140,26 @@ for(s.comb in pref.combinations){
   pokaz('Combine SV info from accessions...')
   sv.cover = 0
   for(acc in accessions){
-    pokaz('Sequence of accession', acc)
+    pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
-    sv.cover = sv.cover + ((v == 0) & (!is.na(v))) * 1
+    v[is.na(v)] = 0
+    
+    pokaz('Find gaps..')
+    sv.acc = findOnes(v == 0)
+    if(sv.acc$beg[1] == 1) sv.acc = sv.acc[-1,]
+    if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
+    v.r = rank(abs(v)) * sign(v)
+    
+    pokaz('Exclude gaps around inversions..')
+    sv.acc$beg.r = v.r[sv.acc$beg - 1]
+    sv.acc$end.r = v.r[sv.acc$end + 1]
+    sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
+    if(nrow(sv.acc.na) > 0){
+      for(irow in 1:nrow(sv.acc.na)){
+        v[sv.acc.na$beg[irow]:sv.acc.na$end[irow]] = Inf
+      }  
+    }
+    sv.cover = sv.cover + (v == 0) * 1
   }
   
   save(list = ls(), file = "tmp_workspace_sv.RData")
@@ -150,29 +167,51 @@ for(s.comb in pref.combinations){
   
   # SV groups
   pokaz('Create SV groups...')
-  pos.non.sv = (sv.cover == 0)
-  idx.beg = which((pos.non.sv[-length(pos.non.sv)] == 1) & (pos.non.sv[-1] == 0))+ 1
-  idx.end = which((pos.non.sv[-length(pos.non.sv)] == 0) & (pos.non.sv[-1] == 1)) 
-  if(pos.non.sv[1] == 0) idx.end = idx.end[-1]
-  idx.beg = idx.beg[1:length(idx.end)]
-  len.sv = idx.end - idx.beg + 1
   
-  sv.pos = data.frame(beg = idx.beg-1, end = idx.end+1)
-  sv.pos$len = abs(sv.pos$beg - sv.pos$end) - 1 # do not change
+  sv.pos = findOnes((sv.cover != 0)*1)
+  sv.pos$len = abs(sv.pos$beg - sv.pos$end) + 1 # do not change
+  sv.pos$beg = sv.pos$beg - 1
+  sv.pos$end = sv.pos$end + 1
+  sv.pos$beg[sv.pos$beg == 0] = 1
+  sv.pos$end[sv.pos$end > length(sv.cover)] = length(sv.cover)
   
   sv.beg = c()
   sv.end = c()
   for(acc in accessions){
-    pokaz('Sequence of accession', acc)
+    pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
+    v[is.na(v)] = 0
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
     sv.end = cbind(sv.end, v[sv.pos$end])
   }
   colnames(sv.beg) = accessions
   colnames(sv.end) = accessions
   
+  # Check ranks
+  for(acc in accessions){
+    acc.r = c(sv.beg[,acc] + 0.1, sv.end[,acc] - 0.1)
+    acc.r = rank(abs(acc.r)) * sign(acc.r)
+    acc.r = matrix(acc.r, ncol = 2)
+    
+    d = acc.r[,2] - acc.r[,1]
+    idx = which(d != 1)
+    if(length(idx) > 0){
+      sv.beg[idx, acc] = 0
+      sv.end[idx, acc] = 0
+    }
+  }
+  
+  # Clean up empty
+  sv.na = (rowSums(sv.beg) == 0) | (rowSums(sv.end) == 0)
+  sv.pos = sv.pos[!sv.na,]
+  sv.beg = sv.beg[!sv.na,]
+  sv.end = sv.end[!sv.na,]
+  
+  # Calculate lengths
   sv.len.acc = abs(sv.beg - sv.end) - 1  # do not change
   colnames(sv.len.acc) = accessions
+  
+  # Calculate frequencies
   sv.pos$freq.min = 0
   sv.pos$freq.max = 0
   for(i.col in 1:n.acc){
@@ -180,20 +219,13 @@ for(s.comb in pref.combinations){
     sv.pos$freq.max = sv.pos$freq.max + 1*((sv.len.acc[,i.col] >= cutoff * sv.pos$len) & (!is.na(sv.len.acc[,i.col])))
   }
   
-  sv.pos$freq.na = rowSums(is.na(sv.len.acc))
-  
-  sv.pos$freq.sum = sv.pos$freq.min + sv.pos$freq.max + sv.pos$freq.na
+  sv.pos$freq.sum = sv.pos$freq.min + sv.pos$freq.max 
   sv.pos$single = (sv.pos$freq.sum == n.acc) * 1
   sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc])
   
   # Clean up NA
-  sv.na = (sv.pos$freq.na == n.acc) | (sv.pos$freq.min == 0) | (sv.pos$freq.max == 0)
-  sv.pos = sv.pos[!sv.na,]
-  sv.beg = sv.beg[!sv.na,]
-  sv.end = sv.end[!sv.na,]
   if(sum((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG1')
   if(sum((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG2')
-  
   
   s.gr.len <- nchar(as.character(nrow(sv.pos)))
   i.chr = strsplit(s.comb, '_')[[1]][1]
