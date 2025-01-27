@@ -134,6 +134,7 @@ for(acc in accessions){
   
   if(file.exists(file.pan.gff)){
     gff.acc.pan = read.table(file.pan.gff, stringsAsFactors = F)
+    colnames(gff.acc.pan) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "acc", "idx.init")
     # gff.acc.pan$acc = acc
   } else {
     pokaz('Conversion of accession', acc)
@@ -160,8 +161,7 @@ for(acc in accessions){
   gff.main.own = rbind(gff.main.own, gff.acc)
 }
 
-colnames(gff.main.pan) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "acc", "idx.init")
-colnames(gff.main.own) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "acc", "idx.init")
+
 
 gff.main.pan$acc = as.character(gff.main.pan$acc)
 gff.main.own$acc = as.character(gff.main.own$acc)
