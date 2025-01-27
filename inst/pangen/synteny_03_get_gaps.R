@@ -150,12 +150,9 @@ loop.function <- function(f.maj,
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
   
   x = readRDS(paste0(path.aln, f.maj))
-  
-  save(list = ls(), file = "tmp_workspace.RData")
-  
   x = cleanOverlaps(x)
   
-  save(list = ls(), file = "tmp_workspace2.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
   
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
