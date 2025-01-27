@@ -207,9 +207,9 @@ gff.gene.pan$idx = 1:nrow(gff.gene.pan)
 gr.shift = 0
 for(i.chr in 1:5){
   
-  # if(i.chr == 4){
-  #   save(list = ls(), file = "tmp_workspace_easy.RData")
-  # }
+  if(i.chr == 2){
+    save(list = ls(), file = "tmp_workspace_gr2.RData")
+  }
   
   for(s.s in s.strand){
     pokaz('Chr', i.chr, s.s)
@@ -273,14 +273,15 @@ gr.acc.cnt = tapply(gff.gene.pan$acc, gff.gene.pan$group,
 
 gr.confusing = names(gr.acc.cnt)[gr.acc.cnt != 0]
 
-save(list = ls(), file = paste0(path.msa,"tmp_workspace_conf.RData"))
+# save(list = ls(), file = paste0(path.msa,"tmp_workspace_conf.RData"))
 
 an.blocks = c()
 for(s.gr in gr.confusing){
   
-  if(s.gr == 'gr_11085'){
-    save(list = ls(), file = paste0(path.msa,"tmp_workspace_group.RData"))
-  }
+  # if(s.gr == 'gr_11085'){
+  #   save(list = ls(), file = paste0(path.msa,"tmp_workspace_group.RData"))
+  # }
+  
   print(s.gr)
   gff.gr = gff.gene.pan[gff.gene.pan$group == s.gr, , drop=F]
   colnames(gff.gr)[1:9] = c('V1', 'V2', 'type', 'beg', 'end', 'V6', 'strand', 'V8', 'info')
