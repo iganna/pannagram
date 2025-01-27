@@ -166,7 +166,7 @@ gff2gff <- function(path.cons,
     bl.beg = blocks[abs(gff2$V4[idx.chr])]
     bl.end = blocks[abs(gff2$V5[idx.chr])]
     
-    save(list = ls(), file = "tmp_workspace_gff2gff.RData")
+    # save(list = ls(), file = "tmp_workspace_gff2gff.RData")
     
     idx.noneq = (bl.beg != bl.end) *1
     idx.noneq[is.na(idx.noneq)] = 1
