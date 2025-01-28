@@ -162,8 +162,8 @@ for(s.comb in pref.combinations){
     sv.cover = sv.cover + (v == 0) * 1
   }
   
-  # save(list = ls(), file = "tmp_workspace_sv.RData")
-  # stop()
+  save(list = ls(), file = "tmp_workspace_sv.RData")
+  stop()
   
   # SV groups
   pokaz('Create SV groups...')
