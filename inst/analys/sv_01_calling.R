@@ -162,8 +162,8 @@ for(s.comb in pref.combinations){
     sv.cover = sv.cover + (v == 0) * 1
   }
   
-  save(list = ls(), file = "tmp_workspace_sv.RData")
-  stop()
+  # save(list = ls(), file = "tmp_workspace_sv.RData")
+  # stop()
   
   # SV groups
   pokaz('Create SV groups...')
@@ -261,6 +261,8 @@ file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
 file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
+
+
 
 sv.mismatch = (sv.beg.all[, accessions] * sv.end.all[,accessions])  < 0
 for(acc in accessions){
