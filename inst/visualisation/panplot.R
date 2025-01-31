@@ -1,6 +1,82 @@
 # This file contains functions for visualising synteny between genomes
 
-# Function to extract blocks for every accession
+
+getBlocks <- function(v, f.split = T){
+  
+  len.min = 20000
+  v.init = v
+  v.idx = 1:length(v)
+  
+  v.idx = v.idx[v != 0]
+  v = v[v != 0]
+  # v.r = rank(abs(v))
+  v.r = v
+  v.r[v < 0] = v.r[v < 0] * (-1)
+  v.b = findRuns(v.r)
+  
+  v.b = v.b[v.b$len >= len.min,]
+  
+  v.b.rank = matrix(rank(v.b[,c('v.beg', 'v.end')]), ncol = 2, dimnames = list(NULL,c('r.beg', 'r.end')))
+  v.b = cbind(v.b, v.b.rank)
+  
+  
+  # Remove 
+  irow = 2
+  while (irow <= nrow(v.b)) {
+    if(((v.b$r.beg[irow] - 1) == v.b$r.end[irow - 1]) &
+       ((v.b$v.beg[irow] - 1 - v.b$v.end[irow - 1]) < len.min)){
+      v.b$r.end[irow - 1] = v.b$r.end[irow]
+      v.b$end[irow - 1] = v.b$end[irow]
+      v.b$v.end[irow - 1] = v.b$v.end[irow]
+      v.b = v.b[-irow,]
+    } else {
+      irow = irow + 1
+    }
+  }
+  v.b$i.beg = v.idx[v.b$beg]
+  v.b$i.end = v.idx[v.b$end]
+  
+  df = v.b[,c('v.beg', 'v.end', 'i.beg', 'i.end')]
+  
+  # Add breaks, if they are with a long gap
+  if(f.split){
+    len.min.split = 50000
+    d = diff(v.idx)
+    i.d = which(d >= len.min.split)
+    for(i.d in which(d >= len.min.split)){
+      v.pos = v[i.d]
+      i.pos = v.idx[i.d]
+      
+      i.v = which((df$v.beg < v.pos) & (df$v.end > v.pos))
+      i.i = which((df$i.beg < i.pos) & (df$i.end > i.pos))
+      
+      if(length(i.v) > 0){
+        if(length(i.i) == 0) stop('Something is wrong with i.i')
+        if(i.v != i.i) stop('Idxs do not match')
+        
+        df.tmp = df[i.v,]
+        
+        df.tmp$v.beg = abs(v[i.d + 1])
+        df.tmp$i.beg = v.idx[i.d + 1]
+        
+        df[i.v,]$v.end = v.pos
+        df[i.v,]$i.end = i.pos
+        
+        df = rbind(df, df.tmp)
+      }
+    }    
+  }
+  
+
+  
+  df = df[order(df$i.beg),]
+  rownames(df) = NULL
+  
+  colnames(df) <- c('own.b', 'own.e', 'pan.b', 'pan.e')
+  df$dir = (df$own.b > df$own.e) * 1
+  return(df)
+}
+
 extractBlocks <- function(path.aln, n.acc, len.break = 50000, len.break.gap = 10000, echo=T){
   
   idx.synteny = c()
@@ -69,8 +145,103 @@ extractBlocks <- function(path.aln, n.acc, len.break = 50000, len.break.gap = 10
                             data.frame(
                               pan.b = pan.b,
                               pan.e = pan.e,
-                              acc.b = acc.b,
-                              acc.e = acc.e,
+                              own.b = acc.b,
+                              own.e = acc.e,
+                              acc = acc,
+                              chr = i.chr,
+                              # pan.len = pan.e - pan.b - 1,
+                              # acc.len = acc.e - acc.b - 1,
+                              dir = (v.acc[idx.dir[i+1],3] < v.acc[idx.dir[i]+1,3]) * 1
+                            ))
+      }
+      rm(v.acc)
+    }
+    
+    if(echo) cat('\n')
+    
+    vars_to_keep <- c("idx.synteny", "i.chr", 'len.break', 'len.break.gap', 'path.aln', 'n.acc')
+    all_vars <- ls()
+    vars_to_remove <- setdiff(all_vars, vars_to_keep)
+    rm(list = vars_to_remove)
+    gc()
+  }
+  
+  colnames(idx.synteny)[c(3,4)] = c('own.b', 'own.e')
+  return(idx.synteny)
+}
+
+
+# Function to extract blocks for every accession
+extractBlocks_old <- function(path.aln, n.acc, len.break = 50000, len.break.gap = 10000, echo=T){
+  
+  idx.synteny = c()
+  for(i.chr in 1:5){
+    if(echo) message(paste('Chromosome', i.chr))
+    v = readRDS(paste0(path.aln, 'val_common_chr_', i.chr, '_ref_add.rds'))
+    n.v = nrow(v)
+    accessions = colnames(v)[1:n.acc]
+    
+    n.acc.per.site = rowSums(v[1:n.acc] != 0, )
+    is.core = (n.acc.per.site == n.acc) * 1
+    
+    zeros.beg <- which(is.core == 0 & c(0, is.core[-n.v]) != 0)
+    zeros.end <- which(is.core == 0 & c(is.core[-1], 0) != 0)
+    if(is.core[1] == 0) zeros.beg = c(1, zeros.beg)
+    if(is.core[n.v] == 0) zeros.end = c(zeros.end, n.v)
+    
+    zeros.len = zeros.end - zeros.beg + 1
+    idx.long = which(zeros.len >= len.break)
+    
+    pos.long = c()
+    for(i in idx.long){
+      pan.b = zeros.beg[i] - 1
+      pan.e = zeros.end[i] + 1
+      if(pan.e > n.v) next
+      if(pan.b == 0 ) next
+      for(acc in accessions){
+        acc.b = v[pan.b, acc] - 1
+        acc.e = v[pan.e, acc]
+        if((acc.e - acc.b < len.break.gap)) next
+        pos.long = rbind(pos.long, data.frame(pos = c(acc.b,acc.e), acc = acc))
+      }
+    }
+    
+    if(echo) cat('Accessions: ')
+    # gaps per accession
+    for(acc in accessions){
+      if(echo) cat(acc)
+      if(echo) cat(' ')
+      
+      v.acc = v[,acc]
+      v.acc = cbind(v.acc, 1:nrow(v))
+      
+      v.acc = v.acc[v.acc[,1] != 0,] 
+      v.acc = cbind(v.acc, 1:nrow(v.acc))
+      v.acc = v.acc[order(v.acc[,1]),]
+      
+      diffs <- diff(v.acc[,3])
+      idx.dir <- which(abs(diffs) != 1)
+      
+      diffs <- diff(v.acc[,1])
+      idx.dir <- c(0, sort(c(idx.dir, which(abs(diffs) >= len.break))), nrow(v.acc))
+      
+      pos.acc = pos.long[pos.long[,2] == acc,1]
+      
+      idx.dir = sort(c(idx.dir, which(v.acc[,1] %in% pos.acc)))
+      
+      for(i in 1:(length(idx.dir)-1)){
+        pan.b = v.acc[idx.dir[i]+1,2]
+        pan.e = v.acc[idx.dir[i+1],2]
+        acc.b = v.acc[idx.dir[i]+1,1]
+        acc.e = v.acc[idx.dir[i+1],1]
+        
+        if((acc.e - acc.b + 1) < len.break.gap) next
+        idx.synteny = rbind(idx.synteny,
+                            data.frame(
+                              pan.b = pan.b,
+                              pan.e = pan.e,
+                              own.b = acc.b,
+                              own.e = acc.e,
                               acc = acc,
                               chr = i.chr,
                               # pan.len = pan.e - pan.b - 1,
@@ -325,7 +496,7 @@ splitBlocksByGrid <- function(df.blocks, wnd.size = 1000000){
 
 
 getColorPallete <- function(df.plot){
-  custom_colors.cold = c('#27374D',rep(c('#526D82', '#9DB2BF', '#DDE6ED', '#9DB2BF', '#526D82', '#27374D'), 5))
+  custom_colors.cold = c('#27374D',rep(c('#526D82', '#9DB2BF', '#DDE6ED', '#9DB2BF', '#526D82', '#27374D'), 6))
   
   # custom_colors.warm = c('#CE1F6A',
   #                        rep(c('#E76161', '#F99B7D', '#FFE4C0', '#F99B7D', '#E76161', '#CE1F6A'), 5))
@@ -425,6 +596,7 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
 panplot <- function(idx.break, i.chr, accessions=NULL, i.order=NULL, file.cen.pos=NULL, file.acc.len=NULL, 
                       gap.len = 100000, wnd.size = 1000000){
   
+  gap.len = min(gap.len, wnd.size / 10)
   if(is.null(accessions)){
     accessions = unique(idx.break$acc)
   }
@@ -460,6 +632,9 @@ panplot <- function(idx.break, i.chr, accessions=NULL, i.order=NULL, file.cen.po
   df.plot = res[[1]]
   gr.col = res[[2]]
   
+  # pokaz(head(df.plot))
+  
+  # p +  theme(legend.position = "none") 
   
   p = ggplot() +
     geom_polygon(data=df.plot[df.plot$chr == i.chr,], 
@@ -481,7 +656,8 @@ panplot <- function(idx.break, i.chr, accessions=NULL, i.order=NULL, file.cen.po
     theme(legend.position = "none") + theme(panel.grid.minor.x = element_blank(), 
                                             panel.grid.minor.y = element_blank(), 
                                             panel.grid.major.x = element_blank()) + 
-    scale_y_continuous(labels =  accessions[i.order], breaks = 1:length(i.order))
+    scale_y_continuous(labels =  accessions[i.order], breaks = 1:length(i.order), expand = c(0, 0)) + 
+    scale_x_continuous(expand = c(0, 0))
   
   
   if(!is.null(cen.pos.chr)){
