@@ -102,6 +102,7 @@ loop.function <- function(acc,
       write.table(chr.len, file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
     }
   }
+  chr.len = chr.len[!is.na(chr.len$acc),]
   
   # ---- Testing ----
   # file.ws = "tmp_workspace.RData"
