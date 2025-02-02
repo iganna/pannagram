@@ -231,9 +231,21 @@ for(s.comb in pref.combinations){
   sv.pos$single = (sv.pos$freq.sum == n.acc) * 1
   sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc])
   
-  save(list = ls(), file = "tmp_workspace_sv.RData")
+  # save(list = ls(), file = "tmp_workspace_sv.RData")
   
-  # Clean up NA
+  # Clean up
+  idx = !((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc))
+  sv.pos = sv.pos[idx,]
+  sv.beg = sv.beg[idx,]
+  sv.end = sv.end[idx,]
+  sv.len.acc = sv.len.acc[idx,]
+  
+  idx = !((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc))
+  sv.pos = sv.pos[idx,]
+  sv.beg = sv.beg[idx,]
+  sv.end = sv.end[idx,]
+  sv.len.acc = sv.len.acc[idx,]
+  
   if(sum((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG1')
   if(sum((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG2')
   
