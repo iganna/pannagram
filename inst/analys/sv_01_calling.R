@@ -211,6 +211,14 @@ for(s.comb in pref.combinations){
   sv.len.acc = abs(sv.beg - sv.end) - 1  # do not change
   colnames(sv.len.acc) = accessions
   
+  
+  # Remove those, which length in more that the length of SV
+  idx = rowMax(sv.len.acc) <= sv.pos$len
+  sv.pos = sv.pos[idx,]
+  sv.beg = sv.beg[idx,]
+  sv.end = sv.end[idx,]
+  sv.len.acc = sv.len.acc[idx,]
+  
   # Calculate frequencies
   sv.pos$freq.min = 0
   sv.pos$freq.max = 0
