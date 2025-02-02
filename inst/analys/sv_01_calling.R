@@ -223,6 +223,8 @@ for(s.comb in pref.combinations){
   sv.pos$single = (sv.pos$freq.sum == n.acc) * 1
   sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc])
   
+  save(list = ls(), file = "tmp_workspace_sv.RData")
+  
   # Clean up NA
   if(sum((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG1')
   if(sum((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG2')
