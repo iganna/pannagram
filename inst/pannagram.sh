@@ -1552,6 +1552,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         find ${path_log_step} -name "*" -type f -exec rm -f {} +
         # rm -f ${path_mafft_out}*aligned.fasta
         # rm -f ${path_log_step}*
+
     fi
 
     "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
@@ -1584,7 +1585,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
         touch ${path_log_step}fake.log
-        rm -f ${path_log_step}*
+        # rm -f ${path_log_step}*
+        find ${path_log_step} -name "*" -type f -exec rm -f {} +
     fi
 
     Rscript $INSTALLED_PATH/pangen/comb_06_bad_mafft.R \
@@ -1620,7 +1622,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_log_step}fake.log
 
         rm -f ${path_mafft_out}*aligned2.fasta
-        rm -f ${path_log_step}*
+        # rm -f ${path_log_step}*
+        find ${path_log_step} -name "*" -type f -exec rm -f {} +
     fi
 
     Rscript $INSTALLED_PATH/pangen/comb_06_mafft2.R \
