@@ -157,11 +157,12 @@ for(i.chr in 1:n.chr){
   i.order = 1:length(accessions)
   
   i.order = c(2,  6 , 5,  4,  3,  8 , 9, 10,  7 ,11,  1 ,12)
+  pokaz(i.order)
   
   df.tmp = df.all
   df.tmp$acc <- factor(df.tmp$acc, levels = accessions[i.order])
   
-  p = panplot(df.tmp, i.chr, accessions, i.order, wnd.size=wnd.size) 
+  p = panplot(df.tmp, i.chr, accessions = accessions, i.order = i.order, wnd.size=wnd.size) 
   
   pdf(paste(path.figures, 'fig_synteny_chr',i.chr,'.pdf', sep = ''), width = 6, height = 4 / 27 * length(accessions))
   print(p)     # Plot 1 --> in the first page of PDF
