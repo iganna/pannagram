@@ -59,8 +59,6 @@ if(is.null(ref.name)) ref.name = ''
 
 s.pattern <- paste0("^", aln.type, ".*h5")
 s.combinations <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pokaz(path.cons)
-pokaz(s.combinations)
 s.combinations = gsub(aln.type, "", s.combinations)
 s.combinations = gsub(".h5", "", s.combinations)
 
@@ -107,7 +105,7 @@ for(s.comb in s.combinations){
   
   df = foreach(acc = accessions, .packages = c('rhdf5', 'crayon', 'pannagram'), .combine = rbind) %dopar% {
     pokaz('Accession', acc)
-    v = h5read(file.combo, paste0(gr.accs.e, acc))
+    v = h5read(file.comb.in, paste0(gr.accs.e, acc))
     
     df.acc = getBlocks(v)
     df.acc$acc = acc
