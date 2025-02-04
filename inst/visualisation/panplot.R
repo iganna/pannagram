@@ -1,6 +1,6 @@
 # This file contains functions for visualising synteny between genomes
 
-
+#' @export
 getBlocks <- function(v, f.split = T){
   
   len.min = 20000
