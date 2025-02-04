@@ -52,6 +52,8 @@ if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
 # Reference genome
 ref.name <- opt$ref
+if(ref.name == "NULL") ref.name = ''
+if(is.null(ref.name)) ref.name = ''
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
