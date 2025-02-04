@@ -154,12 +154,11 @@ n.chr = max(df.all$chr)
 wnd.size = 100000
 for(i.chr in 1:n.chr){
   pokaz('Chromosome', i.chr)
-  i.order = chr.order[[i.chr]]
+  i.order = 1:length(accessions)
   df.tmp = df.all
   df.tmp$acc <- factor(df.tmp$acc, levels = accessions[i.order])
   
-  p = panplot(df.tmp, i.chr, accessions, i.order, 
-              file.cen.pos=file.cen.pos, file.acc.len=file.acc.len, wnd.size=wnd.size) 
+  p = panplot(df.tmp, i.chr, accessions, i.order, wnd.size=wnd.size) 
   
   pdf(paste(path.figures, 'fig_synteny_alignment_chr',i.chr,'.pdf', sep = ''), width = 7, height = 4 / 27 * length(accessions))
   print(p)     # Plot 1 --> in the first page of PDF
