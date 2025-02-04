@@ -67,7 +67,7 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   scale_y_continuous(expand = c(0, 0))
 
 pokaz('Plot...')
-pdf(paste(path.figures, basename(file.pi), '_smooth.pdf', sep = ''), width = 7, height = 2)
+pdf(paste(path.figures, basename(file.pi), '_smooth.pdf', sep = ''), width = 6, height = 1)
 print(p.acc)     # Plot 1 --> in the first page of PDF
 dev.off()
 # 
