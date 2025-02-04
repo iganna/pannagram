@@ -142,11 +142,16 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
     pokaz_stage "Get blocks."
+
+    path_plots="${path_consensus}plot_synteny/"
+    mkdir -p ${path_plots}
+
     Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
         --path.cons ${path_consensus} \
         --cores ${cores} \
         --ref  ${ref_pref} \
-        --aln.type ${aln_type} 
+        --aln.type ${aln_type} \
+        --path.figures ${path_plots}
 fi
 
 if [ "$run_seq" = true ]; then

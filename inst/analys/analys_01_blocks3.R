@@ -15,10 +15,11 @@ source(system.file("utils/utils.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons", type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--ref",       type = "character", default = "",   help = "Prefix of the reference file"),
-  make_option("--cores",     type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--aln.type",  type = "character", default = NULL, help = "Prefix for the output file")
+  make_option("--path.cons",    type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--ref",          type = "character", default = "",   help = "Prefix of the reference file"),
+  make_option("--cores",        type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--aln.type",     type = "character", default = NULL, help = "Prefix for the output file")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -49,6 +50,11 @@ num.cores <- opt$cores
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
+
+# Path with the figures folder
+if (!is.null(opt$path.figures)) path.figures <- opt$path.figures
+if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
+
 
 # Reference genome
 ref.name <- opt$ref
@@ -88,54 +94,76 @@ if(length(s.combinations) == 0){
 # aln.type = aln.type.ref
 # ref.suff = '_0'
 
-df.all = c()
-for(s.comb in s.combinations){
-  
-  i.chr = as.numeric(strsplit(s.comb, '_')[[1]][1])
-  pokaz('Chromosome', i.chr)
-  # --- --- --- --- --- --- --- --- --- --- ---
-  
-  file.comb.in = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
-
-  groups = h5ls(file.comb.in)
-  accessions = groups$name[groups$group == gr.accs.b]
-  
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  df = foreach(acc = accessions, .packages = c('rhdf5', 'crayon', 'pannagram'), .combine = rbind) %dopar% {
-    pokaz('Accession', acc)
-    v = h5read(file.comb.in, paste0(gr.accs.e, acc))
+file.blocks = paste0(path.cons, aln.type, 'syn_blocks',ref.suff,'.rds')
+if(!file.exists(file.blocks)){
+  df.all = c()
+  for(s.comb in s.combinations){
     
-    df.acc = getBlocks(v)
-    df.acc$acc = acc
-    df.acc$chr = i.chr
+    i.chr = as.numeric(strsplit(s.comb, '_')[[1]][1])
+    pokaz('Chromosome', i.chr)
+    # --- --- --- --- --- --- --- --- --- --- ---
     
-    df.acc
+    file.comb.in = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
+    
+    groups = h5ls(file.comb.in)
+    accessions = groups$name[groups$group == gr.accs.b]
+    
+    myCluster <- makeCluster(num.cores, type = "PSOCK") 
+    registerDoParallel(myCluster) 
+    
+    df = foreach(acc = accessions, .packages = c('rhdf5', 'crayon', 'pannagram'), .combine = rbind) %dopar% {
+      pokaz('Accession', acc)
+      v = h5read(file.comb.in, paste0(gr.accs.e, acc))
+      
+      df.acc = getBlocks(v)
+      df.acc$acc = acc
+      df.acc$chr = i.chr
+      
+      df.acc
+    }
+    
+    df.all = rbind(df.all, df)
+    
+    stopCluster(myCluster)
+    gc()
+    
   }
   
-  df.all = rbind(df.all, df)
+  idx.dir = which(df.all$own.b > df.all$own.e)
+  tmp = df.all$own.b[idx.dir]
+  df.all$own.b[idx.dir] = df.all$own.e[idx.dir]
+  df.all$own.e[idx.dir] = tmp
   
-  stopCluster(myCluster)
-  gc()
+  tmp = df.all$pan.b[idx.dir]
+  df.all$pan.b[idx.dir] = df.all$pan.e[idx.dir]
+  df.all$pan.e[idx.dir] = tmp
   
+  
+  saveRDS(df.all, file.blocks)  
+} else {
+  df.all = readRDS(file.blocks)
 }
 
-idx.dir = which(df.all$own.b > df.all$own.e)
-tmp = df.all$own.b[idx.dir]
-df.all$own.b[idx.dir] = df.all$own.e[idx.dir]
-df.all$own.e[idx.dir] = tmp
-
-tmp = df.all$pan.b[idx.dir]
-df.all$pan.b[idx.dir] = df.all$pan.e[idx.dir]
-df.all$pan.e[idx.dir] = tmp
-
-file.blocks = paste0(path.cons, aln.type, 'syn_blocks',ref.suff,'.rds')
-saveRDS(df.all, file.blocks)
 
 # ***********************************************************************
-# ---- Loop  ----
+# ---- Plot  ----
 
+accessions = unique(df.all$acc)
+
+wnd.size = 100000
+for(i.chr in 1:n.chr){
+  pokaz('Chromosome', i.chr)
+  i.order = chr.order[[i.chr]]
+  df.tmp = df.all
+  df.tmp$acc <- factor(df.tmp$acc, levels = accessions[i.order])
+  
+  p = panplot(df.tmp, i.chr, accessions, i.order, 
+              file.cen.pos=file.cen.pos, file.acc.len=file.acc.len, wnd.size=wnd.size) 
+  
+  pdf(paste(path.figures, 'fig_synteny_alignment_chr',i.chr,'.pdf', sep = ''), width = 7, height = 4 / 27 * length(accessions))
+  print(p)     # Plot 1 --> in the first page of PDF
+  dev.off()
+}
 
 
 warnings()
