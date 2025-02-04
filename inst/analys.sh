@@ -201,6 +201,16 @@ if [ "$run_snp" = true ]; then
           base_name=$(basename "$vcf_file" .vcf)
           output_file="${path_snp}${base_name}_output"
           vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
+
+          # vcftools --vcf ${output_file} --geno-r2 --out "${output_file}_dist"
+
+        path_plots="${path_snp}plot_synteny/"
+        mkdir -p ${path_plots}
+
+          Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
+                --path.figures ${path_plots} \
+                --file.pi "${output_file}.sites.pi"
+
         done
     fi
 
