@@ -81,7 +81,7 @@ p = heatplot(dist.mx)
 
 pokaz('Plot...')
 pdf(paste(path.figures, file.pi, '_dist.pdf', sep = ''), width = 7, height = 7)
-print(p.acc)
+print(p)
 dev.off()
 
 saveRDS(dist.mx, paste0(path.snp, file.pi, '_dist.rds'))
