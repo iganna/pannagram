@@ -57,9 +57,13 @@ ref.name <- opt$ref
 
 s.pattern <- paste0("^", aln.type, ".*h5")
 s.combinations <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+pokaz(path.cons)
+pokaz(s.combinations)
 s.combinations = gsub(aln.type, "", s.combinations)
 s.combinations = gsub(".h5", "", s.combinations)
 
+
+pokaz('Reference:', ref.name)
 if(ref.name != ""){
   ref.suff = paste0('_', ref.name)
   
