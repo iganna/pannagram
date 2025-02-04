@@ -8,7 +8,7 @@ suppressMessages({
   library(rhdf5)
 })
 
-source(system.file("utils/utils.R", package = "pannagram"))
+library(pannagram)
 
 # Define blocks in the alignemnt
 
