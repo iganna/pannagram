@@ -66,6 +66,7 @@ run_blocks2=false
 run_seq=false
 run_aln=false
 run_snp=false
+run_snp_pi=false
 
 # analysis of SVs
 run_sv_call=false
@@ -84,10 +85,11 @@ while [ $# -gt 0 ]; do
         -path_chr)       path_chromosomes=$2;    shift 2;;
         
         -blocks)         run_blocks=true;        shift;;           # Get position of synteny blocks between accessions
-        -blocks2)        run_blocks2=true;        shift;;           # Get position of synteny blocks between accessions
+        -blocks2)        run_blocks2=true;       shift;;           # Get position of synteny blocks between accessions
         -seq)            run_seq=true;           shift;;           # Get consensus sequence
         -aln)            run_aln=true;           shift;;           # Produce fasta file with the pangenome alignment
         -snp)            run_snp=true;           shift;;           # Get VCF file with SNPs
+        -snp_pi)         run_snp_pi=true;        shift;;           # Run pi-diversity with VCF-tools
         # -sv)           run_sv=true;            shift;;
 
         -sv_call|-sv)    run_sv_call=true;       shift;;           # SV calling from the alignment
@@ -140,14 +142,7 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
     pokaz_stage "Get blocks."
-    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
-        --path.cons ${path_consensus} \
-        --cores ${cores}
-fi
-
-if [ "$run_blocks2" = true ]; then
-    pokaz_stage "Get blocks 2."
-    Rscript $INSTALLED_PATH/analys/analys_01_blocks2.R \
+    Rscript $INSTALLED_PATH/analys/analys_03_blocks.R \
         --path.cons ${path_consensus} \
         --cores ${cores} \
         --ref  ${ref_pref} \
@@ -186,20 +181,25 @@ if [ "$run_snp" = true ]; then
 
     # ---------------
     # Pi divirsity
-    pokaz_stage "Pi diversity."
-    path_snp="${path_consensus}snps/"
-    vcf_files=$(find "$path_snp" -type f -name "*.vcf")
-    if [ -z "$vcf_files" ]; then
-      echo "VCF-files are not found in $path_snp!"
-      exit 1
+    if [ "$run_snp_pi" = true ]; then
+
+        pokaz_stage "Pi diversity."
+        path_snp="${path_consensus}snps/"
+        vcf_files=$(find "$path_snp" -type f -name "*.vcf")
+        if [ -z "$vcf_files" ]; then
+          echo "VCF-files are not found in $path_snp!"
+          exit 1
+        fi
+
+        # Run VCF-tools
+        for vcf_file in $vcf_files; do
+          base_name=$(basename "$vcf_file" .vcf)
+          output_file="${path_snp}${base_name}_output"
+          vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
+        done
     fi
 
-    # Run VCF-tools
-    for vcf_file in $vcf_files; do
-      base_name=$(basename "$vcf_file" .vcf)
-      output_file="${path_snp}${base_name}_output"
-      vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
-    done
+    rm ${path_snp}*log
 
 fi
 
