@@ -80,7 +80,8 @@ dist.mx = dist.mx[h$order,h$order]
 p = heatplot(dist.mx)
 
 pokaz('Plot...')
-pdf(paste(path.figures, file.pi, '_dist.pdf', sep = ''), width = 7, height = 7)
+pokaz(paste0(path.figures, file.pi, '_dist.pdf'))
+pdf(paste0(path.figures, file.pi, '_dist.pdf'), width = 7, height = 7)
 print(p)
 dev.off()
 
