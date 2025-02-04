@@ -149,6 +149,7 @@ if(!file.exists(file.blocks)){
 # ---- Plot  ----
 
 accessions = unique(df.all$acc)
+n.chr = max(df.all$chr)
 
 wnd.size = 100000
 for(i.chr in 1:n.chr){
