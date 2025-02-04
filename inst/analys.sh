@@ -188,28 +188,29 @@ if [ "$run_snp" = true ]; then
     # Pi divirsity
     if [ "$run_snp_pi" = true ]; then
 
+        path_plots="${path_snp}plot_synteny/"
+        mkdir -p ${path_plots}
+
         pokaz_stage "Pi diversity."
         path_snp="${path_consensus}snps/"
         vcf_files=$(find "$path_snp" -type f -name "*.vcf")
         if [ -z "$vcf_files" ]; then
-          echo "VCF-files are not found in $path_snp!"
-          exit 1
+            echo "VCF-files are not found in $path_snp!"
+            exit 1
         fi
 
         # Run VCF-tools
         for vcf_file in $vcf_files; do
-          base_name=$(basename "$vcf_file" .vcf)
-          output_file="${path_snp}${base_name}_output"
-          vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
+            base_name=$(basename "$vcf_file" .vcf)
+            output_file="${path_snp}${base_name}_output"
+            vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
+            vcftools --vcf "${vcf_file}" --extract-FORMAT-info ID --out "$output_file"
 
-          # vcftools --vcf ${output_file} --geno-r2 --out "${output_file}_dist"
-
-        path_plots="${path_snp}plot_synteny/"
-        mkdir -p ${path_plots}
-
-          Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
                 --path.figures ${path_plots} \
                 --file.pi "${output_file}.sites.pi"
+
+            plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
 
         done
     fi
