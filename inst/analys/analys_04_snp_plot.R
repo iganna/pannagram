@@ -6,6 +6,7 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
+  library(ggplot2)
 })
 
 library(pannagram)
