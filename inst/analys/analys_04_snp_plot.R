@@ -32,18 +32,11 @@ max.len.gap = 20000
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
-# ---- HDF5 ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
-
-aln.type <- ifelse(is.null(opt$aln.type), aln.type.msa, opt$aln.type)
-
 
 # ***********************************************************************
 # ---- Values of parameters ----
 
 # Set the number of cores for parallel processing
-
 
 # Path with the consensus output
 if (!is.null(opt$file.pi)) file.pi <- opt$file.pi
@@ -71,7 +64,7 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   xlab(NULL) +
   theme_minimal()
 
-savePDF(p.acc, path = path.figures, name = paste0(f, '_smooth'), width = 7, height = 3)
+savePDF(p.acc, path = path.figures, name = paste0(file.pi, '_smooth'), width = 7, height = 3)
 
 
 
