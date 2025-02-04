@@ -64,7 +64,7 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   xlab(NULL) +
   theme_minimal()
 
-savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 7, height = 2)
+savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 10, height = 2)
 
 
 
