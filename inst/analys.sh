@@ -142,7 +142,7 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
     pokaz_stage "Get blocks."
-    Rscript $INSTALLED_PATH/analys/analys_03_blocks.R \
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
         --path.cons ${path_consensus} \
         --cores ${cores} \
         --ref  ${ref_pref} \
