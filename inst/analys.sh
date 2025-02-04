@@ -188,8 +188,7 @@ if [ "$run_snp" = true ]; then
     # Pi divirsity
     if [ "$run_snp_pi" = true ]; then
 
-        path_plots="${path_snp}plot_synteny/"
-        mkdir -p ${path_plots}
+        
 
         pokaz_stage "Pi diversity."
         path_snp="${path_consensus}snps/"
@@ -198,6 +197,9 @@ if [ "$run_snp" = true ]; then
             echo "VCF-files are not found in $path_snp!"
             exit 1
         fi
+
+        path_plots="${path_snp}plot_synteny/"
+        mkdir -p ${path_plots}
 
         # Run VCF-tools
         for vcf_file in $vcf_files; do
