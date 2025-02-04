@@ -62,7 +62,9 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
               span = 0.2) +  
   ylab(expression(pi)) + 
   xlab(NULL) +
-  theme_minimal()
+  theme_minimal() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0))
 
 pokaz('Plot...')
 pdf(paste(path.figures, basename(file.pi), '_smooth.pdf', sep = ''), width = 7, height = 2)

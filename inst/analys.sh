@@ -198,7 +198,7 @@ if [ "$run_snp" = true ]; then
             exit 1
         fi
 
-        path_plots="${path_snp}plot_synteny/"
+        path_plots="${path_snp}plot_snp/"
         mkdir -p ${path_plots}
 
         # Run VCF-tools

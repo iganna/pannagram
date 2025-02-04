@@ -6,7 +6,6 @@ suppressMessages({ library(Biostrings)
   library(doParallel)
   library("optparse")
   library(crayon)
-  library(ggplot2)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
