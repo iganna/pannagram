@@ -212,6 +212,10 @@ if [ "$run_snp" = true ]; then
 
             plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
 
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
+                --path.figures ${path_plots} \
+                --file.pi "${vcf_file}"
+
         done
     fi
 
