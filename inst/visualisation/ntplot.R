@@ -41,7 +41,8 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
   
   p = ggplot(df.freq, aes(x = Position, y = Frequency, fill = Base)) +
     geom_bar(stat = "identity", width = 1) +
-    theme_minimal()+ scale_fill_manual(values = msa.cols)
+    theme_minimal()+ scale_fill_manual(values = msa.cols) +
+    theme(legend.position = "bottom", legend.direction = "horizontal")
   
   if(nt.separate){
     p <- p + facet_wrap(~Base, scales = "free_y", ncol = 1) + theme(legend.position = "none") 
