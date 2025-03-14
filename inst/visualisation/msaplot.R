@@ -29,7 +29,7 @@
 #' msaplot(aa_sequences, seq.type = 'aa')
 #'
 #' @export
-msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL){
+msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, f.legend=F){
   
   # Colors
   if(is.null(msa.cols)){
@@ -106,6 +106,10 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL){
           panel.border = element_blank()) + ylab('') + 
     xlab(NULL) +
     theme(legend.position = "none")
+  
+  if(f.legend){
+    g.msa = g.msa + theme(legend.position = "bottom")
+  }
   
   return(g.msa)
   
