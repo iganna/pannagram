@@ -57,7 +57,7 @@ ggedges <- function(edges.linear, label = F, size = 5){
 #' 
 #' @return A vector containing the trait for each node.
 #' 
-#' 
+#' @export
 traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F, 
                             mode = 'maxunique',
                             mix.word = 'Mix',
@@ -126,6 +126,7 @@ traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F,
 getGraphComponents <- function(edges){
   g <- igraph::simplify(igraph::make_graph(t(edges), directed = T))
   g.comp <- igraph::components(g)
+  g.comp$cnt = table(g.comp$membership)
   return(g.comp)
 }
 

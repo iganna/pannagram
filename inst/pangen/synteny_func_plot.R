@@ -7,7 +7,7 @@
 #' @param height The height of the PDF file in inches (default is 10)
 #' @export
 savePDF <- function(geom, path = '.', name='some', width=10, height=10){
-  pdf(file.path(path, paste0(name, ".pdf")), width=width, height=width)
+  pdf(file.path(path, paste0(name, ".pdf")), width=width, height=height)
   print(geom)
   dev.off()
 }
