@@ -1296,6 +1296,8 @@ load.library <- function(package) {
 #' @author Anna A. Igolkina 
 #' @export
 findOnes <- function(g.bin) {
+  if (!all(g.bin %in% c(0, 1))) stop("The array should contain only 0 and 1")
+  
   changes <- diff(c(0, g.bin, 0))
   beg <- which(changes == 1)
   end <- which(changes == -1) - 1
