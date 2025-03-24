@@ -153,10 +153,6 @@ for(acc in accessions){
     write.table(gff.acc.pan, file.pan.gff, row.names = F, col.names = F, quote = F, sep = '\t')
     pokaz('saved')
   }
-  pokaz(colnames(gff.main.pan))
-  pokaz(colnames(gff.acc.pan))
-  pokaz(colnames(gff.main.own))
-  pokaz(colnames(gff.acc))
   gff.main.pan = rbind(gff.main.pan, gff.acc.pan)
   gff.main.own = rbind(gff.main.own, gff.acc)
 }
