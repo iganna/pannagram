@@ -66,7 +66,7 @@ Run the Pannagram:
 pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -ref ${REF_NAME} -pre -cores 8
 ```
 
-Check the vvisualisation:
+Check the visualisation:
 ```
 cd ${PATH_OUT}plots/plot_${REF_NAME}
 ```
@@ -126,8 +126,11 @@ library(hdf5)
 library(ggplot2)
 library(pannagram)
 
-path.msa <- ''     # SPECIFY!
-file.msa <- paste0(path, 'msa_1_1.h5')
+path.msa <- './'     # SPECIFY!
+path.figures <- paste0(path.msa, 'figures/')
+if (!file.exists(path.figures)) dir.create(path.figures)
+
+file.msa <- paste0(path.msa, 'msa_1_1.h5')
 ```
 
 Observe the alignment file:
@@ -153,8 +156,12 @@ p.end <- p.beg + 5000
 Get alignment and visualise:
 ```
 aln.seq = cutAln(path.msa, 1, p.beg, p.end)
-msaplot(aln.seq)
-msadiff(aln.seq)
+p1 <- msaplot(aln.seq)
+p2 <- msadiff(aln.seq)
+
+savePNG(p1, paste0(pth.figures, 'msaplot.png'))
+savePNG(p2, paste0(pth.figures, 'msadiff.png'))
+
 ```
 
 ### gff2gff
