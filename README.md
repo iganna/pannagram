@@ -22,7 +22,7 @@ Make sure you have one of the following package managers installed:
 - [Mamba](https://github.com/mamba-org/mamba)
 - [Micromamba](https://github.com/mamba-org/mamba#micromamba)
 
-Use your selected package manager by replacing <manager> with conda, mamba, or micromamba.
+Use your selected package manager by replacing ```<manager>``` with conda, mamba, or micromamba.
 
 ### Linux and macOS (Intel)
 
@@ -64,6 +64,11 @@ Then run the following in the command line:
 ```bash
 <manager> activate pannagram
 open -a RStudio
+```
+
+One may also create an alias:
+```
+alias panR="micromamba activate pannagram && open -a RStudio"
 ```
 
 ### Included Dependencies
