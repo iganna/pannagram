@@ -5,7 +5,7 @@
 # Pannagram
 
 <p align="left">
-<img src="images/pannagram_scheme.png" width="30%" height="auto">
+<img src="images/pannagram_scheme.png" width="100%" height="auto">
 </p>
 
 Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
