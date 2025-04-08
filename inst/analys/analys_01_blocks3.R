@@ -156,7 +156,7 @@ for(i.chr in 1:n.chr){
   pokaz('Chromosome', i.chr)
   i.order = 1:length(accessions)
   
-  # i.order = c(2,  6 , 5,  4,  3,  8 , 9, 10,  7 ,11,  1 ,12)
+  i.order = c(2,  6,  5,  4,  3,  7,  9, 10,  8, 11,  1, 12)
   # pokaz(i.order)
   
   df.tmp = df.all

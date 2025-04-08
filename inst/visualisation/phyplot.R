@@ -262,10 +262,7 @@ reorderTree <- function(t1, t2) {
 #'
 #' @param tree A phylogenetic tree of class \code{phylo}.
 #' @return A character vector of tip labels in the order they appear in the tree's edge matrix.
-#' @examples
-#' # Example usage:
-#' tree <- ape::rtree(5)
-#' tip_order <- getTipOrder(tree)
+#' @export
 getTipOrder <- function(tree) {
   n <- length(tree$tip.label)
   x <- tree$edge[,2]

@@ -188,8 +188,6 @@ if [ "$run_snp" = true ]; then
     # Pi divirsity
     if [ "$run_snp_pi" = true ]; then
 
-        
-
         pokaz_stage "Pi diversity."
         path_snp="${path_consensus}snps/"
         vcf_files=$(find "$path_snp" -type f -name "*.vcf")
