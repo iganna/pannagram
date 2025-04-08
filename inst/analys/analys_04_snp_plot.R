@@ -68,7 +68,7 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
 
 pokaz('Plot...')
 pdf(paste(path.figures, basename(file.pi), '_smooth.pdf', sep = ''), width = 6, height = 1)
-print(p.acc)     # Plot 1 --> in the first page of PDF
+print(p.acc)     
 dev.off()
 # 
 # savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 7, height = 2)
