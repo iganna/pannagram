@@ -23,7 +23,6 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-max.len.gap = 20000
 
 # print(opt)
 
@@ -66,8 +65,10 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0))
 
+saveRDS(p.acc, paste0(path.figures, basename(file.pi), '_smooth.rds'))
+
 pokaz('Plot...')
-pdf(paste(path.figures, basename(file.pi), '_smooth.pdf', sep = ''), width = 6, height = 1)
+pdf(paste0(path.figures, basename(file.pi), '_smooth.pdf'), width = 6, height = 1)
 print(p.acc)     
 dev.off()
 # 
