@@ -118,7 +118,6 @@ refineMafft <- function(seqs, n.flank = 30){
       pos.variation[idx.block] = (colSums(pos.profile[,idx.block,drop = F] == 0) != 3) * 1
     }
     
-    
     # # Optional
     # for(irow in 1:nrow(blocks)){
     #   idx.block = blocks$beg[irow]:blocks$end[irow]
@@ -129,8 +128,6 @@ refineMafft <- function(seqs, n.flank = 30){
     #     blocks$remove[irow] = 1
     #   } 
     # }
-    
-    
     
     # Remove blocks with very high diversity
     for(irow in 1:nrow(blocks)){
@@ -446,7 +443,7 @@ refineAlignment <- function(seqs, path.work, n.flank = 30){
   
   # # ---- Distance matrix ----
   # 
-  # dist.mx = calсDistAln(seqs.mx)
+  # dist.mx = calcDistAln(seqs.mx)
   dist.mx = calcDistKmer(seqs.clean)
   # 
   # # ---- Clustering ----
@@ -994,7 +991,7 @@ blastTwoSeqs2 <- function(s1, s2, path.work){
 #' @return A symmetric matrix of pairwise distances between the sequences.
 #' @export
 #'
-calсDistAln <- function(seqs.mx) {
+calcDistAln <- function(seqs.mx) {
   
   n.seqs = nrow(seqs.mx)
   

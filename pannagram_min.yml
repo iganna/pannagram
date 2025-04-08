@@ -1,0 +1,24 @@
+name: pannagram
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - r-base
+  - r-devtools
+  - r-testthat
+  - r-ggplot2
+  - r-reshape2
+  - r-roxygen2
+  - r-foreach
+  - r-crayon
+  - r-optparse
+  - r-doparallel
+  - r-stringi
+  - r-usethis
+  - bioconductor-rhdf5
+  - bioconductor-muscle
+  - bioconductor-msa
+  - blast
+  - mafft
+  - parallel
+  - r-ape

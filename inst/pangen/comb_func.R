@@ -238,3 +238,59 @@ solveLong <- function(breaks, breaks.init, len.large) {
   
   return(idx.rem.init)
 }
+
+
+#' Find Breaks in a Vector
+#'
+#' This function identifies breaks in the input vector `v`, detects blocks based 
+#' on ranks, and creates a data frame of the break points. It filters blocks based 
+#' on specific conditions and adds attributes like accuracy and lengths to the result.
+#'
+#' @param v A numeric vector to analyze.
+#' 
+findBreaks <- function(v) {
+  v[is.na(v)] = 0
+  # Remove zeros and retain indices
+  v.idx <- 1:length(v)
+  i.rm = v != 0
+  v.idx <- v.idx[i.rm]
+  v <- v[i.rm]
+  
+  # Rank the values and adjust for negative ranks
+  v.r <- rank(abs(v))
+  v.r[v < 0] <- v.r[v < 0] * (-1)
+  
+  # Find continuous blocks in ranked data
+  v.b <- findRuns(v.r)
+  
+  # Assign start and end values and their indices
+  v.b$v.beg <- v[v.b$beg]
+  v.b$v.end <- v[v.b$end]
+  v.b$i.beg <- v.idx[v.b$beg]
+  v.b$i.end <- v.idx[v.b$end]
+  
+  # Initialize an array for block accumulation
+  blocks.acc <- rep(0, max(v))
+  for(irow in 1:nrow(v.b)) {
+    blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] <- irow
+  }
+  
+  # Identify breaks where consecutive values differ by more than 1
+  i.br.acc <- which(abs(diff(v)) != 1)
+  df <- data.frame(
+    val.beg = v[i.br.acc],
+    val.end = v[i.br.acc + 1],
+    idx.beg = v.idx[i.br.acc],
+    idx.end = v.idx[i.br.acc + 1]
+  )
+  
+  # Filter based on blocks
+  df <- df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
+  
+  # Add attributes: accuracy and lengths
+  df$acc <- acc
+  df$len.acc <- abs(df$val.end - df$val.beg) - 1
+  df$len.comb <- abs(df$idx.end - df$idx.beg) - 1
+  
+  return(df)
+}

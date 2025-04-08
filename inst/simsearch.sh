@@ -173,9 +173,19 @@ fi
 
 for db_file in "${db_files[@]}"; do
 
+    db_pref=$(basename "$db_file")
+    db_pref=${db_pref%%.*}
+    file_out_cnt="${output_pref}.${db_pref}_${sim_threshold}_${coverage}.cnt"
+    echo "File with counts ${file_out_cnt}"
+    if [ -f $file_out_cnt ]; then
+       echo "Counts for ${db_name} extimated."
+       continue
+    fi
+
     # ---------------------------------------------
     # Check if the BLAST database exists for the current file
     db_file_full="${path_genome}$db_file.fasta"
+    echo "Database ${db_file_full}"
     if [ ! -f "${db_file_full}.nhr" ]; then
         pokaz_stage "Creating database for $db_file..."
         makeblastdb -in  ${db_file_full} -dbtype nucl > /dev/null
@@ -196,6 +206,7 @@ for db_file in "${db_files[@]}"; do
         fi
     else
         # Perform BLAST search
+
         pokaz_stage "BLAST search in $db_file..."
         blastn  -db ${db_file_full} \
                 -query ${file_input} \
@@ -217,13 +228,16 @@ for db_file in "${db_files[@]}"; do
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
         # On a set of sequences
+
+        echo "Input ${file_input}"
+
         Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
                 --in_file $file_input \
                 --res $blast_res \
                 --out ${output_pref}.${db_name}.rds \
                 --sim $sim_threshold \
                 --use_strand $use_strand \
-                --db_file $db_file \
+                --db_file ${db_file_full} \
                 --coverage ${coverage}
     else
         # On a genome
@@ -246,7 +260,8 @@ done
 if [[ -z "$file_seq" && -z "$file_genome" ]]; then
     Rscript $INSTALLED_PATH/sim/sim_in_genome_combine.R  \
             --out $output_pref \
-            --sim $sim_threshold
+            --sim $sim_threshold \
+            --coverage ${coverage}
 fi
 
 pokaz_message "Done!"

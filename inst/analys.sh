@@ -37,10 +37,11 @@ Options:
     -aln                        Produce a FASTA file with the pangenome alignment.
     -snp                        Get VCF file with SNPs.
     
-    -sv_call                    SV calling
-    -sv_sim                     Compare SVs with a dataset of sequences
+    -sv                         SV calling
     -sv_graph                   Create the Graph of SVs
+    -sv_sim                     Compare SVs with a dataset of sequences
 
+    -annogroup                  Create the consensus annotation groups
 
     -aln_type ALN_TYPE          Set the type of alignment (default: 'msa_').
     -path_cons PATH_CONS        Specify the path to the consensus folder (has the default value).
@@ -61,43 +62,53 @@ aln_type='msa_'
 
 # Simple analysis
 run_blocks=false
+run_blocks2=false
 run_seq=false
 run_aln=false
 run_snp=false
+run_snp_pi=false
 
 # analysis of SVs
 run_sv_call=false
 run_sv_sim=false
 run_sv_graph=false
+run_annogroup=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
     case $1 in
-        -h|-help) print_usage; exit 0;;
-        -cores) cores=$2; shift 2 ;;
+        -h|-help)        print_usage;            exit 0;;
+        -cores)          cores=$2;               shift 2;;
 
-        -path_msa) path_consensus=$2; shift 2;;
-        -ref) ref_pref=$2; shift 2;;
-        -path_chr) path_chromosomes=$2; shift 2 ;;
+        -path_msa)       path_consensus=$2;      shift 2;;
+        -ref)            ref_pref=$2;            shift 2;;
+        -path_chr)       path_chromosomes=$2;    shift 2;;
         
-        -blocks) run_blocks=true; shift;;  # Get position sof synteny blocks between accessions
-        -seq)    run_seq=true; shift;;  # Get consencuc seqeunce
-        -aln)    run_aln=true; shift;;  # Produce fasta file with the pangenome alignment
-        -snp)    run_snp=true; shift;;  # Get VSF file with SNPs
-        # -sv)     run_sv=true; shift;;
+        -blocks)         run_blocks=true;        shift;;           # Get position of synteny blocks between accessions
+        -blocks2)        run_blocks2=true;       shift;;           # Get position of synteny blocks between accessions
+        -seq)            run_seq=true;           shift;;           # Get consensus sequence
+        -aln)            run_aln=true;           shift;;           # Produce fasta file with the pangenome alignment
+        -snp)            run_snp=true;           shift;;           # Get VCF file with SNPs
+        -snp_pi)         run_snp_pi=true;        shift;;           # Run pi-diversity with VCF-tools
+        # -sv)           run_sv=true;            shift;;
 
-        -sv_call)   run_sv_call=true; shift;;               # SV calling from the alignment
-        -sv_sim) run_sv_sim=true; set_file="$2"; shift 2;;   # File to compare SVs againts set of seequences
-        -sv_graph)  run_sv_graph=true; shift;;              # Construction of a graph on SVs
-        -sim) similarity_value=$2; shift 2;;                # Similarity value
+        -sv_call|-sv)    run_sv_call=true;       shift;;           # SV calling from the alignment
+        -sv_sim)         set_file="$2";                            # File to compare SVs against set of sequences
+                         run_sv_sim=true;        shift 2;;         
+        -sv_graph)       run_sv_graph=true;      shift;;           # Construction of a graph on SVs
+        -sim)            similarity_value=$2;    shift 2;;         # Similarity value
 
-        -sv_acc) acc_anal=$2; shift ;;  # file with accessions to analyse
+        -sv_acc)         acc_anal=$2;            shift 2;;         # File with accessions to analyse
 
-        -aln_type) aln_type=$2; shift 2;;
-        -path_cons) path_consensus=$2; shift 2;;
-        *) print_usage; exit 1;;
+        -annogroup)      path_annot="$2"                           # Path with annotation
+                         run_annogroup=true;     shift 2;;
+
+        -aln_type)       aln_type=$2;            shift 2;;
+        -path_cons)      path_consensus=$2;      shift 2;;
+        *)               print_usage; echo "Wrong parameter ${1}";            exit 1;;
     esac
 done
+
 
 # Check if path_chromosomes is empty while any of run_seq, run_aln, or run_snp are set to true
 if [ -z "$path_chromosomes" ] && ([ "$run_seq" = true ] || [ "$run_aln" = true ] || [ "$run_snp" = true ]); then
@@ -111,7 +122,7 @@ ref_pref="${ref_pref:-NULL}"   # Set of accessions to analyse
 
 pokaz_message "Number of cores: ${cores}"
 
-# check_missing_variable "ref_pref"
+check_missing_variable "ref_pref"
 # check_missing_variable "pref_global"
 # pref_global=$(add_symbol_if_missing "$pref_global" "/")
 
@@ -130,23 +141,31 @@ path_chromosomes=$(add_symbol_if_missing "$path_chromosomes" "/")
 
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
-    Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+    pokaz_stage "Get blocks."
+
+    path_plots="${path_consensus}plot_synteny/"
+    mkdir -p ${path_plots}
+
+    Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
         --path.cons ${path_consensus} \
-        --ref.pref  ${ref_pref} \
         --cores ${cores} \
-        --aln.type ${aln_type}
+        --ref  ${ref_pref} \
+        --aln.type ${aln_type} \
+        --path.figures ${path_plots}
 fi
 
 if [ "$run_seq" = true ]; then
+    pokaz_stage "Get consensus sequences."
     Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
-        --path.chromosomes ${path_chromosomes} \
+        --path.chr ${path_chromosomes} \
         --aln.type ${aln_type} \
         --cores ${cores}
 fi
 
 if [ "$run_aln" = true ]; then
+    pokaz_stage "Get sequences of alignment."
     Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -157,12 +176,53 @@ fi
 
 
 if [ "$run_snp" = true ]; then
-    Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
-        --path.cons ${path_consensus} \
-        --ref.pref  ${ref_pref} \
-        --path.chromosomes ${path_chromosomes} \
-        --aln.type ${aln_type} \
-        --cores ${cores}
+    pokaz_stage "Get SNPs."
+    # Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
+    #     --path.cons ${path_consensus} \
+    #     --ref.pref  ${ref_pref} \
+    #     --path.chr ${path_chromosomes} \
+    #     --aln.type ${aln_type} \
+    #     --cores ${cores}
+
+    # ---------------
+    # Pi divirsity
+    if [ "$run_snp_pi" = true ]; then
+
+        
+
+        pokaz_stage "Pi diversity."
+        path_snp="${path_consensus}snps/"
+        vcf_files=$(find "$path_snp" -type f -name "*.vcf")
+        if [ -z "$vcf_files" ]; then
+            echo "VCF-files are not found in $path_snp!"
+            exit 1
+        fi
+
+        path_plots="${path_snp}plot_snp/"
+        mkdir -p ${path_plots}
+
+        # Run VCF-tools
+        for vcf_file in $vcf_files; do
+            base_name=$(basename "$vcf_file" .vcf)
+            output_file="${path_snp}${base_name}_output"
+            vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
+            vcftools --vcf "${vcf_file}" --extract-FORMAT-info ID --out "$output_file"
+
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
+                --path.figures ${path_plots} \
+                --file.pi "${output_file}.sites.pi"
+
+            plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
+
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
+                --path.figures ${path_plots} \
+                --file.pi "${vcf_file}"
+
+        done
+    fi
+
+    rm ${path_snp}*log
+
 fi
 
 
@@ -171,7 +231,7 @@ fi
 # -------------------------------------------------
 # Sv calling
 if [ "$run_sv_call" = true ]; then
-
+    pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
     # So, sonsensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
@@ -217,8 +277,9 @@ fi
 
 # -------------------------------------------------
 # SV on SVs
-if [ "$sv_graph" = true ]; then
+if [ "$run_sv_graph" = true ]; then
 
+    pokaz_stage "Graph on SVs"
     if [ -z "${similarity_value}" ]; then
         pokaz_message "Simirarity value is 85% (default)"
         similarity_value=85
@@ -245,3 +306,23 @@ if [ "$sv_graph" = true ]; then
     rm "$file_sv_big".nsq
 
 fi
+
+
+# -------------------------------------------------
+# Annotation groups
+if [ "$run_annogroup" = true ]; then
+
+    pokaz_stage "Annotation groups"
+
+    path_annot_res=${path_consensus}annotation/
+    mkdir -p ${path_annot_res}
+
+    Rscript $INSTALLED_PATH/analys/analys_05_annogroups_easier.R \
+            --path.msa ${path_consensus} \
+            --path.annot ${path_annot} \
+            --path.res ${path_annot_res} \
+            --aln.type ${aln_type}
+
+fi
+
+echo "Script completed successfully"

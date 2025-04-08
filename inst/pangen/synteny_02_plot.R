@@ -1,4 +1,3 @@
-
 ### imports
 source(system.file("visualisation/visualisation.R", package = "pannagram"))
 source(system.file("pangen/synteny_func_plot.R", package = "pannagram"))
@@ -14,23 +13,19 @@ suppressMessages({
 args <- commandArgs(trailingOnly = TRUE)
 
 option_list <- list(
-  make_option(c("--ref"), type = "character", default = NULL, 
-              help = "Name of reference sequence", metavar = "character"),
-  make_option(c("--path_ref"), type = "character", default = NULL, 
-              help = "Path to reference sequence", metavar = "character"),
-  make_option(c("--path_out"), type = "character", default = NULL, 
-              help = "Path to the output directory", metavar = "character"),
-  make_option(c("--path_chr"), type = "character", default = NULL, 
-              help = "Path to chromosomes", metavar = "character"),
-  make_option(c("--algn_path"), type = "character", default = NULL, 
-              help = "Path to the alignment directory", metavar = "character"),
-  make_option(c("--path.log"), type = "character", default = NULL, 
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL, 
-              help = "Level of log to be shown on the screen", metavar = "character"),
-  make_option(c("--cores"), type = "integer", default = 1, 
-              help = "Number of cores to use", metavar = "character")
+  
+  make_option(c("--path.plot"),   type = "character", default = NULL, help = "Path to the output directory"),
+  make_option(c("--path.chr"),    type = "character", default = NULL, help = "Path to chromosomes"),
+  make_option(c("--path.aln"),    type = "character", default = NULL, help = "Path to the alignment directory"),
+  
+  make_option(c("--ref"),           type = "character", default = NULL, help = "Name of the reference genome"),
+  make_option(c("--accessions"),    type = "character", default = NULL, help = "File containing accessions to analyze"),
+  
+  make_option(c("--path.log"),    type = "character", default = NULL, help = "Path for log files"),
+  make_option(c("--log.level"),   type = "character", default = NULL, help = "Level of log to be shown on the screen"),
+  make_option(c("--cores"),       type = "integer",   default = 1,    help = "Number of cores to use")
 )
+
 
 
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -40,54 +35,50 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 if (
     is.null(opt$ref) ||
-    is.null(opt$path_ref) ||
-    is.null(opt$path_chr) ||
-    is.null(opt$path_out) ||
-    is.null(opt$algn_path)
+    is.null(opt$path.chr) ||
+    is.null(opt$path.plot) ||
+    is.null(opt$path.aln)
 ) stop("All mandatory arguments must be provided.")
 
+path.chr <- opt$path.chr
+path.plot <- opt$path.plot
+path.aln <- opt$path.aln
 ref <- opt$ref
-path.ref <- opt$path_ref
-path.chr <- opt$path_chr
-path.out <- opt$path_out
-path.aln <- opt$algn_path
 num.cores <- opt$cores
 
-# Extracting only ids from path
-pattern <- ".*_[0-9]+_[0-9]+_maj\\.rds$"
-files.aln <- list.files(path = path.aln, pattern = pattern, full.names = F)
-acc.ids <- unique(sapply(files.aln, function(s) sub("^(.*?)_\\d+_\\d+_maj\\.rds$", "\\1", s)))
-pokaz('Genomes analysed:', acc.ids, file=file.log.main, echo=echo.main)
+pokaz('Reference genome:', ref, 
+      file=file.log.main, echo=echo.main)
 
-# # Find the file with the reference genome
-# ext <- c('fasta', 'fna', 'fa', 'fas')
-# ref.name <- findGenomeFile(genome.pref = ref, 
-#                            path.genome = path.ref,
-#                            ext = ext)
-# if (is.null(ref.name)) stop('No reference genome files found in the specified folder')
 
-# Output folder with plots
-pdf.path <- normalizePath(file.path(path.out, paste0("plots_", ref)), mustWork = FALSE)
-dir.create(pdf.path, showWarnings = FALSE, recursive = TRUE)
+# ***********************************************************************
+# ---- Accessions ----
+
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions <- as.character(tmp[,1])
+accessions = setdiff(accessions, ref)
+pokaz('Names of genomes for the analysis:', accessions, 
+      file=file.log.main, echo=echo.main)
+
+# ***********************************************************************
+# ---- MAIN program body ----
 
 loop.function <- function(acc, 
                           echo.loop=T, 
                           file.log.loop=NULL){
   
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           acc,
-                           '.log')
+  file.log.loop = paste0(path.log, 'loop_file_', acc, '.log')
+  if(!file.exists(file.log.loop)){
     invisible(file.create(file.log.loop))
   }
   
   # ---- Check log Done ----
   if(checkDone(file.log.loop)){
-    return()
+    return(NULL)
   }
   
-  pokaz('Accession', acc, file=file.log.main, echo=echo.main)
+  pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
   
   # Lengths of chromosomes for the accession and reference
   chr.len = c()
@@ -111,8 +102,16 @@ loop.function <- function(acc,
       write.table(chr.len, file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
     }
   }
-  if (is.null(acc)) stop('No target genome files found in the specified folder')
+  chr.len = chr.len[!is.na(chr.len$acc),]
   
+  # ---- Testing ----
+  # file.ws = "tmp_workspace.RData"
+  # all.local.objects <- ls()
+  # save(list = all.local.objects, file = file.ws)
+  # pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
+  # stop('Enough..')
+  
+  # ---- Plot ----
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
                      acc=acc,
@@ -121,28 +120,41 @@ loop.function <- function(acc,
   
   # Save
   pdf.name <- paste0(ref, "-", id)
-  savePDF(p, path = pdf.path, name = pdf.name)
+  # savePDF(p, path = path.plot, name = pdf.name)
+  savePNG(p, path = path.plot, name = pdf.name)
   
 }
 
-
 if(num.cores == 1){
-  for(acc in acc.ids){
+  for(acc in accessions){
     loop.function(acc,
                   echo.loop=echo.loop)
   }
 } else {
-  # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
+  batch.size <- 2 * num.cores  # Define the batch size
   
-  tmp = foreach(acc = acc.ids, 
-                .packages=c('crayon', 'ggplot2'), 
-                .verbose = F)  %dopar% { 
-                  loop.function(acc,
-                                echo.loop=echo.loop)
-                }
-  stopCluster(myCluster)
+  # Initialize a temporary list to store results
+  tmp <- list()
+  
+  # Loop through accessions in batches
+  for (start in seq(1, length(accessions), by = batch.size)) {
+    
+    end <- min(start + batch.size - 1, length(accessions))  # Define the end of the current batch
+    batch.accessions <- accessions[start:end]  # Subset accessions for the current batch
+    
+    # Create and register a new cluster for the current batch
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
+    # Run parallel loop for accessions in the current batch
+    batch.results <- foreach(acc = batch.accessions, .packages = c('crayon', 'ggplot2'), .verbose = FALSE) %dopar% {
+      loop.function(acc, echo.loop = echo.loop)
+    }
+    
+    tmp <- c(tmp, batch.results)  # Store the batch results in the main list
+    
+    stopCluster(myCluster)  # Stop the cluster after completing the batch
+  }
 }
 
 

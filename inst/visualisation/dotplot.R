@@ -88,6 +88,57 @@ dotplot.s <- function(seq1, seq2, wsize, nmatch, ...) {
   return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
 }
 
+
+#' @export
+#'
+dotprot <- function(seq1, seq2, wsize, nmatch) {
+  
+  if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  # Remove gaps
+  seq1 = seq1[seq1 != '-']
+  seq2 = seq2[seq2 != '-']
+  
+  mx1 = toupper(seq2mx(seq1, wsize))
+  mx2 = toupper(seq2mx(seq2, wsize))
+  
+  result = mxComp.a(mx1, mx2, wsize, nmatch)
+  result = rbind(result, data.frame(row=1, col=length(seq2)-1, values=0))
+  
+  len1 = length(seq1)
+  len2 = length(seq2)
+  
+  p = invisible(
+    ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
+      geom_tile(width = 1, height = 1, linewidth = 0.5) +
+      xlab(NULL) + ylab(NULL) +
+      # xlim(c(0, len1)) +
+      # ylim(c(0, len2)) +
+      theme_minimal() + coord_fixed() +
+      scale_x_continuous(expand = c(0, 0), limits = c(0, length(seq1))) + 
+      scale_y_continuous(expand = c(0, 0), limits = c(0, length(seq2))) +
+      scale_fill_gradient2(low = "white", mid = "#4C7B8B", high = "#27374D",
+                           breaks = c(-wsize, 0, wsize)) +
+      scale_color_gradient2(low = "white", mid = "#4C7B8B", high = "#27374D",
+                            breaks = c(-wsize, 0, wsize)) +
+      theme(panel.border = element_rect(colour = "grey", fill = NA, size = 1)) +
+      guides(fill = FALSE, color = FALSE) + 
+      annotate('text', x = len1/2, y = len2, 
+               label = paste('(',wsize,',',nmatch, ')', sep = ''), 
+               vjust = 1.2, hjust = 0.5)
+  )
+  
+  # p
+  return(p )
+}
+
+#' @export
+#'
+dotprot.s <- function(seq1, seq2, wsize, nmatch, ...) {
+  return(dotprot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
+}
+
+
 #' Generate a Dotplot for One Nucleotide Sequence
 #' 
 #' @description
@@ -280,6 +331,22 @@ dotfacet.s <- function(seq1, seq2, ...) {
 mxComp <- function(mx1, mx2, wsize, nmatch){
   mx.res = 0
   for(s in c('A', 'C', 'G', 'T')){
+    mx.res = mx.res + (mx1 == s) %*% t(mx2 == s)
+  }
+  # mx.res = (mx.res >= nmatch) * 1
+  mx.res[mx.res < nmatch] = 0
+  
+  indices <- which(mx.res != 0, arr.ind = TRUE)
+  values <- mx.res[indices]
+  result <- cbind(indices, values)
+  result = as.data.frame(result)
+  return(result)
+}
+
+mxComp.a <- function(mx1, mx2, wsize, nmatch){
+  mx.res = 0
+  for(s in c("A", "G", "C", "D", "E", "N", "Q", "I", "L", "M", 
+             "V", "F", "W", "Y", "H", "K", "R", "P", "S", "T", "X")){
     mx.res = mx.res + (mx1 == s) %*% t(mx2 == s)
   }
   # mx.res = (mx.res >= nmatch) * 1

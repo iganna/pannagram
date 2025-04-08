@@ -1,35 +1,88 @@
-<p align="left">
+<!-- <p align="left">
 <img src="images/pannagram_logo.png" width="30%" height="auto">
-</p>
+</p> -->
 
 # Pannagram
 
+<p align="left">
+<img src="images/pannagram_scheme.png" width="100%" height="auto">
+</p>
 
 Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
-Additionally, Pannagram contains useful functions for visualization. The manual is available in the [examples](./examples) folder.
+Additionally, Pannagram contains useful functions for visualization. The manual is available at the [pannagram-page](https://iganna.github.io/pannagram/).
 
+## Setting Up the Working Environment
 
-## Recreating working environment
-### Linux users
-Make sure you have [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) or [Mamba](https://github.com/mamba-org/mamba) installed. To create and activate the package environment run:
-```sh
-conda env create -f pannagram.yaml
-conda activate pannagram
-# OR
-mamba env create -f pannagram.yaml
-mamba activate pannagram
+Follow these instructions to set up your Pannagram environment.
+
+### Prerequisites
+
+Make sure you have one of the following package managers installed:
+- [Conda](https://docs.conda.io/projects/conda/en/latest/index.html)
+- [Mamba](https://github.com/mamba-org/mamba)
+- [Micromamba](https://github.com/mamba-org/mamba#micromamba)
+
+Use your selected package manager by replacing ```<manager>``` with conda, mamba, or micromamba.
+
+### Linux and macOS (Intel)
+
+```bash
+<manager> env create -f pannagram.yml
+<manager> activate pannagram
 ```
-The environment downloads required R interpreter version and all needed libraries, including [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/), [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html) and others.
 
-### MacOS users
-should also run:
-```sh
-brew install coreutils
+### macOS (M-series chips)
+
+```bash
+<manager> env create --platform osx-64 -f pannagram_m4.yml
+<manager> activate pannagram
 ```
-to make sure all the needed shell commands are installed.
+
+### Alternative: Setting Up the Environment Without Explicit Versions
+
+Use this option if you prefer an environment where package versions are not explicitly specified, and packages are installed with the latest compatible versions available:
+
+**Linux and macOS (Intel)**
+
+```bash
+<manager> env create -f pannagram_min.yml
+<manager> activate pannagram
+```
+
+**macOS (M-series chips)**
+
+```bash
+<manager> env create --platform osx-64 -f pannagram_min.yml
+<manager> activate pannagram
+```
+
+### Running RStudio with the Environment
+
+Make sure that [RStudio-Desktop](https://posit.co/download/rstudio-desktop/) is installed.
+Then run the following in the command line:
+
+```bash
+<manager> activate pannagram
+open -a RStudio
+```
+
+One may also create an alias:
+```
+alias panR="micromamba activate pannagram && open -a RStudio"
+```
+
+### Included Dependencies
+
+The environment provides the following dependencies, each accessible directly via the command line:
+
+- R interpreter (required version)
+- [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/)
+- [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html)
+
 
 ### Windows users
-Can try running code from this repo under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (as Bash and `/` path separator are used extensively in the code). Nevertheless it was never tested in such environment, so good luck.
+Can try running code from this repo under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (as Bash and `/` path separator are used extensively in the code). Nevertheless it was never tested in such environment.
+
 
 ## 1. Pangenome linear alignment
 
@@ -117,11 +170,11 @@ Every node is a unique sequence, size - the amount of this sequence in SVs:
 
 ```r
 # --- Quick start code ---
-source('utils/utils.R')  			# Functions to work with sequences
-source('visualisation/msaplot.R')	# Visualisation
-aln.seq = readFastaMy('aln.fasta')	# Vector of strings
-aln.mx = aln2mx(aln.seq)			# Transfom into the matrix
-msaplot(aln.mx)						# ggplot object
+source('utils/utils.R')             # Functions to work with sequences
+source('visualisation/msaplot.R')   # Visualisation
+aln.seq = readFastaMy('aln.fasta')  # Vector of strings
+aln.mx = aln2mx(aln.seq)            # Transfom into the matrix
+msaplot(aln.mx)                     # ggplot object
 ```
 
 - In the Polymorphism mode:
@@ -133,7 +186,7 @@ msaplot(aln.mx)						# ggplot object
 
 ```r
 # --- Quick start code ---
-msadiff(aln.mx)						# ggplot object
+msadiff(aln.mx)                     # ggplot object
 ```
 ### 2.4 Dotplots of Sequences
 
@@ -145,10 +198,10 @@ Simultaneously on forward (dark color) and reverse complement (pink color) stran
 
 ```r
 # --- Quick start code ---
-source('utils/utils.R')  			# Functions to work with sequences
-source('visualisation/dotplot.R')	# Visualisation
+source('utils/utils.R')             # Functions to work with sequences
+source('visualisation/dotplot.R')   # Visualisation
 s = sample(c("A","C","G","T"), 100, replace = T)
-dotplot(s, s, 15, 9)				# ggplot object
+dotplot(s, s, 15, 9)                # ggplot object
 ```
 
 ### 2.5 ORF-finder and visualisation
@@ -159,11 +212,11 @@ dotplot(s, s, 15, 9)				# ggplot object
 
 ```r
 # --- Quick start code ---
-source('utils/utils.R')  			# Functions to work with sequences
-source('visualisation/orfplot.R')	# Visualisation
+source('utils/utils.R')             # Functions to work with sequences
+source('visualisation/orfplot.R')   # Visualisation
 str = nt2seq(s)
 orfs = orfFinder(str)
-orfplot(orfs$pos)					# ggplot object
+orfplot(orfs$pos)                   # ggplot object
 ```
 
 

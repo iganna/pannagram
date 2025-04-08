@@ -14,6 +14,14 @@ v.ref.name = 'ref'
 
 # Alignment types
 
-aln.type.msa='msa_'
 aln.type.ref='ref_'
 aln.type.comb='comb_'
+aln.type.clean='clean_'
+
+aln.type.pre='pre_'
+
+aln.type.msa='msa_'
+aln.type.add='add_'
+
+aln.type.extra1='extra1_'
+

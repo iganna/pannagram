@@ -1,25 +1,20 @@
 # Load the necessary library
 library(optparse)
+library(pannagram)
+
 source(system.file("sim/sim_func.R", package = "pannagram"))
-source(system.file("utils/utils.R", package = "pannagram"))
+
 
 # Define options
 option_list = list(
-  make_option(c("--in_file"), type = "character", default = NULL,
-              help = "Path to the fasta file with sequences", metavar = "FILE"),
-  make_option(c("--db_file"), type = "character", default = NULL,
-              help = "Path to the database fasta file with sequences", metavar = "FILE"),
-  make_option(c("--res"), type = "character", default = NULL,
-              help = "Path to the BLAST results", metavar = "FILE"),
-  make_option(c("--out"), type = "character", default = NULL,
-              help = "Path to the output coverage file", metavar = "FILE"),
-  make_option(c("--use_strand"), type = "character", default = NULL,
-              help = "Use strand or not", metavar = "FILE"),
-  make_option(c("--sim"), type = "numeric", default = 90,
-              help = "Similarity threshold", metavar = "NUMBER"),
-  make_option(c("--coverage"), type = "numeric", default = NULL,
-              help = "Coverage threshold", metavar = "NUMBER")
-)
+  make_option(c("--in_file"),    type = "character", default = NULL, help = "Path to the fasta file with sequences"),
+  make_option(c("--db_file"),    type = "character", default = NULL, help = "Path to the database fasta file with sequences"),
+  make_option(c("--res"),        type = "character", default = NULL, help = "Path to the BLAST results"),
+  make_option(c("--out"),        type = "character", default = NULL, help = "Path to the output coverage file"),
+  make_option(c("--use_strand"), type = "character", default = NULL, help = "Use strand or not"),
+  make_option(c("--sim"),        type = "numeric",   default = 90,   help = "Similarity threshold"),
+  make_option(c("--coverage"),   type = "numeric",   default = NULL, help = "Coverage threshold")
+);
 
 # Create the option parser
 opt_parser = OptionParser(option_list = option_list)
@@ -63,16 +58,18 @@ v = v[v$V6 >= sim.cutoff * 100,]
 v = v[v$V1 != v$V8,]
 
 # Lengths of query sequences
-seqs = readFastaMy(fasta.file)
+pokaz(fasta.file)
+seqs = readFasta(fasta.file)
 q.len = nchar(seqs)
 rm(seqs)
 
 # Lengths of database sequences
+pokaz(db.fasta.file)
 if(db.fasta.file == fasta.file){
   pokaz('Search seqeunces on themselvs')
   db.len = q.len
 } else {
-  seqs = readFastaMy(db.fasta.file)
+  seqs = readFasta(db.fasta.file)
   db.len = nchar(seqs)
   rm(seqs)  
 }

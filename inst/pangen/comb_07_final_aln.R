@@ -14,27 +14,18 @@ source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("--path.mafft.out"), type="character", default=NULL, 
-              help="path to directory, where to mafft results are", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to directory with the consensus", metavar="character"),
-  make_option(c("--path.out"), type="character", default=NULL, 
-              help="path to directory with MSA output", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
-); 
+option_list <- list(
+  make_option("--path.mafft.out", type = "character", default = NULL, help = "Path to directory where mafft results are"),
+  make_option("--path.cons",      type = "character", default = NULL, help = "Path to directory with the consensus"),
+  make_option("--cores",          type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",       type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",      type = "character", default = NULL, help = "Level of log to be shown on the screen")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
-
-# TODO: SHOULD BE PARAMETERS
 
 n.flank = 30
 max.block.elemnt = 3 * 10^ 6
@@ -48,24 +39,25 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
+aln.type.in = aln.type.clean
+aln.type.out = aln.type.msa
+
+# ***********************************************************************
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+num.cores <- opt$cores
 
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if (!is.null(opt$path.out)) path.out <- opt$path.out
-
 
 # ***********************************************************************
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
+s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
+pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
@@ -84,7 +76,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
-  file.comb = paste0(path.cons, aln.type.comb, s.comb,'.h5')
+  file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -97,17 +89,36 @@ for(s.comb in pref.combinations){
   
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
-  mafft.res = data.frame(file = list.files(path = path.mafft.out, 
-                                           pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned.*\\.fasta$')))
   
   
-  y = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]][1:6])
-  z = t(matrix(unlist(y), ncol = length(y)))
-  mafft.res$comb = paste(z[,2], z[,3], sep = '_')
-  mafft.res$beg = as.numeric(z[,5])
-  mafft.res$end = as.numeric(z[,6])
-  mafft.res$id = as.numeric(z[,3])
+  files.mafft1 = list.files(path = path.mafft.out, 
+                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned\\.fasta$'))
+  files.mafft2 = list.files(path = path.mafft.out, 
+                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$'))
   
+  files.mafft1.pref = sapply(files.mafft1, function(s) strsplit(s, '_aligned')[[1]][1])
+  files.mafft2.pref = sapply(files.mafft2, function(s) strsplit(s, '_aligned')[[1]][1])
+  
+  idx1.dup = which(files.mafft1.pref %in% files.mafft2.pref)
+  if(length(idx1.dup) > 0){
+    pokazAttention('duplicated alignments were found')
+    files.mafft1 = files.mafft1[-idx1.dup]
+  }
+  
+  files.mafft = c(files.mafft1,
+                  files.mafft2)
+  
+  
+  mafft.res = data.frame(file = files.mafft)
+  
+  if(nrow(mafft.res) > 0){
+    y = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]][1:6])
+    z = t(matrix(unlist(y), ncol = length(y)))
+    mafft.res$comb = paste(z[,2], z[,3], sep = '_')
+    mafft.res$beg = as.numeric(z[,5])
+    mafft.res$end = as.numeric(z[,6])
+    mafft.res$id = as.numeric(z[,3])  
+  }
   
   # ---- Get long alignment positions ----
   pokaz('Read Long alignments..', file=file.log.main, echo=echo.main)
@@ -116,9 +127,8 @@ for(s.comb in pref.combinations){
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
   for(i in 1:nrow(mafft.res)){
-    
-
-    pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
+  
+    # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
     
     file.aln = paste0(path.mafft.out, mafft.res$file[i])
     
@@ -134,6 +144,7 @@ for(s.comb in pref.combinations){
     }
     
     aln.seq = readFasta(file.aln)
+    
     
     # ---
     # WITHOUT REFINEMENT
@@ -163,40 +174,88 @@ for(s.comb in pref.combinations){
     # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
     pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
     row.names(pos.mx) = name.acc
+    
+    if(min(colSums(pos.mx != 0)) == 0){
+      pokaz(mafft.res$file[i])
+      stop('Zeros in the alignment')
+    }
 
 
     mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
     # ---
-
     
   }
   
   if(length(idx.skip) > 0){
     mafft.aln.pos = mafft.aln.pos[-idx.skip]
-    mafft.res = mafft.res[-idx.skip,]
+    mafft.res = mafft.res[-idx.skip,,drop=F]
   }
   
   # warnings()
   mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
   mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-  # if(min(mafft.res$extra) < 0) stop('Long: Wrong lengths of alignment and gaps')
+  
+  # Skip if some are shorter than the initial aligned block
+  idx.confusing = which(mafft.res$extra < 0)
+  if(length(idx.confusing) > 0){
+    pokazAttention('Long: Wrong lengths of alignment and gaps')
+    pokazAttention("N confusing:", length(idx.confusing))
+    
+    mafft.res = mafft.res[-idx.confusing,,drop=F]
+    mafft.aln.pos = mafft.aln.pos[-idx.confusing]
+  } 
+  # if(min(mafft.res$extra) < 0) stop()
   mafft.res$extra[mafft.res$extra < 0] = 0
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
-  msa.res = readRDS(paste0(path.cons, 'aln_short_', s.comb, '.rds'))
-  msa.res$len = unlist(lapply(msa.res$aln, nrow))
-  msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
-  # if(min(msa.res$extra) < 0) stop('Short: Wrong lengths of alignment and gaps')
-  msa.res$extra[msa.res$extra < 0] = 0
+  file.msa.res = paste0(path.cons, 'aln_short_', s.comb, '.rds')
+  if(file.exists(file.msa.res)){
+    msa.res = readRDS(file.msa.res)
+    msa.res$len = unlist(lapply(msa.res$aln, nrow))
+    msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
+    
+    idx.confusing = which(msa.res$extra < 0)
+    if(length(idx.confusing) > 0){
+      pokazAttention('Short: Wrong lengths of alignment and gaps')
+      pokazAttention("Confusing:", idx.confusing)
+      
+      msa.res$ref.pos = msa.res$ref.pos[-idx.confusing,,drop=F]
+      msa.res$aln = msa.res$aln[-idx.confusing]
+      msa.res$len = msa.res$len[-idx.confusing]
+      msa.res$extra = msa.res$extra[-idx.confusing]
+    } 
+  
+  } else {
+    msa.res = data.frame()
+  }
 
   # ---- Singletons alignments ----
   pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
-  single.res = readRDS(paste0(path.cons, 'singletons_', s.comb, '.rds'))
-  single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
-  single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1)
-  # if(min(single.res$extra) < 0) stop('Wrong lengths of alignment and gaps')
-  single.res$extra[single.res$extra < 0] = 0
+  file.single.res = paste0(path.cons, 'singletons_', s.comb, '.rds')
+  if(file.exists(file.single.res)){
+    single.res = readRDS(file.single.res)
+    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
+    single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
+    
+    idx.confusing = which((single.res$ref.pos$end - single.res$ref.pos$beg - 1) != 0)
+    if(length(idx.confusing) > 0){
+      pokazAttention('Singletons: Wrong lengths of alignment and gaps')
+      pokazAttention("Number of confusing singletons:", length(idx.confusing))
+      
+      single.res$len = single.res$len[-idx.confusing]
+      single.res$extra = single.res$extra[-idx.confusing]
+      
+      single.res$pos.beg = single.res$pos.beg[-idx.confusing, ,drop = F]
+      single.res$pos.end = single.res$pos.end[-idx.confusing, ,drop = F]
+      single.res$ref.pos = single.res$ref.pos[-idx.confusing, ,drop = F]
+    }
+      
+  } else {
+    single.res = data.frame()
+  }
+
+  pokaz(1)
   
   # ---- Analysis of positions ----
   # Here I wouls like fo find function of positions corresponcences between 4 things: 
@@ -211,6 +270,8 @@ for(s.comb in pref.combinations){
   
   fp.main = (1:base.len) + n.shift
   
+  pokaz(2)
+  
   # -- 
   # Singletons
   fp.single = list()
@@ -219,6 +280,9 @@ for(s.comb in pref.combinations){
     fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
   }
 
+  pokaz(3)
+  # save(list = ls(), file = "tmp_workspace_3_oo.RData")
+  
   # Short
   fp.short = list()
   for(i in 1:length(msa.res$len)){
@@ -226,19 +290,18 @@ for(s.comb in pref.combinations){
     fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
   }
   
+  pokaz(4)
+  
   # Check short
   for(i in 1:length(msa.res$len)){
     if(is.null(msa.res$aln[[i]])) next
     if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-      
-      
-      file.ws = "tmp_workspace.RData"
-      all.local.objects <- ls()
-      save(list = all.local.objects, file = file.ws)
-      
+      save(list = ls(), file = "tmp_workspace.RData")
       stop(paste0('Short', i)) 
     }
   }
+  
+  pokaz(5)
   
   # Long
   fp.long = list()
@@ -251,23 +314,38 @@ for(s.comb in pref.combinations){
   pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
   
   pos.delete.all = 0
+  
+  # save(list = ls(), file = paste0("tmp_workspace2.RData"))
   for(i.pos in 1:3){
     pos.beg = pos.beg.all[[i.pos]]
     pos.end = pos.end.all[[i.pos]]
     pos.delete = rep(0, base.len)
     pos.delete[pos.beg] = 1
     # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
-    pos.delete[pos.end] = pos.delete[pos.end]-1
+    pos.delete[pos.end] = pos.delete[pos.end] - 1
     # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete = cumsum(pos.delete)
     pos.delete[pos.beg] = 0
     pos.delete[pos.end] = 0
     
     pos.delete.all = pos.delete.all + pos.delete
+    
+    # # Testing:  
+    # pos = rep(0, base.len)
+    # for(i in 1:length(pos.beg)){
+    #   if(2310393 %in% c(pos.beg[i]:pos.end[i])) pokaz(i)
+    #   
+    #   pos[pos.beg[i]:pos.end[i]] = pos[pos.beg[i]:pos.end[i]] + 1
+    #   # if(max(pos[pos.beg[i]:pos.end[i]] ) == 2) stop()
+    # }
+    
   }
   pos.delete = pos.delete.all
 
-  if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)) stop('Wrong identification of positions to delete')
+  if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)){
+    save(list = ls(), file = 'tmx_workspace_step18.RData')
+    stop('Wrong identification of positions to delete')
+  } 
   
   pos.remain = pos.delete == 0
   
@@ -276,8 +354,11 @@ for(s.comb in pref.combinations){
   base.len.aln = max(fp.main)
   
   # Check-points
-  fp.add = c(unlist(fp.single),unlist(fp.short),unlist(fp.long))
-  if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) stop('Something if wrotng with positions; Point A')
+  fp.add = c(unlist(fp.single), unlist(fp.short), unlist(fp.long))
+  if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) {
+    save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
+    stop('Something if wrotng with positions; Point A')
+  } 
   # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
   
   
@@ -287,7 +368,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.out, aln.type.msa, s.comb,'.h5')
+  file.res = paste0(path.cons, aln.type.out, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
@@ -319,11 +400,14 @@ for(s.comb in pref.combinations){
     # Add short
     for(i in 1:length(msa.res$len)){
       if(acc %in% colnames(msa.res$aln[[i]])){
-        
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('2: Duplicated positions in short alignments')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
+      
+      save(list = ls(), file = "tmp_workspace.RData")
+      stop('2: Duplicated positions in short alignments')
+    } 
     
     # add long
     for(i in 1:length(mafft.aln.pos)){
@@ -342,7 +426,9 @@ for(s.comb in pref.combinations){
       h5write(v.aln, file.res, paste0(gr.accs.e, acc))
       
       stat.comb <- rbind(stat.comb, 
-                         data.frame(comb = acc, coverage = sum(v.aln != 0)))
+                         data.frame(acc = acc, 
+                                    coverage = sum(v.aln != 0),
+                                    comb = s.comb))
       
     })
     
@@ -354,68 +440,12 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste0(path.cons, 'stat', s.comb,'.rds'))
+saveRDS(stat.comb, paste0(path.cons, 'stat_coverage.rds'))
 
+pokaz('Done.', file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----
 
-
-if(F){
-
-  # ********************
-  # Help testing
-  file.comb = 'res_1_1_ref_0.h5'
-  file.comb = 'msa_1_1_ref_0.h5'
-  
-  library(rhdf5)
-  gr.accs.b <- "/accs"
-  gr.accs.e <- "accs/"
-  groups = h5ls(file.comb)
-  accessions = groups$name[groups$group == gr.accs.b]
-  v = c()
-  for(acc in accessions){
-    v.acc = h5read(file.comb, paste0(gr.accs.e, acc))
-    v = cbind(v, v.acc)
-    print(acc)
-    print(sum((v.acc != 0) & (!is.na(v.acc))))
-  }
-  
-  # ********************
-  # Tom-Greg
-  library(rhdf5)
-source(system.file("pannagram/utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  path.chromosomes = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom/chromosomes/'
-  path.mafft.out = '../mafft_out/'
-  n.flank = 30
-  
-  gr.accs.e <- "accs/"
-  gr.accs.b <- "/accs"
-  gr.break.e = 'break/'
-  gr.break.b = '/break'
-  
-  max.block.elemnt = 3 * 10^ 6
-  
-  # ********************
-  # Rhizobia
-  library(rhdf5)
-source(system.file("utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  path.chromosomes = '../chromosomes/'
-  path.mafft.out = '../mafft_out/'
-  n.flank = 30
-  
-  gr.accs.e <- "accs/"
-  gr.accs.b <- "/accs"
-  gr.break.e = 'break/'
-  gr.break.b = '/break'
-  
-  max.block.elemnt = 3 * 10^ 6
-  
-  
-}
-
-pokaz('Done.', file=file.log.main, echo=echo.main)
 
 

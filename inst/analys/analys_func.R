@@ -29,7 +29,7 @@ extractChrByFormat <- function(gff, s.chr){
   if(sum(is.na(gff$chr)) > 0) stop('Check the chromosome formats (#3)')
   
   if(nrow(gff) != n.gff){
-    pokazAttention('Not all the gff records were recognized, only',nrow(gff), 'out of', n.gff)
+    pokazAttention('Not all the gff records were recognized by chromosomal format, only',nrow(gff), 'out of', n.gff)
   }
   
   return(gff)
@@ -64,31 +64,43 @@ extractChrByFormat <- function(gff, s.chr){
 #' # Example of function usage:
 #' gff_data <- gffgff("path/to/consensus/", "acc1", "acc2", gff1)
 #' 
+#' @export
 gff2gff <- function(path.cons, 
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
-                    ref.acc='0', 
-                    n.chr = 5,
+                    n.chr,
+                    ref.acc='',
                     exact.match=T, 
                     gr.accs.e = "accs/",
                     aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                     echo=T,
                     pangenome.name='Pangen',
-                    s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
+                    s.chr = '_Chr', # in this case the pattern is "*_ChrX", where X is the number
+                    remain=F
                     ){
   
   # Set of names of accettions, which can be used to specify pangenomes coordinates
   pangenome.names = unique(c(pangenome.name, 'Pangen', 'Pangenome', 'Pannagram'))
+  colnames.full1 = colnames(gff1)
+  
+  if(ref.acc == ''){
+    ref.suff = ref.acc
+  } else {
+    # ref.suff = paste0('_ref_', ref.acc)
+    ref.suff = paste0('_', ref.acc)
+  }
   
   if(acc1 == acc2) stop('Accessions provided are identical')
   
   gff1$idx = 1:nrow(gff1)
-  # Get chromosome number from the first column of the gff file
-  # if(!('chr' %in% colnames(gff1))){
-    gff1 =  extractChrByFormat(gff1, s.chr)
-    gff1 = gff1[order(gff1$chr),]
-  # }
+  # Get chromosomes by format
+  gff1 =  extractChrByFormat(gff1, s.chr)
+  gff1 = gff1[order(gff1$chr),]
   
+  # Fitler out blocks
+  gff1 = filterBlocks(acc1, gff1, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
+  
+  # Construct 2
   colnames.1.to.9 = colnames(gff1)[1:9]
   colnames(gff1)[1:9] = paste0('V', 1:9)
   # Prepare new annotation
@@ -100,9 +112,11 @@ gff2gff <- function(path.cons,
   gff2$V5 = -1
   gff2$V1 = gsub(acc1, acc2, gff2$V1)
   
-  
   for(i.chr in 1:n.chr){
     
+    # if(i.chr == 5){
+    #   save(list = ls(), file = "tmp_workspace_chr5.RData")
+    # }
     # ---
     # If there some regions to annotate from the chromosome i.chr
     idx.chr = which(gff2$chr == i.chr)
@@ -110,7 +124,7 @@ gff2gff <- function(path.cons,
     # ---
     
     if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_', ref.acc,'.h5')
+    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
     
     if(tolower(acc1) %in% tolower(pangenome.names)){
       v = h5read(file.msa, paste0(gr.accs.e, acc2))
@@ -138,8 +152,7 @@ gff2gff <- function(path.cons,
     v.corr = rep(0, max.chr.len)
     v.corr[v[,1]] = v[,2]
     
-    
-    if(echo) pokaz('Number of annotations:', length(idx.chr))
+    if(echo) pokaz('Number of provided annotations:', length(idx.chr))
     
     if(exact.match){
       # Exact match of positions
@@ -151,11 +164,26 @@ gff2gff <- function(path.cons,
       gff2$V5[idx.chr] = w$v.prev[gff1$V5[idx.chr]]
     }
     
-    # TODO: add information about blocks
+    # Information about blocks
+    blocks = getSequntialBlocks(v[,2])
+    bl.beg = blocks[abs(gff2$V4[idx.chr])]
+    bl.end = blocks[abs(gff2$V5[idx.chr])]
     
+    # save(list = ls(), file = "tmp_workspace_gff2gff.RData")
+    
+    idx.noneq = (bl.beg != bl.end) *1
+    idx.noneq[is.na(idx.noneq)] = 1
+    
+    if(sum(idx.noneq) > 0){
+      gff2$V4[idx.chr][idx.noneq == 1] = 0
+      gff2$V5[idx.chr][idx.noneq == 1] = 0  
+    }
+    
+    if(sum(is.na(gff2$V4[idx.chr]) > 0)) stop('NA in gff2$V4[idx.chr]')
+    if(sum(is.na(gff2$V5[idx.chr]) > 0)) stop('NA in gff2$V5[idx.chr]')
   }
   
-  idx.wrong.blocks = sign(gff2$V4 * gff2$V5) != 1
+  idx.wrong.blocks = (sign(gff2$V4 * gff2$V5) != 1)
   # gff2[idx.wrong.blocks, c('V4', 'V5')] = 0
   gff2.loosing = gff2[idx.wrong.blocks,]
   gff2.remain = gff2[!idx.wrong.blocks,]
@@ -169,6 +197,16 @@ gff2gff <- function(path.cons,
   gff2.remain$V5[idx.neg] = tmp
   gff2.remain$V7[idx.neg] = s.strand[gff2.remain$V7[idx.neg]]
   
+  idx.trans = which(gff2.remain$V4 > gff2.remain$V5)
+  if(length(idx.trans) > 0){
+    gff2.remain = gff2.remain[-idx.trans,]
+  }
+  
+  # Fitler out blocks
+  gff2.remain = filterBlocks(acc2, gff2.remain, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
+  
+  
+  # Prepare results
   gff2.remain$len.new = gff2.remain$V5 - gff2.remain$V4 + 1
   gff2.remain$V9 = paste0(gff2.remain$V9, ';len_new=', gff2.remain$len.new)  # add new length
   gff2.remain$V9 = paste(gff2.remain$V9, ';len_ratio=', 
@@ -176,7 +214,13 @@ gff2gff <- function(path.cons,
   
   colnames(gff2.loosing)[1:9] = colnames.1.to.9
   colnames(gff2.remain)[1:9] = colnames.1.to.9
-  return(gff2.remain = gff2.remain[,1:9])
+  
+  
+  if(remain){
+    return(gff2.remain[,colnames.full1])
+  }else {
+    return(gff2.remain[,1:9])
+  }
 }
 
 
@@ -406,17 +450,18 @@ getMxFragment <- function(path.cons,
 fillBegEnd <- function(len.acc, gff){
   g = rep(0, len.acc)
   
-  gff[gff$end <= len.acc,] # remove genes which are over the aligned regions
+  gff = gff[gff$end <= len.acc,] # remove genes which are over the aligned regions
+  gff = gff[order(gff$beg),]
   
   # Check for the overlap
   diff = gff$beg[-1] < gff$end[-nrow(gff)]
   if(sum(diff) > 0) {
-    pokazAttention(gff[min(which(diff)) + (0:1),])
+    print(gff[min(which(diff)) + (0:1),])
     stop(paste('Overlap in GFF, accession', acc)) 
   }
   
   if(!('idx' %in% colnames(gff))){
-    gff$idx = 1:nrow(idx)
+    gff$idx = 1:nrow(gff)
   }
   g[gff$beg] = gff$idx
   g[gff$end] = gff$idx * (-1)
@@ -445,7 +490,6 @@ fillBegEnd <- function(len.acc, gff){
 #' the modified input data frame with includes and overlaps removed.
 #'
 #' @export
-
 findIncludeAndOverlap <- function(gff, echo = F){
   
   gff.cut = gff
@@ -546,7 +590,6 @@ getGeneBlocks <- function(g.tmp, len.pan, v.acc){
                     idx = g[idx.beg,1]))
 }
 
-
 saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   
   if(length(snp.pos) != nrow(snp.val)) stop('Dimentions of the SNP matrix and the vectop of positions should match')
@@ -608,6 +651,208 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
 }
 
 
+#' Compute PI per Window
+#'
+#' This function calculates the sum of PI values per defined window length (`len.wnd`) on the result of
+#' vcftools --vcf snps.vcf --site-pi --out output
+#'
+#' @param data A data frame containing at least two columns: `POS` (positions) and `PI` (values).
+#' @param len.wnd Numeric. The length of each window. Default is 300000.
+#'
+#' @return A named numeric vector with the average PI values per window.
+#' 
+#' @export
+piVCF <- function(data, len.wnd = 300000) {
+  if (!all(c("POS", "PI") %in% names(data))) {
+    stop("The data frame must contain 'POS' and 'PI' columns.")
+  }
+  
+  data$wnd <- ceiling(data$POS / len.wnd)
+  pi.wnd <- tapply(data$PI, data$wnd, sum) / len.wnd
+  
+  df = data.frame(pi = pi.wnd, pos = ((1:length(pi.wnd)) - 1) * len.wnd)
+  
+  return(df)
+}
+
+
+defineBlocks <- function(v){
+
+  v.idx = 1:length(v)
+  
+  v.idx = v.idx[v != 0]
+  v = v[v != 0]
+  v.r = rank(abs(v))
+  v.r[v < 0] = v.r[v < 0] * (-1)
+  v.b = findRuns(v.r)
+  
+  v.b$v.beg = v[v.b$beg]
+  v.b$v.end = v[v.b$end]
+  
+  v.b$i.beg = v.idx[v.b$beg]
+  v.b$i.end = v.idx[v.b$end]
+  
+  blocks.acc = rep(0, max(abs(v)))
+  for(irow in 1:nrow(v.b)){
+    blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+  }
+  
+  return(blocks.acc)
+}
+
+filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e) {
+  # Convert pangenome.names to lowercase once for efficiency
+  pangenome.names <- tolower(pangenome.names)
+  
+  # Initialize an empty vector for indices to remove
+  idx.remove <- c()
+  if (!(tolower(acc) %in% pangenome.names)) {
+    # Loop over each chromosome
+    for (i.chr in 1:n.chr) {
+      # Find indices for the current chromosome
+      idx.chr <- which(gff$chr == i.chr)
+      gff.chr <- gff[idx.chr, ]
+      
+      # Generate the MSA file name
+      file.msa <- paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+      
+      # Check if the MSA file exists before reading
+      if (file.exists(file.msa)) {
+        # Read MSA data
+        v <- h5read(file.msa, paste0(gr.accs.e, acc))
+        v[is.na(v)] = 0
+        
+        # Define blocks and get start and end for each block
+        v.blocks <- defineBlocks(v)
+        
+        # Check block boundaries within v.blocks
+        bl.beg <- v.blocks[gff.chr$beg]
+        bl.end <- v.blocks[gff.chr$end]
+        
+        # Append indices where block starts and ends do not match
+        idx.remove <- c(idx.remove, idx.chr[which(bl.beg != bl.end)])
+        # Append indices where block start or end is NA
+        idx.remove <- c(idx.remove, idx.chr[which(is.na(bl.beg) | is.na(bl.end))])
+      } else {
+        message(paste("File not found:", file.msa))
+      }
+    }
+  }
+  
+  # Remove rows from gff based on idx.remove if there are any indices
+  if (length(idx.remove) > 0) {
+    idx.remove <- unique(idx.remove)
+    gff <- gff[-idx.remove, ]
+  }
+  
+  # Return the filtered gff
+  return(gff)
+}
+
+
+#' Previous and Next values in the vector
+#'
+#' If some elements are equal to 0, then this fucntion will find the previous and next non-zero element,
+#' if this 0 is in one block with the flanking non-zero elements
+#'
+#' @param x.acc A numeric vector with positions.
+#' @return A list containing two elements: 'prev' and 'next', each is a vector of calculated values.
+getPrevNext_old <- function(x.acc){
+  ### ---- Find prev and next ----
+  n = length(x.acc)
+  for(i.tmp in 1:2){
+    v.acc = x.acc
+    if(i.tmp == 2) {
+      v.acc = rev(v.acc)
+    }
+    v.rank = rank(v.acc)
+    v.rank[v.acc == 0] = 0
+    
+    v.zero.beg = which((v.acc[-1] == 0) & (v.acc[-n] != 0)) + 1
+    v.zero.end = which((v.acc[-1] != 0) & (v.acc[-n] == 0))
+    if(v.acc[1] == 0) v.zero.end = v.zero.end[-1]
+    if(v.acc[n] == 0) v.zero.end = c(v.zero.end, n)
+    
+    # ..... WITHIN ONE STRATCH BLOCK .....
+    idx = which(abs(v.rank[v.zero.beg-1] - v.rank[v.zero.end+1]) != 1)
+    v.zero.beg = v.zero.beg[-idx]
+    v.zero.end = v.zero.end[-idx]
+    # .....
+    
+    tmp = rep(0, n)
+    tmp[v.zero.beg] = v.acc[v.zero.beg-1]
+    tmp[v.zero.end] = -v.acc[v.zero.beg-1]
+    tmp[v.zero.end[v.zero.beg == v.zero.end]] = 0
+    tmp = cumsum(tmp)
+    tmp[v.zero.end] = v.acc[v.zero.beg-1]
+    
+    if(i.tmp == 1){
+      v.prev = x.acc + tmp
+    } else {
+      tmp = rev(tmp)
+      v.next = x.acc + tmp
+    }
+  }
+  
+  return(list(v.prev = v.prev, 
+              v.next = v.next))
+}
+
+
+getPrevNext <- function(x.acc){
+  
+  n = length(x.acc)
+  for(i.tmp in 1:2){
+    v.acc = x.acc
+    if(i.tmp == 2) {
+      v.acc = rev(v.acc)
+    }
+    
+    v.zero = findOnes((v.acc == 0)*1)
+    v.acc[v.acc == 0] = NA
+    for(irow in 1:nrow(v.zero)){
+      if(v.zero$beg[irow] == 1) next
+      v.acc[v.zero$beg[irow]:v.zero$end[irow]] = v.acc[v.zero$beg[irow]-1]
+    }
+    
+    if(sum(v.acc[!is.na(v.acc)] == 0) > 1) stop('Zeros were found')
+    
+    if(i.tmp == 1){
+      v.prev = v.acc
+    } else {
+      v.acc = rev(v.acc)
+      v.next = v.acc
+    }
+  }
+  
+  return(list(v.prev = v.prev, 
+              v.next = v.next))
+}
+
+
+getSequntialBlocks <- function(v){
+  v.idx = 1:length(v)
+  
+  v.idx = v.idx[v != 0]
+  v = v[v != 0]
+  v.r = rank(abs(v))
+  v.r[v < 0] = v.r[v < 0] * (-1)
+  v.b = findRuns(v.r)
+  
+  v.b$v.beg = v[v.b$beg]
+  v.b$v.end = v[v.b$end]
+  
+  v.b$i.beg = v.idx[v.b$beg]
+  v.b$i.end = v.idx[v.b$end]
+  
+  v.b = v.b[order(abs(v.b$v.beg)),]
+  
+  blocks.acc = rep(0, max(abs(v)))
+  for(irow in 1:nrow(v.b)){
+    blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+  }
+  return(blocks.acc)
+}
 
 
 

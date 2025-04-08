@@ -58,22 +58,25 @@ files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names =
 files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
 files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
 
+pokaz('Number of files to align', length(files.extra))
+
 path.mafft.in.tmp = paste0(path.mafft.in, 'tmp/')
 
 if (!file.exists(path.mafft.in.tmp)) {
   dir.create(path.mafft.in.tmp)
 }
 
+# ***********************************************************************
+# ---- MAIN program body ----
+
 loop.function <- function(f.in, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
-  
+                          echo.loop=T){
   pokaz(f.in)
   # Log files
-  if (is.null(file.log.loop)){
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           sub("\\.[^.]*$", "", basename(f.in)),
-                           '.log')
+  file.log.loop = paste0(path.log, 'loop_file_', 
+                         sub("\\.[^.]*$", "", basename(f.in)),
+                         '.log')
+  if(!file.exists(file.log.loop)){
     invisible(file.create(file.log.loop))
   }
   
@@ -85,6 +88,25 @@ loop.function <- function(f.in,
   seqs = readFasta(paste0(path.mafft.in, f.in))
   seqs.clean = seq2clean(seqs,n.flank)
   
+  seqs.clean = seqs.clean[nchar(seqs.clean) > 7]
+  if(length(seqs.clean) < 2) {
+    pokazAttention('Not enough sequences to align', file=file.log.loop, echo=echo.loop)
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    return()
+  }
+  
+  # cnt N
+  n.n = c()
+  for(s in seqs.clean){
+    s.tmp = seq2nt(s)
+    n.n = c(n.n, sum((s.tmp != 'N') & (s.tmp != 'n')) / length(s.tmp))
+  }
+  
+  if(min(n.n) < 0.5){
+    pokazAttention('Too mane N to align', file=file.log.loop, echo=echo.loop)
+    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    return()
+  }
   
   path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
   pokaz(path.work)
@@ -96,9 +118,10 @@ loop.function <- function(f.in,
   
   alignment.seq = mx2aln(alignment)
   
-  
   file.out = paste0(path.mafft.out, sub('.fasta', '', basename(f.in)), "_aligned2.fasta")
   writeFasta(alignment.seq, file.out)
+  
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   
 }
 
@@ -130,3 +153,26 @@ warnings()
 pokaz('Done.', file=file.log.main, echo=echo.main)
 
 
+
+# 
+# for(f.in in files.in){
+#   pokaz(f.in)
+#   seqs = readFasta(paste0(path.mafft.in, f.in))
+#   seqs.clean = seq2clean(seqs,n.flank)
+#   
+#   
+#   path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
+#   pokaz(path.work)
+#   res = refineAlignment(seqs.clean, path.work)
+#   
+#   alignments = res$aln
+#   
+#   alignment = alignments[[length(alignments)]]
+#   
+#   alignment.seq = mx2aln(alignment)
+#   
+#   pdf(paste(path.fig, f.in, '_v2.pdf', sep = ''), width = 6, height = 4)
+#   print(msaplot(alignment))     # Plot 1 --> in the first page of PDF
+#   dev.off()
+#   
+# }

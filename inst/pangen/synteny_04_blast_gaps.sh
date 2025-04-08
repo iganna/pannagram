@@ -57,57 +57,51 @@ if [ ! -d "${path_db}" ]; then
 fi
 
 # ----------------------------------------------------------------------------
-#                 CREATE BLAST DATABASES
+#                 FUNC: CREATE DATABASE
 # ----------------------------------------------------------------------------
 
-# pokaz_stage "Step 5. BLAST of gaps between syntenic matches"
-
+export path_gaps
+export path_db
+export log_path
+export p_ident
 
 function process_db {
     query_file_path="$1"
-    path_gaps="$2"
-    path_db="$3"
-    log_path=${4}
 
     # Extract the file name from the full file path.
     query_file=$(basename "$query_file_path")
     # Replace 'query' with 'base' in the file name.
     base_file="${query_file/query/base}"
 
-    # Create a log file
-    if [ -d "$log_path" ]; then
-        file_log="${log_path}${p_filename}_${ref_chr}_db.log"
-        > "$file_log"
-    else
-        file_log="/dev/null"
+
+    # If log file exists and has the word "Done" - then don't run the blast again
+    file_log="${log_path}${query_file}_db.log"
+    if [ -f "$file_log" ]; then
+        if grep -q "Done" "$file_log"; then
+            echo "Over." >> "$file_log"
+            return 0
+        fi
     fi
+    echo "New attempt:" > "$file_log"  # Create or empty the log file
 
     # Check if BLAST database files do not exist.
     if [ -f "${path_gaps}${base_file}" ] && [ ! -f "${base_file}.nhr" ] && [ ! -f "${base_file}.nin" ] && [ ! -f "${base_file}.nsq" ]; then
         # Create BLAST database
         makeblastdb -in ${path_gaps}${base_file} -dbtype nucl -out ${path_db}${base_file}  &> /dev/null
-    fi
 
-    if [ -d "$log_path" ]; then
-        echo "Done." >> "$file_log"
+        if [ -d "$log_path" ]; then
+            echo "Done." >> "$file_log"
+        fi
     fi
 }
 
-export -f process_db
-
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_db {} $path_gaps $path_db ${log_path}
-
 
 # ----------------------------------------------------------------------------
-#                 RUN BLAST
+#                 FUNC: RUN BLAST
 # ----------------------------------------------------------------------------
 
-function process_blast {
+function process_blast_normal {
     query_file_path="$1"
-    path_gaps="$2"
-    path_db="$3"
-    log_path="$4"
-    p_ident="$5"
 
     query_file=$(basename "$query_file_path")
     base_file="${query_file/query/base}"
@@ -116,22 +110,26 @@ function process_blast {
     out_file="${out_file%.fasta}.txt"
 
     # ------------------------------------------
-    # Create a log file
-    if [ -d "$log_path" ]; then
-        file_log="${log_path}${query_file}_normal.log"
-        > "$file_log"
-    else
-        file_log="/dev/null"
+    # If log file exists and has the word "Done" - then don't run the blast again
+    file_log="${log_path}${query_file}_normal.log"
+    if [ -f "$file_log" ]; then
+        if grep -q "Done" "$file_log"; then
+            echo "Over." >> "$file_log"
+            return 0
+        fi
     fi
+    
+    echo "New attempt:" > "$file_log"  # Create or empty the log file
 
     # Execute BLAST search
-    if [[ ! -e ${path_gaps}${out_file} ]] && \
-       [[ -e ${path_db}${base_file}.nhr ]] && \
+    if [[ -e ${path_db}${base_file}.nhr ]] && \
        [[ -e ${path_db}${base_file}.nin ]] && \
        [[ -e ${path_db}${base_file}.nsq ]] && \
        [[ -e ${path_gaps}${query_file} ]]; then
 
-echo "blastn -db ${path_db}${base_file} -query ${path_gaps}${query_file} -out ${path_gaps}${out_file} -outfmt '6 qseqid qstart qend sstart send pident length qseq sseq sseqid' -perc_identity ${p_ident} -max_hsps 10" >> "$file_log"
+        if [[ -e "${path_gaps}${out_file}" ]]; then
+            rm "${path_gaps}${out_file}"
+        fi
 
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
@@ -139,22 +137,36 @@ echo "blastn -db ${path_db}${base_file} -query ${path_gaps}${query_file} -out ${
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
                -max_hsps 10  >> "$file_log" 2>&1
-    fi
 
-    if [ -d "$log_path" ]; then
-        echo "Done." >> "$file_log"
+        if [ -d "$log_path" ]; then
+            echo "Done." >> "$file_log"
+        fi
+
     fi
+}
+
+
+# BLAST search in "cross" mode
+function process_blast_cross {
+    query_file_path="$1"
+
+    query_file=$(basename "$query_file_path")
+    base_file="${query_file/query/base}"
+
+    out_file="${query_file/query/out}"
+    out_file="${out_file%.fasta}.txt"
 
     # ------------------------------------------
-    # BLAST search in "cross" mode
-
-    # Create a log file
-    if [ -d "$log_path" ]; then
-        file_log="${log_path}${query_file}_cross.log"
-        > "$file_log"
-    else
-        file_log="/dev/null"
+    # If log file exists and has the word "Done" - then don't run the blast again
+    file_log="${log_path}${query_file}_cross.log"
+    if [ -f "$file_log" ]; then
+        if grep -q "Done" "$file_log"; then
+            echo "Over." >> "$file_log"
+            return 0
+        fi
     fi
+
+    echo "New attempt:" > "$file_log"  # Create or empty the log file
 
     if [[ $query_file != *residual* ]]; then
         base_file="${query_file/query/residual_base}"
@@ -166,23 +178,46 @@ echo "blastn -db ${path_db}${base_file} -query ${path_gaps}${query_file} -out ${
         out_file="${out_file%.fasta}.txt"
     fi
 
-    if [[ ! -e ${path_gaps}${out_file} ]] && [[ -e ${path_db}${base_file} ]] && [[ -e ${path_gaps}${query_file} ]]; then
+    if [[ -e ${path_db}${base_file}.nhr ]] && \
+       [[ -e ${path_db}${base_file}.nin ]] && \
+       [[ -e ${path_db}${base_file}.nsq ]] && \
+       [[ -e ${path_gaps}${query_file} ]]; then
+
+        if [[ -e "${path_gaps}${out_file}" ]]; then
+            rm "${path_gaps}${out_file}"
+        fi
+
         blastn -db ${path_db}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
                -max_hsps 5 >> "$file_log" 2>&1
+        if [ -d "$log_path" ]; then
+            echo "Done." >> "$file_log"
+        fi
     fi
 
-    if [ -d "$log_path" ]; then
-        echo "Done." >> "$file_log"
-    fi
 }
 
-export -f process_blast
+export -f process_blast_normal
+export -f process_blast_cross
+export -f process_db
 
-find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast {} $path_gaps $path_db ${log_path} ${p_ident}
+# ----------------------------------------------------------------------------
+#                 MAIN
+# ----------------------------------------------------------------------------
+
+files_acc=($(find ${path_gaps} -name '*query*.fasta'))
+
+parallel -j ${cores} process_db ::: ${files_acc[@]}
+parallel -j ${cores}  process_blast_normal ::: "${files_acc[@]}" 
+parallel -j ${cores}  process_blast_cross ::: "${files_acc[@]}" 
+
+
+# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_db {} $path_gaps $path_db ${log_path}
+# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast_normal {} $path_gaps $path_db ${log_path} ${p_ident}
+# find ${path_gaps} -name '*query*.fasta' | parallel -j ${cores} process_blast_cross {} $path_gaps $path_db ${log_path} ${p_ident}
 
 
 # pokaz_message "Done!"

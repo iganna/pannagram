@@ -21,23 +21,32 @@
 #' @export
 heatplot <- function(tbl, 
                      cols = NULL,
-                     c.name = 'lila',
+                     c.name = 'gray_sea',
                      xlab=NULL,
                      ylab=NULL,
                      fill.lab=NULL,
-                     cord.fix = F
+                     cord.fix = F,
+                     add.label = F,
+                     to.norm = 'none'
                      ) {
   
   cols.list = list('lila'     = c('#F5EDED', '#CB80AB', '#8967B3', '#624E88'),
                    'mint'     = c('#F6F6F6', '#97DECE', '#439A97', '#2E4F4F'),
                    'sea'      = c('#FFDC7F', '#78B7D0', '#227B94', '#16325B'),
                    'pastel'   = c('#F4EDCC', '#A4CE95', '#6196A6', '#5F5D9C'),
+                   'gray'     = c('white', 'grey90', 'grey70', 'grey50'),
+                   'gray_sea' = c('#F8FAFC', '#D9EAFD', '#BCCCDC', '#9AA6B2'),
+                   'pale_sea' = c('#F8F4FC', '#E0D2F5', '#C6AEE2', '#A989C7'),
+                   
                    
                    'div1' = c("#399918", "#88D66C", "#ECFFE6", "#FFAAAA", "#FF7777"),
                    'div2' = c('#439A97', '#91DDCF', '#F7F9F2', '#F19ED2', '#CD6688'),
                    'div3' = c('#439A97', '#96CEB4', '#FFF7D1', '#FFAD60', '#A66E38'),
+                   'redblue' = c('#11468F','#CDDEFF', 'white',  '#FFBCBC', '#EB455F'),
                    'dot' = c("#CE1F6A", 'white', '#27374D'))
     
+  if(!(to.norm %in% c('none', 'row', 'col'))) stop('Wrong normalisation')
+  
   if(is.null(cols)){
     if(c.name %in% names(cols.list)){
       cols = cols.list[[c.name]]
@@ -49,7 +58,8 @@ heatplot <- function(tbl,
   
   tbl.class = class(tbl)[1]
   if(tbl.class == 'table'){
-    tbl = matrix(tbl, ncol = ncol(tbl))
+    tbl = matrix(tbl, ncol = ncol(tbl), 
+                 dimnames = list(rownames(tbl), colnames(tbl)))
   } else  if(tbl.class == "data.frame") {
     tbl = as.matrix(tbl)
   } else if(tbl.class != 'matrix'){
@@ -59,6 +69,23 @@ heatplot <- function(tbl,
   df <- reshape2::melt(tbl)
   df$Var1 = factor(df$Var1)
   df$Var2 = factor(df$Var2)
+  df$label = df$value
+  
+  if(to.norm == 'row'){
+    for(tmp in unique(df$Var1)){
+      tmp.val = df$value[df$Var1 == tmp]
+      tmp.val = (tmp.val - min(tmp.val)) / (max(tmp.val) - min(tmp.val))
+      df$value[df$Var1 == tmp] = tmp.val
+    }
+  }
+  
+  if(to.norm == 'col'){
+    for(tmp in unique(df$Var2)){
+      tmp.val = df$value[df$Var2 == tmp]
+      tmp.val = (tmp.val - min(tmp.val)) / (max(tmp.val) - min(tmp.val))
+      df$value[df$Var2 == tmp] = tmp.val
+    }
+  }
   
   p <- ggplot(df, aes(Var2, Var1, fill = value)) +
     geom_tile() +
@@ -66,6 +93,10 @@ heatplot <- function(tbl,
     labs(x = xlab, y = ylab, fill = fill.lab) +
     scale_x_discrete(expand = c(0, 0)) +   
     scale_y_discrete(expand = c(0, 0))
+  
+  if(add.label){
+    p = p + geom_text(aes(label = round(label, 2)), color = "black")
+  }
   
   if(c.name == 'dot'){
     wsize = max(abs(df$value))

@@ -15,8 +15,7 @@ suppressMessages({
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
-# source("pangen/synteny_funcs.R")
-
+# source(system.file("pangen/synteny_funcs.R", package = "pannagram"))
 
 
 # ***********************************************************************
@@ -24,21 +23,14 @@ source(system.file("utils/utils.R", package = "pannagram"))
 
 args = commandArgs(trailingOnly=TRUE)
 
-option_list = list(
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to consensus directory", metavar="character"),
-  make_option(c("-r", "--ref0"), type="character", default=NULL, 
-              help="reference file 1", metavar="character"),
-  make_option(c("-p", "--ref1"), type="character", default=NULL, 
-              help="reference file 2", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--path.log"), type = "character", default = NULL,
-              help = "Path for log files", metavar = "character"),
-  make_option(c("--log.level"), type = "character", default = NULL,
-              help = "Level of log to be shown on the screen", metavar = "character")
-); 
-
+option_list <- list(
+  make_option("--path.cons",  type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--ref0",       type = "character", default = NULL, help = "Reference file 1"),
+  make_option("--ref1",       type = "character", default = NULL, help = "Reference file 2"),
+  make_option("--cores",      type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",   type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",  type = "character", default = NULL, help = "Level of log to be shown on the screen")
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -47,48 +39,46 @@ opt = parse_args(opt_parser, args = args);
 
 # ***********************************************************************
 # ---- Logging ----
-
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ---- HDF5 ----
-
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+aln.type.in = aln.type.ref
+aln.type.out = aln.type.comb
 
 # ***********************************************************************
 # ---- Values of parameters ----
 
 # Number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+num.cores <- opt$cores
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
 
 # Reference genomes
-if (is.null(opt$ref0)) {
-  stop("opt$pref is NULL")
-} else {
-  ref0 <- opt$ref0
-}
-if (is.null(opt$ref1)) {
-  stop("opt$pref is NULL")
-} else {
-  ref1 <- opt$ref1
-}
+ref0 <- if (is.null(opt$ref0)) stop("opt$pref is NULL") else opt$ref0
+ref1 <- if (is.null(opt$ref1)) stop("opt$pref is NULL") else opt$ref1
+
+pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-pattern <- paste0("^",aln.type.ref,"[0-9]+_[0-9]+_ref_.*\\.h5$")
+pattern <- paste0("^", aln.type.in, "[0-9]+_[0-9]+_.*\\.h5$")
 combo_files <- list.files(path = path.cons, pattern = pattern, full.names = F)
+combo_files <- combo_files[grep(paste(ref1, ref0, sep = "|"), combo_files)]
 
 extract_xy <- function(filename) {
   parts <- strsplit(filename, "_")[[1]]
   x <- parts[2]
   y <- parts[3]
+  
+  if(x != y) return(NULL)  # CHANGE IN FUTURE
   return(paste(x, y, sep = '_'))
 }
+
 pref.combinations <- unique(sapply(combo_files, extract_xy))
 
 if(length(pref.combinations) == 0) {
@@ -96,10 +86,6 @@ if(length(pref.combinations) == 0) {
 }
 
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
-
-# ----  Combine correspondence  ----
-
-pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -109,11 +95,11 @@ loop.function <- function(s.comb,
                           file.log.loop=NULL){
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref0,'.h5')
-  file.comb1 = paste0(path.cons, aln.type.ref ,s.comb,'_ref_',ref1,'.h5')
+  file.comb0 = paste0(path.cons, aln.type.in, s.comb, '_', ref0, '.h5')
+  file.comb1 = paste0(path.cons, aln.type.in, s.comb, '_', ref1, '.h5')
   
   # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste0(path.cons, aln.type.comb, s.comb, '.h5')
+  file.res = paste0(path.cons, aln.type.out, s.comb, '.h5')
   if(file.exists(file.res)){
     
     if(v.idx.trust %in% h5ls(file.comb0)$name) {
@@ -182,7 +168,6 @@ loop.function <- function(s.comb,
     pokaz('Length of function', length(f01), file=file.log.loop, echo=echo.loop)
     v01 = v1[abs(f01)] * sign(f01)
     
-    
     v0[(v0 != v01) & (v01 != 0)] = 0
     
     pokaz('Length of resultant correspondence', length(v01), file=file.log.loop, echo=echo.loop)
@@ -239,8 +224,6 @@ loop.function <- function(s.comb,
   
   return(NULL)
 }
-
-
 
 # ***********************************************************************
 # ---- Loop  ----

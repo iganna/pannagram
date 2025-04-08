@@ -1,0 +1,802 @@
+---
+title: "SV analysis"
+output: md_document
+---
+
+# Setup
+## Functions
+```{r}
+library(ggplot2)
+library(cowplot)
+library(rhdf5)
+library(pannagram)
+library(igraph)
+library(ggnet)
+library(network)
+
+Sys.setenv(PATH = paste("/Users/annaigolkina/micromamba/envs/pannagram/bin", 
+                          Sys.getenv("PATH"), sep = ":"))
+
+if (!require("igraph")) install.packages("igraph")
+if (!require("GGally")) install.packages("GGally")
+if (!require("network")) install.packages("network")
+
+library(igraph)
+library(GGally)
+library(network)
+library(gridExtra)
+
+
+```
+
+## Paths
+```{r}
+s.species = 'b_juncea'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/b_juncea/'
+
+s.species = 'b_rapa'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/b_rapa/'
+
+s.species = 'camelina_sativa'
+path.sv = '/Volumes/Samsung_T5/vienn/test/camelina_sativa/'
+
+s.species = 'b_nigra'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/b_nigra/'
+
+s.species = 'cucumber'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/cucumber/'
+
+s.species = 'auqilegia'
+path.sv = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/auqilegia/'
+
+
+s.species = 'rleg'
+path.sv = '/Volumes/Samsung_T5/vienn/test/manuals/tmp/sv/'
+```
+
+
+```{r}
+path.figures = paste(path.sv, 'figures/', sep = '')
+
+path.nad = paste(path.sv, 'nad/', sep = '')
+
+if (!dir.exists(path.figures)) dir.create(path.figures)
+if (!dir.exists(path.nad)) dir.create(path.nad)
+
+```
+
+## Variables
+```{r}
+sim.cutoff = 0.85
+sim.cutoff = 0.9
+f.visualise = F
+```
+
+## Binning
+```{r}
+
+bins <- c(0, 100, 200, 400, 800, 1000, 1500, 3000, 5000, 7000, Inf)
+labels <- c("0-100", "100-200", "200-400", "400-800", "800-1000", "1000-1500", "1500-3000", "3000-5000", "5000-7000", "7000+")
+
+
+color.pal <- c("0-100" = "#1f77b4", "100-200" = "#50B498", "200-400" = "#2ca02c", 
+            "400-800" = "#bcbd22", "800-1000" = "#ff7f0e", "1000-1500" = "#d62728", "1500-3000" = "#9467bd",
+            "3000-5000" = "#e377c2", "5000-7000" = "#8c564b", "7000+" = "#7f7f7f")
+
+
+```
+
+
+# SV-graph
+## Reading and constructing
+```{r}
+
+res.cover.file = 'seq_sv_big_on_sv_cover.rds'
+res.nest = readRDS(paste(path.sv, res.cover.file, sep = ''))
+g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, collapse = T)
+
+```
+## Take only copies as proxy to the Mobilome
+```{r}
+min.cnt = 2
+node.remain = g.content$nodes.traits$node[g.content$nodes.traits$cnt >=  min.cnt]
+sv.remain = g.content$nodes$name[g.content$nodes$node %in% node.remain]
+
+res.nest.remain = res.nest[(res.nest$V1 %in% sv.remain) & 
+                             (res.nest$V8 %in% sv.remain),]
+
+g.content = getGraphFromBlast(res.nest = res.nest.remain, sim.cutoff = sim.cutoff, collapse = F)
+
+sum(g.content$nodes.traits$cnt > 100)
+
+x = unique(c(g.content$edges))
+length(x)
+
+```
+
+
+# Plot simple graph
+```{r}
+if(f.visualise){
+  g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+  b.graph.names = network.vertex.names(g)
+
+  set.seed(239)
+  p.refined <- ggnet2(g, label = F, edge.color = "black",
+              # node.size = g.nodes.cnt[b.graph.names],
+              node.size = 1,
+              color = '#468B97',
+              arrow.gap = 0.01, arrow.size = 2,
+              # color = g.nodes.fam[b.graph.names],
+              # palette = fam.palette,
+              # mode = "kamadakawai"
+              )
+  
+  p.refined
+}
+
+```
+
+# Remove components
+## Components
+```{r}
+g.comp <- getGraphComponents(g.content$edges)
+memb.comp = g.comp$membership
+g.content$edges.small = g.content$edges
+```
+
+## Remove one the biggest component and some the smallest
+```{r}
+# # Remove big
+# id.big = which.max(g.comp$csize)
+# sv.name.big = names(g.comp$membership)[g.comp$membership == id.big]
+# g.content$edges.small = g.content$edges.small[!(g.content$edges[,1] %in% sv.name.big),]
+```
+
+## Remove some the smallest
+```{r}
+# Remove small
+min.cl.size = 4
+idx.moderate = which(g.comp$csize >= min.cl.size)
+sv.name.moderate = names(g.comp$membership)[g.comp$membership %in% idx.moderate]
+g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.name.moderate),]
+```
+
+## Collapse small graph
+```{r}
+names.tmp = unique(c(g.content$edges.small))
+res.nest.small = res.nest[(res.nest$V1 %in% names.tmp) & (res.nest$V8 %in% names.tmp),]
+
+sum(!(res.nest.small$V8 %in% names.tmp))
+
+g.content.small = getGraphFromBlast(res.nest = res.nest.small, sim.cutoff = sim.cutoff, collapse = F)
+```
+
+
+### Fam Small
+```{r}
+
+v.sim = readRDS(paste0(path.sv, 'seq_sv_big_on_set_cover.rds'))
+
+# TE family
+v.sim$fam = sapply(v.sim$V8, function(s) strsplit(s, '\\|')[[1]][9])
+v.sim$fam[v.sim$fam %in% c('DNA/Pogo', 'DNA/Tc1', 'DNA/Harbinger', 'DNA/En-Spm',
+                                 'DNA', 'DNA/Mariner')] = 'DNA-TE'
+v.sim$fam[v.sim$fam %in% c('RathE1_cons', 'RathE2_cons', 'RathE3_cons')] = 'RathE1/2/3_cons'
+v.sim$fam[v.sim$fam %in% c('LINE/L1', 'LINE?')] = 'LINE'
+v.sim$fam[v.sim$fam %in% c('RC/Helitron')] = 'Helitron'
+
+family.stat = tapply(v.sim$fam, v.sim$V1, function(s){
+    s0 = s
+    s = unique(s)
+    if(length(s) == 1) return(s)
+    s = setdiff(s, 'TEG')
+    if(length(s) == 1) return(s)
+    s = setdiff(s, 'Unassigned')
+    if(length(s) == 1) return(s)
+    
+    s0 = s0[s0 != 'TEG']
+    s0 = s0[s0 != 'Unassigned']
+    cnt0 = table(s0)
+    if( (4 * max(cnt0)) >= (3 * length(s0))){
+      # return(paste(names(cnt0)[cnt0 == max(cnt0)], 'm', sep = '_'))
+      return(names(cnt0)[cnt0 == max(cnt0)])
+    }
+    
+    if(length(s) == 2) {
+      if(sum(s == 'Helitron') == 1){
+        return(paste('Helitron', setdiff(s, 'Helitron'), sep = '/'))
+      }
+    }
+    
+    return('Mix')
+  } )
+  
+family.stat[family.stat == 'Helitron/DNA/MuDR'] = 'DNA/MuDR' 
+
+idx = g.content.small$nodes$name %in% names(family.stat)
+g.content.small$nodes$fam = ''
+g.content.small$nodes$fam[idx] = family.stat[g.content.small$nodes$name[idx]]
+
+
+node.fam = tapply(g.content.small$nodes$fam, g.content.small$nodes$node, function(s) {
+  s.init = s
+  s = s[s != '']
+  if(length(s) == 0){
+    return('')
+  } else if(length(s) != 1){
+    cnt = table(s.init)
+    s = names(cnt)[cnt == max(cnt)]
+    if(length(s) == 1){
+      return(s)
+    } else {
+      return('Mix')  
+    }
+  } else {
+    return(s)
+  }
+})
+node.fam = node.fam[node.fam != '']
+
+idx = g.content.small$nodes.traits$node %in% names(node.fam)
+g.content.small$nodes.traits$fam = ''
+g.content.small$nodes.traits$fam[idx] = node.fam[g.content.small$nodes.traits$node[idx]]
+
+
+```
+
+
+### Fam Full
+```{r}
+
+g.content.small = g.content
+
+v.sim = readRDS(paste0(path.sv, 'seq_sv_big_on_set_cover.rds'))
+
+# TE family
+v.sim$fam = sapply(v.sim$V8, function(s) strsplit(s, '\\|')[[1]][9])
+v.sim$fam[v.sim$fam %in% c('DNA/Pogo', 'DNA/Tc1', 'DNA/Harbinger', 'DNA/En-Spm',
+                                 'DNA', 'DNA/Mariner')] = 'DNA-TE'
+v.sim$fam[v.sim$fam %in% c('RathE1_cons', 'RathE2_cons', 'RathE3_cons')] = 'RathE1/2/3_cons'
+v.sim$fam[v.sim$fam %in% c('LINE/L1', 'LINE?')] = 'LINE'
+v.sim$fam[v.sim$fam %in% c('RC/Helitron')] = 'Helitron'
+
+family.stat = tapply(v.sim$fam, v.sim$V1, function(s){
+    s0 = s
+    s = unique(s)
+    if(length(s) == 1) return(s)
+    s = setdiff(s, 'TEG')
+    if(length(s) == 1) return(s)
+    s = setdiff(s, 'Unassigned')
+    if(length(s) == 1) return(s)
+    
+    s0 = s0[s0 != 'TEG']
+    s0 = s0[s0 != 'Unassigned']
+    cnt0 = table(s0)
+    if( (4 * max(cnt0)) >= (3 * length(s0))){
+      # return(paste(names(cnt0)[cnt0 == max(cnt0)], 'm', sep = '_'))
+      return(names(cnt0)[cnt0 == max(cnt0)])
+    }
+    
+    if(length(s) == 2) {
+      if(sum(s == 'Helitron') == 1){
+        return(paste('Helitron', setdiff(s, 'Helitron'), sep = '/'))
+      }
+    }
+    
+    return('Mix')
+  } )
+  
+family.stat[family.stat == 'Helitron/DNA/MuDR'] = 'DNA/MuDR' 
+
+idx = g.content.small$nodes$name %in% names(family.stat)
+g.content.small$nodes$fam = ''
+g.content.small$nodes$fam[idx] = family.stat[g.content.small$nodes$name[idx]]
+
+
+node.fam = tapply(g.content.small$nodes$fam, g.content.small$nodes$node, function(s) {
+  s.init = s
+  s = s[s != '']
+  if(length(s) == 0){
+    return('')
+  } else if(length(s) != 1){
+    cnt = table(s.init)
+    s = names(cnt)[cnt == max(cnt)]
+    if(length(s) == 1){
+      return(s)
+    } else {
+      return('Mix')  
+    }
+  } else {
+    return(s)
+  }
+})
+node.fam = node.fam[node.fam != '']
+
+idx = g.content.small$nodes.traits$node %in% names(node.fam)
+g.content.small$nodes.traits$fam = ''
+g.content.small$nodes.traits$fam[idx] = node.fam[g.content.small$nodes.traits$node[idx]]
+
+
+```
+
+
+### Save
+```{r}
+write.table(g.content.small$edges, paste0(path.nad, 'graph_collapse_',s.species,'_full.txt'), quote = F,
+            row.names = F, col.names = F, sep = '\t')
+write.table(g.content.small$nodes.traits, paste0(path.nad, 'graph_collapse_node_traits_',s.species,'_full.txt'), 
+            quote = F, col.names = T, sep = '\t')
+write.table(g.content.small$nodes, paste0(path.nad, 'graph_collapse_nodes_',s.species,'_full.txt'), quote = F, 
+            row.names = F, col.names = T, sep = '\t')
+
+```
+
+
+
+# Plot small components
+```{r}
+
+g.sm <- network(g.content.small$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+b.graph.names = network.vertex.names(g.sm)
+set.seed(239)
+p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
+            # node.size = g.nodes.cnt[b.graph.names],
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            # color = g.nodes.fam[b.graph.names],
+            # palette = fam.palette,
+            # mode = "kamadakawai"
+            )
+
+p.sm
+
+```
+
+## Partition
+```{r}
+
+# Создание графа через igraph
+edges <- g.content.small$edges  # Ваши данные о рёбрах
+igraph_g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
+
+igraph_g <- as.undirected(igraph_g, mode = "collapse")
+
+# Применение метода Лувена
+louvain_result <- cluster_louvain(igraph_g)
+
+# Получение кластеров для каждого узла
+partition <- membership(louvain_result)
+
+# Конвертируем igraph в объект network
+g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Добавляем атрибут "partition" для узлов
+g %v% "partition" <- as.character(partition[g.names])
+
+# Визуализация с ggnet2
+p.refined <- ggnet2(
+  g,
+  label = FALSE,
+  edge.color = "black",
+  node.size = 1,
+  color = "partition",  # Используем найденные сообщества
+  arrow.gap = 0.01,
+  arrow.size = 2
+) + theme(legend.position = "none")
+
+
+p.refined + scale_color_viridis_d(name = "Partition")
+
+```
+## Remove nodes, that are connecting two different partitions
+```{r}
+
+# Рассчитать центральность посредничества
+bridge_scores <- igraph::betweenness(igraph_g, directed = TRUE, normalized = TRUE)
+hist(bridge_scores)
+threshold <- 0.005
+bridges <- which(bridge_scores > threshold)
+
+
+g %v% "bridge" <- (g.names %in% names(bridges)) * 1 + 1
+
+# Визуализация с ggnet2
+p.refined <- ggnet2(
+  g,
+  label = FALSE,
+  node.shape = 'bridge',
+  # node.size = 'bridge',
+  node.size = 1,
+  color = "partition",  # Используем найденные сообщества
+  arrow.gap = 0.01,
+  arrow.size = 2
+) + theme(legend.position = "none") + 
+  scale_color_viridis_d(name = "Partition")
+
+p.refined
+
+
+```
+
+# Separate components
+```{r}
+
+edges = g.content.small$edges
+
+calcClusterFraction <- function(edges, node.b) {
+  edges.b = edges[rowSums(edges == node.b) > 0,,drop=F]
+  node.b.connect = setdiff(c(edges.b), node.b)
+  node.b.connect.val = partition[node.b.connect]
+  cnt = table(node.b.connect.val)
+  p = max(cnt) / length(node.b.connect.val)
+  return(p)
+}
+
+edges = g.content.small$edges
+igraph_g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
+igraph_g <- as.undirected(igraph_g, mode = "collapse")
+louvain_result <- cluster_louvain(igraph_g)
+partition <- membership(louvain_result)
+bridge_scores <- igraph::betweenness(igraph_g, directed = TRUE, normalized = TRUE)
+node.bridges = names(bridge_scores)[order(-bridge_scores)]
+
+result <- sapply(node.bridges[1:round(length(node.bridges)/4)], 
+                 function(v) calcClusterFraction(edges, v))
+
+node.remove = names(result)[which(result < 0.95)]
+
+edges = edges[!(edges[,1] %in% node.remove) & !(edges[,2] %in% node.remove),,drop=F]
+
+```
+
+## Plot
+```{r}
+
+
+igraph_g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
+
+igraph_g <- as.undirected(igraph_g, mode = "collapse")
+
+# Применение метода Лувена
+louvain_result <- cluster_louvain(igraph_g)
+
+# Получение кластеров для каждого узла
+partition <- membership(louvain_result)
+
+# Конвертируем igraph в объект network
+g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Добавляем атрибут "partition" для узлов
+g %v% "partition" <- as.character(partition[g.names])
+
+# Визуализация с ggnet2
+p.refined <- ggnet2(
+  g,
+  label = FALSE,
+  edge.color = "black",
+  node.size = 1,
+  color = "partition",  # Используем найденные сообщества
+  arrow.gap = 0.01,
+  arrow.size = 2
+) + theme(legend.position = "none")
+
+
+p.refined + scale_color_viridis_d(name = "Partition")
+
+
+```
+
+
+
+# Only the inresesting length range
+```{r}
+
+len.max = 400
+len.min = 200
+
+sv.len.tmp = as.numeric(sapply(names(g.comp$membership), function(s) strsplit(s, '\\|')[[1]][2]))
+tmp = tapply(sv.len.tmp, g.comp$membership, function(a) sum((a <= len.min) | (a >= len.max)))
+comp.remove = tmp[tmp != 0]
+
+comp.get = setdiff(1:g.comp$no, as.numeric(names(comp.remove)))
+
+sv.get = names(g.comp$membership)[g.comp$membership %in% comp.get]
+g.content$edges.small = g.content$edges.small[(g.content$edges.small[,1] %in% sv.get),]
+
+dim(g.content$edges.small)
+
+# g.content$edges.small = g.content$edges
+
+```
+
+#### Plot small component
+```{r}
+
+g.sm <- network(g.content$edges.small, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+b.graph.names = network.vertex.names(g.sm)
+set.seed(239)
+p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
+            # node.size = g.nodes.cnt[b.graph.names],
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+            # color = g.nodes.fam[b.graph.names],
+            # palette = fam.palette,
+            # mode = "kamadakawai"
+            )
+
+p.sm
+
+```
+
+### With labels
+```{r}
+
+# edges = g.content$edges.small
+
+g.sm <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g.sm)
+
+g.comp <- getGraphComponents(edges)
+memb.comp = g.comp$membership
+
+g.label = rep('', length(g.names))
+names(g.label) = g.names
+g.label[names(memb.comp)] = as.character(memb.comp)
+g.label[duplicated(g.label)] = ''
+
+g.sm %v% "labels" = g.label
+
+g.names.len = as.numeric(sapply(g.names, function(s) strsplit(s, '\\|')[[1]][2]))
+g.names.len.bin <- as.character(cut(g.names.len, breaks = bins, right = FALSE, labels = labels))
+g.sm %v% "colors" = as.character(g.names.len.bin)
+
+
+p <- ggnet2(g.sm, label = 'labels', edge.color = "grey70", 
+            # node.size = g.content$nodes.traits[g.part.sub.big.names,]$cnt, 
+            # color = g.content$nodes.traits[g.part.sub.big.names,]$type,
+            # mode = 'kamadakawai',
+            node.size = 1,
+            color = 'colors',
+            palette = color.pal
+            ) + 
+  # theme(legend.position = "none") +
+  guides(size = F)
+p
+
+
+png(paste0(path.figures, 'graph_small_', s.species,'.png', sep = ''), width = 6, height = 6, units = "in", res = 300)
+print(p)    
+dev.off()
+
+```
+
+```{r}
+cluster_louvain(g.sm)
+```
+
+
+# Get sequences from every component
+## Read sequence
+```{r}
+seqs = readFasta(paste0(path.sv, 'seq_sv_big.fasta'))
+```
+
+## Save all components
+```{r}
+
+comp.used = unique(g.comp$membership[b.graph.names])
+
+s.ufo = c()
+
+for(i.comp in comp.used){
+  pokaz(i.comp)
+  i.seq = which(memb.comp == i.comp)
+  names.comp = names(memb.comp)[i.seq]
+  s = seqs[names.comp[1]]
+
+  s.ufo[paste0('comp', i.comp)] = s
+}
+
+names(s.ufo) = paste0(s.species, '|', names(s.ufo))
+
+writeFasta(s.ufo, paste0(path.sv, 'ufo_',s.species,'.fasta'))
+
+
+```
+
+```{r}
+stop()
+```
+
+# Alignment
+```{r}
+
+
+save(list = ls(), file = paste0(path.figures, "tmp_workspace_s.RData"))
+
+path.mafft = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/iglab/projects/ufo_proj/07_sv/sv_cucur/tmp_mafft/'
+
+for(i.comp in 1:max(memb.comp)){
+  pokaz('Component', i.comp)
+  i.seq = which(memb.comp == i.comp)
+  
+  names.comp = names(memb.comp)[i.seq]
+  pokaz('Number of sequences', length(names.comp))
+
+  sv.name.target = names.comp
+  
+  seqs.target = seqs[sv.name.target]
+  seqs.target.len = as.numeric(sapply(names(seqs.target), function(s) strsplit(s, '\\|')[[1]][2]))
+  seqs.target = seqs.target[order(-seqs.target.len)]
+  sv.name.target = names(seqs.target)
+  
+  
+  # Find orientations of sequences
+  
+  bl.target = res.nest[(res.nest$V1 %in% sv.name.target) & (res.nest$V8 %in% sv.name.target),]
+  orientation.target = rep('.', length(seqs.target))
+  names(orientation.target) = sv.name.target
+  
+  # Define the first orientation by the longest ORF
+  s = seqs[sv.name.target[1]]
+  orf.res = orfFinder(s)
+  orientation.target[1] = orf.res$pos$strand[1]
+  
+  dir.seq = c('-', '+')
+  
+  for(i in 1:(length(orientation.target) - 1)){
+    bl.tmp = bl.target[bl.target$V1 == sv.name.target[i],]
+    bl.tmp = bl.tmp[!duplicated(bl.tmp$V8),]
+    bl.tmp = bl.tmp[orientation.target[bl.tmp$V8] == '.',]
+    if(nrow(bl.tmp) == 0) next
+    
+    for(irow in 1:nrow(bl.tmp)){
+      if(bl.tmp$dir[irow] == '+'){
+        orientation.target[bl.tmp$V8[irow]] = orientation.target[i]
+      } else {
+        orientation.target[bl.tmp$V8[irow]] = setdiff(dir.seq, orientation.target[i])
+      }
+    }
+    if(sum(orientation.target == '.') == 0) break
+  }
+  table(orientation.target)
+  # 
+  for(i in which(orientation.target == '-')){
+    seqs.target[i] = revComplSeq(seqs.target[i])
+  }
+  
+  # seqs.target.msa = unlist(lapply(seqs.target, function(s) paste0(s, collapse = '')))
+  # seqs.target.msa <- DNAStringSet(seqs.target.msa)
+  # alignment <- msa(seqs.target.msa)
+  
+  # Run the alignment
+  
+  tmp.fasta = paste(path.mafft, 'tmp_',i.comp,'.fasta', sep = '')
+  aln.fasta = paste(path.mafft, 'aln_',i.comp,'.fasta', sep = '')
+  
+  writeFasta(seqs.target, tmp.fasta)
+  
+  pokaz('Mafft...')
+  system(paste('mafft --op 5 --quiet --maxiterate 100 ', tmp.fasta, '>', aln.fasta,  sep = ' '))
+  
+  pokaz('Plot...')
+  alignment = readFasta(aln.fasta)
+  
+  seqs.mx = aln2mx(alignment)
+  seqs.mx = seqs.mx[order(rowSums(seqs.mx == '-')),]
+  p.msa = msaplot(seqs.mx) + annotate("text", x = -Inf, y = Inf, 
+                                      label = i.comp, hjust = 0, vjust = 1)
+  
+  
+  p.msadiff = msadiff(seqs.mx) + annotate("text", x = -Inf, y = Inf, 
+                                      label = i.comp, hjust = 0, vjust = 1)
+  
+  
+  # p.msa
+  # p.msadiff
+  
+  pokaz('Save...')
+  png(paste(path.figures, 'comp_', sprintf("%03d", i.comp),'_msa.png', sep = ''),
+      width = 7, height = 8, units = "in", res = 300)
+  grid.arrange(p.msa, p.msadiff, nrow = 2)  
+  dev.off()
+}
+  
+  
+  
+  
+  # p.msa = p.msa + annotate("text", x = -Inf, y = Inf, 
+  #                                          label = i.target, hjust = 0, vjust = 1)
+  # 
+  # rownames(sv.se) = sv.se$gr
+  # f.sv = sv.se[sub("\\|.*$", "", names(alignment)),]$freq.max
+  # 
+  # 
+  # pdf(paste(path.components, 'graph_mob_component_', sprintf("%03d", comp.target),'_msa.pdf', sep = ''), 
+  #     width = 6, height = 4)
+  # 
+
+
+```
+
+
+
+
+
+# Separate components
+```{r}
+# i.comp = 29
+i.seq = which(memb.comp == i.comp)
+
+names.comp = names(memb.comp)[i.seq]
+
+
+s = seqs[names.comp[5]]
+# dotself.s(s, 15, 12)
+# 
+# dotself.s(s, 15, 10)
+
+dotplot.s(s, s, 15, 12)
+
+
+# s = seqs["SVgr_1_id_03982|1742"]
+
+```
+
+
+```{r}
+
+s1 = seqs[names.comp[1]]
+s2 = seqs[names.comp[2]]
+
+g.content$edges.small[g.content$edges.small[,1] %in% c(names.comp[1], names.comp[2]),]
+
+dotplot.s(s1, s2, 15, 13)
+
+```
+
+
+```{r}
+g.comp$membership[g.comp$membership == 1]
+
+seqs.target = seqs[names(memb.comp)]
+
+writeFasta(seqs.target, paste0(path.sv, 'seq_sv_big_target.fasta'))
+```
+
+
+# ORF
+```{r}
+
+orf.res = orfFinder(s)
+
+orfplot(orf.res$pos)
+
+head(orf.res$orf)
+
+orf.res$orf[1]
+
+
+```
+
+#### comp 7 comp 5
+```{r}
+
+s1 = s
+
+
+dotplot.s(s, s1, 15, 12)
+
+```
+
+
+
+
+
+
+

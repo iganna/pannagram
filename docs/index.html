@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Multiple Files as Dropdown</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="fileLoader.js"></script> <!-- Подключаем файл с функцией -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css">
+    <style>
+    /* Настраиваем фон для белой темы */
+    body {
+        background-color: #f4f4f4; /* общий фон страницы */
+        color: #333; /* цвет текста */
+    }
+
+    .markdown-body {
+        background-color: #ffffff; /* белый фон для markdown контента */
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* лёгкая тень */
+        color: #333; /* цвет текста внутри markdown */
+    }
+
+    /* Если хотите изменить стиль заголовков, можно сделать так: */
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+        color: #222; /* более светлый цвет для заголовков */
+    }
+
+    /* Ссылки */
+    .markdown-body a {
+        color: #41B3A2;
+        text-decoration: none;
+    }
+
+    .markdown-body a:hover {
+        text-decoration: underline; /* подчеркивание ссылок при наведении */
+    }
+
+    /* Остальные элементы, такие как блоки кода */
+    .markdown-body code {
+        background-color: #f6f8fa;
+        color: #243642;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+
+    .markdown-body pre {
+        background-color: #f6f8fa; /* светлый фон для блоков кода */
+        color: #243642;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+
+    /* Настраиваем цитаты */
+    .markdown-body blockquote {
+        color: #7D9D9C; /* более светлый текст внутри цитат */
+        border-left: 5px solid #7D9D9C;
+    }
+
+    /* Настраиваем блоки кода внутри цитат */
+    .markdown-body blockquote code {
+        color: #7D9D9C; /* цвет текста кода */
+    }
+
+
+</style>
+
+    <link rel="stylesheet" href="style.css"> <!-- Подключаем внешний файл стилей -->
+</head>
+<body>
+    <div class="container">
+        <!-- Левая колонка -->
+        <nav class="sidebar">
+            <ul>
+                <li>
+                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/home.md" data-content="fileContent1">Home</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/home_install.md" data-content="fileContent1">Installation</a>
+                        <a href="#" class="clickable" data-file="content/home_options.md" data-content="fileContent1">Common options</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/alignment.md" data-content="fileContent1">Alignment</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/alignment_data.md" data-content="fileContent1">Test dataset</a>
+                        <a href="#" class="clickable" data-file="content/alignment_options.md" data-content="fileContent2">Auxiliary options</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/analys.md" data-content="fileContent1">Analysis</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/analys_sv.md" data-content="fileContent1">SV-calling</a>
+                        <a href="#" class="clickable" data-file="content/analys_snp.md" data-content="fileContent2">SNP-calling</a>
+                        <a href="#" class="clickable" data-file="content/analys_genes.md" data-content="fileContent2">Gene annotation</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/visual.md" data-content="fileContent1">Visualisation</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/visual_pangen.md" data-content="fileContent1">Pangenome</a>
+                        <a href="#" class="clickable" data-file="content/visual_r.md" data-content="fileContent2">SV-graph</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#" class="clickable" data-file="content/simsearch.md" data-content="fileContent1" id="homeLink">Simsearch</a>
+                </li>
+                <li>
+                    <a href="#" class="clickable" data-file="content/pannagram_2024_12_19.md" data-content="fileContent1" id="homeLink">Workshop</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Правая колонка -->
+        <div class="content">
+            <div id="fileContent1" class="fileContent markdown-body"></div>
+            <div id="fileContent2" class="fileContent markdown-body" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Привязываем клики ко всем элементам с классом 'clickable'
+        document.querySelectorAll('.clickable').forEach(element => {
+            element.addEventListener('click', (event) => {
+                event.preventDefault(); // Предотвращаем переход по ссылке
+
+                // Получаем файл и контейнер для отображения
+                const file = event.target.getAttribute('data-file');
+                const contentId = event.target.getAttribute('data-content');
+
+                // Скрываем все контейнеры с контентом
+                document.querySelectorAll('.fileContent').forEach(content => {
+                    content.style.display = 'none';
+                });
+
+                // Загружаем файл в нужный контейнер и показываем его
+                loadFile(file, contentId);
+                document.getElementById(contentId).style.display = 'block';
+            });
+        });
+
+        // Функция для раскрытия подменю
+        var dropdownBtns = document.getElementsByClassName("dropdown-btn");
+        for (var i = 0; i < dropdownBtns.length; i++) {
+            dropdownBtns[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var dropdownContent = this.nextElementSibling;
+                if (dropdownContent.style.display === "block") {
+                    dropdownContent.style.display = "none";
+                } else {
+                    dropdownContent.style.display = "block";
+                }
+            });
+        }
+
+        // Загрузка Home по умолчанию при открытии страницы
+        window.onload = function() {
+            loadFile('content/home.md', 'fileContent1');
+            document.getElementById('fileContent1').style.display = 'block';
+            document.getElementById('fileContent2').style.display = 'none';
+        };
+    </script>
+</body>
+</html>

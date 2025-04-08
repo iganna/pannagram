@@ -19,14 +19,16 @@ refineAlignment <- function(seqs.clean, path.work){
   
   n.seqs = length(seqs.clean)
   
-  # # ---- Distance matrix ----
+  # ---- Distance matrix ----
   # 
   # dist.mx = calсDistAln(seqs.mx)
   dist.mx = calcDistKmer(seqs.clean)
-  # 
-  # # ---- Clustering ----
+  
+  # save(list = ls(), file = "tmp_workspace_refine_aln.RData")
+  
+  # ---- Clustering ----
   hc = hclust(as.dist(dist.mx))
-  # 
+  
   sim.cutoff = 0.1
   clusters <- cutree(hc, h = sim.cutoff) # 0.1 was before
   
@@ -56,12 +58,12 @@ refineAlignment <- function(seqs.clean, path.work){
     seqs.cl.fasta = paste0(path.work, 'seqs_', i.cl, '.fasta')
     aln.fasta = paste0(path.work, 'aln_', i.cl, '.fasta')
     
-    writeFastaMy(seqs.tmp, seqs.cl.fasta)
+    writeFasta(seqs.tmp, seqs.cl.fasta)
     
     #--op 3 --ep 0.1
     system(paste('mafft  --quiet --maxiterate 100 ', seqs.cl.fasta, '>', aln.fasta,  sep = ' '))
     
-    seqs.cl.aln = readFastaMy(aln.fasta)
+    seqs.cl.aln = readFasta(aln.fasta)
     seqs.cl.mx = aln2mx(seqs.cl.aln)
     
     pos.cl.mx = matrix(0,nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
@@ -115,8 +117,6 @@ refineAlignment <- function(seqs.clean, path.work){
     # dotplot.s(s1, s2, 15, 14)
     
     ## ---- Mafft add alignments ----
-    # seq1 = mx2aln(alignments[[i.cl1]])
-    # seq2 = mx2aln(alignments[[i.cl2]])
     
     # Reduce the number of sequences
     seq1 = mx2aln(mx2cons(alignments[[i.cl1]], amount = 3))
@@ -370,7 +370,7 @@ refineAlignment <- function(seqs.clean, path.work){
 #' @param n.diff Integer specifying the maximum allowable gap between alignment blocks to be merged. Default is 5.
 #' @return A data frame with the alignment positions and lengths of the identified blocks.
 #' @export
-mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
+mafftAdd <- function(seq1, seq2, path.work, n.diff = 5, n.flank = 0){
   
   # Create a tablefile (so-called subMSAtable) for mafft 
   id1 = 1:length(seq1)
@@ -383,7 +383,20 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
   
   # Merge sequences into the input file
   file.seqs.merge = paste0(path.work, 'seqs_tmp_merge.fasta')
-  writeFastaMy(c(seq1, seq2), file.seqs.merge)
+  
+  if(n.flank == 0){
+    writeFasta(c(seq1, seq2), file.seqs.merge)  
+  } else {
+    s.flank.beg = nt2seq(rep('A', n.flank))
+    s.flank.end = nt2seq(rep('T', n.flank))
+    
+    seqs = c(seq1, seq2)
+    for(i in 1:length(seqs)){
+      seqs[i] = paste0(s.flank.beg, seqs[i], s.flank.end)
+    }
+    
+    writeFasta(seqs, file.seqs.merge)  
+  }
   
   # File for storing MAFFT alignment output
   file.mafft = paste0(path.work, 'seqs_tmp_mafft.fasta')
@@ -392,8 +405,21 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5){
   system(paste('mafft --op 3  --ep 0.1 --quiet --merge', file.table, file.seqs.merge, '>', file.mafft, sep = ' '))
   
   # Read the aligned sequences
-  xx = readFastaMy(file.mafft)
+  xx = readFasta(file.mafft)
   mafft.mx = aln2mx(xx)
+  
+  if(n.flank != 0){
+    for(i in 1:nrow(mafft.mx)){
+      idx.pos = which(mafft.mx[i,] != '-')
+      
+      n.first <- idx.pos[1:n.flank]
+      n.last <- idx.pos[(length(idx.pos) - n.flank + 1):length(idx.pos)]
+      mafft.mx[i,n.first] = '-'
+      mafft.mx[i,n.last] = '-'
+      
+    }
+    mafft.mx = mafft.mx[,colSums(mafft.mx != '-') > 0, drop = F]
+  }
   
   # p = msaplot(mafft.mx)
   
@@ -452,7 +478,15 @@ blastTwoSeqs <- function(s1, s2, path.work){
   
   # Write the sequences to a temporary FASTA file
   file.seqs.tmp = paste0(path.work, 'seqs_tmp.fasta')
-  writeFastaMy(c(s1, s2), file.seqs.tmp)
+  
+  if(is.null(names(s1))){
+    names(s1) = 'xx'
+  }
+  
+  if(is.null(names(s2))){
+    names(s2) = 'yy'
+  }
+  writeFasta(c(s1, s2), file.seqs.tmp)
   
   # Define the output file for BLAST results
   file.blast.cons = paste0(file.seqs.tmp, '.out')
@@ -464,14 +498,14 @@ blastTwoSeqs <- function(s1, s2, path.work){
   system(paste0('blastn -db ',file.seqs.tmp,' -query ',file.seqs.tmp,
                 ' -num_alignments 50 ',
                 ' -out ',file.blast.cons,
-                ' -outfmt "7 qseqid qstart qend sstart send pident length sseqid"'))
+                ' -outfmt "7 qseqid qstart qend sstart send pident length qseq sseq sseqid"'))
   
   # Read the BLAST output into a data frame
   x = readBlast(file.blast.cons)
   if(is.null(x)) {
     return(data.frame(tmp=numeric()))
   }
-  x = x[x$V1 != x$V8,,drop=F] # Remove self-alignments
+  x = x[x$V1 != x$V10,,drop=F] # Remove self-alignments
   
   # Split data into two groups: alignments starting from sequence 1 and sequence 2
   idx1 = x$V1 %in% names(s1)
@@ -480,7 +514,10 @@ blastTwoSeqs <- function(s1, s2, path.work){
   
   # Swap columns for the second group to match the first group's format
   colnames(x2)[2:5] = c('V4', 'V5', 'V2', 'V3') 
-  colnames(x2)[c(1,8)] = colnames(x2)[c(8,1)]
+  colnames(x2)[c(1,10)] = colnames(x2)[c(10,1)]
+  
+  colnames(x2)[8:9] = c('V9', 'V8') 
+
   
   # Merge both groups into a single data frame
   x = rbind(x1, x2)
@@ -519,10 +556,10 @@ blastTwoSeqs2 <- function(s1, s2, path.work){
   
   # Write the sequences to a temporary FASTA file
   file.seqs.tmp1 = paste0(path.work, 'seqs_tmp1.fasta')
-  writeFastaMy(s1, file.seqs.tmp1)
+  writeFasta(s1, file.seqs.tmp1)
   
   file.seqs.tmp2 = paste0(path.work, 'seqs_tmp2.fasta')
-  writeFastaMy(s2, file.seqs.tmp2)
+  writeFasta(s2, file.seqs.tmp2)
   
   # Define the output file for BLAST results
   file.blast1 = paste0(file.seqs.tmp1, '.out')
@@ -569,7 +606,7 @@ blastTwoSeqs2 <- function(s1, s2, path.work){
 #' @return A symmetric matrix of pairwise distances between the sequences.
 #' @export
 #'
-calсDistAln <- function(seqs.mx) {
+calcDistAln <- function(seqs.mx) {
   
   n.seqs = nrow(seqs.mx)
   

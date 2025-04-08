@@ -78,6 +78,10 @@ tmp = res$V4[idx.tmp]
 res$V4[idx.tmp] = res$V5[idx.tmp]
 res$V5[idx.tmp] = tmp
 
+if(nrow(res) == 0){
+  quit(save = "no")
+}
+
 blastres2gff(res, paste0(output.file, '.gff'))
 
 colnames(res) <- c('query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g', 'strand')

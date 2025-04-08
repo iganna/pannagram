@@ -1,0 +1,55 @@
+---
+title: "R Notebook"
+output: md_document
+---
+
+# Setup
+## Functions
+```{r}
+library(ggplot2)
+library(cowplot)
+library(rhdf5)
+library(pannagram)
+
+```
+
+## Paths
+```{r}
+path.out = "/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/"
+
+
+path.cons = paste(path.out, 'intermediate/consensus/', sep = '')  # the result of pannagram
+path.figures = paste(path.out, 'figures/', sep = '')
+```
+
+## Variables
+```{r}
+n.chr = 1
+aln.type = 'msa_'
+```
+
+# Synteny plot
+```{r}
+
+# Load MSA blocks information and set window size
+file.blocks = paste(path.cons, aln.type, 'blocks.rds', sep = '')
+wnd.size = 50000
+
+# Read block indices and prepare plots for each of the first 5 chromosomes
+idx.blocks = readRDS(file.blocks)
+p.list = list()
+for(i.chr in 1:n.chr){
+  p.list[[i.chr]] = ggSynteny(idx.blocks, i.chr, unique(idx.blocks$acc), wnd.size=wnd.size)
+}
+
+p.list[3]
+# Combine and display all chromosome plots
+p.combo <- plot_grid(plotlist = p.list, nrow = 1)
+p.combo
+
+# Save the combined plot to a PDF file
+pdf(paste(path.figures, aln.type, 'pangenone', '.pdf', sep = ''), width = 8, height = 6)
+print(p.combo)
+dev.off()
+```
+

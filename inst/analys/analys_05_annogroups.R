@@ -1,78 +1,13 @@
 # Create annotation groups
 
 
-# previous pipeline
-
-#' ### Gff files
-#' * Creating combined snnotation (all2.rds file): `prior_annot.Rmd`
-#' * Define and solve confusing annotation groups: `get_genes_4.R`
-#' * Get umbrella positions of annotation groups: `find_borders_of_anngroups.R`
-#' * Check correspondance in strands between two annotations (genes and mRNAs), remove mRNA, which don't fit the genes: `check_pre_annotations.R`
-#' when I define genes borders, some accessions could loose genes, they are mostly around inversions, therefore I need `check_pre_annotations`
-
-
-#' ### Similarity information
-#' * Get sequences from the annotation groups: `get_gene_seqs_4.R`
-#' * Run blast of genes on genes: `blast_all_genes_on_genes.sh`
-#' * Run blast of genes on annotated TEs and genes: `blast_all_genes_on_tes.sh`
-#' * Run blast of genes on accessions: `blast_all_genes_on_acc.sh`
-
-#' * Get similarity to TEs: `get_sim_to_tes.R`
-#' * Define similarity groups: `get_similar_genes_4.R`
-#' * CNV! Define places of genes in accessions: `get_similar_genes_in_accessions.R` - very time-consuming
-
-
-#' ### Extend annotation with additional information
-
-#' * Extend and combine annotations with SimGroups + TEs: `extend_annotations.R`
-#' * Create gff files in the pangenome coordinates: `pangenome_annot.R`
-#' * Remain 9 colimns and fix the order of begin-end positions (inversion): `finalisation.R`
-#' * annotation of tair10 in pangenome coordinates: `pangen_tair10.R`
-#' 
-#' ### Form final gff files
-#' ./sv_res_to_acc.sh
-#' ./genes_res_to_acc.sh
-#' 
-#' 
-#' 
-#' 
-#' 
-
-
-# ***********************************************************************
-# ---- Manual Testing ----
-
-if(F){
-  
-source(system.file("utils/utils.R", package = "pannagram"))
-source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("analys_func.R", package = "pannagram"))
-  
-}
-
-if(F){
-  s.chr = '_Chr1'
-  gff.chr <- c("something_Chr15", "test_Chr2", "another_ChrX", "not_matching", "example_Chr123")
-  idx.match <- grep(paste0(".*",s.chr,"\\d+"), gff.chr)
-  
-  chr.num <- as.numeric(sub(paste(".*",s.chr,"(\\d+)", sep = ''), "\\1", gff.chr[idx.match]))
-  print(cbind(idx.match, chr.num))
-}
-
-if(F){
-  pal = read.table('/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/vienn/pacbio/1001Gplus_paper/01_data_common/02_annot_denovo/02_pannagram/genes_v05/genes_v05_pangen_all.gff', stringsAsFactors = F)
-  pal = pal[pal$V3 == 'gene',]
-
-}
-
-
 # ***********************************************************************
 # ---- Libraries and dependencies ----
 library(crayon)
 library(rhdf5)
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("analys_func.R", package = "pannagram"))
+source(system.file("analys/analys_func.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Setup ----
@@ -86,22 +21,67 @@ source(system.file("analys_func.R", package = "pannagram"))
 #   dir.create(path.res, recursive = TRUE)
 # } 
 
-ref.pref = '0'
-aln.type = 'v_'
+library(optparse)
 
-path.msa = '/Volumes/Samsung_T5/vienn/msa/'
-path.annot = '/Volumes/Samsung_T5/vienn/annotation/'
-path.res = '/Volumes/Samsung_T5/vienn/annotation_common/'
-if (!dir.exists(path.res)) {
-  dir.create(path.res, recursive = TRUE)
-} 
+# Define command-line options
+option_list <- list(
+  make_option(c("--ref"),   type = "character", default = "",   help = "Reference prefix"),
+  make_option(c("--aln.type"),   type = "character", default = NULL, help = "Alignment type"),
+  make_option(c("--path.msa"),   type = "character", default = NULL, help = "Path to MSA files"),
+  make_option(c("--path.annot"), type = "character", default = NULL, help = "Path to annotation files"),
+  make_option(c("--path.res"),   type = "character", default = NULL, help = "Path to result files"),
+  make_option(c("--s.chr"),      type = "character", default = '_Chr', help = "Chromosome name format")
+)
+
+# Parse options
+opt <- parse_args(OptionParser(option_list = option_list))
 
 
-# ---- Chromosome name format to extract the chromosome number ----
-s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
-# s.chr = '_' # in this case the pattern is "*_X", where X is the number
+# ***********************************************************************
+
+# ---- HDF5 ----
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
+
+
+path.msa <- opt$path.msa
+path.annot <- opt$path.annot
+path.res <- opt$path.res
+s.chr <- opt$s.chr
+ref <- opt$ref
+aln.type <- opt$aln.type
+
+
+# Check that required parameters are provided
+if (is.null(path.msa) || path.msa == "") stop("Error: 'path.msa' parameter must be specified.")
+if (is.null(path.annot) || path.annot == "") stop("Error: 'path.annot' parameter must be specified.")
+if (is.null(path.res) || path.res == "") stop("Error: 'path.res' parameter must be specified.")
+
+# Set the defaul values of other parameters
+if (ref == ''){
+  ref.suff = ref
+} else {
+  ref.suff = paste0('_ref_',ref)
+}
+
+if(is.null(aln.type)){
+  aln.type = aln.type.msa
+}
+
+
+# Create results directory if it does not exist
+if (!dir.exists(opt$path.res)) {
+  dir.create(opt$path.res, recursive = TRUE)
+}
+
+
+# ---- Variables ----
+
+s.pannagram = 'Pannagram'
 
 # ---- Accessions ----
+
 files.gff <- list.files(path = path.annot, pattern = "\\.gff$", full.names = FALSE)
 
 accessions <- sub("\\.gff$", "", files.gff)
@@ -110,28 +90,26 @@ accessions = setdiff(accessions, '0')
 accessions = setdiff(accessions, '22001')
 accessions = accessions[1:27]
 
-pokaz('Accessions, (amount', length(accessions), ') :')
+pokaz('Amount of accessions:', length(accessions))
 pokaz('  ', accessions)
 
 
-# ---- Variables ----
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-
-gr.blocks = 'blocks/'
-
-s.pannagram = 'Pannagram'
-
+# ***********************************************************************
+# Accessions 220011
+# acc.new = "22001_mod"
+# acc.prev = "220011"
+# for(i.chr in 1:5){
+#   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
+#   # print(h5ls(file.msa))
+#   # v = h5read(file.msa, paste0(gr.accs.e, acc.new))
+#   # h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
+# }
 
 # ***********************************************************************
 # ---- Merge all GFF files into a common structure ----
 # Split gene and the rest (CDSs, exons....) -> save separately
 
-
 # Initialize an empty list to store all GFF data
-
 
 file.gff.main = paste0(path.res, 'gff_main.rds')
 if(!file.exists(file.gff.main)){
@@ -153,10 +131,9 @@ if(!file.exists(file.gff.main)){
     
     gff$idx = 1:nrow(gff)
     
-    
     # ---- Check chromosome names format ----
     # If less than 70% - stop, maybe format is wrong.
-    # And show examples which don' match with the pattern
+    # And show examples which do not match with the pattern
     
     gff = extractChrByFormat(gff, s.chr)
     
@@ -170,7 +147,6 @@ if(!file.exists(file.gff.main)){
     
     res.p = findIncludeAndOverlap(gff.p)
     res.m = findIncludeAndOverlap(gff.m)
-    
     
     idx.parental = rbind(res.p$idx.include,
                          res.m$idx.include)
@@ -187,27 +163,28 @@ if(!file.exists(file.gff.main)){
   gff.main = readRDS(file.gff.main)
 }
 
-
-
 # ***********************************************************************
 # ---- Convert of initial of GFF files ----
+idx.remain = c()
 for(acc in accessions){
   file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
   file.raw.txt = paste0(path.res, acc,'_pangen_raw.txt')
   if(file.exists(file.raw.gff) & file.exists(file.raw.txt)) next
   pokaz('Conversion of accession', acc)
   gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
+  gff.acc = gff.main[gff.main$acc == acc,]
+  gff.acc$idx.main = gff.acc$idx
+  
   gff.acc.pan = gff2gff(path.cons = path.msa,
                         gff.acc,
                         acc1 = acc,
-                        acc2 = 'Pangen',
-                        ref.acc = '0',
+                        acc2 = s.pannagram,
                         n.chr = 5,
-                        aln.type = 'v_',
-                        s.chr = '_Chr',
-                        flag.exact = F)
-  gff.acc.pan$beg.init = gff.acc$V4[gff.acc.pan$idx]
-  gff.acc.pan$end.init = gff.acc$V5[gff.acc.pan$idx]
+                        aln.type = aln.type,
+                        s.chr = s.chr,
+                        remain = T)
+  
+  idx.remain = c(idx.remain, gff.acc.pan$idx.main)
   
   write.table(gff.acc.pan, file.raw.txt,
               row.names = F, col.names = T, quote = F, sep = '\t')
@@ -216,6 +193,15 @@ for(acc in accessions){
               row.names = F, col.names = F, quote = F, sep = '\t')
   
 }
+
+file.gff.main.idx.remain = paste0(path.res, 'gff_main_idx_remain.rds')
+if(length(idx.remain) != 0){
+  saveRDS(idx.remain, file.gff.main.idx.remain)  
+} else {
+  idx.remain = readRDS(file.gff.main.idx.remain)
+}
+
+gff.main = gff.main[gff.main$idx %in% idx.remain,]
 
 # ***********************************************************************
 
@@ -226,16 +212,14 @@ for(i.chr in 1:5){
   if(file.exists(file.chr.gff)) next
 
   # Read basic info from the alignment
-  s.comb = paste('1', '1', sep = '_')
-  file.msa = paste0(path.msa, aln.type, s.comb,'_ref_',ref.pref,'.h5')
-  # file.msa = paste0(path.msa, 'val_common_chr_', i.chr,'_ref_add.h5')
+  s.comb = paste(i.chr, i.chr, sep = '_')
+  file.msa = paste0(path.msa, aln.type, s.comb, ref.suff,'.h5')
   
   groups = h5ls(file.msa)
   # accessions = groups$name[groups$group == gr.accs.b]
   msa.lens = as.numeric(groups$dim[groups$group == gr.accs.b])
   len.pan = unique(msa.lens)
   if(length(len.pan) != 1) stop('something is wrong with the alignment LENGTHs')
-  
   
   # ---- Gene Minus and gene Plus ----
 
@@ -284,7 +268,6 @@ for(i.chr in 1:5){
         g.mins[idx.change] = g.tmp  
       }
       
-      
       # Check that no split of genes
       g.id.split = setdiff(intersect(g.plus, g.mins), 0)
       if(length(g.id.split) > 0){
@@ -293,7 +276,6 @@ for(i.chr in 1:5){
         g.mins[g.mins %in% g.id.split] = 0
       }
       pokazAttention('Total number of lost genes', length(setdiff(gff.acc$idx, c(g.plus, g.mins))))
-      
       
       # Blocks of genes
       g.plus.blocks = getGeneBlocks(g.plus, len.pan, v.acc)
@@ -306,7 +288,6 @@ for(i.chr in 1:5){
       # Save it for Annogroups
       gene.plus = gene.plus + (gene.plus.add != 0) * 1
       gene.mins = gene.mins + (gene.mins.add != 0) * 1
-      
       
       # Save begin-end for split annogroups
       g.plus.blocks$strand = '+'
@@ -325,10 +306,13 @@ for(i.chr in 1:5){
     load(file.gene.blocks)
   }
   
-  next
   
+  # save(list = ls(), file = "tmp_workspace_here.RData")
+  # stop()
 
   # ----   Groups  ----
+  
+  pokaz('Groups')
   
   an.blocks.all = list()
   n.an = 0
@@ -362,11 +346,12 @@ for(i.chr in 1:5){
       # Define vector to determine splits
       gr.len = an.blocks$end[i.gr] - an.blocks$beg[i.gr] + 1
      
-      
       # Get genes within this block
       genes.gr = gene.blocks.s[gene.blocks.s$annogr == i.gr,]
       genes.gr$beg = genes.gr$beg - an.blocks$beg[i.gr] + 1
       genes.gr$end = genes.gr$end - an.blocks$beg[i.gr] + 1
+      
+      genes.gr$len = genes.gr$end - genes.gr$beg
       # orfplot(genes.gr)
       
       # Define accessions having at least two genes
@@ -376,8 +361,10 @@ for(i.chr in 1:5){
         genes.gr.acc = genes.gr[genes.gr$acc == acc.tmp,]
         for(irow in 1:(nrow(genes.gr.acc) - 1)){
           # pokaz(acc.tmp, genes.gr.acc$end[irow],genes.gr.acc$beg[irow+1])
-          pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] = 
-            pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] + 1
+          if((genes.gr.acc$end[irow]+1) != genes.gr.acc$beg[irow+1]) {
+            pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] = 
+              pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] + 1
+          }
         }
       }
 
@@ -393,7 +380,9 @@ for(i.chr in 1:5){
       
     
       pos.cover = gene.list[[s.s]][an.blocks$beg[i.gr]:an.blocks$end[i.gr]]
-      if(max((pos.cover + pos.split)) > length(accessions)) stop('Problem with the split')
+      if(max((pos.cover + pos.split)) > length(accessions)) {
+        pokazAttention('Problem with the split')
+      }
       
       
       # ***********************************************************************
@@ -401,6 +390,9 @@ for(i.chr in 1:5){
       # Forth
       mx.increase = which(colSums((mx.cover[,-1] > mx.cover[,-ncol(mx.cover)]) * 1) != 0)
       mx.decrease = which(colSums((mx.cover[,-1] < mx.cover[,-ncol(mx.cover)]) * 1) != 0)
+      
+      if(length(mx.increase) == 0) next
+      if(length(mx.decrease) == 0) next
       
       mx = rbind(cbind(mx.increase, 1),
                  cbind(mx.decrease, -1))
@@ -470,16 +462,6 @@ for(i.chr in 1:5){
       
       # ***********************************************************************
       if(nrow(an.blocks.split) > 1){
-        
-        # xx = nrow(an.blocks.split)
-        # yy = sum((pal$V1 == 'PanGen_Chr_1') & (pal$V7 == '+') & 
-        #             (pal$V4 >= an.blocks$beg[i.gr])& 
-        #             (pal$V5 <= an.blocks$end[i.gr]))
-        # pokaz(xx, yy)
-        
-        # if(!(i.gr %in% c(1748, 1861, 1866, 1995, 2007, 2027, 2144))){
-        #   if(xx != yy) stop()
-        # }
         
         an.blocks.split = an.blocks.split + an.blocks$beg[i.gr] +1
         an.blocks$end[i.gr] = an.blocks.split$end[1]

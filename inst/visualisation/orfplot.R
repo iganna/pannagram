@@ -20,6 +20,7 @@
 #' @export
 orfplot <- function(df, optimal = F, 
                     s.color = 'strand', 
+                    y = NULL,
                     show.legend = F,
                     arrow.size = 0.05){
   
@@ -60,6 +61,10 @@ orfplot <- function(df, optimal = F,
     df$row.number = 1:nrow(df)
   }
   
+  if(!is.null(y)){
+    df$row.number = y
+  }
+  
   # Plot ORFs 
   if(s.color %in% colnames(df)){
     p.orf <- ggplot(df, aes(x = beg, xend = end, y = row.number, yend = row.number, colour = !!sym(s.color))) +
@@ -73,12 +78,12 @@ orfplot <- function(df, optimal = F,
     }
     
     if(sum(unique(df[,s.color]) %in% c('+', '-')) == 2){
-      p.orf = p.orf +scale_colour_manual(values = c('-' = '#40679E', '+' = '#FF407D')) 
+      p.orf = p.orf + scale_colour_manual(values = c('-' = '#40679E', '+' = '#FF407D')) 
     }
     
   } else {
     p.orf <- ggplot(df, aes(x = beg, xend = end, y = row.number, yend = row.number, color = as.factor(row.number))) +
-      geom_segment(arrow = arrow(length = unit(0.05, "inches")), size = 1) + 
+      geom_segment(arrow = arrow(length = unit(arrow.size, "inches")), size = 1) + 
       theme_minimal() + xlab(NULL) + ylab(NULL) +  
       theme(legend.position = "none", 
             axis.text.y = element_blank(),  
@@ -87,4 +92,35 @@ orfplot <- function(df, optimal = F,
   
   
   return(p.orf) 
+}
+
+#' Find the Longest ORFs in DNA Sequences
+#'
+#' @param seqs A list or vector of DNA sequences.
+#' @param n.best An integer specifying the number of longest ORFs to select for each sequence (default is 1).
+#' @return A named list of the longest ORFs found, where names indicate the original sequence and ORF identifier.
+#' 
+#' @export
+orfBest <- function(seqs, n.best = 1) {
+  seqs.names <- names(seqs)
+  if (is.null(seqs.names)) {
+    seqs.names <- paste0('s_', seq_along(seqs))
+  }
+  
+  orf.best <- lapply(seq_along(seqs), function(i) {
+    res <- orfFinder(seqs[[i]])
+    if (is.null(res$pos)) return(NULL)
+    
+    orf.tmp <- head(res$orf, n.best)
+    names(orf.tmp) <- paste(seqs.names[i], names(orf.tmp), sep = '|')
+    return(orf.tmp)
+  })
+  
+  orf.best = unlist(orf.best, recursive = FALSE)
+  
+  if(is.null(orf.best)) return(NULL)
+  
+  orf.best = orf.best[order(-nchar(orf.best))]
+  
+  return(orf.best)
 }

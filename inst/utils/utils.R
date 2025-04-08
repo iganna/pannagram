@@ -21,7 +21,11 @@ suppressMessages({
 #' 
 #' @author Anna A. Igolkina 
 #' @export
-readFasta <- function(file.fasta, stop.on.error = FALSE) {
+readFasta <- function(file.fasta, stop.on.error = T) {
+  
+  if(!file.exists(file.fasta)){
+    stop(paste('readFasta: File', file.fasta, 'does not exist'))
+  }
   file.content <- readLines(file.fasta)
   
   if (length(file.content) == 0) {
@@ -32,7 +36,14 @@ readFasta <- function(file.fasta, stop.on.error = FALSE) {
     }
   }
   
-  header.idx <- which(substr(file.content, 1, 1) == ">")
+  # header.idx <- which(substr(file.content, 1, 1) == ">")
+  header.idx = which(grepl("^>", file.content))
+  # for(i in 1:length(file.content)){
+  #   f = file.content[i]
+  #   # pokaz(i)
+  #   grepl("^>", f)
+  # }
+  
   n.seq <- length(header.idx)
   
   if (n.seq == 0) {
@@ -107,6 +118,9 @@ writeFasta <- function(sequences, file, seq.names = NULL, pref = NULL, append = 
   # Open the file connection for writing or appending
   mode <- ifelse(append, "a", "w")
   con <- file(file, mode)
+  
+  # Check the beginning of the seq.names
+  # TODO
   
   # Write each sequence to the file in FASTA format
   for (i in 1:length(sequences)) {
@@ -452,8 +466,12 @@ mx2pos <- function(mx, n.flank = 0){
 #' @export
 mx2cons <- function(mx,
                     s.val = c('A', 'C', 'G', 'T'),
-                    amount = NULL){
+                    amount = NULL,
+                    use.gap = F){
   s.val = toupper(s.val)
+  if(use.gap){
+    s.val = c(s.val, '-')
+  }
   if(length(s.val) <= 1) stop('Wrong values are provided')
   n = ncol(mx)
   s.cons = rep(s.val[1], n)
@@ -846,9 +864,13 @@ revCompl <- function(s){
 #' @export
 revComplSeq <- function(seq){
   
+  seq.names = names(seq)
+  
   seq = seq2nt(seq)
   seq.rc = revCompl(seq)
   seq.rc = nt2seq(seq.rc)
+  
+  names(seq.rc) = seq.names
   
   return(seq.rc)
 }
@@ -885,6 +907,80 @@ justCompl <- function(s){
 }
 
 
+#' Perform Pairwise Alignment of Two DNA Sequences
+#' 
+#' @param s1 A character string representing the first DNA sequence.
+#' @param s2 A character string representing the second DNA sequence.
+#' 
+#' @return A named character vector with the aligned sequences.
+#' @importFrom Biostrings DNAString pairwiseAlignment
+#' @export
+pwAln <- function(s1, s2, gapOpening = 5, gapExtension = 2, substitutionMatrix = NULL){
+  
+  if (!is.character(s1)) stop("Error: s1 must be a character string.")
+  if (!is.character(s2)) stop("Error: s2 must be a character string.")
+  
+  if(length(s1) * length(s2) != 1) stop("Error: Both s1 and s2 must be single-element arrays.")
+  
+  seq1 <- Biostrings::DNAString(s1)
+  seq2 <- Biostrings::DNAString(s2)
+  
+  global.align <- Biostrings::pairwiseAlignment(seq1, seq2,
+                                    substitutionMatrix = substitutionMatrix, 
+                                    gapOpening = gapOpening, gapExtension = gapExtension, 
+                                    type = "global")
+  aligned.seq1 <- as.character(Biostrings::pattern(global.align))
+  aligned.seq2 <- as.character(Biostrings::subject(global.align))
+  
+  aligned = c(aligned.seq1, aligned.seq2)
+  names(aligned) = c(names(s1), names(s2))
+  
+  return(c(aligned))
+}
+
+#' Compute Pairwise P-Distances
+#'
+#' This function calculates the pairwise p-distance matrix for a given alignment matrix.
+#' The p-distance is the proportion of differing sites between two sequences, ignoring gap positions ('-').
+#'
+#' @param mx A character matrix where each row represents a sequence, and each column represents a site. 
+#'
+#' @return A numeric matrix representing pairwise p-distances. The matrix is symmetric,
+#'         with `NA` values for sequence pairs where no valid alignment positions exist.
+#' @export
+distP.mx <- function(mx) {
+  
+  n <- nrow(mx)
+  dist.mx <- matrix(0, n, n)
+  
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if(j <= i) next
+      
+      valid.pos <- (mx[i, ] != "-") & (mx[j, ] != "-")
+      
+      diff.count <- sum(mx[i, valid.pos] != mx[j, valid.pos])
+      aln.len <- sum(valid.pos)
+      
+      if (aln.len > 0) {
+        dist.mx[i, j] <- diff.count / aln.len
+        dist.mx[j, i] <- dist.mx[i, j]
+      } else {
+        dist.mx[i, j] <- NA
+        dist.mx[j, i] <- NA
+      }
+    }
+  }
+  
+  if(!is.null(rownames(mx))){
+    colnames(dist.mx) = rownames(mx)
+    rownames(dist.mx) = rownames(mx)
+  }
+  
+  return(dist.mx)
+}
+
+
 #' Display attention messages with stylization
 #'
 #' This function displays a stylized attention message to alert the user.
@@ -906,9 +1002,9 @@ pokazAttention <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('  Attention: ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#FC345C")
+  text.color <- crayon::make_style("#FC345C")
   # bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color)
+  fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)
   
   if (echo) {
@@ -980,9 +1076,9 @@ pokazStage <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- make_style("#FDFDFD")
+  text.color <- crayon::make_style("#FDFDFD")
   # bg <- make_style("grey5", bg = TRUE)
-  fancy <- combine_styles(text.color)
+  fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)
   
   if (echo) {
@@ -1200,6 +1296,8 @@ load.library <- function(package) {
 #' @author Anna A. Igolkina 
 #' @export
 findOnes <- function(g.bin) {
+  if (!all(g.bin %in% c(0, 1))) stop("The array should contain only 0 and 1")
+  
   changes <- diff(c(0, g.bin, 0))
   beg <- which(changes == 1)
   end <- which(changes == -1) - 1
@@ -1538,5 +1636,46 @@ checkDone <- function(file.log) {
   } else {
     return(FALSE)
   }
+}
+
+
+#' Check if a file exists
+#' @param file.name File name
+#' @export
+checkFile <- function(file.name) {
+  if (!file.exists(file.name)) {
+    pokazAttention("File", file.name, "does not exist.")
+    stop("File does not exist.")
+  }
+  return(NULL)
+}
+
+
+
+#' Find the Longest Common Prefix of Strings
+#'
+#' @param info A character vector of strings
+#'
+#' @return A character string representing the longest common prefix of all input strings 
+#' 
+#' @export
+commonPrefix <- function(info){
+  if(length(info) == 1){
+    return(info)
+  }
+  s.pref = seq2nt(info[1])
+  for(i in 2:length(info)){
+    s = seq2nt(info[i])
+    for(j in 1:length(s.pref)){
+      if(s[j] != s.pref[j]){
+        if(j == 1){
+          return('')
+        }
+        s.pref = s.pref[1:(j-1)]
+        break
+      }
+    }
+  }
+  return(paste0(s.pref, collapse = ''))
 }
 

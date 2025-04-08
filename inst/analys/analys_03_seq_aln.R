@@ -4,10 +4,8 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
+  library(panagram)
 })
-
-source(system.file("utils/utils.R", package = "pannagram"))
-
 
 
 args = commandArgs(trailingOnly=TRUE)
@@ -69,7 +67,6 @@ gr.break.b = '/break'
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-
 s.pattern <- paste0("^", 'msa_', ".*", '_ref_', ref.pref)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("msa_", "", files)
@@ -119,7 +116,6 @@ for(s.comb in pref.combinations){
   file.seq.cons = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
   s.pangen = readFastaMy(file.seq.cons)
   len.pangen = nchar(s.pangen)
-  
   
   # len.pangen = 20
   

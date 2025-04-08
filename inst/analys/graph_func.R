@@ -57,7 +57,7 @@ ggedges <- function(edges.linear, label = F, size = 5){
 #' 
 #' @return A vector containing the trait for each node.
 #' 
-#' 
+#' @export
 traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F, 
                             mode = 'maxunique',
                             mix.word = 'Mix',
@@ -121,9 +121,12 @@ traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F,
 #'
 #' @return A list of connected components, where each component is represented
 #' as a vector of vertex indices.
+#' 
+#' @export
 getGraphComponents <- function(edges){
   g <- igraph::simplify(igraph::make_graph(t(edges), directed = T))
   g.comp <- igraph::components(g)
+  g.comp$cnt = table(g.comp$membership)
   return(g.comp)
 }
 
@@ -173,7 +176,7 @@ getGraphComponents <- function(edges){
 #'     \item{node.traits}{A data frame representing traits associated with nodes.}
 #'     \term{nestedness}{A dataframe resulting from the nestedness detection procedure.}
 #'   }
-#' 
+#' @export
 getGraphFromBlast <- function(bl.res = NULL, 
                               res.nest = NULL,
                               sim.cutoff = 0.85, 
@@ -268,8 +271,13 @@ getGraphFromBlast <- function(bl.res = NULL,
   
   nodes.mutual =     data.frame(node = paste0('N', graph.mutual.comp$membership), 
                                 name = names(graph.mutual.comp$membership))
-  nodes.rest = data.frame(node = paste('R', (1:length(names.rest)), sep = ''), 
-                          name = names.rest)
+  if(length(names.rest) > 0){
+    nodes.rest = data.frame(node = paste('R', (1:length(names.rest)), sep = ''), 
+                            name = names.rest)  
+  } else {
+    nodes.rest = c()
+  }
+  
   nodes = rbind(nodes.mutual, nodes.rest)
   rownames(nodes) = nodes$name
   

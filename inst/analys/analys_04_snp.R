@@ -5,6 +5,7 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
+  library(crayon)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
@@ -13,81 +14,93 @@ source(system.file("analys/analys_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--ref.pref"), type="character", default=NULL, 
-              help="prefix of the reference file", metavar="character"),
-  make_option(c("--path.chromosomes"), type="character", default=NULL, 
-              help="path to directory with chromosomes", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to directory with the consensus", metavar="character"),
-  make_option(c("-c", "--cores"), type = "integer", default = 1, 
-              help = "number of cores to use for parallel processing", metavar = "integer"),
-  make_option(c("--aln.type"), type="character", default="default", 
-              help="type of alignment ('msa_', 'comb_', 'v_', etc)", metavar="character")
+  make_option(c("--path.chr"),    type="character", default=NULL,      help="path to directory with chromosomes"),
+  make_option(c("--path.cons"),   type="character", default=NULL,      help="path to directory with the consensus"),
+  make_option(c("-c", "--cores"), type = "integer", default = 1,       help = "number of cores to use for parallel processing"),
+  make_option(c("--aln.type"),    type="character", default="default", help="type of alignment ('msa_', 'comb_', 'v_', etc)"),
+  make_option(c("--ref.pref"),    type="character", default=NULL,      help="prefix of the reference file")
 ); 
-
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
+# ***********************************************************************
+# ---- Logging ----
+
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+
+# ***********************************************************************
+
 # Set the number of cores for parallel processing
-num.cores.max = 10
-num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
-myCluster <- makeCluster(num.cores, type = "PSOCK")
-registerDoParallel(myCluster)
+num.cores <- opt$cores
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)  
+}
 
 # Reference genome
-if (is.null(opt$ref.pref)) {
-  stop("ref.pref is NULL")
+if (is.null(opt$ref.pref) || (opt$ref.pref == "NULL")) {
+  ref.pref <- ""
+  ref.suff = ""
 } else {
   ref.pref <- opt$ref.pref
+  ref.suff <- paste0('_ref_', ref.pref)
 }
 
 # Alignment prefix
 if (!is.null(opt$aln.type)) {
   aln.type = opt$aln.type
-  pokaz('Alignment type:', aln.type)
 } else {
-  aln.type = 'msa_'
+  aln.type = aln.type.msa
+  pokazAttention('The defaul anighment type is used:', aln.type)
 }
 
-if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+path.chr <- if (!is.null(opt$path.chr)) opt$path.chr else stop("Error: 'path.chr' is NULL. Please provide a valid path.")
+path.cons <- if (!is.null(opt$path.cons)) opt$path.cons else stop("Error: 'path.cons' is NULL. Please provide a valid path.")
+
+# Paths
+if(!dir.exists(path.cons)){
+  stop(paste('The consensus folder does not exist:', path.cons))
+}
 
 path.seq = paste0(path.cons, 'seq/')
+if (!dir.exists(path.seq)) stop('Folder with consensus sequence does not exist')
 
 path.snp = paste0(path.cons, 'snps/')
-if (!dir.exists(path.snp)) dir.create(path.snp)
-
-gr.accs.e <- "accs/"
-gr.accs.b <- "/accs"
-gr.break.e = 'break/'
-gr.break.b = '/break'
-
+if (!dir.exists(path.snp)){
+  dir.create(path.snp)
+} 
+if (!dir.exists(path.snp)){
+  stop(paste0('The output folder was not created'))
+} 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
+s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 
-s.pattern <- paste0("^", aln.type, ".*", '_ref_', ref.pref)
+pokaz('Consensus folder', path.cons)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type, "", files)
-pref.combinations <- sub("_ref.*$", "", pref.combinations)
-pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]
 
-pokaz('Reference:', ref.pref)
+pref.combinations = gsub(aln.type, "", files)
+pref.combinations <- sub(ref.suff, "", pref.combinations)
+pref.combinations <- sub(".h5", "", pref.combinations)
+
 if(length(pref.combinations) == 0){
   stop('No Combinations found.')
 } else {
   pokaz('Combinations', pref.combinations)  
 }
 
-
 # ---- Main ----
 flag.for = T
 for(s.comb in pref.combinations){
-  
-  pokaz('* Combination', s.comb)
   
   # Get Consensus
   i.chr = comb2ref(s.comb)
@@ -97,12 +110,13 @@ for(s.comb in pref.combinations){
   s.pangen = seq2nt(s.pangen)
   
   # Get accessions
-  file.seq = paste0(path.seq, 'seq_', s.comb,'_ref_',ref.pref,'.h5')
+  file.seq = paste0(path.seq, 'seq_', s.comb, ref.suff, '.h5')
   
   groups = h5ls(file.seq)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
 
+  pokaz('Round 1: get positions of differences..')
   pos.diff = c()
   for(acc in accessions){
     pokaz('Sequence of accession', acc)
@@ -116,6 +130,7 @@ for(s.comb in pref.combinations){
   }
   
   # Common positions
+  pokaz('Round 2: get diffs in common positions..')
   pos = sort(unique(pos.diff))
   
   snp.matrix = s.pangen[pos]
@@ -135,30 +150,43 @@ for(s.comb in pref.combinations){
   }
   colnames(snp.val) = accessions
   
-  print(dim(snp.matrix))
-  print(length(c(s.pangen.name, accessions)))
+  # print(dim(snp.matrix))
+  # print(length(c(s.pangen.name, accessions)))
   colnames(snp.matrix) = c(s.pangen.name, accessions)
   snp.matrix = cbind(pos, snp.matrix)
 
-  file.snps = paste0(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.txt')
+  pokaz('Save table...')
+  file.snps = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.txt')
   write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
   
-  
   #Save VCF-file
-  
-  file.vcf = paste0(path.snp, 'snps_', s.comb,'_ref_',ref.pref,'_pangen.vcf')
+  pokaz('Save VCF-file...')
+  file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.vcf')
   saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
+  # Create the VCF-file for the first accession, the main reference.
+  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff, '.h5')
+  pokaz(file.comb)
+  acc = accessions[1]
+  pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))
+  pos.acc = pos.acc[pos]
+  snp.val.acc = snp.val[pos.acc != 0,,drop=F]
+  pos.acc = abs(pos.acc[pos.acc != 0])
+
+  pokaz('Save VCF-file for the accession', acc, '...')
+  file.vcf.acc = paste0(path.snp, 'snps_', s.comb, ref.suff, '_',acc,'.vcf')
+  saveVCF(snp.val.acc, pos.acc, chr.name=paste0(acc,'_Chr', i.chr), file.vcf = file.vcf.acc)
   
 }
 
-stopCluster(myCluster)
+if(num.cores > 1){
+  stopCluster(myCluster)
+}
 
 warnings()
 
-
-
-
+# pokaz('Save Rdata')
+# save(list = ls(), file = "tmp_workspace_snp.RData")
 
 
 
