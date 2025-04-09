@@ -22,3 +22,6 @@ dependencies:
   - mafft
   - parallel
   - r-ape
+  - bioconductor-ggtree
+  - r-ggpubr
+  

@@ -62,7 +62,6 @@ aln_type='msa_'
 
 # Simple analysis
 run_blocks=false
-run_blocks2=false
 run_seq=false
 run_aln=false
 run_snp=false
@@ -85,7 +84,7 @@ while [ $# -gt 0 ]; do
         -path_chr)       path_chromosomes=$2;    shift 2;;
         
         -blocks)         run_blocks=true;        shift;;           # Get position of synteny blocks between accessions
-        -blocks2)        run_blocks2=true;       shift;;           # Get position of synteny blocks between accessions
+    
         -seq)            run_seq=true;           shift;;           # Get consensus sequence
         -aln)            run_aln=true;           shift;;           # Produce fasta file with the pangenome alignment
         -snp)            run_snp=true;           shift;;           # Get VCF file with SNPs
