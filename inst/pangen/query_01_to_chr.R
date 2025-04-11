@@ -6,7 +6,7 @@ suppressMessages({
   library(doParallel)
 })
 
-library(pannagram)
+source(system.file("utils/utils.R", package = "pannagram"))
 
 # ***********************************************************************
 # ---- Command line arguments ----
