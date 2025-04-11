@@ -218,7 +218,7 @@ if [ "$run_snp" = true ]; then
         done
     fi
 
-    rm ${path_snp}*log
+    # rm ${path_snp}*log
 
 fi
 

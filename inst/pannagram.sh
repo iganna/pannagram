@@ -30,6 +30,8 @@ rm_inter="F"  # remove intermediate files
 
 extra_steps="F"  # run extra steps
 
+purge_contigs="F"
+
 unrecognized_options=()
 
 step_start=0
@@ -80,7 +82,9 @@ do
         -purge_reps | -purge_repeats ) purge_reps="T";    shift 1 ;;  # filtration of repeats, default - not
         -incl_reps | -purge_repeats ) purge_reps="F";    shift 1 ;;  # filtration of repeats, default - not
         -rev )        flag_rev="T";      shift 1 ;;  # reverce parts
-        -orf )        flag_orf="T";      shift 1 ;;  # reverce parts
+        -orf )        flag_orf="T";      shift 1 ;;  # ORF finder
+
+        -purge_contigs) purge_contigs="T";  shift 1 ;;
 
         -accessions)   acc_file=$2;  shift 2 ;;  # file with accessions to analyse
         -combinations) comb_file=$2; shift 2 ;;  # file with chromosomal combinations to analyse: first column - query, second column - reference(base)
@@ -732,7 +736,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --f.chr.anal ${flag_chr_anal}
+            --f.chr.anal ${flag_chr_anal} \
+            --purge.contigs ${purge_contigs}
 
     # Done
     touch "${step_file}"

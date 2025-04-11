@@ -6,7 +6,7 @@ suppressMessages({
   library(doParallel)
 })
 
-source(system.file("utils/utils.R", package = "pannagram"))
+library(pannagram)
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -23,7 +23,9 @@ option_list <- list(
   
   make_option(c("--cores"),     type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option(c("--path.log"),  type = "character", default = NULL, help = "Path for log files"),
-  make_option(c("--log.level"), type = "integer",   default = NULL, help = "Log level to display on the screen")
+  make_option(c("--log.level"), type = "integer",   default = NULL, help = "Log level to display on the screen"),
+  
+  make_option(c("--purge.contigs"), type = "logical",   default = NULL, help = "Filter chromosomes, whose names have contig-word")
 )
 
 opt_parser <- OptionParser(option_list = option_list)
@@ -51,6 +53,7 @@ if(n.chr == 0){
   pokaz('Number of chromosomes:', n.chr, file=file.log.main, echo=echo.main)  
 }
 f.chr.anal <- opt$f.chr.anal
+purge.contigs <- opt$purge.contigs
 
 # Accessions to analyse
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
@@ -120,7 +123,13 @@ loop.function <- function(acc, echo.loop=T){
   pokaz('Accession', acc, file=file.log.main, echo=echo.loop)
   
   # Read the genome file
-  q.fasta = readFastaMy(file.genome)
+  q.fasta = readFasta(file.genome)
+  
+  # Filter contig if needed
+  if(purge.contigs){
+    q.fasta = q.fasta[!grepl('contig', names(q.fasta))]
+  }
+  
   
   # Check the chromosome number
   if(n.chr == 0){ # if to analyse all chromosomes
