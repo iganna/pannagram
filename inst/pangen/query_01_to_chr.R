@@ -139,6 +139,7 @@ loop.function <- function(acc, echo.loop=T){
     pokazAttention('Accession', acc, 'was not analysed, not enough chromosomes in the genome.\n
                    Exist:', length(q.fasta), 'Requeired:', n.chr, 
                    file=file.log.main, echo=echo.loop)
+    n.chr = length(q.fasta)
     if(!f.chr.anal){
       return(NULL)  
     }
