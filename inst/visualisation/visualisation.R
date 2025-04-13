@@ -193,7 +193,7 @@ plotSynAllChr <- function(path.aln,
   chr.len.acc = chr.len.acc[order(chr.len.acc$chr),]
   chr.len.ref = chr.len.ref[order(chr.len.ref$chr),]
   
-  save(list = ls(), file = "tmp_workspace_plot.RData")
+  # save(list = ls(), file = "tmp_workspace_plot.RData")
   
   # Check that all choromosomes are presented
   pokaz(nrow(chr.len.acc), n.chr.acc)
