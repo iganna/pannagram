@@ -128,6 +128,9 @@ loop.function <- function(acc, echo.loop=T){
   # Filter contig if needed
   if(purge.contigs){
     q.fasta = q.fasta[!grepl('contig', names(q.fasta))]
+    q.fasta = q.fasta[!grepl('mitochondrion', names(q.fasta))]
+    q.fasta = q.fasta[!grepl('chloroplast', names(q.fasta))]
+    q.fasta = q.fasta[!grepl('unloc', names(q.fasta))]
   }
   
   
