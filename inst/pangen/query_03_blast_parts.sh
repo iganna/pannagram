@@ -100,13 +100,11 @@ run_blast() {
     echo ${file_out} >> ${file_log}
 
     if [ ! -f ${file_acc} ]; then
-        echo "Accession file ${file_acc} does not exists."
         # exit 1
         return 0
     fi
 
     if [ ! -f ${file_ref} ]; then
-        echo "Reference file ${file_ref} does not exists."
         # exit 1
         return 0
     fi

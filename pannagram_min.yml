@@ -24,4 +24,4 @@ dependencies:
   - r-ape
   - bioconductor-ggtree
   - r-ggpubr
-  
+  - r-pryr
