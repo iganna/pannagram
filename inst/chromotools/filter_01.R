@@ -52,11 +52,13 @@ words.remove <- opt$words.remove
 words.remain <- opt$words.remain
 
 if(!is.null(words.remain)){
+  words.remain = gsub(" ", "", words.remain)
   words.remain = strsplit(words.remain, ',')[[1]]
   pokaz("Words to remain:", words.remain)
 }
 
 if(!is.null(words.remove)){
+  words.remove = gsub(" ", "", words.remove)
   words.remove = strsplit(words.remove, ',')[[1]]
   pokaz("Words to remove:", words.remove)
 }
@@ -73,6 +75,7 @@ files <- list.files(path.genomes, pattern = paste0("\\.(", paste(query.types, co
 # print(files)
 
 df.names.removed = c()
+df.names.remained = c()
 for(f in files){
   
   pokaz("Analysing genome:", f)
@@ -96,16 +99,20 @@ for(f in files){
   # Save
   names.remove = setdiff(names(genome), names.chr)
   if(length(names.remove) > 0){
-    df = data.frame(genome = f, names = names.remove)
-    df.names.removed = rbind(df.names.removed, df)  
+    df.names.removed = rbind(df.names.removed, 
+                             data.frame(genome = f, names = names.remove))  
   }
+  
+  df.names.remained = rbind(df.names.remained, 
+                           data.frame(genome = f, names = names.chr))  
   
   writeFasta(genome[names.chr], paste0(path.filtered, f))
 }
 
 if(!is.null(df.names.removed)){
-  write.table(df.names.removed, paste0(path.filtered, 'removed_chr_names.txt'), row.names = F, col.names = T, quote = F)  
+  write.table(df.names.removed, paste0(path.filtered, 'chr_names_removed.txt'), row.names = F, col.names = T, quote = F)  
 }
+write.table(df.names.remained, paste0(path.filtered, 'chr_names_remained.txt'), row.names = F, col.names = T, quote = F)  
 
 
 
