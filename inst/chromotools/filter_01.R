@@ -126,7 +126,6 @@ if(!is.null(df.names.remained)){
 
 write.table(chr.cnt, paste0(path.filtered, 'chr_counts.txt'), row.names = F, col.names = T, quote = F)  
 
-
-print(df.names.removed)
+print(chr.cnt)
 
 
