@@ -1,4 +1,4 @@
-# Alignment-1. Remaining syntenic (major) matches
+# Wind a match between chromosomes and get the blocks of interest
 
 suppressMessages({
   library(foreach)
@@ -14,8 +14,7 @@ suppressMessages({
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option(c("--path.genomes"),      type = "character", default = NULL, help = "Path to the output directory with genomes"),
-  make_option(c("--path.new"),      type = "character", default = NULL, help = "Path to the output directory with rearranged genomes"),
+  make_option(c("--path.aln"),      type = "character", default = NULL, help = "Path to the output directory with alignments"),
   make_option(c("--path.resort"),   type = "character", default = NULL, help = "Path to the output directory with alignments"),
   
   make_option(c("--ref"),           type = "character", default = NULL, help = "Name of the reference genome"),
@@ -46,68 +45,181 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # Number of cores
 num.cores <- opt$cores
 
-path.genomes  <- ifelse(!is.null(opt$path.genomes), opt$path.genomes, stop('Folder with genomes is not specified'))
+path.aln      <- ifelse(!is.null(opt$path.aln), opt$path.aln, stop('Folder with Alignments is not specified'))
 path.resort   <- ifelse(!is.null(opt$path.resort), opt$path.resort, stop('Folder combinations to resort the genomes'))
 base.acc      <- ifelse(!is.null(opt$ref), opt$ref, stop('Reference genome is not specified'))
 
-path.new      <- opt$path.new
-if(is.null(path.new)){
-  path.new = paste0(path.genomes, 'rearranged/')
-}
-if(!dir.exists(path.new)) dir.create(path.new)
+pokaz('path resort', path.resort)
+
+# Create folders for the alignment results
+if(!dir.exists(path.resort)) dir.create(path.resort)
 
 # Accessions
-files.aln <- list.files(path.resort, pattern = ".*\\.rds$", full.names = F)
-accessions = sub(".rds", "", files.aln)
-
-if(length(unique(accessions)) != length(accessions)) stop('Something is wring with accession names')
-accessions = setdiff(accessions, base.acc)
-
-pokaz('Accessions:', accessions)
+files.aln <- list.files(path.aln, pattern = ".*\\.rds$", full.names = F)
+files.aln = sub("_maj.rds", "", files.aln)
+accessions = c()
+for(f in files.aln){
+  s = strsplit(f, '_')[[1]]
+  s = s[-(length(s)-(0:1))]
+  s = paste0(s, collapse = '_')
+  accessions = c(accessions, s)
+  accessions = unique(accessions)
+}
 
 # ***********************************************************************
 # ---- Correspondence ----
 
+ref = 'GCA_002079055.1'
+path.aln = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_meta/yeast_wild/alignment/alignments_GCA_002079055.1/"
+path.chr = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_meta/yeast_wild/alignment/chromosomes/"
+acc = "GCA_002079175.1"
+
+
+ref = 'MN47'
+acc = '1741'
+path.aln = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_meta/arabidopsis/alignment/"
+path.chr = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_meta/arabidopsis/chromosomes/"
+
+file.ref.len = paste0(path.chr, ref, '_chr_len.txt', collapse = '')
+ref.len = read.table(file.ref.len, header = 1)
+
+min.overlap = 0.03
+min.overlap.fragment = 0.01
+
 for(acc in accessions){
   pokaz('Accession', acc)
-
-  file.resort = paste0(path.resort, acc, '.rds')
-  corresp = readRDS(file.resort)
-  corresp = corresp[order(corresp[,1]),]
-  print(corresp)
-
-  pokaz('Reading...')
-  file.genome = paste0(paste0(path.genomes, acc, ".fasta"))
-  if(!file.exists(file.genome)) next
-  pokaz(file.genome)
-  genome = readFasta(file.genome)
-
-  genome.new = rep(NA, nrow(corresp))
-  for(irow in 1:nrow(corresp)){
-    idx = corresp[irow,2]
-    pokaz(idx)
-    if(idx < 0){
-      idx = abs(idx)
-      genome.new[irow] = revComplSeq(genome[idx])
+  
+  file.acc.len = paste0(path.chr, ref, '_chr_len.txt', collapse = '')
+  acc.len = read.table(file.acc.len, header = 1)
+  
+  files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
+  # pokaz(files.aln)
+  files.sizes <- file.size(paste0(path.aln, files.aln))
+  combinations = sub(paste0(acc, "_"), "", files.aln)
+  combinations = sub("_maj.rds", "", combinations)
+  
+  result <- (do.call(rbind, strsplit(combinations, "_")))
+  result <- data.frame(Col1 = as.numeric(result[, 1]), Col2 = as.numeric(result[, 2]))
+  
+  n.acc = max(result[,1])
+  n.ref = max(result[,2])
+  
+  
+  corresp.pure = c()
+  corresp.combined = c()
+  for(i.chr.ref in 1:n.ref){
+    x.all = c()
+    i.chr.ref.len = ref.len$len[i.chr.ref]
+    for(i.chr.acc in 1:n.acc){
+      file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
+      if(!file.exists(file.aln)) next
+      # pokaz(file.aln)
+      x = readRDS(file.aln)
+      x$i.chr.acc = i.chr.acc
+      x$dir = (x$V4 > x$V5) * 1
+      x = glueZero(x)
+      
+      p = sum(abs(x$V5 - x$V4) + 1) / i.chr.ref.len
+      if(p < min.overlap) next
+      x.all = rbind(x.all, x)
+      # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
+    }
+    i.chr.corresp = unique(x.all$i.chr.acc)
+    if(length(i.chr.corresp) == 1){
+      i.chr.acc = i.chr.corresp
+      file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
+      x = readRDS(file.aln)
+      x$dir = (x$V4 > x$V5) * 1
+      pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
+      pos.minus = sum((x$V3 - x$V2 + 1) * x$dir)
+      if(pos.minus > pos.plus){
+        i.chr.acc = -i.chr.acc
+      }
+      corresp.pure = rbind(corresp.pure, 
+                           c(i.chr.ref, i.chr.acc))
     } else {
-      genome.new[irow] = genome[idx]
+      pos = matrix(0, 
+                   nrow = length(i.chr.corresp),
+                   ncol = i.chr.ref.len)
+      for(i in 1:length(i.chr.corresp)){
+        i.chr.acc = i.chr.corresp[i]
+        file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
+        x = readRDS(file.aln)
+        x = x[order(x$V7),]
+        for(irow in 1:nrow(x)){
+          pos[i,x$V4[irow]:x$V5[irow]] = x$V6[irow]
+        }
+      }
+      pos.idx = 1:ncol(pos)
+      idx.remain = colSums(pos) > 0
+      pos.idx = pos.idx[idx.remain]
+      pos = pos[,idx.remain]
+      
+      min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
+
+      df.all = c()
+      for(i in 1:nrow(pos)){
+        df = findOnes((pos[i,] != 0) * 1)
+        df$len = df$end - df$beg + 1
+        
+        df$i.ref = i.chr.ref
+        df$i.acc =  i.chr.corresp[i]
+        
+        df.all = rbind(df.all, df)
+      }
+      df.all = df.all[order(df.all$beg),]
+      
+      # Gradually remove the smallest
+      while(min(df.all$len) < min.len){
+        idx = which.min(df.all$len)[1]
+        df.all = df.all[-idx,,drop=F]
+        idx.merge = which(diff(df.all$i.acc) == 0)
+        if(length(idx.merge) == 0) next
+        idx.merge = idx.merge[1]
+        df.all$end[idx.merge] = df.all$end[idx.merge + 1]
+        df.all$len[idx.merge] = df.all$end[idx.merge] - df.all$beg[idx.merge] + 1
+        df.all = df.all[-(idx.merge + 1),,drop=F]
+        if(nrow(df.all) == 0) stop("no correspondence is left")
+        # print(df.all)
+      }
+      df.all$beg = pos.idx[df.all$beg]
+      df.all$end = pos.idx[df.all$end]
+      df.all$len = df.all$end - df.all$beg + 1
+      print(df.all)
+      
+      # Save
+      corresp.combined = rbind(corresp.combined, df.all)
     }
   }
-  names(genome.new) = paste0('Chr', 1:length(genome.new), "_reodered")
-
-  pokaz('Writing...')
-  file.genome.new = paste0(path.new, acc, '.fasta')
-  writeFasta(genome.new, file.genome.new)
-
+  colnames(corresp.pure) = c('i.ref', 'i.acc')
+  corresp.pure = as.data.frame(corresp.pure)
+  
+  # Extend corresp.combined with the overlap
+  for(i.cor in 1:nrow(corresp.pure)){
+    i.chr.acc = abs(corresp.pure$i.acc[i.cor])
+    i.chr.ref = corresp.pure$i.ref[i.cor]
+    
+    corresp.combined = rbind(corresp.combined,
+                             c(1, ref.len$len[i.chr.ref], ref.len$len[i.chr.ref], i.chr.ref,  i.chr.acc))  
+    
+    
+  }
+  corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
+  corresp.combined
+  
+  # TODO: add corresponding coordinates of accessions genomes
+  
+  # # TODO: Set up the direction for every block
+  # for(i.acc in i.chr.corresp){
+  #   
+  # }
+  
+  
+  # Write chromosomes in a right order in a right merge
+  
+  
 }
 
-file.genome = paste0(path.genomes, base.acc, ".fasta")
-file.genome.new = paste0(path.new, base.acc, '.fasta')
 
-# pokaz(file.genome, file.genome.new)
-res.copy = file.copy(file.genome, file.genome.new, overwrite = TRUE, copy.mode = TRUE)
-if(!res.copy){
-  pokazAttention("Somethig is wrong with copying the reference genome file")
-}
 
 
