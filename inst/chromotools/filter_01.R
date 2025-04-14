@@ -76,6 +76,7 @@ files <- list.files(path.genomes, pattern = paste0("\\.(", paste(query.types, co
 
 df.names.removed = c()
 df.names.remained = c()
+chr.cnt = c()
 for(f in files){
   
   pokaz("Analysing genome:", f)
@@ -103,17 +104,29 @@ for(f in files){
                              data.frame(genome = f, names = names.remove))  
   }
   
-  df.names.remained = rbind(df.names.remained, 
-                           data.frame(genome = f, names = names.chr))  
+  if(length(names.chr) > 0){
+    df.names.remained = rbind(df.names.remained, 
+                             data.frame(genome = f, names = names.chr))  
+    writeFasta(genome[names.chr], paste0(path.filtered, f))
+  } else {
+    pokazAttention("Genome", f, "does not have chromosomes remained.")
+  }
   
-  writeFasta(genome[names.chr], paste0(path.filtered, f))
+  chr.cnt = rbind(chr.cnt, 
+                  data.frame(genome = f, remained = length(names.chr), removed = length(names.remove)))
+  
 }
 
 if(!is.null(df.names.removed)){
   write.table(df.names.removed, paste0(path.filtered, 'chr_names_removed.txt'), row.names = F, col.names = T, quote = F)  
 }
-write.table(df.names.remained, paste0(path.filtered, 'chr_names_remained.txt'), row.names = F, col.names = T, quote = F)  
+if(!is.null(df.names.remained)){
+  write.table(df.names.remained, paste0(path.filtered, 'chr_names_remained.txt'), row.names = F, col.names = T, quote = F)  
+}
+
+write.table(chr.cnt, paste0(path.filtered, 'chr_counts.txt'), row.names = F, col.names = T, quote = F)  
 
 
+print(df.names.removed)
 
 
