@@ -19,3 +19,4 @@ Rscript -e 'devtools::install()'
 ln -sf $PREFIX/lib/R/library/pannagram/analys.sh $PREFIX/bin/analys
 ln -sf $PREFIX/lib/R/library/pannagram/pannagram.sh $PREFIX/bin/pannagram
 ln -sf $PREFIX/lib/R/library/pannagram/simsearch.sh $PREFIX/bin/simsearch
+ln -sf $PREFIX/lib/R/library/pannagram/chromotools.sh $PREFIX/bin/chromotools

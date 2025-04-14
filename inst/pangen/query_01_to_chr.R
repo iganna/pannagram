@@ -125,15 +125,6 @@ loop.function <- function(acc, echo.loop=T){
   # Read the genome file
   q.fasta = readFasta(file.genome)
   
-  # Filter contig if needed
-  if(purge.contigs){
-    q.fasta = q.fasta[!grepl('contig', names(q.fasta))]
-    q.fasta = q.fasta[!grepl('mitochondrion', names(q.fasta))]
-    q.fasta = q.fasta[!grepl('chloroplast', names(q.fasta))]
-    q.fasta = q.fasta[!grepl('unloc', names(q.fasta))]
-  }
-  
-  
   # Check the chromosome number
   if(n.chr == 0){ # if to analyse all chromosomes
     n.chr = length(q.fasta)
