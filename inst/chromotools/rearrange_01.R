@@ -83,13 +83,14 @@ path.chr = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_me
 file.ref.len = paste0(path.chr, ref, '_chr_len.txt', collapse = '')
 ref.len = read.table(file.ref.len, header = 1)
 
-min.overlap = 0.03
+min.overlap = 0.01
 min.overlap.fragment = 0.01
+min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
 
 for(acc in accessions){
   pokaz('Accession', acc)
   
-  file.acc.len = paste0(path.chr, ref, '_chr_len.txt', collapse = '')
+  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
   acc.len = read.table(file.acc.len, header = 1)
   
   files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
@@ -125,16 +126,17 @@ for(acc in accessions){
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
+    
     if(length(i.chr.corresp) == 1){
       i.chr.acc = i.chr.corresp
       file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
       x = readRDS(file.aln)
-      x$dir = (x$V4 > x$V5) * 1
-      pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
-      pos.minus = sum((x$V3 - x$V2 + 1) * x$dir)
-      if(pos.minus > pos.plus){
-        i.chr.acc = -i.chr.acc
-      }
+      # x$dir = (x$V4 > x$V5) * 1
+      # pos.plus = sum((x$V3 - x$V2 + 1) * (1 - x$dir))
+      # pos.minus = sum((x$V3 - x$V2 + 1) * x$dir)
+      # if(pos.minus > pos.plus){
+      #   i.chr.acc = -i.chr.acc
+      # }
       corresp.pure = rbind(corresp.pure, 
                            c(i.chr.ref, i.chr.acc))
     } else {
@@ -150,42 +152,12 @@ for(acc in accessions){
           pos[i,x$V4[irow]:x$V5[irow]] = x$V6[irow]
         }
       }
-      pos.idx = 1:ncol(pos)
-      idx.remain = colSums(pos) > 0
-      pos.idx = pos.idx[idx.remain]
-      pos = pos[,idx.remain]
       
-      min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
-
-      df.all = c()
-      for(i in 1:nrow(pos)){
-        df = findOnes((pos[i,] != 0) * 1)
-        df$len = df$end - df$beg + 1
-        
-        df$i.ref = i.chr.ref
-        df$i.acc =  i.chr.corresp[i]
-        
-        df.all = rbind(df.all, df)
-      }
-      df.all = df.all[order(df.all$beg),]
-      
-      # Gradually remove the smallest
-      while(min(df.all$len) < min.len){
-        idx = which.min(df.all$len)[1]
-        df.all = df.all[-idx,,drop=F]
-        idx.merge = which(diff(df.all$i.acc) == 0)
-        if(length(idx.merge) == 0) next
-        idx.merge = idx.merge[1]
-        df.all$end[idx.merge] = df.all$end[idx.merge + 1]
-        df.all$len[idx.merge] = df.all$end[idx.merge] - df.all$beg[idx.merge] + 1
-        df.all = df.all[-(idx.merge + 1),,drop=F]
-        if(nrow(df.all) == 0) stop("no correspondence is left")
-        # print(df.all)
-      }
-      df.all$beg = pos.idx[df.all$beg]
-      df.all$end = pos.idx[df.all$end]
-      df.all$len = df.all$end - df.all$beg + 1
-      print(df.all)
+      df.all = findBestChromosome (pos, 
+                                   i.chr.ref.len, 
+                                   i.chr.ref, 
+                                   i.chr.corresp, 
+                                   min.len) 
       
       # Save
       corresp.combined = rbind(corresp.combined, df.all)
@@ -206,8 +178,46 @@ for(acc in accessions){
   }
   corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
   corresp.combined
+  # corresp.combined$id = 1:nrow(corresp.combined)
   
-  # TODO: add corresponding coordinates of accessions genomes
+  # Split accession chromosomes
+  i.chr.split = unique(corresp.combined$i.acc[duplicated(corresp.combined$i.acc)])
+  corresp.acc2ref = c()
+  for(i.chr.acc in i.chr.split){
+    
+    i.chr.acc.len = acc.len$len[i.chr.acc]
+    i.chr.corresp = corresp.combined$i.ref[corresp.combined$i.acc == i.chr.acc]
+    
+    pos = matrix(0, 
+                 nrow = length(i.chr.corresp),
+                 ncol = i.chr.acc.len)
+    for(i in 1:length(i.chr.corresp)){
+      i.chr.ref = i.chr.corresp[i]
+      file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
+      x = readRDS(file.aln)
+      x = x[order(x$V7),]
+      for(irow in 1:nrow(x)){
+        pos[i,x$V2[irow]:x$V3[irow]] = x$V6[irow]
+      }
+    }
+    
+    df.all = findBestChromosome (pos, 
+                                 i.chr.acc.len, 
+                                 i.chr.acc, 
+                                 i.chr.corresp, 
+                                 min.len) 
+    idx <- match(c('i.ref', 'i.acc'), colnames(df.all))
+    colnames(df.all)[idx] <- c('i.acc', 'i.ref')
+    
+    corresp.acc2ref = rbind(corresp.acc2ref, df.all)
+    
+    # Округление!
+    
+    
+  }
+  
+  corresp.acc2ref = corresp.acc2ref[order(corresp.acc2ref$i.ref),]
+  
   
   # # TODO: Set up the direction for every block
   # for(i.acc in i.chr.corresp){
