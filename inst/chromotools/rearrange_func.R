@@ -13,7 +13,7 @@ findBestChromosome <- function(pos,
                        i.chr.ref.len, 
                        i.chr.ref, 
                        i.chr.corresp, 
-                       min.len) {
+                       min.len, to.extend = T) {
   
   # Find maxumum by chromosomes
   pos.max <- pos[1, ]
@@ -60,7 +60,25 @@ findBestChromosome <- function(pos,
   df.all$end = pos.idx[df.all$end]
   df.all$len = df.all$end - df.all$beg + 1
   
-  # print(df.all)
   
+  
+  # print(df.all)
+  if(to.extend){
+    
+    df.all = df.all[order(df.all$beg),]
+    
+    for (i in 1:(nrow(df.all)-1)) {
+      gap <- df.all$beg[i+1] - df.all$end[i] - 1
+      shift <- floor(gap / 2)
+      
+      df.all$end[i]   <- df.all$end[i] + shift
+      df.all$beg[i+1] <- df.all$end[i] + 1
+    }
+    
+    df.all$beg[1] = 1
+    df.all$end[nrow(df.all)] = i.chr.ref.len
+    df.all$len = df.all$end - df.all$beg + 1
+  }
+
   return(df.all)
 }

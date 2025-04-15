@@ -1685,6 +1685,16 @@ checkFile <- function(file.name) {
   return(NULL)
 }
 
+#' Check if a folder exists
+#' @param file.name File name
+#' @export
+checkDir <- function(dir.name) {
+  if (!dir.exists(dir.name)) {
+    pokazAttention("Directory", dir.name, "does not exist.")
+    stop("Directory does not exist.")
+  }
+  return(NULL)
+}
 
 
 #' Find the Longest Common Prefix of Strings

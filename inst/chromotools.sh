@@ -34,7 +34,7 @@ Options:
     -cores NUM_CORES            Number of cores for parallel processing (default: 1).
 
 Input/Output:
-    -path_in PATH_IN            Path to the input directory with genomes.
+    -path_in PATH_IN            Path to the input directory with genomes or chromosomes depends on the mode.
     -path_out PATH_OUT          Path to the output directory for processed genomes.
                                 Default: PATH_IN/processed/
 
@@ -61,8 +61,8 @@ ${0##*/} -path_in /data/genomes -path_out /data/genomes/reordered \\
 
 
 # Example 3: Rearranging genomes based on alignment (after alignment)
-${0##*/} -path_in /data/genomes -path_out /data/genomes/rearrange \\
-         -path_aln /data/alignment/aln.fasta -rearrange -cores 4
+${0##*/} -path_in /data/chromosomes -path_out /data/genomes/rearrange \\
+         -path_aln /data/alignments_reference/aln.fasta -rearrange -cores 4
 
 EOF
 }
@@ -105,7 +105,7 @@ done
 if [[ -z "$path_in" ]]; then
     echo "Error: -path_in is required"
 
-    print_fancy_frame "To check usage run: chromtools -h"
+    print_fancy_frame "To check usage run: chromotools -h"
     exit 1
 fi
 path_in=$(add_symbol_if_missing "$path_in" "/")
@@ -140,7 +140,7 @@ fi
 if [[ "$mode_filter" == true && ( "$mode_reorder" == true || "$mode_rearrange" == true ) ]]; then
     echo "Error: Filtering mode (-remove/-remain) cannot be combined with reorder/rearrange modes."
 
-    print_fancy_frame "To check usage run: chromtools -h"
+    print_fancy_frame "To check usage run: chromotools -h"
     exit 1
 fi
 
@@ -150,7 +150,7 @@ if [[ "$mode_filter" == false && "$mode_reorder" == false && "$mode_rearrange" =
     - Reordering:       -path_aln -resort
     - Rearrangement:    -path_aln -rearrange"
 
-    print_fancy_frame "To check usage run: chromtools -h"
+    print_fancy_frame "To check usage run: chromotools -h"
     exit 1
 fi
 
@@ -192,6 +192,10 @@ fi
 if [ "$mode_reorder" = true ]; then
     pokaz_stage "Reordering chromosomes based on the preliminary alignment."
 
+    path_aln=$(add_symbol_if_missing "$path_aln" "/")
+    path_in=$(add_symbol_if_missing "$path_in" "/")
+    path_out=$(add_symbol_if_missing "$path_out" "/")
+
     # Get the name of the reference genome
     ref_name=$(basename "$path_aln")
     ref_name=${ref_name#alignments_}
@@ -207,7 +211,15 @@ if [ "$mode_rearrange" = true ]; then
 
     pokaz_stage "Rearranging (splitting/merging) chromosomes based on alignment."
 
-    # Rscript $INSTALLED_PATH/chromotools/rearrange_01.R 
+    path_aln=$(add_symbol_if_missing "$path_aln" "/")
+    path_in=$(add_symbol_if_missing "$path_in" "/")
+    path_out=$(add_symbol_if_missing "$path_out" "/")
+
+    # Get the name of the reference genome
+    ref_name=$(basename "$path_aln")
+    ref_name=${ref_name#alignments_}
+
+    Rscript $INSTALLED_PATH/chromotools/rearrange_01.R --path.aln ${path_aln} --ref ${ref_name} --path.processed ${path_out} --path.chr ${path_in}
 fi
 
 pokaz_message "Script completed successfully!"
