@@ -184,14 +184,18 @@ for(acc in accessions){
     i.chr.ref = corresp.pure$i.ref[i.cor]
     
     corresp.combined = rbind(corresp.combined,
-                             c(1, ref.len$len[i.chr.ref], ref.len$len[i.chr.ref], i.chr.ref,  i.chr.acc))  
+                             data.frame(beg = 1, 
+                                        end = ref.len$len[i.chr.ref],
+                                        len = ref.len$len[i.chr.ref],
+                                        i.ref = i.chr.ref,
+                                        i.acc = i.chr.acc
+                                        ))
     
     
   }
+  print(corresp.combined)
   corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
-  corresp.combined
   # corresp.combined$id = 1:nrow(corresp.combined)
-  
   
   i.chr.split = unique(corresp.combined$i.acc[duplicated(corresp.combined$i.acc)])
   corresp.remain = corresp.combined[!(corresp.combined$i.acc %in% i.chr.split), ]
