@@ -34,6 +34,7 @@ findBestChromosome <- function(pos,
   df.all = c()
   for(i in 1:length(i.chr.corresp)){
     df = findOnes((pos.i == i) * 1)
+    if(nrow(df) == 0) next
     df$len = df$end - df$beg + 1
     
     df$i.ref = i.chr.ref
