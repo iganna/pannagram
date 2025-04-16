@@ -67,13 +67,14 @@ findBestChromosome <- function(pos,
   if(to.extend){
     
     df.all = df.all[order(df.all$beg),]
-    
-    for (i in 1:(nrow(df.all)-1)) {
-      gap <- df.all$beg[i+1] - df.all$end[i] - 1
-      shift <- floor(gap / 2)
-      
-      df.all$end[i]   <- df.all$end[i] + shift
-      df.all$beg[i+1] <- df.all$end[i] + 1
+    if(nrow(df.all) > 1){
+      for (i in 1:(nrow(df.all)-1)) {
+        gap <- df.all$beg[i+1] - df.all$end[i] - 1
+        shift <- floor(gap / 2)
+        
+        df.all$end[i]   <- df.all$end[i] + shift
+        df.all$beg[i+1] <- df.all$end[i] + 1
+      }  
     }
     
     df.all$beg[1] = 1
