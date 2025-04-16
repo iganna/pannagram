@@ -113,7 +113,7 @@ for(acc in accessions){
 
   genome = list()
   for(i.chr.acc in 1:n.acc){
-    file.chr = paste0(path.chr, acc, '_Chr', i.chr.acc, '.fasta')
+    file.chr = paste0(path.chr, acc, '_chr', i.chr.acc, '.fasta')
     checkFile(file.chr)
     genome[[i.chr.acc]] = seq2nt(readFasta(file.chr))
   }
