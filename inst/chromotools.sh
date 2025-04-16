@@ -209,7 +209,7 @@ fi
 # -------------------------------------------------
 if [ "$mode_rearrange" = true ]; then
 
-    pokaz_stage "Rearranging (splitting/merging) chromosomes based on alignment."
+    pokaz_stage "Find the best rearrangements based on alignment..."
 
     path_aln=$(add_symbol_if_missing "$path_aln" "/")
     path_in=$(add_symbol_if_missing "$path_in" "/")
@@ -219,7 +219,9 @@ if [ "$mode_rearrange" = true ]; then
     ref_name=$(basename "$path_aln")
     ref_name=${ref_name#alignments_}
 
-    Rscript $INSTALLED_PATH/chromotools/rearrange_01_positions.R --path.aln ${path_aln} --ref ${ref_name} --path.processed ${path_out} --path.chr ${path_in}
+    # Rscript $INSTALLED_PATH/chromotools/rearrange_01_positions.R --path.aln ${path_aln} --ref ${ref_name} --path.processed ${path_out} --path.chr ${path_in}
+
+    pokaz_stage "Rearranging (splitting/merging) chromosomes..."
     Rscript $INSTALLED_PATH/chromotools/rearrange_02_genomes.R --path.aln ${path_aln} --ref ${ref_name} --path.processed ${path_out} --path.chr ${path_in}
 fi
 
