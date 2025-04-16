@@ -105,21 +105,19 @@ for(acc in accessions){
   file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
   acc.len = read.table(file.acc.len, header = 1)
   
-  
-  print(corresp.acc2ref)
   corresp.acc2ref = readRDS(paste0(path.processed, 'corresp_',acc,'_to_',ref, '.rds'))
+  print(corresp.acc2ref)
   
   n.acc = max(corresp.acc2ref$i.acc)
   n.ref = max(corresp.acc2ref$i.ref)
 
-  genome = c()
+  genome = list()
   for(i.chr.acc in 1:n.acc){
-    file.chr = paste0(path.chr, acc, '_Chr', i.chr, '.fasta')
+    file.chr = paste0(path.chr, acc, '_Chr', i.chr.acc, '.fasta')
     checkFile(file.chr)
-    genome[i.chr.acc] = seq2nt(readFasta(file.chr))
+    genome[[i.chr.acc]] = seq2nt(readFasta(file.chr))
   }
   
-
   genome.ref = c()
   for(i.chr.ref in 1:n.ref){
     corresp.tmp = corresp.acc2ref[corresp.acc2ref$i.ref == i.chr.ref,]
@@ -127,11 +125,11 @@ for(acc in accessions){
     corresp.tmp = corresp.tmp[order(abs(corresp.tmp$pos)),]
     s = c()
     for(irow in 1:nrow(corresp.tmp)){
-      s.tmp = genome[corresp.tmp$i.acc[irow]][corresp.tmp$beg[irow]:corresp.tmp$end[irow]]
+      s.tmp = genome[[corresp.tmp$i.acc[irow]]][corresp.tmp$beg[irow]:corresp.tmp$end[irow]]
       if(corresp.tmp$pos[irow] < 0){
         s.tmp = revCompl(s.tmp)
       }
-      s = c(c, s.tmp)
+      s = c(s, s.tmp)
     }
     genome.ref[i.chr.ref] = nt2seq(s)
   }

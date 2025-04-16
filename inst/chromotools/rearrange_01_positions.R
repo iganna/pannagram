@@ -116,8 +116,7 @@ for(acc in accessions){
   
   n.acc = max(result[,1])
   n.ref = max(result[,2])
-  
-  pokaz(n.acc, n.ref)
+  # pokaz(n.acc, n.ref)
   
   pokaz("Correspondence to genome", ref, "(reference)...")
   corresp.pure = c()
@@ -158,7 +157,7 @@ for(acc in accessions){
       for(i in 1:length(i.chr.corresp)){
         i.chr.acc = i.chr.corresp[i]
         file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
-        pokaz(file.aln)
+        # pokaz(file.aln)
         x = readRDS(file.aln)
         x = x[order(x$V7),]
         for(irow in 1:nrow(x)){

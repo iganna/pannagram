@@ -1682,7 +1682,7 @@ checkFile <- function(file.name) {
     pokazAttention("File", file.name, "does not exist.")
     stop("File does not exist.")
   }
-  return(NULL)
+  invisible(NULL)
 }
 
 #' Check if a folder exists
@@ -1693,7 +1693,7 @@ checkDir <- function(dir.name) {
     pokazAttention("Directory", dir.name, "does not exist.")
     stop("Directory does not exist.")
   }
-  return(NULL)
+  invisible(NULL)
 }
 
 
