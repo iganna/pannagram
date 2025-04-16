@@ -110,7 +110,6 @@ for(acc in accessions){
   
   n.acc = max(corresp.acc2ref$i.acc)
   n.ref = max(corresp.acc2ref$i.ref)
-  break
 
   genome = list()
   for(i.chr.acc in 1:n.acc){
@@ -132,7 +131,7 @@ for(acc in accessions){
       }
       s = c(s, s.tmp)
     }
-    genome.ref[i.chr.ref] = nt2seq(s)
+    genome.ref[paste0(acc, '_Chr',i.chr.ref)] = nt2seq(s)
   }
   
   writeFasta(genome.ref, paste0(path.processed, acc, '.fasta'))
@@ -140,11 +139,11 @@ for(acc in accessions){
 }
 
 # Also copy the reference genome
-genome = list()
+genome = c()
 for(i.chr.ref in 1:n.ref){
   file.chr = paste0(path.chr, ref, '_chr', i.chr.ref, '.fasta')
   checkFile(file.chr)
-  genome[[i.chr.ref]] = seq2nt(readFasta(file.chr))
+  genome[paste0(ref, '_Chr',i.chr.ref)] = readFasta(file.chr)
 }
-writeFasta(genome.ref, paste0(path.processed, ref, '.fasta'))
+writeFasta(genome, paste0(path.processed, ref, '.fasta'))
 
