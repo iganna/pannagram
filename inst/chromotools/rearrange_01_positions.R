@@ -165,6 +165,7 @@ for(acc in accessions){
         }
       }
       
+      save(list = ls(), file = "tmp_workspace_1.RData")
       df.all = findBestChromosome (pos, 
                                    i.chr.ref.len, 
                                    i.chr.ref, 
@@ -221,7 +222,7 @@ for(acc in accessions){
           pos[i,x$V2[irow]:x$V3[irow]] = x$V6[irow]
         }
       }
-      
+      save(list = ls(), file = "tmp_workspace_2.RData")
       df.all = findBestChromosome (pos, 
                                    i.chr.acc.len, 
                                    i.chr.acc, 
