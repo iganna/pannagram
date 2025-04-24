@@ -99,6 +99,7 @@ min.overlap.fragment = 0.01
 
 # ***********************************************************************
 # ---- Main loop ----
+accessions = c('GCA_019455585.1')
 for(acc in accessions){
   pokaz('Accession', acc)
   
@@ -146,6 +147,7 @@ for(acc in accessions){
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
+    pokaz('Corresp', i.chr.corresp)
     
     if(length(i.chr.corresp) == 1){
       i.chr.acc = i.chr.corresp

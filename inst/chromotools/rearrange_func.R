@@ -46,7 +46,7 @@ findBestChromosome <- function(pos,
   
   # Gradually remove the smallest
   while(min(df.all$len) < min.len){
-    print(df.all)
+    # print(df.all)
     idx = which.min(df.all$len)[1]
     df.all = df.all[-idx,,drop=F]
     if(nrow(df.all) == 0) break
