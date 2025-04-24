@@ -168,7 +168,10 @@ for(acc in accessions){
         }
       }
       pokaz(i.chr.acc)
-      # save(list = ls(), file = "tmp_workspace_1.RData")
+      if(i.chr.acc == 12){
+        save(list = ls(), file = "tmp_workspace_1.RData")
+      }
+      
       df.all = findBestChromosome (pos, 
                                    i.chr.ref.len, 
                                    i.chr.ref, 
