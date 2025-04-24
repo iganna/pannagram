@@ -46,8 +46,11 @@ findBestChromosome <- function(pos,
   
   # Gradually remove the smallest
   while(min(df.all$len) < min.len){
+    print(df.all)
     idx = which.min(df.all$len)[1]
     df.all = df.all[-idx,,drop=F]
+    if(nrow(df.all) == 0) break
+      
     idx.merge = which(diff(df.all$i.acc) == 0)
     if(length(idx.merge) == 0) next
     idx.merge = idx.merge[1]
@@ -57,6 +60,8 @@ findBestChromosome <- function(pos,
     if(nrow(df.all) == 0) stop("no correspondence is left")
     # print(df.all)
   }
+  if(nrow(df.all) == 0) return(NULL)
+  
   df.all$beg = pos.idx[df.all$beg]
   df.all$end = pos.idx[df.all$end]
   df.all$len = df.all$end - df.all$beg + 1

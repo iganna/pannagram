@@ -177,6 +177,7 @@ for(acc in accessions){
                                    i.chr.ref, 
                                    i.chr.corresp, 
                                    min.len) 
+      if(is.null(df.all)) next
       
       # Save
       corresp.combined = rbind(corresp.combined, df.all)
@@ -204,6 +205,7 @@ for(acc in accessions){
   }
   # print(corresp.combined)
   corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
+  print(corresp.combined)
   # corresp.combined$id = 1:nrow(corresp.combined)
   
   i.chr.split = unique(corresp.combined$i.acc[duplicated(corresp.combined$i.acc)])
