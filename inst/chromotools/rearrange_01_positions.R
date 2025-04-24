@@ -119,6 +119,10 @@ for(acc in accessions){
   # pokaz(n.acc, n.ref)
   
   pokaz("Correspondence to genome", ref, "(reference)...")
+  
+  if(acc == "GCA_016808245.1"){
+    save(list = ls(), file = "tmp_workspace_acc.RData")
+  }
   corresp.pure = c()
   corresp.combined = c()
   for(i.chr.ref in 1:n.ref){
