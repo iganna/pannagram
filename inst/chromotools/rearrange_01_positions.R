@@ -147,6 +147,7 @@ for(acc in accessions){
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
+    print(x.all)
     
     if(length(i.chr.corresp) == 1){
       i.chr.acc = i.chr.corresp
@@ -182,6 +183,8 @@ for(acc in accessions){
   }
   colnames(corresp.pure) = c('i.ref', 'i.acc')
   corresp.pure = as.data.frame(corresp.pure)
+  pokaz("Pure..")
+  print(corresp.pure)
   
   # Extend corresp.combined with the overlap
   for(i.cor in 1:nrow(corresp.pure)){
