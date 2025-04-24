@@ -131,7 +131,7 @@ for(acc in accessions){
     min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
     
     for(i.chr.acc in 1:n.acc){
-      # pokaz(i.chr.ref, i.chr.acc)
+      pokaz(i.chr.ref, i.chr.acc)
       file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
       if(!file.exists(file.aln)) next
       
@@ -167,10 +167,10 @@ for(acc in accessions){
           pos[i,x$V4[irow]:x$V5[irow]] = x$V6[irow]
         }
       }
-      pokaz(i.chr.acc)
-      if(i.chr.acc == 12){
-        save(list = ls(), file = "tmp_workspace_1.RData")
-      }
+      # pokaz(i.chr.acc)
+      # if(i.chr.acc == 12){
+      #   save(list = ls(), file = "tmp_workspace_1.RData")
+      # }
       
       df.all = findBestChromosome (pos, 
                                    i.chr.ref.len, 
@@ -185,8 +185,6 @@ for(acc in accessions){
   }
   colnames(corresp.pure) = c('i.ref', 'i.acc')
   corresp.pure = as.data.frame(corresp.pure)
-  pokaz("Pure..")
-  print(corresp.pure)
   
   # Extend corresp.combined with the overlap
   for(i.cor in 1:nrow(corresp.pure)){
@@ -205,8 +203,7 @@ for(acc in accessions){
   }
   # print(corresp.combined)
   corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
-  print(corresp.combined)
-  # corresp.combined$id = 1:nrow(corresp.combined)
+  # print(corresp.combined)
   
   i.chr.split = unique(corresp.combined$i.acc[duplicated(corresp.combined$i.acc)])
   corresp.remain = corresp.combined[!(corresp.combined$i.acc %in% i.chr.split), ]
