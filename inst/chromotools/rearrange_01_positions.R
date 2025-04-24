@@ -120,9 +120,9 @@ for(acc in accessions){
   
   pokaz("Correspondence to genome", ref, "(reference)...")
   
-  if(acc == "GCA_016808245.1"){
-    save(list = ls(), file = "tmp_workspace_acc.RData")
-  }
+  # if(acc == "GCA_016808245.1"){
+  #   save(list = ls(), file = "tmp_workspace_acc.RData")
+  # }
   corresp.pure = c()
   corresp.combined = c()
   for(i.chr.ref in 1:n.ref){
@@ -131,7 +131,7 @@ for(acc in accessions){
     min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
     
     for(i.chr.acc in 1:n.acc){
-      
+      pokaz(i.chr.ref, i.chr.acc)
       file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
       # pokaz(file.aln)
       if(!file.exists(file.aln)) next
