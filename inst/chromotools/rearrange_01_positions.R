@@ -131,9 +131,8 @@ for(acc in accessions){
     min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
     
     for(i.chr.acc in 1:n.acc){
-      pokaz(i.chr.ref, i.chr.acc)
+      # pokaz(i.chr.ref, i.chr.acc)
       file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
-      # pokaz(file.aln)
       if(!file.exists(file.aln)) next
       
       x = readRDS(file.aln)
@@ -147,8 +146,6 @@ for(acc in accessions){
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
-    pokaz('XX')
-    pokaz(i.chr.corresp)
     
     if(length(i.chr.corresp) == 1){
       i.chr.acc = i.chr.corresp
@@ -170,7 +167,7 @@ for(acc in accessions){
           pos[i,x$V4[irow]:x$V5[irow]] = x$V6[irow]
         }
       }
-      
+      pokaz(i.chr.acc)
       # save(list = ls(), file = "tmp_workspace_1.RData")
       df.all = findBestChromosome (pos, 
                                    i.chr.ref.len, 
@@ -230,7 +227,6 @@ for(acc in accessions){
           pos[i,x$V2[irow]:x$V3[irow]] = x$V6[irow]
         }
       }
-      pokaz(i.chr.acc)
       # save(list = ls(), file = "tmp_workspace_2.RData")
       df.all = findBestChromosome (pos, 
                                    i.chr.acc.len, 
