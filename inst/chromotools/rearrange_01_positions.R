@@ -148,6 +148,7 @@ for(acc in accessions){
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
     pokaz('XX')
+    pokaz(i.chr.corresp)
     
     if(length(i.chr.corresp) == 1){
       i.chr.acc = i.chr.corresp
