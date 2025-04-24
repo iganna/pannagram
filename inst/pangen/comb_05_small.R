@@ -198,6 +198,7 @@ for(s.comb in pref.combinations){
     
     # Split the vector of shotp positions into n.core batches
     idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
+    num.cores = min(num.cores, length(idx.batches))
     
     pokaz('Parallel computing: short sequences')
     res.msa <- foreach(i.batch = 1:num.cores,
