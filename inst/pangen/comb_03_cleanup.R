@@ -95,6 +95,7 @@ loop.function <- function(s.comb,
   
   # Create the output file
   suppressMessages({
+    file.remove(file.comb.out)
     h5createFile(file.comb.out)
     h5createGroup(file.comb.out, gr.blocks)
     h5createGroup(file.comb.out, gr.accs.e)
