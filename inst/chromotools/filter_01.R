@@ -87,9 +87,11 @@ for(f in files){
   
   # Filtering
   if(!is.null(words.remain)){
+    pokaz(names.chr)
     for(w in words.remain){
       names.chr = names.chr[grepl(w, names.chr)]
     }
+    pokaz(names.chr)
   }
   if(!is.null(words.remove)){
     for(w in words.remove){
