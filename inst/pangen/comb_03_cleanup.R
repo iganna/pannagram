@@ -170,11 +170,6 @@ loop.function <- function(s.comb,
   }
   
   # ---- Breaks ----
-  
-  if(acc == 'GCA_964341325.1'){
-    save(list = ls(), file = "tmp_workspace_acc.RData")
-  }
-  
   pokaz('Find breaks')
   idx.breaks = c()
   for(acc in accessions){
@@ -183,7 +178,9 @@ loop.function <- function(s.comb,
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
     
-    # save(list = ls(), file = "tmp_workspace_acc.RData")
+    if(acc == 'GCA_964341325.1'){
+      save(list = ls(), file = "tmp_workspace_acc.RData")
+    }
     # Define blocks
     
     v.idx = 1:length(v)
