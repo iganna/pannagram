@@ -116,6 +116,10 @@ loop.function <- function(s.comb,
     
     v.init = v
     
+    if(acc == 'GCA_964341325.1'){
+      save(list = ls(), file = "tmp_workspace_acc0.RData")
+    }
+    
     # Define blocks
     for(i in 1:2){
       v = v.init
@@ -159,6 +163,11 @@ loop.function <- function(s.comb,
     pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
+    
+    if(acc == 'GCA_964341325.1'){
+      save(list = ls(), file = "tmp_workspace_acc1.RData")
+    }
+    
     v = v[idx.nonzero]
     
     # Rewrite  
@@ -179,7 +188,7 @@ loop.function <- function(s.comb,
     v = h5read(file.comb.out, s.acc)
     
     if(acc == 'GCA_964341325.1'){
-      save(list = ls(), file = "tmp_workspace_acc.RData")
+      save(list = ls(), file = "tmp_workspace_acc2.RData")
     }
     # Define blocks
     
