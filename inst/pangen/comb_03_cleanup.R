@@ -105,6 +105,8 @@ loop.function <- function(s.comb,
   groups = h5ls(file.comb.in)
   accessions = groups$name[groups$group == gr.accs.b]
   
+  pokaz('Accessions', acc)
+  
   # ---- Cleanup ----
   idx.nonzero = 0
   for(acc in accessions){
@@ -116,10 +118,10 @@ loop.function <- function(s.comb,
     
     v.init = v
     
-    if(acc == 'GCA_964341325.1'){
-      save(list = ls(), file = "tmp_workspace_acc0.RData")
-    }
-    
+    # if(acc == 'GCA_964341325.1'){
+    #   save(list = ls(), file = "tmp_workspace_acc0.RData")
+    # }
+    # 
     # Define blocks
     for(i in 1:2){
       v = v.init
@@ -143,7 +145,10 @@ loop.function <- function(s.comb,
       for(irow in 1:nrow(v.b.remove)){
         v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
       }
+      
     }
+    
+    pokaz(acc, sum(is.na(v.init)))
     
     suppressMessages({
       h5write(v.init, file.comb.out, s.acc)
@@ -164,14 +169,18 @@ loop.function <- function(s.comb,
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
     
-    if(acc == 'GCA_964341325.1'){
-      save(list = ls(), file = "tmp_workspace_acc1.RData")
-    }
+    pokaz(acc, sum(is.na(v)))
     
+    # if(acc == 'GCA_964341325.1'){
+    #   save(list = ls(), file = "tmp_workspace_acc1.RData")
+    # }
+    # 
     v = v[idx.nonzero]
     
     # Rewrite  
     pokaz('Rewrite')
+    
+    pokaz(acc, sum(is.na(v)))
     suppressMessages({
       h5delete(file.comb.out, s.acc)
       h5write(v, file.comb.out, s.acc)
@@ -186,10 +195,11 @@ loop.function <- function(s.comb,
     pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
-    
-    if(acc == 'GCA_964341325.1'){
-      save(list = ls(), file = "tmp_workspace_acc2.RData")
-    }
+    pokaz(acc, sum(is.na(v)))
+    # 
+    # if(acc == 'GCA_964341325.1'){
+    #   save(list = ls(), file = "tmp_workspace_acc2.RData")
+    # }
     # Define blocks
     
     v.idx = 1:length(v)
