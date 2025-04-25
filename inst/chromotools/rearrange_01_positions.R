@@ -99,7 +99,6 @@ min.overlap.fragment = 0.01
 
 # ***********************************************************************
 # ---- Main loop ----
-accessions = c('GCA_019455585.1')
 for(acc in accessions){
   pokaz('Accession', acc)
   
@@ -132,7 +131,7 @@ for(acc in accessions){
     min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
     
     for(i.chr.acc in 1:n.acc){
-      pokaz(i.chr.ref, i.chr.acc)
+      # pokaz(i.chr.ref, i.chr.acc)
       file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
       if(!file.exists(file.aln)) next
       
