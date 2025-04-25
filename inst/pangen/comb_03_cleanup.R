@@ -116,6 +116,10 @@ loop.function <- function(s.comb,
     
     v.init = v
     
+    if(acc == 'GCA_964341325.1'){
+      save(list = ls(), file = "tmp_workspace_acc.RData")
+    }
+    
     # Define blocks
     for(i in 1:2){
       v = v.init
