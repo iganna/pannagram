@@ -88,9 +88,13 @@ for(f in files){
   # Filtering
   if(!is.null(words.remain)){
     pokaz(names.chr)
+    names.chr.remain = c()
     for(w in words.remain){
-      names.chr = names.chr[grepl(w, names.chr)]
+      names.chr.remain = c(names.chr.remain, names.chr[grepl(w, names.chr)])
     }
+    names.chr.remain = unique(names.chr.remain)
+    names.chr.remain = sort(names.chr.remain)
+    names.chr = names.chr.remain
     pokaz(names.chr)
   }
   if(!is.null(words.remove)){
