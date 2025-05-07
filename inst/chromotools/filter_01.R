@@ -118,7 +118,7 @@ for(f in files){
     names.chr.keep = c()
     for(w in words.keep){
       names.chr.keep = c(names.chr.keep, names.chr.init[grepl(w, names.chr.init)])
-      pokaz(x, ':', names.chr.keep)
+      pokaz(w, ':', names.chr.keep)
     }
     names.chr.keep = unique(names.chr.keep)
     names.chr.keep = sort(names.chr.keep)
