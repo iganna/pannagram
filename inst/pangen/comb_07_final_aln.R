@@ -127,8 +127,7 @@ for(s.comb in pref.combinations){
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
   if(nrow(mafft.res) > 0){
-    
-    
+
     for(i in 1:nrow(mafft.res)){
       
       # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
@@ -316,40 +315,28 @@ for(s.comb in pref.combinations){
   
   # Long
   fp.long = list()
-  for(i in 1:length(mafft.aln.pos)){
-    n.pos = ncol(mafft.aln.pos[[i]])
-    fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
+  if(length(mafft.aln.pos) != 0){
+    for(i in 1:length(mafft.aln.pos)){
+      n.pos = ncol(mafft.aln.pos[[i]])
+      fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
+    }  
   }
   
   pos.beg.all = list(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
   pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
   
   pos.delete.all = 0
-  
-  # save(list = ls(), file = paste0("tmp_workspace2.RData"))
   for(i.pos in 1:3){
     pos.beg = pos.beg.all[[i.pos]]
     pos.end = pos.end.all[[i.pos]]
     pos.delete = rep(0, base.len)
     pos.delete[pos.beg] = 1
-    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete[pos.end] = pos.delete[pos.end] - 1
-    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete = cumsum(pos.delete)
     pos.delete[pos.beg] = 0
     pos.delete[pos.end] = 0
     
     pos.delete.all = pos.delete.all + pos.delete
-    
-    # # Testing:  
-    # pos = rep(0, base.len)
-    # for(i in 1:length(pos.beg)){
-    #   if(2310393 %in% c(pos.beg[i]:pos.end[i])) pokaz(i)
-    #   
-    #   pos[pos.beg[i]:pos.end[i]] = pos[pos.beg[i]:pos.end[i]] + 1
-    #   # if(max(pos[pos.beg[i]:pos.end[i]] ) == 2) stop()
-    # }
-    
   }
   pos.delete = pos.delete.all
 
@@ -421,13 +408,12 @@ for(s.comb in pref.combinations){
     } 
     
     # add long
-    for(i in 1:length(mafft.aln.pos)){
-      if(acc %in% rownames(mafft.aln.pos[[i]])){
-        v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
-        
-        # if(1835154 %in%  mafft.aln.pos[[i]][acc,]) stop(i)
-        # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
-      } 
+    if(length(mafft.aln.pos) != 0){
+      for(i in 1:length(mafft.aln.pos)){
+        if(acc %in% rownames(mafft.aln.pos[[i]])){
+          v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
+        } 
+      }      
     }
     if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3: Duplicated positions in long alignments')
     
