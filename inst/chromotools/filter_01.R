@@ -104,22 +104,26 @@ for(f in files){
     names.chr.remain = sort(names.chr.remain)
     names.chr = names.chr.remain
   }
+  pokaz(names.chr)
+  
   if(!is.null(words.remove)){
     for(w in words.remove){
       names.chr = names.chr[!grepl(w, names.chr)]
     }
   }
+  pokaz(names.chr)
   
   if(! is.null(words.keep)){
     names.chr.keep = c()
     for(w in words.keep){
-      names.chr.keep = c(names.chr.keep, names.chr[grepl(w, names.chr)])
+      names.chr.keep = c(names.chr.keep, names.chr.init[grepl(w, names.chr.init)])
     }
     names.chr.keep = unique(names.chr.keep)
     names.chr.keep = sort(names.chr.keep)
     names.chr = c(names.chr, names.chr.remain)
     names.chr = unique(names.chr)
   }
+  pokaz(names.chr)
   
   # Save
   names.remove = setdiff(names(genome), names.chr)
