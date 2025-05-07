@@ -120,10 +120,9 @@ for(f in files){
       names.chr.keep = c(names.chr.keep, names.chr.init[grepl(w, names.chr.init)])
       pokaz(w, ':', names.chr.keep)
     }
-    names.chr.keep = unique(names.chr.keep)
-    names.chr.keep = sort(names.chr.keep)
-    names.chr = c(names.chr, names.chr.remain)
+    names.chr = c(names.chr, names.chr.keep)
     names.chr = unique(names.chr)
+    names.chr = sort(names.chr)
   }
   pokaz(names.chr)
   
