@@ -230,6 +230,11 @@ for(s.comb in pref.combinations){
       # Get sequences
       subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), p1, p2, idx.tmp.acc %in% c(idx.large, idx.extra))
       
+      if(names(subsets) == 'GCA_040115645.1.GCA_040115645.1|10|1384970|1385000|+|31'){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop()
+      }
+      
       # Save sequences
       pokaz('---')
       pokaz(names(subsets))
