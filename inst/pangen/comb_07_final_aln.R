@@ -415,7 +415,10 @@ for(s.comb in pref.combinations){
         } 
       }      
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3: Duplicated positions in long alignments')
+    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
+      save(list = ls(), file = "tmp_workspace.RData")
+      stop('3: Duplicated positions in long alignments')
+    } 
     
     # Maybe something was overlapped by accident
     
