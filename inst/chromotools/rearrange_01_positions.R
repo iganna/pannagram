@@ -131,9 +131,9 @@ for(acc in accessions){
     min.len = min(round(i.chr.ref.len * min.overlap.fragment), 10000)
     
     for(i.chr.acc in 1:n.acc){
-      # pokaz(i.chr.ref, i.chr.acc)
       file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
       if(!file.exists(file.aln)) next
+      # pokaz(i.chr.ref, i.chr.acc)
       
       x = readRDS(file.aln)
       x$i.chr.acc = i.chr.acc
@@ -184,24 +184,26 @@ for(acc in accessions){
       corresp.combined = rbind(corresp.combined, df.all)
     }
   }
-  colnames(corresp.pure) = c('i.ref', 'i.acc')
-  corresp.pure = as.data.frame(corresp.pure)
-  
-  # Extend corresp.combined with the overlap
-  for(i.cor in 1:nrow(corresp.pure)){
-    i.chr.acc = abs(corresp.pure$i.acc[i.cor])
-    i.chr.ref = corresp.pure$i.ref[i.cor]
-    
-    corresp.combined = rbind(corresp.combined,
-                             data.frame(beg = 1, 
-                                        end = ref.len$len[i.chr.ref],
-                                        len = ref.len$len[i.chr.ref],
-                                        i.ref = i.chr.ref,
-                                        i.acc = i.chr.acc
-                                        ))
-    
-    
+  if(!is.null(corresp.pure)){
+    colnames(corresp.pure) = c('i.ref', 'i.acc')
+    corresp.pure = as.data.frame(corresp.pure)  
+    # Extend corresp.combined with the overlap
+    for(i.cor in 1:nrow(corresp.pure)){
+      i.chr.acc = abs(corresp.pure$i.acc[i.cor])
+      i.chr.ref = corresp.pure$i.ref[i.cor]
+      
+      corresp.combined = rbind(corresp.combined,
+                               data.frame(beg = 1, 
+                                          end = ref.len$len[i.chr.ref],
+                                          len = ref.len$len[i.chr.ref],
+                                          i.ref = i.chr.ref,
+                                          i.acc = i.chr.acc
+                               ))
+    }
   }
+  
+  
+  
   # print(corresp.combined)
   corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
   # print(corresp.combined)
