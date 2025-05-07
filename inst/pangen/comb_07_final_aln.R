@@ -394,7 +394,7 @@ for(s.comb in pref.combinations){
       } 
     }
     v.aln.nozero = v.aln[v.aln != 0]
-    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0) + 1)){
+    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
       save(list = ls(), file = "tmp_workspace.RData")
       stop('1: Duplicated positions in Singletons')
     } 
@@ -406,7 +406,7 @@ for(s.comb in pref.combinations){
       } 
     }
     v.aln.nozero = v.aln[v.aln != 0]
-    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0) + 1)){
+    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
       save(list = ls(), file = "tmp_workspace.RData")
       stop('2: Duplicated positions in short alignments')
     } 
