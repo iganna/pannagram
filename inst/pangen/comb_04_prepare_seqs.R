@@ -158,10 +158,10 @@ for(s.comb in pref.combinations){
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
-  if(s.comb == '10_10'){
-    save(list = ls(), file = "tmp_workspace.RData")
-    stop('Enough..')
-  }
+  # if(s.comb == '10_10'){
+  #   save(list = ls(), file = "tmp_workspace.RData")
+  #   stop('Enough..')
+  # }
   
   ## ---- Analyse by portions ----
   
@@ -233,6 +233,7 @@ for(s.comb in pref.combinations){
       # Save sequences
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
+      pokaz(aln.seqs.names[idx.tmp.acc])
       
       rm(genome)
     }
