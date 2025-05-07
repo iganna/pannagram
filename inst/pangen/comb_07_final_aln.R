@@ -275,32 +275,35 @@ for(s.comb in pref.combinations){
   # -- 
   # Singletons
   fp.single = list()
-  for(i in 1:length(single.res$len)){
-    n.pos = single.res$len[i] - 2
-    fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
+  if(nrow(single.res) != 0){
+    for(i in 1:length(single.res$len)){
+      n.pos = single.res$len[i] - 2
+      fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
+    }    
   }
 
   pokaz(3)
-  save(list = ls(), file = "tmp_workspace_3_oo.RData")
+  # save(list = ls(), file = "tmp_workspace_3_oo.RData")
   
   # Short
   fp.short = list()
-  for(i in 1:length(msa.res$len)){
-    n.pos = msa.res$len[i]
-    fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
-  }
-  
-  pokaz(4)
-  
-  # Check short
-  for(i in 1:length(msa.res$len)){
-    if(is.null(msa.res$aln[[i]])) next
-    if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-      save(list = ls(), file = "tmp_workspace.RData")
-      stop(paste0('Short', i)) 
+  if(nrow(msa.res) != 0){
+    for(i in 1:length(msa.res$len)){
+      n.pos = msa.res$len[i]
+      fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
+    }    
+    pokaz(4)
+    
+    # Check short
+    for(i in 1:length(msa.res$len)){
+      if(is.null(msa.res$aln[[i]])) next
+      if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop(paste0('Short', i)) 
+      }
     }
   }
-  
+
   pokaz(5)
   
   # Long
