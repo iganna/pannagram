@@ -88,8 +88,8 @@ pref.combinations <- sub(".h5", "", pref.combinations)
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
-
-pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
+pokaz('Number of cores', pref.combinations, file=file.log.main, echo=echo.main)
+pokaz('Combinations', num.cores, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
