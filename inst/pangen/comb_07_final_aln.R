@@ -393,7 +393,11 @@ for(s.comb in pref.combinations){
         # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1: Duplicated positions in Singletons')
+    v.aln.nozero = v.aln[v.aln != 0]
+    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0) + 1)){
+      save(list = ls(), file = "tmp_workspace.RData")
+      stop('1: Duplicated positions in Singletons')
+    } 
     
     # Add short
     for(i in 1:length(msa.res$len)){
@@ -401,8 +405,8 @@ for(s.comb in pref.combinations){
         v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
-      
+    v.aln.nozero = v.aln[v.aln != 0]
+    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0) + 1)){
       save(list = ls(), file = "tmp_workspace.RData")
       stop('2: Duplicated positions in short alignments')
     } 
