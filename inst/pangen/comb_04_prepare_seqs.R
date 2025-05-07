@@ -159,8 +159,8 @@ for(s.comb in pref.combinations){
           paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
   
-  # save(list = ls(), file = "tmp_workspace.RData")
-  # stop('Enough..')
+  save(list = ls(), file = "tmp_workspace.RData")
+  stop('Enough..')
   
   ## ---- Analyse by portions ----
   
