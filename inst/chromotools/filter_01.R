@@ -18,6 +18,7 @@ option_list <- list(
   make_option(c("--path.filtered"),  type = "character", default = NULL, help = "Path to the output directory with alignments"),
   make_option(c("--words.remove"),   type = "character", default = NULL, help = "Substring in names to remove"),
   make_option(c("--words.remain"),   type = "character", default = NULL, help = "Substring in names to remain"),
+  make_option(c("--words.keep"),     type = "character", default = NULL, help = "Substring in names to keep for sure"),
   
   make_option(c("--cores"),         type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option(c("--path.log"),      type = "character", default = NULL, help = "Path for log files"),
@@ -50,6 +51,7 @@ path.filtered <- ifelse(!is.null(opt$path.filtered), opt$path.filtered, stop('Fo
 
 words.remove <- opt$words.remove
 words.remain <- opt$words.remain
+words.keep <- opt$words.keep
 
 if(!is.null(words.remain)){
   words.remain = gsub(" ", "", words.remain)
@@ -61,6 +63,12 @@ if(!is.null(words.remove)){
   words.remove = gsub(" ", "", words.remove)
   words.remove = strsplit(words.remove, ',')[[1]]
   pokaz("Words to remove:", words.remove)
+}
+
+if(!is.null(words.keep)){
+  words.keep = gsub(" ", "", words.keep)
+  words.keep = strsplit(words.keep, ',')[[1]]
+  pokaz("Words to keep for sure:", words.keep)
 }
 
 # Create folders for the alignment results
@@ -84,6 +92,7 @@ for(f in files){
   names.chr = names(genome)
   names.chr = gsub(" ", '_', names.chr)
   names(genome) = names.chr
+  names.chr.init = names.chr
   
   # Filtering
   if(!is.null(words.remain)){
@@ -99,6 +108,17 @@ for(f in files){
     for(w in words.remove){
       names.chr = names.chr[!grepl(w, names.chr)]
     }
+  }
+  
+  if(! is.null(words.keep)){
+    names.chr.keep = c()
+    for(w in words.keep){
+      names.chr.keep = c(names.chr.keep, names.chr[grepl(w, names.chr)])
+    }
+    names.chr.keep = unique(names.chr.keep)
+    names.chr.keep = sort(names.chr.keep)
+    names.chr = c(names.chr, names.chr.remain)
+    names.chr = unique(names.chr)
   }
   
   # Save

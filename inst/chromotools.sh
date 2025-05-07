@@ -80,6 +80,7 @@ path_in=""
 path_out=""
 words_remove=""
 words_remain=""
+words_keep=""
 path_aln=""
 resort=false
 rearrange=false
@@ -93,6 +94,7 @@ while [ $# -gt 0 ]; do
         -path_out)        require_arg $1 $2; path_out=$2; shift 2 ;;
         -remove)          require_arg $1 $2; words_remove=$2; shift 2 ;;
         -remain)          require_arg $1 $2; words_remain=$2; shift 2 ;;
+        -keep)            require_arg $1 $2; words_keep=$2; shift 2 ;;
         -path_aln)        require_arg $1 $2; path_aln=$2; shift 2 ;;
         -resort)          resort=true; shift ;;
         -rearrange)       rearrange=true; shift ;;
@@ -169,6 +171,7 @@ if [ "$mode_filter" = true ]; then
 
     param_words_remove=""
     param_words_remain=""
+    param_words_keep=""
 
     if [[ -n "${words_remove}" ]]; then
         param_words_remove="--words.remove ${words_remove}"
@@ -178,12 +181,17 @@ if [ "$mode_filter" = true ]; then
         param_words_remain="--words.remain ${words_remain}"
     fi
 
+    if [[ -n "${words_keep}" ]]; then
+        param_words_keep="--words.keep ${words_keep}"
+    fi
+
     Rscript $INSTALLED_PATH/chromotools/filter_01.R \
         --path.genomes ${path_in} \
         --path.filtered ${path_out} \
         --cores ${cores} \
         ${param_words_remove} \
-        ${param_words_remain}
+        ${param_words_remain} \
+        ${param_words_keep}
 
 fi
 

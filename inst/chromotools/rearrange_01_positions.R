@@ -116,7 +116,7 @@ for(acc in accessions){
   
   n.acc = max(result[,1])
   n.ref = max(result[,2])
-  # pokaz(n.acc, n.ref)
+  pokaz(n.acc, n.ref)
   
   pokaz("Correspondence to genome", ref, "(reference)...")
   
