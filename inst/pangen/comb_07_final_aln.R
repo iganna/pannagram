@@ -126,87 +126,92 @@ for(s.comb in pref.combinations){
   mafft.aln.pos = list()
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
-  for(i in 1:nrow(mafft.res)){
-    if(nrow(mafft.res) == 0) break
-  
-    # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
-    
-    file.aln = paste0(path.mafft.out, mafft.res$file[i])
-    
-    if(!file.exists(file.aln)) {
-      idx.skip = c(idx.skip, i)
-      next
-    }
-
-    if (grepl("_aligned2", mafft.res$file[i])) {
-      remove.flank = F
-    } else {
-      remove.flank = T
-    }
-    
-    aln.seq = readFasta(file.aln)
+  if(nrow(mafft.res) > 0){
     
     
-    # ---
-    # WITHOUT REFINEMENT
-    n.aln.seq = length(aln.seq)
-    name.aln.seq = names(aln.seq)
-    name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
-    pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
-
-
-    len.aln.seq <- nchar(aln.seq[1])
-    # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
-    pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
-    for (i.seq in 1:length(aln.seq)) {
-      tmp = strsplit(aln.seq[i.seq], "")[[1]]
-      tmp.nongap = which(tmp != '-')
+    for(i in 1:nrow(mafft.res)){
       
-      if(remove.flank){
-        tmp.nongap = tmp.nongap[-(1:(n.flank))]
-        tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]  
+      # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
+      
+      file.aln = paste0(path.mafft.out, mafft.res$file[i])
+      
+      if(!file.exists(file.aln)) {
+        idx.skip = c(idx.skip, i)
+        next
       }
       
-      p1 = pos.aln[1, i.seq]
-      p2 = pos.aln[2, i.seq]
-      pos.tmp = p1:p2
-      pos.mx[i.seq, tmp.nongap] = pos.tmp
+      if (grepl("_aligned2", mafft.res$file[i])) {
+        remove.flank = F
+      } else {
+        remove.flank = T
+      }
+      
+      aln.seq = readFasta(file.aln)
+      
+      
+      # ---
+      # WITHOUT REFINEMENT
+      n.aln.seq = length(aln.seq)
+      name.aln.seq = names(aln.seq)
+      name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
+      pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
+      
+      
+      len.aln.seq <- nchar(aln.seq[1])
+      # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
+      pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
+      for (i.seq in 1:length(aln.seq)) {
+        tmp = strsplit(aln.seq[i.seq], "")[[1]]
+        tmp.nongap = which(tmp != '-')
+        
+        if(remove.flank){
+          tmp.nongap = tmp.nongap[-(1:(n.flank))]
+          tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]  
+        }
+        
+        p1 = pos.aln[1, i.seq]
+        p2 = pos.aln[2, i.seq]
+        pos.tmp = p1:p2
+        pos.mx[i.seq, tmp.nongap] = pos.tmp
+      }
+      # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
+      pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
+      row.names(pos.mx) = name.acc
+      
+      if(min(colSums(pos.mx != 0)) == 0){
+        pokaz(mafft.res$file[i])
+        stop('Zeros in the alignment')
+      }
+      
+      
+      mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
+      # ---
+      
     }
-    # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
-    pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
-    row.names(pos.mx) = name.acc
     
-    if(min(colSums(pos.mx != 0)) == 0){
-      pokaz(mafft.res$file[i])
-      stop('Zeros in the alignment')
+    if(length(idx.skip) > 0){
+      mafft.aln.pos = mafft.aln.pos[-idx.skip]
+      mafft.res = mafft.res[-idx.skip,,drop=F]
     }
-
-
-    mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
-    # ---
     
-  }
-  
-  if(length(idx.skip) > 0){
-    mafft.aln.pos = mafft.aln.pos[-idx.skip]
-    mafft.res = mafft.res[-idx.skip,,drop=F]
-  }
-  
-  # warnings()
-  mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
-  mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-  
-  # Skip if some are shorter than the initial aligned block
-  idx.confusing = which(mafft.res$extra < 0)
-  if(length(idx.confusing) > 0){
-    pokazAttention('Long: Wrong lengths of alignment and gaps')
-    pokazAttention("N confusing:", length(idx.confusing))
+    # warnings()
+    mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
+    mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
     
-    mafft.res = mafft.res[-idx.confusing,,drop=F]
-    mafft.aln.pos = mafft.aln.pos[-idx.confusing]
-  } 
-  # if(min(mafft.res$extra) < 0) stop()
-  mafft.res$extra[mafft.res$extra < 0] = 0
+    # Skip if some are shorter than the initial aligned block
+    idx.confusing = which(mafft.res$extra < 0)
+    if(length(idx.confusing) > 0){
+      pokazAttention('Long: Wrong lengths of alignment and gaps')
+      pokazAttention("N confusing:", length(idx.confusing))
+      
+      mafft.res = mafft.res[-idx.confusing,,drop=F]
+      mafft.aln.pos = mafft.aln.pos[-idx.confusing]
+    } 
+    # if(min(mafft.res$extra) < 0) stop()
+    mafft.res$extra[mafft.res$extra < 0] = 0
+  } else {
+    mafft.res = data.frame()
+  }
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
