@@ -275,11 +275,13 @@ for(s.comb in pref.combinations){
   # -- 
   # Singletons
   fp.single = list()
-  if(nrow(single.res) != 0){
-    for(i in 1:length(single.res$len)){
-      n.pos = single.res$len[i] - 2
-      fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
-    }    
+  if(length(single.res) != 0){
+    if(length(single.res$len) != 0){
+      for(i in 1:length(single.res$len)){
+        n.pos = single.res$len[i] - 2
+        fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
+      } 
+    }
   }
 
   pokaz(3)
