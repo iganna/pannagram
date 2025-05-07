@@ -289,7 +289,7 @@ for(s.comb in pref.combinations){
   
   # Short
   fp.short = list()
-  if(nrow(msa.res) != 0){
+  if(length(msa.res) != 0){
     for(i in 1:length(msa.res$len)){
       n.pos = msa.res$len[i]
       fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
