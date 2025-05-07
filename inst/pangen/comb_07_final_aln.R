@@ -127,6 +127,7 @@ for(s.comb in pref.combinations){
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
   for(i in 1:nrow(mafft.res)){
+    if(nrow(mafft.res) == 0) break
   
     # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
     
