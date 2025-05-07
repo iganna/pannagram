@@ -158,9 +158,10 @@ for(s.comb in pref.combinations){
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
-  
-  save(list = ls(), file = "tmp_workspace.RData")
-  stop('Enough..')
+  if(s.comb == '10_10'){
+    save(list = ls(), file = "tmp_workspace.RData")
+    stop('Enough..')
+  }
   
   ## ---- Analyse by portions ----
   
