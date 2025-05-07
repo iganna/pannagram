@@ -155,6 +155,7 @@ for(s.comb in pref.combinations){
       #   # stop()
       # }
       
+      save(list = ls(), file = "tmp_workspace_s.RData")
       n.pos = nchar(aln[1])
       
       aln.text <- paste(names(aln), collapse = "\n")
