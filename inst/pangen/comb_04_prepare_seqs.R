@@ -231,6 +231,8 @@ for(s.comb in pref.combinations){
       subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), p1, p2, idx.tmp.acc %in% c(idx.large, idx.extra))
       
       # Save sequences
+      pokaz('---')
+      pokaz(names(subsets))
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
       pokaz(aln.seqs.names[idx.tmp.acc])
