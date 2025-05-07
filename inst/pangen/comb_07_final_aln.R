@@ -415,7 +415,9 @@ for(s.comb in pref.combinations){
         } 
       }      
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
+    
+    v.aln.nozero = v.aln[v.aln != 0]
+    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
       save(list = ls(), file = "tmp_workspace.RData")
       stop('3: Duplicated positions in long alignments')
     } 
