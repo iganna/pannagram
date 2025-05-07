@@ -42,7 +42,7 @@ do
     case $1 in
         -h) print_usage_short; print_examples; exit ;;
         -help ) print_usage_detailed; print_examples; exit ;;
-        -s | -stage ) step_start="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
+        -s | -stage | -step ) step_start="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -e | -end )   step_end="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -log)         log_level=$2;    shift 2 ;;  # path to the output
         -cores)       cores=$2;        shift 2 ;;
