@@ -382,6 +382,8 @@ for(s.comb in pref.combinations){
     v.aln[fp.main[pos.nonzero]] = v[pos.nonzero]
     # v.aln[fp.main[pos.remain]] = v[pos.remain]
     
+    save(list = ls(), file = 'tmx_workspace_step18.RData')
+    
     # Add singletons
     if(length(single.res) != 0){
       for(i in 1:length(single.res$len)){
