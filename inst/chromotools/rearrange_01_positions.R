@@ -147,7 +147,7 @@ for(acc in accessions){
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
     if(is.null(i.chr.corresp)){
-      pokaz('No correspondence for i.chr.ref')
+      pokaz('No correspondence for', i.chr.ref)
       next
     }
     pokaz('Corresp for', i.chr.ref, 'is', i.chr.corresp)

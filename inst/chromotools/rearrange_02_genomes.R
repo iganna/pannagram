@@ -98,6 +98,25 @@ min.overlap.fragment = 0.01
 
 
 # ***********************************************************************
+# ---- Define the chromosomes, which have the correspondence in all accessions ----
+ref.chromosomes = c()
+for(acc in accessions){
+  pokaz('Accession', acc)
+  
+  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+  acc.len = read.table(file.acc.len, header = 1)
+  
+  corresp.acc2ref = readRDS(paste0(path.processed, 'corresp_',acc,'_to_',ref, '.rds'))
+  if(acc == accessions[1]){
+    ref.chromosomes = unique(corresp.acc2ref$i.ref)
+  } else {
+    ref.chromosomes = setdiff(ref.chromosomes, corresp.acc2ref$i.ref)
+  }
+}
+ref.chromosomes = sort(ref.chromosomes)
+pokaz('Reference chromosomes:', ref.chromosomes)
+
+
 # ---- Main loop ----
 for(acc in accessions){
   pokaz('Accession', acc)
@@ -109,7 +128,7 @@ for(acc in accessions){
   print(corresp.acc2ref)
   
   n.acc = max(corresp.acc2ref$i.acc)
-  n.ref = max(corresp.acc2ref$i.ref)
+  # n.ref = max(corresp.acc2ref$i.ref)
 
   genome = list()
   for(i.chr.acc in 1:n.acc){
@@ -119,7 +138,7 @@ for(acc in accessions){
   }
   
   genome.ref = c()
-  for(i.chr.ref in 1:n.ref){
+  for(i.chr.ref in ref.chromosomes){
     corresp.tmp = corresp.acc2ref[corresp.acc2ref$i.ref == i.chr.ref,]
     if(nrow(corresp.tmp) == 0) next
     corresp.tmp = corresp.tmp[order(abs(corresp.tmp$pos)),]
@@ -140,7 +159,7 @@ for(acc in accessions){
 
 # Also copy the reference genome
 genome = c()
-for(i.chr.ref in 1:n.ref){
+for(i.chr.ref in ref.chromosomes){
   file.chr = paste0(path.chr, ref, '_chr', i.chr.ref, '.fasta')
   checkFile(file.chr)
   genome[paste0(ref, '_Chr',i.chr.ref)] = readFasta(file.chr)
