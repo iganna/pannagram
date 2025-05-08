@@ -383,33 +383,38 @@ for(s.comb in pref.combinations){
     # v.aln[fp.main[pos.remain]] = v[pos.remain]
     
     # Add singletons
-    for(i in 1:length(single.res$len)){
-      if(single.res$pos.beg[i, acc] != 0){
-        # if(i == 2) stop('670')
-        pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
-        pos = pos[-c(1, length(pos))]
+    if(length(single.res) != 0){
+      for(i in 1:length(single.res$len)){
+        if(single.res$pos.beg[i, acc] != 0){
+          # if(i == 2) stop('670')
+          pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
+          pos = pos[-c(1, length(pos))]
           
-        v.aln[fp.single[[i]]] = pos
-        # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
+          v.aln[fp.single[[i]]] = pos
+          # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
+        } 
+      }   
+      v.aln.nozero = v.aln[v.aln != 0]
+      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('1: Duplicated positions in Singletons')
       } 
     }
-    v.aln.nozero = v.aln[v.aln != 0]
-    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-      save(list = ls(), file = "tmp_workspace.RData")
-      stop('1: Duplicated positions in Singletons')
-    } 
-    
+
     # Add short
-    for(i in 1:length(msa.res$len)){
-      if(acc %in% colnames(msa.res$aln[[i]])){
-        v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
-      } 
+    if(length(msa.res$len) != 0){
+      for(i in 1:length(msa.res$len)){
+        if(acc %in% colnames(msa.res$aln[[i]])){
+          v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
+        } 
+      }
+      v.aln.nozero = v.aln[v.aln != 0]
+      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('2: Duplicated positions in short alignments')
+      }       
     }
-    v.aln.nozero = v.aln[v.aln != 0]
-    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-      save(list = ls(), file = "tmp_workspace.RData")
-      stop('2: Duplicated positions in short alignments')
-    } 
+
     
     # add long
     if(length(mafft.aln.pos) != 0){
@@ -418,13 +423,12 @@ for(s.comb in pref.combinations){
           v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
         } 
       }      
+      v.aln.nozero = v.aln[v.aln != 0]
+      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('3: Duplicated positions in long alignments')
+      } 
     }
-    
-    v.aln.nozero = v.aln[v.aln != 0]
-    if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-      save(list = ls(), file = "tmp_workspace.RData")
-      stop('3: Duplicated positions in long alignments')
-    } 
     
     # Maybe something was overlapped by accident
     
