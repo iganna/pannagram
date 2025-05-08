@@ -146,7 +146,11 @@ for(acc in accessions){
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
     }
     i.chr.corresp = unique(x.all$i.chr.acc)
-    pokaz('Corresp', i.chr.corresp)
+    if(is.null(i.chr.corresp)){
+      pokaz('No correspondence for i.chr.ref')
+      next
+    }
+    pokaz('Corresp for', i.chr.ref, 'is', i.chr.corresp)
     
     if(length(i.chr.corresp) == 1){
       i.chr.acc = i.chr.corresp
