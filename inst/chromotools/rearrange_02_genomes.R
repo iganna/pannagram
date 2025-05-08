@@ -110,8 +110,9 @@ for(acc in accessions){
   if(acc == accessions[1]){
     ref.chromosomes = unique(corresp.acc2ref$i.ref)
   } else {
-    ref.chromosomes = setdiff(ref.chromosomes, corresp.acc2ref$i.ref)
+    ref.chromosomes = intersect(ref.chromosomes, corresp.acc2ref$i.ref)
   }
+  pokaz(ref.chromosomes)
 }
 ref.chromosomes = sort(ref.chromosomes)
 pokaz('Reference chromosomes:', ref.chromosomes)
