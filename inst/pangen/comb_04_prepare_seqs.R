@@ -240,11 +240,11 @@ for(s.comb in pref.combinations){
       # }
       
       # Save sequences
-      pokaz('---')
-      pokaz(names(subsets))
+      # pokaz('---')
+      # pokaz(names(subsets))
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
-      pokaz(aln.seqs.names[idx.tmp.acc])
+      # pokaz(aln.seqs.names[idx.tmp.acc])
       
       rm(genome)
     }
