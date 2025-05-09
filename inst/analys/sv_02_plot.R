@@ -159,7 +159,7 @@ cnt = as.matrix(table(sv.se$freq.max[sv.se$len>=len.min], sv.se$len.gr[sv.se$len
 
 f.max = max(sv.se$freq.max)
 
-if(length(cnt) != 1){
+if(f.max != 1){
   cnt = rowSums(cnt)
   df = data.frame(Var1 = 1:length(cnt), value = cnt)
   g <- ggplot(df, aes(Var1, value)) +
