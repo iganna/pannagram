@@ -109,7 +109,7 @@ p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
     axis.text.y = element_blank(),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    legend.position = "inside",
+    # legend.position = "inside",
     legend.position.inside = c(0.04, 0.93),
     legend.justification = c(0, 1),
     legend.background = element_blank(),
