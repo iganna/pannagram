@@ -230,13 +230,21 @@ fi
 if [ "$run_sv_call" = true ]; then
     pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
-    # So, sonsensus should be run before GFF
+    # So, consensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
-    Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
-        --path.cons ${path_consensus} \
-        --ref.pref  ${ref_pref} \
-        --aln.type ${aln_type} \
-        --acc.anal ${acc_anal}
+
+    # Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
+    #     --path.cons ${path_consensus} \
+    #     --ref.pref  ${ref_pref} \
+    #     --aln.type ${aln_type} \
+    #     --acc.anal ${acc_anal}
+
+    # path_plots="${path_consensus}plot_svs/"
+    # mkdir -p ${path_plots}
+
+    Rscript $INSTALLED_PATH/analys/sv_02_plot.R \
+        --path.cons ${path_consensus} 
+
 fi
 
 
