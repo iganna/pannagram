@@ -62,7 +62,7 @@ color.len <- c(
 )
 
 # ***********************************************************************
-# ---- Simple-Complex pie chart ----
+# ---- Reading the data ----
 
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 if(!file.exists(file.sv.pos)){
@@ -70,6 +70,14 @@ if(!file.exists(file.sv.pos)){
 }
 sv.all = readRDS(file.sv.pos)
 sv.all$chr = as.numeric(sv.all$chr)
+
+sv.se = sv.all[sv.all$single == 1,]
+sv.se$len.gr =  cut(sv.se$len, breaks = len.bins, right = FALSE, labels = len.labels)
+
+f.max = max(sv.se$freq.max)
+
+# ***********************************************************************
+# ---- Simple-Complex pie chart ----
 
 # Print stat
 res.len = c()
@@ -152,12 +160,7 @@ dev.off()
 # ***********************************************************************
 # ---- Length distribution ----
 
-sv.se = sv.all[sv.all$single == 1,]
-sv.se$len.gr =  cut(sv.se$len, breaks = len.bins, right = FALSE, labels = len.labels)
-
 cnt = as.matrix(table(sv.se$freq.max[sv.se$len>=len.min], sv.se$len.gr[sv.se$len>=len.min]))
-
-f.max = max(sv.se$freq.max)
 
 if(f.max != 1){
   cnt = rowSums(cnt)
