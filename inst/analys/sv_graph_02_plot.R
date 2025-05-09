@@ -42,6 +42,7 @@ if(!dir.exists(path.figures)) stop(paste0('Folder for SV figures does nto exist'
 # ***********************************************************************
 # ---- Values ----
 len.min = 15 
+sim.cutoff = 0.9
 
 
 # Binning
@@ -82,7 +83,7 @@ res.nest = readRDS(paste(path.sv, res.cover.file, sep = ''))
 # ***********************************************************************
 # ----Construct the graph ----
 
-file.g.content = paste0(path.sv, 'g_content.rds')
+file.g.content = paste0(path.sv, 'g_content_sim',round(sim.cutoff * 100),'.rds')
 # remove duplicates in orientations
 if(!file.exists(file.g.content)){
   idx = which(duplicated(res.nest[,c('V1', 'V8')]))
