@@ -72,6 +72,7 @@ run_sv_call=false
 run_sv_sim=false
 run_sv_graph=false
 run_annogroup=false
+run_sv_sim_prot=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -94,6 +95,8 @@ while [ $# -gt 0 ]; do
         -sv_call|-sv)    run_sv_call=true;       shift;;           # SV calling from the alignment
         -sv_sim)         set_file="$2";                            # File to compare SVs against set of sequences
                          run_sv_sim=true;        shift 2;;         
+        -sv_sim_prot)    set_file_prot="$2";                            # File to compare SVs against set of sequences
+                         run_sv_sim_prot=true;        shift 2;;         
         -sv_graph)       run_sv_graph=true;      shift;;           # Construction of a graph on SVs
         -sim)            similarity_value=$2;    shift 2;;         # Similarity value
 
@@ -315,8 +318,17 @@ if [ "$run_sv_graph" = true ]; then
     Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
         --path.cons ${path_consensus} 
 
+
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
         --path.cons ${path_consensus} 
+
+    if [ "$run_sv_sim_prot" = true ]; then
+        makeblastdb -in ${set_file_prot} -dbtype prot
+        blastp -db ${set_file_prot} -query ${path_consensus}sv/sv_in_graph_orfs.fasta \
+                -out blast_sv_orfs_on_set.txt \
+                -outfmt "7 qseqid qstart qend sstart send pident length  sseqid" -num_threads ${cores}
+
+    fi
 
 fi
 

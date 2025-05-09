@@ -46,7 +46,7 @@ if(!dir.exists(path.figures)) stop(paste0('Folder for SV figures does nto exist'
 # ***********************************************************************
 # ---- Values ----
 
-len.aa.min = 300
+len.aa.min = 200
 
 # Binning
 len.bins <- c(0, 100, 200, 400, 800, 1000, 3000, 5000, 7000, 12000, Inf)
@@ -73,11 +73,26 @@ sv.seqs = readFasta(paste0(path.sv, 'seq_sv_big.fasta'))
 
 sv.seqs = sv.seqs[names(sv.partition)]
 
-pokaz('Numer of SVs is', length(sv.seqs))
+sv.seqs = sv.seqs[nchar(sv.seqs) > len.aa.min * 3]
+
+pokaz('Numer of SVs to analyse is', length(sv.seqs))
 
 # ***********************************************************************
-# ---- Make a collapsed graph ----
+# ---- Get ORFs for every SV ----
 
+
+orfs = c()
+for(i.s in 1:length(sv.seqs)){
+  s = sv.seqs[i.s]
+  ref = orfFinder(s)
+  orf.tmp = ref$orf[nchar(ref$orf) > len.aa.min]
+  if(length(orf.tmp) == 0) next
+  names(orf.tmp) = paste(names(s), names(orf.tmp), sep='|')
+  orfs = c(orfs, orf.tmp)
+}
+
+pokaz('Numer of ORFs is', length(orfs))
+writeFasta(orfs, paste0(path.sv, 'sv_in_graph_orfs.fasta'))
 
 
 
