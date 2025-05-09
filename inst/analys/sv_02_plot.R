@@ -10,19 +10,18 @@ suppressMessages({ library(Biostrings)
   library(crayon)
 })
 
-pokazAttention('Make sure that the consensus sequences for the pangenome chromosomes have been generated.')
 
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
-  make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing"),
+  make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
 );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-
+# print(opt)
 
 # ***********************************************************************
 # Paths

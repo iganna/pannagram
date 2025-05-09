@@ -242,7 +242,6 @@ if [ "$run_sv_call" = true ]; then
     # path_plots="${path_consensus}plot_svs/"
     # mkdir -p ${path_plots}
 
-    echo ${path_consensus} 
     Rscript $INSTALLED_PATH/analys/sv_02_plot.R \
         --path.cons ${path_consensus} 
 
