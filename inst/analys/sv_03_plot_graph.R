@@ -74,6 +74,7 @@ color.len <- c(
 
 # ***********************************************************************
 # ---- Reading the data ----
+pokaz('Reading the data...')
 
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 if(!file.exists(file.sv.pos)){
@@ -92,6 +93,7 @@ res.nest = readRDS(paste(path.sv, res.cover.file, sep = ''))
 
 # ***********************************************************************
 # ---- Make a collapsed graph ----
+pokaz('Make a collapsed graph...')
 
 file.g.content = paste0(path.sv, 'g_content_sim',round(sim.cutoff * 100),'.rds')
 
@@ -130,6 +132,8 @@ g.content.init = g.content
 # ***********************************************************************
 # ---- Remain only the nodes with nore than 2 sequences ----
 
+pokaz('Remain only the nodes with nore than 2 sequences...')
+
 g.content = g.content.init
 node.remain = g.content$nodes.traits$node[g.content$nodes.traits$cnt >=  min.cnt]
 sv.remain = g.content$nodes$name[g.content$nodes$node %in% node.remain]
@@ -165,6 +169,7 @@ savePNG(p.refined, path = path.figures, name = 'graph_01_init', width = 6, heigh
 
 # ***********************************************************************
 # ---- Filtration 2: Component size and length of nodes ----
+pokaz('Filtration 2: Component size and length of nodes...')
 
 # Components
 g.comp <- getGraphComponents(g.content$edges)
@@ -188,6 +193,7 @@ g.content$edges.small = edges[!idx.short,]
 
 # ***********************************************************************
 # ---- Construct the reduced graph ----
+pokaz('Construct the reduced graph...')
 
 ## Collapse small graph
 names.tmp = unique(c(g.content$edges.small))
@@ -216,6 +222,7 @@ savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.siz
 
 # ***********************************************************************
 # ---- Partition of the reduced graph ----
+pokaz('Partition of the reduced graph...')
 
 # I-graph
 edges <- g.content.small$edges 
@@ -252,13 +259,15 @@ savePNG(p.partition, path = path.figures, name = paste0('graph_03_louvain'), wid
 
 
 # ***********************************************************************
-# ---- Filter edges because of the partition ---
+# ---- Filter edges because of the partition ----
+
 edges.keep <- edges[partition[edges[,1]] == partition[edges[,2]],]
 edges = edges.keep
 
 
 # ***********************************************************************
-# ---- Put back all of the SVs ---
+# ---- Put back all of the SVs ----
+pokaz('Put back all of the SVs...')
 
 # Add short sequences back is they are all connect to the same cluster
 
@@ -303,7 +312,8 @@ for(s.sv in sv.names.short){
 edges = edges.add
 
 # ***********************************************************************
-# ---- Filtration ---
+# ---- Filtration ----
+pokaz('Filtration small components...')
 
 ### Remove small components
 g.comp <- getGraphComponents(edges)
@@ -316,7 +326,10 @@ edges = edges[(edges[,1] %in% sv.name.moderate),]
 
 
 # ***********************************************************************
-# ---- Filan partitioning ---
+# ---- Final partitioning ----
+
+pokaz('Final partitioning...')
+
 igraph_g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
 igraph_g <- as.undirected(igraph_g, mode = "collapse")
 
@@ -332,13 +345,13 @@ write.table(as.matrix(partition), paste0(path.sv, 'sv_partition_solved.txt'),
 
 
 # ***********************************************************************
-# ---- Save ---
+# ---- Save ----
 ## Save edges
 saveRDS(edges, paste0(path.sv, 'edges_solved.rds'))
 write.table(edges, paste0(path.sv, 'edges_solved.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
 
 # ***********************************************************************
-# ---- Plot ---
+# ---- Plot ----
 
 # Create graph
 g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -360,7 +373,7 @@ p.refined <- ggnet2(
 p.refined
 
 savePNG(p.refined, path = path.figures, name = paste0('graph_05_solved'),
-        width = 7, height = 6)
+        width = 6, height = 6)
 
 # ***********************************************************************
 # ---- Colored by length ----
