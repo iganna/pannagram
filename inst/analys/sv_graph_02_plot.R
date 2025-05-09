@@ -9,6 +9,10 @@ suppressMessages({ library(Biostrings)
   library(pannagram)
   library(crayon)
   library(ggplot2)
+  
+  library(igraph)
+  library(ggnet)
+  library(network)
 })
 
 
