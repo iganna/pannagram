@@ -8,6 +8,7 @@ suppressMessages({ library(Biostrings)
   library("optparse")
   library(pannagram)
   library(crayon)
+  library(ggplot2)
 })
 
 
@@ -35,6 +36,7 @@ if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.cons))
 
 
 path.figures = paste0(path.cons, 'plot_svs/')
+pokaz('Folder with figures',path.figures)
 if (!dir.exists(path.sv)) dir.create(path.sv)
 if(!dir.exists(path.sv)) stop(paste0('Folder for Sv figures does nto exist', path.cons))
 
