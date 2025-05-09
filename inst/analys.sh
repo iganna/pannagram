@@ -242,7 +242,7 @@ if [ "$run_sv_call" = true ]; then
     # path_plots="${path_consensus}plot_svs/"
     # mkdir -p ${path_plots}
 
-    Rscript $INSTALLED_PATH/analys/sv_02_plot.R \
+    Rscript $INSTALLED_PATH/analys/sv_02_plot_stat.R \
         --path.cons ${path_consensus} 
 
 fi
@@ -312,7 +312,10 @@ if [ "$run_sv_graph" = true ]; then
 
 
     pokaz_stage "Plotting SV-Graph..."
-    Rscript $INSTALLED_PATH/analys/sv_graph_02_plot.R \
+    Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
+        --path.cons ${path_consensus} 
+
+    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
         --path.cons ${path_consensus} 
 
 fi
