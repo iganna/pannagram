@@ -226,7 +226,7 @@ for(s.comb in pref.combinations){
   
   if(nrow(sv.pos) == 0){
     pokazAttention('SVs were not generaed, and IT IS OK!')
-    quit(save = "no", status = 0)
+    next
   }
   
   # Calculate frequencies
