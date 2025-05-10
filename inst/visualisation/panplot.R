@@ -452,7 +452,6 @@ getBlocksBwNeiAccs <- function(idx.break, i.chr, accessions, i.order){
 splitBlocksByGrid <- function(df.blocks, wnd.size = 1000000){
   
   # message(paste('window size', wnd.size))
-  print(df.blocks)
   n.bl = nrow(df.blocks)
   for(irow in 1:n.bl){
     d = df.blocks$pan.e[irow] - df.blocks$pan.b[irow] 
@@ -614,6 +613,8 @@ panplot <- function(idx.break, i.chr, accessions=NULL, i.order=NULL, file.cen.po
   
   # Blocks by grid
   # wnd.size = 100000
+  
+  save(list = ls(), file = "tmp_workspace_blocks.RData")
   
   df.plot = splitBlocksByGrid(df.blocks, wnd.size = wnd.size)
   
