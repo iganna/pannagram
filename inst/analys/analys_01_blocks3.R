@@ -162,8 +162,6 @@ for(i.chr in 1:n.chr){
   df.tmp = df.all
   df.tmp$acc <- factor(df.tmp$acc, levels = accessions[i.order])
   
-  save(list = ls(), file = "tmp_workspace_plot.RData")
-  
   p = panplot(df.tmp, i.chr, accessions = accessions, i.order = i.order, wnd.size=wnd.size) 
   
   pdf(paste(path.figures, 'fig_synteny_chr',i.chr,'.pdf', sep = ''), width = 6, height = 4 / 27 * length(accessions))
