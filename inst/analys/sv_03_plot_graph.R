@@ -357,8 +357,8 @@ sv.name.moderate = names(g.comp$membership)[g.comp$membership %in% idx.moderate]
 edges = edges[(edges[,1] %in% sv.name.moderate),]
 
 if(nrow(edges) == 0){
-  pokazAttention('Nu graph was generated, not enough SVs')
-  return(NULL)
+  pokazAttention('No graph was generated, not enough SVs')
+  quit(save = "no", status = 0)
 }
 
 # ***********************************************************************
