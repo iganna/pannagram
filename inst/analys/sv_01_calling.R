@@ -187,7 +187,11 @@ for(s.comb in pref.combinations){
   colnames(sv.beg) = accessions
   colnames(sv.end) = accessions
   
+  
+  save(list = ls(), file = "tmp_workspace_sv.RData")
+  
   # Check ranks
+  pokaz('Check ranks...')
   for(acc in accessions){
     acc.r = c(sv.beg[,acc] + 0.1, sv.end[,acc] - 0.1)
     acc.r = rank(abs(acc.r)) * sign(acc.r)
@@ -202,6 +206,7 @@ for(s.comb in pref.combinations){
   }
   
   # Clean up empty
+  pokaz('Clean up empty...')
   sv.na = (rowSums(sv.beg) == 0) | (rowSums(sv.end) == 0)
   sv.pos = sv.pos[!sv.na,]
   sv.beg = sv.beg[!sv.na,]
