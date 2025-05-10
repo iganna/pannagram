@@ -72,7 +72,7 @@ stat.comb <- data.frame(comb = character(),
 
 
 for(s.comb in pref.combinations){
-  s.comb = '7_7'
+  s.comb = '8_8'
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
@@ -244,7 +244,12 @@ for(s.comb in pref.combinations){
     
     save(list = ls(), file = "tmp_workspace_x.RData")
     
-    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
+    if(dim(single.res$pos.end) != 0){
+      single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1  
+    } else {
+      single.res$len = sum(single.res$pos.end) - sum(single.res$pos.beg)  + 1
+    }
+    
     single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
     
     idx.confusing = which((single.res$ref.pos$end - single.res$ref.pos$beg - 1) != 0)
