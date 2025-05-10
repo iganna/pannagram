@@ -242,13 +242,17 @@ for(s.comb in pref.combinations){
   if(file.exists(file.single.res)){
     single.res = readRDS(file.single.res)
     
-    save(list = ls(), file = "tmp_workspace_x.RData")
+    # save(list = ls(), file = "tmp_workspace_x.RData")
     
     if(!is.null(dim(single.res$pos.end))){
-      single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1  
-    } else {
-      single.res$len = sum(single.res$pos.end) - sum(single.res$pos.beg)  + 1
+      single.res$pos.end = t(as.matrix(single.res$pos.end))
     }
+    
+    if(!is.null(dim(single.res$pos.beg))){
+      single.res$pos.beg = t(as.matrix(single.res$pos.beg))
+    }
+    
+    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1  
     
     single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
     
