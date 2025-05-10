@@ -297,6 +297,8 @@ segmentSplit <- function(df.tmp, n){
   step_y <- (y2 - y1) / n
   
   # Create points
+  pokaz(x1, step_x, x2)
+  pokaz(y1, step_y, y2)
   x_points <- c(x1, seq(x1 + step_x, x2 - step_x, by = step_x), x2)
   y_points <- c(y1, seq(y1 + step_y, y2 - step_y, by = step_y), y2)
   
