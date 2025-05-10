@@ -452,7 +452,7 @@ getBlocksBwNeiAccs <- function(idx.break, i.chr, accessions, i.order){
 splitBlocksByGrid <- function(df.blocks, wnd.size = 1000000){
   
   # message(paste('window size', wnd.size))
-  print(df.blocks)
+  # print(df.blocks)
   n.bl = nrow(df.blocks)
   for(irow in 1:n.bl){
     d = df.blocks$pan.e[irow] - df.blocks$pan.b[irow] 
