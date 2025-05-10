@@ -74,7 +74,10 @@ if(db.fasta.file == fasta.file){
   rm(seqs)  
 }
 
-print(v)
+if(nrow(v) == 0){
+  pokazAttention('No similarity in SVs, NO SVs were genegated')
+  quit(save = "no", status = 0)
+}
 
 res = findNestedness(v, use.strand=use.strand)
 
