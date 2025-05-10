@@ -86,8 +86,14 @@ save(list = ls(), file = "tmp_workspace_stat.RData")
 
 thresholds = c(0,15,50,100, 1000)
 for(thresh in thresholds){
-  cnt = c(table(sv.all$single[sv.all$len >thresh]))
-  tmp = c(sum(sv.all$len >thresh), cnt, as.numeric(sprintf("%.2f",cnt[2]/cnt[1])))
+  cnt = c(table(sv.all$single[sv.all$len > thresh]))
+  print(cnt)
+  if(length(cnt) == 1){
+    cnt = c(0, cnt)
+  } 
+  
+  tmp = c(sum(sv.all$len >thresh), cnt, as.numeric(sprintf("%.2f",cnt[2]/cnt[1])))  
+  
   res.len = rbind(res.len, tmp)
 }
 colnames(res.len) = c('all', 'complex', 'simple', 'ratio')
@@ -96,10 +102,8 @@ rownames(res.len)[1] = 'all SVs'
 
 print(res.len)
 
-
 df = reshape2::melt(t(apply(res.len[,2:3], 1, function(x) x/sum(x))))
 df$group = factor(rep(rownames(res.len), 2), levels = rev(rownames(res.len)))
-
 
 # create nested pie chart using ggplot
 p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
