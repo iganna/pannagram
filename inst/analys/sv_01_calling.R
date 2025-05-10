@@ -313,8 +313,6 @@ pokaz('Gff files for accessions..')
 sv.version = 6
 file.sv.gff = paste(path.gff, 'svs_pangen_v',sprintf("%02d", sv.version),'.gff', sep = '')
 
-save(list = ls(), file = "tmp_workspace_sv.RData")
-
 sv.pos.all$V10 = 1:nrow(sv.pos.all)
 rownames(sv.pos.all) = sv.pos.all$gr
 
