@@ -79,7 +79,8 @@ pokaz('Reading the data...')
 
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 if(!file.exists(file.sv.pos)){
-  stop('SVs were not generated.')
+  pokazAttention('SVs were not generated.')
+  quit(save = "no", status = 0)
 }
 sv.all = readRDS(file.sv.pos)
 sv.all$chr = as.numeric(sv.all$chr)
@@ -90,6 +91,10 @@ sv.se$len.gr =  cut(sv.se$len, breaks = len.bins, right = FALSE, labels = len.la
 f.max = max(sv.se$freq.max)
 
 res.cover.file = 'seq_sv_big_on_sv_cover.rds'
+if(!file.exists(res.cover.file)){
+  pokazAttention('All SVs are different, can not biuld a graph.')
+  quit(save = "no", status = 0)
+}
 res.nest = readRDS(paste(path.sv, res.cover.file, sep = ''))
 
 # ***********************************************************************
