@@ -72,6 +72,7 @@ stat.comb <- data.frame(comb = character(),
 
 
 for(s.comb in pref.combinations){
+  s.comb = '13_13'
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
@@ -240,6 +241,9 @@ for(s.comb in pref.combinations){
   file.single.res = paste0(path.cons, 'singletons_', s.comb, '.rds')
   if(file.exists(file.single.res)){
     single.res = readRDS(file.single.res)
+    
+    save(list = ls(), file = "tmp_workspace_x.RData")
+    
     single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
     single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
     
