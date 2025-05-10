@@ -304,6 +304,7 @@ if [ "$run_sv_graph" = true ]; then
            -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
            -perc_identity ${similarity_value} 
     # fi
+    pokaz_message "Blast is done."
 
     file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
