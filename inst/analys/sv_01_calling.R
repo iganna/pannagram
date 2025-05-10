@@ -146,10 +146,9 @@ for(s.comb in pref.combinations){
     v[is.na(v)] = 0
     
     pokaz('Find gaps..')
-    
-    save(list = ls(), file = "tmp_workspace_sv.RData")
-    
     sv.acc = findOnes(v == 0)
+    if(nrow(sv.acc) == 0) next
+    
     if(sv.acc$beg[1] == 1) sv.acc = sv.acc[-1,]
     if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
     v.r = rank(abs(v)) * sign(v)
