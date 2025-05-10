@@ -244,11 +244,11 @@ for(s.comb in pref.combinations){
     
     # save(list = ls(), file = "tmp_workspace_x.RData")
     
-    if(!is.null(dim(single.res$pos.end))){
+    if(is.null(dim(single.res$pos.end))){
       single.res$pos.end = t(as.matrix(single.res$pos.end))
     }
     
-    if(!is.null(dim(single.res$pos.beg))){
+    if(is.null(dim(single.res$pos.beg))){
       single.res$pos.beg = t(as.matrix(single.res$pos.beg))
     }
     
