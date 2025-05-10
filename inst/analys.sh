@@ -318,7 +318,6 @@ if [ "$run_sv_graph" = true ]; then
     Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
         --path.cons ${path_consensus} 
 
-
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
         --path.cons ${path_consensus} 
 

@@ -68,8 +68,16 @@ color.len <- c(
 # ***********************************************************************
 # ---- Reading the data ----
 
-sv.partition = readRDS(paste0(path.sv, 'sv_partition_solved.rds'))
-sv.seqs = readFasta(paste0(path.sv, 'seq_sv_big.fasta'))
+file.partition = paste0(path.sv, 'sv_partition_solved.rds')
+file.seqs = paste0(path.sv, 'seq_sv_big.fasta')
+
+if(!file.exists(file.partition)){
+  pokazAttention('No partitioning was generated, ORFs will not be generated')
+  quit(save = "no", status = 0)
+}
+
+sv.partition = readRDS(file.partition)
+sv.seqs = readFasta(file.seqs)
 
 sv.seqs = sv.seqs[names(sv.partition)]
 
