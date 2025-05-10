@@ -148,7 +148,7 @@ if(!file.exists(file.blocks)){
 # ***********************************************************************
 # ---- Plot  ----
 
-pokaz(Plots...)
+pokaz("Plots...")
 accessions = unique(df.all$acc)
 n.chr = max(df.all$chr)
 
