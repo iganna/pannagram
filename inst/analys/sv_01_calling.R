@@ -115,6 +115,7 @@ sv.beg.all = c()
 sv.end.all = c()
 
 for(s.comb in pref.combinations){
+  s.comb = '16_16'
   
   pokaz('* Combination', s.comb)
   
@@ -145,6 +146,9 @@ for(s.comb in pref.combinations){
     v[is.na(v)] = 0
     
     pokaz('Find gaps..')
+    
+    save(list = ls(), file = "tmp_workspace_sv.RData")
+    
     sv.acc = findOnes(v == 0)
     if(sv.acc$beg[1] == 1) sv.acc = sv.acc[-1,]
     if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
