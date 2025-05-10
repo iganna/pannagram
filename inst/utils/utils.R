@@ -56,6 +56,7 @@ readFasta <- function(file.fasta, stop.on.error = T) {
   
   sequences <- character(n.seq)
   for (i.seq in 1:n.seq) {
+    # pokaz(i.seq)
     start <- header.idx[i.seq] + 1
     end <- if (i.seq < n.seq) header.idx[i.seq + 1] - 1 else length(file.content)
     if (start <= end) {
@@ -71,6 +72,9 @@ readFasta <- function(file.fasta, stop.on.error = T) {
   
   seq.names <- substr(file.content[header.idx], 2, nchar(file.content[header.idx]))
   names(sequences) <- seq.names
+  
+  names(sequences) = gsub('\t', '_', names(sequences))
+  names(sequences) = gsub(' ', '_', names(sequences))
   
   return(sequences)
 }

@@ -1,7 +1,7 @@
 # Get SV positions, GFF files, dencity files and consensys sequences
 # Find SVs and create GFF file
 
-suppressMessages({ library(Biostrings)
+suppressMessages({ 
   library(rhdf5)
   library('foreach')
   library(doParallel)
@@ -11,8 +11,9 @@ suppressMessages({ library(Biostrings)
   library(ggplot2)
   
   library(igraph)
-  library(ggnet)
+  # library(ggnet)
   library(network)
+  library(GGally)
 })
 
 
@@ -188,81 +189,89 @@ sv.names = unique(c(edges))
 sv.names.len = sapply(sv.names, function(s) as.numeric(strsplit(s, '\\|')[[1]][2]))
 
 idx.short = (sv.names.len[edges[,1]] < len.cutoff) | (sv.names.len[edges[,2]] < len.cutoff)
-edges.short = edges[idx.short,]
+edges.short = edges[idx.short,,drop=F]
 g.content$edges.small = edges[!idx.short,]
 
 # ***********************************************************************
 # ---- Construct the reduced graph ----
-pokaz('Construct the reduced graph...')
-
-## Collapse small graph
-names.tmp = unique(c(g.content$edges.small))
-res.nest.small = res.nest[(res.nest$V1 %in% names.tmp) & (res.nest$V8 %in% names.tmp),]
-
-sum(!(res.nest.small$V8 %in% names.tmp))
-
-g.content.small = getGraphFromBlast(res.nest = res.nest.small, sim.cutoff = sim.cutoff, collapse = F)
-
-# Plot small components
-
-g.sm <- network(g.content.small$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-b.graph.names = network.vertex.names(g.sm)
-set.seed(239)
-p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
-               node.size = 1,
-               color = '#468B97',
-               arrow.gap = 0.01, 
-               arrow.size = 2
-)
-
-p.sm
-
-savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.size, '_', len.cutoff), width = 6, height = 6)
+if(nrow(edges) > 0){
+  pokaz('Construct the reduced graph...')
+  
+  ## Collapse small graph
+  names.tmp = unique(c(g.content$edges.small))
+  res.nest.small = res.nest[(res.nest$V1 %in% names.tmp) & (res.nest$V8 %in% names.tmp),]
+  
+  sum(!(res.nest.small$V8 %in% names.tmp))
+  
+  g.content.small = getGraphFromBlast(res.nest = res.nest.small, sim.cutoff = sim.cutoff, collapse = F)
+  
+  # Plot small components
+  
+  g.sm <- network(g.content.small$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+  b.graph.names = network.vertex.names(g.sm)
+  set.seed(239)
+  p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
+                 node.size = 1,
+                 color = '#468B97',
+                 arrow.gap = 0.01, 
+                 arrow.size = 2
+  )
+  
+  p.sm
+  
+  savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.size, '_', len.cutoff), width = 6, height = 6)
+}
 
 
 # ***********************************************************************
 # ---- Partition of the reduced graph ----
-pokaz('Partition of the reduced graph...')
-
-# I-graph
-edges <- g.content.small$edges 
-igraph_g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
-igraph_g <- as.undirected(igraph_g, mode = "collapse")
-
-# Louvain partition
-louvain_result <- cluster_louvain(igraph_g)
-
-# Get clusters
-partition <- membership(louvain_result)
-
-# Construct the graph
-g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-g.names = network.vertex.names(g)
-
-# Add cluster color
-g %v% "partition" <- as.character(partition[g.names])
-
-set.seed(239)
-p.partition <- ggnet2(
-  g,
-  label = FALSE,
-  edge.color = "grey70",
-  node.size = 1,
-  color = "partition", 
-  arrow.gap = 0.01,
-  arrow.size = 2
-) + theme(legend.position = "none") + scale_color_viridis_d(name = "partition")
-
-p.partition
-
-savePNG(p.partition, path = path.figures, name = paste0('graph_03_louvain'), width = 6, height = 6)
-
+if(nrow(edges) > 0){
+  pokaz('Partition of the reduced graph...')
+  
+  # I-graph
+  edges <- g.content.small$edges 
+  igraph_g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
+  igraph_g <- as.undirected(igraph_g, mode = "collapse")
+  
+  # Louvain partition
+  louvain_result <- cluster_louvain(igraph_g)
+  
+  # Get clusters
+  partition <- membership(louvain_result)
+  
+  # Construct the graph
+  g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+  g.names = network.vertex.names(g)
+  
+  # Add cluster color
+  g %v% "partition" <- as.character(partition[g.names])
+  
+  set.seed(239)
+  p.partition <- ggnet2(
+    g,
+    label = FALSE,
+    edge.color = "grey70",
+    node.size = 1,
+    color = "partition", 
+    arrow.gap = 0.01,
+    arrow.size = 2
+  ) + theme(legend.position = "none") + scale_color_viridis_d(name = "partition")
+  
+  p.partition
+  
+  savePNG(p.partition, path = path.figures, name = paste0('graph_03_louvain'), width = 6, height = 6)
+} else {
+  partition = c()
+}
 
 # ***********************************************************************
 # ---- Filter edges because of the partition ----
 
-edges.keep <- edges[partition[edges[,1]] == partition[edges[,2]],]
-edges = edges.keep
+if(nrow(edges) > 0){
+  edges.keep <- edges[partition[edges[,1]] == partition[edges[,2]],]
+  edges = edges.keep  
+}
+
 
 
 # ***********************************************************************
@@ -282,22 +291,42 @@ sv.names.short = sv.names.short[order(-sv.names.short.len)]
 sv.names.short.len = sapply(sv.names.short, function(s) as.numeric(strsplit(s, '\\|')[[1]][2]))
 sv.names.short = sv.names.short[sv.names.short.len > 100]
 
+# Edges
+edges.short = g.content$edges
+edges.short = edges.short[(edges.short[,1] %in% sv.names.short) | 
+                            (edges.short[,2] %in% sv.names.short),,drop=F]
+edges.short = unique(edges.short)
+
+# Variables
 partition.add = partition
 edges.add = edges
+if(!is.null(partition.add)){
+  max.part = max(partition.add)  
+} else {
+  max.part = 0
+}
+
+sv.names.ingraph = unique(c(edges.add))
+
 for(s.sv in sv.names.short){
   # pokaz(s.sv)
   sv.edges.connect = edges.short[rowSums(edges.short == s.sv) == 1,, drop=F]
-  sv.edges.connect = sv.edges.connect[((sv.edges.connect[,1] %in% sv.names.short) + 
-                                         (sv.edges.connect[,2] %in% sv.names.short)) == 1,,drop=F]
+  sv.edges.connect = sv.edges.connect[((sv.edges.connect[,1] %in% sv.names.ingraph) + 
+                                         (sv.edges.connect[,2] %in% sv.names.ingraph)) == 1,,drop=F]
   sv.node.connect = c(sv.edges.connect)
   sv.node.connect = setdiff(sv.node.connect, s.sv)
   sv.node.connect = intersect(sv.node.connect, names(partition.add))
-  # sv.node.connect = setdiff(sv.node.connect, sv.names.short)
+  
+  
   if(length(sv.node.connect) == 0) {
-    partition.add[s.sv] = max(partition.add) + 1
+    partition.add[s.sv] = max.part + 1
+    max.part = max.part + 1
+    
+    # Add node name to the graph
+    sv.names.ingraph = c(sv.names.ingraph, s.sv)
     next
   }
-  sv.node.connect.part = partition[sv.node.connect]
+  sv.node.connect.part = partition.add[sv.node.connect]
   part.cnt = table(sv.node.connect.part)
   if(max(part.cnt)/sum(part.cnt) > part.cutoff){
     i.part = as.numeric(names(part.cnt)[which.max(part.cnt)])
@@ -306,6 +335,9 @@ for(s.sv in sv.names.short){
     sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
                                       (sv.edges.connect[,2] %in% sv.part),, drop=F]
     edges.add = rbind(edges.add, sv.edges.add)
+    
+    # Add node name to the graph
+    sv.names.ingraph = c(sv.names.ingraph, s.sv)
   }
 }
 
@@ -324,6 +356,10 @@ idx.moderate = which(g.comp$csize >= min.cl.size)
 sv.name.moderate = names(g.comp$membership)[g.comp$membership %in% idx.moderate]
 edges = edges[(edges[,1] %in% sv.name.moderate),]
 
+if(nrow(edges) == 0){
+  pokazAttention('Nu graph was generated, not enough SVs')
+  return(NULL)
+}
 
 # ***********************************************************************
 # ---- Final partitioning ----
