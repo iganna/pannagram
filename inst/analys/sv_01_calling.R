@@ -224,6 +224,11 @@ for(s.comb in pref.combinations){
   sv.end = sv.end[idx,]
   sv.len.acc = sv.len.acc[idx,]
   
+  if(nrow(sv.pos) == 0){
+    pokazAttention('SVs were not generaed, and IT IS OK!')
+    quit(save = "no", status = 0)
+  }
+  
   # Calculate frequencies
   sv.pos$freq.min = 0
   sv.pos$freq.max = 0
