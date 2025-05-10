@@ -115,8 +115,6 @@ sv.beg.all = c()
 sv.end.all = c()
 
 for(s.comb in pref.combinations){
-  s.comb = '16_16'
-  
   pokaz('* Combination', s.comb)
   
   # Get file for the combination
