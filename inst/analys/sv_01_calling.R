@@ -187,8 +187,7 @@ for(s.comb in pref.combinations){
   colnames(sv.beg) = accessions
   colnames(sv.end) = accessions
   
-  
-  save(list = ls(), file = "tmp_workspace_sv.RData")
+  # save(list = ls(), file = "tmp_workspace_sv.RData")
   
   # Check ranks
   pokaz('Check ranks...')
