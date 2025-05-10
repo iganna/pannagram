@@ -385,7 +385,7 @@ for(s.comb in pref.combinations){
     save(list = ls(), file = 'tmx_workspace_step18.RData')
     
     # Add singletons
-    if(length(single.res) != 0){
+    if(length(single.res$len) != 0){
       for(i in 1:length(single.res$len)){
         if(single.res$pos.beg[i, acc] != 0){
           # if(i == 2) stop('670')
