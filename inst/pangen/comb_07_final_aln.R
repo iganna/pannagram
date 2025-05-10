@@ -244,7 +244,7 @@ for(s.comb in pref.combinations){
     
     save(list = ls(), file = "tmp_workspace_x.RData")
     
-    if(is.null(dim(single.res$pos.end))){
+    if(!is.null(dim(single.res$pos.end))){
       single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1  
     } else {
       single.res$len = sum(single.res$pos.end) - sum(single.res$pos.beg)  + 1
