@@ -302,6 +302,9 @@ segmentSplit <- function(df.tmp, n){
   x_points <- c(x1, seq(x1 + step_x, x2 - step_x/2, by = step_x), x2)
   y_points <- c(y1, seq(y1 + step_y, y2 - step_y/2, by = step_y), y2)
   
+  pokaz(x_points)
+  pokaz(y_points)
+  
   # Save
   points2 <- data.frame(x = x_points, y = y_points)  
   return(list(p1 = points1, p2 = points2))
