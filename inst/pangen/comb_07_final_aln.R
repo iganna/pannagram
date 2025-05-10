@@ -74,8 +74,7 @@ stat.comb <- data.frame(comb = character(),
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
-  poakz('NEW!')
-  
+
   # Get accessions
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
   
