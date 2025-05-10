@@ -245,6 +245,7 @@ if [ "$run_sv_call" = true ]; then
     # path_plots="${path_consensus}plot_svs/"
     # mkdir -p ${path_plots}
 
+    pokaz_stage "Plot SV stat"
     Rscript $INSTALLED_PATH/analys/sv_02_plot_stat.R \
         --path.cons ${path_consensus} 
 

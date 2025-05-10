@@ -82,6 +82,8 @@ f.max = max(sv.se$freq.max)
 # Print stat
 res.len = c()
 
+save(list = ls(), file = "tmp_workspace_stat.RData")
+
 thresholds = c(0,15,50,100, 1000)
 for(thresh in thresholds){
   cnt = c(table(sv.all$single[sv.all$len >thresh]))

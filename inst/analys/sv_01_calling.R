@@ -478,6 +478,7 @@ for(s.comb in pref.combinations){
 writeFasta(seqs.small, file.sv.small)
 writeFasta(seqs.big, file.sv.big)
 
+pokaz('Done')
 
 # ---- GFF densities ----
 
