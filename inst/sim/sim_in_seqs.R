@@ -74,7 +74,7 @@ if(db.fasta.file == fasta.file){
   rm(seqs)  
 }
 
-head(db.len)
+print(v)
 
 res = findNestedness(v, use.strand=use.strand)
 
