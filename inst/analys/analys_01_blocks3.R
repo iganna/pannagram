@@ -95,6 +95,7 @@ if(length(s.combinations) == 0){
 # ref.suff = '_0'
 
 file.blocks = paste0(path.cons, aln.type, 'syn_blocks',ref.suff,'.rds')
+
 if(!file.exists(file.blocks)){
   df.all = c()
   for(s.comb in s.combinations){
@@ -138,9 +139,9 @@ if(!file.exists(file.blocks)){
   df.all$pan.b[idx.dir] = df.all$pan.e[idx.dir]
   df.all$pan.e[idx.dir] = tmp
   
-  
   saveRDS(df.all, file.blocks)  
 } else {
+  pokaz("File with blocks was generated in advance", file.blocks)
   df.all = readRDS(file.blocks)
 }
 
