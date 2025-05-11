@@ -51,7 +51,10 @@ getBlocks <- function(v, f.split = T){
       i.i = which((df$i.beg < i.pos) & (df$i.end > i.pos))
       
       if(length(i.v) > 0){
-        if(length(i.i) == 0) stop('Something is wrong with i.i')
+        if(length(i.i) == 0){
+          save(list = ls(), file = "tmp_workspace_blocks.RData")
+          stop('Something is wrong with i.i')
+        } 
         if(i.v != i.i) stop('Idxs do not match')
         
         df.tmp = df[i.v,]
