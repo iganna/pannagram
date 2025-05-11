@@ -614,8 +614,6 @@ panplot <- function(idx.break, i.chr, accessions=NULL, i.order=NULL, file.cen.po
   # Blocks by grid
   # wnd.size = 100000
   
-  save(list = ls(), file = "tmp_workspace_blocks.RData")
-  
   df.plot = splitBlocksByGrid(df.blocks, wnd.size = wnd.size)
   
   # Define color pallete
