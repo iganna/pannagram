@@ -316,12 +316,12 @@ if [ "$run_sv_graph" = true ]; then
     # rm "$file_sv_big".nsq
 
 
-    pokaz_stage "Plotting SV-Graph..."
-    Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
-        --path.cons ${path_consensus} 
+    # pokaz_stage "Plotting SV-Graph..."
+    # Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
+    #     --path.cons ${path_consensus} 
 
-    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.cons ${path_consensus} 
+    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+    #     --path.cons ${path_consensus} 
 
     if [ "$run_sv_sim_prot" = true ]; then
 
