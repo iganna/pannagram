@@ -230,12 +230,13 @@ if(nrow(g.content$edges.small) > 0){
   savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.size, '_', len.cutoff), width = 6, height = 6)
 } else {
   g.content.small = g.content  # Kostyl
+  g.content.small$edges = g.content.small$edges.small
 }
 
 
 # ***********************************************************************
 # ---- Partition of the reduced graph ----
-if(nrow(g.content.small$edges.small) > 0){
+if(nrow(g.content.small$edges) > 0){
   pokaz('Partition of the reduced graph...')
   
   # I-graph
