@@ -230,7 +230,7 @@ if(nrow(g.content$edges.small) > 0){
 
 # ***********************************************************************
 # ---- Partition of the reduced graph ----
-if(nrow(edges) > 0){
+if(nrow(g.content.small$edges) > 0){
   pokaz('Partition of the reduced graph...')
   
   # I-graph
