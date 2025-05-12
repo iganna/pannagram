@@ -202,6 +202,8 @@ g.content$edges.small = edges[!idx.short,]
 if(nrow(edges) > 0){
   pokaz('Construct the reduced graph...')
   
+  save(list = ls(), file = "tmp_workspace_graph.RData")
+  
   ## Collapse small graph
   names.tmp = unique(c(g.content$edges.small))
   res.nest.small = res.nest[(res.nest$V1 %in% names.tmp) & (res.nest$V8 %in% names.tmp),]
