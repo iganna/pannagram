@@ -195,14 +195,12 @@ sv.names.len = sapply(sv.names, function(s) as.numeric(strsplit(s, '\\|')[[1]][2
 
 idx.short = (sv.names.len[edges[,1]] < len.cutoff) | (sv.names.len[edges[,2]] < len.cutoff)
 edges.short = edges[idx.short,,drop=F]
-g.content$edges.small = edges[!idx.short,]
+g.content$edges.small = edges[!idx.short,,drop=F]
 
 # ***********************************************************************
 # ---- Construct the reduced graph ----
-if(nrow(edges) > 0){
+if(nrow(g.content$edges.small) > 0){
   pokaz('Construct the reduced graph...')
-  
-  save(list = ls(), file = "tmp_workspace_graph.RData")
   
   ## Collapse small graph
   names.tmp = unique(c(g.content$edges.small))
