@@ -316,22 +316,27 @@ if [ "$run_sv_graph" = true ]; then
     # rm "$file_sv_big".nsq
 
 
-    pokaz_stage "Plotting SV-Graph..."
-    Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
-        --path.cons ${path_consensus} 
+    # pokaz_stage "Plotting SV-Graph..."
+    # Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
+    #     --path.cons ${path_consensus} 
 
-    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.cons ${path_consensus} 
+    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+    #     --path.cons ${path_consensus} 
 
     if [ "$run_sv_sim_prot" = true ]; then
 
-        pokaz_stage "BLAST on proteins..."
+        if [ -f "${path_consensus}sv/sv_in_graph_orfs.fasta" ]; then
+            pokaz_stage "BLAST on proteins..."
 
-        # makeblastdb -in ${set_file_prot} -dbtype prot
-        echo ${set_file_prot}
-        blastp -db ${set_file_prot} -query ${path_consensus}sv/sv_in_graph_orfs.fasta \
-                -out ${path_consensus}sv/blast_sv_orfs_on_set.txt \
-                -outfmt "7 qseqid qstart qend sstart send pident length  sseqid" -num_threads ${cores}
+            # makeblastdb -in ${set_file_prot} -dbtype prot
+            blastp -db "${set_file_prot}" \
+                   -query "${path_consensus}sv/sv_in_graph_orfs.fasta" \
+                   -out "${path_consensus}sv/blast_sv_orfs_on_set.txt" \
+                   -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+                   -num_threads "${cores}"
+        else
+            pokaz_error "File with ORFs does not exist, BLAST against proteins was not performed."
+        fi
 
     fi
 
