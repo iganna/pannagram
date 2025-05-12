@@ -116,7 +116,7 @@ if(!file.exists(file.blocks)){
       pokaz('Accession', acc)
       v = h5read(file.comb.in, paste0(gr.accs.e, acc))
       
-      df.acc = getBlocks(v)
+      df.acc = getBlocks(v, f.split = F)
       df.acc$acc = acc
       df.acc$chr = i.chr
       

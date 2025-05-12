@@ -19,7 +19,6 @@ getBlocks <- function(v, f.split = T){
   v.b.rank = matrix(rank(v.b[,c('v.beg', 'v.end')]), ncol = 2, dimnames = list(NULL,c('r.beg', 'r.end')))
   v.b = cbind(v.b, v.b.rank)
   
-  
   # Remove 
   irow = 2
   while (irow <= nrow(v.b)) {

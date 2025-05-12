@@ -1626,8 +1626,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_mafft_out}fake_aligned2.fasta
         touch ${path_log_step}fake.log
 
-        rm -f ${path_mafft_out}*aligned2.fasta
+        # rm -f ${path_mafft_out}*aligned2.fasta
         # rm -f ${path_log_step}*
+        find ${path_mafft_out} -name "*aligned2.fasta" -type f -exec rm -f {} +
         find ${path_log_step} -name "*" -type f -exec rm -f {} +
     fi
 
