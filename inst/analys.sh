@@ -324,9 +324,12 @@ if [ "$run_sv_graph" = true ]; then
         --path.cons ${path_consensus} 
 
     if [ "$run_sv_sim_prot" = true ]; then
-        makeblastdb -in ${set_file_prot} -dbtype prot
+
+        pokaz_stage "BLAST on proteins..."
+
+        # makeblastdb -in ${set_file_prot} -dbtype prot
         blastp -db ${set_file_prot} -query ${path_consensus}sv/sv_in_graph_orfs.fasta \
-                -out blast_sv_orfs_on_set.txt \
+                -out ${path_consensus}sv/blast_sv_orfs_on_set.txt \
                 -outfmt "7 qseqid qstart qend sstart send pident length  sseqid" -num_threads ${cores}
 
     fi
