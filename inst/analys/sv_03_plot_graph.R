@@ -126,6 +126,7 @@ if(!file.exists(file.g.content)){
     }
   }
   
+  save(list = ls(), file = "tmp_workspace_graph.RData")
   g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, collapse = T)
   
   saveRDS(g.content, file.g.content)
