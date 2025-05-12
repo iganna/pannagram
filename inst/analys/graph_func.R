@@ -346,8 +346,6 @@ refineDirectEdges <- function(edges.compact, echo = T){
     # tails = names(deg.in)[((deg.in + deg.out) == 1) & ((deg.in * deg.out) == 0) | ((deg.in * deg.out) == 1)]
     tails = names(deg.in)[((deg.in + deg.out) == 1) & ((deg.in * deg.out) == 0) ]
     
-    # if( 'R4396' %in% tails) stop()
-    
     nodes.keep = c(nodes.keep, tails)
     g <- delete_vertices(g, tails)
   }
@@ -363,6 +361,7 @@ refineDirectEdges <- function(edges.compact, echo = T){
   g.comp <- igraph::components(g)
   edges.polised = c()
   for(i.comp in 1:g.comp$no){
+    if(g.comp$no == 0) break
     # message(i.comp)
     
     # Get subgraph
