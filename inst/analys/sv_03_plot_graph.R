@@ -126,7 +126,6 @@ if(!file.exists(file.g.content)){
     }
   }
   
-  save(list = ls(), file = "tmp_workspace_graph.RData")
   g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, collapse = T)
   
   saveRDS(g.content, file.g.content)
@@ -200,6 +199,9 @@ g.content$edges.small = edges[!idx.short,,drop=F]
 
 # ***********************************************************************
 # ---- Construct the reduced graph ----
+
+save(list = ls(), file = "tmp_workspace_graph.RData")
+
 if(nrow(g.content$edges.small) > 0){
   pokaz('Construct the reduced graph...')
   
