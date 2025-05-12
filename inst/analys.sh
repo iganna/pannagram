@@ -328,6 +328,7 @@ if [ "$run_sv_graph" = true ]; then
         pokaz_stage "BLAST on proteins..."
 
         # makeblastdb -in ${set_file_prot} -dbtype prot
+        echo ${set_file_prot}
         blastp -db ${set_file_prot} -query ${path_consensus}sv/sv_in_graph_orfs.fasta \
                 -out ${path_consensus}sv/blast_sv_orfs_on_set.txt \
                 -outfmt "7 qseqid qstart qend sstart send pident length  sseqid" -num_threads ${cores}
