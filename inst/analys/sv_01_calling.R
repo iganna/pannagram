@@ -117,7 +117,7 @@ sv.end.all = c()
 for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb)
   
-  s.comb = '4_4'
+  # s.comb = '4_4'
   
   # Get file for the combination
   file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
