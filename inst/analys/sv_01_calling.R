@@ -172,6 +172,10 @@ for(s.comb in pref.combinations){
   pokaz('Create SV groups...')
   
   sv.pos = findOnes((sv.cover != 0)*1)
+  if(nrow(sv.pos) == 0){
+    pokazAttention('SVs were not generaed, and IT IS OK!')
+    next
+  } 
   sv.pos$len = abs(sv.pos$beg - sv.pos$end) + 1 # do not change
   sv.pos$beg = sv.pos$beg - 1
   sv.pos$end = sv.pos$end + 1
