@@ -187,6 +187,9 @@ for(s.comb in pref.combinations){
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
     sv.end = cbind(sv.end, v[sv.pos$end])
   }
+  
+  save(list = ls(), file = "tmp_workspace_sv.RData")
+  
   colnames(sv.beg) = accessions
   colnames(sv.end) = accessions
   
