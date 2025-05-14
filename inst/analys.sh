@@ -203,15 +203,17 @@ if [ "$run_snp" = true ]; then
 
         # Run VCF-tools
         for vcf_file in $vcf_files; do
+            echo "VCF-tools.."
             base_name=$(basename "$vcf_file" .vcf)
             output_file="${path_snp}${base_name}_output"
             vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
             vcftools --vcf "${vcf_file}" --extract-FORMAT-info ID --out "$output_file"
 
-            Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
-                --path.figures ${path_plots} \
-                --file.pi "${output_file}.sites.pi"
+            # Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
+            #     --path.figures ${path_plots} \
+            #     --file.pi "${output_file}.sites.pi"
 
+            echo "Plink.."
             plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
 
             # Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
