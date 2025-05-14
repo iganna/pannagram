@@ -179,12 +179,12 @@ fi
 
 if [ "$run_snp" = true ]; then
     pokaz_stage "Get SNPs."
-    # Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
-    #     --path.cons ${path_consensus} \
-    #     --ref.pref  ${ref_pref} \
-    #     --path.chr ${path_chromosomes} \
-    #     --aln.type ${aln_type} \
-    #     --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --path.chr ${path_chromosomes} \
+        --aln.type ${aln_type} \
+        --cores ${cores}
 
     # ---------------
     # Pi divirsity
@@ -205,18 +205,18 @@ if [ "$run_snp" = true ]; then
         for vcf_file in $vcf_files; do
             base_name=$(basename "$vcf_file" .vcf)
             output_file="${path_snp}${base_name}_output"
-            #vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
-            #vcftools --vcf "${vcf_file}" --extract-FORMAT-info ID --out "$output_file"
+            vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
+            vcftools --vcf "${vcf_file}" --extract-FORMAT-info ID --out "$output_file"
 
             Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
                 --path.figures ${path_plots} \
                 --file.pi "${output_file}.sites.pi"
 
-            #plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
+            plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
 
-            #Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
-            #    --path.figures ${path_plots} \
-            #    --file.pi "${vcf_file}"
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
+               --path.figures ${path_plots} \
+               --file.pi "${vcf_file}"
 
         done
     fi
