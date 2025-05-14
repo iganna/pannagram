@@ -179,12 +179,12 @@ fi
 
 if [ "$run_snp" = true ]; then
     pokaz_stage "Get SNPs."
-    # Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
-    #     --path.cons ${path_consensus} \
-    #     --ref.pref  ${ref_pref} \
-    #     --path.chr ${path_chromosomes} \
-    #     --aln.type ${aln_type} \
-    #     --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --path.chr ${path_chromosomes} \
+        --aln.type ${aln_type} \
+        --cores ${cores}
 
     # ---------------
     # Pi divirsity
