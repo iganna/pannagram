@@ -208,7 +208,7 @@ g.content$edges.small = edges[!idx.short,,drop=F]
 # ***********************************************************************
 # ---- Construct the reduced graph ----
 
-save(list = ls(), file = "tmp_workspace_graph.RData")
+# save(list = ls(), file = "tmp_workspace_graph.RData")
 
 if(nrow(g.content$edges.small) > 0){
   pokaz('Construct the reduced graph...')
