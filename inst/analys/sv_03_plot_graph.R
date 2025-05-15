@@ -17,6 +17,7 @@ suppressMessages({
 })
 
 
+
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -26,6 +27,10 @@ option_list = list(
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
+
+# ***********************************************************************
+
+flag.plot = F
 
 # print(opt)
 
@@ -155,23 +160,26 @@ g.content = getGraphFromBlast(res.nest = res.nest.remain, sim.cutoff = sim.cutof
 x = unique(c(g.content$edges))
 length(x)
 
-g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-b.graph.names = network.vertex.names(g)
+if(flag.plot){
+  g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+  b.graph.names = network.vertex.names(g)
+  
+  set.seed(239)
+  p.refined <- ggnet2(g, label = F, edge.color = "black",
+                      # node.size = g.nodes.cnt[b.graph.names],
+                      node.size = 1,
+                      color = '#468B97',
+                      arrow.gap = 0.01, arrow.size = 2,
+                      # color = g.nodes.fam[b.graph.names],
+                      # palette = fam.palette,
+                      # mode = "kamadakawai"
+  )
+  
+  p.refined
+  
+  savePNG(p.refined, path = path.figures, name = 'graph_01_init', width = 6, height = 6)  
+}
 
-set.seed(239)
-p.refined <- ggnet2(g, label = F, edge.color = "black",
-                    # node.size = g.nodes.cnt[b.graph.names],
-                    node.size = 1,
-                    color = '#468B97',
-                    arrow.gap = 0.01, arrow.size = 2,
-                    # color = g.nodes.fam[b.graph.names],
-                    # palette = fam.palette,
-                    # mode = "kamadakawai"
-)
-
-p.refined
-
-savePNG(p.refined, path = path.figures, name = 'graph_01_init', width = 6, height = 6)
 
 # ***********************************************************************
 # ---- Filtration 2: Component size and length of nodes ----
@@ -215,19 +223,21 @@ if(nrow(g.content$edges.small) > 0){
   
   # Plot small components
   
-  g.sm <- network(g.content.small$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-  b.graph.names = network.vertex.names(g.sm)
-  set.seed(239)
-  p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
-                 node.size = 1,
-                 color = '#468B97',
-                 arrow.gap = 0.01, 
-                 arrow.size = 2
-  )
-  
-  p.sm
-  
-  savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.size, '_', len.cutoff), width = 6, height = 6)
+  if(flag.plot){
+    g.sm <- network(g.content.small$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+    b.graph.names = network.vertex.names(g.sm)
+    set.seed(239)
+    p.sm <- ggnet2(g.sm, label = F, edge.color = "black",
+                   node.size = 1,
+                   color = '#468B97',
+                   arrow.gap = 0.01, 
+                   arrow.size = 2
+    )
+    
+    p.sm
+    
+    savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.size, '_', len.cutoff), width = 6, height = 6)
+  }
 } else {
   g.content.small = g.content  # Kostyl
   g.content.small$edges = g.content.small$edges.small
@@ -250,27 +260,29 @@ if(nrow(g.content.small$edges) > 0){
   # Get clusters
   partition <- membership(louvain_result)
   
-  # Construct the graph
-  g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-  g.names = network.vertex.names(g)
-  
-  # Add cluster color
-  g %v% "partition" <- as.character(partition[g.names])
-  
-  set.seed(239)
-  p.partition <- ggnet2(
-    g,
-    label = FALSE,
-    edge.color = "grey70",
-    node.size = 1,
-    color = "partition", 
-    arrow.gap = 0.01,
-    arrow.size = 2
-  ) + theme(legend.position = "none") + scale_color_viridis_d(name = "partition")
-  
-  p.partition
-  
-  savePNG(p.partition, path = path.figures, name = paste0('graph_03_louvain'), width = 6, height = 6)
+  if(flag.plot){
+    # Construct the graph
+    g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+    g.names = network.vertex.names(g)
+    
+    # Add cluster color
+    g %v% "partition" <- as.character(partition[g.names])
+    
+    set.seed(239)
+    p.partition <- ggnet2(
+      g,
+      label = FALSE,
+      edge.color = "grey70",
+      node.size = 1,
+      color = "partition", 
+      arrow.gap = 0.01,
+      arrow.size = 2
+    ) + theme(legend.position = "none") + scale_color_viridis_d(name = "partition")
+    
+    p.partition
+    
+    savePNG(p.partition, path = path.figures, name = paste0('graph_03_louvain'), width = 6, height = 6)
+  }
 } else {
   partition = c()
 }
@@ -396,6 +408,10 @@ write.table(as.matrix(partition), paste0(path.sv, 'sv_partition_solved.txt'),
 ## Save edges
 saveRDS(edges, paste0(path.sv, 'edges_solved.rds'))
 write.table(edges, paste0(path.sv, 'edges_solved.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
+
+if(!flag.plot){
+  quit(save = "no", status = 0)
+}
 
 # ***********************************************************************
 # ---- Plot ----
