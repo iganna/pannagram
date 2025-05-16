@@ -16,8 +16,6 @@ suppressMessages({
   library(GGally)
 })
 
-
-
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -343,18 +341,20 @@ sv.edges.add.counter = 1
 for(s.sv in sv.names.short){
   pokaz(s.sv)
   
-  if(s.sv == 'SVgr_28_id_25904|286'){
-    save(list = ls(), file = "tmp_workspace_put_back2.RData")
-  }
+  # if(s.sv == 'SVgr_28_id_25904|286'){
+  #   save(list = ls(), file = "tmp_workspace_put_back2.RData")
+  # }
 
   idx = as.numeric(idx.map[[s.sv]])
   if (is.null(idx)) next
   
   # Get neighbours
-  sv.edges.connect = edges.short[idx,]
+  sv.edges.connect = edges.short[idx,,drop=F]
   sv.edges.connect = sv.edges.connect[
     (sv.edges.connect[,1] == s.sv & sv.edges.connect[,2] != s.sv) |
       (sv.edges.connect[,2] == s.sv & sv.edges.connect[,1] != s.sv), , drop=F]
+  
+  if(nrow(sv.edges.connect) == 0) next
   
   sv.node.connect = unique(c(sv.edges.connect))
   sv.node.connect = sv.node.connect[sv.node.connect != s.sv]
