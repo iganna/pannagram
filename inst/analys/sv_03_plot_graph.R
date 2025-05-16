@@ -342,6 +342,10 @@ sv.edges.add.counter = 1
 
 for(s.sv in sv.names.short){
   pokaz(s.sv)
+  
+  if(s.sv == 'SVgr_28_id_25904|286'){
+    save(list = ls(), file = "tmp_workspace_put_back2.RData")
+  }
 
   idx = as.numeric(idx.map[[s.sv]])
   if (is.null(idx)) next
