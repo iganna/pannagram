@@ -337,10 +337,16 @@ sv.names.ingraph = unique(c(edges.add))
 save(list = ls(), file = "tmp_workspace_put_back.RData")
 
 for(s.sv in sv.names.short){
-  # pokaz(s.sv)
-  sv.edges.connect = edges.short[rowSums(edges.short == s.sv) == 1,, drop=F]
-  sv.edges.connect = sv.edges.connect[((sv.edges.connect[,1] %in% sv.names.ingraph) + 
-                                         (sv.edges.connect[,2] %in% sv.names.ingraph)) == 1,,drop=F]
+  pokaz(s.sv)
+  # sv.edges.connect = edges.short[rowSums(edges.short == s.sv) == 1,, drop=F]
+  # sv.edges.connect = sv.edges.connect[((sv.edges.connect[,1] %in% sv.names.ingraph) + 
+  #                                        (sv.edges.connect[,2] %in% sv.names.ingraph)) == 1,,drop=F]
+  
+  
+  sv.edges.connect = edges.short[
+    (edges.short[,1] == s.sv & edges.short[,2] != s.sv) |
+      (edges.short[,2] == s.sv & edges.short[,1] != s.sv), , drop=F]
+  
   sv.node.connect = c(sv.edges.connect)
   sv.node.connect = setdiff(sv.node.connect, s.sv)
   sv.node.connect = intersect(sv.node.connect, names(partition.add))
