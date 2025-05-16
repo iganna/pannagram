@@ -341,7 +341,7 @@ sv.edges.add.list = list()
 sv.edges.add.counter = 1  
 
 for(s.sv in sv.names.short){
-  # pokaz(s.sv)
+  pokaz(s.sv)
 
   idx = as.numeric(idx.map[[s.sv]])
   if (is.null(idx)) next
