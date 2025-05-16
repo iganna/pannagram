@@ -330,34 +330,35 @@ if(!is.null(partition.add)){
   max.part = 0
 }
 
-sv.names.ingraph = unique(c(edges.add))
+# save(list = ls(), file = "tmp_workspace_put_back.RData")
 
+idx.names = rbind(cbind(edges.short[,1], 1:nrow(edges.short)),
+            cbind(edges.short[,2], 1:nrow(edges.short)))
+idx.names = idx.names[idx.names[,1] %in% sv.names.short,]
+idx.map = split(idx.names[,2], idx.names[,1])
 
-
-save(list = ls(), file = "tmp_workspace_put_back.RData")
+sv.edges.add.list = list() 
+sv.edges.add.counter = 1  
 
 for(s.sv in sv.names.short){
-  pokaz(s.sv)
-  # sv.edges.connect = edges.short[rowSums(edges.short == s.sv) == 1,, drop=F]
-  # sv.edges.connect = sv.edges.connect[((sv.edges.connect[,1] %in% sv.names.ingraph) + 
-  #                                        (sv.edges.connect[,2] %in% sv.names.ingraph)) == 1,,drop=F]
+  # pokaz(s.sv)
+
+  idx = as.numeric(idx.map[[s.sv]])
+  if (is.null(idx)) next
   
+  # Get neighbours
+  sv.edges.connect = edges.short[idx,]
+  sv.edges.connect = sv.edges.connect[
+    (sv.edges.connect[,1] == s.sv & sv.edges.connect[,2] != s.sv) |
+      (sv.edges.connect[,2] == s.sv & sv.edges.connect[,1] != s.sv), , drop=F]
   
-  sv.edges.connect = edges.short[
-    (edges.short[,1] == s.sv & edges.short[,2] != s.sv) |
-      (edges.short[,2] == s.sv & edges.short[,1] != s.sv), , drop=F]
-  
-  sv.node.connect = c(sv.edges.connect)
-  sv.node.connect = setdiff(sv.node.connect, s.sv)
+  sv.node.connect = unique(c(sv.edges.connect))
+  sv.node.connect = sv.node.connect[sv.node.connect != s.sv]
   sv.node.connect = intersect(sv.node.connect, names(partition.add))
-  
   
   if(length(sv.node.connect) == 0) {
     partition.add[s.sv] = max.part + 1
     max.part = max.part + 1
-    
-    # Add node name to the graph
-    sv.names.ingraph = c(sv.names.ingraph, s.sv)
     next
   }
   sv.node.connect.part = partition.add[sv.node.connect]
@@ -368,14 +369,21 @@ for(s.sv in sv.names.short){
     sv.part = names(partition.add)[partition.add == i.part]
     sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
                                       (sv.edges.connect[,2] %in% sv.part),, drop=F]
-    edges.add = rbind(edges.add, sv.edges.add)
     
-    # Add node name to the graph
-    sv.names.ingraph = c(sv.names.ingraph, s.sv)
+    if (nrow(sv.edges.add) > 0) {
+      sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add
+      sv.edges.add.counter = sv.edges.add.counter + 1
+    } else {
+      stop('Something is wrong')
+    }
   }
 }
 
-edges = edges.add
+if (length(sv.edges.add.list) > 0) {
+  edges.add = rbind(edges.add, do.call(rbind, sv.edges.add.list))
+}
+
+edges = rbind(edges, edges.add)
 
 # ***********************************************************************
 # ---- Filtration ----
@@ -500,7 +508,6 @@ p
 
 savePNG(p, path = path.figures, name = paste0('graph_07_label'),
         width = 7, height = 6)
-
 
 
 
