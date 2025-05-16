@@ -332,6 +332,10 @@ if(!is.null(partition.add)){
 
 sv.names.ingraph = unique(c(edges.add))
 
+
+
+save(list = ls(), file = "tmp_workspace_put_back.RData")
+
 for(s.sv in sv.names.short){
   # pokaz(s.sv)
   sv.edges.connect = edges.short[rowSums(edges.short == s.sv) == 1,, drop=F]
