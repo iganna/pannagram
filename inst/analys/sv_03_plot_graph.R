@@ -304,7 +304,8 @@ pokaz('Put back all of the SVs...')
 # Add short sequences back is they are all connect to the same cluster
 
 # sv.names = c(edges)  # Old version
-sv.names = unique(g.content.init$nodes$name)
+# sv.names = unique(g.content.init$nodes$name)
+sv.names = sv.remain  # maybe this?
 
 sv.names.short = setdiff(sv.names, c(edges))
 
