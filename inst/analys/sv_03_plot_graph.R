@@ -28,7 +28,7 @@ opt = parse_args(opt_parser, args = args);
 
 # ***********************************************************************
 
-flag.plot = F
+flag.plot = T
 
 # print(opt)
 
