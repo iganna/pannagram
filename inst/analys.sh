@@ -290,57 +290,57 @@ fi
 # SV on SVs
 if [ "$run_sv_graph" = true ]; then
 
-    pokaz_stage "Graph on SVs"
-    if [ -z "${similarity_value}" ]; then
-        pokaz_message "Simirarity value is 85% (default)"
-        similarity_value=85
-    fi
-
-    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
-
-    # Check if BLAST database exists
-    makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
-    
-    # if [ ! -f "${file_sv_big_on_sv}" ]; then
-        blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-           -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
-           -perc_identity ${similarity_value} -num_threads "${cores}"
+    # pokaz_stage "Graph on SVs"
+    # if [ -z "${similarity_value}" ]; then
+    #     pokaz_message "Simirarity value is 85% (default)"
+    #     similarity_value=85
     # fi
-    pokaz_message "Blast is done."
 
-    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
-    Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
-            --out ${file_sv_big_on_sv_cover} --sim ${similarity_value} --use_strand T
+    # file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+    # file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
 
-    rm "$file_sv_big".nin
-    rm "$file_sv_big".nhr
-    rm "$file_sv_big".nsq
+    # # Check if BLAST database exists
+    # makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
+    
+    # # if [ ! -f "${file_sv_big_on_sv}" ]; then
+    #     blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
+    #        -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
+    #        -perc_identity ${similarity_value} -num_threads "${cores}"
+    # # fi
+    # pokaz_message "Blast is done."
+
+    # file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
+    # Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
+    #         --out ${file_sv_big_on_sv_cover} --sim ${similarity_value} --use_strand T
+
+    # rm "$file_sv_big".nin
+    # rm "$file_sv_big".nhr
+    # rm "$file_sv_big".nsq
 
 
     pokaz_stage "Plotting SV-Graph..."
     Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
         --path.cons ${path_consensus} 
 
-    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.cons ${path_consensus} 
+    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+    #     --path.cons ${path_consensus} 
 
-    if [ "$run_sv_sim_prot" = true ]; then
+    # if [ "$run_sv_sim_prot" = true ]; then
 
-        if [ -f "${path_consensus}sv/sv_in_graph_orfs.fasta" ]; then
-            pokaz_stage "BLAST on proteins..."
+    #     if [ -f "${path_consensus}sv/sv_in_graph_orfs.fasta" ]; then
+    #         pokaz_stage "BLAST on proteins..."
 
-            # makeblastdb -in ${set_file_prot} -dbtype prot
-            blastp -db "${set_file_prot}" \
-                   -query "${path_consensus}sv/sv_in_graph_orfs.fasta" \
-                   -out "${path_consensus}sv/blast_sv_orfs_on_set.txt" \
-                   -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
-                   -num_threads "${cores}"
-        else
-            pokaz_error "File with ORFs does not exist, BLAST against proteins was not performed."
-        fi
+    #         # makeblastdb -in ${set_file_prot} -dbtype prot
+    #         blastp -db "${set_file_prot}" \
+    #                -query "${path_consensus}sv/sv_in_graph_orfs.fasta" \
+    #                -out "${path_consensus}sv/blast_sv_orfs_on_set.txt" \
+    #                -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+    #                -num_threads "${cores}"
+    #     else
+    #         pokaz_error "File with ORFs does not exist, BLAST against proteins was not performed."
+    #     fi
 
-    fi
+    # fi
 
 fi
 
