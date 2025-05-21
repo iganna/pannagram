@@ -57,7 +57,9 @@ countplot <- function(data, sv.class, show.legend = F) {
   background_df <- data.frame(
     ymin = strip_rows - 0.5,
     ymax = strip_rows + 0.5,
-    fill = rep(c("gray95", "#f0fcfd"), length.out = length(strip_rows))  # чередующиеся цвета
+    fill = rep(#c("gray95", "#f0fcfd"), 
+               c("gray95", "gray95"),
+               length.out = length(strip_rows))  # чередующиеся цвета
   )
   
   
@@ -85,7 +87,7 @@ countplot <- function(data, sv.class, show.legend = F) {
                color = "gray85", size = 1, inherit.aes = FALSE) +
     geom_segment(data = segments_df, aes(x = column, xend = column, y = y_min, yend = y_max),
                  color = "gray40", inherit.aes = FALSE, size = 1) +
-    geom_point(size = 2) +
+    geom_point(size = 3) +
     scale_y_continuous(breaks = y_numeric, labels = y_levels) +
     scale_x_continuous(limits = c(x_min, x_max), expand = c(0, 0)) +
     theme_minimal() +
