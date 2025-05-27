@@ -12,8 +12,6 @@ else
   exit 1
 fi
 
-
-# Quick installation: no documentation
 echo -e "[4] \033[34mPannagram documentation installation\033[0m"
 Rscript -e "
 suppressMessages(devtools::document(quiet=TRUE))
