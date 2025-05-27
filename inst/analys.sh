@@ -111,10 +111,17 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+if [[ -z "$path_consensus" ]]; then
+    pokaz_error "Error: -path_msa is required"
+
+    print_fancy_frame "To check usage run: ${0##*/} -h"
+    exit 1
+fi
 
 # Check if path_chromosomes is empty while any of run_seq, run_aln, or run_snp are set to true
 if [ -z "$path_chromosomes" ] && ([ "$run_seq" = true ] || [ "$run_aln" = true ] || [ "$run_snp" = true ]); then
     pokaz_error "Error: -path_chr must be specified when any of -seq, -aln, or -snp options are used."
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 

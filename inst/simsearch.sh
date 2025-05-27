@@ -58,13 +58,10 @@ EOF
 #            PARAMETERS
 # ----------------------------------------------------------------------------
 
-#!/bin/bash
-
 after_blast_flag=0
 keep_blast_flag=0
 use_strand=T
 
-# Read arguments
 # Read arguments
 while [ "$1" != "" ]; do
     case $1 in
@@ -82,7 +79,7 @@ while [ "$1" != "" ]; do
         -keepblast )  keep_blast_flag=1; shift ;;
 
         -strandfree ) use_strand=F; shift ;;
-        * ) echo "Invalid parameter: $1"; show_help; exit 1 ;;
+        * ) pokaz_error "Error: Invalid parameter: $1"; show_help; exit 1 ;;
     esac
 done
 
@@ -93,25 +90,28 @@ count=0
 [ ! -z "$path_genome" ] && count=$((count + 1))
 
 if [ $count -ne 1 ]; then
-    echo "Error: You must specify exactly one of -on_seq, -on_genome, or -on_path."
+    pokaz_error "Error: You must specify exactly one of -on_seq, -on_genome, or -on_path."
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 
 # Check if FASTA file parameter is provided
 if [ -z "$file_input" ]; then
-    echo "FASTA file not specified"
+    pokaz_error "Error: FASTA file not specified"
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 
 # Check if the FASTA file exists
 if [ ! -f "$file_input" ]; then
-    echo "Input FASTA file not found: $file_input"
+    pokaz_error "Error: Input FASTA file not found: $file_input"
     exit 1
 fi
 
 # Check if output file parameter is provided
 if [ -z "$output_pref" ]; then
-    echo "Output file not specified"
+    pokaz_error "Error: Output file not specified"
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 

@@ -105,9 +105,9 @@ done
 
 # Check required parameters
 if [[ -z "$path_in" ]]; then
-    echo "Error: -path_in is required"
+    pokaz_error "Error: -path_in is required"
 
-    print_fancy_frame "To check usage run: chromotools -h"
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 path_in=$(add_symbol_if_missing "$path_in" "/")
@@ -140,19 +140,19 @@ fi
 
 # Check invalid combinations
 if [[ "$mode_filter" == true && ( "$mode_reorder" == true || "$mode_rearrange" == true ) ]]; then
-    echo "Error: Filtering mode (-remove/-remain) cannot be combined with reorder/rearrange modes."
+    pokaz_error "Error: Filtering mode (-remove/-remain) cannot be combined with reorder/rearrange modes."
 
-    print_fancy_frame "To check usage run: chromotools -h"
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 
 if [[ "$mode_filter" == false && "$mode_reorder" == false && "$mode_rearrange" == false ]]; then
-    echo "Error: Specify parameters for one of the modes:
+    pokaz_error "Error: Specify parameters for one of the modes:
     - Filtering:        -remove/-remain
     - Reordering:       -path_aln -resort
     - Rearrangement:    -path_aln -rearrange"
 
-    print_fancy_frame "To check usage run: chromotools -h"
+    print_fancy_frame "To check usage run: ${0##*/} -h"
     exit 1
 fi
 
