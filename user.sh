@@ -24,5 +24,5 @@ suppressMessages(devtools::install(quiet=TRUE))
 " && {
   END_TIME=$(date +%s.%N)
   ELAPSED_TIME=$(awk "BEGIN {printf \"%.1f\", $END_TIME - $START_TIME}")
-  echo -e "\033[32mDeveloper mode: Package $PACKAGE_NAME check and (re)installation process completed in $ELAPSED_TIME seconds.\033[0m"
+  echo -e "\033[32mUser mode: Package $PACKAGE_NAME check and (re)installation process completed in $ELAPSED_TIME seconds.\033[0m"
 }
