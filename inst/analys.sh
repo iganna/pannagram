@@ -19,7 +19,7 @@ Usage: ${0##*/}  -path_msa PATH_MSA  -path_chr PATH_CHR
                 [-ref REF]
                 [-h] [-cores NUM_CORES]  
                 [-blocks] [-seq] [-aln] [-snp] 
-                [-aln_type ALN_TYPE] [-path_cons PATH_CONS]
+                [-aln_type ALN_TYPE]
 
 
 This script manages various genomic analyses and alignments.
@@ -44,7 +44,6 @@ Options:
     -annogroup                  Create the consensus annotation groups
 
     -aln_type ALN_TYPE          Set the type of alignment (default: 'msa_').
-    -path_cons PATH_CONS        Specify the path to the consensus folder (has the default value).
 
 Examples:
     ${0##*/}  -path_msa /data/genomes -ref genome_ref -path_chr /data/chromosomes  -blocks -seq -snp
@@ -106,7 +105,6 @@ while [ $# -gt 0 ]; do
                          run_annogroup=true;     shift 2;;
 
         -aln_type)       aln_type=$2;            shift 2;;
-        -path_cons)      path_consensus=$2;      shift 2;;
         *)               print_usage; echo "Wrong parameter ${1}";            exit 1;;
     esac
 done

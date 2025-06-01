@@ -44,10 +44,9 @@ OTHER PARAMETERS:
 EOF
 }
 
-#[-path_cons PATH_CONSENSUS] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
+#[-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
 # -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
 # -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
-# -path_cons PATH_CONSENSUS   Path to the consensus folder. 
 
 # Function to display a long help message
 print_usage_detailed() {

@@ -66,7 +66,6 @@ do
         # # Optional paths
         # -path_chrom) path_chrom=$2;  shift 2 ;;  # path to the folder with individual chromosomes in separate files
         # -path_parts) path_parts=$2;  shift 2 ;;  # path to the folder with chromosomal parts
-        # -path_cons)  path_cons=$2;   shift 2 ;;  # path to the consensus folder
 
         # Number of chromosomes
         -nchr)      nchr=$2;     shift 2 ;;  # number of chromosomes
