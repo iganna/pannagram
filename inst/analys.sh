@@ -28,8 +28,8 @@ Options:
     -h, --help                  Display this help message and exit.
     -cores NUM_CORES            Specify the number of cores for parallel processing (default is 1).
 
-    -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. The same as -path_out in pangen.sh
-    -path_chr PATH_CHR          Specify the path to chromosome files.
+    -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. (PATH_OUT/intermediate/consensus/ from pannagram)
+    -path_chr PATH_CHR          Specify the path to chromosome files. (PATH_OUT/intermediate/chromosomes/ from pannagram)
 
     -ref REF                    Specify the prefix for the gaccession, which was used to sort the alignment.
     -blocks                     RGet positions of synteny blocks between accessions.
@@ -54,7 +54,11 @@ EOF
 # ----------------------------------------------------------------------------
 #             PARAMETERS
 # ----------------------------------------------------------------------------
-
+if [ $# -eq 0 ]; then
+    pokaz_error "No arguments provided!"
+    help_in_box
+    exit 0
+fi
 
 # Initialize variables to determine which scripts to run
 aln_type='msa_'
@@ -105,21 +109,20 @@ while [ $# -gt 0 ]; do
                          run_annogroup=true;     shift 2;;
 
         -aln_type)       aln_type=$2;            shift 2;;
-        *)               print_usage; echo "Wrong parameter ${1}";            exit 1;;
+        *)               pokaz_error "Unknown parameter: $1"; help_in_box; exit 1;;
     esac
 done
 
 if [[ -z "$path_consensus" ]]; then
     pokaz_error "Error: -path_msa is required"
-
-    print_fancy_frame "To check usage run: ${0##*/} -h"
+    help_in_box
     exit 1
 fi
 
 # Check if path_chromosomes is empty while any of run_seq, run_aln, or run_snp are set to true
 if [ -z "$path_chromosomes" ] && ([ "$run_seq" = true ] || [ "$run_aln" = true ] || [ "$run_snp" = true ]); then
     pokaz_error "Error: -path_chr must be specified when any of -seq, -aln, or -snp options are used."
-    print_fancy_frame "To check usage run: ${0##*/} -h"
+    help_in_box
     exit 1
 fi
 

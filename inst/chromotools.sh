@@ -72,6 +72,11 @@ EOF
 # ----------------------------------------------------------------------------
 #             PARAMETERS
 # ----------------------------------------------------------------------------
+if [ $# -eq 0 ]; then
+    pokaz_error "No arguments provided!"
+    help_in_box
+    exit 0
+fi
 
 
 # Default values
@@ -85,7 +90,6 @@ path_aln=""
 resort=false
 rearrange=false
 
-# Parse command line arguments
 while [ $# -gt 0 ]; do
     case $1 in
         -h|--help)        print_usage; exit 0 ;;
@@ -98,7 +102,7 @@ while [ $# -gt 0 ]; do
         -path_aln)        require_arg $1 $2; path_aln=$2; shift 2 ;;
         -resort)          resort=true; shift ;;
         -rearrange)       rearrange=true; shift ;;
-        *)                print_usage; echo "Unknown parameter: $1"; exit 1 ;;
+        *)                pokaz_error "Unknown parameter: $1"; help_in_box; exit 1;;
     esac
 done
 
@@ -106,8 +110,7 @@ done
 # Check required parameters
 if [[ -z "$path_in" ]]; then
     pokaz_error "Error: -path_in is required"
-
-    print_fancy_frame "To check usage run: ${0##*/} -h"
+    help_in_box
     exit 1
 fi
 path_in=$(add_symbol_if_missing "$path_in" "/")
@@ -141,8 +144,7 @@ fi
 # Check invalid combinations
 if [[ "$mode_filter" == true && ( "$mode_reorder" == true || "$mode_rearrange" == true ) ]]; then
     pokaz_error "Error: Filtering mode (-remove/-remain) cannot be combined with reorder/rearrange modes."
-
-    print_fancy_frame "To check usage run: ${0##*/} -h"
+    help_in_box
     exit 1
 fi
 
@@ -151,8 +153,7 @@ if [[ "$mode_filter" == false && "$mode_reorder" == false && "$mode_rearrange" =
     - Filtering:        -remove/-remain
     - Reordering:       -path_aln -resort
     - Rearrangement:    -path_aln -rearrange"
-
-    print_fancy_frame "To check usage run: ${0##*/} -h"
+    help_in_box
     exit 1
 fi
 
