@@ -15,6 +15,11 @@ source $INSTALLED_PATH/utils/utils_help.sh
 # ----------------------------------------------------------------------------
 #            PARAMETERS: parsing
 # ----------------------------------------------------------------------------
+if [ $# -eq 0 ]; then
+    pokaz_error "No arguments provided!"
+    help_in_box
+    exit 0
+fi
 
 aln_type_msa='msa_'
 aln_type_ref='ref_'
@@ -40,8 +45,7 @@ while [ $# -gt 0 ]
 do
     # echo $1
     case $1 in
-        -h) print_usage_short; print_examples; exit ;;
-        -help ) print_usage_detailed; print_examples; exit ;;
+        -h | -help ) print_usage_detailed; print_examples; exit ;;
         -s | -stage | -step ) step_start="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -e | -end )   step_end="$2"; shift 2 ;;  # stage from which to run, when the stage is not provided - the last interrupted stage withh be re-run
         -log)         log_level=$2;    shift 2 ;;  # path to the output
@@ -66,7 +70,6 @@ do
         # # Optional paths
         # -path_chrom) path_chrom=$2;  shift 2 ;;  # path to the folder with individual chromosomes in separate files
         # -path_parts) path_parts=$2;  shift 2 ;;  # path to the folder with chromosomal parts
-        # -path_cons)  path_cons=$2;   shift 2 ;;  # path to the consensus folder
 
         # Number of chromosomes
         -nchr)      nchr=$2;     shift 2 ;;  # number of chromosomes
@@ -97,11 +100,11 @@ done
 
 # Output of Unrecognized Parameters
 if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
-    print_usage_short
-    pokaz_message "Unrecognized options:"
+    pokaz_error "Error: Unrecognized options:"
     for option in "${unrecognized_options[@]}"; do
-        echo "$option"
+        echo "    $option"
     done
+    help_in_box
     exit 1
 fi
 
@@ -123,13 +126,14 @@ elif [ "$mode_pre" = "F" ] && [ "$mode_ref" = "T" ] && [ "$mode_msa" = "F" ]; th
     mode_pangen=${name_mode_ref}
 else
     pokaz_error "Error: Invalid combination of parameters to determine the pangen launch mode."
-    print_usage_short
+    help_in_box
     exit 1
 fi
 
 
 if [[ ${#one2one} -gt 1 ]]; then
     pokaz_error "Error: -all2all and -one2one should not be set up together"
+    help_in_box
     exit 1
 elif [[ ${#one2one} -eq 0 ]]; then
     # Parameters -all2all and -one2one should be taken with default values
@@ -148,11 +152,13 @@ fi
 # Required PATHS
 if [ -z "${path_in}" ]; then
     pokaz_error "Error: The path to the genomes folder (-path_in) is not specified"
+    help_in_box
     exit 1
 fi
 
 if [ -z "${path_out}" ]; then
     pokaz_error "Error: The path to the output folder (-path_out) is not specified"
+    help_in_box
     exit 1
 fi
 
@@ -207,7 +213,7 @@ fi
 acc_target=()
 
 if [ -n "${acc_file}" ] && ! [ -f "${acc_file}" ]; then
-    pokaz_message "Error: File '${acc_file}' does not exist"
+    pokaz_error "Error: File '${acc_file}' does not exist"
     exit 1
 fi
 
@@ -362,13 +368,15 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
             nchr=${counts[0]}
             nchr_ref=${nchr}
         else
-            pokaz_error "Genomes have different number of chromosomes. Please change files or specify the number -nchr."
+            pokaz_error "Error: Genomes have different number of chromosomes. Please change files or specify the number -nchr."
+            help_in_box
             exit 1
         fi
     fi
 
 elif [ -z "${nchr}" ] && [ ! -z "${nchr_ref}" ]; then  # nchr_ref is defined.
     pokaz_error "Error: -nchr not defined, when -nchr_ref is defined ."
+    help_in_box
     exit 1
 elif [ ! -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # nchr is defined.
     nchr_ref=${nchr}
@@ -489,6 +497,7 @@ elif [ "${purge_reps}" == "T" ]; then
     option_purge_reps=" --purge.reps T"
 else
     pokaz_error "Error: purge_reps must be either 'F' or 'T'."
+    help_in_box
     exit 1
 fi
 
@@ -520,6 +529,7 @@ log_level=${log_level:-1}  # Set the default value to 'steps'
 
 if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
     pokaz_error "Error: log_level must be a number between 0 and 3."
+    help_in_box
     exit 1
 fi
 
@@ -562,6 +572,7 @@ elif [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
     message_mode="Pannagram runs in the Multiple Genome Alignment mode."
 else 
     with_level 1 pokaz_error "Error: Wrong running mode"
+    help_in_box
     exit 1
 fi
 
@@ -681,7 +692,7 @@ pokaz_message "Start End: ${step_start} ${step_end}"
 # Check start and end
 if [ "$step_start" -gt "$step_end" ]; then
     echo "Error: step_start ($step_start) is greater than step_end ($step_end)"
-    exit 1  # Exit the script with error status 1
+    exit 1
 fi
 
 
