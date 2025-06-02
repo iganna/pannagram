@@ -4,7 +4,7 @@ suppressMessages({ library(Biostrings)
   library('foreach')
   library(doParallel)
   library("optparse")
-  library(panagram)
+  library(pannagram)
 })
 
 

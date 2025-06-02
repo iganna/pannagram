@@ -11,7 +11,7 @@ suppressMessages({ library(Biostrings)
   library(ggplot2)
   
   library(igraph)
-  library(ggnet)
+  library(GGally)
   library(network)
 })
 
