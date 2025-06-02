@@ -93,6 +93,9 @@ make_dir() {
     fi
 }
 
+help_in_box() {
+    print_fancy_frame "Get help by running: ${0##*/} -h"
+}
 
 # Logging messages either to the console or to a specified file based on the given log level.
 # Logging into files - always
