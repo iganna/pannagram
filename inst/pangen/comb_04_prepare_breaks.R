@@ -6,8 +6,7 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
-  library(muscle)  #BiocManager::install("muscle")
-  # library(Biostrings)
+  library(muscle)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
@@ -33,7 +32,6 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-# print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -87,10 +85,9 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = T
 for(s.comb in pref.combinations){
   
-  if(echo) pokaz('* Combination', s.comb)
+  pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
@@ -111,13 +108,13 @@ for(s.comb in pref.combinations){
   breaks.init = breaks
   
   # ---- Merge coverages ----
-  pokaz('Merge coverages..')
+  pokaz('Merge coverages..', file=file.log.main, echo=echo.main)
   breaks <- mergeOverlaps(breaks)
   
   if(sum(breaks$cnt) != nrow(breaks.init)) stop('Checkpoint3')
   
   # ---- Solve long ----
-  pokaz('Solve long..')
+  pokaz('Solve long..', file=file.log.main, echo=echo.main)
   idx.rem.init = solveLong(breaks, breaks.init, len.large)
   if(length(idx.rem.init) > 0){
     breaks.extra = rbind(breaks.extra, breaks.init[idx.rem.init,])
@@ -127,7 +124,7 @@ for(s.comb in pref.combinations){
   
   if((sum(breaks$cnt) + nrow(breaks.extra)) != n.init) stop('Checkout length')
   
-  pokaz('Save extra breaks..')
+  pokaz('Save extra breaks..', file=file.log.main, echo=echo.main)
   file.breaks.extra = paste0(path.cons, 'breaks_extra_', s.comb,'.rds')
   saveRDS(breaks.extra, file.breaks.extra)
   
@@ -135,16 +132,10 @@ for(s.comb in pref.combinations){
   v.beg = c()
   v.end = c()
   for(acc in accessions){
-  # for(acc in '6220_v1.1'){
-    pokaz(acc)
+    pokaz(acc, file=file.log.main, echo=echo.main)
     
     x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
     b.acc = h5read(file.comb, paste0(gr.blocks, acc))
-    
-    # if(acc == '6220_v1.1'){
-    #   save(list = ls(), file = "tmp_workspace_6220.RData")
-    #   stop()
-    # }
     
     x.beg = fillPrev(x.acc)[breaks$idx.beg]
     x.end = fillNext(x.acc)[breaks$idx.end]
@@ -162,9 +153,6 @@ for(s.comb in pref.combinations){
   colnames(v.beg) = accessions
   colnames(v.end) = accessions
   
-  # save(list = ls(), file = "tmp_workspace1.RData")
-  # stop('Enough..')
-  
   
   # Filter "extra" breaks
   for(acc in accessions){
@@ -179,8 +167,7 @@ for(s.comb in pref.combinations){
   
   # Check inversions
   if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
-  # To test: which(rowSums(sign(v.beg * v.end) < 0) > 0)
-  
+
   # Check direction
   if (any(sign(v.end - v.beg) < 0)){
     save(list = ls(), file = paste0("tmp_workspace_checkpoint5_", s.comb,".RData"))
@@ -221,7 +208,7 @@ for(s.comb in pref.combinations){
   
   idx.zero = which(rowSums(v.beg != 0) == 0)
   if(length(idx.zero) != 0){
-    pokaz('Number of zero-breaks is', length(idx.zero))
+    pokaz('Number of zero-breaks is', length(idx.zero), file=file.log.main, echo=echo.main)
     v.beg = v.beg[-idx.zero,]
     v.end = v.end[-idx.zero,]
     breaks = breaks[-idx.zero,]
@@ -249,11 +236,3 @@ if(num.cores > 1){
 }
 
 warnings()
-
-
-# ***********************************************************************
-# ---- Manual testing ----
-
-
-
-

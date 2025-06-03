@@ -70,7 +70,7 @@ if (is.null(opt$max.len.gap)) {
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
 
-pokaz('Number of cores', num.cores)
+pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
 if(num.cores > 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
@@ -103,10 +103,9 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = T
 for(s.comb in pref.combinations){
   
-  if(echo) pokaz('* Combination', s.comb)
+  pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
   file.ws = paste0(path.cons, 'breaks_ws_', s.comb, '.RData')
@@ -124,18 +123,7 @@ for(s.comb in pref.combinations){
         length(idx.singl), 
         length(idx.short), 
         length(idx.large), 
-        length(idx.extra))
-  
-  # ----
-  
-  # IMPORTANT: THERE ARE SOME BREAKS WITH LOOK LIKE SINGLETONS< BUT THEY ARE NOT
-  # if(sum(length(idx.singl) +
-  #        length(idx.short) +
-  #        length(idx.large) +
-  #        length(idx.extra)) != nrow(breaks)) {
-  #   save(list = ls(), file = "tmp_wrong_Chrckpoint7.RData")
-  #   stop('Chrckpoint7')
-  # } 
+        length(idx.extra), file=file.log.main, echo=echo.main)
   
   # Names of files
   n.digits <- nchar(as.character(nrow(breaks)))
@@ -158,11 +146,6 @@ for(s.comb in pref.combinations){
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
-  # if(s.comb == '10_10'){
-  #   save(list = ls(), file = "tmp_workspace.RData")
-  #   stop('Enough..')
-  # }
-  
   ## ---- Analyse by portions ----
   
   idx.remained = setdiff(1:nrow(breaks), idx.singl)
@@ -176,7 +159,7 @@ for(s.comb in pref.combinations){
     
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
-      pokaz(acc)
+      pokaz(acc, file=file.log.main, echo=echo.main)
       file.chromosome = paste(path.chromosomes, 
                               acc, 
                               '_chr', q.chr, '.fasta', sep = '')
@@ -214,7 +197,6 @@ for(s.comb in pref.combinations){
         seq = nt2seq(seq)
         
         seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')
-        # pokaz(seq.name)
         names(seq) = seq.name
         
         return(seq = seq)
@@ -230,22 +212,9 @@ for(s.comb in pref.combinations){
       
       # Get sequences
       subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), unname(p1), unname(p2), idx.tmp.acc %in% c(idx.large, idx.extra))  
-      # 
-      # print(subsets)
-      # if(length(subsets) == 1){
-      #   if(names(subsets) == 'GCA_040115645.1.GCA_040115645.1|10|1384970|1385000|+|31'){
-      #     save(list = ls(), file = "tmp_workspace.RData")
-      #     stop()
-      #   }  
-      # }
-      
-      # Save sequences
-      # pokaz('---')
-      # pokaz(names(subsets))
+
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
-      aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
-      # pokaz(aln.seqs.names[idx.tmp.acc])
-      
+      aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)      
       rm(genome)
     }
     idx.save = c(idx.large, idx.extra)
@@ -257,7 +226,7 @@ for(s.comb in pref.combinations){
     if(length(intersect(idx.save, idx.short)) > 0) stop('Wrong idx are saved')
     
     if(num.cores == 1){
-      pokaz('Save sequences...')
+      pokaz('Save sequences...', file=file.log.main, echo=echo.main)
       for(i in idx.save){
         writeFasta(aln.seqs[[i]], 
                    file = paste0(path.mafft.in,breaks$file[i]), 
@@ -265,7 +234,7 @@ for(s.comb in pref.combinations){
                    append = T)
       }
     } else { # Many cores
-      pokaz('Save sequences with parallel...')
+      pokaz('Save sequences with parallel...', file=file.log.main, echo=echo.main)
       foreach(i = idx.save,
               .packages=c('crayon'))  %dopar% {
                 writeFasta(aln.seqs[[i]], 
@@ -274,7 +243,7 @@ for(s.comb in pref.combinations){
                            append = T)
               }
     }
-    if(echo) pokaz('.. done!')
+    pokaz('.. done!', file=file.log.main, echo=echo.main)
     
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)
@@ -291,7 +260,7 @@ for(s.comb in pref.combinations){
   }
   
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
-  pokaz(n.null, length(idx.short))
+  pokaz(n.null, length(idx.short), file=file.log.main, echo=echo.main)
   if(n.null != length(idx.short)) {
     # pokazAttention('fix short')
     # save(list = ls(), file = "tmp_wrong_number_of_short.RData")
@@ -313,7 +282,3 @@ if(num.cores > 1){
 }
 
 warnings()
-
-
-# ***********************************************************************
-# ---- Manual testing ----
