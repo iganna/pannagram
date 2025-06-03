@@ -82,8 +82,7 @@ do
 
         -one2one)     one2one="T";      shift 1 ;;  # compare chromosomes one-to-one or not (default in REF and MSA modes)
         -all2all)     one2one="F";      shift 1 ;;  # compare chromosomes all-to-all or not (default in PRE mode)
-        -purge_reps | -purge_repeats ) purge_reps="T";    shift 1 ;;  # filtration of repeats, default - not
-        -incl_reps | -purge_repeats ) purge_reps="F";    shift 1 ;;  # filtration of repeats, default - not
+        -incl_reps | -include_repeats ) purge_reps="F";    shift 1 ;;  # filtration of repeats, default - not
         -rev )        flag_rev="T";      shift 1 ;;  # reverce parts
         -orf )        flag_orf="T";      shift 1 ;;  # ORF finder
 
