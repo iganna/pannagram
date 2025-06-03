@@ -163,6 +163,7 @@ gff2gff <- function(path.cons,
       gff2$V4[idx.chr] = w$v.next[gff1$V4[idx.chr]]
       gff2$V5[idx.chr] = w$v.prev[gff1$V5[idx.chr]]
     }
+    idx.chr = idx.chr[(gff2$V4[idx.chr] != 0) & (gff2$V5[idx.chr] != 0)]
     
     # Information about blocks
     blocks = getSequntialBlocks(v[,2])
@@ -184,6 +185,7 @@ gff2gff <- function(path.cons,
   }
   
   idx.wrong.blocks = (sign(gff2$V4 * gff2$V5) != 1)
+  
   # gff2[idx.wrong.blocks, c('V4', 'V5')] = 0
   gff2.loosing = gff2[idx.wrong.blocks,]
   gff2.remain = gff2[!idx.wrong.blocks,]

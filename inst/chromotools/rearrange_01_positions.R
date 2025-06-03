@@ -141,6 +141,7 @@ for(acc in accessions){
       x = glueZero(x)
       
       p = sum(abs(x$V5 - x$V4) + 1) / i.chr.ref.len
+      pokaz(i.chr.ref, i.chr.acc, p)
       if(p < min.overlap) next
       x.all = rbind(x.all, x)
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
