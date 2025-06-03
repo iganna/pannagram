@@ -10,7 +10,7 @@ source $INSTALLED_PATH/utils/chunk_error_control.sh
 # ----------------------------------------------------------------------------
 
 source $INSTALLED_PATH/utils/utils_bash.sh
-source $INSTALLED_PATH/utils/utils_help.sh
+source $INSTALLED_PATH/utils/pannagram_help.sh
 
 # ----------------------------------------------------------------------------
 #            PARAMETERS: parsing
