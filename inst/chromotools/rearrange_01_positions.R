@@ -94,6 +94,7 @@ file.ref.len = paste0(path.chr, ref, '_chr_len.txt', collapse = '')
 if(!file.exists(file.ref.len)) stop('File', file.ref.len, 'does not exist.')
 ref.len = read.table(file.ref.len, header = 1)
 min.overlap = 0.01
+min.overlap = 0.001
 min.overlap.fragment = 0.01
 
 
