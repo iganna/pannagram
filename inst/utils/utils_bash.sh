@@ -84,15 +84,6 @@ pokaz_help() {
     pokaz_message "< Welcome to Hellp >"
 }
 
-
-# Create directory if not exists
-make_dir() {
-    local path_name="$1"
-    if [ ! -d "$path_name" ]; then
-        mkdir -p "$path_name"
-    fi
-}
-
 help_in_box() {
     print_fancy_frame "Get help by running: ${0##*/} -h"
 }

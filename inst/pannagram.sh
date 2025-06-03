@@ -724,7 +724,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 step_name="step${step_num}_query_01"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -771,7 +771,7 @@ if [[ "${path_in}" != "$path_ref" ]]; then
         step_name="step${step_num}_query_01_refpart_${ref0}/"
         step_file="${path_log}${step_name}_done"
         path_log_step="${path_log}${step_name}/"
-        make_dir ${path_log_step}
+        mkdir -p ${path_log_step}
 
         # Start
         if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -814,7 +814,7 @@ if [ ! -z "${flag_orf}" ]; then
     step_name="step${step_num}_query_01_orf"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -858,8 +858,8 @@ with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
 step_name="step${step_num}_query_02"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
-make_dir ${path_parts}
+mkdir -p ${path_log_step}
+mkdir -p ${path_parts}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -903,13 +903,13 @@ for ref0 in "${refs_all[@]}"; do
 
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
-    make_dir ${path_blast_parts}
+    mkdir -p ${path_blast_parts}
     
     # Logs
     step_name="step${step_num}_query_03_blast_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -997,13 +997,13 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_blast_parts=${path_inter}blast_parts_${ref0}/
     path_alignment=${path_inter}alignments_${ref0}/
-    make_dir ${path_alignment}
+    mkdir -p ${path_alignment}
 
     # Logs
     step_name="step${step_num}_synteny_01_maj_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1055,13 +1055,13 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_plots_ref=${path_plots}plots_${ref0}/
-    make_dir ${path_plots_ref}
+    mkdir -p ${path_plots_ref}
     
     # Logs
     step_name="step${step_num}_synteny_02_plot_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1121,13 +1121,13 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_gaps=${path_inter}blast_gaps_${ref0}/
-    make_dir ${path_gaps}
+    mkdir -p ${path_gaps}
 
     # Logs
     step_name="step${step_num}_synteny_03_get_gaps_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1173,13 +1173,13 @@ for ref0 in "${refs_all[@]}"; do
     # Paths
     path_alignment=${path_inter}alignments_${ref0}/
     path_gaps=${path_inter}blast_gaps_${ref0}/
-    make_dir "${path_gaps}db/"
+    mkdir -p "${path_gaps}db/"
 
     # Logs
     step_name="step${step_num}_synteny_04_blast_gaps_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1229,7 +1229,7 @@ for ref0 in "${refs_all[@]}"; do
     step_name="step${step_num}_synteny_05_full_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1285,7 +1285,7 @@ for ref0 in "${refs_all[@]}"; do
     step_name="step${step_num}_comb_01_${ref0}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
 
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1356,7 +1356,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
     step_name="step${step_num}_comb_02_${ref0}_${ref1}"
     step_file="${path_log}${step_name}_done"
     path_log_step="${path_log}${step_name}/"
-    make_dir ${path_log_step}
+    mkdir -p ${path_log_step}
         
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1397,7 +1397,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Remain only the trustable syntenic p
 step_name="step${step_num}_comb_03_cleanup"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1432,7 +1432,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Prepare breakes for an additional al
 step_name="step${step_num}_comb_04_prepare_breaks"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1468,7 +1468,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for alignments."
 step_name="step${step_num}_comb_04_prepare_seqs"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Paths for MAFFT, common for the next code too
 path_mafft_in="${path_inter}mafft_in/"
@@ -1521,7 +1521,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Align short sequences."
 step_name="step${step_num}_comb_05_small"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1554,7 +1554,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
 step_name="step${step_num}_comb_05_mafft"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir "${path_log_step}"
+mkdir -p "${path_log_step}"
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1593,7 +1593,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Remove bad mafft."
 step_name="step${step_num}_comb_06_bad_mafft"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1627,7 +1627,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 step_name="step${step_num}_comb_06_mafft2"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1665,7 +1665,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into
 step_name="step${step_num}_comb_07"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1707,7 +1707,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # step_name="step${step_num}_comb_08"
 # step_file="${path_log}${step_name}_done"
 # path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
+# mkdir -p ${path_log_step}
 
 # # Start
 # if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1756,7 +1756,7 @@ fi
 step_name="step${step_num}_comb_09"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1796,7 +1796,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
 step_name="step${step_num}_comb_10"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1837,7 +1837,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
 step_name="step${step_num}_comb_11"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1882,7 +1882,7 @@ fi
 step_name="step${step_num}_comb_09"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1924,7 +1924,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
 step_name="step${step_num}_comb_10"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -1965,7 +1965,7 @@ with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
 step_name="step${step_num}_comb_11"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
-make_dir ${path_log_step}
+mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
@@ -2005,7 +2005,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # step_name="step${step_num}_analys_01_blocks"
 # step_file="${path_log}${step_name}_done"
 # path_log_step="${path_log}${step_name}/"
-# make_dir ${path_log_step}
+# mkdir -p ${path_log_step}
 
 # # Start
 # if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
