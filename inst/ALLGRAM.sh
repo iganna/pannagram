@@ -487,8 +487,18 @@ if [ "$step_start" -gt "$step_end" ]; then
     exit 1
 fi
 
-# MAIN PIPELINE
-# CHROMOSOMES & PARTS
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════╗  /\_/\  
+# ║                                                                                   ║ ( o.o ) 
+# ║                                  MAIN PIPELINE                                    ║  > ^ <
+# ║                                                                                   ║ /     \
+# ╚═══════════════════════════════════════════════════════════════════════════════════╝ \_____/
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                         CHROMOSOMES & PARTS                               │
+# └───────────────────────────────────────────────────────────────────────────┘
+    
+
 if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
     flag_chr_anal="T"
 else
@@ -667,7 +677,9 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# REFERENCE-BASED
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                         REFERENCE-BASED                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
 # Blast parts on the reference genome
 
 with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
@@ -1088,7 +1100,12 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
     exit
 fi
 
-# MSA 
+# ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
+# ║                                                                                   ║      /|_||_\`.__
+# ║                                  MSA                                              ║     (   _    _ _\
+# ║                                                                                   ║     =`-(_)--(_)-'
+# ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
+
 with_level 1 pokaz_stage "MGA is strting..  (^>^)"
 
 # Run consensus for a pair of files
