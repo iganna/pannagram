@@ -225,6 +225,9 @@ elif [ ! -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # nchr is defined.
     nchr_ref=${nchr}
 fi
 
+# MISFITS
+# source $INSTALLED_PATH/pannagram_misfits/chrNumInRefGenCheck.sh
+# source $INSTALLED_PATH/pannagram_misfits/chrNumInAccGenCheck.sh
 
 
 # File with combinations
@@ -1422,6 +1425,9 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
+# MISFITS
+# source $INSTALLED_PATH/pannagram_misfits/addLostSyntenyPositions.sh
+
 # EXTRA STEPS
     if [[ "$extra_steps" == "F" ]]; then
         exit 0
@@ -1666,7 +1672,9 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
                         source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-                        # Final
+# MISFITS
+# source $INSTALLED_PATH/pannagram_misfits/getSyntenyBlocks.sh
+
                             if [ $step_start -eq 0 ]; then
                                 echo "Script completed successfully"
                             fi
