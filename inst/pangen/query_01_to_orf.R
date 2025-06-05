@@ -29,6 +29,8 @@ option_list <- list(
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
 
+# print(opt)
+
 # ***********************************************************************
 # ---- Logging ----
 
@@ -148,4 +150,15 @@ if(num.cores == 1){
 
 warnings()
 
-pokaz('Done.', file=file.log.main, echo=echo.main)
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+# Rscript query_to_chr.R -n 5 -t fasta --path.in ../pb_genomes/ --path.orf ../pb_chromosomes/
+# Rscript query_to_chr.R -n 8 -t fasta --path.in ../lyrata/ --path.orf ../ly_chromosomes/    
+# Rscript query_to_chr.R -n 1 -t fasta --path.in ../rhizobia/ --path.orf ../rhiz_chromosomes/ -s T
+
+
+

@@ -7,12 +7,15 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(msa)
-  library(muscle)
+  library(muscle)  #BiocManager::install("muscle")
   library(Biostrings)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
+# source("synteny_funcs.R")
+
+# pokazStage('Step 10. Prepare sequences for MAFFT')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -62,7 +65,7 @@ if (is.null(opt$max.len.gap)) {
 # Number of cores for parallel processing
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Whong number of cores: NULL')
-pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
+pokaz('Number of cores', num.cores)
 
 # Path with the consensus output
 if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
@@ -91,11 +94,12 @@ pokaz('Combinations', num.cores, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
+echo = T
 for(s.comb in pref.combinations){
   
   initial.vars <- ls()
   
-  pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
+  if(echo) pokaz('* Combination', s.comb)
   
   # -------------------------------------
   
@@ -116,7 +120,7 @@ for(s.comb in pref.combinations){
   path.tmp = '/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/intermediate/consensus/'
   
   # ---- Align Short sequences ----
-  pokaz('Align short seqs', file=file.log.main, echo=echo.main)
+  if(echo) pokaz('Align short seqs')
   
   # Checkup the number of sequences in alignments
   tmp = unlist(lapply(aln.seqs[idx.short], length))
@@ -132,15 +136,24 @@ for(s.comb in pref.combinations){
     mx.list = vector("list", length = length(idx.use))
     
     for(i.aln in 1:length(idx.use)){
+      # pokaz(i.aln)
 
       idx.aln = idx.use[i.aln]
       seqs = aln.seqs[[idx.aln]]
       names(seqs) = aln.seqs.names[[idx.aln]]
       
       seqs <- DNAStringSet(seqs)
+      # alignment <- msa(seqs, method = "ClustalOmega")
+      # aln = as.character(alignment)
       
       alignment = muscle(seqs, quiet = T)
       aln = as.character(alignment)
+      
+      
+      # if(i.aln == 3){
+      #   save(list = ls(), file = "tmp_workspace_s.RData")
+      #   # stop()
+      # }
       
       save(list = ls(), file = "tmp_workspace_s.RData")
       
@@ -169,9 +182,12 @@ for(s.comb in pref.combinations){
     return(mx.list)
   }
   
+  # save(list = ls(), file = "tmp_workspace_s.RData")
+  # stop()
+  
   # Two possible loops depending on the number of cores
   if(num.cores == 1){
-    pokaz('No parallel computing: short sequences', file=file.log.main, echo=echo.main)
+    pokaz('No parallel computing: short sequences')
     # One core
     
     idx.batches <- list(idx.short)  # do not remove
@@ -186,7 +202,7 @@ for(s.comb in pref.combinations){
     idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
     num.cores = min(num.cores, length(idx.batches))
     
-    pokaz('Parallel computing: short sequences', file=file.log.main, echo=echo.main)
+    pokaz('Parallel computing: short sequences')
     res.msa <- foreach(i.batch = 1:num.cores,
                        .packages=c('Biostrings', 'crayon', 'msa', 'muscle'))  %dopar% {
                          return(CODE_ALN_BATCH(i.batch)) 
@@ -212,7 +228,7 @@ for(s.comb in pref.combinations){
   
   if(length(res.msa) != nrow(ref.pos)){
     
-    pokaz(length(res.msa), nrow(ref.pos), file=file.log.main, echo=echo.main)
+    pokaz(length(res.msa), nrow(ref.pos))
     
     file.ws = "tmp_workspace_x.RData"
     all.local.objects <- ls()
@@ -232,10 +248,29 @@ for(s.comb in pref.combinations){
   # Cleanup variables
   final.vars <- ls()
   new.vars <- setdiff(final.vars, initial.vars)
-  pokaz('Veriables to remove', new.vars, file=file.log.main, echo=echo.main)
+  pokaz('Veriables to remove', new.vars)
   rm(list = new.vars)
   gc()
+  
 }
 
+
+
 warnings()
+
+
+# ***********************************************************************
+# ---- Manual testing ----
+
+if(F){
+
+  library(rhdf5)
+  path.cons = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/consensus/'
+  path.mafft.in = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/mafft_in/'
+  path.chromosomes = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/chromosomes/'
+  
+}
+
+
+
 

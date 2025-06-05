@@ -211,7 +211,8 @@ if(num.cores == 1){
 
 warnings()
 
-pokaz('Done.', file=file.log.main, echo=echo.main)
+pokaz('Done.',
+      file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- Manual testing ----
