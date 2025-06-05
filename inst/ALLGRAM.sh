@@ -15,10 +15,12 @@ path_ref="${path_ref:-${path_in}}"
 path_ref=$(add_symbol_if_missing "$path_ref" "/")
 
 path_features="${path_out}features/"
-path_msa="${path_features}msa/"
+path_features_msa="${path_features}msa/"
+path_extra="$path_features/extra/"
 
 path_inter="${path_out}intermediate/"
 path_alignment="${path_inter}alignments/"
+path_inter_msa="${path_inter}msa/"
 path_blast="${path_inter}blast/"
 path_mafft="${path_inter}mafft/"
 path_chrom="${path_inter}chromosomes/"
@@ -30,11 +32,14 @@ path_plots="${path_out}plots/"
 mkdir -p "${path_out}"
 
 mkdir -p "${path_features}"
-mkdir -p "${path_msa}"
+mkdir -p "${path_features_msa}"
+mkdir -p "${path_extra}"
 
 mkdir -p "${path_inter}"
 mkdir -p "${path_chrom}"
 mkdir -p "${path_parts}"
+mkdir -p "${path_inter_msa}"
+
 
 mkdir -p "${path_plots}"
 
@@ -375,7 +380,7 @@ fi
 with_level 1 pokaz_attention ${message_mode}
 
 if [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
-    with_level 1 pokaz_attention "Path with consensus MSA: ${path_msa}"
+    with_level 1 pokaz_attention "Path with consensus MSA: ${path_features_msa}"
 fi
 
 with_level 2 pokaz_message "Number of chromosomes ${nchr}"
@@ -569,7 +574,7 @@ if [[ "${path_in}" != "$path_ref" ]]; then
             with_level 1  pokaz_attention "Reference ${ref0}"
 
             # Temporary file to analyse only the reference genome from the folder
-            file_acc_ref=${path_msa}ref_acc.txt
+            file_acc_ref=${path_features_msa}ref_acc.txt
             echo "${ref0}" > ${file_acc_ref}
 
             # Run the step
@@ -724,16 +729,16 @@ for ref0 in "${refs_all[@]}"; do
         shopt -u nullglob
 
         if [ ${#files[@]} -eq 0 ]; then
-        with_level 0 pokaz_error "Error: No files matching the pattern ${path_chrom}${ref0}_chr*fasta"
-        exit 1
+            with_level 0 pokaz_error "Error: No files matching the pattern ${path_chrom}${ref0}_chr*fasta"
+            exit 1
         fi
 
         # Iterate over each file and create the database
         for file in "${files[@]}"; do
-        # Check if the BLAST database files already exist
-        if [ ! -f "${file}.nin" ]; then
-            makeblastdb -in ${file} -dbtype nucl > /dev/null
-        fi
+            # Check if the BLAST database files already exist
+            if [ ! -f "${file}.nin" ]; then
+                makeblastdb -in ${file} -dbtype nucl > /dev/null
+            fi
         done
 
         # ---- Run BLAST ----
@@ -1065,16 +1070,16 @@ for ref0 in "${refs_all[@]}"; do
 
         # ---- Clean up the output folders ----
         if   [ "$clean" == "T" ]; then 
-            touch ${path_msa}ref_fake_${ref0}_.h5
+            touch ${path_features_msa}ref_fake_${ref0}_.h5
             touch ${path_log_step}fake.log
 
-            rm -f ${path_msa}ref*${ref0}_.h5
+            rm -f ${path_features_msa}ref*${ref0}_.h5
             rm -f ${path_log_step}*
         fi  
 
         # Run the step
         Rscript $INSTALLED_PATH/pangen/comb_01_one_ref.R \
-                --path.cons ${path_msa} \
+                --path.cons ${path_features_msa} \
                 --path.aln ${path_alignment_ref} \
                 --path.chr ${path_chrom} \
                 --ref ${ref0}  \
@@ -1086,10 +1091,8 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
-
     fi
     unset path_alignment_ref
-
 done
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1130,17 +1133,17 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         
         # ---- Clean up the output folders ----
         if [ "$clean" == "T" ] && [ "$flag_first" == "true" ]; then 
-            touch ${path_msa}comb_fake.h5
+            touch ${path_features_msa}comb_fake.h5
             touch ${path_log_step}fake.log
 
-            rm -f ${path_msa}comb*h5
+            rm -f ${path_features_msa}comb*h5
             rm -f ${path_log_step}*
 
             flag_first=false
         fi  
 
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs2.R \
-                --path.cons ${path_msa} \
+                --path.cons ${path_features_msa} \
                 --ref0 ${ref0} \
                 --ref1 ${ref1} \
                 --cores ${cores} \
@@ -1168,15 +1171,16 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_msa}clean_fake.h5
+        touch ${path_features_msa}clean_fake.h5
         touch ${path_log_step}fake.log
 
-        rm -f ${path_msa}clean*h5
+        rm -f ${path_features_msa}clean*h5
         rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
-            --path.cons ${path_msa} \
+            --path.features.msa ${path_features_msa} \
+            --path.inter.msa ${path_inter_msa} \
             --cores ${cores} \
             --path.log ${path_log_step} \
             --log.level ${log_level} 
@@ -1201,15 +1205,16 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
-        touch ${path_msa}breaks_ws_fake.RData
+        touch ${path_features_msa}breaks_ws_fake.RData
         touch ${path_log_step}fake.log
 
-        rm -f  ${path_msa}breaks_ws_*.RData
+        rm -f  ${path_features_msa}breaks_ws_*.RData
         rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_breaks.R \
-            --path.cons "${path_msa}" \
+            --path.features.msa "${path_features_msa}" \
+            --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
             --path.chromosomes "${path_chrom}" \
             --path.log "${path_log_step}" \
@@ -1249,17 +1254,18 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_mafft_in}fake.fasta
         touch ${path_mafft_in}fake.tree
         touch ${path_log_step}fake.log
-        touch ${path_msa}small_ws_fake.RData
+        touch ${path_features_msa}small_ws_fake.RData
 
         find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
         find ${path_mafft_in} -name "*.tree" -type f -exec rm -f {} +
         # rm -f ${path_mafft_in}*fasta
         rm -f ${path_log_step}*
-        rm -f ${path_msa}small_ws_*.RData
+        rm -f ${path_features_msa}small_ws_*.RData
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_seqs.R \
-            --path.cons "${path_msa}" \
+            --path.features.msa "${path_features_msa}" \
+            --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
             --path.chromosomes "${path_chrom}" \
             --path.mafft.in "${path_mafft_in}" \
@@ -1292,7 +1298,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_05_small.R \
-            --path.cons "${path_msa}" \
+            --path.features.msa "${path_features_msa}" \
+            --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
             --path.log "${path_log_step}" \
             --log.level "${log_level}" \
@@ -1422,17 +1429,18 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_msa}msa_fake_h5
+        touch ${path_features_msa}msa_fake_h5
         touch ${path_log_step}fake.log
 
-        rm -f ${path_msa}msa*h5
+        rm -f ${path_features_msa}msa*h5
         rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_07_final_aln.R  \
             --cores ${cores} \
             --path.mafft.out ${path_mafft_out} \
-            --path.cons ${path_msa} \
+            --path.features.msa "${path_features_msa}" \
+            --path.inter.msa "${path_inter_msa}" \
             --path.log ${path_log_step} \
             --log.level ${log_level}
 
@@ -1446,252 +1454,256 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # source $INSTALLED_PATH/pannagram_misfits/addLostSyntenyPositions.sh
 
 # EXTRA STEPS
-    if [[ "$extra_steps" == "F" ]]; then
-        exit 0
-    fi
+if [[ "$extra_steps" == "F" ]]; then
+    exit 0
+fi
 
-    pokaz_attention "Extra steps are running.."
+pokaz_attention "Extra steps are running.."
 
-    # Get sequences of extra long fragments - 1
+# Get sequences of extra long fragments - 1
 
-    with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
 
     # Paths
-    path_extra="${path_inter}extra_regions/"
-    if [ ! -d "$path_extra" ]; then
-        mkdir -p "$path_extra"
-    fi
+    path_extra_long1="${path_extra}long1/"
+    mkdir -p "$path_extra_long1"
 
-    # Logs
-    step_name="step${step_num}_comb_09"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
-    mkdir -p ${path_log_step}
+# Logs
+step_name="step${step_num}_comb_09"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
 
-    # Start
-    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        # ---- Clean up the output folders ----
-        if   [ "$clean" == "T" ]; then 
-            touch ${path_extra}fake
-            touch ${path_log_step}fake.log
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra_long1}fake
+        touch ${path_log_step}fake.log
 
-            rm -rf ${path_extra}*
-            # find ${path_extra} -exec rm -rf {} +
-            rm -f ${path_log_step}*
-        fi  
+        rm -rf ${path_extra_long1}*
+        # find ${path_extra_long1} -exec rm -rf {} +
+        rm -f ${path_log_step}*
+    fi  
 
-        Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
-                --cores ${cores} \
-                --path.chromosomes "${path_chrom}" \
-                --path.extra ${path_extra} \
-                --path.cons ${path_msa} \
-                --path.log ${path_log_step} \
-                --log.level ${log_level}  \
-                --len.cutoff 25000 \
-                --aln.type.in 'msa_'
+    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra_long1} \
+            --path.cons ${path_features_msa} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}  \
+            --len.cutoff 25000 \
+            --aln.type.in 'msa_'
 
-        # Done
-        touch "${step_file}"
-    fi
+    # Done
+    touch "${step_file}"
+fi
 
-    source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-    # Align extra long fragments - 1
-        with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
+# Align extra long fragments - 1
+with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
 
-        # Logs
-        step_name="step${step_num}_comb_10"
-        step_file="${path_log}${step_name}_done"
-        path_log_step="${path_log}${step_name}/"
-        mkdir -p ${path_log_step}
+# Logs
+step_name="step${step_num}_comb_10"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
 
-        # Start
-        if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-            # ---- Clean up the output folders ----
-            if   [ "$clean" == "T" ]; then 
-                touch ${path_extra}fake_out.RData
-                touch ${path_extra}fake_len.RData
-                touch ${path_log_step}fake.log
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra_long1}fake_out.RData
+        touch ${path_extra_long1}fake_len.RData
+        touch ${path_log_step}fake.log
 
-                rm -rf ${path_extra}*out.RData
-                rm -rf ${path_extra}*len.RData
-                rm -f ${path_log_step}*
-            fi  
+        rm -rf ${path_extra_long1}*out.RData
+        rm -rf ${path_extra_long1}*len.RData
+        rm -f ${path_log_step}*
+    fi  
 
-            Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
-                    --cores ${cores} \
-                    --path.chromosomes "${path_chrom}" \
-                    --path.extra ${path_extra} \
-                    --path.cons ${path_msa} \
-                    --path.log ${path_log_step} \
-                    --log.level ${log_level} \
-                    --aln.type.in 'msa_'
+    Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra_long1} \
+            --path.cons ${path_features_msa} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --aln.type.in 'msa_'
 
-            # Done
-            touch "${step_file}"
-        fi
+    # Done
+    touch "${step_file}"
+fi
 
-        source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-        # Insert extra long fragments - 1
+# Insert extra long fragments - 1
 
-            with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
 
-            # Logs
-            step_name="step${step_num}_comb_11"
-            step_file="${path_log}${step_name}_done"
-            path_log_step="${path_log}${step_name}/"
-            mkdir -p ${path_log_step}
+# Logs
+step_name="step${step_num}_comb_11"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
 
-            # Start
-            if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-                # ---- Clean up the output folders ----
-                if   [ "$clean" == "T" ]; then 
-                    touch ${path_msa}extra1_out.h5
-                    touch ${path_log_step}fake.log
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_features_msa}extra1_out.h5
+        touch ${path_log_step}fake.log
 
-                    rm -rf ${path_msa}extra1*.h5
-                    rm -f ${path_log_step}*
-                fi  
+        rm -rf ${path_features_msa}extra1*.h5
+        rm -f ${path_log_step}*
+    fi  
 
-                Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
-                        --cores ${cores} \
-                        --path.extra ${path_extra} \
-                        --path.cons ${path_msa} \
-                        --path.log ${path_log_step} \
-                        --log.level ${log_level} \
-                        --aln.type.in 'msa_'
+    Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
+            --cores ${cores} \
+            --path.extra ${path_extra_long1} \
+            --path.cons ${path_features_msa} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --aln.type.in 'msa_'
 
-                # Done
-                touch "${step_file}"
-            fi
+    # Done
+    touch "${step_file}"
+fi
 
-            source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-            # Get sequences of extra long fragments - 2
-                with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
+# Get sequences of extra long fragments - 2
+with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
 
-                # Paths
-                path_extra="${path_inter}extra_regions2/"
-                if [ ! -d "$path_extra" ]; then
-                    mkdir -p "$path_extra"
-                fi
+# Paths
+path_extra_long2="${path_extgra}long2/"
+mkdir -p "$path_extra_long2"
 
-                # Logs
-                step_name="step${step_num}_comb_09"
-                step_file="${path_log}${step_name}_done"
-                path_log_step="${path_log}${step_name}/"
-                mkdir -p ${path_log_step}
+# Logs
+step_name="step${step_num}_comb_09"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
 
-                # Start
-                if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-                    # ---- Clean up the output folders ----
-                    if   [ "$clean" == "T" ]; then 
-                        touch ${path_extra}fake
-                        touch ${path_log_step}fake.log
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra_long2}fake
+        touch ${path_log_step}fake.log
 
-                        rm -rf ${path_extra}*
-                        # find ${path_extra} -exec rm -rf {} +
-                        rm -f ${path_log_step}*
-                    fi  
+        rm -rf ${path_extra_long2}*
+        # find ${path_extra_long2} -exec rm -rf {} +
+        rm -f ${path_log_step}*
+    fi  
 
-                    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
-                            --cores ${cores} \
-                            --path.chromosomes "${path_chrom}" \
-                            --path.extra ${path_extra} \
-                            --path.cons ${path_msa} \
-                            --path.log ${path_log_step} \
-                            --log.level ${log_level}  \
-                            --len.cutoff 200000 \
-                            --aln.type.in 'extra1_'
+    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra_long2} \
+            --path.cons ${path_features_msa} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level}  \
+            --len.cutoff 200000 \
+            --aln.type.in 'extra1_'
 
-                    # Done
-                    touch "${step_file}"
-                fi
+    # Done
+    touch "${step_file}"
+fi
 
-                source $INSTALLED_PATH/utils/chunk_step_done.sh
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-                # Align extra long fragments - 2
-                    with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
 
-                    # Logs
-                    step_name="step${step_num}_comb_10"
-                    step_file="${path_log}${step_name}_done"
-                    path_log_step="${path_log}${step_name}/"
-                    mkdir -p ${path_log_step}
 
-                    # Start
-                    if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+# ----------------------------------------------
+# Align extra long fragments - 2
 
-                        # ---- Clean up the output folders ----
-                        if   [ "$clean" == "T" ]; then 
-                            touch ${path_extra}fake_out.RData
-                            touch ${path_extra}fake_len.RData
-                            touch ${path_log_step}fake.log
+with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
 
-                            rm -rf ${path_extra}*out.RData
-                            rm -rf ${path_extra}*len.RData
-                            rm -f ${path_log_step}*
-                        fi  
+# Logs
+step_name="step${step_num}_comb_10"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
 
-                        Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
-                                --cores ${cores} \
-                                --path.chromosomes "${path_chrom}" \
-                                --path.extra ${path_extra} \
-                                --path.cons ${path_msa} \
-                                --path.log ${path_log_step} \
-                                --log.level ${log_level} \
-                                --aln.type.in 'extra1_'
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-                        # Done
-                        touch "${step_file}"
-                    fi
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_extra_long2}fake_out.RData
+        touch ${path_extra_long2}fake_len.RData
+        touch ${path_log_step}fake.log
 
-                    source $INSTALLED_PATH/utils/chunk_step_done.sh
+        rm -rf ${path_extra_long2}*out.RData
+        rm -rf ${path_extra_long2}*len.RData
+        rm -f ${path_log_step}*
+    fi  
 
-                    # Nextstep
-                        with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
+    Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
+            --cores ${cores} \
+            --path.chromosomes "${path_chrom}" \
+            --path.extra ${path_extra_long2} \
+            --path.cons ${path_features_msa} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --aln.type.in 'extra1_'
 
-                        # Logs
-                        step_name="step${step_num}_comb_11"
-                        step_file="${path_log}${step_name}_done"
-                        path_log_step="${path_log}${step_name}/"
-                        mkdir -p ${path_log_step}
+    # Done
+    touch "${step_file}"
+fi
 
-                        # Start
-                        if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-                            # ---- Clean up the output folders ----
-                            if   [ "$clean" == "T" ]; then 
-                                touch ${path_msa}extra2_out.h5
-                                touch ${path_log_step}fake.log
 
-                                rm -rf ${path_msa}extra2*.h5
-                                rm -f ${path_log_step}*
-                            fi  
+# ----------------------------------------------
+# Insert extra long fragments - 2
 
-                            Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
-                                    --cores ${cores} \
-                                    --path.extra ${path_extra} \
-                                    --path.cons ${path_msa} \
-                                    --path.log ${path_log_step} \
-                                    --log.level ${log_level} \
-                                    --aln.type.in 'extra1_' \
-                                    --aln.type.out 'extra2_'
+with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
 
-                            # Done
-                            touch "${step_file}"
-                        fi
+# Logs
+step_name="step${step_num}_comb_11"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
 
-                        source $INSTALLED_PATH/utils/chunk_step_done.sh
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_features_msa}extra2_out.h5
+        touch ${path_log_step}fake.log
+
+        rm -rf ${path_features_msa}extra2*.h5
+        rm -f ${path_log_step}*
+    fi  
+
+    Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
+            --cores ${cores} \
+            --path.extra ${path_extra_long2} \
+            --path.cons ${path_features_msa} \
+            --path.log ${path_log_step} \
+            --log.level ${log_level} \
+            --aln.type.in 'extra1_' \
+            --aln.type.out 'extra2_'
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # MISFITS
 # source $INSTALLED_PATH/pannagram_misfits/getSyntenyBlocks.sh
 
-                            if [ $step_start -eq 0 ]; then
-                                echo "Script completed successfully"
-                            fi
+if [ $step_start -eq 0 ]; then
+    # rm -f "$FLAG_DIR"/.*
+    echo "Script completed successfully"
+fi

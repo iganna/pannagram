@@ -16,7 +16,8 @@ args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
   make_option("--path.mafft.out", type = "character", default = NULL, help = "Path to directory where mafft results are"),
-  make_option("--path.cons",      type = "character", default = NULL, help = "Path to directory with the consensus"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to directory for MSA features (.h5 files)"),
+  make_option("--path.inter.msa",   type = "character", default = NULL, help = "Path to directory for intermediate MSA files (.rds files)"),
   make_option("--cores",          type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option("--path.log",       type = "character", default = NULL, help = "Path for log files"),
   make_option("--log.level",      type = "character", default = NULL, help = "Level of log to be shown on the screen")
@@ -49,14 +50,15 @@ aln.type.out = aln.type.msa
 num.cores <- opt$cores
 
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
+if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
 
 # ***********************************************************************
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.in, ".*")
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -76,7 +78,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
 
   # Get accessions
-  file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
+  file.comb = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -214,7 +216,7 @@ for(s.comb in pref.combinations){
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
-  file.msa.res = paste0(path.cons, 'aln_short_', s.comb, '.rds')
+  file.msa.res = paste0(path.inter.msa, 'aln_short_', s.comb, '.rds')
   if(file.exists(file.msa.res)){
     msa.res = readRDS(file.msa.res)
     msa.res$len = unlist(lapply(msa.res$aln, nrow))
@@ -237,7 +239,7 @@ for(s.comb in pref.combinations){
 
   # ---- Singletons alignments ----
   pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
-  file.single.res = paste0(path.cons, 'singletons_', s.comb, '.rds')
+  file.single.res = paste0(path.inter.msa, 'singletons_', s.comb, '.rds')
   if(file.exists(file.single.res)){
     single.res = readRDS(file.single.res)
     
@@ -378,7 +380,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.cons, aln.type.out, s.comb,'.h5')
+  file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
@@ -464,7 +466,7 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste0(path.cons, 'stat_coverage.rds'))
+saveRDS(stat.comb, paste0(path.inter.msa, 'stat_coverage.rds'))
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 
