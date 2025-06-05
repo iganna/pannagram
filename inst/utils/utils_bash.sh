@@ -143,3 +143,24 @@ require_arg() {
         exit 1
     fi
 }
+
+joinpath() {
+    local joined=""
+    local arg
+    local first=1
+
+    for arg in "$@"; do
+        if [[ $first -eq 1 ]]; then
+            joined="${arg%/}"
+            first=0
+        else
+            if [[ "$arg" == /* ]]; then
+                pokaz_error "Error: argument '$arg' should not start with a '/'" >&2
+                exit 1
+            fi
+            joined="${joined%/}/${arg#/}"
+        fi
+    done
+
+    echo "$joined"
+}
