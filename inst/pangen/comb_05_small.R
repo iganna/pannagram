@@ -187,6 +187,9 @@ for(s.comb in pref.combinations){
       res[idx.batches[[i.batch]]] = res.msa[[i.batch]]
     }
     
+    res.msa = res
+    if(length(res.msa) != max(idx.short)) stop('Something is wrong with indexes')
+    
     res.msa = res.msa[idx.short]
     
     # Stop clusters
