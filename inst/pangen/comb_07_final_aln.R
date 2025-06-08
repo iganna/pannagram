@@ -328,7 +328,7 @@ for(s.comb in pref.combinations){
     for(i in 1:length(msa.res$len)){
       if(is.null(msa.res$aln[[i]])) next
       if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop(paste0('Short', i)) 
       }
     }
@@ -364,7 +364,7 @@ for(s.comb in pref.combinations){
   pos.delete = pos.delete.all
 
   if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)){
-    save(list = ls(), file = 'tmx_workspace_step18.RData')
+    # save(list = ls(), file = 'tmx_workspace_step18.RData')
     stop('Wrong identification of positions to delete')
   } 
   
@@ -377,7 +377,7 @@ for(s.comb in pref.combinations){
   # Check-points
   fp.add = c(unlist(fp.single), unlist(fp.short), unlist(fp.long))
   if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) {
-    save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
+    # save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
     stop('Something is wrong with positions; Point A')
   } 
   # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
@@ -420,7 +420,7 @@ for(s.comb in pref.combinations){
       }   
       v.aln.nozero = v.aln[v.aln != 0]
       if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop('1: Duplicated positions in Singletons')
       } 
     }
@@ -434,7 +434,7 @@ for(s.comb in pref.combinations){
       }
       v.aln.nozero = v.aln[v.aln != 0]
       if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop('2: Duplicated positions in short alignments')
       }       
     }
@@ -449,7 +449,7 @@ for(s.comb in pref.combinations){
       }      
       v.aln.nozero = v.aln[v.aln != 0]
       if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop('3: Duplicated positions in long alignments')
       } 
     }

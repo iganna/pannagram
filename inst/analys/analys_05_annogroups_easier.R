@@ -210,9 +210,9 @@ gff.gene.pan$idx = 1:nrow(gff.gene.pan)
 gr.shift = 0
 for(i.chr in 1:5){
   
-  if(i.chr == 2){
-    save(list = ls(), file = "tmp_workspace_gr2.RData")
-  }
+  # if(i.chr == 2){
+  #   save(list = ls(), file = "tmp_workspace_gr2.RData")
+  # }
   
   for(s.s in s.strand){
     pokaz('Chr', i.chr, s.s)
@@ -328,8 +328,8 @@ for(s.gr in gr.confusing){
     next
   }
   
-  if(length(mx.increase) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_1.RData")); stop('1') } 
-  if(length(mx.decrease) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_2.RData")); stop('2') } 
+  # if(length(mx.increase) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_1.RData")); stop('1') } 
+  # if(length(mx.decrease) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_2.RData")); stop('2') } 
   
   mx = rbind(cbind(mx.increase, 1),
              cbind(mx.decrease, -1))

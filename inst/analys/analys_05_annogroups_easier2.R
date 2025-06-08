@@ -359,8 +359,8 @@ for(s.gr in gr.confusing){
     next
   }
   
-  if(length(mx.increase) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_1.RData")); stop('1') } 
-  if(length(mx.decrease) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_2.RData")); stop('2') } 
+  # if(length(mx.increase) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_1.RData")); stop('1') } 
+  # if(length(mx.decrease) == 0){ save(list = ls(), file = paste0(path.msa,"tmp_workspace_2.RData")); stop('2') } 
   
   mx = rbind(cbind(mx.increase, 1),
              cbind(mx.decrease, -1))

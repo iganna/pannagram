@@ -404,7 +404,8 @@ for(i.acc in 1:length(accessions)){
   df = df[df$V5 != 0,]
   
   if(sum(df$V5 < df$V4) > 0){
-    save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
+    # save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
+    pokaz("sum(df$V5 < df$V4) = ", sum(df$V5 < df$V4))
     stop()
   }
   

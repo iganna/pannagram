@@ -73,7 +73,7 @@ loop.function <- function(f.in,
   seq.cons = mx2cons(mx)
   pos.variation = (colSums(pos.profile == 0) != 3) * 1
 
-  save(list = ls(), file = "tmp_workspace_good.RData")
+  # save(list = ls(), file = "tmp_workspace_good.RData")
   # Define blocks, were the alignment non well
   blocks.all = c()
   for(i.seq in 1:nrow(mx)){

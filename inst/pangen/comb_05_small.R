@@ -131,7 +131,7 @@ for(s.comb in pref.combinations){
       alignment = muscle(seqs, quiet = T)
       aln = as.character(alignment)
       
-      save(list = ls(), file = "tmp_workspace_s.RData")
+      # save(list = ls(), file = "tmp_workspace_s.RData")
       
       n.pos = nchar(aln[1])
       
