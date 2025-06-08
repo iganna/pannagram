@@ -62,7 +62,7 @@ if (is.null(opt$max.len.gap)) {
 # Number of cores for parallel processing
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Wrong number of cores: NULL')
-pokaz('Number of cores', num.cores)
+pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
 
 # Path with the MSA output (features)
 path.features.msa <- opt$path.features.msa
