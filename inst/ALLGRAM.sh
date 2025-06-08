@@ -3,8 +3,8 @@
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 source $INSTALLED_PATH/utils/chunk_error_control.sh
 source $INSTALLED_PATH/utils/utils_bash.sh
-source $INSTALLED_PATH/utils/pannagram_help.sh
-source $INSTALLED_PATH/utils/pannagram_argparse.sh
+source $INSTALLED_PATH/utils/help_pannagram.sh
+source $INSTALLED_PATH/utils/argparse_pannagram.sh
 
 
 path_in=$(add_symbol_if_missing "$path_in" "/")
