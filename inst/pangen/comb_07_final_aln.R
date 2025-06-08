@@ -1,13 +1,14 @@
 # Combine all alignments together into the final one
 
 suppressMessages({
-library(rhdf5)
-library('foreach')
-library(doParallel)
-library("optparse")
+  library(rhdf5)
+  library(foreach)
+  library(doParallel)
+  library(optparse)
+})
+
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
-})
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -15,18 +16,17 @@ source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.mafft.out", type = "character", default = NULL, help = "Path to directory where mafft results are"),
-  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to directory for MSA features (.h5 files)"),
-  make_option("--path.inter.msa",   type = "character", default = NULL, help = "Path to directory for intermediate MSA files (.rds files)"),
-  make_option("--cores",          type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--path.log",       type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",      type = "character", default = NULL, help = "Level of log to be shown on the screen")
+  make_option("--path.mafft.out",   type = "character", default = NULL, help = "Path to directory where mafft results are"),
+  make_option("--path.features.msa",type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",   type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  
+  make_option("--cores",            type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",         type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
 
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser, args = args);
-
-# print(opt)
+opt_parser = OptionParser(option_list=option_list)
+opt = parse_args(opt_parser, args = args)
 
 n.flank = 30
 max.block.elemnt = 3 * 10^ 6
@@ -50,8 +50,17 @@ aln.type.out = aln.type.msa
 num.cores <- opt$cores
 
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
-if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
-if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
+
+# Path with the MSA output (features)
+path.features.msa <- opt$path.features.msa
+path.inter.msa <- opt$path.inter.msa
+
+if (is.null(path.features.msa) || is.null(path.inter.msa)) {
+  stop("Error: both --path.features.msa and --path.inter.msa must be provided")
+}
+
+if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 
 # ***********************************************************************
 
@@ -369,7 +378,7 @@ for(s.comb in pref.combinations){
   fp.add = c(unlist(fp.single), unlist(fp.short), unlist(fp.long))
   if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) {
     save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
-    stop('Something if wrotng with positions; Point A')
+    stop('Something is wrong with positions; Point A')
   } 
   # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
   
@@ -402,7 +411,6 @@ for(s.comb in pref.combinations){
     if(length(single.res$len) != 0){
       for(i in 1:length(single.res$len)){
         if(single.res$pos.beg[i, acc] != 0){
-          # if(i == 2) stop('670')
           pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
           pos = pos[-c(1, length(pos))]
           
