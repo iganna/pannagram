@@ -133,7 +133,7 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
 
 # Handling reference genomes in MSA modes
 else
-    # Check the number of reference genomes for randomisation
+    # Check the number of reference genomes for randomization
     if [ -z "${ref_num}" ]; then
         ref_num=2
     fi
@@ -143,7 +143,7 @@ else
         exit 1
     fi
 
-    pokaz_message "Number of genomes for randomisation: ${ref_num}"
+    pokaz_message "Number of genomes for randomization: ${ref_num}"
 
     # Check if ref_num is greater than the number of genomes in acc_set
     if (( ref_num > ${#acc_set[@]} )); then
@@ -178,7 +178,7 @@ else
     fi
 
     # Print the selected reference genomes for verification
-    pokaz_message "Names of genomes for randomisation: $(IFS=,; echo "${refs_all[*]}")"
+    pokaz_message "Names of genomes for randomization: $(IFS=,; echo "${refs_all[*]}")"
 
 fi
 
@@ -484,7 +484,7 @@ if [ "$one_step" == "T" ]; then
     step_end=${step_start}
 fi
 
-pokaz_message "Start End: ${step_start} ${step_end}"
+with_level 2 pokaz_message "Start End: ${step_start} ${step_end}"
 
 # Check start and end
 if [ "$step_start" -gt "$step_end" ]; then
@@ -1109,10 +1109,10 @@ fi
 # ║                                                                                   ║     =`-(_)--(_)-'
 # ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
 
-with_level 1 pokaz_stage "MGA is strting..  (^>^)"
+with_level 1 pokaz_stage "MGA starts...  (^>^)"
 
 # Run consensus for a pair of files
-with_level 1 pokaz_stage "Step ${step_num}. Randomisation of references.." 
+with_level 1 pokaz_stage "Step ${step_num}. Randomization of references.." 
 
 flag_first=true
 
@@ -1205,10 +1205,10 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
-        touch ${path_features_msa}breaks_ws_fake.RData
+        touch ${path_inter_msa}breaks_ws_fake.RData
         touch ${path_log_step}fake.log
 
-        rm -f  ${path_features_msa}breaks_ws_*.RData
+        rm -f  ${path_inter_msa}breaks_ws_*.RData
         rm -f ${path_log_step}*
     fi  
 
@@ -1254,13 +1254,13 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         touch ${path_mafft_in}fake.fasta
         touch ${path_mafft_in}fake.tree
         touch ${path_log_step}fake.log
-        touch ${path_features_msa}small_ws_fake.RData
+        touch ${path_inter_msa}small_ws_fake.RData
 
         find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
         find ${path_mafft_in} -name "*.tree" -type f -exec rm -f {} +
         # rm -f ${path_mafft_in}*fasta
         rm -f ${path_log_step}*
-        rm -f ${path_features_msa}small_ws_*.RData
+        rm -f ${path_inter_msa}small_ws_*.RData
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_seqs.R \
