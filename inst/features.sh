@@ -45,9 +45,9 @@ fi
 if [ "$run_seq" = true ]; then # -seq
     pokaz_stage "Get consensus sequences."
     Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
-        --path.cons ${path_consensus} \
+        --path.features.msa ${path_features_msa} \
         --ref.pref  ${ref_pref} \
-        --path.chr ${path_chromosomes} \
+        --path.chr ${path_chrom} \
         --aln.type ${aln_type} \
         --cores ${cores}
 fi

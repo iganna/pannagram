@@ -2,10 +2,10 @@
 
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
-  library('pannagram')
+  library(optparse)
+  library(pannagram)
   library(crayon)
 })
 
@@ -14,7 +14,7 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--ref.pref"),    type = "character", default = NULL, help = "prefix of the reference file"),
   make_option(c("--path.chr"),    type = "character", default = NULL, help = "path to directory with chromosomes"),
-  make_option(c("--path.cons"),   type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
   make_option(c("-c", "--cores"), type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
   make_option(c("--aln.type"),    type = "character", default = NULL, help = "type of alignment ('msa_', 'comb_', 'extra1_', etc)")
 );
@@ -62,14 +62,14 @@ if (!is.null(opt$aln.type)) {
 }
 
 path.chr <- if (!is.null(opt$path.chr)) opt$path.chr else stop("Error: 'path.chr' is NULL. Please provide a valid path.")
-path.cons <- if (!is.null(opt$path.cons)) opt$path.cons else stop("Error: 'path.cons' is NULL. Please provide a valid path.")
+path.features.msa <- if (!is.null(opt$path.features.msa)) opt$path.features.msa else stop("Error: 'path.features.msa' is NULL. Please provide a valid path.")
 
 # Paths
-if(!dir.exists(path.cons)){
-  stop(paste('The consensus folder does not exist:', path.cons))
+if(!dir.exists(path.features.msa)){
+  stop(paste('The consensus folder does not exist:', path.features.msa))
 }
 
-path.seq = paste0(path.cons, 'seq/')
+path.seq = paste0(path.features.msa, 'seq/')
 if (!dir.exists(path.seq)){
   dir.create(path.seq)
 } 
@@ -81,7 +81,7 @@ if (!dir.exists(path.seq)){
 # 
 # library(rhdf5)
 # source("../../../pannagram/utils/utils.R")
-# path.cons = './'
+# path.features.msa = './'
 # path.chr = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
 # ref.pref = '0'
 # s.nts = c('A', 'C', 'G', 'T', '-')
@@ -92,8 +92,8 @@ if (!dir.exists(path.seq)){
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 # pokaz(s.pattern)
 
-pokaz('Consensus folder', path.cons)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+pokaz('Consensus folder', path.features.msa)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 # pokaz(files)
 
 pref.combinations = gsub(aln.type, "", files)
@@ -127,7 +127,7 @@ loop.function <- function(s.comb, echo = T){
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   
   # Get accessions
-  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff, '.h5')
+  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff, '.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]

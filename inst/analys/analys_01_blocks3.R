@@ -75,7 +75,7 @@ if(ref.name != ""){
 }
 
 if(length(s.combinations) == 0){
-  save(list = ls(), file = "tmp_workspace_s.RData")
+  # save(list = ls(), file = "tmp_workspace_s.RData")
   stop('No Combinations found.')
 
 } else {
