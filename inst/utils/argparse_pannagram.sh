@@ -107,6 +107,12 @@ if [[ -n "$one2one" && "$one2one" != "T" && "$one2one" != "F" ]]; then
     exit 1
 fi
 
+path_in=$(add_symbol_if_missing "$path_in" "/")
+path_out=$(add_symbol_if_missing "$path_out" "/")
+
+path_ref="${path_ref:-${path_in}}"
+path_ref=$(add_symbol_if_missing "$path_ref" "/")
+
 # Export variables for main script
 export mode_pre mode_ref mode_msa clean one_step purge_reps rm_inter extra_steps purge_contigs
 export step_start step_end log_level cores path_out path_in path_ref ref_name ref_set ref_num

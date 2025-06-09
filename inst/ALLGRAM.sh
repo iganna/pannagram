@@ -6,14 +6,6 @@ source $INSTALLED_PATH/utils/utils_bash.sh
 source $INSTALLED_PATH/utils/help_pannagram.sh
 source $INSTALLED_PATH/utils/argparse_pannagram.sh
 
-
-path_in=$(add_symbol_if_missing "$path_in" "/")
-path_out=$(add_symbol_if_missing "$path_out" "/")
-
-# Optional paths paths
-path_ref="${path_ref:-${path_in}}"
-path_ref=$(add_symbol_if_missing "$path_ref" "/")
-
 path_features="${path_out}features/"
 path_features_msa="${path_features}msa/"
 path_extra="$path_features/extra/"
