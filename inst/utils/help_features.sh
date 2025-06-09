@@ -1,6 +1,6 @@
 print_usage() {
     cat << EOF
-Usage: ${0##*/}  -path_msa PATH_MSA  -path_chr PATH_CHR 
+Usage: ${0##*/}  -path_in PATH_IN
                 [-ref REF]
                 [-h] [-cores NUM_CORES]  
                 [-blocks] [-seq] [-aln] [-snp] 
@@ -13,8 +13,7 @@ Options:
     -h, --help                  Display this help message and exit.
     -cores NUM_CORES            Specify the number of cores for parallel processing (default is 1).
 
-    -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. (PATH_OUT/intermediate/consensus/ from pannagram)
-    -path_chr PATH_CHR          Specify the path to chromosome files. (PATH_OUT/intermediate/chromosomes/ from pannagram)
+    -path_in PATH_IN            Specify the path to pannagram script output directory
 
     -ref REF                    Specify the prefix for the gaccession, which was used to sort the alignment.
     -blocks                     RGet positions of synteny blocks between accessions.

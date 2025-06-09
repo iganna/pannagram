@@ -5,28 +5,41 @@ INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 source "$INSTALLED_PATH/utils/chunk_error_control.sh"
 source "$INSTALLED_PATH/utils/utils_bash.sh"
 source "$INSTALLED_PATH/utils/help_features.sh"
-source "$INSTALLED_PATH/parse_arguments.sh" "$@"
+source "$INSTALLED_PATH/utils/argparse_features.sh" "$@"
+
+path_features="${path_in}features/"
+path_features_msa="${path_features}msa/"
+path_extra="$path_features/extra/"
+
+path_inter="${path_in}intermediate/"
+path_alignment="${path_inter}alignments/"
+path_inter_msa="${path_inter}msa/"
+path_blast="${path_inter}blast/"
+path_mafft="${path_inter}mafft/"
+path_chrom="${path_inter}chromosomes/"
+path_parts="${path_chrom}parts/"
+
+path_plots="${path_in}plots/"
 
 # ----------------------------------------------------------------------------
 #                                   MAIN
 # ----------------------------------------------------------------------------
-
-
 # ******************  General work with the alignment   **********************
 
 # -------------------------------------------------
 if [ "$run_blocks" = true ]; then
     pokaz_stage "Get blocks."
 
-    path_plots="${path_consensus}plot_synteny/"
-    mkdir -p ${path_plots}
+    path_plots_synteny="${path_plots}synteny/"
+    mkdir -p ${path_plots_synteny}
 
     Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
-        --path.cons ${path_consensus} \
+        --path.inter.msa ${path_inter_msa} \
+        --path.features.msa ${path_features_msa} \
+        --path.figures ${path_plots_synteny} \
         --cores ${cores} \
         --ref  ${ref_pref} \
-        --aln.type ${aln_type} \
-        --path.figures ${path_plots}
+        --aln.type ${aln_type}
 fi
 
 if [ "$run_seq" = true ]; then

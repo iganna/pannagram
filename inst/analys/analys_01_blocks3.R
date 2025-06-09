@@ -6,67 +6,60 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
+  library(pannagram)
 })
 
-library(pannagram)
+source(system.file("utils/chunk_hdf5.R", package = "pannagram"))
 
-# Define blocks in the alignemnt
 
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons",    type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
-  make_option("--ref",          type = "character", default = "",   help = "Prefix of the reference file"),
-  make_option("--cores",        type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--aln.type",     type = "character", default = NULL, help = "Prefix for the output file")
+  make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa dir (internal)"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
+  make_option("--path.figures",      type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--ref",               type = "character", default = "",   help = "Prefix of the reference file"),
+  make_option("--cores",             type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--aln.type",          type = "character", default = aln.type.msa, help = "Prefix for the output file"),
+  make_option("--wnd.size",          type = "integer", default = 100000, help = "Window size (plotting)")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-max.len.gap = 20000
-
 # print(opt)
 
-# ***********************************************************************
-# ---- Logging ----
+source(system.file("utils/chunk_logging.R", package = "pannagram"))
 
-source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-# ---- HDF5 ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
-
-aln.type <- ifelse(is.null(opt$aln.type), aln.type.msa, opt$aln.type)
-
-
-# ***********************************************************************
-# ---- Values of parameters ----
-
-# Set the number of cores for parallel processing
-num.cores <- opt$cores
-
-# Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
-
-# Path with the figures folder
-if (!is.null(opt$path.figures)) path.figures <- opt$path.figures
-if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
-
-
-# Reference genome
+aln.type <- opt$aln.type
 ref.name <- opt$ref
+num.cores <- opt$cores
+wnd.size <- opt$wnd.size
+
+
 if(ref.name == "NULL") ref.name = ''
 if(is.null(ref.name)) ref.name = ''
 
-# ---- Combinations of chromosomes query-base to create the alignments ----
 
+if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
+
+pokaz(path.features.msa)
+
+if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
+if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
+
+if (!is.null(opt$path.figures)) path.figures <- opt$path.figures
+if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
+
+# ---- Combinations of chromosomes query-base to create the alignments ----
 s.pattern <- paste0("^", aln.type, ".*h5")
-s.combinations <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
+pokaz(s.combinations)
 s.combinations = gsub(aln.type, "", s.combinations)
+pokaz(s.combinations)
 s.combinations = gsub(".h5", "", s.combinations)
+pokaz(s.combinations)
 
 
 pokaz('Reference:', ref.name)
@@ -82,19 +75,16 @@ if(ref.name != ""){
 }
 
 if(length(s.combinations) == 0){
+  save(list = ls(), file = "tmp_workspace_s.RData")
   stop('No Combinations found.')
+
 } else {
   pokaz('Combinations', s.combinations)  
 }
 # ***********************************************************************
 # ---- MAIN program body ----
 
-
-# path.cons = '/Volumes/Samsung_T5/vienn/test/a600/'
-# aln.type = aln.type.ref
-# ref.suff = '_0'
-
-file.blocks = paste0(path.cons, aln.type, 'syn_blocks',ref.suff,'.rds')
+file.blocks = paste0(path.inter.msa, aln.type, 'syn_blocks', ref.suff,'.rds')
 
 if(!file.exists(file.blocks)){
   df.all = c()
@@ -104,7 +94,7 @@ if(!file.exists(file.blocks)){
     pokaz('Chromosome', i.chr)
     # --- --- --- --- --- --- --- --- --- --- ---
     
-    file.comb.in = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
+    file.comb.in = paste0(path.features.msa, aln.type, s.comb, ref.suff,'.h5')
     
     groups = h5ls(file.comb.in)
     accessions = groups$name[groups$group == gr.accs.b]
@@ -153,7 +143,6 @@ pokaz("Plots...")
 accessions = unique(df.all$acc)
 n.chr = max(df.all$chr)
 
-wnd.size = 100000
 for(i.chr in 1:n.chr){
   pokaz('Chromosome', i.chr)
   i.order = 1:length(accessions)
