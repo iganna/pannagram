@@ -18,7 +18,7 @@ path_mafft="${path_inter}mafft/"
 path_chrom="${path_inter}chromosomes/"
 path_parts="${path_chrom}parts/"
 
-path_plots="${path_out}plots/"
+path_plots="${path_out}plots/ref/"
 
 # Make folders
 mkdir -p "${path_out}"
@@ -830,7 +830,7 @@ for ref0 in "${refs_all[@]}"; do
 
     # Paths
     path_alignment_ref="$path_alignment${ref0}/"
-    path_plots_ref=$path_plots/ref/$ref0/
+    path_plots_ref="${path_plots}${ref0}/"
     mkdir -p $path_plots_ref
     
     # Logs
