@@ -27,7 +27,7 @@ path_plots="${path_in}plots/"
 # ******************  General work with the alignment   **********************
 
 # -------------------------------------------------
-if [ "$run_blocks" = true ]; then
+if [ "$run_blocks" = true ]; then # -blocks
     pokaz_stage "Get blocks."
 
     path_plots_synteny="${path_plots}synteny/"
@@ -42,7 +42,7 @@ if [ "$run_blocks" = true ]; then
         --aln.type ${aln_type}
 fi
 
-if [ "$run_seq" = true ]; then
+if [ "$run_seq" = true ]; then # -seq
     pokaz_stage "Get consensus sequences."
     Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
         --path.cons ${path_consensus} \
@@ -52,7 +52,7 @@ if [ "$run_seq" = true ]; then
         --cores ${cores}
 fi
 
-if [ "$run_aln" = true ]; then
+if [ "$run_aln" = true ]; then # -aln
     pokaz_stage "Get sequences of alignment."
     Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R \
         --path.cons ${path_consensus} \
@@ -63,7 +63,7 @@ if [ "$run_aln" = true ]; then
 fi
 
 
-if [ "$run_snp" = true ]; then
+if [ "$run_snp" = true ]; then # -snp
     pokaz_stage "Get SNPs."
     Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
         --path.cons ${path_consensus} \
@@ -74,7 +74,7 @@ if [ "$run_snp" = true ]; then
 
     # ---------------
     # Pi diversity
-    if [ "$run_snp_pi" = true ]; then
+    if [ "$run_snp_pi" = true ]; then # -snp_pi
 
         pokaz_stage "Pi diversity."
         path_snp="${path_consensus}snps/"
@@ -118,7 +118,7 @@ fi
 
 # -------------------------------------------------
 # Sv calling
-if [ "$run_sv_call" = true ]; then
+if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
     # So, consensus should be run before GFF
@@ -143,7 +143,7 @@ fi
 
 # -------------------------------------------------
 # Compare SVs with TEs
-if [ "$run_sv_sim" = true ]; then
+if [ "$run_sv_sim" = true ]; then # -sv_sim
     check_missing_variable "set_file"
 
     if [ -z "${similarity_value}" ]; then
@@ -174,7 +174,7 @@ fi
 
 # -------------------------------------------------
 # SV on SVs
-if [ "$run_sv_graph" = true ]; then
+if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     pokaz_stage "Graph on SVs"
     if [ -z "${similarity_value}" ]; then
@@ -211,7 +211,7 @@ if [ "$run_sv_graph" = true ]; then
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
         --path.cons ${path_consensus} 
 
-    if [ "$run_sv_sim_prot" = true ]; then
+    if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
         if [ -f "${path_consensus}sv/sv_in_graph_orfs.fasta" ]; then
             pokaz_stage "BLAST on proteins..."
@@ -233,7 +233,7 @@ fi
 
 # -------------------------------------------------
 # Annotation groups
-if [ "$run_annogroup" = true ]; then
+if [ "$run_annogroup" = true ]; then # -annogroup
 
     pokaz_stage "Annotation groups"
 
