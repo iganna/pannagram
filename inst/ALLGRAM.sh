@@ -222,9 +222,42 @@ elif [ ! -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # nchr is defined.
     nchr_ref=${nchr}
 fi
 
-# MISFITS
-# source $INSTALLED_PATH/pannagram_misfits/chrNumInRefGenCheck.sh
-# source $INSTALLED_PATH/pannagram_misfits/chrNumInAccGenCheck.sh
+# # Check the number of chromosomes in the reference genome
+# if [[ ${nchr_ref} -ne 0 ]]; then
+#     for ref_name in "${refs_all[@]}"; do
+#         for ext in "${genome_extensions[@]}"; do
+#             # Find the file with the current acc and extension
+#             file="${path_ref}/${ref_name}.${ext}"
+#             # Check if the file exists
+#             if [[ -f "$file" ]]; then
+#                 count=$(grep -c '^>' "$file")
+#                 if [[ ${count} -lt ${nchr_ref} ]]; then
+#                     pokaz_error "Error: Number of chromosomes in the reference genome ${ref_name} is ${count}. Must be at least ${nchr_ref}."
+#                     exit 1
+#                 fi
+#             fi
+#         done
+#     done
+# fi
+
+# # Check the number of chromosomes in the accessions genome
+# if [[ ${nchr} -ne 0 ]]; then
+#     for acc_name in "${acc_set[@]}"; do
+#         for ext in "${genome_extensions[@]}"; do
+#             # Find the file with the current acc and extension
+#             file="${path_in}/${acc_name}.${ext}"
+            
+#             # Check if the file exists
+#             if [[ -f "$file" ]]; then
+#                 count=$(grep -c '^>' "$file")
+#                 if [[ ${count} -lt ${nchr} ]]; then
+#                     pokaz_error "Error: Number of chromosomes in the reference genome ${acc_name} is ${count}. Must be at least ${nchr}."
+#                     exit 1
+#                 fi
+#             fi
+#         done
+#     done
+# fi
 
 
 # File with combinations
@@ -1442,8 +1475,45 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# MISFITS
-# source $INSTALLED_PATH/pannagram_misfits/addLostSyntenyPositions.sh
+# # Add synteny positions which were lost
+
+# with_level 1 pokaz_stage "Step ${step_num}. Add synteny positions which were lost."
+
+# # Paths
+# path_extra="${path_inter}extra_regions/"
+# if [ ! -d "$path_extra" ]; then
+#     mkdir -p "$path_extra"
+# fi
+
+# # Logs
+# step_name="step${step_num}_comb_08"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# mkdir -p ${path_log_step}
+
+# # Start
+# if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+#     # ---- Clean up the output folders ----
+#     if   [ "$clean" == "T" ]; then 
+#         touch ${path_cons}aln_fake_h5
+#         touch ${path_log_step}fake.log
+
+#         rm -f ${path_cons}aln*h5
+#         rm -f ${path_log_step}*
+#     fi  
+
+#     Rscript $INSTALLED_PATH/pangen/comb_08_insert_back.R  \
+#             --cores ${cores} \
+#             --path.cons ${path_cons} \
+#             --path.log ${path_log_step} \
+#             --log.level ${log_level}
+
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # EXTRA STEPS
 if [[ "$extra_steps" == "F" ]]; then
@@ -1692,8 +1762,28 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# MISFITS
-# source $INSTALLED_PATH/pannagram_misfits/getSyntenyBlocks.sh
+# # Get synteny blocks
+
+# with_level 1 pokaz_stage "Step ${step_num}. Get synteny blocks."
+
+# # Logs
+# step_name="step${step_num}_analys_01_blocks"
+# step_file="${path_log}${step_name}_done"
+# path_log_step="${path_log}${step_name}/"
+# mkdir -p ${path_log_step}
+
+# # Start
+# if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+#     Rscript $INSTALLED_PATH/analys/analys_01_blocks.R \
+#             --path.cons ${path_cons} \
+#             --cores ${cores}
+#     # Done
+#     touch "${step_file}"
+# fi
+
+# source $INSTALLED_PATH/utils/chunk_step_done.sh
+
 
 if [ $step_start -eq 0 ]; then
     # rm -f "$FLAG_DIR"/.*
