@@ -66,13 +66,6 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
 
 saveRDS(p.acc, paste0(path.figures, basename(file.pi), '_smooth.rds'))
 
-pokaz('Plot...')
-pdf(paste0(path.figures, basename(file.pi), '_smooth.pdf'), width = 6, height = 1)
-print(p.acc)     
-dev.off()
-# 
-# savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 7, height = 2)
-
-
+savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 6, height = 1)
 
 

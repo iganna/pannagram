@@ -129,11 +129,7 @@ p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
   geom_text(aes(label = round(value, 2)), position = position_stack(vjust = 0.5)) +
   ylab('')+ xlab('') + theme(plot.margin = unit(c(-1, -1, -1, -1), "cm"))
 
-# p
-
-pdf(paste0(path.figures, 'sv_pie_chart.pdf'), width = 4, height = 4)
-print(p)     # Plot 1 --> in the first page of PDF
-dev.off()
+savePDF(p, path=path.figures, name='sv_pie_chart', width = 4, height = 4)
 
 write.table(df, paste0(path.figures, 'sv_pie_chart.txt'), row.names = F, sep = '\t')
 saveRDS(df, paste0(path.figures, 'sv_pie_chart.rds'))
@@ -152,12 +148,9 @@ g <- ggplot(sv.all[sv.all$len > len.min,], aes(x=beg, fill = as.factor(single)))
   labs(x = "Pangenome coordinate", y = "Count", fill = "SVs:") + 
   scale_fill_manual(values = c('#F48484', '#B5D5C5'), labels = c("complex", "simple"))
 
-# g
+savePDF(g, path=path.figures, name=paste0('sv_chr_minlen',len.min, '_pangen'), 
+        width = 6, height = 3/5 * max(sv.all$chr) + 1)
 
-pdf(paste(path.figures, 'sv_chr_minlen',len.min,'_pangen.pdf', sep = ''), 
-    width = 6, height = 3/5 * max(sv.all$chr))
-print(g)     # Plot 1 --> in the first page of PDF
-dev.off()
 
 
 # ***********************************************************************
@@ -173,7 +166,7 @@ if(f.max != 1){
     #          fill = 'grey60', alpha = 0.5) +
     # annotate(geom = "rect",xmin = 25, xmax = Inf, ymin = -Inf, ymax = Inf,
     #          fill = 'grey60', alpha = 0.5) +
-    geom_line(size = 2) + theme_minimal() + 
+    geom_line(linewidth = 2) + theme_minimal() + 
     theme(legend.position='none',
           strip.text.y = element_text(angle = 0)) + 
     # geom_segment(aes(x = 1, y = 15000, xend = f.max, yend = 15000), 
@@ -190,11 +183,8 @@ if(f.max != 1){
       panel.background = element_rect(fill = "white", color = 'white'),
       plot.background = element_rect(fill = "white", color = 'white')
     ) 
-  # g  
   
-  pdf(paste(path.figures, 'sv_freq_hist.pdf', sep = ''), width = 2.6, height = 1.7)
-  print(g)     # Plot 1 --> in the first page of PDF
-  dev.off()
+  savePDF(g, path=path.figures, name='sv_freq_hist', width = 2.6, height = 1.7)
 }
 
 
@@ -218,13 +208,8 @@ p <- ggplot(data=df, aes(x=freq.max, y = value, fill=len.gr)) +
         legend.box.just = c("top"), 
         legend.background = element_rect(fill=alpha('white', 0.75)),
         legend.margin = margin(2, 2, 2, 2))
-p
-# 
-
-pdf(paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'_norm.pdf'), 
-    width = max(2, 7/5*max(sv.se$freq.max)), height = 3)
-print(p)     # Plot 1 --> in the first page of PDF
-dev.off()
+savePDF(p, path=path.figures, name=paste0('sv_freq_hist_length_minlen', len.min ,'_norm'),
+        width = max(2, 5/27*max(sv.se$freq.max)), height = 3)
 
 
 
@@ -245,13 +230,8 @@ p <- ggplot(data=df.abs, aes(x=freq.max, y = value, fill=len.gr)) +
         legend.box.just = c("top"), 
         legend.background = element_rect(fill=alpha('white', 0.75)),
         legend.margin = margin(2, 2, 2, 2))
-p
-# 
-
-pdf(paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'_abs.pdf'), 
-    width = max(2, 7/5*max(sv.se$freq.max)), height = 3)
-print(p)     # Plot 1 --> in the first page of PDF
-dev.off()
+savePDF(p, path=path.figures, name=paste0('sv_freq_hist_length_minlen', len.min ,'_abs'),
+        width = max(2, 5/27*max(sv.se$freq.max)), height = 3)
 
 df$value.abs = df.abs$value
 write.table(df, paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'.txt'),sep = '\t', row.names = F)

@@ -156,10 +156,7 @@ for(i.chr in 1:n.chr){
   # save(list = ls(), file = "tmp_workspace_blocks.RData")
   
   p = panplot(df.tmp, i.chr, accessions = accessions, i.order = i.order, wnd.size=wnd.size) 
-  
-  pdf(paste(path.figures, 'fig_synteny_chr',i.chr,'.pdf', sep = ''), width = 6, height = 4 / 27 * length(accessions))
-  print(p)     # Plot 1 --> in the first page of PDF
-  dev.off()
+  savePDF(p, path = path.figures, name = paste0('fig_synteny_chr',i.chr), width = 6, height = 4 / 27 * length(accessions))
 }
 
 
