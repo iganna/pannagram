@@ -605,5 +605,5 @@ write.table(gff.new.pan, paste0(path.msa,'gff_pan.gff'),
             quote = F)
 
 # save(list = ls(), file = paste0(path.msa,"tmp_workspace_end.RData"))
-pokaz('Done!')
+
 

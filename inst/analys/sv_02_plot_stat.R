@@ -3,9 +3,9 @@
 
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
+  library(optparse)
   library(pannagram)
   library(crayon)
   library(ggplot2)
@@ -85,7 +85,6 @@ res.len = c()
 thresholds = c(0,15,50,100, 1000)
 for(thresh in thresholds){
   cnt = c(table(sv.all$single[sv.all$len > thresh]))
-  print(cnt)
   if(length(cnt) == 1){
     cnt = c(0, cnt)
   } 
@@ -98,7 +97,7 @@ colnames(res.len) = c('all', 'complex', 'simple', 'ratio')
 rownames(res.len) = paste('len >', thresholds, 'bp', sep = '')
 rownames(res.len)[1] = 'all SVs'
 
-print(res.len)
+print(res.len) # prints table DO NOT TOUCH
 
 df = reshape2::melt(t(apply(res.len[,2:3], 1, function(x) x/sum(x))))
 df$group = factor(rep(rownames(res.len), 2), levels = rev(rownames(res.len)))

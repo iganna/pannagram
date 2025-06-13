@@ -1,11 +1,12 @@
 # Get SV positions, GFF files, dencity files and consensys sequences
 # Find SVs and create GFF file
 
-suppressMessages({ library(Biostrings)
+suppressMessages({
+  library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
+  library(optparse)
   library(pannagram)
   library(crayon)
   library(ggplot2)
@@ -101,23 +102,3 @@ for(i.s in 1:length(sv.seqs)){
 
 pokaz('Numer of ORFs is', length(orfs))
 writeFasta(orfs, paste0(path.sv, 'sv_in_graph_orfs.fasta'))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

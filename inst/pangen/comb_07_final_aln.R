@@ -283,7 +283,7 @@ for(s.comb in pref.combinations){
     single.res = data.frame()
   }
 
-  pokaz(1)
+  pokaz("Checkpoint 1", file=file.log.main, echo=echo.main)
   
   # ---- Analysis of positions ----
   # Here I wouls like fo find function of positions corresponcences between 4 things: 
@@ -298,7 +298,7 @@ for(s.comb in pref.combinations){
   
   fp.main = (1:base.len) + n.shift
   
-  pokaz(2)
+  pokaz("Checkpoint 2", file=file.log.main, echo=echo.main)
   
   # -- 
   # Singletons
@@ -312,7 +312,7 @@ for(s.comb in pref.combinations){
     }
   }
 
-  pokaz(3)
+  pokaz("Checkpoint 3", file=file.log.main, echo=echo.main)
   # save(list = ls(), file = "tmp_workspace_3_oo.RData")
   
   # Short
@@ -322,7 +322,7 @@ for(s.comb in pref.combinations){
       n.pos = msa.res$len[i]
       fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
     }    
-    pokaz(4)
+    pokaz("Checkpoint 4", file=file.log.main, echo=echo.main)
     
     # Check short
     for(i in 1:length(msa.res$len)){
@@ -334,7 +334,7 @@ for(s.comb in pref.combinations){
     }
   }
 
-  pokaz(5)
+  pokaz("Checkpoint 5", file=file.log.main, echo=echo.main)
   
   # Long
   fp.long = list()

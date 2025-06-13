@@ -44,7 +44,7 @@ if(is.null(ref.name)) ref.name = ''
 if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
 
-pokaz(path.features.msa)
+# pokaz(path.features.msa)
 
 if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
 if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
@@ -55,14 +55,14 @@ if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 # ---- Combinations of chromosomes query-base to create the alignments ----
 s.pattern <- paste0("^", aln.type, ".*h5")
 s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-pokaz(s.combinations)
+# pokaz(s.combinations)
 s.combinations = gsub(aln.type, "", s.combinations)
-pokaz(s.combinations)
+# pokaz(s.combinations)
 s.combinations = gsub(".h5", "", s.combinations)
-pokaz(s.combinations)
+# pokaz(s.combinations)
 
 
-pokaz('Reference:', ref.name)
+# pokaz('Reference:', ref.name)
 if(ref.name != ""){
   ref.suff = paste0('_', ref.name)
   

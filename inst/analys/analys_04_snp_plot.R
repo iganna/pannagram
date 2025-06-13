@@ -7,9 +7,8 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(ggplot2)
+  library(pannagram)
 })
-
-library(pannagram)
 
 # Define blocks in the alignemnt
 

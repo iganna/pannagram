@@ -2,9 +2,9 @@
 
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
+  library(optparse)
   library(crayon)
 })
 
@@ -85,7 +85,7 @@ if (!dir.exists(path.snp)){
 
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 
-pokaz('Consensus folder', path.cons)
+# pokaz('Consensus folder', path.cons)
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 
 pref.combinations = gsub(aln.type, "", files)
@@ -119,7 +119,7 @@ for(s.comb in pref.combinations){
   pokaz('Round 1: get positions of differences..')
   pos.diff = c()
   for(acc in accessions){
-    pokaz('Sequence of accession', acc)
+    # pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     pos = which((v != s.pangen) & (v != '-'))
@@ -136,7 +136,7 @@ for(s.comb in pref.combinations){
   snp.matrix = s.pangen[pos]
   snp.val = c()
   for(acc in accessions){
-    pokaz('Sequence of accession', acc)
+    # pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     tmp = (v[pos] != s.pangen[pos]) * 1
@@ -166,7 +166,7 @@ for(s.comb in pref.combinations){
   
   # Create the VCF-file for the first accession, the main reference.
   file.comb = paste0(path.cons, aln.type, s.comb, ref.suff, '.h5')
-  pokaz(file.comb)
+  # pokaz(file.comb)
   acc = accessions[1]
   pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))
   pos.acc = pos.acc[pos]
@@ -184,16 +184,3 @@ if(num.cores > 1){
 }
 
 warnings()
-
-# pokaz('Save Rdata')
-# save(list = ls(), file = "tmp_workspace_snp.RData")
-
-
-
-
-
-
-
-
-
-

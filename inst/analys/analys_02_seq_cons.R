@@ -1,6 +1,7 @@
 # Get sequence alignments and consensus sequence
 
-suppressMessages({ library(Biostrings)
+suppressMessages({
+  library(Biostrings)
   library(rhdf5)
   library(foreach)
   library(doParallel)
@@ -92,7 +93,7 @@ if (!dir.exists(path.seq)){
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 # pokaz(s.pattern)
 
-pokaz('Consensus folder', path.features.msa)
+# pokaz('Consensus folder', path.features.msa)
 files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 # pokaz(files)
 
@@ -142,7 +143,7 @@ loop.function <- function(s.comb, echo = T){
   mx.consensus = NULL
   idx.negative = c()
   for(acc in accessions){
-    pokaz('Sequence of accession', acc)
+    # pokaz('Sequence of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v.na = is.na(v)
     v[v.na] = 0
@@ -245,17 +246,4 @@ if(num.cores == 1){
 }
 
 warnings()
-
-
-
-
-
-
-
-
-
-
-
-
-
 

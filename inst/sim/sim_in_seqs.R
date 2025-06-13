@@ -1,7 +1,8 @@
 # Load the necessary library
-library(optparse)
-library(pannagram)
-
+invisible(suppressMessages({
+  library(optparse)
+  library(pannagram)
+}))
 source(system.file("sim/sim_func.R", package = "pannagram"))
 
 
@@ -51,20 +52,20 @@ coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 
 # ---- Main ----
 
-pokaz(blast.file)
+# pokaz(blast.file)
 
 v = read.table(blast.file, stringsAsFactors = F)
 v = v[v$V6 >= sim.cutoff * 100,]
 v = v[v$V1 != v$V8,]
 
 # Lengths of query sequences
-pokaz(fasta.file)
+# pokaz(fasta.file)
 seqs = readFasta(fasta.file)
 q.len = nchar(seqs)
 rm(seqs)
 
 # Lengths of database sequences
-pokaz(db.fasta.file)
+# pokaz(db.fasta.file)
 if(db.fasta.file == fasta.file){
   pokaz('Search seqeunces on themselvs')
   db.len = q.len
@@ -92,7 +93,6 @@ res$p8 = res$C8 / res$len8
 
 res$cover = ((res$p1 >= sim.cutoff) | (res$p8 >= sim.cutoff)) * 1
 pokaz('Number of pairs after the sumilarity cutoff', sum(res$cover == 0))
-head(res)
 
 saveRDS(res, output.file)
 
@@ -106,9 +106,3 @@ saveRDS(res, output.file)
 # blastres2gff(res, output.file)
 # 
 # # write.table(res, output.file, quote = F, row.names = F, col.names = T, sep = '\t')
-
-
-
-
-
-

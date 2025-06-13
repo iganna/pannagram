@@ -115,14 +115,12 @@ sv.beg.all = c()
 sv.end.all = c()
 
 for(s.comb in pref.combinations){
-  pokaz('* Combination', s.comb)
-  
-  # s.comb = '4_4'
+  pokaz('Run for combination', s.comb, "...")
   
   # Get file for the combination
   file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
   if(!file.exists(file.comb)) stop('Alignment file does not exist')
-  pokaz('Alignment file', file.comb)
+  # pokaz('Alignment file', file.comb)
   
   # Get accessions
   groups = h5ls(file.comb)
@@ -141,11 +139,11 @@ for(s.comb in pref.combinations){
   pokaz('Combine SV info from accessions...')
   sv.cover = 0
   for(acc in accessions){
-    pokaz('Positions of accession', acc)
+    # pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     
-    pokaz('Find gaps..')
+    # pokaz('Find gaps..')
     sv.acc = findOnes(v == 0)
     if(nrow(sv.acc) == 0) next
     
@@ -153,7 +151,7 @@ for(s.comb in pref.combinations){
     if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
     v.r = rank(abs(v)) * sign(v)
     
-    pokaz('Exclude gaps around inversions..')
+    # pokaz('Exclude gaps around inversions..')
     sv.acc$beg.r = v.r[sv.acc$beg - 1]
     sv.acc$end.r = v.r[sv.acc$end + 1]
     sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
@@ -185,7 +183,7 @@ for(s.comb in pref.combinations){
   sv.beg = c()
   sv.end = c()
   for(acc in accessions){
-    pokaz('Positions of accession', acc)
+    # pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
@@ -285,8 +283,6 @@ for(s.comb in pref.combinations){
   
 }
 
-pokaz('Saving....')
-
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 saveRDS(sv.pos.all, file.sv.pos)
 
@@ -295,7 +291,6 @@ if(flag.stat.only){
   quit(save="no")
 } 
 ## ---- Stop for Stat ----
-pokaz('Stat....')
 file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
 file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
@@ -382,7 +377,7 @@ options(scipen = 0)
 pokaz('Gff files for accessions comb..')
 for(i.acc in 1:length(accessions)){
   acc = accessions[i.acc]
-  pokaz('Generate GFF for accession', acc)
+  # pokaz('Generate GFF for accession', acc)
   
   df = sv.gff
   df$V1 = paste0(acc, '_Chr', sv.pos.all$chr)
@@ -405,7 +400,7 @@ for(i.acc in 1:length(accessions)){
   
   if(sum(df$V5 < df$V4) > 0){
     # save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
-    pokaz("sum(df$V5 < df$V4) = ", sum(df$V5 < df$V4))
+    pokazAttention("sum(df$V5 < df$V4) = ", sum(df$V5 < df$V4))
     stop()
   }
   
