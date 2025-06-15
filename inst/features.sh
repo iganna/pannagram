@@ -40,17 +40,15 @@ if [ "$run_seq" = true ]; then # -seq
         --path.chr ${path_chrom} \
         --aln.type ${aln_type} \
         --cores ${cores}
-fi
-
-if [ "$run_aln" = true ]; then # -aln
-    pokaz_stage "Get sequences of alignment."
-    Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R \
-        --path.cons ${path_consensus} \
-        --ref.pref  ${ref_pref} \
-        --path.chromosomes ${path_chromosomes} \
-        --aln.type ${aln_type} \
-        --cores ${cores}
-fi
+# Sequences of alignment
+# if [ "$run_aln" = true ]; then # -aln
+#     pokaz_stage "Get sequences of alignment."
+#     Rscript $INSTALLED_PATH/analys/analys_03_seq_aln.R \
+#         --path.features.msa ${path_features_msa} \
+#         --ref.pref  ${ref_pref} \
+#         --aln.type ${aln_type} \
+#         --cores ${cores}
+# fi
 
 
 if [ "$run_snp" = true ]; then # -snp
@@ -145,36 +143,18 @@ fi
 
 # -------------------------------------------------
 # Compare SVs with TEs
-if [ "$run_sv_sim" = true ]; then # -sv_sim
-    check_missing_variable "set_file"
+# if [ "$run_annogroup" = true ]; then # -annogroup
+#     pokaz_stage "Annotation groups"
+#     path_annot_res=${path_consensus}annotation/
+#     mkdir -p ${path_annot_res}
+#     Rscript $INSTALLED_PATH/analys/analys_05_annogroups_easier.R \
+#             --path.msa ${path_consensus} \
+#             --path.annot ${path_annot} \
+#             --path.res ${path_annot_res} \
+#             --aln.type ${aln_type}
+# fi
 
-    if [ -z "${similarity_value}" ]; then
-        pokaz_message "Simirarity value is 85% (default)"
-        similarity_value=85
-    fi
 
-    # Check if BLAST database exists
-    # if [ ! -f "${set_file}.nhr" ]; then
-        makeblastdb -in "$set_file" -dbtype nucl > /dev/null
-    # fi
-    
-    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-    file_sv_big_on_set=${file_sv_big%.fasta}_on_set_blast.txt
-
-    # if [ ! -f "${file_sv_big_on_set}" ]; then
-        blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
-           -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
-           -perc_identity "${similarity_value}" -num_threads "${cores}"
-    # fi
-
-    file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
-    Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
-            --out ${file_sv_big_on_set_cover} --sim ${similarity_value} --use_strand F
-
-    rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
-fi
-
-# -------------------------------------------------
 # SV on SVs
 if [ "$run_sv_graph" = true ]; then # -sv_graph
 
@@ -239,19 +219,34 @@ fi
 
 # -------------------------------------------------
 # Annotation groups
-if [ "$run_annogroup" = true ]; then # -annogroup
+# if [ "$run_sv_sim" = true ]; then # -sv_sim
+#     check_missing_variable "set_file"
 
-    pokaz_stage "Annotation groups"
+#     if [ -z "${similarity_value}" ]; then
+#         pokaz_message "Simirarity value is 85% (default)"
+#         similarity_value=85
+#     fi
 
-    path_annot_res=${path_consensus}annotation/
-    mkdir -p ${path_annot_res}
+#     # Check if BLAST database exists
+#     # if [ ! -f "${set_file}.nhr" ]; then
+#         makeblastdb -in "$set_file" -dbtype nucl > /dev/null
+#     # fi
+    
+#     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+#     file_sv_big_on_set=${file_sv_big%.fasta}_on_set_blast.txt
 
-    Rscript $INSTALLED_PATH/analys/analys_05_annogroups_easier.R \
-            --path.msa ${path_consensus} \
-            --path.annot ${path_annot} \
-            --path.res ${path_annot_res} \
-            --aln.type ${aln_type}
+#     # if [ ! -f "${file_sv_big_on_set}" ]; then
+#         blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
+#            -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
+#            -perc_identity "${similarity_value}" -num_threads "${cores}"
+#     # fi
 
-fi
+#     file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
+#     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
+#             --out ${file_sv_big_on_set_cover} --sim ${similarity_value} --use_strand F
 
-echo "Script completed successfully"
+#     rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
+# fi
+
+
+pokaz_message "Script completed successfully"
