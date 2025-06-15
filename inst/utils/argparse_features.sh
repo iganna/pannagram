@@ -24,7 +24,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         -h|-help) print_usage;                                          exit 0  ;;
         -cores)   cores="$2";                                           shift 2 ;;
-        -path_in) path_in="$2"; required_params+=("path_in");           shift 2 ;;
+        -path_in|-path_project) path_project="$2"; required_params+=("path_project");shift 2 ;;
         -ref)         ref_pref="$2";                                    shift 2 ;;
         -blocks)      run_blocks=true;                                  shift 1 ;;
         -seq)         run_seq=true;                                     shift 1 ;;
@@ -56,7 +56,4 @@ cores="${cores:-1}"
 acc_anal="${acc_anal:-NULL}"
 ref_pref="${ref_pref:-NULL}"
 
-path_in=$(add_symbol_if_missing "$path_in" "/")
-
-export aln_type run_blocks run_seq run_aln run_snp run_snp_pi run_sv_call run_sv_sim run_sv_sim_prot run_sv_graph run_annogroup
-export cores acc_anal ref_pref path_in set_file set_file_prot similarity_value path_annot
+path_project=$(add_symbol_if_missing "$path_project" "/")

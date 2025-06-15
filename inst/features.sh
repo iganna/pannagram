@@ -29,6 +29,7 @@ if [ "$run_blocks" = true ]; then # -blocks
     pokaz_message "Step -blocks is done!"
 fi
 
+
 if [ "$run_seq" = true ]; then # -seq
     pokaz_stage "Get consensus sequences."
 
@@ -40,6 +41,7 @@ if [ "$run_seq" = true ]; then # -seq
         --path.features.msa ${path_features_msa} \
         --ref.pref  ${ref_pref} \
         --path.chr ${path_chrom} \
+        --path.seq ${path_seq} \
         --aln.type ${aln_type} \
         --cores ${cores}
     
@@ -67,9 +69,10 @@ if [ "$run_snp" = true ]; then # -snp
     mkdir -p $path_snp
 
     Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
-        --path.cons ${path_consensus} \
+        --path.features.msa ${path_features_msa} \
+        --path.snp ${path_snp} \
+        --path.seq ${path_seq} \
         --ref.pref  ${ref_pref} \
-        --path.chr ${path_chromosomes} \
         --aln.type ${aln_type} \
         --cores ${cores}
 
@@ -79,35 +82,33 @@ if [ "$run_snp" = true ]; then # -snp
     if [ "$run_snp_pi" = true ]; then # -snp_pi
 
         pokaz_stage "Pi diversity."
-        path_snp="${path_consensus}snps/"
         vcf_files=$(find "$path_snp" -type f -name "*.vcf")
         if [ -z "$vcf_files" ]; then
             echo "VCF-files are not found in $path_snp!"
             exit 1
         fi
 
-        path_plots="${path_snp}plot_snp/"
-        mkdir -p ${path_plots}
+        mkdir -p ${path_plots_snp}
 
         # Run VCF-tools
         for vcf_file in $vcf_files; do
             echo "VCF-tools.."
             base_name=$(basename "$vcf_file" .vcf)
             output_file="${path_snp}${base_name}_output"
-            vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
-            vcftools --vcf "${vcf_file}" --extract-FORMAT-info ID --out "$output_file"
+            vcftools --vcf "$vcf_file" --site-pi --out "$output_file" &>/dev/null
+            vcftools --vcf "$vcf_file" --extract-FORMAT-info ID --out "$output_file" &>/dev/null
 
-            # Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
-            #     --path.figures ${path_plots} \
-            #     --file.pi "${output_file}.sites.pi"
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_plot.R \
+                --path.figures ${path_plots_snp} \
+                --file.pi "${output_file}.sites.pi"
 
             echo "Plink.."
-            plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
+            plink --vcf "${vcf_file}" --distance --out "${vcf_file}.dist" --allow-extra-chr &>/dev/null
 
-            # Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
-            #    --path.figures ${path_plots} \
-            #    --file.pi "${vcf_file}"
-
+            Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
+                --path.figures ${path_plots_snp} \
+                --file.pi ${vcf_file} \
+                --path.snp ${path_snp}
         done
         pokaz_message "Step -snp_pi is done!"
     fi
@@ -117,9 +118,6 @@ if [ "$run_snp" = true ]; then # -snp
 fi
 
 
-# ********************************   SVs   ***********************************
-
-# -------------------------------------------------
 # Sv calling
 if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     pokaz_stage "SV-calling"
@@ -134,24 +132,26 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     mkdir -p $path_gff
 
     Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
-        --path.cons ${path_consensus} \
+        --path.features.msa ${path_features_msa} \
+        --path.seq ${path_seq} \
+        --path.sv ${path_sv} \
+        --path.gff ${path_gff} \
         --ref.pref  ${ref_pref} \
         --aln.type ${aln_type} \
         --acc.anal ${acc_anal}
-
-    # path_plots="${path_consensus}plot_svs/"
-    # mkdir -p ${path_plots}
+    
+    mkdir -p $path_plots_sv
 
     pokaz_stage "Plot SV stat"
     Rscript $INSTALLED_PATH/analys/sv_02_plot_stat.R \
-        --path.cons ${path_consensus} 
+        --path.features.msa ${path_features_msa} \
+        --path.sv ${path_sv} \
+        --path.figures ${path_plots_sv}
 
     pokaz_message "Step -sv is done!"
 fi
 
 
-
-# -------------------------------------------------
 # Compare SVs with TEs
 # if [ "$run_annogroup" = true ]; then # -annogroup
 #     pokaz_stage "Annotation groups"
@@ -202,20 +202,23 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     pokaz_stage "Plotting SV-Graph..."
     Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
-        --path.cons ${path_consensus} 
+        --path.features.msa ${path_features_msa} \
+        --path.sv ${path_sv} \
+        --path.figures ${path_plots_sv}
 
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.cons ${path_consensus} 
+        --path.features.msa ${path_features_msa} \
+        --path.sv ${path_sv}
 
     if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
-        if [ -f "${path_consensus}sv/sv_in_graph_orfs.fasta" ]; then
+        if [ -f "${path_sv}/sv_in_graph_orfs.fasta" ]; then
             pokaz_stage "BLAST on proteins..."
 
-            # makeblastdb -in ${set_file_prot} -dbtype prot
+            makeblastdb -in ${set_file_prot} -dbtype prot
             blastp -db "${set_file_prot}" \
-                   -query "${path_consensus}sv/sv_in_graph_orfs.fasta" \
-                   -out "${path_consensus}sv/blast_sv_orfs_on_set.txt" \
+                   -query "${path_sv}sv_in_graph_orfs.fasta" \
+                   -out "${path_sv}blast_sv_orfs_on_set.txt" \
                    -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
                    -num_threads "${cores}"
         else
@@ -227,7 +230,6 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 fi
 
 
-# -------------------------------------------------
 # Annotation groups
 # if [ "$run_sv_sim" = true ]; then # -sv_sim
 #     check_missing_variable "set_file"
