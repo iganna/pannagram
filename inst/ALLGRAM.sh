@@ -1,39 +1,16 @@
 #!/bin/bash
 
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
+
 source $INSTALLED_PATH/utils/chunk_error_control.sh
 source $INSTALLED_PATH/utils/utils_bash.sh
 source $INSTALLED_PATH/utils/help_pannagram.sh
 source $INSTALLED_PATH/utils/argparse_pannagram.sh
-
-path_features="${path_out}features/"
-path_features_msa="${path_features}msa/"
-path_extra="$path_features/extra/"
-
-path_inter="${path_out}intermediate/"
-path_alignment="${path_inter}alignments/"
-path_inter_msa="${path_inter}msa/"
-path_blast="${path_inter}blast/"
-path_mafft="${path_inter}mafft/"
-path_chrom="${path_inter}chromosomes/"
-path_parts="${path_chrom}parts/"
-
-path_plots="${path_out}plots/ref/"
+source $INSTALLED_PATH/utils/chunk_paths.sh
 
 # Make folders
-mkdir -p "${path_out}"
-
-mkdir -p "${path_features}"
-mkdir -p "${path_features_msa}"
-mkdir -p "${path_extra}"
-
-mkdir -p "${path_inter}"
-mkdir -p "${path_chrom}"
-mkdir -p "${path_parts}"
-mkdir -p "${path_inter_msa}"
-
-
-mkdir -p "${path_plots}"
+mkdir -p "${path_project}"
+check_dir "${path_project}"
 
 # Handling accessions
 genome_extensions=('fasta' 'fna' 'fa' 'fas')
@@ -259,6 +236,7 @@ fi
 #     done
 # fi
 
+mkdir -p "${path_inter}"
 
 # File with combinations
 file_combinations="${path_inter}combinations.txt"
@@ -337,7 +315,7 @@ fi
 if [ -z "${flag_rev}" ]; then
     option_mirror=" "
 else
-    path_parts="${path_inter}parts_mirror/"
+    path_parts="$path_parts_mirror"
     option_mirror=" --purge.reps T"
 fi
 
@@ -353,7 +331,6 @@ cores="${cores:-1}"
 
 
 # LOGS
-
 log_level=${log_level:-1}  # Set the default value to 'steps'
 
 if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
@@ -362,8 +339,6 @@ if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
     exit 1
 fi
 
-# Hidden path with logs
-path_log="${path_out}logs/"
 mkdir -p ${path_log}
 
 # File with steps logs
@@ -541,6 +516,8 @@ step_num=1
 
 with_level 1 pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 
+mkdir -p "${path_chrom}"
+
 # Logs
 step_name="step${step_num}_query_01"
 step_file="${path_log}${step_name}_done"
@@ -578,8 +555,10 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Split reference fasta into chromosomes if additionally needed
 
+mkdir -p "${path_features_msa}"
+
+# Split reference fasta into chromosomes if additionally needed
 if [[ "${path_in}" != "$path_ref" ]]; then
 
     ((step_num = step_num - 1))
@@ -638,8 +617,6 @@ if [ ! -z "${flag_orf}" ]; then
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        # Make ORF folder
-        path_orf="${path_inter}orf/"
         mkdir -p "${path_orf}"
 
         # Clean up the output folders
@@ -678,6 +655,8 @@ path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
 
 # Start
+mkdir -p "$path_parts"
+
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Clean up the output folders
@@ -861,9 +840,11 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 for ref0 in "${refs_all[@]}"; do
 
+    mkdir -p "${path_plots_pairwise}"
+
     # Paths
     path_alignment_ref="$path_alignment${ref0}/"
-    path_plots_ref="${path_plots}${ref0}/"
+    path_plots_ref="${path_plots_pairwise}${ref0}/"
     mkdir -p $path_plots_ref
     
     # Logs
@@ -1185,6 +1166,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # Remain only the trustable positions
 with_level 1 pokaz_stage "Step ${step_num}. Remain only the trustable syntenic positions.."
 
+mkdir -p "${path_inter_msa}"
+
 # Logs
 step_name="step${step_num}_comb_03_cleanup"
 step_file="${path_log}${step_name}_done"
@@ -1480,10 +1463,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # with_level 1 pokaz_stage "Step ${step_num}. Add synteny positions which were lost."
 
 # # Paths
-# path_extra="${path_inter}extra_regions/"
-# if [ ! -d "$path_extra" ]; then
-#     mkdir -p "$path_extra"
-# fi
+# mkdir -p "$path_extra"
 
 # # Logs
 # step_name="step${step_num}_comb_08"
@@ -1526,9 +1506,10 @@ pokaz_attention "Extra steps are running.."
 
 with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
 
-    # Paths
-    path_extra_long1="${path_extra}long1/"
-    mkdir -p "$path_extra_long1"
+# Paths
+path_extra_long="${path_extra}long/"
+mkdir -p "$path_extra"
+mkdir -p "$path_extra_long"
 
 # Logs
 step_name="step${step_num}_comb_09"

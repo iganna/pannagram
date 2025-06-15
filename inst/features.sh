@@ -6,31 +6,16 @@ source "$INSTALLED_PATH/utils/chunk_error_control.sh"
 source "$INSTALLED_PATH/utils/utils_bash.sh"
 source "$INSTALLED_PATH/utils/help_features.sh"
 source "$INSTALLED_PATH/utils/argparse_features.sh" "$@"
+source "$INSTALLED_PATH/utils/chunk_paths.sh" # requires path_project variable
 
-path_features="${path_in}features/"
-path_features_msa="${path_features}msa/"
-path_extra="$path_features/extra/"
 
-path_inter="${path_in}intermediate/"
-path_alignment="${path_inter}alignments/"
-path_inter_msa="${path_inter}msa/"
-path_blast="${path_inter}blast/"
-path_mafft="${path_inter}mafft/"
-path_chrom="${path_inter}chromosomes/"
-path_parts="${path_chrom}parts/"
-
-path_plots="${path_in}plots/"
-
-# ----------------------------------------------------------------------------
-#                                   MAIN
-# ----------------------------------------------------------------------------
-# ******************  General work with the alignment   **********************
-
-# -------------------------------------------------
+# General alignment processing
 if [ "$run_blocks" = true ]; then # -blocks
     pokaz_stage "Get blocks."
 
-    path_plots_synteny="${path_plots}synteny/"
+    check_dir "$path_inter_msa"    || exit 1
+    check_dir "$path_features_msa" || exit 1
+
     mkdir -p ${path_plots_synteny}
 
     Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
@@ -44,6 +29,11 @@ fi
 
 if [ "$run_seq" = true ]; then # -seq
     pokaz_stage "Get consensus sequences."
+
+    check_dir "$path_features_msa" || exit 1
+    check_dir "$path_chrom"        || exit 1
+
+    mkdir -p $path_seq
     Rscript $INSTALLED_PATH/analys/analys_02_seq_cons.R \
         --path.features.msa ${path_features_msa} \
         --ref.pref  ${ref_pref} \
@@ -65,6 +55,12 @@ fi
 
 if [ "$run_snp" = true ]; then # -snp
     pokaz_stage "Get SNPs."
+
+    check_dir "$path_features_msa" || exit 1
+    check_dir "$path_seq"          || exit 1
+
+    mkdir -p $path_snp
+
     Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -124,6 +120,12 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     # So, consensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
 
+    check_dir "$path_features_msa" || exit 1
+    check_dir "$path_seq"          || exit 1
+
+    mkdir -p $path_sv
+    mkdir -p $path_gff
+
     Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
@@ -182,7 +184,11 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
         similarity_value=85
     fi
 
-    file_sv_big=${path_consensus}sv/seq_sv_big.fasta
+    check_dir "$path_features_msa" || exit 1
+    check_dir "$path_sv"           || exit 1
+    check_dir "$path_plots_sv"     || exit 1
+
+    file_sv_big=${path_sv}seq_sv_big.fasta
     file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
 
     # Check if BLAST database exists
