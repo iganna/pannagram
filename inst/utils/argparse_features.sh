@@ -52,6 +52,11 @@ for param in "${required_params[@]}"; do
     fi
 done
 
+if [[ "$run_snp_pi" == true && "$run_snp" == false ]]; then
+    pokaz_error "Error: -snp_pi won't run unless -snp flag is used"
+    exit 1
+fi
+
 cores="${cores:-1}"
 acc_anal="${acc_anal:-NULL}"
 ref_pref="${ref_pref:-NULL}"
