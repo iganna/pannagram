@@ -1522,18 +1522,18 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_extra_long1}fake
+        touch ${path_extra_long}fake
         touch ${path_log_step}fake.log
 
-        rm -rf ${path_extra_long1}*
-        # find ${path_extra_long1} -exec rm -rf {} +
+        rm -rf ${path_extra_long}*
+        # find ${path_extra_long} -exec rm -rf {} +
         rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
-            --path.extra ${path_extra_long1} \
+            --path.extra ${path_extra_long} \
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
@@ -1560,19 +1560,19 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_extra_long1}fake_out.RData
-        touch ${path_extra_long1}fake_len.RData
+        touch ${path_extra_long}fake_out.RData
+        touch ${path_extra_long}fake_len.RData
         touch ${path_log_step}fake.log
 
-        rm -rf ${path_extra_long1}*out.RData
-        rm -rf ${path_extra_long1}*len.RData
+        rm -rf ${path_extra_long}*out.RData
+        rm -rf ${path_extra_long}*len.RData
         rm -f ${path_log_step}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
-            --path.extra ${path_extra_long1} \
+            --path.extra ${path_extra_long} \
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
@@ -1608,7 +1608,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
             --cores ${cores} \
-            --path.extra ${path_extra_long1} \
+            --path.extra ${path_extra_long} \
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
