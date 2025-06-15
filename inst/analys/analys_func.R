@@ -65,7 +65,7 @@ extractChrByFormat <- function(gff, s.chr){
 #' gff_data <- gffgff("path/to/consensus/", "acc1", "acc2", gff1)
 #' 
 #' @export
-gff2gff <- function(path.cons, 
+gff2gff <- function(path.proj,
                     acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
                     n.chr,
@@ -73,12 +73,13 @@ gff2gff <- function(path.cons,
                     exact.match=T, 
                     gr.accs.e = "accs/",
                     aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
-                    echo=T,
+                    echo=FALSE,
                     pangenome.name='Pangen',
                     s.chr = '_Chr', # in this case the pattern is "*_ChrX", where X is the number
                     remain=F
                     ){
-  
+  path.cons <- file.path(path.proj, "features", "msa/")
+
   # Set of names of accettions, which can be used to specify pangenomes coordinates
   pangenome.names = unique(c(pangenome.name, 'Pangen', 'Pangenome', 'Pannagram'))
   colnames.full1 = colnames(gff1)
@@ -96,7 +97,7 @@ gff2gff <- function(path.cons,
   # Get chromosomes by format
   gff1 =  extractChrByFormat(gff1, s.chr)
   gff1 = gff1[order(gff1$chr),]
-  
+
   # Fitler out blocks
   gff1 = filterBlocks(acc1, gff1, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
   
