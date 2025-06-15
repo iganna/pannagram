@@ -24,7 +24,9 @@ if [ "$run_blocks" = true ]; then # -blocks
         --path.figures ${path_plots_synteny} \
         --cores ${cores} \
         --ref  ${ref_pref} \
-        --aln.type ${aln_type}
+        --aln.type ${aln_type} 
+        
+    pokaz_message "Step -blocks is done!"
 fi
 
 if [ "$run_seq" = true ]; then # -seq
@@ -40,6 +42,11 @@ if [ "$run_seq" = true ]; then # -seq
         --path.chr ${path_chrom} \
         --aln.type ${aln_type} \
         --cores ${cores}
+    
+    pokaz_message "Step -seq is done!"
+fi
+
+
 # Sequences of alignment
 # if [ "$run_aln" = true ]; then # -aln
 #     pokaz_stage "Get sequences of alignment."
@@ -66,7 +73,8 @@ if [ "$run_snp" = true ]; then # -snp
         --aln.type ${aln_type} \
         --cores ${cores}
 
-    # ---------------
+    pokaz_message "Step -snp is done!"
+
     # Pi diversity
     if [ "$run_snp_pi" = true ]; then # -snp_pi
 
@@ -101,6 +109,7 @@ if [ "$run_snp" = true ]; then # -snp
             #    --file.pi "${vcf_file}"
 
         done
+        pokaz_message "Step -snp_pi is done!"
     fi
 
     # rm ${path_snp}*log
@@ -137,6 +146,7 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     Rscript $INSTALLED_PATH/analys/sv_02_plot_stat.R \
         --path.cons ${path_consensus} 
 
+    pokaz_message "Step -sv is done!"
 fi
 
 
@@ -213,7 +223,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
         fi
 
     fi
-
+    pokaz_message "Step -sv_graph is done!"
 fi
 
 
