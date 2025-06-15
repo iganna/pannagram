@@ -14,8 +14,9 @@ source(system.file("analys/analys_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.chr"),    type="character", default=NULL,      help="path to directory with chromosomes"),
-  make_option(c("--path.cons"),   type="character", default=NULL,      help="path to directory with the consensus"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
+  make_option("--path.snp", type = "character", default = NULL, help = "Path to snp dir"),
+  make_option("--path.seq", type = "character", default = NULL, help = "Path to seq dir"),
   make_option(c("-c", "--cores"), type = "integer", default = 1,       help = "number of cores to use for parallel processing"),
   make_option(c("--aln.type"),    type="character", default="default", help="type of alignment ('msa_', 'comb_', 'v_', etc)"),
   make_option(c("--ref.pref"),    type="character", default=NULL,      help="prefix of the reference file")
@@ -24,14 +25,17 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-# print(opt)
 
-# ***********************************************************************
-# ---- Logging ----
+path.seq <- opt$path.seq
+if (!dir.exists(path.seq)) stop('Folder `path.seq` does not exist')
 
-source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-# ---- HDF5 ----
+path.snp <- opt$path.snp
+if (!dir.exists(path.snp)){
+  dir.create(path.snp)
+} 
+if (!dir.exists(path.snp)){
+  stop(paste0('The output folder was not created'))
+} 
 
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
@@ -62,31 +66,17 @@ if (!is.null(opt$aln.type)) {
   pokazAttention('The defaul anighment type is used:', aln.type)
 }
 
-path.chr <- if (!is.null(opt$path.chr)) opt$path.chr else stop("Error: 'path.chr' is NULL. Please provide a valid path.")
-path.cons <- if (!is.null(opt$path.cons)) opt$path.cons else stop("Error: 'path.cons' is NULL. Please provide a valid path.")
+path.features.msa <- if (!is.null(opt$path.features.msa)) opt$path.features.msa else stop("Error: 'path.features.msa' is NULL. Please provide a valid path.")
 
 # Paths
-if(!dir.exists(path.cons)){
-  stop(paste('The consensus folder does not exist:', path.cons))
-}
-
-path.seq = paste0(path.cons, 'seq/')
-if (!dir.exists(path.seq)) stop('Folder with consensus sequence does not exist')
-
-path.snp = paste0(path.cons, 'snps/')
-if (!dir.exists(path.snp)){
-  dir.create(path.snp)
-} 
-if (!dir.exists(path.snp)){
-  stop(paste0('The output folder was not created'))
-} 
+if(!dir.exists(path.features.msa)) stop(paste('The consensus folder does not exist:', path.features.msa))
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 
 # pokaz('Consensus folder', path.cons)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 
 pref.combinations = gsub(aln.type, "", files)
 pref.combinations <- sub(ref.suff, "", pref.combinations)
@@ -165,7 +155,7 @@ for(s.comb in pref.combinations){
   saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   # Create the VCF-file for the first accession, the main reference.
-  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff, '.h5')
+  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff, '.h5')
   # pokaz(file.comb)
   acc = accessions[1]
   pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))

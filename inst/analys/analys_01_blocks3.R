@@ -37,19 +37,18 @@ num.cores <- opt$cores
 wnd.size <- opt$wnd.size
 
 
-if(ref.name == "NULL") ref.name = ''
-if(is.null(ref.name)) ref.name = ''
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 
 
-if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
+path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
 
 # pokaz(path.features.msa)
 
-if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
+path.inter.msa <- opt$path.inter.msa
 if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
 
-if (!is.null(opt$path.figures)) path.figures <- opt$path.figures
+path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 
 # ---- Combinations of chromosomes query-base to create the alignments ----

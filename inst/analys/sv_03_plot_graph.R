@@ -19,7 +19,9 @@ suppressMessages({
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option(c("--path.features.msa"), type = "character", default = NULL, help = "path to msa dir (features)"),
+  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
 );
 
@@ -35,17 +37,15 @@ flag.plot = T
 # ***********************************************************************
 # Paths
 
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop(paste0('Consensus folder does nto exist', path.cons))
+path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop(paste0('No path.features.msa dir!', path.features.msa))
 
-path.sv = paste0(path.cons, 'sv/')
-if (!dir.exists(path.sv)) dir.create(path.sv)
-if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.cons))
+path.sv <- opt$path.sv
+if(!dir.exists(path.sv)) stop(paste0('No SV dir!', path.sv))
 
 
-path.figures = paste0(path.cons, 'plot_svs/')
-if (!dir.exists(path.figures)) dir.create(path.figures)
-if(!dir.exists(path.figures)) stop(paste0('Folder for SV figures does nto exist', path.figures))
+path.figures <- opt$path.figures
+if(!dir.exists(path.figures)) stop(paste0('No SV figures dir', path.figures))
 
 # ***********************************************************************
 # ---- Values ----
