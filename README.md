@@ -164,22 +164,30 @@ After running `pannagram` pipeline you are able to get more features of your dat
 
 ### 3. Search for similar sequences with `simsearch`
 
+* **...in set of sequences** This approach is designed to search for similarities against another set of sequences. 
+    ```sh
+    simsearch \
+        -in_seq genes.fasta \
+        -on_seq genome.fasta \
+        -sim 90 \
+        -out "<out path>"
+    ```
+
 * **...in the genome** This approach involves searching against entire genomes or individual chromosomes:
     ```sh
     simsearch \
         -in_seq genes.fasta
         -on_genome genome.fasta \
-        -sim 90 \
-        -out out.txt
+        -out "<out path>"
     ```
     The result is a GFF file with hits matching the similarity threshold.
 
-* **...in set of sequences** This approach, in contrast, is designed to search for similarities against another set of sequences. 
+* **...on all genomes in directory** Here we learch in all genomes in given directory:
     ```sh
     simsearch \
         -in_seq genes.fasta \
-        -on_seq genome.fasta \
-        -out out.txt
+        -on_path "<path to genomes>" \
+        -out "<out path>"
     ```
 
 
