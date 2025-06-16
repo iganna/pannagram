@@ -97,14 +97,14 @@ source("install_in_rstudio.R")
 ### For Windows Users
 Windows users may use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) following steps described for Linux users but be warned, that we have never tested **pannagram** in such environment.
 
-<h2 style="display: flex; align-items: center; gap: 0.5ex;">
+## Pannagram as a suite of bash pipelines
+<!-- <h2 style="display: flex; align-items: center; gap: 0.5ex;">
     <img
       src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg"
       style="height: 30; width: auto; vertical-align: middle;"
     />
-  </a>
   <span>Pannagram as a suite of bash pipelines</span>
-</h2>
+</h2> -->
 
 An extended description of the parameters for all scripts are avaliable by executing scripts with the flag `-help`.
 
@@ -190,15 +190,15 @@ After running `pannagram` pipeline you are able to get more features of your dat
         -out "<out path>"
     ```
 
-
-<h2 style="display: flex; align-items: center; gap: 0.5ex;">
+## Pannagram as an R package
+<!-- <h2 style="display: flex; align-items: center; gap: 0.5ex;">
     <img
       src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg"
       style="height: 30; width: auto; vertical-align: middle;"
     />
   </a>
   <span>Pannagram as an R package</span>
-</h2>
+</h2> -->
 
 0. In your R session call the library:
     ```R
