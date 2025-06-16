@@ -71,7 +71,7 @@ fi
 
 # Check Intersecton
 if [ ${#acc_set[@]} -eq 0 ]; then
-    pokaz_error "Error: No fcommon accessions in ${acc_file} file and ${path_in} folder"
+    pokaz_error "Error: No common accessions found in ${acc_file} file and ${path_in} folder"
     exit 1
 fi
 
@@ -94,7 +94,7 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
     done
 
     if [ "$file_found" = false ]; then
-        pokaz_error "Error: No reference genome ${ref_name} was found in ${path_ref}."
+        pokaz_error "Error: No reference genome ${ref_name} was found in ${path_ref}. Pass the -ref argument with no explicit FASTA suffix."
         exit 1  
     fi
 
@@ -366,9 +366,9 @@ with_level() {
 # MESSAGES
 
 if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
-    message_mode="Pannagram runs in the PRELIMINARY mode."
+    message_mode="Pannagram runs in the PRELIMINARY mode with reference $ref_name."
 elif [ "${mode_pangen}" == "${name_mode_ref}" ]; then  # PRE mode
-    message_mode="Pannagram runs in the REFENRECE-based mode."
+    message_mode="Pannagram runs in the REFENRECE-based mode with reference $ref_name."
 elif [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
     message_mode="Pannagram runs in the Multiple Genome Alignment mode."
 else 
@@ -575,7 +575,9 @@ if [[ "${path_in}" != "$path_ref" ]]; then
         # Start
         if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-            with_level 1  pokaz_attention "Reference ${ref0}"
+            if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+                with_level 1  pokaz_attention "Reference ${ref0}"
+            fi
 
             # Temporary file to analyse only the reference genome from the folder
             file_acc_ref=${path_features_msa}ref_acc.txt
@@ -691,7 +693,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # └───────────────────────────────────────────────────────────────────────────┘
 # Blast parts on the reference genome
 
-with_level 1 pokaz_stage "Step ${step_num}. BLAST of parts against the reference genome."
+with_level 1 pokaz_stage "Step ${step_num}. BLAST parts against the reference genome."
 for ref0 in "${refs_all[@]}"; do
 
     # Paths
@@ -707,7 +709,9 @@ for ref0 in "${refs_all[@]}"; do
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # with_level 1 pokaz_message "NOTE: if this stage takes relatively long, use -purge_repeats -s 2 to mask highly repetative regions"
 
@@ -797,7 +801,9 @@ for ref0 in "${refs_all[@]}"; do
     # Start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # Clean up the output folders
         if   [ "$clean" == "T" ]; then 
@@ -856,7 +862,9 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # ---- Clean up the output folders ----
         if [ "$clean" == "T" ]; then 
@@ -917,7 +925,9 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # ---- Clean up the output folders ----
         if  [ "$clean" == "T" ]; then 
@@ -968,7 +978,9 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # ---- Clean up the output folders ----
         if 
@@ -1017,7 +1029,9 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # ---- Clean up the output folders ----
         if [ "$clean" == "T" ]; then 
@@ -1056,6 +1070,7 @@ done
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Create a consensus
+mkdir -p "${path_features_msa}"
 
 with_level 1 pokaz_stage "Step ${step_num}. Combine reference-based alignments by chromosomes."
 for ref0 in "${refs_all[@]}"; do  
@@ -1072,7 +1087,9 @@ for ref0 in "${refs_all[@]}"; do
     # Step start
     if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-        with_level 1  pokaz_attention "Reference ${ref0}"
+        if [ "${mode_pangen}" == "${name_mode_msa}" ]; then
+            with_level 1  pokaz_attention "Reference ${ref0}"
+        fi
 
         # ---- Clean up the output folders ----
         if   [ "$clean" == "T" ]; then 
@@ -1105,7 +1122,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ====== REF mod ends here =======
 if [ "${mode_pangen}" != "${name_mode_msa}" ]; then 
-    echo "Pannagram's REFRENCE-based mode is done."
+    echo "Pannagram's REFRENCE-based mode is done for reference ${ref0}."
     exit
 fi
 
