@@ -60,7 +60,7 @@ num.cores <- opt$cores
 
 # Reference accessions
 if (!is.null(opt$ref)) base.acc.ref <- opt$ref
-pokaz('Reference genome', base.acc.ref)
+pokaz('Reference genome', base.acc.ref, file=file.log.main, echo=echo.main)
 
 # Paths
 if (!is.null(opt$path.chr)) path.chr <- opt$path.chr  # to know the chromosomal lengths
@@ -85,7 +85,7 @@ pokaz('Names of genomes for the analysis:', accessions,
 # Available combinations
 
 files.aln <- list.files(path = path.aln, pattern = "_full.rds$")
-pokaz('Full files:', files.aln)
+pokaz('Full files:', files.aln, file=file.log.main, echo=echo.main)
 files.aln <- files.aln[sapply(files.aln, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 files.aln = gsub("_full.rds", "", files.aln)
 

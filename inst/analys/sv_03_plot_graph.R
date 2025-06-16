@@ -19,7 +19,9 @@ suppressMessages({
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option(c("--path.features.msa"), type = "character", default = NULL, help = "path to msa dir (features)"),
+  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
 );
 
@@ -35,17 +37,15 @@ flag.plot = T
 # ***********************************************************************
 # Paths
 
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop(paste0('Consensus folder does nto exist', path.cons))
+path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop(paste0('No path.features.msa dir!', path.features.msa))
 
-path.sv = paste0(path.cons, 'sv/')
-if (!dir.exists(path.sv)) dir.create(path.sv)
-if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.cons))
+path.sv <- opt$path.sv
+if(!dir.exists(path.sv)) stop(paste0('No SV dir!', path.sv))
 
 
-path.figures = paste0(path.cons, 'plot_svs/')
-if (!dir.exists(path.figures)) dir.create(path.figures)
-if(!dir.exists(path.figures)) stop(paste0('Folder for SV figures does nto exist', path.figures))
+path.figures <- opt$path.figures
+if(!dir.exists(path.figures)) stop(paste0('No SV figures dir', path.figures))
 
 # ***********************************************************************
 # ---- Values ----
@@ -141,7 +141,7 @@ g.content.init = g.content
 # ***********************************************************************
 # ---- Remain only the nodes with nore than 2 sequences ----
 
-pokaz('Remain only the nodes with nore than 2 sequences...')
+pokaz('Remain only the nodes with more than 2 sequences...')
 
 g.content = g.content.init
 node.remain = g.content$nodes.traits$node[g.content$nodes.traits$cnt >=  min.cnt]
@@ -156,7 +156,7 @@ res.nest.remain = res.nest[(res.nest$V1 %in% sv.remain) &
 g.content = getGraphFromBlast(res.nest = res.nest.remain, sim.cutoff = sim.cutoff, collapse = F)
 
 x = unique(c(g.content$edges))
-length(x)
+
 
 if(flag.plot){
   g <- network(g.content$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -172,8 +172,6 @@ if(flag.plot){
                       # palette = fam.palette,
                       # mode = "kamadakawai"
   )
-  
-  p.refined
   
   savePNG(p.refined, path = path.figures, name = 'graph_01_init', width = 6, height = 6)  
 }
@@ -231,8 +229,6 @@ if(nrow(g.content$edges.small) > 0){
                    arrow.gap = 0.01, 
                    arrow.size = 2
     )
-    
-    p.sm
     
     savePNG(p.sm, path = path.figures, name = paste0('graph_02_refined_', min.cl.size, '_', len.cutoff), width = 6, height = 6)
   }
@@ -339,11 +335,6 @@ sv.edges.add.list = list()
 sv.edges.add.counter = 1  
 
 for(s.sv in sv.names.short){
-  pokaz(s.sv)
-  
-  # if(s.sv == 'SVgr_28_id_25904|286'){
-  #   save(list = ls(), file = "tmp_workspace_put_back2.RData")
-  # }
 
   idx = as.numeric(idx.map[[s.sv]])
   if (is.null(idx)) next
@@ -456,8 +447,6 @@ p.refined <- ggnet2(
   arrow.size = 2
 ) + theme(legend.position = "none") + scale_color_viridis_d(name = "Partition")
 
-p.refined
-
 savePNG(p.refined, path = path.figures, name = paste0('graph_05_solved'),
         width = 6, height = 6)
 
@@ -477,8 +466,6 @@ p <- ggnet2(g,
 ) + 
   guides(size = F)  + theme(aspect.ratio = 1) + 
   guides(color = guide_legend(title = "Length, bp"))
-
-p
 
 savePNG(p, path = path.figures, name = paste0('graph_06_colored'),
         width = 7, height = 6)
@@ -507,7 +494,6 @@ p <- ggnet2(g, label = 'labels',
 ) + 
   guides(size = F)  + theme(aspect.ratio = 1) + 
   guides(color = guide_legend(title = "Length, bp"))
-p
 
 
 savePNG(p, path = path.figures, name = paste0('graph_07_label'),

@@ -115,7 +115,7 @@ for(s.comb in pref.combinations){
   n.acc = length(accessions)
   pokaz("Number of accessions", length(accessions))
   
-  save(list = ls(), file =paste0(path.extra, "tmp_breaks.RData"))
+  # save(list = ls(), file =paste0(path.extra, "tmp_breaks.RData"))
   
   # Get breaks
   breaks.init = c()
@@ -250,7 +250,7 @@ for(s.comb in pref.combinations){
       
       # Check length
       if(nchar(breaks.init$seq[i.b]) != breaks.init$len.acc[i.b]){
-        save(list = ls(), file = "tmp_wrong.RData")
+        # save(list = ls(), file = "tmp_wrong.RData")
         stop('Wrong sequence is taken')
       }
       

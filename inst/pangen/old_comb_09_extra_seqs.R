@@ -283,7 +283,7 @@ for(s.comb in pref.combinations){
     # save(list = ls(), file ="tmp_workspace_extra.RData")
     
     if(length(idx.cons) != ncol(mx.cons)){
-      save(list = ls(), file ="tmp_workspace_extra.RData")
+      # save(list = ls(), file ="tmp_workspace_extra.RData")
       stop('Something is wrong with lengths')
     } 
 
@@ -359,7 +359,7 @@ for(s.comb in pref.combinations){
   
         pokaz('point2')
         
-        save(list = ls(), file ="tmp_workspace_point2.RData")
+        # save(list = ls(), file ="tmp_workspace_point2.RData")
         
         ## ---- BLAST----
         x = data.frame(tmp=numeric())   
@@ -513,7 +513,7 @@ for(s.comb in pref.combinations){
           
         } else {
           
-          save(list = ls(), file ="tmp_workspace_s1.RData")
+          # save(list = ls(), file ="tmp_workspace_s1.RData")
           
           n1 = nchar(seq1)[1]
           n2 = nchar(seq2)[1]

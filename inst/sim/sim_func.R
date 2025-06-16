@@ -333,7 +333,7 @@ getOneSideCoverage <- function(v.rest, side = 0){
     idx.nested = which((v.rest$V2[-1] >= v.rest$V2[-nrow(v.rest)]) & 
                          (v.rest$V3[-1] <=v.rest$V3[-nrow(v.rest)]) & 
                          (v.rest$V1[-1] == v.rest$V1[-nrow(v.rest)])) + 1
-    print(length(idx.nested))
+    # print(length(idx.nested))
     if(length(idx.nested) == 0) next
     v.rest = v.rest[-idx.nested,]  
   }

@@ -3,9 +3,9 @@
 
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
+  library(optparse)
   library(pannagram)
   library(crayon)
   library(ggplot2)
@@ -15,8 +15,11 @@ suppressMessages({ library(Biostrings)
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
-  make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
+  make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
+  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--cores",     type = "integer",   default = 1, help = "number of cores to use for parallel processing"),
+  make_option("--len.min",     type = "integer",   default = 15, help = "Minimal length for plotting")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -27,21 +30,16 @@ opt = parse_args(opt_parser, args = args);
 # ***********************************************************************
 # Paths
 
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop(paste0('Consensus folder does nto exist', path.cons))
+path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop(paste0('Consensus folder does nto exist', path.features.msa))
 
-path.sv = paste0(path.cons, 'sv/')
-if (!dir.exists(path.sv)) dir.create(path.sv)
-if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.cons))
+path.sv = opt$path.sv
+if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.sv))
 
-
-path.figures = paste0(path.cons, 'plot_svs/')
-if (!dir.exists(path.figures)) dir.create(path.figures)
+path.figures = opt$path.figures
 if(!dir.exists(path.figures)) stop(paste0('Folder for SV figures does nto exist', path.figures))
 
-# ***********************************************************************
-# ---- Values ----
-len.min = 15 
+len.min <- opt$len.min
 
 
 # Binning
@@ -85,7 +83,6 @@ res.len = c()
 thresholds = c(0,15,50,100, 1000)
 for(thresh in thresholds){
   cnt = c(table(sv.all$single[sv.all$len > thresh]))
-  print(cnt)
   if(length(cnt) == 1){
     cnt = c(0, cnt)
   } 
@@ -98,7 +95,7 @@ colnames(res.len) = c('all', 'complex', 'simple', 'ratio')
 rownames(res.len) = paste('len >', thresholds, 'bp', sep = '')
 rownames(res.len)[1] = 'all SVs'
 
-print(res.len)
+print(res.len) # prints table DO NOT TOUCH
 
 df = reshape2::melt(t(apply(res.len[,2:3], 1, function(x) x/sum(x))))
 df$group = factor(rep(rownames(res.len), 2), levels = rev(rownames(res.len)))
@@ -130,11 +127,7 @@ p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
   geom_text(aes(label = round(value, 2)), position = position_stack(vjust = 0.5)) +
   ylab('')+ xlab('') + theme(plot.margin = unit(c(-1, -1, -1, -1), "cm"))
 
-# p
-
-pdf(paste0(path.figures, 'sv_pie_chart.pdf'), width = 4, height = 4)
-print(p)     # Plot 1 --> in the first page of PDF
-dev.off()
+savePDF(p, path=path.figures, name='sv_pie_chart', width = 4, height = 4)
 
 write.table(df, paste0(path.figures, 'sv_pie_chart.txt'), row.names = F, sep = '\t')
 saveRDS(df, paste0(path.figures, 'sv_pie_chart.rds'))
@@ -153,12 +146,9 @@ g <- ggplot(sv.all[sv.all$len > len.min,], aes(x=beg, fill = as.factor(single)))
   labs(x = "Pangenome coordinate", y = "Count", fill = "SVs:") + 
   scale_fill_manual(values = c('#F48484', '#B5D5C5'), labels = c("complex", "simple"))
 
-# g
+savePDF(g, path=path.figures, name=paste0('sv_chr_minlen',len.min, '_pangen'), 
+        width = 6, height = 3/5 * max(sv.all$chr) + 1)
 
-pdf(paste(path.figures, 'sv_chr_minlen',len.min,'_pangen.pdf', sep = ''), 
-    width = 6, height = 3/5 * max(sv.all$chr))
-print(g)     # Plot 1 --> in the first page of PDF
-dev.off()
 
 
 # ***********************************************************************
@@ -174,7 +164,7 @@ if(f.max != 1){
     #          fill = 'grey60', alpha = 0.5) +
     # annotate(geom = "rect",xmin = 25, xmax = Inf, ymin = -Inf, ymax = Inf,
     #          fill = 'grey60', alpha = 0.5) +
-    geom_line(size = 2) + theme_minimal() + 
+    geom_line(linewidth = 2) + theme_minimal() + 
     theme(legend.position='none',
           strip.text.y = element_text(angle = 0)) + 
     # geom_segment(aes(x = 1, y = 15000, xend = f.max, yend = 15000), 
@@ -191,11 +181,8 @@ if(f.max != 1){
       panel.background = element_rect(fill = "white", color = 'white'),
       plot.background = element_rect(fill = "white", color = 'white')
     ) 
-  # g  
   
-  pdf(paste(path.figures, 'sv_freq_hist.pdf', sep = ''), width = 2.6, height = 1.7)
-  print(g)     # Plot 1 --> in the first page of PDF
-  dev.off()
+  savePDF(g, path=path.figures, name='sv_freq_hist', width = 2.6, height = 1.7)
 }
 
 
@@ -219,13 +206,8 @@ p <- ggplot(data=df, aes(x=freq.max, y = value, fill=len.gr)) +
         legend.box.just = c("top"), 
         legend.background = element_rect(fill=alpha('white', 0.75)),
         legend.margin = margin(2, 2, 2, 2))
-p
-# 
-
-pdf(paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'_norm.pdf'), 
-    width = max(2, 7/5*max(sv.se$freq.max)), height = 3)
-print(p)     # Plot 1 --> in the first page of PDF
-dev.off()
+savePDF(p, path=path.figures, name=paste0('sv_freq_hist_length_minlen', len.min ,'_norm'),
+        width = max(2, 5/27*max(sv.se$freq.max)), height = 3)
 
 
 
@@ -246,13 +228,8 @@ p <- ggplot(data=df.abs, aes(x=freq.max, y = value, fill=len.gr)) +
         legend.box.just = c("top"), 
         legend.background = element_rect(fill=alpha('white', 0.75)),
         legend.margin = margin(2, 2, 2, 2))
-p
-# 
-
-pdf(paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'_abs.pdf'), 
-    width = max(2, 7/5*max(sv.se$freq.max)), height = 3)
-print(p)     # Plot 1 --> in the first page of PDF
-dev.off()
+savePDF(p, path=path.figures, name=paste0('sv_freq_hist_length_minlen', len.min ,'_abs'),
+        width = max(2, 5/27*max(sv.se$freq.max)), height = 3)
 
 df$value.abs = df.abs$value
 write.table(df, paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'.txt'),sep = '\t', row.names = F)

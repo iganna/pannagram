@@ -48,15 +48,17 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 # ---- Preparation ----
 
 files.out <- list.files(path = path.mafft.out, pattern = "_aligned\\.fasta$", full.names = F)
-pokaz('Number of MAFFT alignments', length(files.out))
+pokaz('Number of MAFFT alignments', length(files.out), file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
 loop.function <- function(f.in, 
                           echo.loop=T){
-  
-  # pokaz(f.in)
+  # Log files
+  file.log.loop = paste0(path.log, 'loop_file_', f.in, '.log')
+  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop)) 
+  if(checkDone(file.log.loop)) next   # Check log Done
   
   seqs = readFasta(paste0(path.mafft.out, f.in))
   
@@ -71,7 +73,7 @@ loop.function <- function(f.in,
   seq.cons = mx2cons(mx)
   pos.variation = (colSums(pos.profile == 0) != 3) * 1
 
-  save(list = ls(), file = "tmp_workspace_good.RData")
+  # save(list = ls(), file = "tmp_workspace_good.RData")
   # Define blocks, were the alignment non well
   blocks.all = c()
   for(i.seq in 1:nrow(mx)){
@@ -96,7 +98,7 @@ loop.function <- function(f.in,
     
     f.in.bad <- sub("_aligned.fasta$", "_aligned_bad.fasta", f.in)
     
-    pokaz(f.in, f.in.bad)
+    pokaz(f.in, f.in.bad, file=file.log.loop, echo=echo.loop)
     
     file.rename(paste0(path.mafft.out,f.in),
                 paste0(path.mafft.out, f.in.bad))

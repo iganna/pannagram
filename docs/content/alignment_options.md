@@ -51,7 +51,7 @@ writeFasta(chr_rev_compl, "chromosome_out.fasta", seq.names = "Chr1_rev_compl")
 - `revComplSeq`: Generates the reverse complement of a sequence.
 - `writeFasta`: Writes the modified sequence back to a FASTA file.
 
-### Automatic reodering
+<!-- ### Automatic reodering
 
 You can also try the automatic procedure in bash.
 First, set the necessary environment variables:
@@ -77,4 +77,4 @@ Rscript ${PATH_PAN}inst/pangen/resort_02_rearrange.R --path.genomes ${PATH_DATA}
 
 
 
-
+ -->

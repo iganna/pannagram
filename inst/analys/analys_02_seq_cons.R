@@ -1,11 +1,12 @@
 # Get sequence alignments and consensus sequence
 
-suppressMessages({ library(Biostrings)
+suppressMessages({
+  library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
-  library('pannagram')
+  library(optparse)
+  library(pannagram)
   library(crayon)
 })
 
@@ -14,7 +15,8 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option(c("--ref.pref"),    type = "character", default = NULL, help = "prefix of the reference file"),
   make_option(c("--path.chr"),    type = "character", default = NULL, help = "path to directory with chromosomes"),
-  make_option(c("--path.cons"),   type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option("--path.seq", type = "character", default = NULL, help = "Path to seq dir"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
   make_option(c("-c", "--cores"), type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
   make_option(c("--aln.type"),    type = "character", default = NULL, help = "type of alignment ('msa_', 'comb_', 'extra1_', etc)")
 );
@@ -22,16 +24,12 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-# print(opt)
 
-# ***********************************************************************
-# ---- Logging ----
+path.seq <- opt$path.seq
+if (!dir.exists(path.seq)) stop(paste0('No path.seq dir found!'))
 
-source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
-# ---- HDF5 ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+source(system.file("utils/chunk_hdf5.R", package = "pannagram"))
 
 
 # ***********************************************************************
@@ -61,30 +59,11 @@ if (!is.null(opt$aln.type)) {
   pokazAttention('The defaul anighment type is used:', aln.type)
 }
 
-path.chr <- if (!is.null(opt$path.chr)) opt$path.chr else stop("Error: 'path.chr' is NULL. Please provide a valid path.")
-path.cons <- if (!is.null(opt$path.cons)) opt$path.cons else stop("Error: 'path.cons' is NULL. Please provide a valid path.")
+path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
 
-# Paths
-if(!dir.exists(path.cons)){
-  stop(paste('The consensus folder does not exist:', path.cons))
-}
-
-path.seq = paste0(path.cons, 'seq/')
-if (!dir.exists(path.seq)){
-  dir.create(path.seq)
-} 
-if (!dir.exists(path.seq)){
-  stop(paste0('The output folder was not created'))
-} 
-
-# ---- Testing ----
-# 
-# library(rhdf5)
-# source("../../../pannagram/utils/utils.R")
-# path.cons = './'
-# path.chr = '/home/anna/storage/arabidopsis/pacbio/pan_test/tom2/chromosomes/'
-# ref.pref = '0'
-# s.nts = c('A', 'C', 'G', 'T', '-')
+path.chr <- opt$path.chr
+if(!dir.exists(path.chr)) stop('intermediate/chromosomes dir doesn’t exist')
 
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -92,8 +71,8 @@ if (!dir.exists(path.seq)){
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 # pokaz(s.pattern)
 
-pokaz('Consensus folder', path.cons)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+# pokaz('Consensus folder', path.features.msa)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 # pokaz(files)
 
 pref.combinations = gsub(aln.type, "", files)
@@ -117,17 +96,8 @@ loop.function <- function(s.comb, echo = T){
   
   pokaz('* Combination', s.comb)
   
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
-  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
-  
-  # Check log Done
-  if(checkDone(file.log.loop)) return(NULL)
-  
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  
   # Get accessions
-  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff, '.h5')
+  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff, '.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -142,7 +112,7 @@ loop.function <- function(s.comb, echo = T){
   mx.consensus = NULL
   idx.negative = c()
   for(acc in accessions){
-    pokaz('Sequence of accession', acc)
+    # pokaz('Sequence of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v.na = is.na(v)
     v[v.na] = 0
@@ -245,17 +215,4 @@ if(num.cores == 1){
 }
 
 warnings()
-
-
-
-
-
-
-
-
-
-
-
-
-
 

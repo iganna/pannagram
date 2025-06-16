@@ -91,7 +91,7 @@ if (length(readLines(file.combinations)) == 0) {
   }
 }
 
-pokaz(files.maj)
+pokaz(files.maj, file=file.log.main, echo=echo.main)
 
 if(length(files.maj) == 0) stop('No alignments provided')
 pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.main)
@@ -101,11 +101,8 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 
 loop.function <- function(f.maj, 
                           echo.loop=T){
-  echo.loop = T
   initial.vars <- ls()
   
-  pokaz("File", f.maj)
-  # Remove extensions
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
   
   # Log files
@@ -120,6 +117,10 @@ loop.function <- function(f.maj,
   if(checkDone(file.log.loop)){
     return()
   }
+  
+  pokaz("File", f.maj, file=file.log.loop, echo=echo.loop)
+  # Remove extensions
+  
 
   # --- --- --- --- --- --- --- --- --- --- ---
   
@@ -494,7 +495,7 @@ for(f.maj in files.maj){
 files.maj = files.maj.todo
 
 if(length(files.maj) == 0){
-  pokaz('All files are done')
+  pokaz('All files are done', file=file.log.main, echo=echo.main)
   quit(save = "no")
 } 
 
@@ -522,7 +523,7 @@ if(num.cores == 1){
     myCluster <- makeCluster(num.cores, type = "PSOCK")
     registerDoParallel(myCluster)
     
-    pokaz(batch.files)
+    pokaz(batch.files, file=file.log.loop, echo=echo.loop)
     
     # Run parallel loop for files in the current batch
     batch.results <- foreach(f.maj = batch.files, .packages = c('crayon'), .verbose = FALSE) %dopar% {

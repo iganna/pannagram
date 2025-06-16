@@ -1,8 +1,8 @@
 #' @export
-cutAln <- function(path.msa, i.chr, p.beg, p.end, 
+cutAln <- function(path.proj, i.chr, p.beg, p.end, 
                    acc = NULL,
-                   aln.type=NULL, ref.acc='',
-                   mode = 'seq', echo=T){
+                   aln.type="msa_", ref.acc='',
+                   mode = 'seq', echo=FALSE){
   
   s.pangenome = c('pangen', 'pannagram', 'pangenome')
   
@@ -15,14 +15,13 @@ cutAln <- function(path.msa, i.chr, p.beg, p.end,
     # ref.suff = paste0('_ref_', ref.acc)
     ref.suff = paste0('_', ref.acc)
   }
-  
-  if(is.null(aln.type)) stop('Provide the alignment type')
-  file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+
+  file.msa = paste0(path.proj, "/features/msa/", aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
   
   if(mode == 'seq'){
-    file.mode = paste0(path.msa, 'seq/', 'seq_', i.chr, '_', i.chr, ref.suff, '.h5')
+    file.mode = paste0(path.proj, "/features/seq/", 'seq_', i.chr, '_', i.chr, ref.suff, '.h5')
   } else if(mode == 'pos') {
-    file.mode = paste0(path.msa, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.mode = paste0(path.proj, "/features/msa/", aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
   } else {
     stop("Mode could be either 'seq' or 'pos'")
   }

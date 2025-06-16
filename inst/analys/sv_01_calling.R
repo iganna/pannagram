@@ -3,9 +3,9 @@
 
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
+  library(optparse)
   library(pannagram)
   library(crayon)
 })
@@ -16,11 +16,17 @@ args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option(c("--ref.pref"),  type = "character", default = NULL, help = "prefix of the reference file"),
-  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
-  make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
+  make_option("--path.seq", type = "character", default = NULL, help = "Path to seq dir"),
+  make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
+  make_option("--path.gff", type = "character", default = NULL, help = "Path to gff dir"),
   make_option(c("--aln.type"),  type = "character", default = "default", help = "type of alignment ('msa_', 'comb_', 'v_', etc)"),
   make_option(c("--acc.anal"),  type = "character", default = NULL, help = "files with accessions to analyze"),
-  make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze")
+  make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze"),
+  make_option("--cutoff", type = "numeric", default = 0.9, help = "Frequency cutoff"),
+  make_option("--min.len", type = "integer", default = 15, help = ""),
+  make_option("--big.len", type = "integer", default = 30, help = ""),
+  make_option("--max.len", type = "integer", default = 30000, help = "")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -75,27 +81,29 @@ if (is.null(opt$ref.pref) || (opt$ref.pref == "NULL")) {
   ref.suff <- paste0('_ref_', ref.pref)
 }
 
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop(paste0('No Consensus directory found!', path.features.msa))
 
-if(!dir.exists(path.cons)) stop(paste0('Consensus folder does nto exist', path.cons))
+path.seq <- opt$path.seq
+if(!dir.exists(path.seq)) stop(paste0('No Consensus directory found!', path.seq))
 
-path.sv = paste0(path.cons, 'sv/')
-if (!dir.exists(path.sv)) dir.create(path.sv)
-if(!dir.exists(path.sv)) stop(paste0('SV folder does nto exist', path.cons))
+path.sv <- opt$path.sv
+if(!dir.exists(path.sv)) stop(paste0('No SV directory found!', path.features.msa))
 
-path.gff = paste0(path.sv, 'gff/')
-if (!dir.exists(path.gff)) dir.create(path.gff)
-if(!dir.exists(path.gff)) stop(paste0('GFF folder does nto exist', path.cons))
+path.gff <- opt$path.gff
+if(!dir.exists(path.gff)) stop(paste0('No GFF directory found!', path.features.msa))
 
-cutoff = 0.90
-
+cutoff <- opt$cutoff
+min.len <- opt$min.len
+big.len <- opt$big.len
+max.len <- opt$max.len
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type, ".*", ref.suff, "\\.h5")
 # pokaz(s.pattern)
-pokaz(path.cons)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+# pokaz(path.features.msa)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 # pokaz(files)
 
 pref.combinations = gsub(aln.type, "", files)
@@ -115,14 +123,12 @@ sv.beg.all = c()
 sv.end.all = c()
 
 for(s.comb in pref.combinations){
-  pokaz('* Combination', s.comb)
-  
-  # s.comb = '4_4'
+  pokaz('Run for combination', s.comb, "...")
   
   # Get file for the combination
-  file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
+  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff,'.h5')
   if(!file.exists(file.comb)) stop('Alignment file does not exist')
-  pokaz('Alignment file', file.comb)
+  # pokaz('Alignment file', file.comb)
   
   # Get accessions
   groups = h5ls(file.comb)
@@ -141,11 +147,11 @@ for(s.comb in pref.combinations){
   pokaz('Combine SV info from accessions...')
   sv.cover = 0
   for(acc in accessions){
-    pokaz('Positions of accession', acc)
+    # pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     
-    pokaz('Find gaps..')
+    # pokaz('Find gaps..')
     sv.acc = findOnes(v == 0)
     if(nrow(sv.acc) == 0) next
     
@@ -153,7 +159,7 @@ for(s.comb in pref.combinations){
     if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
     v.r = rank(abs(v)) * sign(v)
     
-    pokaz('Exclude gaps around inversions..')
+    # pokaz('Exclude gaps around inversions..')
     sv.acc$beg.r = v.r[sv.acc$beg - 1]
     sv.acc$end.r = v.r[sv.acc$end + 1]
     sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
@@ -185,7 +191,7 @@ for(s.comb in pref.combinations){
   sv.beg = c()
   sv.end = c()
   for(acc in accessions){
-    pokaz('Positions of accession', acc)
+    # pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
@@ -285,8 +291,6 @@ for(s.comb in pref.combinations){
   
 }
 
-pokaz('Saving....')
-
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 saveRDS(sv.pos.all, file.sv.pos)
 
@@ -295,7 +299,6 @@ if(flag.stat.only){
   quit(save="no")
 } 
 ## ---- Stop for Stat ----
-pokaz('Stat....')
 file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
 file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
@@ -382,7 +385,7 @@ options(scipen = 0)
 pokaz('Gff files for accessions comb..')
 for(i.acc in 1:length(accessions)){
   acc = accessions[i.acc]
-  pokaz('Generate GFF for accession', acc)
+  # pokaz('Generate GFF for accession', acc)
   
   df = sv.gff
   df$V1 = paste0(acc, '_Chr', sv.pos.all$chr)
@@ -404,7 +407,8 @@ for(i.acc in 1:length(accessions)){
   df = df[df$V5 != 0,]
   
   if(sum(df$V5 < df$V4) > 0){
-    save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
+    # save(list = ls(), file = 'tmx_workspace_sv_acc.RData')
+    pokazAttention("sum(df$V5 < df$V4) = ", sum(df$V5 < df$V4))
     stop()
   }
   
@@ -423,21 +427,10 @@ for(i.acc in 1:length(accessions)){
 }
 
 # ---- FASTA of seSVs ----
-path.seq = paste0(path.cons, 'seq/')
-if (!dir.exists(path.seq)) {
-  pokazAttention('Consensus sequence doesn’t exist')
-  stop('Please generate the pangenome consensus sequence first')
-}
-
-min.len = 15
-big.len = 50
-max.len = 30000
-
 
 file.sv.small =  paste0(path.sv, 'seq_sv_small.fasta')
 file.sv.big =  paste0(path.sv, 'seq_sv_big.fasta')
 
-pokaz(file.sv.small)
 
 seqs.small = c()
 seqs.big = c()
@@ -484,19 +477,4 @@ for(s.comb in pref.combinations){
 
 writeFasta(seqs.small, file.sv.small)
 writeFasta(seqs.big, file.sv.big)
-
-pokaz('Done')
-
-# ---- GFF densities ----
-
-# ***********************************************************************
-# ---- Manual testing ----
-
-if(F){
-  library(rhdf5)
-source(system.file("pannagram/utils/utils.R", package = "pannagram"))
-  path.cons = './'
-  ref.pref = '0'  
-} 
-
 

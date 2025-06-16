@@ -1,4 +1,4 @@
-# Get positiona for an extra alignment
+# Get positional data for an extra alignment
 
 suppressMessages({
   library(foreach)
@@ -7,15 +7,12 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(msa)
-  library(muscle)  #BiocManager::install("muscle")
+  library(muscle)
   library(Biostrings)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
-# source("synteny_funcs.R")
-
-# pokazStage('Step 10. Prepare sequences for MAFFT')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -23,13 +20,14 @@ source(system.file("pangen/comb_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons",   type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--cores",       type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--path.log",    type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",   type = "character", default = NULL, help = "Level of log to be shown on the screen"),
-  make_option("--max.len.gap", type = "integer",   default = NULL, help = "Max length of the gap")
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  
+  make_option("--cores",             type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",          type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",         type = "character", default = NULL, help = "Level of log to be shown on the screen"),
+  make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap")
 )
-
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -62,65 +60,56 @@ if (is.null(opt$max.len.gap)) {
 }
 
 # Number of cores for parallel processing
-# Number of cores for parallel processing
 num.cores = opt$cores
-if(is.null(num.cores)) stop('Whong number of cores: NULL')
-pokaz('Number of cores', num.cores)
+if(is.null(num.cores)) stop('Wrong number of cores: NULL')
+pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
 
-# Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn???t exist')
+# Path with the MSA output (features)
+path.features.msa <- opt$path.features.msa
+path.inter.msa <- opt$path.inter.msa
 
-# Path to chromosomes
-if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
+if (is.null(path.features.msa) || is.null(path.inter.msa)) {
+  stop("Error: both --path.features.msa and --path.inter.msa must be provided")
+}
 
-# Path to mafft input
-if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
+if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.comb, ".*")
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.comb, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
-pokaz('Number of cores', pref.combinations, file=file.log.main, echo=echo.main)
-pokaz('Combinations', num.cores, file=file.log.main, echo=echo.main)
+pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = T
 for(s.comb in pref.combinations){
-  
-  initial.vars <- ls()
-  
-  if(echo) pokaz('* Combination', s.comb)
-  
-  # -------------------------------------
-  
   # Log files
   file.log.loop = paste0(path.log, 'loop_file_', s.comb, '.log')
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop)) 
   if(checkDone(file.log.loop)) next   # Check log Done
   
-  # --- --- --- --- --- --- --- --- --- --- ---
+  initial.vars <- ls()
   
-  file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
+  pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
+  
+  file.ws = paste0(path.inter.msa, 'small_ws_', s.comb, '.RData')
   load(file.ws)
   
   if(length(idx.short) == 0) next
   
   n.acc = length(accessions)
-  
-  path.tmp = '/Volumes/Samsung_T5/vienn/test/manuals/ecoli_out/intermediate/consensus/'
-  
+    
   # ---- Align Short sequences ----
-  if(echo) pokaz('Align short seqs')
+  pokaz('Align short seqs', file=file.log.loop, echo=echo.loop)
   
   # Checkup the number of sequences in alignments
   tmp = unlist(lapply(aln.seqs[idx.short], length))
@@ -130,32 +119,19 @@ for(s.comb in pref.combinations){
   CODE_ALN_BATCH <- function(i.batch, echo=F){
     idx.use = idx.batches[[i.batch]]
     
-    # file.in = paste0(path.tmp, 'batch_',i.batch, '.fasta')
-    # file.out = paste0(path.tmp, 'batch_',i.batch, '_aligned.fasta')
-    
     mx.list = vector("list", length = length(idx.use))
     
     for(i.aln in 1:length(idx.use)){
-      # pokaz(i.aln)
-
       idx.aln = idx.use[i.aln]
       seqs = aln.seqs[[idx.aln]]
       names(seqs) = aln.seqs.names[[idx.aln]]
       
       seqs <- DNAStringSet(seqs)
-      # alignment <- msa(seqs, method = "ClustalOmega")
-      # aln = as.character(alignment)
       
       alignment = muscle(seqs, quiet = T)
       aln = as.character(alignment)
       
-      
-      # if(i.aln == 3){
-      #   save(list = ls(), file = "tmp_workspace_s.RData")
-      #   # stop()
-      # }
-      
-      save(list = ls(), file = "tmp_workspace_s.RData")
+      # save(list = ls(), file = "tmp_workspace_s.RData")
       
       n.pos = nchar(aln[1])
       
@@ -182,12 +158,10 @@ for(s.comb in pref.combinations){
     return(mx.list)
   }
   
-  # save(list = ls(), file = "tmp_workspace_s.RData")
-  # stop()
   
   # Two possible loops depending on the number of cores
   if(num.cores == 1){
-    pokaz('No parallel computing: short sequences')
+    pokaz('No parallel computing: short sequences', file=file.log.loop, echo=echo.loop)
     # One core
     
     idx.batches <- list(idx.short)  # do not remove
@@ -202,7 +176,7 @@ for(s.comb in pref.combinations){
     idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
     num.cores = min(num.cores, length(idx.batches))
     
-    pokaz('Parallel computing: short sequences')
+    pokaz('Parallel computing: short sequences', file=file.log.loop, echo=echo.loop)
     res.msa <- foreach(i.batch = 1:num.cores,
                        .packages=c('Biostrings', 'crayon', 'msa', 'muscle'))  %dopar% {
                          return(CODE_ALN_BATCH(i.batch)) 
@@ -214,8 +188,8 @@ for(s.comb in pref.combinations){
     }
     
     res.msa = res
-    
     if(length(res.msa) != max(idx.short)) stop('Something is wrong with indexes')
+    
     res.msa = res.msa[idx.short]
     
     # Stop clusters
@@ -227,9 +201,7 @@ for(s.comb in pref.combinations){
                        end = breaks$idx.end[idx.short]) 
   
   if(length(res.msa) != nrow(ref.pos)){
-    
-    pokaz(length(res.msa), nrow(ref.pos))
-    
+    pokaz(length(res.msa), nrow(ref.pos), file=file.log.loop, echo=echo.loop)
     file.ws = "tmp_workspace_x.RData"
     all.local.objects <- ls()
     save(list = all.local.objects, file = file.ws)
@@ -239,7 +211,7 @@ for(s.comb in pref.combinations){
   saveRDS(list(aln = res.msa,
                ref.pos = data.frame(beg = breaks$idx.beg[idx.short],
                                     end = breaks$idx.end[idx.short]) ),
-          paste0(path.cons, 'aln_short_',s.comb,'.rds'), compress = F)
+          paste0(path.inter.msa, 'aln_short_',s.comb,'.rds'), compress = F)
   
   
   # Done
@@ -248,29 +220,8 @@ for(s.comb in pref.combinations){
   # Cleanup variables
   final.vars <- ls()
   new.vars <- setdiff(final.vars, initial.vars)
-  pokaz('Veriables to remove', new.vars)
+  pokaz('Variables to remove', new.vars, file=file.log.loop, echo=echo.loop)
   rm(list = new.vars)
   gc()
-  
 }
-
-
-
 warnings()
-
-
-# ***********************************************************************
-# ---- Manual testing ----
-
-if(F){
-
-  library(rhdf5)
-  path.cons = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/consensus/'
-  path.mafft.in = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/mafft_in/'
-  path.chromosomes = '/Volumes/Samsung_T5/vienn/test/symA_test_0/intermediate/chromosomes/'
-  
-}
-
-
-
-
