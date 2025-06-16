@@ -8,23 +8,27 @@
 <img src="images/pannagram_scheme.png" width="100%" height="auto">
 </p>
 
-Pannagram is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
-Additionally, Pannagram contains useful functions for visualization. The manual is available at the [pannagram-page](https://iganna.github.io/pannagram/).
+**Pannagram** is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
+
+**Pannagram** as a project consists of several **Bash** pipelines for streamline genomic analisys and an **R** library with tools for further analysis and visualization.
+
+
+Documentation can be found at [pannagram-page](https://iganna.github.io/pannagram/).
 
 ## Setting Up the Working Environment
 
-Follow these instructions to set up your Pannagram environment.
+After cloning the repo follow these instructions to set up your **pannagram** environment.
 
 ### Prerequisites
 
-Make sure you have one of the following package managers installed:
+It is expected, that you have one of the following package managers installed on your machine:
 - [Conda](https://docs.conda.io/projects/conda/en/latest/index.html)
 - [Mamba](https://github.com/mamba-org/mamba)
 - [Micromamba](https://github.com/mamba-org/mamba#micromamba)
 
-Use your selected package manager by replacing ```<manager>``` with conda, mamba, or micromamba.
+Below package manager of your choice is refered to as `<manager>`.
 
-### Linux and macOS (Intel)
+### Linux
 
 ```bash
 <manager> env create -f pannagram.yml
@@ -40,7 +44,7 @@ Use your selected package manager by replacing ```<manager>``` with conda, mamba
 
 ### Alternative: Setting Up the Environment Without Explicit Versions
 
-Use this option if you prefer an environment where package versions are not explicitly specified, and packages are installed with the latest compatible versions available:
+If you want to resolve package dependencies by yourself use `pannagram_min.yml` where only direct dependencies are specified with no explicit versions. Packages will be thus installed with the latest compatible versions available:
 
 **Linux and macOS (Intel)**
 
@@ -67,181 +71,174 @@ open -a RStudio
 ```
 
 One may also create an alias:
+```bash
+alias panR="<manager> activate pannagram && open -a RStudio"
 ```
-alias panR="micromamba activate pannagram && open -a RStudio"
+
+### Installing Pannagram in Already Running RStudio Environment
+
+We encourage you to run RStudio from activated package environment, but if RStudio server is already running and you want to install **pannagram** there as an R package run in console:
+```R
+setwd("<path to pannagram repo>")
+source("install_in_rstudio.R")
 ```
 
 ### Included Dependencies
 
-The environment provides the following dependencies, each accessible directly via the command line:
+**Pannagram** package environment includes the following dependencies and they are accessible directly via the command line:
 
 - R interpreter (required version)
 - [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK279690/)
 - [MAFFT](https://mafft.cbrc.jp/alignment/software/manual/manual.html)
+- [VCFtools](https://vcftools.github.io/)
+- [PLINK](https://www.cog-genomics.org/plink2/)
 
 
-### Windows users
-Can try running code from this repo under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (as Bash and `/` path separator are used extensively in the code). Nevertheless it was never tested in such environment.
+### For Windows Users
+Windows users may use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) following steps described for Linux users but be warned, that we have never tested **pannagram** in such environment.
+
+<h2 style="display: flex; align-items: center; gap: 0.5ex;">
+    <img
+      src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg"
+      style="height: 1.5em; width: auto; vertical-align: middle;"
+    />
+  </a>
+  <span>Pannagram as a suite of bash pipelines</span>
+</h2>
+
+An extended description of the parameters for all scripts are avaliable by executing scripts with the flag `-help`.
+
+### 1. Pangenome linear alignment with `pannagram`
+
+* **Preliminary mode** helps you give a quick look at your genomes when you start your research:
+    ```shell
+    pannagram -pre \
+        -path_in '<directory with your genomes as FASTA files>' \
+        -path_out '<directory to put the results in (will be created)>' \
+        -ref '<reference genome filename with no FASTA suffix>' \
+        -cores 8
+    ```
+    Here `-ref` argument is some name from `-path_in` directory with FASTA suffix ommited. If path to your reference genome is different provide it using `-path_ref`. Each subsequent run with different `-ref` will create separate subdirectory inside `-path_in`.
+
+* **Reference-based mode** runs full alignmnet pipeline for aligning all genomes to the given genome :
+    ```shell
+    pannagram \
+        -path_in '<directory with your genomes as FASTA files>' \
+        -path_out '<directory to put the results in (will be created)>' \
+        -ref '<reference genome filename with no FASTA suffix>' \
+        -cores 8
+    ```
+    Here the **pannagram** expects your genomes to have the same number of chromosomes. If it is not the case, specify `-nchr` integer parameter to truncate analisys to specific number of chromosomes. Read about `-ref` and `-path_ref` parameters above.
+
+* **Reference-free (MSA) mode** runs full alignmnet pipeline for aligning all genomes to the given genome:
+    ```shell
+    pannagram \
+        -path_in '<directory with your genomes as FASTA files>' \
+        -path_out '<directory to put the results in (will be created)>' \
+        -cores 8
+    ```
+    Once again specify `-nchr` integer parameter if needed.
+
+>To facilitate correct execution of other **pannagram** scripts and functions do not alter output subdirectories content!
+
+### 2. Feature extraction with `features`
+
+After running `pannagram` pipeline you are able to get more features of your data! Pay attention, some of flags are independent from each other, others need to be passed together:
+* **Extract information** from the pangenome alignment:
+    ```sh
+    features -path_in '<same as -path_out of pannagram>' \
+        -blocks  \  # Find Synteny block inforamtion for visualisation
+        -seq  \     # Create consensus sequence of the pangenome
+        -snp \      # SNP calling
+        -cores 8
+    ```
+
+* **Structural variants** calling. When the pangenome linear alignment is built, SVs can be called using the following command:
+    ```sh
+    features -path_in '<same as -path_out of pannagram>' \
+        -sv_call  \         # Create output .gff and .fasta files with SVs
+        -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
+        -sv_graph  \        # Construct the graph of SVs
+        -cores 8
+    ```
+
+### 3. Search for similar sequences with `simsearch`
+
+* **...in the genome** This approach involves searching against entire genomes or individual chromosomes:
+    ```sh
+    simsearch \
+        -in_seq genes.fasta
+        -on_genome genome.fasta \
+        -sim 90 \
+        -out out.txt
+    ```
+    The result is a GFF file with hits matching the similarity threshold.
+
+* **...in set of sequences** This approach, in contrast, is designed to search for similarities against another set of sequences. 
+    ```sh
+    simsearch \
+        -in_seq genes.fasta \
+        -on_seq genome.fasta \
+        -out out.txt
+    ```
 
 
-## 1. Pangenome linear alignment
+<h2 style="display: flex; align-items: center; gap: 0.5ex;">
+    <img
+      src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg"
+      style="height: 1.5em; width: auto; vertical-align: middle;"
+    />
+  </a>
+  <span>Pannagram as an R package</span>
+</h2>
 
-### 1.1 Building the alignment
-Pangenome alignment can be built in two modes:
- - **reference-free**:
-```sh
-./pannagram.sh -path_in '<genome files directory path>' \
-    -path_out '<output files path>' \
-    -cores 8
-```
+0. In your R session call the library:
+    ```R
+    library(pannagram)
+    ```
+1. Extract the part of the alignment within given window (will work after if `features` was called with `-seq` flag):
+    ```R
+    path.project = "<same path as for -path_out of pannagram>"
+    aln.seq <- cutAln(path.proj=path.project,
+                      i.chr=1,
+                      p.beg=1,
+                      p.end=20500,
+                      acc="<single accession from your genomes>")
+    ```
+2. Build and save alignment window plots:
+    ```R
+    p.nucl <- msaplot(aln.seq)
+    p.diff <- msadiff(aln.seq)
+    ```
+3. And save them as pdf:
+    ```R
+    savePDF(p.nucl,
+            path="<specify desired output path>",
+            name="msa_nucl",
+            width=7,
+            height=5)
+    savePDF(p.diff,
+            path="<specify desired output path>",
+            name="msa_diff",
+            width=7,
+            height=5)
+    ```
+4. You'll get pictures similar to:
+    <div style="display: flex; gap: 0.5em;">
+    <img
+        src="images/msaplot.png"
+        alt="First image"
+        style="width: 50%; object-fit: cover;"
+    />
+    <img
+        src="images/msaplot_diff.png"
+        alt="Second image"
+        style="width: 50%; object-fit: cover;"
+    />
+    </div>
 
- - **reference-based**:
-```sh
-./pannagram.sh -ref '<reference genome name>' \
-    -path_in '<genome files directory path>' \
-    -path_out '<output files path>' \
-    -cores 8
-```
+    >For more examples and detailed documentation visit [pannagram-page](https://iganna.github.io/pannagram/).
 
- - **quick look**:
-If there is no information on genomes and corresponding chromosomes available, one can run preparation steps:
-```sh
-./pannagram.sh -ref '<reference genome name>' \
-    -path_in '<genome files directory path>' \
-    -path_out '<output files path>' \
-    -cores 8 -pre
-```
- 
-An extended description of the parameters for all three scripts are avaliable by executing scripts with the flag `-help`.
-
-### 1.2 Extract information from the pangenome alignment
-Synteny blocks, SNPs, and sequence consensus (for the [IGV browser](https://igv.org)) can be extracted from the alignment:
-```sh
-./analys.sh -path_msa '<output path with consensus>' \
-      -path_chr '<path with chromosomes>' \
-      -blocks  \  # Find Synteny block inforamtion for visualisation
-      -seq  \     # Create consensus sequence of the pangenome
-      -snp        # SNP calling
-```
-
-### 1.3 Calling structural variants
-When the pangenome linear alignment is built, SVs can be called using the following script:
-```sh
-./analys.sh -path_msa '<output path with consensus>' \
-      -sv_call  \         # Create output .gff and .fasta files with SVs
-      -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
-      -sv_graph           # Construct the graph of SVs
-```
-
-## 2. Visualisation
-Pannagram contains a number of useful methods for visualization in R.
-
-### 2.1 Visualisation of the pangenome alignment
-All genomes together:
-<p align="left">
-<img src="images/pangenome_alignment.png" width="50%" height="auto">
-</p>
-
-A dotplot for a pair of genomes:
-<p align="left">
-<img src="images/syntenyplot.png" width="50%" height="auto">
-</p>
-
-### 2.2 Graph of Nestedness on Structural variants
-
-Every node is an SV:
-<p align="left">
-<img src="images/graph_of_svs.png" width="50%" height="auto">
-</p>
-
-Every node is a unique sequence, size - the amount of this sequence in SVs:
-<p align="left">
-<img src="images/graph_of_svs_te.png" width="60%" height="auto">
-</p>
-
-
-### 2.3 Nucleotide plot for a fragment of the alignment
-
- - In the ACTG-mode:
-
-<p align="left">
-<img src="images/msaplot.png" width="50%" height="auto">
-</p>
-
-```r
-# --- Quick start code ---
-source('utils/utils.R')             # Functions to work with sequences
-source('visualisation/msaplot.R')   # Visualisation
-aln.seq = readFastaMy('aln.fasta')  # Vector of strings
-aln.mx = aln2mx(aln.seq)            # Transfom into the matrix
-msaplot(aln.mx)                     # ggplot object
-```
-
-- In the Polymorphism mode:
-
-<p align="left">
-<img src="images/msaplot_diff.png" width="50%" height="auto">
-</p>
-
-
-```r
-# --- Quick start code ---
-msadiff(aln.mx)                     # ggplot object
-```
-### 2.4 Dotplots of Sequences
-
-Simultaneously on forward (dark color) and reverse complement (pink color) strands:
-<p align="left">
-<img src="images/dotplot.png" width="40%" height="auto">
-</p>
-
-
-```r
-# --- Quick start code ---
-source('utils/utils.R')             # Functions to work with sequences
-source('visualisation/dotplot.R')   # Visualisation
-s = sample(c("A","C","G","T"), 100, replace = T)
-dotplot(s, s, 15, 9)                # ggplot object
-```
-
-### 2.5 ORF-finder and visualisation
-
-<p align="left">
-<img src="images/orfplot.png" width="40%" height="auto">
-</p>
-
-```r
-# --- Quick start code ---
-source('utils/utils.R')             # Functions to work with sequences
-source('visualisation/orfplot.R')   # Visualisation
-str = nt2seq(s)
-orfs = orfFinder(str)
-orfplot(orfs$pos)                   # ggplot object
-```
-
-
-## 3. Additional useful tools
-### 3.1 Search for similar sequences
-
-#### ...on the genome
-The first approach involves searching against entire genomes or individual chromosomes. 
-The quickstart toy-example is:
-```sh
-./simsearch.sh -in_seq genes.fasta -on_genome genome.fasta -out out.txt
-```
-The result is a GFF file with hits matching the similarity threshold.
-
-#### ...on another set
-The second approach, in contrast, is designed to search for similarities against another set of sequences. 
-The quickstart toy-example is:
-```sh
-./simsearch.sh -in_seq genes.fasta -on_seq genome.fasta -out out.txt
-```
-The result is an RDS (R Data Structure) table. 
-This table shows the coverage of one sequence over another and 
-includes a flag column that indicates whether the sequences meet the similarity threshold. 
-Additionally, the second script takes into account the coverage strand, 
-determining not just if a sequence is covered, but also if it's covered in a specific orientation.
 
 ## Acknowledgements
 
