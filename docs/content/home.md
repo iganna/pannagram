@@ -3,7 +3,7 @@
 
 <div style="text-align: center;">
   <img
-    src="../images/pannagram_scheme.png"
+    src="images/pannagram_scheme.png"
     alt="Description"
     style="width: 100%; height: auto;"
   />
