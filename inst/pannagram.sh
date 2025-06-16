@@ -556,7 +556,6 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
-mkdir -p "${path_features_msa}"
 
 # Split reference fasta into chromosomes if additionally needed
 if [[ "${path_in}" != "$path_ref" ]]; then
@@ -580,7 +579,7 @@ if [[ "${path_in}" != "$path_ref" ]]; then
             fi
 
             # Temporary file to analyse only the reference genome from the folder
-            file_acc_ref=${path_features_msa}ref_acc.txt
+            file_acc_ref=${path_inter}ref_acc.txt
             echo "${ref0}" > ${file_acc_ref}
 
             # Run the step
