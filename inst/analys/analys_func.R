@@ -128,14 +128,14 @@ gff2gff <- function(path.proj,
     file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
     
     if(tolower(acc1) %in% tolower(pangenome.names)){
-      v = h5read(file.msa, paste0(gr.accs.e, acc2))
+      v = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc2))
       v = cbind(1:length(v), v)
     } else if (tolower(acc2) %in% tolower(pangenome.names)){
-      v = h5read(file.msa, paste0(gr.accs.e, acc1))
+      v = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc1))
       v = cbind(v, 1:length(v))
     } else {  # Two different accessions
-      v = cbind(h5read(file.msa, paste0(gr.accs.e, acc1)),
-                h5read(file.msa, paste0(gr.accs.e, acc2)))  
+      v = cbind(rhdf5::h5read(file.msa, paste0(gr.accs.e, acc1)),
+                rhdf5::h5read(file.msa, paste0(gr.accs.e, acc2)))  
     }
     
     max.chr.len = max(nrow(v), max(abs(v[!is.na(v)])))
@@ -399,7 +399,7 @@ getMxFragment <- function(path.cons,
     pos2.acc = pos2
   } else {
     file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
-    v.acc = h5read(file.msa, paste0(gr.accs.e, acc))
+    v.acc = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
     pos1.acc = which(v.acc == pos1)
     pos2.acc = which(v.acc == pos2)  
   }
@@ -410,10 +410,10 @@ getMxFragment <- function(path.cons,
   # Get Alignment
   file.seq.msa = paste0(path.cons, 'seq_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
   
-  h5ls(file.seq.msa)
+  rhdf5::h5ls(file.seq.msa)
   
   # Get accession names
-  groups = h5ls(file.seq.msa)
+  groups = rhdf5::h5ls(file.seq.msa)
   accessions = groups$name[groups$group == gr.accs.b]
   
   # Initialize vector and load MSA data for each accession
@@ -425,7 +425,7 @@ getMxFragment <- function(path.cons,
   for(i.acc in 1:length(accessions)){
     # pokaz(accessions[i.acc])
     if(echo) cat('.')
-    s.acc = h5read(file.seq.msa, paste0(gr.accs.e, accessions[i.acc]))
+    s.acc = rhdf5::h5read(file.seq.msa, paste0(gr.accs.e, accessions[i.acc]))
     
     # if(length(s.acc) != length(v.acc))  stop('MSA and seq do not match')
     seq.mx[i.acc,] = s.acc[pos1.acc:pos2.acc]
@@ -720,7 +720,7 @@ filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, 
       # Check if the MSA file exists before reading
       if (file.exists(file.msa)) {
         # Read MSA data
-        v <- h5read(file.msa, paste0(gr.accs.e, acc))
+        v <- rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
         v[is.na(v)] = 0
         
         # Define blocks and get start and end for each block
