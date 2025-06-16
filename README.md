@@ -100,7 +100,7 @@ Windows users may use [WSL](https://learn.microsoft.com/en-us/windows/wsl/instal
 <h2 style="display: flex; align-items: center; gap: 0.5ex;">
     <img
       src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg"
-      style="height: 1.5em; width: auto; vertical-align: middle;"
+      style="height: 30; width: auto; vertical-align: middle;"
     />
   </a>
   <span>Pannagram as a suite of bash pipelines</span>
@@ -194,7 +194,7 @@ After running `pannagram` pipeline you are able to get more features of your dat
 <h2 style="display: flex; align-items: center; gap: 0.5ex;">
     <img
       src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg"
-      style="height: 1.5em; width: auto; vertical-align: middle;"
+      style="height: 30; width: auto; vertical-align: middle;"
     />
   </a>
   <span>Pannagram as an R package</span>
@@ -210,7 +210,7 @@ After running `pannagram` pipeline you are able to get more features of your dat
     aln.seq <- cutAln(path.proj=path.project,
                       i.chr=1,
                       p.beg=1,
-                      p.end=20500,
+                      p.end=20000,
                       acc="<single accession from your genomes>")
     ```
 2. Build and save alignment window plots:
