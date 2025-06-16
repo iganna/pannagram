@@ -57,14 +57,16 @@ EOF
 # ----------------------------------------------------------------------------
 #            PARAMETERS
 # ----------------------------------------------------------------------------
-
-#!/bin/bash
+if [ $# -eq 0 ]; then
+    pokaz_error "No arguments provided!"
+    help_in_box
+    exit 0
+fi
 
 after_blast_flag=0
 keep_blast_flag=0
 use_strand=T
 
-# Read arguments
 # Read arguments
 while [ "$1" != "" ]; do
     case $1 in
@@ -82,7 +84,7 @@ while [ "$1" != "" ]; do
         -keepblast )  keep_blast_flag=1; shift ;;
 
         -strandfree ) use_strand=F; shift ;;
-        * ) echo "Invalid parameter: $1"; show_help; exit 1 ;;
+        * ) pokaz_error "Unknown parameter: $1"; help_in_box; exit 1;;
     esac
 done
 
@@ -93,25 +95,28 @@ count=0
 [ ! -z "$path_genome" ] && count=$((count + 1))
 
 if [ $count -ne 1 ]; then
-    echo "Error: You must specify exactly one of -on_seq, -on_genome, or -on_path."
+    pokaz_error "Error: You must specify exactly one of -on_seq, -on_genome, or -on_path."
+    help_in_box
     exit 1
 fi
 
 # Check if FASTA file parameter is provided
 if [ -z "$file_input" ]; then
-    echo "FASTA file not specified"
+    pokaz_error "Error: FASTA file not specified"
+    help_in_box
     exit 1
 fi
 
 # Check if the FASTA file exists
 if [ ! -f "$file_input" ]; then
-    echo "Input FASTA file not found: $file_input"
+    pokaz_error "Error: Input FASTA file not found: $file_input"
     exit 1
 fi
 
 # Check if output file parameter is provided
 if [ -z "$output_pref" ]; then
-    echo "Output file not specified"
+    pokaz_error "Error: Output file not specified"
+    help_in_box
     exit 1
 fi
 

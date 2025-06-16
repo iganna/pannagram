@@ -158,9 +158,10 @@ for(s.comb in pref.combinations){
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
   
-  
-  # save(list = ls(), file = "tmp_workspace.RData")
-  # stop('Enough..')
+  # if(s.comb == '10_10'){
+  #   save(list = ls(), file = "tmp_workspace.RData")
+  #   stop('Enough..')
+  # }
   
   ## ---- Analyse by portions ----
   
@@ -213,6 +214,7 @@ for(s.comb in pref.combinations){
         seq = nt2seq(seq)
         
         seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')
+        # pokaz(seq.name)
         names(seq) = seq.name
         
         return(seq = seq)
@@ -227,11 +229,22 @@ for(s.comb in pref.combinations){
       p2 = p2[idx.acc]
       
       # Get sequences
-      subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), p1, p2, idx.tmp.acc %in% c(idx.large, idx.extra))
+      subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), unname(p1), unname(p2), idx.tmp.acc %in% c(idx.large, idx.extra))  
+      # 
+      # print(subsets)
+      # if(length(subsets) == 1){
+      #   if(names(subsets) == 'GCA_040115645.1.GCA_040115645.1|10|1384970|1385000|+|31'){
+      #     save(list = ls(), file = "tmp_workspace.RData")
+      #     stop()
+      #   }  
+      # }
       
       # Save sequences
+      # pokaz('---')
+      # pokaz(names(subsets))
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
+      # pokaz(aln.seqs.names[idx.tmp.acc])
       
       rm(genome)
     }

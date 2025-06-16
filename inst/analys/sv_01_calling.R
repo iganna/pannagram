@@ -115,8 +115,9 @@ sv.beg.all = c()
 sv.end.all = c()
 
 for(s.comb in pref.combinations){
-  
   pokaz('* Combination', s.comb)
+  
+  # s.comb = '4_4'
   
   # Get file for the combination
   file.comb = paste0(path.cons, aln.type, s.comb, ref.suff,'.h5')
@@ -146,6 +147,8 @@ for(s.comb in pref.combinations){
     
     pokaz('Find gaps..')
     sv.acc = findOnes(v == 0)
+    if(nrow(sv.acc) == 0) next
+    
     if(sv.acc$beg[1] == 1) sv.acc = sv.acc[-1,]
     if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
     v.r = rank(abs(v)) * sign(v)
@@ -169,6 +172,10 @@ for(s.comb in pref.combinations){
   pokaz('Create SV groups...')
   
   sv.pos = findOnes((sv.cover != 0)*1)
+  if(nrow(sv.pos) == 0){
+    pokazAttention('SVs were not generaed, and IT IS OK!')
+    next
+  } 
   sv.pos$len = abs(sv.pos$beg - sv.pos$end) + 1 # do not change
   sv.pos$beg = sv.pos$beg - 1
   sv.pos$end = sv.pos$end + 1
@@ -184,10 +191,14 @@ for(s.comb in pref.combinations){
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
     sv.end = cbind(sv.end, v[sv.pos$end])
   }
+  
+  # save(list = ls(), file = "tmp_workspace_sv.RData")
+  
   colnames(sv.beg) = accessions
   colnames(sv.end) = accessions
   
   # Check ranks
+  pokaz('Check ranks...')
   for(acc in accessions){
     acc.r = c(sv.beg[,acc] + 0.1, sv.end[,acc] - 0.1)
     acc.r = rank(abs(acc.r)) * sign(acc.r)
@@ -202,6 +213,7 @@ for(s.comb in pref.combinations){
   }
   
   # Clean up empty
+  pokaz('Clean up empty...')
   sv.na = (rowSums(sv.beg) == 0) | (rowSums(sv.end) == 0)
   sv.pos = sv.pos[!sv.na,]
   sv.beg = sv.beg[!sv.na,]
@@ -218,6 +230,11 @@ for(s.comb in pref.combinations){
   sv.beg = sv.beg[idx,]
   sv.end = sv.end[idx,]
   sv.len.acc = sv.len.acc[idx,]
+  
+  if(nrow(sv.pos) == 0){
+    pokazAttention('SVs were not generaed, and IT IS OK!')
+    next
+  }
   
   # Calculate frequencies
   sv.pos$freq.min = 0
@@ -468,6 +485,7 @@ for(s.comb in pref.combinations){
 writeFasta(seqs.small, file.sv.small)
 writeFasta(seqs.big, file.sv.big)
 
+pokaz('Done')
 
 # ---- GFF densities ----
 

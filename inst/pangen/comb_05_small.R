@@ -88,8 +88,8 @@ pref.combinations <- sub(".h5", "", pref.combinations)
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
-
-pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
+pokaz('Number of cores', pref.combinations, file=file.log.main, echo=echo.main)
+pokaz('Combinations', num.cores, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -155,6 +155,8 @@ for(s.comb in pref.combinations){
       #   # stop()
       # }
       
+      save(list = ls(), file = "tmp_workspace_s.RData")
+      
       n.pos = nchar(aln[1])
       
       aln.text <- paste(names(aln), collapse = "\n")
@@ -198,6 +200,7 @@ for(s.comb in pref.combinations){
     
     # Split the vector of shotp positions into n.core batches
     idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
+    num.cores = min(num.cores, length(idx.batches))
     
     pokaz('Parallel computing: short sequences')
     res.msa <- foreach(i.batch = 1:num.cores,

@@ -5,6 +5,7 @@ getBlocks <- function(v, f.split = T){
   
   len.min = 20000
   v.init = v
+  v = v.init
   v.idx = 1:length(v)
   
   v.idx = v.idx[v != 0]
@@ -18,12 +19,14 @@ getBlocks <- function(v, f.split = T){
   
   v.b.rank = matrix(rank(v.b[,c('v.beg', 'v.end')]), ncol = 2, dimnames = list(NULL,c('r.beg', 'r.end')))
   v.b = cbind(v.b, v.b.rank)
+
+  v.b$dir = sign(v[v.b$beg])
   
-  
-  # Remove 
+  # Remove
   irow = 2
   while (irow <= nrow(v.b)) {
     if(((v.b$r.beg[irow] - 1) == v.b$r.end[irow - 1]) &
+       (v.b$dir[irow] == v.b$dir[irow - 1]) &
        ((v.b$v.beg[irow] - 1 - v.b$v.end[irow - 1]) < len.min)){
       v.b$r.end[irow - 1] = v.b$r.end[irow]
       v.b$end[irow - 1] = v.b$end[irow]
@@ -33,6 +36,7 @@ getBlocks <- function(v, f.split = T){
       irow = irow + 1
     }
   }
+
   v.b$i.beg = v.idx[v.b$beg]
   v.b$i.end = v.idx[v.b$end]
   
@@ -51,7 +55,15 @@ getBlocks <- function(v, f.split = T){
       i.i = which((df$i.beg < i.pos) & (df$i.end > i.pos))
       
       if(length(i.v) > 0){
-        if(length(i.i) == 0) stop('Something is wrong with i.i')
+        if(length(i.i) == 0){
+          # save(list = ls(), file = "tmp_workspace_blocks.RData")
+          # stop('Something is wrong with i.i')
+          pokazAttention('Something is wrong with i.i')
+          next
+          # I have found that it's the case, 
+          # when i.v points to something between two blocks, 
+          # so there is no block to split
+        } 
         if(i.v != i.i) stop('Idxs do not match')
         
         df.tmp = df[i.v,]
@@ -61,7 +73,7 @@ getBlocks <- function(v, f.split = T){
         
         df[i.v,]$v.end = v.pos
         df[i.v,]$i.end = i.pos
-        
+      
         df = rbind(df, df.tmp)
       }
     }    
@@ -279,8 +291,8 @@ segmentSplit <- function(df.tmp, n){
   step_y <- (y2 - y1) / n
   
   # Create points
-  x_points <- c(x1, seq(x1 + step_x, x2 - step_x, by = step_x), x2)
-  y_points <- c(y1, seq(y1 + step_y, y2 - step_y, by = step_y), y2)
+  x_points <- c(x1, seq(x1 + step_x, x2 - step_x/2, by = step_x), x2)
+  y_points <- c(y1, seq(y1 + step_y, y2 - step_y/2, by = step_y), y2)
   
   # Save
   points1 <- data.frame(x = x_points, y = y_points)
@@ -297,8 +309,8 @@ segmentSplit <- function(df.tmp, n){
   step_y <- (y2 - y1) / n
   
   # Create points
-  x_points <- c(x1, seq(x1 + step_x, x2 - step_x, by = step_x), x2)
-  y_points <- c(y1, seq(y1 + step_y, y2 - step_y, by = step_y), y2)
+  x_points <- c(x1, seq(x1 + step_x, x2 - step_x/2, by = step_x), x2)
+  y_points <- c(y1, seq(y1 + step_y, y2 - step_y/2, by = step_y), y2)
   
   # Save
   points2 <- data.frame(x = x_points, y = y_points)  

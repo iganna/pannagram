@@ -22,3 +22,11 @@ dependencies:
   - mafft
   - parallel
   - r-ape
+  - bioconductor-ggtree
+  - r-ggpubr
+  - r-pryr
+  - r-ggally
+  - r-network
+  - r-igraph
+  - r-sna
+  

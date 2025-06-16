@@ -197,6 +197,7 @@ getGraphFromBlast <- function(bl.res = NULL,
     # nestedness
     bl.res = bl.res[bl.res$V1 != bl.res$V8,]
     bl.res = bl.res[bl.res$V6 >= sim.cutoff * 100,]
+    if(nrow(bl.res) == 0) return(NULL)
     
     # Length of sequences (optimised approach)
     res.nest.len = sapply(unique(c(bl.res$V1, bl.res$V8)), function(s) as.numeric(strsplit(s, '\\|')[[1]][i.len.field]))
@@ -297,7 +298,9 @@ getGraphFromBlast <- function(bl.res = NULL,
   
   if(refine){
     cat('Refine...')
-    edges.compact = refineDirectEdges(edges.compact, echo = F)
+    if(nrow(edges.compact) > 1){
+      edges.compact = refineDirectEdges(edges.compact, echo = F)  
+    }
     cat(' done!\n')
   }
   
@@ -343,8 +346,6 @@ refineDirectEdges <- function(edges.compact, echo = T){
     # tails = names(deg.in)[((deg.in + deg.out) == 1) & ((deg.in * deg.out) == 0) | ((deg.in * deg.out) == 1)]
     tails = names(deg.in)[((deg.in + deg.out) == 1) & ((deg.in * deg.out) == 0) ]
     
-    # if( 'R4396' %in% tails) stop()
-    
     nodes.keep = c(nodes.keep, tails)
     g <- delete_vertices(g, tails)
   }
@@ -360,6 +361,7 @@ refineDirectEdges <- function(edges.compact, echo = T){
   g.comp <- igraph::components(g)
   edges.polised = c()
   for(i.comp in 1:g.comp$no){
+    if(g.comp$no == 0) break
     # message(i.comp)
     
     # Get subgraph

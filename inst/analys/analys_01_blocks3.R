@@ -95,6 +95,7 @@ if(length(s.combinations) == 0){
 # ref.suff = '_0'
 
 file.blocks = paste0(path.cons, aln.type, 'syn_blocks',ref.suff,'.rds')
+
 if(!file.exists(file.blocks)){
   df.all = c()
   for(s.comb in s.combinations){
@@ -115,7 +116,7 @@ if(!file.exists(file.blocks)){
       pokaz('Accession', acc)
       v = h5read(file.comb.in, paste0(gr.accs.e, acc))
       
-      df.acc = getBlocks(v)
+      df.acc = getBlocks(v, f.split = F)
       df.acc$acc = acc
       df.acc$chr = i.chr
       
@@ -138,9 +139,9 @@ if(!file.exists(file.blocks)){
   df.all$pan.b[idx.dir] = df.all$pan.e[idx.dir]
   df.all$pan.e[idx.dir] = tmp
   
-  
   saveRDS(df.all, file.blocks)  
 } else {
+  pokaz("File with blocks was generated in advance", file.blocks)
   df.all = readRDS(file.blocks)
 }
 
@@ -148,6 +149,7 @@ if(!file.exists(file.blocks)){
 # ***********************************************************************
 # ---- Plot  ----
 
+pokaz("Plots...")
 accessions = unique(df.all$acc)
 n.chr = max(df.all$chr)
 
@@ -156,11 +158,13 @@ for(i.chr in 1:n.chr){
   pokaz('Chromosome', i.chr)
   i.order = 1:length(accessions)
   
-  # i.order = c(2,  6 , 5,  4,  3,  8 , 9, 10,  7 ,11,  1 ,12)
+  # i.order = c(2,  6,  5,  4,  3,  7,  9, 10,  8, 11,  1, 12)
   # pokaz(i.order)
   
   df.tmp = df.all
   df.tmp$acc <- factor(df.tmp$acc, levels = accessions[i.order])
+  
+  # save(list = ls(), file = "tmp_workspace_blocks.RData")
   
   p = panplot(df.tmp, i.chr, accessions = accessions, i.order = i.order, wnd.size=wnd.size) 
   

@@ -74,7 +74,7 @@ stat.comb <- data.frame(comb = character(),
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
-  
+
   # Get accessions
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
   
@@ -126,86 +126,91 @@ for(s.comb in pref.combinations){
   mafft.aln.pos = list()
   
   pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
-  for(i in 1:nrow(mafft.res)){
-  
-    # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
-    
-    file.aln = paste0(path.mafft.out, mafft.res$file[i])
-    
-    if(!file.exists(file.aln)) {
-      idx.skip = c(idx.skip, i)
-      next
-    }
+  if(nrow(mafft.res) > 0){
 
-    if (grepl("_aligned2", mafft.res$file[i])) {
-      remove.flank = F
-    } else {
-      remove.flank = T
-    }
-    
-    aln.seq = readFasta(file.aln)
-    
-    
-    # ---
-    # WITHOUT REFINEMENT
-    n.aln.seq = length(aln.seq)
-    name.aln.seq = names(aln.seq)
-    name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
-    pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
-
-
-    len.aln.seq <- nchar(aln.seq[1])
-    # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
-    pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
-    for (i.seq in 1:length(aln.seq)) {
-      tmp = strsplit(aln.seq[i.seq], "")[[1]]
-      tmp.nongap = which(tmp != '-')
+    for(i in 1:nrow(mafft.res)){
       
-      if(remove.flank){
-        tmp.nongap = tmp.nongap[-(1:(n.flank))]
-        tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]  
+      # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
+      
+      file.aln = paste0(path.mafft.out, mafft.res$file[i])
+      
+      if(!file.exists(file.aln)) {
+        idx.skip = c(idx.skip, i)
+        next
       }
       
-      p1 = pos.aln[1, i.seq]
-      p2 = pos.aln[2, i.seq]
-      pos.tmp = p1:p2
-      pos.mx[i.seq, tmp.nongap] = pos.tmp
+      if (grepl("_aligned2", mafft.res$file[i])) {
+        remove.flank = F
+      } else {
+        remove.flank = T
+      }
+      
+      aln.seq = readFasta(file.aln)
+      
+      
+      # ---
+      # WITHOUT REFINEMENT
+      n.aln.seq = length(aln.seq)
+      name.aln.seq = names(aln.seq)
+      name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
+      pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
+      
+      
+      len.aln.seq <- nchar(aln.seq[1])
+      # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
+      pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
+      for (i.seq in 1:length(aln.seq)) {
+        tmp = strsplit(aln.seq[i.seq], "")[[1]]
+        tmp.nongap = which(tmp != '-')
+        
+        if(remove.flank){
+          tmp.nongap = tmp.nongap[-(1:(n.flank))]
+          tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]  
+        }
+        
+        p1 = pos.aln[1, i.seq]
+        p2 = pos.aln[2, i.seq]
+        pos.tmp = p1:p2
+        pos.mx[i.seq, tmp.nongap] = pos.tmp
+      }
+      # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
+      pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
+      row.names(pos.mx) = name.acc
+      
+      if(min(colSums(pos.mx != 0)) == 0){
+        pokaz(mafft.res$file[i])
+        stop('Zeros in the alignment')
+      }
+      
+      
+      mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
+      # ---
+      
     }
-    # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
-    pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
-    row.names(pos.mx) = name.acc
     
-    if(min(colSums(pos.mx != 0)) == 0){
-      pokaz(mafft.res$file[i])
-      stop('Zeros in the alignment')
+    if(length(idx.skip) > 0){
+      mafft.aln.pos = mafft.aln.pos[-idx.skip]
+      mafft.res = mafft.res[-idx.skip,,drop=F]
     }
-
-
-    mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
-    # ---
     
-  }
-  
-  if(length(idx.skip) > 0){
-    mafft.aln.pos = mafft.aln.pos[-idx.skip]
-    mafft.res = mafft.res[-idx.skip,,drop=F]
-  }
-  
-  # warnings()
-  mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
-  mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-  
-  # Skip if some are shorter than the initial aligned block
-  idx.confusing = which(mafft.res$extra < 0)
-  if(length(idx.confusing) > 0){
-    pokazAttention('Long: Wrong lengths of alignment and gaps')
-    pokazAttention("N confusing:", length(idx.confusing))
+    # warnings()
+    mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
+    mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
     
-    mafft.res = mafft.res[-idx.confusing,,drop=F]
-    mafft.aln.pos = mafft.aln.pos[-idx.confusing]
-  } 
-  # if(min(mafft.res$extra) < 0) stop()
-  mafft.res$extra[mafft.res$extra < 0] = 0
+    # Skip if some are shorter than the initial aligned block
+    idx.confusing = which(mafft.res$extra < 0)
+    if(length(idx.confusing) > 0){
+      pokazAttention('Long: Wrong lengths of alignment and gaps')
+      pokazAttention("N confusing:", length(idx.confusing))
+      
+      mafft.res = mafft.res[-idx.confusing,,drop=F]
+      mafft.aln.pos = mafft.aln.pos[-idx.confusing]
+    } 
+    # if(min(mafft.res$extra) < 0) stop()
+    mafft.res$extra[mafft.res$extra < 0] = 0
+  } else {
+    mafft.res = data.frame()
+  }
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
@@ -235,7 +240,19 @@ for(s.comb in pref.combinations){
   file.single.res = paste0(path.cons, 'singletons_', s.comb, '.rds')
   if(file.exists(file.single.res)){
     single.res = readRDS(file.single.res)
-    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1
+    
+    # save(list = ls(), file = "tmp_workspace_x.RData")
+    
+    if(is.null(dim(single.res$pos.end))){
+      single.res$pos.end = t(as.matrix(single.res$pos.end))
+    }
+    
+    if(is.null(dim(single.res$pos.beg))){
+      single.res$pos.beg = t(as.matrix(single.res$pos.beg))
+    }
+    
+    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1  
+    
     single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
     
     idx.confusing = which((single.res$ref.pos$end - single.res$ref.pos$beg - 1) != 0)
@@ -275,9 +292,13 @@ for(s.comb in pref.combinations){
   # -- 
   # Singletons
   fp.single = list()
-  for(i in 1:length(single.res$len)){
-    n.pos = single.res$len[i] - 2
-    fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
+  if(length(single.res) != 0){
+    if(length(single.res$len) != 0){
+      for(i in 1:length(single.res$len)){
+        n.pos = single.res$len[i] - 2
+        fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
+      } 
+    }
   }
 
   pokaz(3)
@@ -285,60 +306,49 @@ for(s.comb in pref.combinations){
   
   # Short
   fp.short = list()
-  for(i in 1:length(msa.res$len)){
-    n.pos = msa.res$len[i]
-    fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
-  }
-  
-  pokaz(4)
-  
-  # Check short
-  for(i in 1:length(msa.res$len)){
-    if(is.null(msa.res$aln[[i]])) next
-    if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-      save(list = ls(), file = "tmp_workspace.RData")
-      stop(paste0('Short', i)) 
+  if(length(msa.res) != 0){
+    for(i in 1:length(msa.res$len)){
+      n.pos = msa.res$len[i]
+      fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
+    }    
+    pokaz(4)
+    
+    # Check short
+    for(i in 1:length(msa.res$len)){
+      if(is.null(msa.res$aln[[i]])) next
+      if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop(paste0('Short', i)) 
+      }
     }
   }
-  
+
   pokaz(5)
   
   # Long
   fp.long = list()
-  for(i in 1:length(mafft.aln.pos)){
-    n.pos = ncol(mafft.aln.pos[[i]])
-    fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
+  if(length(mafft.aln.pos) != 0){
+    for(i in 1:length(mafft.aln.pos)){
+      n.pos = ncol(mafft.aln.pos[[i]])
+      fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
+    }  
   }
   
   pos.beg.all = list(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
   pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
   
   pos.delete.all = 0
-  
-  # save(list = ls(), file = paste0("tmp_workspace2.RData"))
   for(i.pos in 1:3){
     pos.beg = pos.beg.all[[i.pos]]
     pos.end = pos.end.all[[i.pos]]
     pos.delete = rep(0, base.len)
     pos.delete[pos.beg] = 1
-    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete[pos.end] = pos.delete[pos.end] - 1
-    # pokaz(  sum(pos.delete == 1), sum(pos.delete == -1), file=file.log.main, echo=echo.main)
     pos.delete = cumsum(pos.delete)
     pos.delete[pos.beg] = 0
     pos.delete[pos.end] = 0
     
     pos.delete.all = pos.delete.all + pos.delete
-    
-    # # Testing:  
-    # pos = rep(0, base.len)
-    # for(i in 1:length(pos.beg)){
-    #   if(2310393 %in% c(pos.beg[i]:pos.end[i])) pokaz(i)
-    #   
-    #   pos[pos.beg[i]:pos.end[i]] = pos[pos.beg[i]:pos.end[i]] + 1
-    #   # if(max(pos[pos.beg[i]:pos.end[i]] ) == 2) stop()
-    # }
-    
   }
   pos.delete = pos.delete.all
 
@@ -384,41 +394,55 @@ for(s.comb in pref.combinations){
     v.aln[fp.main[pos.nonzero]] = v[pos.nonzero]
     # v.aln[fp.main[pos.remain]] = v[pos.remain]
     
-    # Add singletons
-    for(i in 1:length(single.res$len)){
-      if(single.res$pos.beg[i, acc] != 0){
-        # if(i == 2) stop('670')
-        pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
-        pos = pos[-c(1, length(pos))]
-          
-        v.aln[fp.single[[i]]] = pos
-        # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
-      } 
-    }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1: Duplicated positions in Singletons')
+    # save(list = ls(), file = 'tmx_workspace_step18.RData')
     
-    # Add short
-    for(i in 1:length(msa.res$len)){
-      if(acc %in% colnames(msa.res$aln[[i]])){
-        v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
+    # Add singletons
+    if(length(single.res$len) != 0){
+      for(i in 1:length(single.res$len)){
+        if(single.res$pos.beg[i, acc] != 0){
+          # if(i == 2) stop('670')
+          pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
+          pos = pos[-c(1, length(pos))]
+          
+          v.aln[fp.single[[i]]] = pos
+          # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
+        } 
+      }   
+      v.aln.nozero = v.aln[v.aln != 0]
+      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('1: Duplicated positions in Singletons')
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)){
-      
-      save(list = ls(), file = "tmp_workspace.RData")
-      stop('2: Duplicated positions in short alignments')
-    } 
+
+    # Add short
+    if(length(msa.res$len) != 0){
+      for(i in 1:length(msa.res$len)){
+        if(acc %in% colnames(msa.res$aln[[i]])){
+          v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
+        } 
+      }
+      v.aln.nozero = v.aln[v.aln != 0]
+      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('2: Duplicated positions in short alignments')
+      }       
+    }
+
     
     # add long
-    for(i in 1:length(mafft.aln.pos)){
-      if(acc %in% rownames(mafft.aln.pos[[i]])){
-        v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
-        
-        # if(1835154 %in%  mafft.aln.pos[[i]][acc,]) stop(i)
-        # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3')
+    if(length(mafft.aln.pos) != 0){
+      for(i in 1:length(mafft.aln.pos)){
+        if(acc %in% rownames(mafft.aln.pos[[i]])){
+          v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
+        } 
+      }      
+      v.aln.nozero = v.aln[v.aln != 0]
+      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
+        save(list = ls(), file = "tmp_workspace.RData")
+        stop('3: Duplicated positions in long alignments')
       } 
     }
-    if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('3: Duplicated positions in long alignments')
     
     # Maybe something was overlapped by accident
     

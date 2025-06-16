@@ -1,16 +1,15 @@
-# Function to display a short help message
-print_usage_short() {
+#[-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
+# -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
+# -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
+
+# Function to display a long help message
+print_usage_detailed() {
     pokaz_help
 
     cat << EOF
+pannagram performs alignment of query genomes to the reference genome.
 
-Show short help:
-${0##*/} -h
-
-Show detailed help:
-${0##*/} -help
-
-Usage for the PREliminary alignment:
+PRE: parameters for the PREliminary alignment:
 ${0##*/} -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER -pre 
          -ref REF_NAME 
          [-nchr NUM_OF_CHR] 
@@ -18,7 +17,7 @@ ${0##*/} -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER -pre
          [-one2one]
          [OTHER PARAMETERS]
 
-Usage for the REF-base alignment:
+REF: parameters for the REF-base alignment:
 ${0##*/} -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER 
          -ref REF_NAME 
          -nchr N_CHR_QUERY 
@@ -26,7 +25,7 @@ ${0##*/} -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER
          [-all2all]
          [OTHER PARAMETERS]
 
-Usage for the Multiple Genome Alignment (MGA):
+MGA: parameters for the Multiple Genome Alignment:
 ${0##*/} -path_in INPUT_FOLDER -path_out OUTPUT_FOLDER
         [-refs REFS_NAMES]
         [-nref NUM_OF_REFS]
@@ -40,23 +39,9 @@ OTHER PARAMETERS:
     [-path_ref PATH_CHR_REF]
     [-p_ident P_IDENT] [-part_len PART_LEN]
     [-accessions ACC_FILE] [-combinations COMB_FILE]
-    
-EOF
-}
+--------------------------------------------------------------------
 
-#[-path_cons PATH_CONSENSUS] [-path_chrom PATH_CHROM] [-path_parts PATH_PARTS]
-# -path_chrom PATH_CHROM      Path to the folder with individual chromosomes in separate files. 
-# -path_parts PATH_PARTS      Path to the folder with files of chromosomal parts.
-# -path_cons PATH_CONSENSUS   Path to the consensus folder. 
-
-# Function to display a long help message
-print_usage_detailed() {
-    pokaz_help
-
-    cat << EOF
-This script performs alignment of query genomes to the reference genome.
-
-Options:
+PARAMETERS EXPLAINED:
     -h, -help                   Display this help messages and exit.
     -s, -stage STAGE            Specify the stage from which to run: a number from 1 to 12.
                                 If not provided, the last interrupted stage will be re-run.
@@ -107,7 +92,6 @@ Options:
         -p_ident P_IDENT            Percentage identity threshold (default: 85).
         -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 5000).
         
-
 EOF
 }
 

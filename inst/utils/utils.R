@@ -56,6 +56,7 @@ readFasta <- function(file.fasta, stop.on.error = T) {
   
   sequences <- character(n.seq)
   for (i.seq in 1:n.seq) {
+    # pokaz(i.seq)
     start <- header.idx[i.seq] + 1
     end <- if (i.seq < n.seq) header.idx[i.seq + 1] - 1 else length(file.content)
     if (start <= end) {
@@ -71,6 +72,9 @@ readFasta <- function(file.fasta, stop.on.error = T) {
   
   seq.names <- substr(file.content[header.idx], 2, nchar(file.content[header.idx]))
   names(sequences) <- seq.names
+  
+  names(sequences) = gsub('\t', '_', names(sequences))
+  names(sequences) = gsub(' ', '_', names(sequences))
   
   return(sequences)
 }
@@ -1527,6 +1531,41 @@ readTableMy <- function(file){
   return(readBlast(file))
 }
 
+#' Read Lower Triangular Distance Matrix from File
+#'
+#' @param file A character string specifying the path to the input file.
+#' @return A symmetric numeric matrix.
+#'
+#' @export
+readDist <- function(file) {
+  
+  # Read file line by line
+  lines <- readLines(file)
+  
+  # Parse each line: split by whitespace and convert to numeric
+  parsed <- lapply(lines, function(line) {
+    as.numeric(strsplit(trimws(line), "\\s+")[[1]])
+  })
+  
+  # Check consistency: line i should have i elements (lower triangular form)
+  n <- length(parsed) + 1
+  if (!all(sapply(1:(n-1), function(i) length(parsed[[i]]) == i))) {
+    stop("File format is not a valid lower triangular distance matrix.")
+  }
+  
+  # Initialize a square matrix of size n x n
+  mat <- matrix(0, n, n)
+  
+  # Fill the lower and upper triangle symmetrically
+  for (i in 1:(n-1)) {
+    mat[i+1, 1:i] <- parsed[[i]]
+    mat[1:i, i+1] <- parsed[[i]]
+  }
+  
+  return(mat)
+}
+
+
 #' Show BLAST Results Without Sequences
 #'
 #' This function displays a subset of BLAST results, focusing on specific columns and optionally, specific rows.
@@ -1647,9 +1686,19 @@ checkFile <- function(file.name) {
     pokazAttention("File", file.name, "does not exist.")
     stop("File does not exist.")
   }
-  return(NULL)
+  invisible(NULL)
 }
 
+#' Check if a folder exists
+#' @param file.name File name
+#' @export
+checkDir <- function(dir.name) {
+  if (!dir.exists(dir.name)) {
+    pokazAttention("Directory", dir.name, "does not exist.")
+    stop("Directory does not exist.")
+  }
+  invisible(NULL)
+}
 
 
 #' Find the Longest Common Prefix of Strings

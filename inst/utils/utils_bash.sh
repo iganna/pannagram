@@ -93,6 +93,9 @@ make_dir() {
     fi
 }
 
+help_in_box() {
+    print_fancy_frame "Get help by running: ${0##*/} -h"
+}
 
 # Logging messages either to the console or to a specified file based on the given log level.
 # Logging into files - always
@@ -124,4 +127,28 @@ make_dir() {
 
 # }
 
+# Echo a fancy frame around the messase
+print_fancy_frame() {
+  local message="$1"
+  local len=${#message}
+  
+  # Верхняя граница
+  echo -n "┌"
+  printf -- '─%.0s' $(seq 1 $((len + 2)))
+  echo "┐"
 
+  # Текст
+  echo "│ $message │"
+
+  # Нижняя граница
+  echo -n "└"
+  printf -- '─%.0s' $(seq 1 $((len + 2)))
+  echo "┘"
+}
+
+require_arg() {
+    if [ $# -lt 2 ]; then
+        echo "Error: $1 requires an argument" >&2
+        exit 1
+    fi
+}

@@ -95,6 +95,7 @@ loop.function <- function(s.comb,
   
   # Create the output file
   suppressMessages({
+    file.remove(file.comb.out)
     h5createFile(file.comb.out)
     h5createGroup(file.comb.out, gr.blocks)
     h5createGroup(file.comb.out, gr.accs.e)
@@ -106,9 +107,10 @@ loop.function <- function(s.comb,
   accessions = groups$name[groups$group == gr.accs.b]
   
   # ---- Cleanup ----
+  pokaz('Cleanup..')
   idx.nonzero = 0
   for(acc in accessions){
-    pokaz(acc)
+    pokaz('Accession', acc)
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.in, s.acc)
@@ -149,20 +151,19 @@ loop.function <- function(s.comb,
   }
   
   # ---- Remove zeros ----
-  pokaz('Remove zeros')
+  pokaz('Remove zeros..')
   idx.nonzero = idx.nonzero > 0
-  
-  pokaz(length(idx.nonzero), sum(idx.nonzero))
+  # pokaz(length(idx.nonzero), sum(idx.nonzero))
   
   for(acc in accessions){
+    pokaz('Accession', acc)
     
-    pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
+    
     v = v[idx.nonzero]
     
     # Rewrite  
-    pokaz('Rewrite')
     suppressMessages({
       h5delete(file.comb.out, s.acc)
       h5write(v, file.comb.out, s.acc)
@@ -170,17 +171,15 @@ loop.function <- function(s.comb,
   }
   
   # ---- Breaks ----
-  pokaz('Find breaks')
+  pokaz('Find breaks..')
   idx.breaks = c()
   for(acc in accessions){
+    pokaz('Accession', acc)
     
-    pokaz(acc)
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
-    
-    # save(list = ls(), file = "tmp_workspace_acc.RData")
+
     # Define blocks
-    
     v.idx = 1:length(v)
     
     v.idx = v.idx[v != 0]
@@ -196,7 +195,6 @@ loop.function <- function(s.comb,
     v.b$i.end = v.idx[v.b$end]
     
     v.b = v.b[order(abs(v.b$v.beg)),]
-    
     
     blocks.acc = rep(0, max(abs(v)))
     for(irow in 1:nrow(v.b)){
@@ -224,9 +222,7 @@ loop.function <- function(s.comb,
     df$len.comb = abs(df$idx.end - df$idx.beg) - 1
     
     idx.breaks = rbind(idx.breaks, df)
-    
   }
-  
   
   file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
   saveRDS(idx.breaks, file.breaks)

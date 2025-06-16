@@ -389,8 +389,19 @@ seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
   return(n.match)
 }
 
-
-dotScore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
+#' Compute Dot Plot-Based Similarity Score Between Two Sequences
+#'
+#' Calculates a similarity score between two nucleotide sequences using a dot plot–based window comparison.
+#' The function returns normalized scores for both the forward and reverse complement orientations of the second sequence.
+#'
+#' @param seq1 A character string representing the first nucleotide sequence.
+#' @param seq2 A character string representing the second nucleotide sequence.
+#' @param method Character string specifying the method. Currently only `'dotplot'` is supported (default: `'dotplot'`).
+#' @param wsize Integer. Size of the sliding window used to segment sequences (default: 10).
+#' @param nmatch Integer. Minimum number of matches required within a window to count it as a match (default: 9).
+#'
+#' @export
+dotscore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
   
   mx1 = toupper(seq2mx(seq1, wsize))
   mx2 = toupper(seq2mx(seq2, wsize))
@@ -405,5 +416,9 @@ dotScore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
   
   n = (length(seq1) + length(seq2)) / 2
   return(c(n.forward, n.backward) / n)
+}
+
+dotScore <- function(...) {
+  dotscore(...)
 }
 

@@ -19,7 +19,7 @@ Usage: ${0##*/}  -path_msa PATH_MSA  -path_chr PATH_CHR
                 [-ref REF]
                 [-h] [-cores NUM_CORES]  
                 [-blocks] [-seq] [-aln] [-snp] 
-                [-aln_type ALN_TYPE] [-path_cons PATH_CONS]
+                [-aln_type ALN_TYPE]
 
 
 This script manages various genomic analyses and alignments.
@@ -28,8 +28,8 @@ Options:
     -h, --help                  Display this help message and exit.
     -cores NUM_CORES            Specify the number of cores for parallel processing (default is 1).
 
-    -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. The same as -path_out in pangen.sh
-    -path_chr PATH_CHR          Specify the path to chromosome files.
+    -path_msa PATH_MSA          Specify the global prefix for multiple sequence alignment. (PATH_OUT/intermediate/consensus/ from pannagram)
+    -path_chr PATH_CHR          Specify the path to chromosome files. (PATH_OUT/intermediate/chromosomes/ from pannagram)
 
     -ref REF                    Specify the prefix for the gaccession, which was used to sort the alignment.
     -blocks                     RGet positions of synteny blocks between accessions.
@@ -44,7 +44,6 @@ Options:
     -annogroup                  Create the consensus annotation groups
 
     -aln_type ALN_TYPE          Set the type of alignment (default: 'msa_').
-    -path_cons PATH_CONS        Specify the path to the consensus folder (has the default value).
 
 Examples:
     ${0##*/}  -path_msa /data/genomes -ref genome_ref -path_chr /data/chromosomes  -blocks -seq -snp
@@ -55,14 +54,17 @@ EOF
 # ----------------------------------------------------------------------------
 #             PARAMETERS
 # ----------------------------------------------------------------------------
-
+if [ $# -eq 0 ]; then
+    pokaz_error "No arguments provided!"
+    help_in_box
+    exit 0
+fi
 
 # Initialize variables to determine which scripts to run
 aln_type='msa_'
 
 # Simple analysis
 run_blocks=false
-run_blocks2=false
 run_seq=false
 run_aln=false
 run_snp=false
@@ -73,6 +75,7 @@ run_sv_call=false
 run_sv_sim=false
 run_sv_graph=false
 run_annogroup=false
+run_sv_sim_prot=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -85,7 +88,7 @@ while [ $# -gt 0 ]; do
         -path_chr)       path_chromosomes=$2;    shift 2;;
         
         -blocks)         run_blocks=true;        shift;;           # Get position of synteny blocks between accessions
-        -blocks2)        run_blocks2=true;       shift;;           # Get position of synteny blocks between accessions
+    
         -seq)            run_seq=true;           shift;;           # Get consensus sequence
         -aln)            run_aln=true;           shift;;           # Produce fasta file with the pangenome alignment
         -snp)            run_snp=true;           shift;;           # Get VCF file with SNPs
@@ -95,6 +98,8 @@ while [ $# -gt 0 ]; do
         -sv_call|-sv)    run_sv_call=true;       shift;;           # SV calling from the alignment
         -sv_sim)         set_file="$2";                            # File to compare SVs against set of sequences
                          run_sv_sim=true;        shift 2;;         
+        -sv_sim_prot)    set_file_prot="$2";                            # File to compare SVs against set of sequences
+                         run_sv_sim_prot=true;        shift 2;;         
         -sv_graph)       run_sv_graph=true;      shift;;           # Construction of a graph on SVs
         -sim)            similarity_value=$2;    shift 2;;         # Similarity value
 
@@ -104,15 +109,20 @@ while [ $# -gt 0 ]; do
                          run_annogroup=true;     shift 2;;
 
         -aln_type)       aln_type=$2;            shift 2;;
-        -path_cons)      path_consensus=$2;      shift 2;;
-        *)               print_usage; echo "Wrong parameter ${1}";            exit 1;;
+        *)               pokaz_error "Unknown parameter: $1"; help_in_box; exit 1;;
     esac
 done
 
+if [[ -z "$path_consensus" ]]; then
+    pokaz_error "Error: -path_msa is required"
+    help_in_box
+    exit 1
+fi
 
 # Check if path_chromosomes is empty while any of run_seq, run_aln, or run_snp are set to true
 if [ -z "$path_chromosomes" ] && ([ "$run_seq" = true ] || [ "$run_aln" = true ] || [ "$run_snp" = true ]); then
     pokaz_error "Error: -path_chr must be specified when any of -seq, -aln, or -snp options are used."
+    help_in_box
     exit 1
 fi
 
@@ -177,18 +187,16 @@ fi
 
 if [ "$run_snp" = true ]; then
     pokaz_stage "Get SNPs."
-    # Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
-    #     --path.cons ${path_consensus} \
-    #     --ref.pref  ${ref_pref} \
-    #     --path.chr ${path_chromosomes} \
-    #     --aln.type ${aln_type} \
-    #     --cores ${cores}
+    Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
+        --path.cons ${path_consensus} \
+        --ref.pref  ${ref_pref} \
+        --path.chr ${path_chromosomes} \
+        --aln.type ${aln_type} \
+        --cores ${cores}
 
     # ---------------
     # Pi divirsity
     if [ "$run_snp_pi" = true ]; then
-
-        
 
         pokaz_stage "Pi diversity."
         path_snp="${path_consensus}snps/"
@@ -203,6 +211,7 @@ if [ "$run_snp" = true ]; then
 
         # Run VCF-tools
         for vcf_file in $vcf_files; do
+            echo "VCF-tools.."
             base_name=$(basename "$vcf_file" .vcf)
             output_file="${path_snp}${base_name}_output"
             vcftools --vcf "$vcf_file" --site-pi --out "$output_file" > /dev/null
@@ -212,16 +221,17 @@ if [ "$run_snp" = true ]; then
                 --path.figures ${path_plots} \
                 --file.pi "${output_file}.sites.pi"
 
+            echo "Plink.."
             plink --vcf "${vcf_file}" --distance  --out "${vcf_file}.dist" --allow-extra-chr
 
             Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
-                --path.figures ${path_plots} \
-                --file.pi "${vcf_file}"
+               --path.figures ${path_plots} \
+               --file.pi "${vcf_file}"
 
         done
     fi
 
-    rm ${path_snp}*log
+    # rm ${path_snp}*log
 
 fi
 
@@ -233,13 +243,22 @@ fi
 if [ "$run_sv_call" = true ]; then
     pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
-    # So, sonsensus should be run before GFF
+    # So, consensus should be run before GFF
     # Therefore, sequences of seSVs could also be produced together with GFFs.
+
     Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
         --path.cons ${path_consensus} \
         --ref.pref  ${ref_pref} \
         --aln.type ${aln_type} \
         --acc.anal ${acc_anal}
+
+    # path_plots="${path_consensus}plot_svs/"
+    # mkdir -p ${path_plots}
+
+    pokaz_stage "Plot SV stat"
+    Rscript $INSTALLED_PATH/analys/sv_02_plot_stat.R \
+        --path.cons ${path_consensus} 
+
 fi
 
 
@@ -265,7 +284,7 @@ if [ "$run_sv_sim" = true ]; then
     # if [ ! -f "${file_sv_big_on_set}" ]; then
         blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
            -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
-           -perc_identity "${similarity_value}"
+           -perc_identity "${similarity_value}" -num_threads "${cores}"
     # fi
 
     file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
@@ -294,8 +313,9 @@ if [ "$run_sv_graph" = true ]; then
     # if [ ! -f "${file_sv_big_on_sv}" ]; then
         blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
            -outfmt "6 qseqid qstart qend sstart send pident length sseqid" \
-           -perc_identity ${similarity_value} 
+           -perc_identity ${similarity_value} -num_threads "${cores}"
     # fi
+    pokaz_message "Blast is done."
 
     file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${file_sv_big} --res ${file_sv_big_on_sv} \
@@ -304,6 +324,31 @@ if [ "$run_sv_graph" = true ]; then
     rm "$file_sv_big".nin
     rm "$file_sv_big".nhr
     rm "$file_sv_big".nsq
+
+
+    pokaz_stage "Plotting SV-Graph..."
+    Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
+        --path.cons ${path_consensus} 
+
+    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+        --path.cons ${path_consensus} 
+
+    if [ "$run_sv_sim_prot" = true ]; then
+
+        if [ -f "${path_consensus}sv/sv_in_graph_orfs.fasta" ]; then
+            pokaz_stage "BLAST on proteins..."
+
+            # makeblastdb -in ${set_file_prot} -dbtype prot
+            blastp -db "${set_file_prot}" \
+                   -query "${path_consensus}sv/sv_in_graph_orfs.fasta" \
+                   -out "${path_consensus}sv/blast_sv_orfs_on_set.txt" \
+                   -outfmt "7 qseqid qstart qend sstart send pident length sseqid" \
+                   -num_threads "${cores}"
+        else
+            pokaz_error "File with ORFs does not exist, BLAST against proteins was not performed."
+        fi
+
+    fi
 
 fi
 
