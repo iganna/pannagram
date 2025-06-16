@@ -163,8 +163,6 @@ echo $PATH_PROJECT
 
 ```R
 library(pannagram)
-library(rhdf5)
-library(ggplot2)
 
 path.project <- "<paste the path here>"
 path.analisys <- file.path(path.project, 'analisys/')
@@ -177,8 +175,8 @@ Specify accession, chromosome number and an arbitrary window:
 ```R
 acc <- "<put your accession id here>"
 i.chr <- 1
-window.beg <- 11000
-window.end <- window.beg + 1000
+window.beg <- 1000
+window.end <- window.beg + 500
 ```
 
 Cut the specified window from the Multiple Genome Alignment:
@@ -221,11 +219,17 @@ file.gff1 <- "<your GFF file>"
 acc1 <- "<set accession 1>"
 acc2 <- "<set accession 2>"
 
-gff1 <- read.table(file.gff1, stringsAsFactors=F)
+gff1 <- read.table(file = file.gff1,
+                   sep      = "\t",
+                   quote    = "",
+                   comment.char = "#",
+                   header   = FALSE,
+                   stringsAsFactors = FALSE,
+                   fill     = TRUE )
 gff1 <- gff1[gff1$V1 == gff1$V1[1],]
 gff1$V1 <- paste0(gff1$V1, "Chr1")
 
-gff2 <- gff2gff(path.proj, 
+gff2 <- gff2gff(path.project, 
                 acc1 = acc1,
                 acc2 = acc2,
                 gff1 = gff1,
@@ -233,12 +237,7 @@ gff2 <- gff2gff(path.proj,
                 exact.match = F,
                 s.chr = 'Chr')
 
-write.table(gff2,
-            file.path(path.analisys, "gff2.gff"),
-            rownames=FALSE,
-            colnames=FALSE,
-            quotes=FALSE,
-            sep='\t')
+writeGFF(gff2, file.path(path.analisys, "gff2.gff"))
 ```
 
 ## 5. Simsearch
