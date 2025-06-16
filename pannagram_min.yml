@@ -15,18 +15,20 @@ dependencies:
   - r-doparallel
   - r-stringi
   - r-usethis
-  - bioconductor-rhdf5
-  - bioconductor-muscle
-  - bioconductor-msa
-  - blast
-  - mafft
-  - parallel
   - r-ape
-  - bioconductor-ggtree
   - r-ggpubr
   - r-pryr
   - r-ggally
   - r-network
   - r-igraph
   - r-sna
+  - bioconductor-rhdf5
+  - bioconductor-muscle
+  - bioconductor-msa
+  - bioconductor-ggtree
+  - blast
+  - mafft
+  - parallel
+  - vcftools
+  - plink
   

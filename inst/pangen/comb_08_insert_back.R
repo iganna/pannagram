@@ -124,8 +124,8 @@ for(s.comb in pref.combinations){
     v.add$acc.val1 = v1[v.add[,3]]
     
     if(max(abs(v.add$acc.val1)) != 0) {
-      save(list = ls(), file = "tmp_workspace_insert.RData")
-      pokaz('Something is wrong') 
+      # save(list = ls(), file = "tmp_workspace_insert.RData")
+      pokaz('Something is wrong: max(abs(v.add$acc.val1)) = ', max(abs(v.add$acc.val1)) ) 
       stop()
     }
     

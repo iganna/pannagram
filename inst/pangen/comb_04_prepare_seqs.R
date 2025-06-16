@@ -1,20 +1,14 @@
-# Get positiona for an extra alignment
-
 suppressMessages({
   library(foreach)
   library(doParallel)
   library(optparse)
   library(crayon)
   library(rhdf5)
-  library(muscle)  #BiocManager::install("muscle")
-  # library(Biostrings)
+  library(muscle)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
-# source("synteny_funcs.R")
-
-# pokazStage('Step 10. Prepare sequences for MAFFT')
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -22,30 +16,30 @@ source(system.file("pangen/comb_func.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons",        type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--path.chromosomes", type = "character", default = NULL, help = "Path to directory with chromosomes"),
-  make_option("--path.mafft.in",    type = "character", default = NULL, help = "Path to directory where to combine fasta files for mafft runs"),
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  make_option("--path.chromosomes",  type = "character", default = NULL, help = "Path to directory with chromosomes"),
+  make_option("--path.mafft.in",     type = "character", default = NULL, help = "Path to directory where to combine fasta files for mafft runs"),
   
-  make_option("--max.len.gap",      type = "integer",   default = NULL, help = "Max length of the gap"),
+  make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap"),
   
-  make_option("--cores",            type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--path.log",         type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
+  make_option("--cores",             type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",          type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",         type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
 
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser, args = args);
+opt_parser = OptionParser(option_list=option_list)
+opt = parse_args(opt_parser, args = args)
 
 #TODO: SHOULD BE PARAMATERS
-len.short = 50
 # len.large = 40000
+len.short = 50
 n.flank = 30
 len.large.mafft = 15000
 
 s.flank.beg = rep('A', n.flank)
 s.flank.end = rep('T', n.flank)
 
-# print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -68,17 +62,23 @@ if (is.null(opt$max.len.gap)) {
 
 # Number of cores for parallel processing
 num.cores = opt$cores
-if(is.null(num.cores)) stop('Whong number of cores: NULL')
-
-pokaz('Number of cores', num.cores)
+if(is.null(num.cores)) stop('Wrong number of cores: NULL')
+pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
 if(num.cores > 1){
   myCluster <- makeCluster(num.cores, type = "PSOCK") 
   registerDoParallel(myCluster) 
 }
 
-# Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn???t exist')
+# Path with the MSA output (features)
+path.features.msa <- opt$path.features.msa
+path.inter.msa <- opt$path.inter.msa
+
+if (is.null(path.features.msa) || is.null(path.inter.msa)) {
+  stop("Error: both --path.features.msa and --path.inter.msa must be provided")
+}
+
+if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 
 # Path to chromosomes
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
@@ -86,11 +86,11 @@ if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 # Path to mafft input
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
 
-# **************************************************************************
+# ***************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.in, ".*")
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -103,13 +103,19 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-echo = T
 for(s.comb in pref.combinations){
   
-  if(echo) pokaz('* Combination', s.comb)
+  # Log files
+  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
+  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
+  
+  # Check log Done
+  if(checkDone(file.log.loop)) return(NULL)
+  
+  pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
-  file.ws = paste0(path.cons, 'breaks_ws_', s.comb, '.RData')
+  file.ws = paste0(path.inter.msa, 'breaks_ws_', s.comb, '.RData')
   load(file.ws)
   
   # Define indexes for short and singletons
@@ -124,7 +130,7 @@ for(s.comb in pref.combinations){
         length(idx.singl), 
         length(idx.short), 
         length(idx.large), 
-        length(idx.extra))
+        length(idx.extra), file=file.log.loop, echo=echo.loop)
   
   # ----
   
@@ -148,7 +154,7 @@ for(s.comb in pref.combinations){
   breaks$file[idx.extra] = sub('.fasta', '_extra.fasta', breaks$file[idx.extra])
   
   # Save breaks
-  file.breaks.merged = paste0(path.cons, 'breaks_merged_', s.comb,'.rds')
+  file.breaks.merged = paste0(path.inter.msa, 'breaks_merged_', s.comb,'.rds')
   saveRDS(breaks, file.breaks.merged)
   
   ## ---- Save singletons ----
@@ -156,12 +162,7 @@ for(s.comb in pref.combinations){
                pos.end = v.end[idx.singl,],
                ref.pos = data.frame(beg = breaks$idx.beg[idx.singl],
                                     end = breaks$idx.end[idx.singl]) ), 
-          paste0(path.cons, 'singletons_',s.comb,'.rds'), compress = F)
-  
-  # if(s.comb == '10_10'){
-  #   save(list = ls(), file = "tmp_workspace.RData")
-  #   stop('Enough..')
-  # }
+          paste0(path.inter.msa, 'singletons_',s.comb,'.rds'), compress = F)
   
   ## ---- Analyse by portions ----
   
@@ -176,7 +177,7 @@ for(s.comb in pref.combinations){
     
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
-      pokaz(acc)
+      pokaz(acc, file=file.log.loop, echo=echo.loop)
       file.chromosome = paste(path.chromosomes, 
                               acc, 
                               '_chr', q.chr, '.fasta', sep = '')
@@ -214,7 +215,6 @@ for(s.comb in pref.combinations){
         seq = nt2seq(seq)
         
         seq.name = paste(acc, q.chr, pos[1], pos[length(pos)], s.strand, p2 - p1 + 1, sep = '|')
-        # pokaz(seq.name)
         names(seq) = seq.name
         
         return(seq = seq)
@@ -229,22 +229,11 @@ for(s.comb in pref.combinations){
       p2 = p2[idx.acc]
       
       # Get sequences
-      subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), unname(p1), unname(p2), idx.tmp.acc %in% c(idx.large, idx.extra))  
-      # 
-      # print(subsets)
-      # if(length(subsets) == 1){
-      #   if(names(subsets) == 'GCA_040115645.1.GCA_040115645.1|10|1384970|1385000|+|31'){
-      #     save(list = ls(), file = "tmp_workspace.RData")
-      #     stop()
-      #   }  
-      # }
+      subsets <- mapply(function(b, e, for.mafft) getSeq(b, e, for.mafft), unname(p1), unname(p2), idx.tmp.acc %in% c(idx.large, idx.extra))
       
       # Save sequences
-      # pokaz('---')
-      # pokaz(names(subsets))
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
-      # pokaz(aln.seqs.names[idx.tmp.acc])
       
       rm(genome)
     }
@@ -257,7 +246,7 @@ for(s.comb in pref.combinations){
     if(length(intersect(idx.save, idx.short)) > 0) stop('Wrong idx are saved')
     
     if(num.cores == 1){
-      pokaz('Save sequences...')
+      pokaz('Save sequences...', file=file.log.loop, echo=echo.loop)
       for(i in idx.save){
         writeFasta(aln.seqs[[i]], 
                    file = paste0(path.mafft.in,breaks$file[i]), 
@@ -265,7 +254,7 @@ for(s.comb in pref.combinations){
                    append = T)
       }
     } else { # Many cores
-      pokaz('Save sequences with parallel...')
+      pokaz('Save sequences with parallel...', file=file.log.loop, echo=echo.loop)
       foreach(i = idx.save,
               .packages=c('crayon'))  %dopar% {
                 writeFasta(aln.seqs[[i]], 
@@ -274,7 +263,7 @@ for(s.comb in pref.combinations){
                            append = T)
               }
     }
-    if(echo) pokaz('.. done!')
+    pokaz('.. done!', file=file.log.loop, echo=echo.loop)
     
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)
@@ -283,37 +272,26 @@ for(s.comb in pref.combinations){
     
   }
   
-    
-  # save(list = ls(), file = "tmp_workspace.RData")
-
   for(i in setdiff(1:length(aln.seqs), idx.short)){
     aln.seqs[i] <- list(NULL)
   }
   
   n.null <- sum(sapply(aln.seqs, Negate(is.null)))
-  pokaz(n.null, length(idx.short))
+  pokaz(n.null, length(idx.short), file=file.log.loop, echo=echo.loop)
   if(n.null != length(idx.short)) {
-    # pokazAttention('fix short')
-    # save(list = ls(), file = "tmp_wrong_number_of_short.RData")
     stop('Wrong number of short')
   }
   
   all.local.objects <- c("breaks", "aln.seqs", "aln.seqs.names", "idx.short", "accessions")
-  file.ws = paste0(path.cons, 'small_ws_', s.comb, '.RData')
+  file.ws = paste0(path.inter.msa, 'small_ws_', s.comb, '.RData')
   save(list = all.local.objects, file = file.ws)
   
   rm(aln.seqs)
   rm(aln.seqs.names)
-
 }
-
 
 if(num.cores > 1){
   stopCluster(myCluster)
 }
 
 warnings()
-
-
-# ***********************************************************************
-# ---- Manual testing ----

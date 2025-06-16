@@ -7,9 +7,8 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(ggplot2)
+  library(pannagram)
 })
-
-library(pannagram)
 
 # Define blocks in the alignemnt
 
@@ -17,39 +16,24 @@ args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
   make_option("--file.pi",    type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures")
+  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--len.wnd", type = "integer", default = 200000,   help = "Window length for plotting")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-
-# print(opt)
-
-# ***********************************************************************
-# ---- Logging ----
-
-source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-
-# ***********************************************************************
-# ---- Values of parameters ----
-
-# Set the number of cores for parallel processing
+len.wnd <- opt$len.wnd
 
 # Path with the consensus output
-if (!is.null(opt$file.pi)) file.pi <- opt$file.pi
+file.pi <- opt$file.pi
 if(!file.exists(file.pi)) stop('File with pi doesn’t exist')
 
 # Path with the figures folder
-if (!is.null(opt$path.figures)) path.figures <- opt$path.figures
+path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 
-
-len.wnd = 200000
-
 pi.acc = read.table(file.pi, header = 1)
-
 pi.acc = piVCF(pi.acc, len.wnd)
 
 p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
@@ -67,13 +51,6 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
 
 saveRDS(p.acc, paste0(path.figures, basename(file.pi), '_smooth.rds'))
 
-pokaz('Plot...')
-pdf(paste0(path.figures, basename(file.pi), '_smooth.pdf'), width = 6, height = 1)
-print(p.acc)     
-dev.off()
-# 
-# savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 7, height = 2)
-
-
+savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 6, height = 1)
 
 

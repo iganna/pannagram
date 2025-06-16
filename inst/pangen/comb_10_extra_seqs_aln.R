@@ -180,7 +180,7 @@ for(s.comb in pref.combinations){
       # save(list = ls(), file ="tmp_workspace_extra.RData")
       
       if(length(idx.cons) != ncol(mx.cons)){
-        save(list = ls(), file ="tmp_workspace_extra.RData")
+        # save(list = ls(), file ="tmp_workspace_extra.RData")
         stop('Something is wrong with lengths')
       } 
     } else {
@@ -428,7 +428,7 @@ for(s.comb in pref.combinations){
               pp = mx.comb[jrow,]
               pp = pp[pp != 0]
               if(is.unsorted(pp)){
-                save(list = ls(), file ="tmp_workspace_ws1.RData")
+                # save(list = ls(), file ="tmp_workspace_ws1.RData")
                 stop('WRONG SORTING')
               }
               
@@ -503,7 +503,7 @@ for(s.comb in pref.combinations){
                 s2 = seq2nt(df.sup$V9[jrow])
                 
                 if(sum(s1 != '-') != (df.sup$V3[jrow] - df.sup$V2[jrow] + 1)){
-                  save(list = ls(), file ="tmp_workspace_wl1.RData")
+                  # save(list = ls(), file ="tmp_workspace_wl1.RData")
                   stop('Wrong len 1')
                 } 
                 if(sum(s2 != '-') != (df.sup$V5[jrow] - df.sup$V4[jrow] + 1)) stop('Wrong len 2')

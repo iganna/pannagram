@@ -1,9 +1,9 @@
 # Create and Alignment in Pangenome coordinates
 suppressMessages({ library(Biostrings)
   library(rhdf5)
-  library('foreach')
+  library(foreach)
   library(doParallel)
-  library("optparse")
+  library(optparse)
   library(pannagram)
 })
 
@@ -11,12 +11,10 @@ suppressMessages({ library(Biostrings)
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
+  make_option("--path.features.msa", type = "character", default = NULL,
+              help = "Path to msa dir (features)"),
   make_option(c("--ref.pref"), type="character", default=NULL, 
               help="prefix of the reference file", metavar="character"),
-  make_option(c("--path.chromosomes"), type="character", default=NULL, 
-              help="path to directory with chromosomes", metavar="character"),
-  make_option(c("--path.cons"), type="character", default=NULL, 
-              help="path to directory with the consensus", metavar="character"),
   make_option(c("-c", "--cores"), type = "integer", default = 1, 
               help = "number of cores to use for parallel processing", metavar = "integer"),
   make_option(c("--aln.type"), type="character", default="default", 
@@ -36,18 +34,17 @@ myCluster <- makeCluster(num.cores, type = "PSOCK")
 registerDoParallel(myCluster)
 
 # Reference genome
-if (is.null(opt$ref.pref)) {
+if (is.null(opt$ref.pref) || opt$ref.pref == "NULL") {
   stop("ref.pref is NULL")
 } else {
   ref.pref <- opt$ref.pref
 }
 
-if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
 
-path.seq = paste0(path.cons, 'seq/')
+path.seq = paste0(path.features.msa, 'seq/')
 
-path.aln = paste0(path.cons, 'aln_pangen/')
+path.aln = paste0(path.features.msa, 'aln_pangen/')
 if (!dir.exists(path.aln)) dir.create(path.aln)
 
 # Alignment prefix
@@ -68,7 +65,7 @@ gr.break.b = '/break'
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", 'msa_', ".*", '_ref_', ref.pref)
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub("msa_", "", files)
 pref.combinations <- sub("_ref.*$", "", pref.combinations)
 pref.combinations <- pref.combinations[grep("^[0-9]+_[0-9]+$", pref.combinations)]

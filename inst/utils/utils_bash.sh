@@ -84,15 +84,6 @@ pokaz_help() {
     pokaz_message "< Welcome to Hellp >"
 }
 
-
-# Create directory if not exists
-make_dir() {
-    local path_name="$1"
-    if [ ! -d "$path_name" ]; then
-        mkdir -p "$path_name"
-    fi
-}
-
 help_in_box() {
     print_fancy_frame "Get help by running: ${0##*/} -h"
 }
@@ -151,4 +142,25 @@ require_arg() {
         echo "Error: $1 requires an argument" >&2
         exit 1
     fi
+}
+
+joinpath() {
+    local joined=""
+    local arg
+    local first=1
+
+    for arg in "$@"; do
+        if [[ $first -eq 1 ]]; then
+            joined="${arg%/}"
+            first=0
+        else
+            if [[ "$arg" == /* ]]; then
+                pokaz_error "Error: argument '$arg' should not start with a '/'" >&2
+                exit 1
+            fi
+            joined="${joined%/}/${arg#/}"
+        fi
+    done
+
+    echo "$joined"
 }

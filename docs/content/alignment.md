@@ -3,10 +3,10 @@
 
 Before running the example, define the key working paths in the command line:
 - `PATH_DATA` - the path to the data folder
-- `PATH_OUT` - the path to the output directory
+- `PATH_PROJECT` - the path to the output directory
 
 > ⚠️ **Warning:**  
-> Ensure that `PATH_OUT` is set to a completely new folder. Existing files in this directory may be overwritten.
+> Ensure that `PATH_PROJECT` is set to a completely new folder. Existing files in this directory may be overwritten.
 
 ## Preliminary mode
 
@@ -14,16 +14,28 @@ This mode might be useful for quickly reviewing the data.
 As a result, you will get a visualization of draft reference-based alignments.
 To set up the reference, please define the `REF_NAME` variable (basename without extension).
 And run Pannagram in preliminary mode:
+```shell
+pannagram -pre \
+    -path_in ${PATH_DATA} \
+    -path_out ${PATH_PROJECT} \
+    -ref ${REF_NAME} \
+    -cores 8
 ```
-conda activate pannagram
-pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -ref ${REF_NAME} -pre 
-```
-<!-- pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -nchr 1 -log 2 -ref ${REF_NAME} -accessions ${FILE_ACC} -->
 
-The result is pairwise dot plots in PDF format:
-```
-cd "${PATH_OUT}plots/plots_${REF_NAME}/"
-```
+The result is pairwise dot plots in PDF format can be found in `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`:
+
+<div style="display: flex; width: 90%; height: auto;">
+<img
+    src="../images/pre2.png"
+    alt="Second image"
+    style="width: 50%; object-fit: cover;"
+/>
+<img
+    src="../images/pre1.png"
+    alt="First image"
+    style="width: 50%; object-fit: cover;"
+/>
+</div>
 
 These plots are useful for deciding in which mode Pannagram should be used:
 - `-one2one`, when all chromosomes in all genomes are sorted in the same order and should be aligned one-to-one
@@ -35,7 +47,7 @@ These plots are useful for deciding in which mode Pannagram should be used:
 > 3. If certain accessions appear suspicious based on visual inspection, and you decide not to analyze them, create a file called `FILE_ACC` that contains only the accessions you wish to analyze, with each accession listed on a separate line. For all further analyses, use the flag `-accessions ${FILE_ACC}` in every command.
 
 > ⚠️ **Warning:**  
-> If you have modified the genome-files after the preliminary mode, please **delete** the `PATH_OUT` folder completely before building the alignment.
+> If you have modified the genome-files after the preliminary mode, please **delete** the `PATH_PROJECT` folder completely before building the alignment.
 
 ## Alignment modes
 
@@ -45,31 +57,28 @@ If they differ — for instance, if the genome files contain not only chromosome
 ### Reference-based mode
 
 This mode produces the alignmnet of all genomes to the reference genome:
-```
-conda activate pannagram
-pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8 -ref ${REF_NAME} 
+```shell
+pannagram \
+    -path_in '${PATH_DATA}' \
+    -path_out '${PATH_PROJECT}' \
+    -ref '<reference genome filename with no FASTA suffix>' \
+    -cores 8
 ```
 
-The result files are located at and called `ref_*.h5`. The prefix `ref` is crucial for the `analysis.sh` script.
+The result files are located at and called `ref_*.h5`. The prefix `ref` is crucial for the `features` script.
 ```
-PATH_ALN="${PATH_OUT}intermediate/consensus/"
-cd ${PATH_ALN}
-ls -lrt ref*
+PATH_ALN="${PATH_PROJECT}/features/msa/"
+ls -lrt ${PATH_ALN}/ref*
 ```
 
 ### REFERENCE-FREE mode
 
 This mode doesn't require specification of the reference genome.
-```
-conda activate pannagram
-pannagram -path_in ${PATH_DATA} -path_out ${PATH_OUT} -cores 8
-```
-
-The result files are located at and called `msa_*.h5`. The prefix `msa` is crucial for the `analysis.sh` script.
-```
-PATH_ALN="${PATH_OUT}"
-cd ${PATH_ALN}
-ls -lrt msa*
+```shell
+pannagram \
+    -path_in ${PATH_DATA}\
+    -path_out ${PATH_PROJECT} \
+    -cores 8
 ```
 
 > 💡 **Tips:**  

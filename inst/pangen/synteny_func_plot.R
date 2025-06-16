@@ -7,9 +7,11 @@
 #' @param height The height of the PDF file in inches (default is 10)
 #' @export
 savePDF <- function(geom, path = '.', name='some', width=10, height=10){
-  pdf(file.path(path, paste0(name, ".pdf")), width=width, height=height)
-  print(geom)
-  dev.off()
+  invisible(suppressMessages({
+    pdf(file.path(path, paste0(name, ".pdf")), width=width, height=height)
+    print(geom)
+    dev.off()
+  }))
 }
 
 #' Save a ggplot2 plot to a PNG file
@@ -22,9 +24,11 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 #' @param res The resolution of the PNG file in dots per inch (default is 300)
 #' @export
 savePNG <- function(geom, path = '.', name='some', width=10, height=10, res=300){
-  png(file.path(path, paste0(name, ".png")), width=width, height=height, units='in', res=res)
-  print(geom)
-  dev.off()
+  invisible(suppressMessages({
+    png(file.path(path, paste0(name, ".png")), width=width, height=height, units='in', res=res)
+    print(geom)
+    dev.off()
+  }))
 }
 
 #' Get unique file prefixes in a given path

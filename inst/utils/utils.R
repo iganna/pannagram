@@ -1443,7 +1443,11 @@ idxDuplicates <- function(x){
 #' @author Anna A. Igolkina 
 #' @export
 writeGFF <- function(gff, file){
-  write.table(gff[,1:9], file, quote = F, row.names = F, col.names = F, sep = '\t')
+  gff.header <- c("##gff-version 3")
+  writeLines(gff.header, con = file)
+  write.table(gff[,1:9], file,
+              quote = FALSE, row.names = FALSE,
+              col.names = FALSE, sep = "\t", append = TRUE)
 }
 
 

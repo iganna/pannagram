@@ -1,13 +1,14 @@
 # Combine all alignments together into the final one
 
 suppressMessages({
-library(rhdf5)
-library('foreach')
-library(doParallel)
-library("optparse")
+  library(rhdf5)
+  library(foreach)
+  library(doParallel)
+  library(optparse)
+})
+
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
-})
 
 # ***********************************************************************
 # ---- Command line arguments ----
@@ -15,17 +16,17 @@ source(system.file("pangen/comb_func_mafft_refine.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.mafft.out", type = "character", default = NULL, help = "Path to directory where mafft results are"),
-  make_option("--path.cons",      type = "character", default = NULL, help = "Path to directory with the consensus"),
-  make_option("--cores",          type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--path.log",       type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",      type = "character", default = NULL, help = "Level of log to be shown on the screen")
+  make_option("--path.mafft.out",   type = "character", default = NULL, help = "Path to directory where mafft results are"),
+  make_option("--path.features.msa",type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",   type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  
+  make_option("--cores",            type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",         type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
 
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser, args = args);
-
-# print(opt)
+opt_parser = OptionParser(option_list=option_list)
+opt = parse_args(opt_parser, args = args)
 
 n.flank = 30
 max.block.elemnt = 3 * 10^ 6
@@ -49,14 +50,24 @@ aln.type.out = aln.type.msa
 num.cores <- opt$cores
 
 if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
+
+# Path with the MSA output (features)
+path.features.msa <- opt$path.features.msa
+path.inter.msa <- opt$path.inter.msa
+
+if (is.null(path.features.msa) || is.null(path.inter.msa)) {
+  stop("Error: both --path.features.msa and --path.inter.msa must be provided")
+}
+
+if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 
 # ***********************************************************************
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.in, ".*")
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -76,7 +87,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
 
   # Get accessions
-  file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
+  file.comb = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -214,7 +225,7 @@ for(s.comb in pref.combinations){
   
   # ---- Short alignments ----
   pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
-  file.msa.res = paste0(path.cons, 'aln_short_', s.comb, '.rds')
+  file.msa.res = paste0(path.inter.msa, 'aln_short_', s.comb, '.rds')
   if(file.exists(file.msa.res)){
     msa.res = readRDS(file.msa.res)
     msa.res$len = unlist(lapply(msa.res$aln, nrow))
@@ -237,7 +248,7 @@ for(s.comb in pref.combinations){
 
   # ---- Singletons alignments ----
   pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
-  file.single.res = paste0(path.cons, 'singletons_', s.comb, '.rds')
+  file.single.res = paste0(path.inter.msa, 'singletons_', s.comb, '.rds')
   if(file.exists(file.single.res)){
     single.res = readRDS(file.single.res)
     
@@ -272,7 +283,7 @@ for(s.comb in pref.combinations){
     single.res = data.frame()
   }
 
-  pokaz(1)
+  pokaz("Checkpoint 1", file=file.log.main, echo=echo.main)
   
   # ---- Analysis of positions ----
   # Here I wouls like fo find function of positions corresponcences between 4 things: 
@@ -287,7 +298,7 @@ for(s.comb in pref.combinations){
   
   fp.main = (1:base.len) + n.shift
   
-  pokaz(2)
+  pokaz("Checkpoint 2", file=file.log.main, echo=echo.main)
   
   # -- 
   # Singletons
@@ -301,7 +312,7 @@ for(s.comb in pref.combinations){
     }
   }
 
-  pokaz(3)
+  pokaz("Checkpoint 3", file=file.log.main, echo=echo.main)
   # save(list = ls(), file = "tmp_workspace_3_oo.RData")
   
   # Short
@@ -311,19 +322,19 @@ for(s.comb in pref.combinations){
       n.pos = msa.res$len[i]
       fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
     }    
-    pokaz(4)
+    pokaz("Checkpoint 4", file=file.log.main, echo=echo.main)
     
     # Check short
     for(i in 1:length(msa.res$len)){
       if(is.null(msa.res$aln[[i]])) next
       if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop(paste0('Short', i)) 
       }
     }
   }
 
-  pokaz(5)
+  pokaz("Checkpoint 5", file=file.log.main, echo=echo.main)
   
   # Long
   fp.long = list()
@@ -353,7 +364,7 @@ for(s.comb in pref.combinations){
   pos.delete = pos.delete.all
 
   if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)){
-    save(list = ls(), file = 'tmx_workspace_step18.RData')
+    # save(list = ls(), file = 'tmx_workspace_step18.RData')
     stop('Wrong identification of positions to delete')
   } 
   
@@ -366,8 +377,8 @@ for(s.comb in pref.combinations){
   # Check-points
   fp.add = c(unlist(fp.single), unlist(fp.short), unlist(fp.long))
   if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) {
-    save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
-    stop('Something if wrotng with positions; Point A')
+    # save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
+    stop('Something is wrong with positions; Point A')
   } 
   # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
   
@@ -378,7 +389,7 @@ for(s.comb in pref.combinations){
   # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
   # pos.block.end[length(pos.block.end)] = base.len
   
-  file.res = paste0(path.cons, aln.type.out, s.comb,'.h5')
+  file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)
   h5createFile(file.res)
   
@@ -400,7 +411,6 @@ for(s.comb in pref.combinations){
     if(length(single.res$len) != 0){
       for(i in 1:length(single.res$len)){
         if(single.res$pos.beg[i, acc] != 0){
-          # if(i == 2) stop('670')
           pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
           pos = pos[-c(1, length(pos))]
           
@@ -410,7 +420,7 @@ for(s.comb in pref.combinations){
       }   
       v.aln.nozero = v.aln[v.aln != 0]
       if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop('1: Duplicated positions in Singletons')
       } 
     }
@@ -424,7 +434,7 @@ for(s.comb in pref.combinations){
       }
       v.aln.nozero = v.aln[v.aln != 0]
       if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop('2: Duplicated positions in short alignments')
       }       
     }
@@ -439,7 +449,7 @@ for(s.comb in pref.combinations){
       }      
       v.aln.nozero = v.aln[v.aln != 0]
       if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        save(list = ls(), file = "tmp_workspace.RData")
+        # save(list = ls(), file = "tmp_workspace.RData")
         stop('3: Duplicated positions in long alignments')
       } 
     }
@@ -464,7 +474,7 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste0(path.cons, 'stat_coverage.rds'))
+saveRDS(stat.comb, paste0(path.inter.msa, 'stat_coverage.rds'))
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 

@@ -17,36 +17,29 @@ args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
   make_option("--file.pi",    type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures")
+  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--path.snp", type = "character", default = NULL, help = "Path to snp dir")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-max.len.gap = 20000
-
-# print(opt)
-
-# ***********************************************************************
-# ---- Logging ----
-
-source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 
 # ***********************************************************************
 # ---- Values of parameters ----
 
-# Set the number of cores for parallel processing
+path.snp <- opt$path.snp
+if (!dir.exists(path.snp)) stop('Folder `path.snp` does not exist')
 
 # Path with the consensus output
-if (!is.null(opt$file.pi)) file.pi <- opt$file.pi
+file.pi <- opt$file.pi
 if(!file.exists(file.pi)) stop('File with pi doesn’t exist')
-path.snp = paste0(dirname(file.pi), '/')
 file.pi = basename(file.pi)
 
 
 # Path with the figures folder
-if (!is.null(opt$path.figures)) path.figures <- opt$path.figures
+path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 
 
@@ -73,17 +66,11 @@ colnames(dist.mx) <- labels
 rownames(dist.mx) <- labels
 
 h = hclust(as.dist(dist.mx))
-plot(h)
-
 dist.mx = dist.mx[h$order,h$order]
-
 p = heatplot(dist.mx)
 
-pokaz('Plot...')
-pokaz(paste0(path.figures, file.pi, '_dist.pdf'))
-pdf(paste0(path.figures, file.pi, '_dist.pdf'), width = 7, height = 7)
-print(p)
-dev.off()
+savePDF(h, path=path.figures, name=paste0(file.pi, '_dendro'), width = 7, height = 7)
+savePDF(p, path=path.figures, name=paste0(file.pi, '_dist'), width = 7, height = 7)
 
 saveRDS(dist.mx, paste0(path.snp, file.pi, '_dist.rds'))
 

@@ -142,26 +142,30 @@ echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042692195.1\nGCA_042259155.1\nGCA
 # Run Pannagram
 
 ## Preliminary mode
+```shell
+pannagram -pre \
+    -path_in ${PATH_DATA} \
+    -path_out ${PATH_PROJECT} \
+    -ref ${REF_NAME} \
+    -cores 8
 ```
-conda activate pannagram
-${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -ref ${REF_NAME} -cores 8
-```
-The refults are in the folder:
-```
-cd "${PATH_OUT}plots/plots_${REF_NAME}/"
-```
+The refults are in the folder: `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`
 
 ## Reference-free mode
 
 In the case of the *E. coli* test example, the first sequence is the chromosome, while the others are plasmids. To analyze only the chromosome, specify `-nchr 1`. To analyze the chromosome and the first plasmid, use `-nchr 2`, and so on (but please ensure that the homologous plasmids are located in the same order).
+```shell
+pannagram \
+    -path_in ${PATH_DATA}\
+    -path_out ${PATH_PROJECT} \
+    -cores 8 \
+    -accessions ${FILE_ACC}
 ```
-conda activate pannagram
-${PATH_PAN}pannagram.sh -path_in ${PATH_DATA} -path_out ${PATH_OUT} -accessions ${FILE_ACC} -cores 8 -nchr 1
-```
+
 The results are in the folder:
 ```
-PATH_ALN="${PATH_OUT}"
-ls -lrt ${PATH_ALN}msa*
+PATH_ALN="${PATH_PROJECT}/features/msa/"
+ls -lrt ${PATH_ALN}/ref*
 ```
 
 

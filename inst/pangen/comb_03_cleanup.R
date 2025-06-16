@@ -17,10 +17,11 @@ source(system.file("utils/utils.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons",  type = "character", default = NULL, help = "Path to consensus directory"),
-  make_option("--cores",      type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
-  make_option("--path.log",   type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",  type = "character", default = NULL, help = "Level of log to be shown on the screen")
+  make_option("--path.features.msa",  type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",     type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  make_option("--cores",              type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
+  make_option("--path.log",           type = "character", default = NULL, help = "Path for log files"),
+  make_option("--log.level",          type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -48,14 +49,17 @@ num.cores.max = 10
 num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
 
 # Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
+if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop('path_features_msa directory doesn’t exist')
+
+if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
+if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.in, ".*\\.*h5$")
-files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -85,9 +89,9 @@ loop.function <- function(s.comb,
   }
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  pokaz('Combination', s.comb)
-  file.comb.in = paste0(path.cons, aln.type.in, s.comb,'.h5')
-  file.comb.out = paste0(path.cons, aln.type.out, s.comb,'.h5')
+  pokaz('Combination', s.comb, file=file.log.loop, echo=echo.loop)
+  file.comb.in = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
+  file.comb.out = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   
   if(!file.exists(file.comb.in)){
     stop('File with combined references doesn’t exist')
@@ -107,10 +111,10 @@ loop.function <- function(s.comb,
   accessions = groups$name[groups$group == gr.accs.b]
   
   # ---- Cleanup ----
-  pokaz('Cleanup..')
+  pokaz('Cleanup..', file=file.log.loop, echo=echo.loop)
   idx.nonzero = 0
   for(acc in accessions){
-    pokaz('Accession', acc)
+    pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.in, s.acc)
@@ -151,12 +155,12 @@ loop.function <- function(s.comb,
   }
   
   # ---- Remove zeros ----
-  pokaz('Remove zeros..')
+  pokaz('Remove zeros..', file=file.log.loop, echo=echo.loop)
   idx.nonzero = idx.nonzero > 0
   # pokaz(length(idx.nonzero), sum(idx.nonzero))
   
   for(acc in accessions){
-    pokaz('Accession', acc)
+    pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
@@ -171,10 +175,10 @@ loop.function <- function(s.comb,
   }
   
   # ---- Breaks ----
-  pokaz('Find breaks..')
+  pokaz('Find breaks..', file=file.log.loop, echo=echo.loop)
   idx.breaks = c()
   for(acc in accessions){
-    pokaz('Accession', acc)
+    pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
@@ -224,7 +228,7 @@ loop.function <- function(s.comb,
     idx.breaks = rbind(idx.breaks, df)
   }
   
-  file.breaks = paste0(path.cons, 'breaks_', s.comb,'.rds')
+  file.breaks = paste0(path.inter.msa, 'breaks_', s.comb,'.rds')
   saveRDS(idx.breaks, file.breaks)
   
   rmSafe(idx.breaks)

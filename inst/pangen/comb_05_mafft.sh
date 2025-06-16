@@ -135,6 +135,3 @@ export path_mafft_out
 
 find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" ! -name "*_extra.fasta" | parallel -j $cores mafft_task {} ${log_path}
 
-
-
-echo "  Done!"
