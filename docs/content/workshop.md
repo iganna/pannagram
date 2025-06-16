@@ -24,12 +24,12 @@ cd pannagram
 ### Setup paths
 
 Specity the absolute path to working directory:
-```
+```shell
 PATH_BASE="<enter absolute path>/"
 ```
 
 Specify other directories:
-```
+```shell
 PATH_TOOLS="${PATH_BASE}"
 PATH_DATA="${PATH_BASE}genomes/"
 PATH_PROJECT="${PATH_BASE}alignment/"
@@ -39,18 +39,18 @@ FILE_IDS="${PATH_DATA}ids.txt"
 ```
 
 ### Create the files with IDs
-```
+```shell
 nano ${FILE_IDS}
 ```
 
 ### Download poputils
-```
+```shell
 cd ${PATH_TOOLS}
 git clone https://github.com/iganna/poputils.git
 ```
 
 ### Download genomes
-```
+```shell
 cd ${PATH_TOOLS}poputils/genomes
 ./genbank_download_list.sh -f ${FILE_IDS} -p ${PATH_DATA}
 
@@ -61,12 +61,12 @@ ls -l ${PATH_DATA}*fasta
 ### Preliminary mode
 
 Specify the reference genome (one id from `FILE_IDS`):
-```
+```shell
 REF_NAME=""
 ```
 
 Run the Pannagram:
-```
+```shell
 pannagram -path_in ${PATH_DATA} -path_out ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
 ```
 
@@ -79,7 +79,7 @@ cd ${PATH_PROJECT}plots/synteny_pairwise/${REF_NAME}
 ### Reference-free mode
 
 Remove the preliminary run:
-```
+```shell
 cd ${PATH_BASE}
 mv ${PATH_PROJECT} $(basename "$PATH_PROJECT")_pre
 # rm -r ${PATH_PROJECT}
@@ -91,15 +91,15 @@ pannagram -path_in ${PATH_DATA} -path_out ${PATH_PROJECT} -cores 8 -nchr 1
 ```
 
 Check the visualisation:
-```
+```shell
 cd ${PATH_PROJECT}plots/synteny_pairwise/${REF_NAME}
 ```
 
 ## 3. Get all features: synteny blocks, SNPs, SVs and SV-graph
 
-Run the analysis:
+Run the features script:
 ```
-analys -path_in ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
+features -path_in ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
 ```
 
 Locations of some important result files:
@@ -192,7 +192,7 @@ aln.seq <- cutAln(path.proj=path.project,
 
 Visualize alignment in the window:
 
-```
+```R
 p.nucl <- msaplot(aln.seq)
 p.diff <- msadiff(aln.seq)
 
@@ -245,16 +245,23 @@ write.table(gff2,
 
 ### Against the folder with genomes
 
-```
-simsearch -in_seq "${PATH_MSA}sv/seq_sv_big.fasta" -on_path ${PATH_DATA}  -out "${PATH_MSA}sv/on_path/"
-cd "${PATH_MSA}sv/on_path/"
+```shell
+simsearch \
+    -in_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
+    -on_path ${PATH_DATA} \
+    -out "${PATH_BASE}/simsearch"
+cd "${PATH_BASE}/simsearch"
 ls -lrt
+less -S simsearch.total_cnt_85_0.85.txt
 ```
 
 ### Against the set of sequences
 
-```
-simsearch -in_seq ${PATH_MSA}sv/seq_sv_big.fasta -on_seq <file_with_sequences> -out ${PATH_MSA}sv/on_seq/
+```shell
+simsearch \
+    -in_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
+    -on_seq '<file_with_sequences>' \
+    -out "${PATH_BASE}/simsearch"
 ```
 
 
