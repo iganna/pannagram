@@ -59,17 +59,16 @@ If they differ — for instance, if the genome files contain not only chromosome
 This mode produces the alignmnet of all genomes to the reference genome:
 ```shell
 pannagram \
-    -path_in '<directory with your genomes as FASTA files>' \
-    -path_out '<directory to put the results in (will be created)>' \
+    -path_in '${PATH_DATA}' \
+    -path_out '${PATH_PROJECT}' \
     -ref '<reference genome filename with no FASTA suffix>' \
     -cores 8
 ```
 
 The result files are located at and called `ref_*.h5`. The prefix `ref` is crucial for the `features` script.
 ```
-PATH_ALN="${PATH_PROJECT}/msa/"
-cd ${PATH_ALN}
-ls -lrt ref*
+PATH_ALN="${PATH_PROJECT}/features/msa/"
+ls -lrt ${PATH_ALN}/ref*
 ```
 
 ### REFERENCE-FREE mode
@@ -77,16 +76,9 @@ ls -lrt ref*
 This mode doesn't require specification of the reference genome.
 ```shell
 pannagram \
-    -path_in '<directory with your genomes as FASTA files>' \
-    -path_out '<directory to put the results in (will be created)>' \
+    -path_in ${PATH_DATA}\
+    -path_out ${PATH_PROJECT} \
     -cores 8
-```
-
-The result files are located at and called `msa_*.h5`. The prefix `msa` is crucial for the `features` script.
-```
-PATH_ALN="${PATH_PROJECT}"
-cd ${PATH_ALN}
-ls -lrt msa*
 ```
 
 > 💡 **Tips:**  
