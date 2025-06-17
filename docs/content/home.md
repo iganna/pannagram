@@ -1,20 +1,17 @@
 
 # Pannagram
 
-<div style="text-align: center;">
-  <img
-    src="../images/pannagram_scheme.png"
-    alt="Description"
-    style="width: 100%; height: auto;"
-  />
-</div>
+<img
+    src="images/pannagram_scheme.png"
+    style="width: 90%; object-fit: cover;"
+/>
 
-
-<div style="width: 100%; margin: 0 auto;">
+<div style="width: 90%;">
 
 **Pannagram** is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes. A project consists of several **Bash** pipelines for streamline genomic analisys and an **R** library with tools for further analysis and visualization.
 </div>
 
+The code is availible in [GitHub repo](https://github.com/iganna/pannagram/).
 
 ## Acknowledgements
 

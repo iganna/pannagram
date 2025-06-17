@@ -7,6 +7,6 @@ features -path_in '${PATH_PROJECT}' -blocks
 Results you will find in `${PATH_PROJECT}/plots/synteny_pangenome`:
 
 <img
-    src="../images/pangenome_alignment.png"
+    src="images/pangenome_alignment.png"
     style="width: 90%; object-fit: cover;"
 />

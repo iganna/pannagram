@@ -7,6 +7,6 @@ features -path_in '${PATH_PROJECT}' -snp -snp_pi
 Results you will find in `${PATH_PROJECT}/plots/snp`:
 
 <img
-    src="../images/snp_pi.png"
+    src="images/snp_pi.png"
     style="width: 90%; object-fit: cover;"
 />
