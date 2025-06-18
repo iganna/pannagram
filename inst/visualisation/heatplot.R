@@ -27,7 +27,9 @@ heatplot <- function(tbl,
                      fill.lab=NULL,
                      cord.fix = F,
                      add.label = F,
-                     to.norm = 'none'
+                     to.norm = 'none',
+                     ynames=T,
+                     xnames=T
                      ) {
   
   cols.list = list('lila'     = c('#F5EDED', '#CB80AB', '#8967B3', '#624E88'),
@@ -109,6 +111,12 @@ heatplot <- function(tbl,
   if(cord.fix){
     p = p + coord_fixed()
   }
+  
+  p <- p +
+    theme(
+      axis.text.y = if (ynames) element_text() else element_blank(),
+      axis.text.x = if (xnames) element_text() else element_blank()
+    )
   
   
   return(p)

@@ -1,6 +1,5 @@
 
 # Pannagram
-
 <img
     src="images/pannagram_scheme.png"
     style="width: 90%; object-fit: cover;"

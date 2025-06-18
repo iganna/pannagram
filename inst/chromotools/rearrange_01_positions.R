@@ -94,6 +94,7 @@ file.ref.len = paste0(path.chr, ref, '_chr_len.txt', collapse = '')
 if(!file.exists(file.ref.len)) stop('File', file.ref.len, 'does not exist.')
 ref.len = read.table(file.ref.len, header = 1)
 min.overlap = 0.01
+min.overlap = 0.001
 min.overlap.fragment = 0.01
 
 
@@ -141,6 +142,7 @@ for(acc in accessions){
       x = glueZero(x)
       
       p = sum(abs(x$V5 - x$V4) + 1) / i.chr.ref.len
+      # pokaz(i.chr.ref, i.chr.acc, p)x
       if(p < min.overlap) next
       x.all = rbind(x.all, x)
       # mx.coverage[i.chr.ref, i.chr.acc] = sum(abs(x$V3 - x$V2) + 1)
