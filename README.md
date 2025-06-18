@@ -1,17 +1,14 @@
-<!-- <p align="left">
-<img src="images/pannagram_logo.png" width="30%" height="auto">
-</p> -->
-
 # Pannagram
 
-<p align="left">
-<img src="images/pannagram_scheme.png" width="100%" height="auto">
-</p>
+<img
+    src="docs/images/pannagram_scheme.png"
+    style="width: 90%; object-fit: cover;"
+/>
 
-**Pannagram** is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes.
+<div style="width: 90%;">
 
-**Pannagram** as a project consists of several **Bash** pipelines for streamline genomic analisys and an **R** library with tools for further analysis and visualization.
-
+**Pannagram** is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes. A project consists of several **Bash** pipelines for streamline genomic analisys and an **R** library with tools for further analysis and visualization.
+</div>
 
 Documentation can be found at [pannagram-page](https://iganna.github.io/pannagram/).
 
@@ -232,20 +229,15 @@ After running `pannagram` pipeline you are able to get more features of your dat
             height=5)
     ```
 4. You'll get pictures similar to:
-    <div style="display: flex; gap: 0.5em;">
-    <img
-        src="images/msaplot.png"
-        alt="First image"
-        style="width: 50%; object-fit: cover;"
-    />
-    <img
-        src="images/msaplot_diff.png"
-        alt="Second image"
-        style="width: 50%; object-fit: cover;"
-    />
-    </div>
 
-    >For more examples and detailed documentation visit [pannagram-page](https://iganna.github.io/pannagram/).
+    <table align='center'>
+    <t0>
+        <td><img src="docs/images/msaplot.png"></td>
+        <td><img src="docs/images/msaplot_diff.png"></td>
+    </tr>
+    </table>
+
+    >For more examples and detailed documentation visit [Docuentation Pages](https://iganna.github.io/pannagram/).
 
 
 ## Acknowledgements

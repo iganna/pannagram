@@ -9,9 +9,10 @@ features -path_in '${PATH_PROJECT}' \
     -cores 8
 ```
 Results can be found in `${PATH_PROJECT}/features/sv`
-Newly generated images will appear in `${PATH_PROJECT}/plots/sv`
+
+Newly generated images will appear in `${PATH_PROJECT}/plots/sv`:
 
 <img
-    src="../images/sv_graph.png"
+    src="images/sv_graph.png"
     style="width: 90%; object-fit: cover;"
 />

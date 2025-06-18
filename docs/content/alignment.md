@@ -24,18 +24,12 @@ pannagram -pre \
 
 The result is pairwise dot plots in PDF format can be found in `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`:
 
-<div style="display: flex; width: 90%; height: auto;">
 <img
-    src="../images/pre2.png"
-    alt="Second image"
-    style="width: 50%; object-fit: cover;"
+    src="images/pre1.png"
+    style="width: 90%; object-fit: cover;"
 />
-<img
-    src="../images/pre1.png"
-    alt="First image"
-    style="width: 50%; object-fit: cover;"
-/>
-</div>
+
+
 
 These plots are useful for deciding in which mode Pannagram should be used:
 - `-one2one`, when all chromosomes in all genomes are sorted in the same order and should be aligned one-to-one
