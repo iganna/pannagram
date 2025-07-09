@@ -1168,7 +1168,7 @@ blastres2gff <- function(v.blast, gff.file, to.sort = T){
                                    ';query=',v.blast$query,
                                    ';len=', v.blast$coverage.g,
                                    ';sim=', round(v.blast$sim, 2),
-                                   ';cov=', v.blast$coverage.q))
+                                   ';cov=', round(100 * v.blast$coverage.q / v.blast$coverage.g, 2)))
   
   # Sorting
   if(to.sort){
