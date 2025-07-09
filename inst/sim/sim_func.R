@@ -215,7 +215,7 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
   v.sim$V4[idx.tmp] = v.sim$V5[idx.tmp]
   v.sim$V5[idx.tmp] = tmp
 
-  colnames(v.sim) <- c('query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g', 'strand')
+  colnames(v.sim) <- c('query', 'beg.q', 'end.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g', 'strand')
   
   return(v.sim)
 }

@@ -1142,7 +1142,7 @@ saveWorkspace <- function(file.ws){
 #' @description
 #' `blastres2gff` converts a data frame containing BLAST results into a GFF formatted file.
 #'
-#' @param v.blast A data frame containing the BLAST results. Expected columns are 'query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g' and 'strand'.
+#' @param v.blast A data frame containing BLAST results. Mandatory columns are: 'query', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g' and 'strand'.
 #' @param gff.file The file path where the GFF output will be saved.
 #' @param to.sort Boolean value indicating whether the output should be sorted. If `TRUE` (default), 
 #' the output is sorted by column 4 and then by column 1. If `FALSE`, the output is not sorted.
@@ -1155,7 +1155,7 @@ saveWorkspace <- function(file.ws){
 #' 
 #' @author Anna A. Igolkina 
 #' @export
-blastres2gff <- function(v.blast, gff.file, to.sort = T){
+blastres2gff <- function(v.blast, gff.file, to.sort = TRUE){
   v.gff = data.frame(col1 = v.blast$genome.chr,
                      col2 = 'blast2gff',
                      col3 = 'query',
