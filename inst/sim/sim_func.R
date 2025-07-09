@@ -208,6 +208,12 @@ findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
     
     v.sim = rbind(v.sim, df.cover[idx.include, colnames(v.sim)])
   }
+
+  # Sort V4 and V5 positions
+  idx.tmp = v.sim$V4 > v.sim$V5
+  tmp = v.sim$V4[idx.tmp]
+  v.sim$V4[idx.tmp] = v.sim$V5[idx.tmp]
+  v.sim$V5[idx.tmp] = tmp
   return(v.sim)
 }
 

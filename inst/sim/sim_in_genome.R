@@ -69,15 +69,6 @@ v$len1 = len1
 # ---- Similarity analysis ----
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, coverage=coverage, echo = F)
 
-# Sort V4 and V5 positions
-idx.tmp = res$V4 > res$V5
-# print(sum(idx.tmp))
-# print(sum(res$strand == '-'))
-
-tmp = res$V4[idx.tmp]
-res$V4[idx.tmp] = res$V5[idx.tmp]
-res$V5[idx.tmp] = tmp
-
 if(nrow(res) == 0){
   quit(save = "no")
 }
