@@ -42,8 +42,6 @@ files <- list.files(path = output.dir, pattern = paste0(".*",sim.cutoff,'_', cov
 if(length(files) == 0) stop('No files with results')
 # print(files)
 
-coverage = coverage / 100
-
 total.cnt.list = list()
 total.cnt.names = c()
 
