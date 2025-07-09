@@ -75,7 +75,6 @@ if(nrow(res) == 0){
 
 blastres2gff(res, paste0(output.file, '.gff'))
 
-colnames(res) <- c('query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g', 'strand')
 res = res[order(res$genome.chr),]
 res = res[order(res$query),]
 write.table(res, paste0(output.file, '.table'), quote = F, row.names = F, col.names = T, sep = '\t')

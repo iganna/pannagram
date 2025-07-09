@@ -1142,7 +1142,7 @@ saveWorkspace <- function(file.ws){
 #' @description
 #' `blastres2gff` converts a data frame containing BLAST results into a GFF formatted file.
 #'
-#' @param v.blast A data frame containing the BLAST results. Expected columns are V1, V4, V5, V7, V8, len1, and strand.
+#' @param v.blast A data frame containing the BLAST results. Expected columns are 'query', 'beg.q', 'eng.q', 'beg.g', 'end.g', 'sim', 'coverage.q', 'genome.chr', 'coverage.g' and 'strand'.
 #' @param gff.file The file path where the GFF output will be saved.
 #' @param to.sort Boolean value indicating whether the output should be sorted. If `TRUE` (default), 
 #' the output is sorted by column 4 and then by column 1. If `FALSE`, the output is not sorted.
@@ -1156,18 +1156,19 @@ saveWorkspace <- function(file.ws){
 #' @author Anna A. Igolkina 
 #' @export
 blastres2gff <- function(v.blast, gff.file, to.sort = T){
-  v.gff = data.frame(col1 = v.blast$V8,
+  v.gff = data.frame(col1 = v.blast$genome.chr,
                      col2 = 'blast2gff',
                      col3 = 'query',
-                     col4 = v.blast$V4,
-                     col5 = v.blast$V5,
+                     col4 = v.blast$beg.g,
+                     col5 = v.blast$end.g,
                      col6 = '.',
                      col7 = v.blast$strand,
                      col8 = '.',
                      col9 = paste0('ID=Q', 1:nrow(v.blast),
-                                   ';query=',v.blast$V1,
-                                   ';len=', v.blast$len1,
-                                   ';coverage=', v.blast$V7))
+                                   ';query=',v.blast$query,
+                                   ';len=', v.blast$coverage.g,
+                                   ';sim=', round(v.blast$sim, 2),
+                                   ';cov=', v.blast$coverage.q))
   
   # Sorting
   if(to.sort){
