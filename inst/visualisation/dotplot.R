@@ -28,7 +28,7 @@
 #'
 #' @export
 #'
-dotplot <- function(seq1, seq2, wsize, nmatch) {
+dotplot <- function(seq1, seq2, wsize=15, nmatch=12) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
   
@@ -87,7 +87,7 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
 #' 
 #' @export
 #'
-dotplot.s <- function(seq1, seq2, wsize, nmatch, ...) {
+dotplot.s <- function(seq1, seq2, wsize=15, nmatch=12, ...) {
   return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
 }
 

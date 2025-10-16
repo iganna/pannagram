@@ -29,7 +29,7 @@
 #' msaplot(aa_sequences, seq.type = 'aa')
 #'
 #' @export
-msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, f.legend=F){
+msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, show.legend=F){
   
   # Colors
   if(is.null(msa.cols)){
@@ -107,8 +107,11 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, f.legend=F){
     xlab(NULL) +
     theme(legend.position = "none")
   
-  if(f.legend){
-    g.msa = g.msa + theme(legend.position = "bottom")
+  if(show.legend){
+    g.msa = g.msa + theme(legend.position = "bottom") + 
+      guides(color = guide_legend(title = NULL),
+             fill = guide_legend(title = NULL, 
+                                 override.aes = list(colour = "black"))) 
   }
   
   return(g.msa)
@@ -138,7 +141,7 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, f.legend=F){
 #' msadiff(sequences, i.ref = 1)
 #'
 #' @export
-msadiff <- function(seqs.mx, i.ref=1){
+msadiff <- function(seqs.mx, i.ref=1, show.legend=F){
   
   seqs.mx = toupper(seqs.mx)
   bin.mx <- t(apply(seqs.mx, 1, function(row) as.integer(row != seqs.mx[i.ref, ]))) + 2
@@ -148,7 +151,8 @@ msadiff <- function(seqs.mx, i.ref=1){
   bin.mx <- t(apply(bin.mx, 1, function(row) values[row]))
   
   b.msa = msaplot(bin.mx,
-                  msa.cols = c("same" = "grey80", "diff" = "grey20", "gap" = "white"))
+                  msa.cols = c("same" = "grey80", "diff" = "grey20", "gap" = "white"),
+                  show.legend = show.legend)
   
   return(b.msa)
   

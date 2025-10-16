@@ -60,7 +60,7 @@ color.len <- c(
 # ***********************************************************************
 # ---- Reading the data ----
 
-file.seqs = paste0(path.sv, 'seq_sv_big.fasta')
+file.seqs = paste0(path.sv, 'seq_sv_large.fasta')
 
 sv.seqs = readFasta(file.seqs)
 

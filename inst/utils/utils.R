@@ -571,7 +571,7 @@ mx2profile <- function(mx, gap.flag = F){
 seq2mx <- function(seq, wsize){
   
   m <- embed(seq, wsize)
-  matrix_seq <- m[, ncol(m):1]
+  matrix_seq <- m[, ncol(m):1, drop = F]
   
   return(matrix_seq)
 }
@@ -870,10 +870,11 @@ revComplSeq <- function(seq){
   
   seq.names = names(seq)
   
-  seq = seq2nt(seq)
-  seq.rc = revCompl(seq)
-  seq.rc = nt2seq(seq.rc)
-  
+  seq.rc = c()
+  for(s in seq){
+    seq.rc = c(seq.rc, nt2seq(revCompl(seq2nt(s))))
+  }
+
   names(seq.rc) = seq.names
   
   return(seq.rc)

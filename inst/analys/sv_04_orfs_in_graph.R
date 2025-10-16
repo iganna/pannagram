@@ -61,7 +61,7 @@ color.len <- c(
 # ---- Reading the data ----
 
 file.partition = paste0(path.sv, 'sv_partition_solved.rds')
-file.seqs = paste0(path.sv, 'seq_sv_big.fasta')
+file.seqs = paste0(path.sv, 'seq_sv_large.fasta')
 
 if(!file.exists(file.partition)){
   pokazAttention('No partitioning was generated, ORFs will not be generated')

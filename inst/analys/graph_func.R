@@ -130,6 +130,44 @@ getGraphComponents <- function(edges){
   return(g.comp)
 }
 
+
+#' Get Louvain Partition of a Graph
+#'
+#' This function takes an edge list, creates an undirected igraph object,
+#' performs Louvain community detection, and returns a vector indicating the
+#' community membership of each node.
+#'
+#' @param edges A data frame or matrix with two columns representing the edge list.
+#' Each row corresponds to an edge between two nodes.
+#' @param directed Logical, whether the input graph should be treated as directed.
+#' Default is \code{TRUE}, but the graph will be converted to undirected internally.
+#'
+#' @return An integer vector of community memberships, where names correspond to node labels.
+#' @examples
+#' \dontrun{
+#' library(igraph)
+#' edges <- data.frame(
+#'   from = c("A", "A", "B", "C"),
+#'   to   = c("B", "C", "C", "D")
+#' )
+#' partition <- getGraphCommunities(edges)
+#' print(partition)
+#' }
+#' @export
+getGraphCommunities <- function(edges) {
+  
+  # igraph_g <- igraph::graph_from_edgelist(as.matrix(edges), directed = TRUE)
+  # igraph_g <- igraph::as_undirected(igraph_g, mode = "collapse")
+  
+  igraph_g <- igraph::graph_from_edgelist(as.matrix(edges), directed = FALSE)
+  
+  louvain_result <- igraph::cluster_louvain(igraph_g) # Perform Louvain community detection
+  
+  return(igraph::membership(louvain_result))
+}
+
+
+
 #' Create a graph from BLAST results
 #'
 #' This function takes BLAST results in tabular format and generates a graph
@@ -436,119 +474,271 @@ refineDirectEdges <- function(edges.compact, echo = T){
 }
 
 
-#' Create a graph from BLAST results
+#' Filter a coverage matrix by various criteria
 #'
-#' This function takes BLAST results in tabular format and generates a graph
+#' Filters a coverage matrix (`mx.cov`) based on coverage percentage, sequence 
+#' length, and minimum copy number.
 #'
-#' @param bl.res The BLAST results in tabular format, basically a table with columns:
-#' V1 and V8 contain names
-#' V2-V3 - positions of match in sequence "query"
-#' V4-V5 - positions of match in sequence "subject"
-#' V6 - similarity from 0 to 100
-#' V7 - length
-#' 
-#' @param sim.cutoff similarity to establish an edge between sequences
-#' this is for both: (1) sequence blast similarity, (2) length similarity.
-#' 
-#' @param i.len.field index for the field, where you see the length of the sequence in names
+#' @param mx.cov Data frame with coverage and length information. Must contain 
+#'   columns: `name.query`, `name.target`, 
+#'            `length.query`, `length.target`,
+#'            `coverage.query`, `coverage.target` .
+#' @param cov.cutoff Integer. Minimum coverage percentage to retain entries (default = NULL).
+#' @param min.len Integer. Minimum sequence length to retain entries (default = NULL).
+#' @param max.len Integer. Maximum sequence length to retain entries (default = NULL).
+#' @param min.copy Integer. Minimum number of copies to retain entries (default = NULL).
 #'
-#' @return A matrix representing the edges of the graph
-#' 
-old_getGraphFromBlast <- function(bl.res, sim.cutoff = 0.85, i.len.field = 5){
-  bl.res = bl.res[bl.res$V1 != bl.res$V8,]
+#' @return A filtered data frame with the same structure as `mx.cov`.
+#' @examples
+#' filtered <- filterCoverageMatrix(mx.cov, cov.cutoff = 80, min.len = 500)
+#' @export
+filterCoverageMatrix <- function(mx.cov,
+                                 cov.cutoff = NULL,
+                                 min.len    = NULL,
+                                 max.len    = NULL,
+                                 min.copy   = NULL,
+                                 names.remove = NULL,
+                                 echo = F) {
   
-  bl.res.init = bl.res
-  bl.res = bl.res[bl.res$V6 >= sim.cutoff * 100,]
+  if(echo){
+    pokaz('Initial number of rows:', nrow(mx.cov))
+  }
   
-  res.nest = findNestedness(bl.res, use.strand = F)
-  
-  message('be careful with extracting sequence lengths, it a positionsl information in their names')
-  res.nest.len = sapply(unique(c(res.nest$V1, res.nest$V8)), function(s) as.numeric(strsplit(s, '\\|')[[1]][i.len.field]))
-  
-  res.nest$len1 = res.nest.len[res.nest$V1]
-  res.nest$len8 = res.nest.len[res.nest$V8]
-  res.nest$p1 = res.nest$C1 / res.nest$len1
-  res.nest$p8 = res.nest$C8 / res.nest$len8
-  
-  res.nest.sim = res.nest[(res.nest$p1 >= sim.cutoff) | 
-                            (res.nest$p8 >= sim.cutoff),]
-  
-  ## Creating the graph
-  
-  # all edges
-  idx = res.nest$p1 >= sim.cutoff
-  edges = cbind(res.nest$V1[idx], res.nest$V8[idx])
-  idx = res.nest$p8 >= sim.cutoff
-  edges = rbind(edges, cbind(res.nest$V8[idx], res.nest$V1[idx]))
-  te.enges.names = unique(c(edges[,1], edges[,2]))
-  
-  # nodes
-  idx = (res.nest$p1 >= sim.cutoff) & (res.nest$p8 >= sim.cutoff)
-  te.nodes = cbind(res.nest$V1[idx], res.nest$V8[idx])
-  
-  te.rest = setdiff(te.enges.names, c(te.nodes[,1], te.nodes[,2]))
-  
-  te.nodes.graph <- igraph::make_graph(t(te.nodes), directed = T)
-  te.nodes.graph <- igraph::simplify(te.nodes.graph)
-  te.nodes.comp <- igraph::components(te.nodes.graph)
-  
-  nodes = data.frame(node = paste0('N', te.nodes.comp$membership), 
-                     te = names(te.nodes.comp$membership))
-  nodes.rest = data.frame(node = paste('R', (1:length(te.rest)), sep = ''), te = te.rest)
-  nodes = rbind(nodes, nodes.rest)
-  
-  rownames(nodes) = nodes$te
-  
-  
-  nodes.cnt = data.frame(cnt = c(table(nodes$node)))
-  nodes.cnt$node = rownames(nodes.cnt)
-  
-  
-  # Redefine edges but with node names
-  idx.endes = (edges[,1] %in% nodes$te) & (edges[,2] %in% nodes$te)
-  b.graph = cbind(nodes[edges[idx.endes,1], 'node'],nodes[edges[idx.endes,2], 'node'])
-  b.graph = unique(b.graph)
-  # b.graph = b.graph[b.graph[,1] != b.graph[,2],]
-  b.graph.uni = b.graph[b.graph[,1] == b.graph[,2],]
-  b.graph = b.graph[b.graph[,1] != b.graph[,2],]
-  
-  length(unique(c(b.graph[,1], b.graph[,2])))
-  
-  b.graph = refineDirectEdges_old(b.graph)
-  
-  return(b.graph)
-}
-
-#' Remove direct edges from a graph. OLD VERSION!!
-#'
-#' This function takes a list of edges and removes direct edges if a longer path exists.
-#' Example list of edges:
-#' (1) -> (2)
-#' (2) -> (3)
-#' (1) -> (3)
-#' 
-#' The edge (1) -> (3) should de removed, because path (1) -> (2) -> (3) exists.
-#'
-#' @param b.graph A list of edges in the form of a matrix (n x 2).
-#' @param echo Logical value for printing progress (default is TRUE).
-#'
-#' @return A list of edges without direct edges
-#'
-old_refineDirectEdges <- function(b.graph, echo = T){
-  # reduce indirect arrows
-  idx.remove = c()
-  for(i.edge in 1:nrow(b.graph)){
+  # ---- Filter by names to remove ----
+  if(!is.null(names.remove)){
+    mx.cov = res.sim[!(mx.cov$name.query %in% names.remove) & 
+                        !(mx.cov$name.target %in% names.remove),]
     
     if(echo){
-      if(i.edge %% 1000 == 0) print(i.edge)
+      pokaz('Number of rows after name filtration:', nrow(mx.cov))
+    }
+  }
+  
+  # ---- Filter by coverage cutoff (percentage) ----
+  if (!is.null(cov.cutoff)) {
+    thr <- cov.cutoff / 100
+    mx.cov2 <- mx.cov[(mx.cov$coverage.query  >= thr) |
+                       (mx.cov$coverage.target >= thr), ]
+    
+    if(echo){
+      pokaz('Number of rows after filtration by coverage:', nrow(mx.cov))
+    }
+  }
+  
+  # ---- Filter by minimum length ----
+  if (!is.null(min.len)) {
+    mx.cov2 <- mx.cov[(mx.cov$length.query  >= min.len) &
+                       (mx.cov$length.target >= min.len), , drop = FALSE]
+    
+    if(echo){
+      pokaz('Number of rows after filtration by minimum length:', nrow(mx.cov))
+    }
+  }
+  
+  # ---- Filter by maximum length ----
+  if (!is.null(max.len)) {
+    mx.cov <- mx.cov[(mx.cov$length.query  <= max.len) &
+                       (mx.cov$length.target <= max.len), , drop = FALSE]
+    
+    if(echo){
+      pokaz('Number of rows after filtration by maximum length:', nrow(mx.cov))
+    }
+  }
+  
+  # ---- Filter by minimum number of copies ----
+  if (!is.null(min.copy)) {
+    
+    if (is.null(cov.cutoff)) {
+      warning("'cov.cutoff' sould be provided to filter by copy-number")
+    }
+    thr <- cov.cutoff / 100
+    
+    mx.cov.equal <- mx.cov[(mx.cov$coverage.query  >= thr) &
+                             (mx.cov$coverage.target >= thr), , drop = FALSE]
+    
+    if (nrow(mx.cov.equal) > 0) {
+      
+      if(min.copy == 2){
+        sv.passed = c(mx.cov.equal$name.query, mx.cov.equal$name.target)
+      } else {
+        # getGraphComponents should return:
+        #   $membership — vector of component IDs (names = vertices)
+        #   $csize      — vector of component sizes (index = component ID)
+        g.comp <- getGraphComponents(mx.cov.equal[, c("name.query", "name.target")])
+        
+        comp.passed <- which(g.comp$csize >= min.copy)
+        sv.passed   <- names(g.comp$membership)[g.comp$membership %in% comp.passed]
+      }
+      
+      mx.cov <- mx.cov[(mx.cov$name.query  %in% sv.passed) &
+                         (mx.cov$name.target %in% sv.passed), , drop = FALSE]        
+      
+    } else {
+      # Return an empty data frame with the same structure if no edges remain
+      mx.cov <- mx.cov[0, , drop = FALSE]
+    }
+    if(echo){
+      pokaz('Number of rows after filtration by copies:', nrow(mx.cov))
+    }
+  }
+  
+  return(mx.cov)
+}
+
+
+#' Filter graph edges by various criteria
+#'
+#' @description
+#' Filters an edge matrix by:
+#' * minimum component size,
+#' * removing inter-community edges,
+#' * removing bridge edges.
+#'
+#' @param edges Two-column edge list (matrix or data.frame).
+#' @param min.comp.size Integer or NULL. Remove edges connected to components smaller than this size.
+#' @param remove.intercommunity Logical. If TRUE, keep only edges inside the same community.
+#' @param remove.bridges Logical. If TRUE, remove bridge edges.
+#'
+#' @return Filtered edge list (matrix).
+#' @examples
+#' \dontrun{
+#' edges <- data.frame(from = c("a","a","b","c","d"),
+#'                     to   = c("b","c","c","d","e"))
+#' filterEdges(edges, min.comp.size = 3,
+#'             remove.intercommunity = TRUE,
+#'             remove.bridges = TRUE)
+#' }
+#' @importFrom igraph graph_from_edgelist simplify bridges delete_edges as_data_frame
+#' @export
+filterEdges <- function(edges,
+                        min.comp.size = NULL,
+                        remove.intercommunity = FALSE,
+                        remove.bridges = FALSE,
+                        echo = F) {
+  
+  # ---- Filter by component size ----
+  if (!is.null(min.comp.size)) {
+    g.comp <- getGraphComponents(edges)
+    comp.remove <- which(g.comp$csize < min.comp.size)
+    sv.remove <- names(g.comp$membership)[g.comp$membership %in% comp.remove]
+    edges <- edges[!(edges[,1] %in% sv.remove) & !(edges[,2] %in% sv.remove), ]
+  }
+  
+  # ---- Filter edges between communities ----
+  if (remove.intercommunity) {
+    communities <- getCommunities(edges)
+    edges <- edges[communities[edges[,1]] == communities[edges[,2]], ]
+  }
+  
+  # ---- Filter bridges ----
+  if (remove.bridges) {
+    g <- igraph::graph_from_edgelist(as.matrix(edges), directed = FALSE)
+    g <- igraph::simplify(g, remove.multiple = TRUE, remove.loops = TRUE)
+    bridge.ids <- igraph::bridges(g)
+    g.no.bridges <- igraph::delete_edges(g, bridge.ids)
+    edges.no.bridges <- as.matrix(igraph::as_data_frame(g.no.bridges, what = "edges"))
+    
+    sv.remain = c(edges.no.bridges[,1], edges.no.bridges[,2])
+    
+    if(echo){
+      pokaz('Number of edges after bridge filtration (undirected):', nrow(edges.no.bridges))
     }
     
-    tmp.to = b.graph[b.graph[,1] == b.graph[i.edge,1],2]
-    tmp.from = b.graph[b.graph[,2] == b.graph[i.edge,2],1]
-    if(length(intersect(tmp.to, tmp.from)) > 0) idx.remove = c(idx.remove, i.edge)
+    edges = edges[(edges[,1] %in% sv.remain) & 
+                    (edges[,2] %in% sv.remain),, drop= F]
+    
+    if(echo){
+      pokaz('Number of edges after bridge filtration:', nrow(edges))
+    }
   }
-  idx.remove = unique(idx.remove)
-  b.graph = b.graph[-idx.remove,]
   
-  return(b.graph)
+  
+  return(edges)
 }
+
+
+# Put all SVs back with dominant effect 0.7
+putEdgesBack <- function(edges, edges.init, echo=F){
+  
+  sv.back = setdiff(c(as.matrix(edges.init)), c(as.matrix(edges)))
+  if(echo) pokaz('Number of SVs to put back', length(sv.back))
+  
+  edges.back = edges.init
+  edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),]
+  edges.back = as.matrix(edges.back)
+  
+  g.comp <- getGraphComponents(edges)
+  partition <- g.comp$membership
+  partition.add = partition
+  
+  if(!is.null(partition.add)){
+    max.part = max(partition.add)  
+  } else {
+    max.part = 0
+  }
+  
+  # Map of "in which Edges every SV play the role"
+  idx.names = rbind(cbind(edges.back[,1], 1:nrow(edges.back)),
+                    cbind(edges.back[,2], 1:nrow(edges.back)))
+  idx.names = idx.names[idx.names[,1] %in% sv.back,]
+  idx.map = split(idx.names[,2], idx.names[,1])
+  
+  sv.edges.add.list = list() 
+  sv.edges.add.counter = 1  
+  
+  for(s.sv in sv.back){
+    
+    idx = as.numeric(idx.map[[s.sv]])
+    if (is.null(idx)) {
+      stop()
+      next 
+    }
+    
+    # Get neighbours
+    sv.edges.connect = edges.back[idx,,drop=F]
+    
+    if(nrow(sv.edges.connect) == 0){
+      stop('WHY')
+      next
+    } 
+    
+    sv.node.connect = unique(c(sv.edges.connect))
+    sv.node.connect = sv.node.connect[sv.node.connect != s.sv]
+    sv.node.connect = intersect(sv.node.connect, names(partition.add))
+    
+    if(length(sv.node.connect) == 0) {
+      partition.add[s.sv] = max.part + 1
+      max.part = max.part + 1
+      next
+    }
+    sv.node.connect.part = partition.add[sv.node.connect]
+    part.cnt = table(sv.node.connect.part)
+    if(max(part.cnt)/sum(part.cnt) > dominant.effect){
+      i.part = as.numeric(names(part.cnt)[which.max(part.cnt)])
+      partition.add[s.sv] = i.part
+      sv.part = names(partition.add)[partition.add == i.part]
+      sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
+                                        (sv.edges.connect[,2] %in% sv.part), , drop=F]
+      
+      if (nrow(sv.edges.add) > 0) {
+        sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add
+        sv.edges.add.counter = sv.edges.add.counter + 1
+      } else {
+        stop('Something is wrong')
+      }
+    }
+  }
+  
+  if(echo) pokaz('Number of edges to put back:', sv.edges.add.counter)
+  
+  if (length(sv.edges.add.list) > 0) {
+    edges.add = do.call(rbind, sv.edges.add.list)
+  }
+  
+  edges = rbind(edges, edges.add)
+  
+}
+
+
+
+

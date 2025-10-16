@@ -93,7 +93,7 @@ sv.se$len.gr =  cut(sv.se$len, breaks = len.bins, right = FALSE, labels = len.la
 
 f.max = max(sv.se$freq.max)
 
-res.cover.file = paste0(path.sv, 'seq_sv_big_on_sv_cover.rds')
+res.cover.file = paste0(path.sv, 'seq_sv_large_on_sv_cover.rds')
 if(!file.exists(res.cover.file)){
   pokazAttention('All SVs are different, can not biuld a graph.')
   quit(save = "no", status = 0)

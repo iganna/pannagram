@@ -6,6 +6,7 @@ path_extra="$path_features/extra/"
 path_snp="$path_features/snp/"
 path_seq="$path_features/seq/"
 path_sv="$path_features/sv/"
+path_sv_simsearch="$path_sv/simsearch_sv_large/"
 path_gff="$path_sv/gff/"
 
 path_inter="${path_project}.intermediate/"

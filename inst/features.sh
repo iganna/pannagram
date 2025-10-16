@@ -190,45 +190,47 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     check_dir "$path_sv"           || exit 1
     check_dir "$path_plots_sv"     || exit 1
 
-    file_sv_big=${path_sv}seq_sv_big.fasta
-    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
+    file_sv_large=${path_sv}seq_sv_large.fasta
+    file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
 
     # Check if BLAST database exists
-    makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
+    makeblastdb -in "$file_sv_large" -dbtype nucl > /dev/null
+
+    simsearch -in_seq ${file_sv_large} -on_seq ${file_sv_large} -sim ${similarity_value} -out ${path_sv_simsearch}
     
-    # if [ ! -f "${file_sv_big_on_sv}" ]; then
-        blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-           -perc_identity ${similarity_value} \
-           -num_threads "${cores}" \
-           -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen"
+    # # if [ ! -f "${file_sv_large_on_sv}" ]; then
+    #     blastn -db ${file_sv_large} -query ${file_sv_large} -out ${file_sv_large_on_sv} \
+    #        -perc_identity ${similarity_value} \
+    #        -num_threads "${cores}" \
+    #        -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen"
            
-    # fi
-    pokaz_message "Blast is done."
-    pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}"
+    # # fi
+    # pokaz_message "Blast is done."
+    # pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}"
 
-    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
-    Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
-        --in_file ${file_sv_big} \
-        --db_file ${file_sv_big} \
-        --res ${file_sv_big_on_sv} \
-        --out ${file_sv_big_on_sv_cover} \
-        --use_strand T \
-        --sim ${similarity_value} \
-        --coverage ${coverage_value}
+    # file_sv_large_on_sv_cover=${file_sv_large%.fasta}_on_sv_cover.rds
+    # Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
+    #     --in_file ${file_sv_large} \
+    #     --db_file ${file_sv_large} \
+    #     --res ${file_sv_large_on_sv} \
+    #     --out ${file_sv_large_on_sv_cover} \
+    #     --use_strand T \
+    #     --sim ${similarity_value} \
+    #     --coverage ${coverage_value}
 
-    rm "$file_sv_big".nin
-    rm "$file_sv_big".nhr
-    rm "$file_sv_big".nsq
+    # rm "$file_sv_large".nin
+    # rm "$file_sv_large".nhr
+    # rm "$file_sv_large".nsq
 
-    pokaz_stage "Plotting SV-Graph..."
-    Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
-        --path.features.msa ${path_features_msa} \
-        --path.sv ${path_sv} \
-        --path.figures ${path_plots_sv}
+    # pokaz_stage "Plotting SV-Graph..."
+    # Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
+    #     --path.features.msa ${path_features_msa} \
+    #     --path.sv ${path_sv} \
+    #     --path.figures ${path_plots_sv}
 
-    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.features.msa ${path_features_msa} \
-        --path.sv ${path_sv}
+    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+    #     --path.features.msa ${path_features_msa} \
+    #     --path.sv ${path_sv}
 
     pokaz_message "Step -sv_graph is done!"
 fi
@@ -238,20 +240,20 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
     if [ ! -f "${set_file_prot}" ]; then
         pokaz_error "File with proteins does not exist, provide an existing file."
-    elif [ -f "${path_sv}/sv_big_orfs.fasta" ]; then
+    elif [ -f "${path_sv}/sv_large_orfs.fasta" ]; then
         pokaz_stage "BLAST on proteins..."
 
         path_simsearch_out="${path_sv}.simsearch/"
         echo "Output ${path_simsearch_out}"
-        # simsearch -in_seq "${path_sv}sv_big_orfs.fasta" -on_seq ${set_file_prot} -out ${path_simsearch_out} -cores "${cores}" -prot
+        # simsearch -in_seq "${path_sv}sv_large_orfs.fasta" -on_seq ${set_file_prot} -out ${path_simsearch_out} -cores "${cores}" -prot
 
 
         base_set_file_prot="$(basename "$set_file_prot")"
         makeblastdb -in "$set_file_prot" -dbtype prot -out "${path_simsearch_out}${base_set_file_prot}" > /dev/null
 
         blastp -db "${path_simsearch_out}${base_set_file_prot}" \
-               -query "${path_sv}sv_big_orfs.fasta" \
-               -out "${path_sv}blast_sv_big_orfs_on_set.txt" \
+               -query "${path_sv}sv_large_orfs.fasta" \
+               -out "${path_sv}blast_sv_large_orfs_on_set.txt" \
                -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
                -num_threads "${cores}"
     else
@@ -274,18 +276,18 @@ fi
 #         makeblastdb -in "$set_file" -dbtype nucl > /dev/null
 #     # fi
     
-#     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-#     file_sv_big_on_set=${file_sv_big%.fasta}_on_set_blast.txt
+#     file_sv_large=${path_consensus}sv/seq_sv_large.fasta
+#     file_sv_large_on_set=${file_sv_large%.fasta}_on_set_blast.txt
 
-#     # if [ ! -f "${file_sv_big_on_set}" ]; then
-#         blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
+#     # if [ ! -f "${file_sv_large_on_set}" ]; then
+#         blastn -db "${set_file}" -query "${file_sv_large}" -out "${file_sv_large_on_set}" \
 #            -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
 #            -perc_identity "${similarity_value}" -num_threads "${cores}"
 #     # fi
 
-#     file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
-#     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
-#             --out ${file_sv_big_on_set_cover} --sim ${similarity_value} --use_strand F
+#     file_sv_large_on_set_cover=${file_sv_large%.fasta}_on_set_cover.rds
+#     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_large} --db_file ${set_file} --res ${file_sv_large_on_set} \
+#             --out ${file_sv_large_on_set_cover} --sim ${similarity_value} --use_strand F
 
 #     rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
 # fi

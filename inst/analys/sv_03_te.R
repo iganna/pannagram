@@ -271,7 +271,7 @@ max.len = 30000
 
 
 file.sv.small =  paste0(path.sv, 'seq_sv_small.fasta')
-file.sv.big =  paste0(path.sv, 'seq_sv_big.fasta')
+file.sv.big =  paste0(path.sv, 'seq_sv_large.fasta')
 
 pokaz(file.sv.small)
 
