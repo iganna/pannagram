@@ -19,7 +19,7 @@ pokaz_message "Prefex for the output file was changed to ${output_pref}"
 # Create intermediate directory
 intermediate_dir="${output_pref}.intermediate"
 mkdir -p "$intermediate_dir"
-pokaz_message "Intermediate files will be stored in $intermediate_dir"
+# pokaz_message "Intermediate files will be stored in $intermediate_dir"
 
 
 # Add all FASTA files from path_genome to db_files if path_genome is not empty
@@ -57,7 +57,7 @@ for db_file in "${db_files[@]}"; do
     db_pref=$(basename "$db_file")
     db_pref=${db_pref%%.*}
     file_out_cnt="${output_pref}${db_pref}_${sim_threshold}_${coverage}.cnt"
-    pokaz_message "File with counts ${file_out_cnt}"
+    pokaz_message "File with counts: ${file_out_cnt}"
     if [ -f "$file_out_cnt" ]; then
        pokaz_message "Counts for ${db_pref} estimated."
        continue
@@ -71,7 +71,7 @@ for db_file in "${db_files[@]}"; do
     # Create DB in intermediate_dir
     db_path_intermediate="${intermediate_dir}/${db_name}"
     if [ ! -f "${db_path_intermediate}.phr" ] && [ ! -f "${db_path_intermediate}.nhr" ]; then
-        pokaz_stage "Creating database for $db_file in intermediate directory..."
+        pokaz_stage "Creating database for $db_file..."
         makeblastdb -in "$db_file_full" -dbtype "$dbtype" -out "$db_path_intermediate" > /dev/null
     fi
 

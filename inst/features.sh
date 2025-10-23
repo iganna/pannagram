@@ -120,7 +120,7 @@ if [ "$run_snp_pi" = true ]; then # -snp_pi
 fi
 
 
-# Sv calling
+# SV calling
 if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
@@ -180,11 +180,10 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     pokaz_stage "Graph on SVs"
     if [ -z "${similarity_value}" ]; then
-        pokaz_message "Simirarity value is 85% (default)"
         similarity_value=85
     fi
     coverage_value=${similarity_value}
-    pokaz_message "Coverage value is set to ${coverage_value}%"
+    pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}."
 
     check_dir "$path_features_msa" || exit 1
     check_dir "$path_sv"           || exit 1
@@ -193,20 +192,44 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     file_sv_large=${path_sv}seq_sv_large.fasta
     file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
 
-    # Check if BLAST database exists
-    makeblastdb -in "$file_sv_large" -dbtype nucl > /dev/null
+    simsearch -in_seq ${file_sv_large} \
+              -on_seq ${file_sv_large} \
+              -sim ${similarity_value} \
+              -cov ${coverage_value} \
+              -out ${path_sv_simsearch} \
+              -cores "${cores}"
 
-    simsearch -in_seq ${file_sv_large} -on_seq ${file_sv_large} -sim ${similarity_value} -out ${path_sv_simsearch}
+    if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
+        mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${path_sv}"
+        rm -rf ${path_sv_simsearch}
+    else
+        echo "No similarities within SVs were found."
+    fi
+
+    pokaz_stage "Plotting SV-Graph..."
+    Rscript $INSTALLED_PATH/analys/sv_03_graph_build.R \
+        --path.sv ${path_sv} \
+        --path.figures ${path_plots_sv}
+
+    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+        --path.features.msa ${path_features_msa} \
+        --path.sv ${path_sv}
+
+    # Construct the graph + plotting
+
+    # ORFs in SVs
     
+    # Check if BLAST database exists
+    # makeblastdb -in "$file_sv_large" -dbtype nucl > /dev/null
     # # if [ ! -f "${file_sv_large_on_sv}" ]; then
     #     blastn -db ${file_sv_large} -query ${file_sv_large} -out ${file_sv_large_on_sv} \
     #        -perc_identity ${similarity_value} \
     #        -num_threads "${cores}" \
-    #        -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen"
+    #        -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" -num_threads "${cores}"
            
     # # fi
     # pokaz_message "Blast is done."
-    # pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}"
+    
 
     # file_sv_large_on_sv_cover=${file_sv_large%.fasta}_on_sv_cover.rds
     # Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
@@ -223,7 +246,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     # rm "$file_sv_large".nsq
 
     # pokaz_stage "Plotting SV-Graph..."
-    # Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
+    # Rscript $INSTALLED_PATH/analys/sv_03_graph_plot.R \
     #     --path.features.msa ${path_features_msa} \
     #     --path.sv ${path_sv} \
     #     --path.figures ${path_plots_sv}
@@ -241,19 +264,36 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
     if [ ! -f "${set_file_prot}" ]; then
         pokaz_error "File with proteins does not exist, provide an existing file."
     elif [ -f "${path_sv}/sv_large_orfs.fasta" ]; then
-        pokaz_stage "BLAST on proteins..."
+
+        # Define the output file
+        file_sv_large_on_set="${path_sv}sv_large_orfs_on_set.txt"
+        if [ -f "$file_sv_large_on_set" ]; then
+            pokaz_attention "Warning: you have already run the search for ORFs of SVs against a database."
+            timestamp=$(date +%Y%m%d_%H%M%S)
+            file_sv_large_on_set="${path_sv}sv_large_orfs_on_set_${timestamp}.txt"
+            echo "The result of the new search will be saved in: ${file_sv_large_on_set}"
+        else
+            echo "The result of the search for ORFs of SVs against the database will be saved in: ${file_sv_large_on_set}."
+        fi
 
         path_simsearch_out="${path_sv}.simsearch/"
-        echo "Output ${path_simsearch_out}"
-        # simsearch -in_seq "${path_sv}sv_large_orfs.fasta" -on_seq ${set_file_prot} -out ${path_simsearch_out} -cores "${cores}" -prot
-
+        # simsearch -in_seq "${path_sv}sv_large_orfs.fasta" \
+        #           -on_seq ${set_file_prot} \
+        #           -out ${path_simsearch_out} \
+        #           -cores "${cores}" \
+        #           -prot \
+        #           -sim 10 \
+        #           -cov 80 
 
         base_set_file_prot="$(basename "$set_file_prot")"
         makeblastdb -in "$set_file_prot" -dbtype prot -out "${path_simsearch_out}${base_set_file_prot}" > /dev/null
 
+        # Run blast
+        pokaz_stage "BLAST on proteins..."
+
         blastp -db "${path_simsearch_out}${base_set_file_prot}" \
                -query "${path_sv}sv_large_orfs.fasta" \
-               -out "${path_sv}blast_sv_large_orfs_on_set.txt" \
+               -out ${file_sv_large_on_set} \
                -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
                -num_threads "${cores}"
     else
