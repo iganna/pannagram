@@ -89,7 +89,7 @@ if(show.echo) pokaz('Get initial edges...')
 
 res.sim = filterCoverageMatrix(res.sim,
                                min.len = min.len,
-                               echo = echo)
+                               echo = show.echo)
 
 edges = getGraphFromNestedness(res.sim, coverage.cutoff = sim.cutoff.true)
 
