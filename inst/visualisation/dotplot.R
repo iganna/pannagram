@@ -421,6 +421,34 @@ dotscore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
   return(c(n.forward, n.backward) / n)
 }
 
+#' Calculate dotplot-based sequence coverage
+#'
+#' Computes the fraction of a sequence covered by matching windows between two sequences
+#' using a dotplot comparison, including reverse complement matches.
+#'
+#' @param seq1 Character string, first DNA sequence.
+#' @param seq2 Character string, second DNA sequence.
+#' @param wsize Integer, window size (default: 10).
+#' @param nmatch Integer, minimum number of matching characters per window (default: 9).
+#'
+#' @return Numeric value — proportion of seq1 covered by matches with seq2 or its reverse complement.
+#' @export
+dotcover <- function(seq1, seq2, wsize=10, nmatch=9) {
+  
+  mx1 = toupper(seq2mx(seq1, wsize))
+  mx2 = toupper(seq2mx(seq2, wsize))
+  result = mxComp(mx1, mx2, wsize, nmatch)
+  
+  seq2.rc = revCompl(seq2)
+  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
+  
+  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  n.cover = length(unique(c(result.rc$row, result$row)))
+  
+  n = (length(seq1))
+  return(n.cover / n)
+}
+
 dotScore <- function(...) {
   dotscore(...)
 }

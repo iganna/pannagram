@@ -350,6 +350,148 @@ getGraphFromBlast <- function(bl.res = NULL,
   
 }
 
+#' Generate Graph Edges from Nestedness Results
+#'
+#' This function extracts directed edges between query and target names
+#' based on a similarity cutoff from nestedness analysis results.
+#'
+#' @param res.nest A list or data frame containing \code{name.query},
+#'   \code{name.target}, \code{coverage.query}, and \code{coverage.target}.
+#' @param coverage.cutoff Numeric value specifying the similarity cutoff.
+#'   Values between 0–1 or 10–100 (interpreted as %) are accepted.
+#'
+#' @return A two-column matrix of unique edges representing connections
+#'   that meet the similarity threshold.
+#' @export
+getGraphFromNestedness <- function(res.nest,
+                                   coverage.cutoff){
+  
+  if (coverage.cutoff >= 10 && coverage.cutoff <= 100) {
+    coverage.cutoff <- coverage.cutoff / 100
+  } else if (coverage.cutoff < 0 || coverage.cutoff > 1) {
+    stop("coverage.cutoff does not make sense")
+  }
+  
+  idx.1.to.2 = res.nest$coverage.query >= coverage.cutoff
+  edges = cbind(res.nest$name.query[idx.1.to.2], res.nest$name.target[idx.1.to.2])
+  idx.2.to.1 = res.nest$coverage.target >= coverage.cutoff
+  edges = rbind(edges, cbind(res.nest$name.target[idx.2.to.1], res.nest$name.query[idx.2.to.1]))
+  
+  edges = unique(edges)
+  
+  return(edges)
+}
+
+#' Create a Compact Representation of a Directed Graph
+#'
+#' This function constructs a compact version of a directed graph by identifying 
+#' strongly connected components and grouping their nodes. It returns a simplified 
+#' representation with compacted edges, node information, and component details.
+#'
+#' @param edges A data frame or matrix with two columns representing directed edges 
+#'   (source and target nodes). Column 1 should contain the source nodes, and 
+#'   column 2 should contain the target nodes.
+#' @param echo Logical; if \code{TRUE}, prints progress information (currently unused 
+#'   in the function but retained for compatibility).
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{\code{edges}}{A unique matrix of edges between compacted nodes (no self-loops).}
+#'   \item{\code{nodes}}{A data frame mapping each original node to its compact node label. 
+#'     Nodes in strongly connected components are labeled as \code{"N#"}, 
+#'     and all other nodes as \code{"R#"}.}
+#'   \item{\code{nodes.list}}{A named list mapping each compact node ID to the original 
+#'     node names it contains.}
+#'   \item{\code{nodes.size}}{A named numeric vector giving the number of original nodes 
+#'     in each compact node.}
+#' }
+#' @export
+getGraphCompact <- function(edges, 
+                              echo = T){
+  
+  g  <- graph_from_data_frame(edges, directed = TRUE)
+  compsStrong <- components(g, mode = "strong")
+  names.mutual = names(compsStrong$membership)[compsStrong$membership != 1]
+  names.rest =  names(compsStrong$membership)[compsStrong$membership == 1]
+  
+  if(length(names.mutual) > 0){
+    nodes.mutual = data.frame(node = paste0('N', compsStrong$membership[names.mutual]), 
+                              name = names(compsStrong$membership[names.mutual]))  
+  } else {
+    nodes.mutual <- data.frame(node = character(), name = character(), 
+                               stringsAsFactors = FALSE)  
+  }
+  if(length(names.rest) > 0){
+    nodes.rest = data.frame(node = paste0('R', compsStrong$membership[names.rest]), 
+                              name = names(compsStrong$membership[names.rest]))  
+  } else {
+    nodes.rest <- data.frame(node = character(), name = character(), 
+                               stringsAsFactors = FALSE)  
+  }
+  
+  nodes.info = rbind(nodes.mutual, nodes.rest)
+  rownames(nodes.info) = nodes.info$name
+  
+  edges.compact = cbind(nodes.info[edges[,1],]$node,
+                      nodes.info[edges[,2],]$node)
+  edges.compact <- unique(edges.compact)
+  edges.compact = edges.compact[edges.compact[,1] != edges.compact[,2],,drop=F]
+  
+  
+  nodes.list <- split(nodes.info$name, nodes.info$node)
+  nodes.size <- unlist(lapply(nodes.list, length))
+  
+  res.list = list(edges = edges.compact, 
+                  nodes = nodes.info, 
+                  nodes.list = nodes.list,
+                  nodes.size = nodes.size)
+  return(res.list)
+  
+}
+
+#' Get indices of bypassed edges
+#'
+#' Finds edges that can be bypassed (i.e., there exists an alternative 2-step path).
+#'
+#' @param edges.compact Two-column matrix or data.frame of edges (from, to).
+#' @return Integer vector of indices of bypassed edges.
+#' @examples
+#' edges <- matrix(c("A","B","B","C","A","C"), ncol=2, byrow=TRUE)
+#' getBypassedEdgeIdx(edges)
+#' @export
+getBypassedEdgeIdx <- function(edges.compact) {
+  # Get unique node names
+  node.names <- unique(c(edges.compact))
+  node.n <- length(node.names)
+  
+  # Map nodes to indices
+  id1 <- match(edges.compact[,1], node.names)
+  id2 <- match(edges.compact[,2], node.names)
+  
+  # Build sparse adjacency matrix
+  A <- sparseMatrix(i = id1, j = id2, x = TRUE, dims = c(node.n, node.n))
+  
+  # Get paths of length 2
+  A2 <- A %*% A
+  
+  # Find bypassed edges (edges that have an alternative 2-step path)
+  # A.remove <- (A2 & A)
+  A.remove <- (A2 != 0) & (A != 0)
+  # head(A.remove)
+  # idx.remove <- which(A.remove, arr.ind = TRUE)
+  nz <- Matrix::which(A.remove)                  # positions of TRUE as linear indices
+  idx.remove <- arrayInd(nz, .dim = dim(A.remove))
+  
+  # Vectorized matching using interaction keys
+  key.all <- interaction(id1, id2, drop = TRUE)
+  key.remove <- interaction(idx.remove[,1], idx.remove[,2], drop = TRUE)
+  
+  # Find indices of edges that are bypassed
+  idx.bypassed <- which(key.all %in% key.remove)
+  
+  return(idx.bypassed)
+}
+
 
 
 #' Remove direct edges from a graph. WORKING VERSION!!
@@ -527,7 +669,7 @@ filterCoverageMatrix <- function(mx.cov,
   
   # ---- Filter by minimum length ----
   if (!is.null(min.len)) {
-    mx.cov2 <- mx.cov[(mx.cov$length.query  >= min.len) &
+    mx.cov <- mx.cov[(mx.cov$length.query  >= min.len) &
                        (mx.cov$length.target >= min.len), , drop = FALSE]
     
     if(echo){
@@ -626,7 +768,7 @@ filterEdges <- function(edges,
   
   # ---- Filter edges between communities ----
   if (remove.intercommunity) {
-    communities <- getCommunities(edges)
+    communities <- getGraphCommunities(edges)
     edges <- edges[communities[edges[,1]] == communities[edges[,2]], ]
   }
   
@@ -657,11 +799,29 @@ filterEdges <- function(edges,
 }
 
 
-# Put all SVs back with dominant effect 0.7
-putEdgesBack <- function(edges, edges.init, echo=F){
+#' Restore missing SV edges to the graph
+#'
+#' Re-adds edges for structural variants (SVs) that were removed, assigning each
+#' missing SV to the component where most of its neighbors belong (if dominance
+#' > `dominant.effect`).
+#'
+#' @param edges Current edge list (matrix or data frame, 2 columns).
+#' @param edges.init Initial full edge list.
+#' @param echo Logical, print progress if TRUE. Default: FALSE.
+#' @param dominant.effect Numeric threshold (0–1) for dominant component membership. Default: 0.7.
+#'
+#' @return Updated edge list with restored SV edges.
+#' @export
+putEdgesBack <- function(edges, edges.init, echo=F, dominant.effect = 0.7){
   
   sv.back = setdiff(c(as.matrix(edges.init)), c(as.matrix(edges)))
-  if(echo) pokaz('Number of SVs to put back', length(sv.back))
+  if(length(sv.back) == 0){
+    if(echo) pokaz('No SVs to put back', length(sv.back))
+    return(edges)
+  } else {
+    if(echo) pokaz('Number of SVs to put back', length(sv.back))  
+  }
+  
   
   edges.back = edges.init
   edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),]
@@ -712,30 +872,47 @@ putEdgesBack <- function(edges, edges.init, echo=F){
       next
     }
     sv.node.connect.part = partition.add[sv.node.connect]
+    sv.node.connect.part = sv.node.connect.part[!is.na(sv.node.connect.part)]
     part.cnt = table(sv.node.connect.part)
+    
+    
+    i.part = NA  # In case one want to remove the "else" branch in the following if
+    
     if(max(part.cnt)/sum(part.cnt) > dominant.effect){
       i.part = as.numeric(names(part.cnt)[which.max(part.cnt)])
+    } else {
+      sv.node.connect.part.len = as.numeric(sapply(names(sv.node.connect.part), function(s) strsplit(s, '\\|')[[1]][2]))
+      s.sv.len = as.numeric(sapply(s.sv, function(s) strsplit(s, '\\|')[[1]][2]))
+      idx.max.len = which.max(sv.node.connect.part.len)
+      if(sv.node.connect.part.len[idx.max.len] / s.sv.len > 0.7){
+        i.part = sv.node.connect.part[idx.max.len]  
+      }
+    }
+    
+    if(!is.na(i.part)){
       partition.add[s.sv] = i.part
       sv.part = names(partition.add)[partition.add == i.part]
       sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
                                         (sv.edges.connect[,2] %in% sv.part), , drop=F]
-      
       if (nrow(sv.edges.add) > 0) {
         sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add
         sv.edges.add.counter = sv.edges.add.counter + 1
       } else {
         stop('Something is wrong')
       }
-    }
+    } 
   }
   
   if(echo) pokaz('Number of edges to put back:', sv.edges.add.counter)
   
   if (length(sv.edges.add.list) > 0) {
     edges.add = do.call(rbind, sv.edges.add.list)
+  } else{
+    return(edges)
   }
   
   edges = rbind(edges, edges.add)
+  return(edges)
   
 }
 
