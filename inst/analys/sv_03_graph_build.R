@@ -322,7 +322,6 @@ for(node.from in nodes.parasite){
     score.beg = dotcover(s1, s2[1:n.cut], 15, 12)
     score.end = dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12)
     score.tot = max(score.beg, score.end)
-    print(score.tot)
     
     if(score.tot < flank.cover.cutoff){
       stat.neighbours$remain[irow] = F
@@ -460,7 +459,6 @@ for(node.to in nodes.umbrella){
     score.beg = dotcover(s1, s2[1:n.cut], 15, 12)
     score.end = dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12)
     score.tot = max(score.beg, score.end)
-    print(score.tot)
     
     if(score.tot < flank.cover.cutoff){
       stat.neighbours$remain[irow] = F
@@ -606,7 +604,6 @@ if(show.echo) pokaz('Remove edges, connecting different communities....')
 n.edges = 0
 while(n.edges != nrow(edges22)){
   n.edges = nrow(edges22)
-  pokaz(n.edges)
   edges22 = filterEdges(edges2, min.comp.size = min.comp.size, echo = show.echo)
   edges22 = filterEdges(edges22, remove.intercommunity = T, echo = show.echo)
 }
