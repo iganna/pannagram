@@ -64,9 +64,12 @@ flag.plot = T
 flag.save.plot = F
 i.plot = 1
 
+# Echo
+show.echo = F
+
 # ***********************************************************************
 # ---- Reading the data ----
-pokaz('Reading the data...')
+if(show.echo) pokaz('Reading the data...')
 
 res.sim.file = file.path(path.sv, 'seq_sv_large_85_85.txt')
 if(!file.exists(res.sim.file)){
@@ -79,14 +82,14 @@ seqs = readFasta(file.path(path.sv, 'seq_sv_large.fasta'))
 
 # ***********************************************************************
 # ---- Get initial edges ----
-pokaz('Get initial edges...')
+if(show.echo) pokaz('Get initial edges...')
 
 # edges = res.sim[, c("name.query", "name.target")]
 # edges = unique(edges)
 
 res.sim = filterCoverageMatrix(res.sim,
                                min.len = min.len,
-                               echo = T)
+                               echo = echo)
 
 edges = getGraphFromNestedness(res.sim, coverage.cutoff = sim.cutoff.true)
 
@@ -117,11 +120,11 @@ if(F){
 # ***********************************************************************
 # ---- Remain those nodes, that have at least two sequences + Length cutoff ----
 
-pokaz('Remain those node, that have at least two sequences + Length cutoff...')
+if(show.echo) pokaz('Remain those node, that have at least two sequences + Length cutoff...')
 res.sim.major = filterCoverageMatrix(res.sim,
                                      cov.cutoff = sim.cutoff,
                                      min.copy = min.copy, 
-                                     echo = T)
+                                     echo = show.echo)
 
 # edges2 = res.sim.major[, c("name.query", "name.target")]
 # edges2 = unique(edges2)
@@ -210,7 +213,7 @@ if(length(idx.bypassed) > 0){
     idx.edges.remove = c(idx.edges.remove, i.edges.remove)
   }
   
-  pokaz('Number of bypass edges is', length(idx.edges.remove))
+  if(show.echo) pokaz('Number of bypass edges is', length(idx.edges.remove))
   if(length(idx.edges.remove) > 0){
     comp.before = getGraphComponents(edges2)
     edges2 = edges2[-idx.edges.remove,]
@@ -307,12 +310,9 @@ for(node.from in nodes.parasite){
   for(irow in which(stat.neighbours$remain)){
     node.to = stat.neighbours$node.to[irow]
     # stop()
-    pokaz(node.to)
     
     idx.tmp = which(edges.nei.mod[,2] == node.to)[1]
-    pokaz(idx.tmp)
     edge.tmp = edges.nei[idx.tmp,]
-    pokaz(edge.tmp)
     
     s1 = seq2nt(seqs[edge.tmp[1]])
     s2 = seq2nt(seqs[edge.tmp[2]])
@@ -345,7 +345,7 @@ if(length(idx.edge.remove) > 0){
     idx.edges.remove = c(idx.edges.remove, i.edges.remove)
   }
   
-  pokaz('Number of edges to remove', length(idx.edges.remove))
+  if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
   if(length(idx.edges.remove) > 0){
     comp.before = getGraphComponents(edges2)
     edges2 = edges2[-idx.edges.remove,]
@@ -443,12 +443,9 @@ for(node.to in nodes.umbrella){
   for(irow in which(stat.neighbours$remain)){
     node.from = stat.neighbours$node.from[irow]
     # stop()
-    pokaz(node.from)
     
     idx.tmp = which(edges.nei.mod[,1] == node.from)[1]
-    # pokaz(idx.tmp)
     edge.tmp = edges.nei[idx.tmp,]
-    pokaz(edge.tmp)
     
     s1 = seq2nt(seqs[edge.tmp[1]])
     s2 = seq2nt(seqs[edge.tmp[2]])
@@ -507,7 +504,7 @@ if(length(idx.edge.remove) > 0){
     idx.edges.remove = c(idx.edges.remove, i.edges.remove)
   }
   
-  pokaz('Number of edges to remove', length(idx.edges.remove))
+  if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
   if(length(idx.edges.remove) > 0){
     comp.before = getGraphComponents(edges2)
     edges2 = edges2[-idx.edges.remove,]
@@ -554,14 +551,14 @@ if(T){
 
 # ***********************************************************************
 # ---- Remove small clusters ----
-pokaz('Remove small clusters...')
+if(show.echo) pokaz('Remove small clusters...')
 
 edges22 = filterEdges(edges2, min.comp.size = min.comp.size)
 
 # ***********************************************************************
 # ---- Partitioning ----
 
-pokaz('Partitioning....')
+if(show.echo) pokaz('Partitioning....')
 
 partition = getGraphCommunities(edges22) # Louvain partition
 
@@ -602,15 +599,16 @@ if(flag.plot){
 
 
 # ***********************************************************************
-# ---- Keep good edges ----
+# ---- Remove edges, connecting different communities ----
 
-pokaz('Remove edges, connecting different communities....')
+if(show.echo) pokaz('Remove edges, connecting different communities....')
 
 n.edges = 0
 while(n.edges != nrow(edges22)){
   n.edges = nrow(edges22)
-  edges22 = filterEdges(edges2, min.comp.size = min.comp.size)
-  edges22 = filterEdges(edges22, remove.intercommunity = T)
+  pokaz(n.edges)
+  edges22 = filterEdges(edges2, min.comp.size = min.comp.size, echo = show.echo)
+  edges22 = filterEdges(edges22, remove.intercommunity = T, echo = show.echo)
 }
 
 partition = getGraphCommunities(edges22)
@@ -654,9 +652,9 @@ if(flag.plot){
 # ***********************************************************************
 # ---- Remove bridges ----
 
-pokaz('Remove bridge nodes....')
+if(show.echo) pokaz('Remove bridge nodes....')
 
-edges22.no.bridges = filterEdges(edges22, remove.bridges = T, echo = T)
+edges22.no.bridges = filterEdges(edges22, remove.bridges = T, echo = show.echo)
 
 partition = getGraphCommunities(edges22.no.bridges)
 
@@ -697,7 +695,7 @@ if(flag.plot){
 
 # ***********************************************************************
 # ---- Put back all of the SVs ----
-pokaz('## Put all SVs back with dominant effect...')
+if(show.echo)  pokaz('Put all SVs back with dominant effect...')
 
 edges.solved = edges22.no.bridges
 n.edges.solved = 0
@@ -705,7 +703,7 @@ while(n.edges.solved != nrow(edges.solved)){
   n.edges.solved = nrow(edges.solved)
   edges.solved = putEdgesBack(edges = edges.solved, 
                               edges.init = edges, 
-                              echo = T,
+                              echo = show.echo,
                               dominant.effect = dominant.effect)
 }
 
