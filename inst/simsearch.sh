@@ -14,7 +14,7 @@ source "$INSTALLED_PATH/utils/argparse_simsearch.sh"
 # ----------------------------------------------------------------------------
 
 output_pref=$(add_symbol_if_missing "$output_pref" "/")
-pokaz_message "Prefex for the output file was changed to ${output_pref}"
+# pokaz_message "Prefex for the output file was changed to ${output_pref}"
 
 # Create intermediate directory
 intermediate_dir="${output_pref}.intermediate"
@@ -57,9 +57,8 @@ for db_file in "${db_files[@]}"; do
     db_pref=$(basename "$db_file")
     db_pref=${db_pref%%.*}
     file_out_cnt="${output_pref}${db_pref}_${sim_threshold}_${coverage}.cnt"
-    pokaz_message "File with counts: ${file_out_cnt}"
     if [ -f "$file_out_cnt" ]; then
-       pokaz_message "Counts for ${db_pref} estimated."
+       pokaz_message "Counts for ${db_pref} have been estimated."
        continue
     fi
 
@@ -143,6 +142,8 @@ for db_file in "${db_files[@]}"; do
             --sim "$sim_threshold" \
             --coverage "$coverage"
     fi
+
+    pokaz_message "File with counts was generated: ${file_out_cnt}"
 
     # Remove the BLAST temporary file if not needed
     if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then

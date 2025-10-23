@@ -179,11 +179,11 @@ fi
 
 # Determine BLAST command and database type
 if [ "$use_aa" -eq 1 ]; then
-    pokaz_message "Searching for proteins in nucleotide db"
+    # pokaz_message "Searching for proteins in nucleotide db"
     blast_cmd="tblastn"
     dbtype="nucl"
 else
-    pokaz_message "Searching for nucleotides in nucleotide db"
+    # pokaz_message "Searching for nucleotides in nucleotide db"
     blast_cmd="blastn"
     dbtype="nucl"
 fi
