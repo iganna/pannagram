@@ -57,7 +57,7 @@ plot.size = 8
 
 
 # Binning
-source(system.file("analys/sv_variables.R", package = "pannagram"))
+source(system.file("utils/chunk_sv_variables.R", package = "pannagram"))
 
 # Variables for plotting
 flag.plot = T
