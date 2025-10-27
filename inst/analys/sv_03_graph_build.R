@@ -131,6 +131,11 @@ res.sim.major = filterCoverageMatrix(res.sim,
 
 edges2 = getGraphFromNestedness(res.sim.major, coverage.cutoff = 85)
 
+if(nrow(edges2) == 0){
+  pokaz('Not echough SVs to build the graph')
+  quit(save = "no")
+}
+
 if(flag.plot){
   suppressMessages(suppressWarnings({
     
