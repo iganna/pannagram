@@ -166,7 +166,7 @@ if(show.echo) pokaz('Create a compact graph...')
 graph.compact = getGraphCompact(edges2)
 edges.compact = graph.compact$edges
 
-print(edges.compact)
+if(nrow(edges.compact) > 0){
 
 if(T){
 # if(flag.plot){
@@ -196,35 +196,41 @@ if(T){
     
   }))
 }
+}
 
 # ***********************************************************************
 # Components with two nodes are not needed to be filtered, therefore min.comp.size = 3
 
-edges.compact = filterEdges(edges.compact, min.comp.size = 3)
+if(nrow(edges.compact) > 0){
+  edges.compact = filterEdges(edges.compact, min.comp.size = 3)
+}
 
 # ***********************************************************************
 # ---- Refine baypass edges ----
 
-idx.bypassed = getBypassedEdgeIdx(edges.compact)
-
-# Remove corresponding edges from edges2
-if(length(idx.bypassed) > 0){
-  idx.edges.remove = c()
-  for(i.edge in idx.bypassed){
-    nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
-    nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
-    i.edges.remove = which((edges2[,1] %in% nodes.from) & (edges2[,2] %in% nodes.to))
-    idx.edges.remove = c(idx.edges.remove, i.edges.remove)
-  }
+if(nrow(edges.compact) > 0){
+    
+  idx.bypassed = getBypassedEdgeIdx(edges.compact)
   
-  if(show.echo) pokaz('Number of bypass edges is', length(idx.edges.remove))
-  if(length(idx.edges.remove) > 0){
-    comp.before = getGraphComponents(edges2)
-    edges2 = edges2[-idx.edges.remove,]
-    comp.after = getGraphComponents(edges2)
-    # Check number of components
-    if(comp.before$no != comp.after$no){
-      stop("Some deleted edges were crucial")
+  # Remove corresponding edges from edges2
+  if(length(idx.bypassed) > 0){
+    idx.edges.remove = c()
+    for(i.edge in idx.bypassed){
+      nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
+      nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
+      i.edges.remove = which((edges2[,1] %in% nodes.from) & (edges2[,2] %in% nodes.to))
+      idx.edges.remove = c(idx.edges.remove, i.edges.remove)
+    }
+    
+    if(show.echo) pokaz('Number of bypass edges is', length(idx.edges.remove))
+    if(length(idx.edges.remove) > 0){
+      comp.before = getGraphComponents(edges2)
+      edges2 = edges2[-idx.edges.remove,]
+      comp.after = getGraphComponents(edges2)
+      # Check number of components
+      if(comp.before$no != comp.after$no){
+        stop("Some deleted edges were crucial")
+      }
     }
   }
 }
@@ -235,6 +241,7 @@ if(length(idx.bypassed) > 0){
 graph.compact = getGraphCompact(edges2)
 edges.compact = graph.compact$edges
 
+if(nrow(edges.compact) > 0){
 if(T){
   # if(flag.plot){
   suppressMessages(suppressWarnings({
@@ -263,6 +270,7 @@ if(T){
     
   }))
 }
+}
 
 # ***********************************************************************
 # Remove parasitic edges
@@ -270,6 +278,7 @@ if(T){
 cutoff.remain.edges = 0.7
 flank.cover.cutoff = 0.8
 
+if(nrow(edges.compact) > 0){
 # Consider all nodes that have at least two outgoing edges
 stat.neighbours.all = c()
 nodes.parasite = unique(edges.compact[duplicated(edges.compact[,1]),1])
@@ -361,6 +370,7 @@ if(length(idx.edge.remove) > 0){
   }
 }
 
+}
 
 # ***********************************************************************
 # ---- Update the compact structure and visualize again ----
@@ -368,6 +378,7 @@ if(length(idx.edge.remove) > 0){
 graph.compact = getGraphCompact(edges2)
 edges.compact = graph.compact$edges
 
+if(nrow(edges.compact) > 0){
 if(T){
   # if(flag.plot){
   suppressMessages(suppressWarnings({
@@ -397,6 +408,7 @@ if(T){
     
   }))
 }
+}
 
 
 # ***********************************************************************
@@ -404,6 +416,7 @@ if(T){
 
 coverage.umbrella.children = 100
 
+if(nrow(edges.compact) > 0){
 stat.neighbours.all = c()
 nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
                          edges.compact[,1])
@@ -520,6 +533,7 @@ if(length(idx.edge.remove) > 0){
     comp.after = getGraphComponents(edges2)
   }
 }
+}
 
 # ***********************************************************************
 # ---- Update the compact structure and visualize again ----
@@ -527,6 +541,7 @@ if(length(idx.edge.remove) > 0){
 graph.compact = getGraphCompact(edges2)
 edges.compact = graph.compact$edges
 
+if(nrow(edges.compact) > 0){
 if(T){
   # if(flag.plot){
   suppressMessages(suppressWarnings({
@@ -556,6 +571,7 @@ if(T){
     
   }))
 }
+}
 
 
 # ***********************************************************************
@@ -563,6 +579,10 @@ if(T){
 if(show.echo) pokaz('Remove small clusters...')
 
 edges22 = filterEdges(edges2, min.comp.size = min.comp.size)
+
+if(nrow(edges22) == 0){
+  edges22 = edges2
+}
 
 # ***********************************************************************
 # ---- Partitioning ----
