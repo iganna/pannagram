@@ -192,17 +192,17 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     file_sv_large=${path_sv}seq_sv_large.fasta
     file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
 
-    simsearch -in_seq ${file_sv_large} \
-              -on_seq ${file_sv_large} \
-              -sim ${similarity_value} \
-              -cov ${coverage_value} \
-              -out ${path_sv_simsearch} \
-              -cores "${cores}"
+    # simsearch -in_seq ${file_sv_large} \
+    #           -on_seq ${file_sv_large} \
+    #           -sim ${similarity_value} \
+    #           -cov ${coverage_value} \
+    #           -out ${path_sv_simsearch} \
+    #           -cores "${cores}"
 
-    if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
-        mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${path_sv}"
-        rm -rf ${path_sv_simsearch}
-    fi
+    # if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
+    #     mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${path_sv}"
+    #     rm -rf ${path_sv_simsearch}
+    # fi
 
     pokaz_stage "Plotting SV-Graph..."
     Rscript $INSTALLED_PATH/analys/sv_03_graph_build.R \

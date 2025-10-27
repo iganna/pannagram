@@ -333,7 +333,6 @@ for(node.from in nodes.parasite){
 }
 
 if(!is.null(stat.neighbours.all)){
-  save(list = ls(), file = "tmp_workspace_good2.RData")
   idx.edge.remove = stat.neighbours.all$edge.id[!stat.neighbours.all$remain]  
 } else {
   idx.edge.remove = c()
@@ -495,7 +494,6 @@ for(node.to in nodes.umbrella){
 }
 
 if(!is.null(stat.neighbours.all)){
-  save(list = ls(), file = "tmp_workspace_good1.RData")
   idx.edge.remove = stat.neighbours.all$edge.id[!stat.neighbours.all$remain]
 } else {
   idx.edge.remove = c()
