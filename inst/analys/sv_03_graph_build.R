@@ -131,8 +131,6 @@ res.sim.major = filterCoverageMatrix(res.sim,
 
 edges2 = getGraphFromNestedness(res.sim.major, coverage.cutoff = 85)
 
-print(edges2)
-
 if(flag.plot){
   suppressMessages(suppressWarnings({
     
@@ -167,6 +165,8 @@ if(show.echo) pokaz('Create a compact graph...')
 
 graph.compact = getGraphCompact(edges2)
 edges.compact = graph.compact$edges
+
+print(edges.compact)
 
 if(T){
 # if(flag.plot){
