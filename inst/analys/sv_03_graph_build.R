@@ -65,7 +65,7 @@ flag.save.plot = F
 i.plot = 1
 
 # Echo
-show.echo = F
+show.echo = T
 
 # ***********************************************************************
 # ---- Reading the data ----
