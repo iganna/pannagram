@@ -60,7 +60,13 @@ sv.seqs = sv.seqs[nchar(sv.seqs) >= len.aa.min * 3]
 
 pokaz('Min length of ORFs:', len.aa.min)
 pokaz('Min length of SVs:', len.aa.min * 3)
-pokaz('Number of SVs to analyse is', length(sv.seqs))
+
+if(length(sv.seqs) == 0){
+  pokaz('No SVs to analyse')
+  quit(save = "no")
+} else {
+  pokaz('Number of SVs to analyse is', length(sv.seqs))
+}
 
 # ***********************************************************************
 # ---- Get ORFs for every SV ----
