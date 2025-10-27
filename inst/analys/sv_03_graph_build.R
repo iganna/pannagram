@@ -163,6 +163,8 @@ if(flag.plot){
 # ***********************************************************************
 # ---- Create a compact graph ----
 
+if(show.echo) pokaz('Create a compact graph...')
+
 graph.compact = getGraphCompact(edges2)
 edges.compact = graph.compact$edges
 
