@@ -633,10 +633,18 @@ if(flag.plot){
 if(show.echo) pokaz('Remove edges, connecting different communities....')
 
 n.edges = 0
+edges22 = edges2
 while(n.edges != nrow(edges22)){
   n.edges = nrow(edges22)
-  edges22 = filterEdges(edges2, min.comp.size = min.comp.size, echo = show.echo)
+  if(n.edges == 0){
+    break
+  }
+  edges22 = filterEdges(edges22, min.comp.size = min.comp.size, echo = show.echo)
   edges22 = filterEdges(edges22, remove.intercommunity = T, echo = show.echo)
+}
+
+if(nrow(edges22) == 0){
+  edges22 = edges2
 }
 
 partition = getGraphCommunities(edges22)
@@ -683,6 +691,10 @@ if(flag.plot){
 if(show.echo) pokaz('Remove bridge nodes....')
 
 edges22.no.bridges = filterEdges(edges22, remove.bridges = T, echo = show.echo)
+
+if(nrow(edges22.no.bridges) == 0){
+  edges22.no.bridges = edges22
+}
 
 partition = getGraphCommunities(edges22.no.bridges)
 
