@@ -131,6 +131,8 @@ res.sim.major = filterCoverageMatrix(res.sim,
 
 edges2 = getGraphFromNestedness(res.sim.major, coverage.cutoff = 85)
 
+print(edges2)
+
 if(flag.plot){
   suppressMessages(suppressWarnings({
     
