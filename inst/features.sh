@@ -192,17 +192,17 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     file_sv_large=${path_sv}seq_sv_large.fasta
     file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
 
-    # simsearch -in_seq ${file_sv_large} \
-    #           -on_seq ${file_sv_large} \
-    #           -sim ${similarity_value} \
-    #           -cov ${coverage_value} \
-    #           -out ${path_sv_simsearch} \
-    #           -cores "${cores}"
+    simsearch -in_seq ${file_sv_large} \
+              -on_seq ${file_sv_large} \
+              -sim ${similarity_value} \
+              -cov ${coverage_value} \
+              -out ${path_sv_simsearch} \
+              -cores "${cores}"
 
-    # if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
-    #     mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${path_sv}"
-    #     rm -rf ${path_sv_simsearch}
-    # fi
+    if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
+        mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${path_sv}"
+        rm -rf ${path_sv_simsearch}
+    fi
 
     pokaz_stage "Plotting SV-Graph..."
     Rscript $INSTALLED_PATH/analys/sv_03_graph_build.R \
@@ -213,46 +213,6 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
         --path.features.msa ${path_features_msa} \
         --path.sv ${path_sv}
-
-    # Construct the graph + plotting
-
-    # ORFs in SVs
-    
-    # Check if BLAST database exists
-    # makeblastdb -in "$file_sv_large" -dbtype nucl > /dev/null
-    # # if [ ! -f "${file_sv_large_on_sv}" ]; then
-    #     blastn -db ${file_sv_large} -query ${file_sv_large} -out ${file_sv_large_on_sv} \
-    #        -perc_identity ${similarity_value} \
-    #        -num_threads "${cores}" \
-    #        -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" -num_threads "${cores}"
-           
-    # # fi
-    # pokaz_message "Blast is done."
-    
-
-    # file_sv_large_on_sv_cover=${file_sv_large%.fasta}_on_sv_cover.rds
-    # Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
-    #     --in_file ${file_sv_large} \
-    #     --db_file ${file_sv_large} \
-    #     --res ${file_sv_large_on_sv} \
-    #     --out ${file_sv_large_on_sv_cover} \
-    #     --use_strand T \
-    #     --sim ${similarity_value} \
-    #     --coverage ${coverage_value}
-
-    # rm "$file_sv_large".nin
-    # rm "$file_sv_large".nhr
-    # rm "$file_sv_large".nsq
-
-    # pokaz_stage "Plotting SV-Graph..."
-    # Rscript $INSTALLED_PATH/analys/sv_03_graph_plot.R \
-    #     --path.features.msa ${path_features_msa} \
-    #     --path.sv ${path_sv} \
-    #     --path.figures ${path_plots_sv}
-
-    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-    #     --path.features.msa ${path_features_msa} \
-    #     --path.sv ${path_sv}
 
     pokaz_message "Step -sv_graph is done!"
 fi
