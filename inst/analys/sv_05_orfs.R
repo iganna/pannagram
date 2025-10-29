@@ -37,6 +37,8 @@ if(!dir.exists(path.sv)) stop(paste0('No SV dir!', path.sv))
 len.orf.min = opt$len.orf.min
 pokaz('Minimum length of ORF is', len.orf.min)
 
+len.sv.min = len.orf.min * 3
+
 # ***********************************************************************
 # ---- Reading the data ----
 
