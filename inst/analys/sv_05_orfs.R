@@ -48,7 +48,13 @@ sv.seqs = readFasta(file.seqs)
 
 sv.seqs = sv.seqs[nchar(sv.seqs) > len.sv.min]
 
-pokaz('Number of SVs to analyse is', length(sv.seqs))
+
+if(length(sv.seqs) == 0){
+  pokaz('Not echough long SVs to get ORFs')
+  quit(save = "no")
+} else {
+  pokaz('Number of SVs to analyse is', length(sv.seqs))  
+}
 
 # ***********************************************************************
 # ---- Get ORFs for every SV ----
