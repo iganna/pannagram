@@ -43,6 +43,10 @@ len.sv.min = len.orf.min * 3
 # ---- Reading the data ----
 
 file.seqs = paste0(path.sv, 'seq_sv_large.fasta')
+if(!file.exists(file.seqs)){
+  pokaz('No SVs found')
+  quit(save = "no")
+}
 
 sv.seqs = readFasta(file.seqs)
 
