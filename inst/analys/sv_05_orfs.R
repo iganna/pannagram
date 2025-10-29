@@ -21,7 +21,6 @@ args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
-  make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
   make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing"),
   make_option(c("--len.orf.min"), type = "integer", default = 65, help = "Minimum Length of ORFs")  # ~200/3
 );

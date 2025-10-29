@@ -158,7 +158,6 @@ if [ "$run_sv_orf" = true ]; then # -sv_orf
     pokaz_stage "Get ORFs from SVs"
 
     Rscript $INSTALLED_PATH/analys/sv_05_orfs.R \
-        --path.features.msa ${path_features_msa} \
         --path.sv ${path_sv}
 fi
 
