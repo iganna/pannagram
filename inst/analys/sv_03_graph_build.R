@@ -20,10 +20,12 @@ suppressMessages({
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
+  make_option("--path.figures", type = "character", default = "", help = "Path to folder with figures"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
-  make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
-);
+  make_option("--cores", type = "integer", default = 1, help = "Number of cores to use for parallel processing"),
+  make_option("--flag.plot", type = "logical", default = TRUE, help = "Enable plotting (default: TRUE)")
+)
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
@@ -60,7 +62,7 @@ plot.size = 8
 source(system.file("analys/sv_variables.R", package = "pannagram"))
 
 # Variables for plotting
-flag.plot = T
+flag.plot = opt$flag.plot
 flag.save.plot = F
 i.plot = 1
 

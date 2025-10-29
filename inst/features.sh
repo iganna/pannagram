@@ -191,28 +191,35 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     file_sv_large=${path_sv}seq_sv_large.fasta
     file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
+    file_sv_large_on_sv_mv="${path_sv}seq_sv_large_85_85.txt"
 
-    simsearch -in_seq ${file_sv_large} \
-              -on_seq ${file_sv_large} \
-              -sim ${similarity_value} \
-              -cov ${coverage_value} \
-              -out ${path_sv_simsearch} \
-              -cores "${cores}"
+    if [[ ! -f "$file_sv_large_on_sv_mv" ]]; then
+        pokaz_message "Run Simsearch.."
+        simsearch -in_seq ${file_sv_large} \
+                  -on_seq ${file_sv_large} \
+                  -sim ${similarity_value} \
+                  -cov ${coverage_value} \
+                  -out ${path_sv_simsearch} \
+                  -cores "${cores}"
 
-    if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
-        mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${path_sv}"
-        rm -rf ${path_sv_simsearch}
+        if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
+            mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${file_sv_large_on_sv_mv}"
+            rm -rf ${path_sv_simsearch}
+        fi
+    else
+        pokaz_message "Simsearch was executed before."
     fi
 
-    pokaz_stage "Plotting SV-Graph..."
+    pokaz_stage "Building SV-Graph for Mobile Element Families..."
     Rscript $INSTALLED_PATH/analys/sv_03_graph_build.R \
         --path.sv ${path_sv} \
-        --path.figures ${path_plots_sv}
+        --path.figures ${path_plots_sv} \
+        --flag.plot FALSE
 
-    pokaz_stage "Get ORFs from SVs in the Graph..."
+    pokaz_stage "Get ORFs from Families..."
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
         --path.features.msa ${path_features_msa} \
-        --path.sv ${path_sv}
+        --path.sv ${path_sv} 
 
     pokaz_message "Step -sv_graph is done!"
 fi
