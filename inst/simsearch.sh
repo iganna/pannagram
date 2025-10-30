@@ -84,7 +84,7 @@ for db_file in "${db_files[@]}"; do
         fi
     else
         # Perform BLAST search
-        pokaz_stage "BLAST search in $db_file..."
+        pokaz_stage "BLAST search $(basename "$file_input") in $(basename "$db_file")..."
         if [ "$use_aa" -eq 1 ]; then
             blast_res_pre="${blast_res}.pre"
 
@@ -120,11 +120,12 @@ for db_file in "${db_files[@]}"; do
 
     if [ "$stop_after_blast_flag" -eq 1 ]; then
         pokaz_message "Simsearch was stopped before the output file was created."
+        exit 0
     fi
 
     # ---------------------------------------------
     # Proceed to similarity search
-    pokaz_stage "Search in ${db_file}: similarity ${sim_threshold}, coverage ${coverage}..."
+    pokaz_stage "Processing BLAST-results to get counts..."
 
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
@@ -145,9 +146,9 @@ for db_file in "${db_files[@]}"; do
             --out "${output_pref}${db_name}" \
             --sim "$sim_threshold" \
             --coverage "$coverage"
-    fi
 
-    pokaz_message "File with counts was generated: ${file_out_cnt}"
+        # pokaz_message "File with counts was generated: ${file_out_cnt}"
+    fi
 
     # Remove the BLAST temporary file if not needed
     if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
