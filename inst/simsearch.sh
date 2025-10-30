@@ -119,13 +119,13 @@ for db_file in "${db_files[@]}"; do
     fi
 
     if [ "$stop_after_blast_flag" -eq 1 ]; then
-        pokaz_message "Simsearch was stopped before the output file was created."
+        pokaz_message "Simsearch was stopped after BLAST, but before the output file was created."
         exit 0
     fi
 
     # ---------------------------------------------
     # Proceed to similarity search
-    pokaz_stage "Processing BLAST-results to get counts..."
+    pokaz_stage "Processing BLAST-results..."
 
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
