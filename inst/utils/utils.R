@@ -1710,3 +1710,23 @@ checkCombinations <- function(vec) {
   all(grepl(pattern, vec))
 }
 
+
+#' Parse specific part of split strings
+#'
+#' @param strings Character vector to parse.
+#' @param n Index of the part to extract (integer).
+#' @param split Split pattern (default "\\|").
+#' @param numeric Logical; convert output to numeric (default FALSE).
+#'
+#' @return A character or numeric vector with the extracted elements.
+#' @examples
+#' parseStrings(c("A|B|C", "D|E|F"), 2)
+#' parseStrings(c("1|2|3", "4|5|6"), 3, numeric = TRUE)
+#'
+#' @export
+parseStrings <- function(strings, n, split = "\\|", numeric = FALSE) {
+  res <- data.table::tstrsplit(strings, split, fixed = FALSE)[[n]]
+  if (numeric) res <- as.numeric(res)
+  res
+}
+
