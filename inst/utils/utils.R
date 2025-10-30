@@ -1725,7 +1725,9 @@ checkCombinations <- function(vec) {
 #'
 #' @export
 parseStrings <- function(strings, n, split = "\\|", numeric = FALSE) {
-  res <- data.table::tstrsplit(strings, split, fixed = FALSE)[[n]]
+  m = length(strsplit(strings[1], split)[[1]])
+  parts <- stringr::str_split_fixed(strings, split, m)
+  res <- parts[, n]
   if (numeric) res <- as.numeric(res)
   res
 }
