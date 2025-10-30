@@ -118,6 +118,10 @@ for db_file in "${db_files[@]}"; do
         continue
     fi
 
+    if [ "$stop_after_blast_flag" -eq 1 ]; then
+        pokaz_message "Simsearch was stopped before the output file was created."
+    fi
+
     # ---------------------------------------------
     # Proceed to similarity search
     pokaz_stage "Search in ${db_file}: similarity ${sim_threshold}, coverage ${coverage}..."

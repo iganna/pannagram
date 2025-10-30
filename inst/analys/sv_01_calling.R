@@ -25,7 +25,7 @@ option_list = list(
   make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze"),
   make_option("--cutoff", type = "numeric", default = 0.9, help = "Frequency cutoff"),
   make_option("--min.len", type = "integer", default = 15, help = ""),
-  make_option("--big.len", type = "integer", default = 30, help = ""),
+  make_option("--big.len", type = "integer", default = 50, help = ""),
   make_option("--max.len", type = "integer", default = 30000, help = "")
 );
 

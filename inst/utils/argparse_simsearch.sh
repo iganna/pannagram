@@ -30,6 +30,7 @@ else
 fi
 
 after_blast_flag=0
+stop_after_blast_flag=0
 keep_blast_flag=0
 use_strand=T
 use_aa=0
@@ -50,6 +51,7 @@ while [ "$1" != "" ]; do
 
         -afterblast ) after_blast_flag=1; shift ;;
         -keepblast )  keep_blast_flag=1;  shift ;;
+        -stopafterblast) stop_after_blast_flag=1; shift ;;
         -aa|-prot )   use_aa=1;           shift ;;
 
         -strandfree ) use_strand=F; shift ;;
@@ -169,12 +171,16 @@ if [ -z "$sim_threshold" ]; then
         sim_threshold=85
         pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
     fi
+else
+    pokaz_message "Similarity threshold: ${sim_threshold}"
 fi
 
 # Check if coverage parameter is provided. If not - set qeual to sim
 if [ -z "$coverage" ]; then
     coverage=${sim_threshold}
-    pokaz_message "Coverage not specified, set to default: ${sim_threshold}"
+    pokaz_message "Coverage threshold not specified, default: ${coverage}"
+else
+    pokaz_message "Coverage threshold: ${coverage}"
 fi
 
 # Determine BLAST command and database type
