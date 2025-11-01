@@ -783,8 +783,8 @@ write.table(as.matrix(partition.solved), paste0(path.sv, 'sv_partition_solved.tx
             row.names = T, col.names = F, sep = '\t', quote = F)
 
 ## Save edges
-saveRDS(edges, paste0(path.sv, 'edges_solved.rds'))
-write.table(edges, paste0(path.sv, 'edges_solved.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
+saveRDS(edges.solved, paste0(path.sv, 'edges_solved.rds'))
+write.table(edges.solved, paste0(path.sv, 'edges_solved.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
 
 if(!flag.plot){
   quit(save = "no", status = 0)

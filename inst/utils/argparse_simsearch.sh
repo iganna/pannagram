@@ -75,7 +75,6 @@ if (( cores < 1 )); then
 elif (( cores > max_cores )); then
   cores=$max_cores
 fi
-pokaz_message "Running BLAST on ${cores} threads."
 
 # Ensure only one of -on_seq, -on_genome, -on_path is set
 count=0

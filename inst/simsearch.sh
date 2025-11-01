@@ -84,7 +84,8 @@ for db_file in "${db_files[@]}"; do
         fi
     else
         # Perform BLAST search
-        pokaz_stage "BLAST search $(basename "$file_input") in $(basename "$db_file")..."
+        pokaz_stage "BLAST search $(basename "$file_input") in $(basename "$db_file")"
+        pokaz_message "Running BLAST on ${cores} threads..."
         if [ "$use_aa" -eq 1 ]; then
             blast_res_pre="${blast_res}.pre"
 
