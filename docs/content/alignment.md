@@ -1,9 +1,18 @@
+# Build a Pangenome Alignment
 
-# Construct the Multiple Genome Alignment
+The main module in the Pannagram package for building a pangenome linear alignment is also called `pannagram` :)
+The alignment can be built in three modes:
+
+- **Preliminary** – builds only a skeleton alignment to visually check the correspondence between aligned genomes.  
+- **Reference-based** – aligns all genomes to a chosen reference genome.  
+- **Reference-free** – creates a pangenome alignment independent of any reference genome.
 
 Before running the example, define the key working paths in the command line:
-- `PATH_DATA` - the path to the data folder
+- `PATH_DATA` - the path to the data folder containing files with whole genomes.
 - `PATH_PROJECT` - the path to the output directory
+
+The structure of the output directory:
+
 
 > ⚠️ **Warning:**  
 > Ensure that `PATH_PROJECT` is set to a completely new folder. Existing files in this directory may be overwritten.
@@ -16,19 +25,18 @@ To set up the reference, please define the `REF_NAME` variable (basename without
 And run Pannagram in preliminary mode:
 ```shell
 pannagram -pre \
-    -path_in ${PATH_DATA} \
-    -path_out ${PATH_PROJECT} \
-    -ref ${REF_NAME} \
-    -cores 8
+          -path_in ${PATH_DATA} \
+          -path_out ${PATH_PROJECT} \
+          -ref ${REF_NAME} \
+          -cores 8
 ```
 
 The result is pairwise dot plots in PDF format can be found in `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`:
 
 <img
     src="images/pre1.png"
-    style="width: 90%; object-fit: cover;"
+    style="width: 50%; object-fit: cover;"
 />
-
 
 
 These plots are useful for deciding in which mode Pannagram should be used:
@@ -43,12 +51,12 @@ These plots are useful for deciding in which mode Pannagram should be used:
 > ⚠️ **Warning:**  
 > If you have modified the genome-files after the preliminary mode, please **delete** the `PATH_PROJECT` folder completely before building the alignment.
 
-## Alignment modes
 
-In alignment modes, it is expected that the number of chromosomes in the query accessions is the same. 
+<!-- In alignment modes, it is expected that the number of chromosomes in the query accessions is the same. 
 If they differ — for instance, if the genome files contain not only chromosomes but also a varying number of scaffolds — you need to use the `-nchr N` flag, where `N` represents the number first sequences in the genome FASTA files.
+ -->
 
-### Reference-based mode
+## Reference-based mode
 
 This mode produces the alignmnet of all genomes to the reference genome:
 ```shell
@@ -65,7 +73,7 @@ PATH_ALN="${PATH_PROJECT}/features/msa/"
 ls -lrt ${PATH_ALN}/ref*
 ```
 
-### REFERENCE-FREE mode
+## REFERENCE-FREE mode
 
 This mode doesn't require specification of the reference genome.
 ```shell

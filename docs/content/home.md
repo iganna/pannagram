@@ -1,22 +1,37 @@
 
 # Pannagram
-<img
-    src="images/pannagram_scheme.png"
-    style="width: 90%; object-fit: cover;"
-/>
 
-<div style="width: 90%;">
 
-**Pannagram** is a package for constructing pan-genome alignments, analyzing structural variants, and translating annotations between genomes. A project consists of several **Bash** pipelines for streamline genomic analisys and an **R** library with tools for further analysis and visualization.
+<div style="width: 70%;">
+
+Pannagram is a package for constructing Pan-genome alignments, analyzing Structural Variants (SVs) and Mobile Element Families, as well as translating annotations between genomes and more. It comprises two components: command-line interface modules and an R library for downstream analysis and visualization. Both components are installed together through a Conda environment. The code is available in the <a href="https://github.com/iganna/pannagram/">GitHub repository</a>. The structure of Pannagram is illustrated below:
+
+
+<p align="center">
+  <img src="images/pannagram_scheme_v04.png" style="width:70%; object-fit:cover;"/>
+</p>
+
 </div>
 
-The code is availible in [GitHub repo](https://github.com/iganna/pannagram/).
+
+## Citation
+
+If you use Pannagram, please cite:
+
+- **Pannagram: unbiased pangenome alignment and Mobilome calling**  
+  *Anna A. Igolkina et al.*, *bioRxiv*, 2025. [**Link**](https://doi.org/10.1101/2025.02.07.637071)
+
+To explore Pannagram applications, we recommend:
+
+- **A comparison of 27 *Arabidopsis thaliana* genomes and the path toward an unbiased characterization of genetic polymorphism**  
+  *Anna A. Igolkina et al.*, *Nature Genetics*, 2025. [**Link**](https://doi.org/10.1038/s41588-025-02293-0)
+
 
 ## Acknowledgements
 
 **Development:**
-- Anna Igolkina - Lead Developer and Project Initiator
-- Alexander Bezlepsky - Assistant
+- Anna A. Igolkina - Lead Developer and Project Initiator
+- Alexander D. Bezlepsky - Assistant
 
 **Testing:**
 - Anna Igolkina: Lead Tester
