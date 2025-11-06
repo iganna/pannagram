@@ -1,7 +1,6 @@
 # Installation
 
-This guide explains how to set up the **pannagram** environment on various operating systems using popular package managers.
-
+This guide explains how to set up the **Pannagram** environment on various operating systems using popular package managers.
 Once the setup is complete and the pannagram environment is activated, you can **run the following commands from anywhere** without having to remember the installation path:
 
 ```bash
@@ -43,11 +42,11 @@ cd pannagram
 
 Before proceeding, make sure you have one of the following package managers installed:
 
-- [Conda](https://docs.conda.io/projects/conda/en/latest/index.html)
-- [Mamba](https://github.com/mamba-org/mamba)
-- [Micromamba](https://github.com/mamba-org/mamba#micromamba)
+- [conda](https://docs.conda.io/projects/conda/en/latest/index.html)
+- [mamba](https://github.com/mamba-org/mamba)
+- [micromamba](https://github.com/mamba-org/mamba#micromamba)
 
-> In the commands below, replace `<manager>` with the package manager you’re using.
+In the commands below, replace `<manager>` with the package manager you’re using.
 
 
 ### 3. Environment Setup
@@ -110,7 +109,7 @@ source("install_in_rstudio.R")
 
 ### 7. Verifying Installation
 
-After activating the environment, verify that **Pannagram** is available by running:
+After activating the environment, verify that Pannagram is available by running:
 
 ```bash
 ./verify_installation.sh
