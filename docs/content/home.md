@@ -1,12 +1,13 @@
 
 # Pannagram
 
+Pannagram is a package for constructing Pan-genome alignments, analyzing Structural Variants (SVs) and Mobile Element Families, as well as translating annotations between genomes and more.  
+It comprises two components: command-line interface modules and an R library for downstream analysis and visualization.  
+Both components are installed together through a Conda environment.  
+The code is available in the [GitHub repository](https://github.com/iganna/pannagram/).  
+The structure of Pannagram is illustrated below:
 
 <div style="width: 70%;">
-
-Pannagram is a package for constructing Pan-genome alignments, analyzing Structural Variants (SVs) and Mobile Element Families, as well as translating annotations between genomes and more. It comprises two components: command-line interface modules and an R library for downstream analysis and visualization. Both components are installed together through a Conda environment. The code is available in the <a href="https://github.com/iganna/pannagram/">GitHub repository</a>. The structure of Pannagram is illustrated below:
-
-
 <p align="center">
   <img src="images/pannagram_scheme_v04.png" style="width:70%; object-fit:cover;"/>
 </p>

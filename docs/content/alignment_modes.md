@@ -1,4 +1,4 @@
-# Perform Alignments in Different Modes
+# Building Alignments in Different Modes
 
 Before running the example, define the key working paths in the command line:
 - `PATH_DATA` - the path to the data folder containing files with whole genomes.
@@ -13,9 +13,10 @@ The structure of the output directory:
 
 ## Preliminary mode
 
-This mode might be useful for quickly reviewing the data.
-As a result, you will get a visualization of draft reference-based alignments.
+This mode might be useful for quickly reviewing the data.  
+As a result, you will get a visualization of draft reference-based alignments.  
 To set up the reference, please define the `REF_NAME` variable (basename without extension).
+
 And run Pannagram in preliminary mode:
 ```shell
 pannagram -pre \
@@ -24,6 +25,16 @@ pannagram -pre \
           -ref ${REF_NAME} \
           -cores 8
 ```
+
+```shell
+pannagram -pre \
+    -path_in ${PATH_DATA} \
+    -path_out ${PATH_PROJECT} \
+    -ref ${REF_NAME} \
+    -cores 8
+```
+The refults are in the folder: `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`
+
 
 The result is pairwise dot plots in PDF format can be found in `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`:
 
@@ -82,25 +93,7 @@ pannagram \
 > By default, two random reference genomes are chosen, and the first genome is used to sort the positions in the final alignment.
 > You can specify the number of references to use with the `-nref` flag or directly provide specific references using the `-refs` flag.
 
-## Format of the output files
 
-In the default case, the names of the output files contain combinations of `N_N`, where `N` represents the chromosome numbers that are aligned together. 
-This implies that all chromosomes in genomes are sorted in the corresponding order, and all first chromosomes, all second chromosomes, and so on are aligned separately.
-
-
-
-
-## Preliminary mode
-```shell
-pannagram -pre \
-    -path_in ${PATH_DATA} \
-    -path_out ${PATH_PROJECT} \
-    -ref ${REF_NAME} \
-    -cores 8
-```
-The refults are in the folder: `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NAME}/"`
-
-## Reference-free mode
 
 In the case of the *E. coli* test example, the first sequence is the chromosome, while the others are plasmids. To analyze only the chromosome, specify `-nchr 1`. To analyze the chromosome and the first plasmid, use `-nchr 2`, and so on (but please ensure that the homologous plasmids are located in the same order).
 ```shell
@@ -127,6 +120,13 @@ ls -lrt ${PATH_ALN}/ref*
 > pannagram -path_in ${PATH_DATA} -path_out ${PATH_PROJECT} -accessions ${FILE_ACC} -ref ${REF_NAME} -cores 8 
 > pannagram -path_in ${PATH_DATA} -path_out ${PATH_PROJECT} -accessions ${FILE_ACC} -cores 8 -nchr 1 
 > ```
+
+
+## Format of the output files
+
+In the default case, the names of the output files contain combinations of `N_N`, where `N` represents the chromosome numbers that are aligned together. 
+This implies that all chromosomes in genomes are sorted in the corresponding order, and all first chromosomes, all second chromosomes, and so on are aligned separately.
+
 
 
 
