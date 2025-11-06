@@ -1,12 +1,12 @@
-# Quick Start
+# Input Data
 
 The input data for **Pannagram** is a folder containing files with whole-genome assemblies at the chromosomal level.  
-All genome files must be placed in a single folder. The following file extensions are supported:  
-`(.fasta, .fna, .fa, .fas)`.  
+All genome files must be placed in a single folder.  
+The following file extensions are supported: `(.fasta, .fna, .fa, .fas)`.  
 This folder will be used as the input parameter for Pannagram.
 
 ### Genome Names  
-Genome names are taken from the file names of the genome assemblies, without the file extensions.
+Genome names are taken from the file names of the genome assemblies, without the file extensions.  
 To simplify post-analysis steps, avoid using overly complex or lengthy file names.
 
 ### Using Reference Genomes  
@@ -16,10 +16,10 @@ Although we recommend storing the reference genome file in the same folder as th
 
 ### Selecting Specific Genomes  
 
-If you do **not** want to include all genomes from the folder, you can create a plain text file listing in a column the names of the genomes to include. 
-Each line should contain a single accession, without spaces, tabs, or separators.
+If you do **not** want to use all genomes from the folder, provide a text file listing only the desired ones.
+Each line must contain a single accession, with no spaces or separators.
 
-An example of such a file is named `accessions.txt`:
+An example of such a file could be named `accessions.txt`:
 ```
 GCA_000005845.2
 GCA_000008865.2
@@ -92,10 +92,11 @@ echo -e "GCA_027925785.1\nGCA_027925565.1\nGCA_027925845.1" >> "${FILE_ACCESSION
 
 Then, run steps 1–3 of the pipeline described above to download the genomes from [NCBI](https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=562).
 
-
 ## Working with Scaffold-Level Assemblies
 
-If your genomes are available only at the scaffold level, you can create chimeric chromosomes by merging scaffolds in the corresponding order. We strongly recommend removing short or uninformative scaffolds beforehand. For example, when the goal is to work with Structural Variants (SVs) to analyse Mobile Elements, which are typically several kbp long, scaffolds shorter than 50–100 kbp will not provide sufficient resolution for accurate analysis.
+If your genomes are available only at the scaffold level, you can create chimeric chromosomes by merging scaffolds in the corresponding order.  
+We strongly recommend removing short or uninformative scaffolds beforehand.  
+For example, when the goal is to work with Structural Variants (SVs) to analyse Mobile Elements, which are typically several kbp long, scaffolds shorter than 50–100 kbp will not provide sufficient resolution for accurate analysis.
 
 ### How to Merge Scaffolds Using Pannagram
 
