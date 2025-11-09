@@ -553,7 +553,7 @@ fi
 
 
 # Split reference fasta into chromosomes if additionally needed
-if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
+if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
 
     with_level 1 pokaz_stage "Additional step. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
     for ref0 in "${refs_all[@]}"; do
