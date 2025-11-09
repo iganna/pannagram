@@ -580,9 +580,18 @@ if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
             file_acc_ref=${path_inter}ref_acc.txt
             echo "${ref0}" > ${file_acc_ref}
 
+            echo "Running: Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
+    --path.in ${path_ref} \
+    --path.out ${path_chrom} \
+    --cores ${cores} \
+    --accessions ${file_acc_ref} \
+    --n.chr ${nchr_ref} \
+    --path.log ${path_log_step} --log.level ${log_level}"
+
             # Run the step
             Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
-                    --path.in ${path_ref} --path.out ${path_chrom}   \
+                    --path.in ${path_ref} \
+                    --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --accessions ${file_acc_ref} \
                     --n.chr ${nchr_ref}  \
