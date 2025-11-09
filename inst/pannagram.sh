@@ -549,16 +549,11 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Done
     touch "${step_file}"
-    
 fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
 # Split reference fasta into chromosomes if additionally needed
 if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
-
-    ((step_num = step_num - 1))
 
     with_level 1 pokaz_stage "Additional step. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
     for ref0 in "${refs_all[@]}"; do
@@ -578,9 +573,7 @@ if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
 
             # Temporary file to analyse only the reference genome from the folder
             file_acc_ref=${path_inter}ref_acc.txt
-            echo "${ref0}" > ${file_acc_ref}
-            echo ${nchr_ref}
-            echo ${nchr}
+            echo "${ref0}" > ${file_acc_ref}}
 
             # Run the step
             Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
@@ -598,15 +591,10 @@ if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
             touch "${step_file}"
         fi
     done
-
-    source $INSTALLED_PATH/utils/chunk_step_done.sh
 fi
 
 # ORF-Finder
-
 if [ ! -z "${flag_orf}" ]; then
-
-    ((step_num = step_num - 1))
 
     with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
@@ -642,10 +630,11 @@ if [ ! -z "${flag_orf}" ]; then
         # Done
         touch "${step_file}"
     fi
-
-    source $INSTALLED_PATH/utils/chunk_step_done.sh
 fi
 
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# -------------------------------------------------
 # Split query chromosomes into parts
 
 with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
