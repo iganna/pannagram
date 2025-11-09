@@ -578,6 +578,9 @@ if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
 
             # Temporary file to analyse only the reference genome from the folder
             file_acc_ref=${path_inter}ref_acc.txt
+
+            echo ${file_acc_ref}
+            echo "${ref0}"
             echo "${ref0}" > ${file_acc_ref}
 
             echo "Running: Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
