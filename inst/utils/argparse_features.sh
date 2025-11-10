@@ -66,6 +66,14 @@ acc_anal="${acc_anal:-NULL}"
 
 path_project=$(add_symbol_if_missing "$path_project" "/")
 
+
+# Setup the alignment type
+if [ -z "$aln_type" ]; then
+  aln_type="msa_"  # Default
+fi
+aln_type=$(add_symbol_if_missing "$aln_type" "_")
+
+
 if [ -z "$ref_pref" ]; then
   ref_pref="NULL"
 else
@@ -77,10 +85,6 @@ else
     fi
 fi
 
-# Setup the alignment type
-if [ -z "$aln_type" ]; then
-  aln_type="msa_"  # Default
-fi
 
 
 

@@ -26,6 +26,15 @@ All query accessions that should be aligned must be located in the `PATH_DATA` f
 > All reference genomes must be located either in `PATH_DATA` or in `PATH_REF`, but not in both simultaneously.
 
 
+
+
+## Options
+
+These plots are useful for deciding in which mode Pannagram should be used:
+- `-one2one`, when all chromosomes in all genomes are sorted in the same order and should be aligned one-to-one
+- `-all2all`, when all chromosomes should be compared with each other.
+
+
 ## Chromosome reordering to fit the reference genome
 
 
