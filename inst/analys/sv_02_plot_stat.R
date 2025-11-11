@@ -100,7 +100,7 @@ print(res.len) # prints table DO NOT TOUCH
 df = reshape2::melt(t(apply(res.len[,2:3], 1, function(x) x/sum(x))))
 df$group = factor(rep(rownames(res.len), 2), levels = rev(rownames(res.len)))
 
-# create nested pie chart using ggplot
+# Create nested pie chart using ggplot
 p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
   geom_col() +
   scale_x_discrete(limits = rev(unique(df$group))) +
@@ -118,11 +118,8 @@ p = ggplot(df, aes(x = factor(group), y = value, fill = factor(Var2))) +
     axis.text.y = element_blank(),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    # legend.position = "inside",
-    legend.position.inside = c(0.04, 0.93),
-    legend.justification = c(0, 1),
-    legend.background = element_blank(),
-    legend.box.background = element_blank()
+    legend.position = c(0.05, 0.05),
+    legend.justification = c("left", "bottom")
   ) +
   geom_text(aes(label = round(value, 2)), position = position_stack(vjust = 0.5)) +
   ylab('')+ xlab('') + theme(plot.margin = unit(c(-1, -1, -1, -1), "cm"))
@@ -182,32 +179,38 @@ if(f.max != 1){
       plot.background = element_rect(fill = "white", color = 'white')
     ) 
   
-  savePDF(g, path=path.figures, name='sv_freq_hist', width = 2.6, height = 1.7)
+  savePDF(g, path=path.figures, name='sv_freq_hist',
+          width = max(2, 5/27*max(sv.se$freq.max)) + 1, height = 3)
+  
 }
 
 
 # ***********************************************************************
 # ---- Length distribution bins ----
 
+save(list = ls(), file = "tmp_workspace_good.RData")
+
 tbl = table(sv.se[(sv.se$len > len.min), c('len.gr', 'freq.max')])
 tbl = tbl[rowSums(tbl) != 0,,drop=F]
 tbl = apply(tbl, 2, function(x) x / sum(x))
 df = reshape2::melt(tbl)
 p <- ggplot(data=df, aes(x=freq.max, y = value, fill=len.gr)) +
-  geom_bar(stat="identity") + theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') + 
-  scale_fill_manual(values=color.len,  name ='sSVs len (bp)') +
+  geom_bar(stat="identity") + theme_minimal()  + xlab('Frequency of presence') + ylab('Absolute number') + 
+  scale_fill_manual(values=color.len,  name ='Length of\nsimple SVs\n(bp)') +
   scale_y_continuous(expand = c(0, 0)) +
   scale_x_discrete(expand = c(0, 0))  +
   theme(legend.key.size = unit(0.3, "cm"),
-        legend.position=c(1,1),
-        legend.justification=c(1,1),
-        legend.direction="vertical",
-        legend.box="horizontal",
-        legend.box.just = c("top"), 
-        legend.background = element_rect(fill=alpha('white', 0.75)),
-        legend.margin = margin(2, 2, 2, 2))
+        # legend.position=c(1,1),
+        # legend.justification=c(1,1),
+        # legend.direction="vertical",
+        # legend.box="horizontal",
+        # legend.box.just = c("top"), 
+        # legend.background = element_rect(fill=alpha('white', 0.75)),
+        # legend.margin = margin(2, 2, 2, 2)
+        )
+
 savePDF(p, path=path.figures, name=paste0('sv_freq_hist_length_minlen', len.min ,'_norm'),
-        width = max(2, 5/27*max(sv.se$freq.max)), height = 3)
+        width = max(2, 5/27*max(sv.se$freq.max)) + 2, height = 3)
 
 
 
@@ -217,19 +220,20 @@ tbl = tbl[rowSums(tbl) != 0,,drop=F]
 df.abs = reshape2::melt(tbl)
 p <- ggplot(data=df.abs, aes(x=freq.max, y = value, fill=len.gr)) +
   geom_bar(stat="identity") + theme_minimal()  + xlab('Frequency of presence') + ylab('Proportion') + 
-  scale_fill_manual(values=color.len,  name ='sSVs len (bp)') +
+  scale_fill_manual(values=color.len,  name ='Length of\nsimple SVs\n(bp)') +
   scale_y_continuous(expand = c(0, 0)) +
   scale_x_discrete(expand = c(0, 0))  +
   theme(legend.key.size = unit(0.3, "cm"),
-        legend.position=c(1,1),
-        legend.justification=c(1,1),
-        legend.direction="vertical",
-        legend.box="horizontal",
-        legend.box.just = c("top"), 
-        legend.background = element_rect(fill=alpha('white', 0.75)),
-        legend.margin = margin(2, 2, 2, 2))
+        # legend.position=c(1,1),
+        # legend.justification=c(1,1),
+        # legend.direction="vertical",
+        # legend.box="horizontal",
+        # legend.box.just = c("top"), 
+        # legend.background = element_rect(fill=alpha('white', 0.75)),
+        # legend.margin = margin(2, 2, 2, 2)
+        )
 savePDF(p, path=path.figures, name=paste0('sv_freq_hist_length_minlen', len.min ,'_abs'),
-        width = max(2, 5/27*max(sv.se$freq.max)), height = 3)
+        width = max(2, 5/27*max(sv.se$freq.max)) + 2, height = 3)
 
 df$value.abs = df.abs$value
 write.table(df, paste0(path.figures, 'sv_freq_hist_length_minlen', len.min ,'.txt'),sep = '\t', row.names = F)

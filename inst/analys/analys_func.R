@@ -632,7 +632,13 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
     # Print the VCF header
     cat("##fileformat=VCFv4.2\n", file = file.vcf.conn)
     sample_names <- colnames(snp.val) # Exclude the first column (reference)
-    cat("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT", paste(sample_names, collapse="\t"), "\n", sep="\t", file = file.vcf.conn)
+    
+    info.line <- paste(
+      c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", sample_names),
+      collapse = "\t"
+    )
+    cat(info.line, "\n", file = file.vcf.conn, sep = "")
+    
   } else {
     file.vcf.conn <- file(file.vcf, "a")
   }

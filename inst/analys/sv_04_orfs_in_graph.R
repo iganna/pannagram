@@ -23,6 +23,7 @@ option_list = list(
   make_option(c("--path.features.msa"), type = "character", default = NULL, help = "path to msa dir (features)"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
+  make_option(c("--len.aa.min"), type = "integer", default = 100, help = "Minimal length of ORFs"),
   make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
 );
 
@@ -38,12 +39,12 @@ if(!dir.exists(path.sv)) stop(paste0('No SV dir!', path.sv))
 # ***********************************************************************
 # ---- Values ----
 
-len.aa.min = 200
+len.aa.min = opt$len.aa.min
 
 # ***********************************************************************
 # ---- Reading the data ----
 
-file.partition = paste0(path.sv, 'sv_partition_solved.rds')
+file.partition = paste0(path.sv, 'sv_families.rds')
 file.seqs = paste0(path.sv, 'seq_sv_large.fasta')
 
 if(!file.exists(file.partition)){
@@ -82,4 +83,4 @@ for(i.s in 1:length(sv.seqs)){
 }
 
 pokaz('Numer of ORFs is', length(orfs))
-writeFasta(orfs, paste0(path.sv, 'sv_in_graph_orfs.fasta'))
+writeFasta(orfs, paste0(path.sv, 'seq_sv_large_orfs.fasta'))

@@ -10,8 +10,12 @@ suppressMessages({ library(Biostrings)
   library(crayon)
 })
 
-pokazAttention('Make sure that the consensus sequences for the pangenome chromosomes have been generated.')
+# ***********************************************************************
+# ---- Alignment types ----
 
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
+
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -20,7 +24,7 @@ option_list = list(
   make_option("--path.seq", type = "character", default = NULL, help = "Path to seq dir"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option("--path.gff", type = "character", default = NULL, help = "Path to gff dir"),
-  make_option(c("--aln.type"),  type = "character", default = "default", help = "type of alignment ('pan', 'ref', etc)"),
+  make_option(c("--aln.type"),  type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', etc)"),
   make_option(c("--acc.anal"),  type = "character", default = NULL, help = "files with accessions to analyze"),
   make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze"),
   make_option("--cutoff", type = "numeric", default = 0.9, help = "Frequency cutoff"),
@@ -37,10 +41,6 @@ opt = parse_args(opt_parser, args = args);
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-# ---- HDF5 ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ***********************************************************************
 # ---- Modes ----
@@ -429,7 +429,7 @@ for(i.acc in 1:length(accessions)){
 
 # ---- FASTA of seSVs ----
 
-file.sv.small =  paste0(path.sv, 'seq_sv_small.fasta')
+file.sv.small =  paste0(path.sv, 'seq_sv_short.fasta')
 file.sv.big =  paste0(path.sv, 'seq_sv_large.fasta')
 
 
@@ -465,8 +465,8 @@ for(s.comb in s.combinations){
     if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
     seqs.big[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
   }
-  pokaz('Number of big sequences', length(seqs.big))
-  pokaz('Number of small sequences', length(seqs.small))
+  pokaz('Number of large sequences', length(seqs.big))
+  pokaz('Number of short sequences', length(seqs.small))
 }
 
 writeFasta(seqs.small, file.sv.small)

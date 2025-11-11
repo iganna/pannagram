@@ -9,6 +9,12 @@ suppressMessages({
   library(optparse)
 })
 
+# ***********************************************************************
+# ---- Alignment types ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
@@ -30,10 +36,6 @@ opt = parse_args(opt_parser, args = args);
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-# ---- HDF5 ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ***********************************************************************
 # ---- Variables ----
@@ -73,7 +75,7 @@ source(system.file("utils/chunk_combinations.R", package = "pannagram"))
 # ***********************************************************************
 # ---- MAIN program body ----
 
-file.blocks = paste0(path.inter.msa, aln.type, 'syn_blocks', ref.suff,'.rds')
+file.blocks = paste0(path.inter.msa, aln.pref, 'syn_blocks', ref.suff,'.rds')
 
 if(!file.exists(file.blocks)){
   df.all = c()
@@ -82,7 +84,7 @@ if(!file.exists(file.blocks)){
     pokaz('Combination', s.comb)
     # --- --- --- --- --- --- --- --- --- --- ---
     
-    file.comb.in = paste0(path.features.msa, aln.type, s.comb, ref.suff,'.h5')
+    file.comb.in = paste0(path.features.msa, aln.pref, s.comb, ref.suff,'.h5')
     
     groups = h5ls(file.comb.in)
     accessions = groups$name[groups$group == gr.accs.b]

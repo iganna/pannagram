@@ -109,12 +109,20 @@ if [ "$run_snp_pi" = true ]; then # -snp_pi
             --file.pi "${output_file}.sites.pi"
 
         echo "Plink.."
-        plink --vcf "${vcf_file}" --distance --out "${vcf_file}.dist" --allow-extra-chr # &>/dev/null
+        plink --vcf "${vcf_file}" --distance --out "${vcf_file}.dist" --allow-extra-chr > /dev/null
 
         Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
             --path.figures ${path_plots_snp} \
             --file.pi ${vcf_file} \
             --path.snp ${path_snp}
+
+
+        rm -f "${path_snp}"*FORMAT
+        rm -f "${path_snp}"*nosex
+        rm -f "${path_snp}"*log
+        rm -f "${path_snp}"*dist
+        rm -f "${path_snp}"*id
+        
     done
     pokaz_message "Step -snp_pi is done!"
 fi
@@ -190,7 +198,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     file_sv_large=${path_sv}seq_sv_large.fasta
     file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
-    file_sv_large_on_sv_mv="${path_sv}seq_sv_large_85_85.txt"
+    file_sv_large_on_sv_mv="${path_sv}nestedness_sv_large_85_85.txt"
 
     if [[ ! -f "$file_sv_large_on_sv_mv" ]]; then
         pokaz_message "Run Simsearch.."
@@ -213,7 +221,8 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     Rscript $INSTALLED_PATH/analys/sv_03_graph_build.R \
         --path.sv ${path_sv} \
         --path.figures ${path_plots_sv} \
-        --flag.plot FALSE
+        --file.nestedness ${file_sv_large_on_sv_mv} \
+        --flag.plot ${plot_families}
 
     pokaz_stage "Get ORFs from Families..."
     Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \

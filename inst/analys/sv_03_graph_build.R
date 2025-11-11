@@ -22,6 +22,7 @@ args = commandArgs(trailingOnly=TRUE)
 option_list = list(
   make_option("--path.figures", type = "character", default = "", help = "Path to folder with figures"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
+  make_option("--file.nestedness", type = "character", default = NULL, help = "File with nestedness"),
   make_option("--cores", type = "integer", default = 1, help = "Number of cores to use for parallel processing"),
   make_option("--flag.plot", type = "logical", default = TRUE, help = "Enable plotting (default: TRUE)")
 )
@@ -40,6 +41,9 @@ if(!dir.exists(path.sv)) stop(paste0('No SV dir!', path.sv))
 
 path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop(paste0('No SV figures dir', path.figures))
+
+file.nestedness <- opt$file.nestedness
+if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exist', file.nestedness))
 
 # ***********************************************************************
 # ---- Variables ----
@@ -73,7 +77,7 @@ show.echo = T
 # ---- Reading the data ----
 if(show.echo) pokaz('Reading the data...')
 
-res.sim.file = file.path(path.sv, 'seq_sv_large_85_85.txt')
+res.sim.file = file.nestedness
 if(!file.exists(res.sim.file)){
   pokazAttention('All SVs are different, can not biuld a graph.')
   quit(save = "no", status = 0)
@@ -778,13 +782,13 @@ partition.solved = getGraphCommunities(edges.solved)
 # ---- Save ----
 
 # Clustering safe
-saveRDS(partition.solved, paste0(path.sv, 'sv_partition_solved.rds'))
-write.table(as.matrix(partition.solved), paste0(path.sv, 'sv_partition_solved.txt'), 
+saveRDS(partition.solved, paste0(path.sv, 'sv_families.rds'))
+write.table(as.matrix(partition.solved), paste0(path.sv, 'sv_families.txt'), 
             row.names = T, col.names = F, sep = '\t', quote = F)
 
 ## Save edges
-saveRDS(edges.solved, paste0(path.sv, 'edges_solved.rds'))
-write.table(edges.solved, paste0(path.sv, 'edges_solved.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
+saveRDS(edges.solved, paste0(path.sv, 'edges_families.rds'))
+write.table(edges.solved, paste0(path.sv, 'edges_families.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
 
 if(!flag.plot){
   quit(save = "no", status = 0)
@@ -811,7 +815,7 @@ if(flag.plot){
     ) + theme(legend.position = "none") + scale_color_viridis_d(name = "Partition")
     
     
-    name.output = sprintf("graph_%02d_solved", i.plot)
+    name.output = sprintf("graph_%02d_families", i.plot)
     i.plot = i.plot + 1
     savePNG(p, path = path.figures, name = name.output,
             width = plot.size, height = plot.size)
@@ -845,7 +849,7 @@ if(flag.plot){
     ) +  guides(size = F) + theme(aspect.ratio = 1) + 
       guides(color = guide_legend(title = "Length, bp"))
     
-    name.output = sprintf("graph_%02d_solved_colored", i.plot)
+    name.output = sprintf("graph_%02d_families_colored", i.plot)
     i.plot = i.plot + 1
     savePNG(p, path = path.figures, name = name.output,
             width = plot.size + 1, height = plot.size)
@@ -881,7 +885,7 @@ if(flag.plot){
     ) +  guides(size = F) + theme(aspect.ratio = 1) + 
       guides(color = guide_legend(title = "Length, bp"))
     
-    name.output = sprintf("graph_%02d_labeled", i.plot)
+    name.output = sprintf("graph_%02d_families_labeled", i.plot)
     i.plot = i.plot + 1
     savePNG(p, path = path.figures, name = name.output,
             width = plot.size + 1, height = plot.size)

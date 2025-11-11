@@ -15,8 +15,8 @@ v.ref.name = 'ref'
 # Alignment types
 
 aln.type.ref='ref'
-aln.type.comb='comb'
-aln.type.clean='clean'
+aln.type.comb='.comb'
+aln.type.clean='.clean'
 
 aln.type.pre='pre'
 

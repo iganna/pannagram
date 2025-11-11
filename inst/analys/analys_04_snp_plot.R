@@ -36,13 +36,14 @@ if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 pi.acc = read.table(file.pi, header = 1)
 pi.acc = piVCF(pi.acc, len.wnd)
 
+save(list = ls(), file = "tmp_workspace_good.RData")
+
 p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   geom_point(color = "#176B87", size = 1) +
   geom_smooth(method = "loess", 
               color = "#A02334",
               fill = "#A02334",
-              se = T,
-              span = 0.2) +  
+              se = T) +  
   ylab(expression(pi)) + 
   xlab(NULL) +
   theme_minimal() +
@@ -50,7 +51,4 @@ p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   scale_y_continuous(expand = c(0, 0))
 
 saveRDS(p.acc, paste0(path.figures, basename(file.pi), '_smooth.rds'))
-
-savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 6, height = 1)
-
-
+savePDF(p.acc, path = path.figures, name = paste0(basename(file.pi), '_smooth'), width = 6, height = 1.5)

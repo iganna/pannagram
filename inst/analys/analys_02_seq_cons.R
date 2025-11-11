@@ -10,15 +10,22 @@ suppressMessages({
   library(crayon)
 })
 
+
+# ***********************************************************************
+# ---- Alignment types ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
+
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option("--ref",               type = "character", default = "",   help = "Prefix of the reference file"),
-  make_option("--path.chr",          type = "character", default = NULL, help = "path to directory with chromosomes"),
-  make_option("--path.seq",          type = "character", default = NULL, help = "Path to seq dir"),
-  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
-  make_option("--cores",             type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
-  make_option("--aln.type",          type = "character", default = NULL, help = "type of alignment ('pan', 'ref', 'extra1', etc)")
+  make_option("--ref",               type = "character", default = "",           help = "Prefix of the reference file"),
+  make_option("--path.chr",          type = "character", default = NULL,         help = "path to directory with chromosomes"),
+  make_option("--path.seq",          type = "character", default = NULL,         help = "Path to seq dir"),
+  make_option("--path.features.msa", type = "character", default = NULL,         help = "Path to msa dir (features)"),
+  make_option("--cores",             type = "integer",   default = 1,            help = "number of cores to use for parallel processing"),
+  make_option("--aln.type",          type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', 'extra1', etc)")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -28,10 +35,6 @@ opt = parse_args(opt_parser, args = args);
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-# ---- HDF5 ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ***********************************************************************
 # ---- Variables ----
@@ -78,7 +81,7 @@ loop.function <- function(s.comb, echo = T){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste0(path.features.msa, aln.type, '_', s.comb, ref.suff, '.h5')
+  file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, '.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]

@@ -68,14 +68,15 @@ h = hclust(as.dist(dist.mx))
 dist.mx = dist.mx[h$order,h$order]
 p = heatplot(dist.mx)
 
-invisible(suppressMessages({
-  pdf(file.path(path.figures, paste0(file.pi, "_dendro.pdf")), width = 7, height = 7)
-  plot(as.dendrogram(h))
-  dev.off()
-}))
-savePDF(p, path=path.figures, name=paste0(file.pi, '_dist'), width = 7, height = 7)
+# invisible(suppressMessages({
+#   pdf(file.path(path.figures, paste0(file.pi, "_dendro.pdf")), width = 7, height = 7)
+#   plot(as.dendrogram(h))
+#   dev.off()
+# }))
+# savePDF(p, path=path.figures, name=paste0(file.pi, '_dist'), width = 7, height = 7)
 
-saveRDS(dist.mx, paste0(path.snp, file.pi, '_dist.rds'))
+# saveRDS(dist.mx, paste0(path.snp, file.pi, '_dist.rds'))
+write.table(dist.mx, paste0(path.snp, file.pi, '_dist.txt'), quote = F, sep = '\t')
 
 
 
