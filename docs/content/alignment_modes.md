@@ -1,5 +1,12 @@
 # Building Alignments in Different Modes
 
+The alignment can be built in three modes:
+
+- **`I` Preliminary** – builds only a skeleton alignment to visually check the correspondence between aligned genomes.  
+- **`II` Reference-based** – aligns all genomes to a chosen reference genome.  
+- **`III` Reference-free** – creates a pangenome alignment independent of any reference genome.
+
+
 Before running the alignment, define the key working paths in the command line:
 - `PATH_GENOMES` - the path to the data folder containing files with whole genomes.
 - `PATH_PROJECT` - the path to the output directory
@@ -86,7 +93,7 @@ The result files are located here:
 ```
 ${PATH_PROJECT}/
 ├── features/
-|   └── msa/
+|   └── alignments/
 |       └── ref_*.h5      ← Resultant alignments are here
 └── plots/
 ```
@@ -120,26 +127,20 @@ The output files are located here:
 ```
 ${PATH_PROJECT}/
 ├── features/
-|   └── msa/
-|       └── msa_*.h5      ← Resultant alignments are here
+|   └── alignments/
+|       └── pan_*.h5      ← Resultant alignments are here
 └── plots/
 ```
 
 Each .h5 file (HDF5-format) contains matrices of corresponding positions between genomes.
 
-
-After running the **Reference-Free Mode**, you can extract alignment features directly.  
-You **do not need to specify** the `-anl_type msa` flag when running the **features** module.  
-However, if you prefer, you **may explicitly set** this flag — it’s optional.
-
-
-If you want to extract alignment features after running the Reference-Free Mode, you **do not need to specify** the `-anl_type msa` flag when executing the features module.
+If you want to extract alignment features after running the Reference-Free Mode, you **do not need to specify** the `-anl_type pan` flag when executing the **features** module.
 However, if you wish, you can explicitly set it.
 
 
 ## Names of output HDF5-files
 
 File names start with the prefix `ref` contains also two numbers in the format `_N_M`, where `N` is the chromosome number of the query genome and `M` is the chromosome number of the reference genome.
-For `msa` files, the numbers are the same (`_N_N`), indicating that all Nth chromosomes are aligned together in the reference-free manner.
+For `pan` files, the numbers are the same (`_N_N`), indicating that all Nth chromosomes are aligned together in the reference-free manner.
 
 

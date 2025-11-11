@@ -45,13 +45,13 @@ If you don't already have a folder with genomes, you can quickly create a datase
 
 Open a Terminal and define the following variables with **absolute paths**:
 
-- `PATH_DATA` — where you want to store genome files  
+- `PATH_GENOMES` — where you want to store genome files  
 - `PATH_TOOLS` — where you usually cloned GitHub repositories  
 - `FILE_ACCESSIONS` — the full path to your `accessions.txt` file  
 
 Example command:
 ```bash
-PATH_DATA=/absolute/path/to/data
+PATH_GENOMES=/absolute/path/to/data
 PATH_TOOLS=/absolute/path/to/tools
 FILE_ACCESSIONS=/absolute/path/to/accessions.txt
 ```
@@ -65,21 +65,21 @@ git clone https://github.com/iganna/poputils.git
 
 ### 3. Download Genomes from NCBI
 
-Use the provided script to download genomes listed in your accessions file to the folder `PATH_DATA`:
+Use the provided script to download genomes listed in your accessions file to the folder `PATH_GENOMES`:
 
 ```bash
 cd ${PATH_TOOLS}/poputils/genomes
-./genbank_download_list.sh -f ${FILE_ACCESSIONS} -p ${PATH_DATA}
+./genbank_download_list.sh -f ${FILE_ACCESSIONS} -p ${PATH_GENOMES}
 ```
 
 ### → Result
-After running the commands, `PATH_DATA` will contain genome files for all accessions of interest, ready for downstream analysis.
+After running the commands, `PATH_GENOMES` will contain genome files for all accessions of interest, ready for downstream analysis.
 
 
 ## Test Dataset
 
 If you just want to play with **Pannagram**, you can use a small test dataset with *E. coli* genomes.  
-Specify the `FILE_ACCESSIONS` file as follows:
+Specify the `FILE_ACCESSIONS` variable as an absolute path, and then run the following commands:
 
 ``` bash
 echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042189615.1" > "${FILE_ACCESSIONS}"

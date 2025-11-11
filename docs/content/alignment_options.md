@@ -1,4 +1,4 @@
-# Auxiliary options
+# Extra parameters for Alignment
 
 ## Number of chromosomes
 By default, if the maximum number of chromosomes is not specified (i.e., `-nchr N` is not provided), the genomes of the query accessions in `PATH_DATA` are scanned to determine the number of chromosomes. If all genomes have the same number of chromosomes, `N` is set to this number. Otherwise, an error will occur, and it's recommended to provide `-nchr N`.

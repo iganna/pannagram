@@ -1,9 +1,9 @@
-# Manupulations with the alignment
+# Extract Features from Alignments
 
 After running `pannagram` pipeline you are able to get more features of your data! Pay attention, some of flags are independent from each other, others need to be passed together:
 * **Extract information** from the pangenome alignment:
     ```sh
-    features -path_in '${PATH_PROJECT}' \
+    features -path_project '${PATH_PROJECT}' \
         -blocks  \  # Find Synteny block inforamtion for visualisation
         -seq  \     # Create consensus sequence of the pangenome
         -snp \      # SNP calling
@@ -12,7 +12,7 @@ After running `pannagram` pipeline you are able to get more features of your dat
 
 * **Structural variants** calling. When the pangenome linear alignment is built, SVs can be called using the following command:
     ```sh
-    features -path_in '${PATH_PROJECT}' \
+    features -path_project '${PATH_PROJECT}' \
         -sv_call  \         # Create output .gff and .fasta files with SVs
         -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
         -sv_graph  \        # Construct the graph of SVs
@@ -23,7 +23,7 @@ New files will be generated in respective subdirectories:
 ```shell 
 PATH_PROJECT/
 ├── features/
-│   ├── msa/               # .h5 files with MGA
+│   ├── alignments/        # .h5 files with Alignments
 │   ├── seq/               # Consensus sequence of the pangenome
 │   ├── snp/               # VCF files with SNPs
 │   └── sv/                # GFF and FASTA files with SVs

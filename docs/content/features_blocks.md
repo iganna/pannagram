@@ -1,4 +1,6 @@
-# Synteny Blocks
+# Alignment features
+
+## Synteny Blocks
 
 After running `pannagram` pipeline you are able to get more features of your data! For example you can get synteny blocks by running:
 ```sh
@@ -10,3 +12,6 @@ Results you will find in `${PATH_PROJECT}/plots/synteny_pangenome`:
     src="images/pangenome_alignment.png"
     style="width: 90%; object-fit: cover;"
 />
+
+## Consensus sequence
+
