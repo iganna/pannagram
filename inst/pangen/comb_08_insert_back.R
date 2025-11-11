@@ -48,9 +48,14 @@ if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
 
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.msa, ".*")
+
+aln.pref.msa = paste0(aln.type.msa, '_')
+aln.pref.clean = paste0(aln.type.clean, '_')
+aln.pref.add = paste0(aln.type.add, '_')
+
+s.pattern <- paste0("^", aln.pref.msa, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.msa, "", files)
+pref.combinations = gsub(aln.pref.msa, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 pattern <- "^[0-9]+_[0-9]+$"
@@ -72,10 +77,10 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # Get accessions
-  file.cln = paste0(path.cons, aln.type.clean, s.comb,'.h5')
-  file.msa = paste0(path.cons, aln.type.msa, s.comb,'.h5')
+  file.cln = paste0(path.cons, aln.pref.clean, s.comb,'.h5')
+  file.msa = paste0(path.cons, aln.pref.msa, s.comb,'.h5')
   
-  file.add = paste0(path.cons, aln.type.add, s.comb,'.h5')
+  file.add = paste0(path.cons, aln.pref.add, s.comb,'.h5')
   suppressMessages({
     h5createFile(file.add)
     h5createGroup(file.add, gr.blocks)

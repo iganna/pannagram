@@ -25,7 +25,7 @@ Options:
     -sv_graph                       Create the Graph of SVs;
 
 
-    -aln_type ALN_TYPE              Set the type of alignment (default: 'msa_');
+    -aln_type ALN_TYPE              Set the type of alignment (default: 'pan');
 
 Examples:
     ${0##*/}  -path_in '<project_dir>' -ref '<reference_name>' -blocks -seq -snp -sv -sv_graph -cores 4

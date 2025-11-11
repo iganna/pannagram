@@ -60,7 +60,7 @@ if (is.null(opt$max.len.gap)) {
 # Number of cores for parallel processing
 num.cores = opt$cores
 if(is.null(num.cores)) stop('Wrong number of cores: NULL')
-pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
+pokaz('Number of cores:', num.cores, file=file.log.main, echo=echo.main)
 
 # Number of batches
 if(is.na(opt$num.batches)){
@@ -81,20 +81,27 @@ if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
-files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+aln.pref = paste0(aln.type.comb, '_')
 
-if(length(pref.combinations) == 0) {
-  stop('No files with the ref-based alignments are found')
+s.pattern <- paste0("^", aln.pref, ".*\\.h5$")
+s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
+if (!length(s.combinations)) stop(paste("No .h5 files matching", aln.type, "prefix found."))
+s.combinations = sub(aln.pref, "", s.combinations)
+s.combinations = sub("\\.h5$", "", s.combinations)
+
+if(length(s.combinations) == 0){
+  stop('No Combinations found.')
+} else {
+  if(!checkCombinations(s.combinations)){
+    stop("Wrong combination format.\nPossible hint: check that you have provided the name of the reference genome -ref.")
+  }
+  pokaz('Combinations:', s.combinations, file=file.log.main, echo=echo.main)
 }
-pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-for(s.comb in pref.combinations){
+for(s.comb in s.combinations){
   # Log files
   file.log.loop = paste0(path.log, 'loop_file_', s.comb, '.log')
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop)) 
@@ -129,19 +136,26 @@ for(s.comb in pref.combinations){
       seqs = aln.seqs[[idx.aln]]
       names(seqs) = aln.seqs.names[[idx.aln]]
       
-      seqs <- DNAStringSet(seqs)
       
-      # alignment = muscle(seqs, quiet = T)
-      
-      gc(); gc(reset = TRUE)
-      before <- sum(gc()[, "used"])
-      alignment <- muscle(seqs, quiet = TRUE)
-      after <- sum(gc()[, "used"])
-      cat("Delta muscle", after - before, "\n")
-      
-      aln = as.character(alignment)
-      
-      # save(list = ls(), file = "tmp_workspace_s.RData")
+      if(length(unique(seqs)) == 1){
+        # Everything is already aligned
+        aln = seqs 
+      }
+      if(max(nchar(seqs)) == 1){
+        # Everything is already aligned
+        aln = seqs
+      } else {
+        seqs <- DNAStringSet(seqs)
+        
+        gc(); gc(reset = TRUE)
+        before <- sum(gc()[, "used"])
+        alignment <- muscle(seqs, quiet = TRUE)
+        after <- sum(gc()[, "used"])
+        cat("Delta muscle", after - before, "\n")
+        
+        aln = as.character(alignment)
+        rm(alignment)
+      }
       
       n.pos = nchar(aln[1])
       
@@ -162,7 +176,7 @@ for(s.comb in pref.combinations){
       rm(aln.info)
       rm(aln)
       rm(mx.pos)
-      rm(alignment)
+      
       rm(seqs)
       gc()
       

@@ -44,8 +44,8 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- HDF5 ----
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
-aln.type.in = aln.type.ref
-aln.type.out = aln.type.comb
+aln.type.in = paste0(aln.type.ref, '_')
+aln.type.out = paste0(aln.type.comb, '_')
 
 # ***********************************************************************
 # ---- Values of parameters ----

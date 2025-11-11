@@ -52,47 +52,6 @@ fi
 
 trap "echo 'Script interrupted'; exit" INT
 
-# declare -A running_jobs
-
-# # Iterating over all .fasta files in the input directory
-# for input_file in "${path_mafft_in}"/*.fasta; do
-# # find "${path_mafft_in}" -maxdepth 1 -name "*.fasta" | while read input_file; do
-#     # Check if .fasta files exist
-#     if [ ! -e "$input_file" ]; then
-#         echo "No .fasta files found in input directory for MAFFT."
-#         break
-#     fi
-
-#     # Extracting the file name without extension for use in the output file
-#     base_name=$(basename "${input_file}" .fasta)
-#     output_file="${path_mafft_out}/${base_name}_aligned.fasta"
-
-#     if [ -e "$output_file" ]; then
-#         continue
-#     fi
-
-#     # Run MAFFT in parallel
-#     timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}" &
-#     job_pid=$!
-
-#     running_jobs[$job_pid]=1
-
-#     # Check the number of running processes
-#     while (( ${#running_jobs[@]} >= $cores )); do
-#         for pid in "${!running_jobs[@]}"; do
-#             if ! kill -0 $pid 2>/dev/null; then
-#                 unset running_jobs[$pid]
-#             fi
-#         done
-#         sleep 1
-#     done
-# done
-
-# # Wait for all processes to finish
-# for pid in "${!running_jobs[@]}"; do
-#     wait $pid
-# done
-
 # Defining the function to be executed in parallel
 mafft_task() {
     input_file=$1
@@ -113,13 +72,21 @@ mafft_task() {
         file_log="/dev/null"
     fi
 
+    # Check if timeout exists
+    if command -v timeout >/dev/null 2>&1; then
+        TIMEOUT_CMD="timeout --foreground 60"
+    elif command -v gtimeout >/dev/null 2>&1; then
+        TIMEOUT_CMD="gtimeout --foreground 60"
+    else
+        TIMEOUT_CMD=""  # нет timeout — запускаем напрямую
+    fi
+
     # Run MAFFT
-    # timeout --foreground 100 mafft --op 5 --quiet --maxiterate 100 "${input_file}" > "${output_file}"
-    { 
-        timeout --foreground 60 mafft --quiet --op 3  --ep 0.1 --treeout  "${input_file}" > "${output_file}"  2>/dev/null
+    {
+        $TIMEOUT_CMD mafft --quiet --op 3 --ep 0.1 --treeout "$input_file" > "$output_file" 2>/dev/null
     } || {
-        rm "${output_file}"
-        # echo "MAFFT command failed for $input_file, but continuing with other files."
+        rm -f "$output_file"
+        echo "MAFFT command failed for $input_file, but continuing with other files."
     }
 
     if [ -d "$log_path" ]; then

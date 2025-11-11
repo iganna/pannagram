@@ -9,9 +9,6 @@ suppressMessages({
   library(optparse)
 })
 
-source(system.file("utils/chunk_hdf5.R", package = "pannagram"))
-
-
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
@@ -29,19 +26,26 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-source(system.file("utils/chunk_logging.R", package = "pannagram"))
+# ***********************************************************************
+# ---- Logging ----
 
-aln.type <- opt$aln.type
-ref.name <- opt$ref
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ---- HDF5 ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
+
+# ***********************************************************************
+# ---- Variables ----
+
 num.cores <- opt$cores
 wnd.size <- opt$wnd.size
 
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+# ***********************************************************************
+# ---- Paths ----
 
 path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
-
-# pokaz(path.features.msa)
 
 path.inter.msa <- opt$path.inter.msa
 if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
@@ -49,38 +53,23 @@ if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
 path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 
+# ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
-s.pattern <- paste0("^", aln.type, ".*h5")
-# pokaz(aln.type)
-s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-# pokaz(s.combinations)
-s.combinations = gsub(aln.type, "", s.combinations)
-# pokaz(s.combinations)
-s.combinations = gsub(".h5", "", s.combinations)
-# pokaz(s.combinations)
 
-
-# pokaz('Reference:', ref.name)
-if(ref.name != ""){
-  ref.suff = paste0('_', ref.name)
-  
-  pokaz('Reference:', ref.name)
-  s.combinations <- s.combinations[grep(ref.suff, s.combinations)]
-  s.combinations = gsub(ref.suff, "", s.combinations)
-  
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
 } else {
-  ref.suff = ''
+  aln.type = aln.type.msa
 }
 
-if(length(s.combinations) == 0){
-  # save(list = ls(), file = "tmp_workspace_s.RData")
-  stop('No Combinations found.')
-} else {
-  pokaz('Combinations', s.combinations)  
-  if(!checkCombinations(s.combinations)){
-    stop("Wrong combination format.\nPossible hint: check that you have provided the name of the reference genome -ref.")
-  }
-}
+# Reference genome
+ref.name <- opt$ref
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
+
 # ***********************************************************************
 # ---- MAIN program body ----
 

@@ -107,6 +107,9 @@ if (length(readLines(file.combinations)) != 0) {
 
 pokaz('Combinations:', chromosome.pairs, file=file.log.main, echo=echo.main)
 
+# Alignment pref
+aln.pref = paste0(aln.type.ref, '_')
+
 # ***********************************************************************
 # ---- Length of reference chromosomes ----
 
@@ -146,7 +149,7 @@ loop.function <- function(s.comb,
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
-  file.comb = paste0(path.cons, aln.type.ref, query.chr, '_', base.chr, '_', base.acc.ref,'.h5')
+  file.comb = paste0(path.cons, aln.pref, query.chr, '_', base.chr, '_', base.acc.ref,'.h5')
   if (file.exists(file.comb)) file.remove(file.comb)
   h5createFile(file.comb)
   

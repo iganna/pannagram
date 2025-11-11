@@ -44,7 +44,7 @@ getPannagramPaths <- function(path.proj = NULL, dot.args = list()) {
 #' @param p.end End position in the Accession.
 #' @param path.proj Path to project folder.
 #' @param mode Mode of extraction: either `"seq"` (sequence coordinates) or `"pos"` (alignment coordinates).
-#' @param aln.type Prefix for alignment files (default `"msa_"`).
+#' @param aln.type Prefix for alignment files (default `"pan"`).
 #' @param ref.acc Reference accession ID if you built in the reference-based alignment.
 #' @param echoWhether to print verbose messages (default `FALSE`).
 #'
@@ -54,7 +54,7 @@ getPannagramPaths <- function(path.proj = NULL, dot.args = list()) {
 cutAln <- function(acc, i.chr, p.beg, p.end,
                    path.proj = NULL,
                    mode = 'seq',
-                   aln.type = "msa_", 
+                   aln.type = "pan", 
                    ref.acc = '',
                    echo = FALSE, ...) {
   
@@ -76,7 +76,7 @@ cutAln <- function(acc, i.chr, p.beg, p.end,
   
   # --- Construct file suffix and MSA file path ---
   ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
-  file.msa <- file.path(path.msa, paste0(aln.type, i.chr, '_', i.chr, ref.suff, '.h5'))
+  file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))
   
   if (!file.exists(file.msa)) stop(paste("File", file.msa, "does not exist"))
   

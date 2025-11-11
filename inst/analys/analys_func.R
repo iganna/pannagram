@@ -14,7 +14,7 @@
 #' @param gr.accs.e Path to access data in the HDF5 file (default is "accs/").
 #' @param echo Logical flag for messages during execution (default is TRUE).
 #' @param ref.acc String identifier for the accession, which was used to sort the MSA position order.
-#' @param aln.type String specifying the prefix or type of alignment data being used; this might include prefixes such as 'msa_' for generic MSA or 'comb_' for combined reference-based alignments.
+#' @param aln.type String specifying the prefix or type of alignment data being used; this might include prefixes such as 'pan' for generic MSA or 'comb_' for combined reference-based alignments.
 #' @param pangenome.name String specifying a name to represent the pangenomic coordinate system if one of the accessions is named 'pangen', enabling transfers with pangenome coordinates.
 #' @param s.chr String used to split the chromosomal name and extract the chromosome number, following a specific pattern such as '*_ChrX' where 'X' denotes a chromosome number.
 #' 
@@ -30,7 +30,7 @@
 gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
                     path.proj=NULL,
-                    aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                    aln.type = 'pan',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                     ref.acc='',
                     exact.match=T, 
                     s.chr = '_Chr', # in this case the pattern is "*_ChrX", where X is the number
@@ -64,7 +64,7 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
   
   i.chr <- 1
   while (TRUE) {
-    file.msa.tmp <- paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.msa.tmp <- paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
     if (!file.exists(file.msa.tmp)) break
     i.chr <- i.chr + 1
   }
@@ -72,7 +72,7 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
   if (n.chr == 0) {
     pokaz(path.cons)
     pokaz(aln.type)
-    pokazAttention('Required format:', paste0(path.cons, aln.type, 'X_X', ref.suff, '.h5'))
+    pokazAttention('Required format:', paste0(path.cons, aln.type, '_', 'X_X', ref.suff, '.h5'))
     stop('Files in the required format do not exist.')
   }
   if(echo) pokaz("Number of chromosome is", n.chr)
@@ -116,7 +116,7 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
     # ---
     
     if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.msa = paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
     
     if(tolower(acc1) %in% tolower(pangenome.names)){
       v = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc2))
@@ -363,7 +363,7 @@ plotMsaFragment <- function(path.cons,
                        ref.acc = '0', 
                        exact.match=T,
                        gr.accs.e = "accs/",
-                       aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                       aln.type = 'pan',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                        echo=T,
                        pangenome.name='Pangen',
                        s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
@@ -403,7 +403,7 @@ getMxFragment <- function(path.cons,
                             ref.acc = '0', 
                             exact.match=T,
                             gr.accs.e = "accs/",
-                            aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                            aln.type = 'pan',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                             echo=T,
                             pangenome.name='Pangen',
                             s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
@@ -429,7 +429,7 @@ getMxFragment <- function(path.cons,
     pos1.acc = pos1
     pos2.acc = pos2
   } else {
-    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
+    file.msa = paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
     v.acc = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
     pos1.acc = which(v.acc == pos1)
     pos2.acc = which(v.acc == pos2)  
@@ -746,7 +746,7 @@ filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, 
       gff.chr <- gff[idx.chr, ]
       
       # Generate the MSA file name
-      file.msa <- paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+      file.msa <- paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
       
       # Check if the MSA file exists before reading
       if (file.exists(file.msa)) {

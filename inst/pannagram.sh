@@ -100,7 +100,7 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
 
     refs_all=("${ref_name}")
 
-# Handling reference genomes in MSA modes
+# Handling reference genomes in Pangenome modes
 else
     # Check the number of reference genomes for randomization
     if [ -z "${ref_num}" ]; then
@@ -160,7 +160,7 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
         nchr=0
         nchr_ref=0
-    else   # REF and MSA mode
+    else   # REF and PAN mode
         # Define from files
         # Count the number of chromosomes in files
         counts=()
@@ -369,7 +369,7 @@ if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
 elif [ "${mode_pangen}" == "${name_mode_ref}" ]; then  # PRE mode
     message_mode="Pannagram runs in the REFENRECE-based mode with reference $ref_name."
 elif [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
-    message_mode="Pannagram runs in the Multiple Genome Alignment mode."
+    message_mode="Pannagram runs in the REFENRECE-FREE Alignment mode (Pangenome Alignment)."
 else 
     with_level 1 pokaz_error "Error: Wrong running mode"
     help_in_box
@@ -377,10 +377,6 @@ else
 fi
 
 with_level 1 pokaz_attention ${message_mode}
-
-if [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
-    with_level 1 pokaz_attention "Path with consensus MSA: ${path_features_msa}"
-fi
 
 with_level 2 pokaz_message "Number of chromosomes ${nchr}"
 with_level 2 pokaz_message "Number of cores ${cores}"
@@ -1117,11 +1113,11 @@ fi
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
 # ║                                                                                   ║      /|_||_\`.__
-# ║                                  MSA                                              ║     (   _    _ _\
+# ║                           Pangenome Alignment                                     ║     (   _    _ _\
 # ║                                                                                   ║     =`-(_)--(_)-'
 # ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
 
-with_level 1 pokaz_stage "MGA starts...  (^>^)"
+with_level 1 pokaz_stage "Pangenome Alignment starts..."
 
 # Run consensus for a pair of files
 with_level 1 pokaz_stage "Step ${step_num}. Randomization of references.." 
@@ -1309,6 +1305,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     if [ "$clean" == "T" ]; then 
         touch ${path_log_step}fake.log
         rm -f ${path_log_step}*
+        rm -f ${path_inter_msa}aln_short*rds
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_05_small.R \
@@ -1443,10 +1440,10 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_features_msa}msa_fake_h5
+        touch ${path_features_msa}pan_fake_h5
         touch ${path_log_step}fake.log
 
-        rm -f ${path_features_msa}msa*h5
+        rm -f ${path_features_msa}pan*h5
         rm -f ${path_log_step}*
     fi  
 
@@ -1503,6 +1500,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # EXTRA STEPS
 if [[ "$extra_steps" == "F" ]]; then
+    with_level 1 pokaz_message "Script completed successfully"
     exit 0
 fi
 
@@ -1544,7 +1542,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
             --len.cutoff 25000 \
-            --aln.type.in 'msa_'
+            --aln.type.in 'pan'
 
     # Done
     touch "${step_file}"
@@ -1582,7 +1580,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'msa_'
+            --aln.type.in 'pan'
 
     # Done
     touch "${step_file}"
@@ -1618,7 +1616,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'msa_'
+            --aln.type.in 'pan'
 
     # Done
     touch "${step_file}"
@@ -1660,7 +1658,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
             --len.cutoff 200000 \
-            --aln.type.in 'extra1_'
+            --aln.type.in 'extra1'
 
     # Done
     touch "${step_file}"
@@ -1702,7 +1700,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'extra1_'
+            --aln.type.in 'extra1'
 
     # Done
     touch "${step_file}"
@@ -1740,8 +1738,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'extra1_' \
-            --aln.type.out 'extra2_'
+            --aln.type.in 'extra1' \
+            --aln.type.out 'extra2'
 
     # Done
     touch "${step_file}"

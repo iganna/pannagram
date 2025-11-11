@@ -24,6 +24,7 @@ step_end=100
 required_params=()
 
 # Process command-line arguments
+cmdline="$(basename "$0") $@"
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|-help )       print_usage_detailed; print_examples; exit 0 ;;
@@ -32,30 +33,30 @@ while [ $# -gt 0 ]; do
         -path_out|-path_proj|-path_project) path_project="$2"; shift 2; required_params+=("path_project") ;;
         -path_in| -path_genomes)                 path_in="$2"; shift 2; required_params+=("path_in") ;; # path with all genomes in fasta format
 
-        -s|-stage|-step) step_start="$2"; shift 2 ;; # first stage to run from, when the stage is not provided - the last interrupted stage withh be re-run
-        -e|-end)         step_end="$2"; shift 2 ;;   # last stage to run to
-        -log)            log_level="$2"; shift 2 ;;
-        -cores)          cores="$2"; shift 2 ;;
-        -clean|-cleanup) clean="T"; shift 1 ;;
-        -one_step | -1s) one_step="T"; shift 1 ;;
-        -rm_inter)       rm_inter="T"; shift 1 ;;
+        -s|-stage|-step) step_start="$2";   shift 2 ;; # first stage to run from, when the stage is not provided - the last interrupted stage withh be re-run
+        -e|-end)         step_end="$2";     shift 2 ;;   # last stage to run to
+        -log)            log_level="$2";    shift 2 ;;
+        -cores)          cores="$2";        shift 2 ;;
+        -clean|-cleanup) clean="T";         shift 1 ;;
+        -one_step | -1s) one_step="T";      shift 1 ;;
+        -rm_inter)       rm_inter="T";      shift 1 ;;
         
         
         # REF-based
-        -pre)            mode_pre="T"; shift 1 ;;                # shitch to the preliminary mode
+        -pre)            mode_pre="T";                shift 1 ;; # shitch to the preliminary mode
         -ref)            ref_name="$2"; mode_ref="T"; shift 2 ;; # name of the reference genome
-        -path_ref)       path_ref="$2"; shift 2 ;;               # dont provide if it's the same folder as the path with query genomes
+        -path_ref)       path_ref="$2";               shift 2 ;; # dont provide if it's the same folder as the path with query genomes
         
         # MSA
         -refs)           ref_set="$2"; mode_msa="T"; shift 2 ;;
         -nref)           ref_num="$2"; mode_msa="T"; shift 2 ;;
         
         # Number of chromosomes
-        -nchr)           nchr="$2"; shift 2 ;;        # in every genome
+        -nchr)           nchr="$2";     shift 2 ;;    # in every genome
         -nchr_ref)       nchr_ref="$2"; shift 2 ;;    # in reference genome
 
-        -part_len)       part_len="$2"; shift 2 ;;    # fragments to which each chromosome should be cut, has a default value 5000
-        -p_ident)        p_ident="$2"; shift 2 ;;     # percent of identity
+        -part_len)       part_len="$2";    shift 2 ;; # fragments to which each chromosome should be cut, has a default value 5000
+        -p_ident)        p_ident="$2";     shift 2 ;; # percent of identity
         -p_ident_gap)    p_ident_gap="$2"; shift 2 ;; # percent of identity of gaps
         -max_len_gap)    max_len_gap="$2"; shift 2 ;; # Max length that can be aligned with MAFFT
 
@@ -88,6 +89,7 @@ done
 # Handle unrecognized options
 if [[ ${#unrecognized_options[@]} -gt 0 ]]; then
     pokaz_error "Unrecognized options: ${unrecognized_options[*]}"
+    pokaz_attention "!!! Please check your command: ${cmdline}"
     help_in_box
     exit 1
 fi

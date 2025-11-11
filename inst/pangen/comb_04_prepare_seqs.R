@@ -49,6 +49,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 aln.type.in = aln.type.clean
+aln.type.in = paste0(aln.type.in, '_')
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -181,6 +182,10 @@ for(s.comb in pref.combinations){
       file.chromosome = paste(path.chromosomes, 
                               acc, 
                               '_chr', q.chr, '.fasta', sep = '')
+      if(!file.exists(file.chromosome)){
+        pokaz('File', file.chromosome, 'does not exist')
+        stop()
+      }
       genome = readFasta(file.chromosome)
       genome = seq2nt(genome)
       

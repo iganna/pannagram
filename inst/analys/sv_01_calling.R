@@ -20,7 +20,7 @@ option_list = list(
   make_option("--path.seq", type = "character", default = NULL, help = "Path to seq dir"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option("--path.gff", type = "character", default = NULL, help = "Path to gff dir"),
-  make_option(c("--aln.type"),  type = "character", default = "default", help = "type of alignment ('msa_', 'comb_', 'v_', etc)"),
+  make_option(c("--aln.type"),  type = "character", default = "default", help = "type of alignment ('pan', 'ref', etc)"),
   make_option(c("--acc.anal"),  type = "character", default = NULL, help = "files with accessions to analyze"),
   make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze"),
   make_option("--cutoff", type = "numeric", default = 0.9, help = "Frequency cutoff"),
@@ -43,6 +43,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 # ***********************************************************************
+# ---- Modes ----
 
 # If only the statistics is needed
 if (!is.null(opt$stat.only)) {
@@ -50,7 +51,6 @@ if (!is.null(opt$stat.only)) {
 } else {
   flag.stat.only = F
 }
-
 
 # Accessions to analyse
 acc.anal <- opt$acc.anal
@@ -65,17 +65,8 @@ if(!is.null(acc.anal)){
   }
 }
 
-# Alignment prefix
-if (!is.null(opt$aln.type)) {
-  aln.type = opt$aln.type
-} else {
-  aln.type = aln.type.msa
-}
-
-# Reference genome
-ref.name <- opt$ref
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
-
+# ***********************************************************************
+# ---- Paths ----
 path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop(paste0('No Consensus directory found!', path.features.msa))
 
@@ -88,37 +79,32 @@ if(!dir.exists(path.sv)) stop(paste0('No SV directory found!', path.features.msa
 path.gff <- opt$path.gff
 if(!dir.exists(path.gff)) stop(paste0('No GFF directory found!', path.features.msa))
 
+# ***********************************************************************
+# ---- Variables ----
+
 cutoff <- opt$cutoff
 min.len <- opt$min.len
 big.len <- opt$big.len
 max.len <- opt$max.len
 
+# ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
-s.pattern <- paste0("^", aln.type, ".*h5")
-s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-s.combinations = gsub(aln.type, "", s.combinations)
-s.combinations = gsub(".h5", "", s.combinations)
 
-# pokaz('Reference:', ref.name)
-if(ref.name != ""){
-  ref.suff = paste0('_', ref.name)
-  
-  pokaz('Reference:', ref.name)
-  s.combinations <- s.combinations[grep(ref.suff, s.combinations)]
-  s.combinations = gsub(ref.suff, "", s.combinations)
-  
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
 } else {
-  ref.suff = ''
+  aln.type = aln.type.msa
 }
 
-if(length(s.combinations) == 0){
-  # save(list = ls(), file = "tmp_workspace_s.RData")
-  stop('No Combinations found.')
-  
-} else {
-  pokaz('Combinations', s.combinations)  
-}
+# Reference genome
+ref.name <- opt$ref
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
+
+# ***********************************************************************
 # ---- Positions of SVs ----
 
 sv.pos.all = c()
@@ -139,7 +125,7 @@ for(s.comb in s.combinations){
   pokaz('Run for combination', s.comb, "...")
   
   # Get file for the combination
-  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff,'.h5')
+  file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff,'.h5')
   if(!file.exists(file.comb)) stop('Alignment file does not exist')
   # pokaz('Alignment file', file.comb)
   

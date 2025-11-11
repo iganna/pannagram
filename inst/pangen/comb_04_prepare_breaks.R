@@ -39,6 +39,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 aln.type.in <- ifelse(is.null(opt$aln.type.in), aln.type.clean, opt$aln.type.in)
+aln.type.in = paste0(aln.type.in, '_')
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -110,6 +111,10 @@ for(s.comb in pref.combinations){
   
   # ---- Read Breaks ----
   file.breaks = paste0(path.inter.msa, 'breaks_', s.comb,'.rds')
+  if(!file.exists(file.breaks)) {
+    pokaz('File', file.breaks, 'does not exist')
+    stop()
+  }
   breaks = readRDS(file.breaks)
   n.init = nrow(breaks)
   

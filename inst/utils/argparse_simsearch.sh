@@ -37,6 +37,7 @@ use_aa=0
 cores=1
 
 # Read arguments
+cmdline="$(basename "$0") $@"
 while [ "$1" != "" ]; do
     case $1 in
         -h | --help )         show_help; exit ;;
@@ -66,7 +67,9 @@ while [ "$1" != "" ]; do
         fi
         ;;
 
-        * ) pokaz_error "Unknown parameter: $1"; help_in_box; exit 1;;
+        * ) pokaz_error "Unknown parameter: $1"; 
+            pokaz_attention "!!! Please check your command: ${cmdline}";
+            help_in_box; exit 1;;
     esac
 done
 
