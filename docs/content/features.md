@@ -12,18 +12,17 @@ The figure below shows these dependencies:
 
 Extractable features are organized into four main groups, each depending on the previous steps:
 
-**`I`**. These include identifying pangenome synteny and generating consensus sequences, which serve as the foundation for all subsequent analyses.
+**`I`. Alignment Summary.** These include identifying pangenome synteny and generating consensus sequences, which serve as the foundation for all subsequent analyses.
 
-**`II`**. Focus on single-nucleotide polymorphisms (SNPs) and related metrics such as nucleotide diversity (π).
+**`II`. SNPs and Diversity.** Focus on single-nucleotide polymorphisms (SNPs) and related metrics such as nucleotide diversity (π).
 
-**`III`**. Focus on structural variants, their properties, and mobile element families.  
+**`III`. SVs and Mobilome Families.** Focus on structural variants, their properties, and mobile element families.  
 This step also enables comparison of SVs with other sequence features (e.g., transposon annotations).
 
-**`IV`**. Use gene annotations from different accessions and arrange them into common annotation groups through the pangenome coordinate system.
+**`IV`. Gene annotation.** Use gene annotations from different accessions and arrange them into common annotation groups through the pangenome coordinate system.
 
-## Run All Steps in One Command
-
-To execute the complete feature extraction workflow:
+### Run All Steps in One Command
+to execute the complete feature extraction workflow:
 ```
 features -path_project ${PATH_PROJECT} -synteny -consensus -snp -snp_pi -sv -sv_family -sv_orf
 ```
