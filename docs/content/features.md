@@ -1,35 +1,22 @@
 # Extract Features from Alignments
 
-After running `pannagram` pipeline you are able to get more features of your data! Pay attention, some of flags are independent from each other, others need to be passed together:
-* **Extract information** from the pangenome alignment:
-    ```sh
-    features -path_project '${PATH_PROJECT}' \
-        -blocks  \  # Find Synteny block inforamtion for visualisation
-        -seq  \     # Create consensus sequence of the pangenome
-        -snp \      # SNP calling
-        -cores 8
-    ```
+After running the `pannagram` alignment pipeline, you can extract useful features from your data.  
+The features must be executed in a specific order — not all can be run independently.
 
-* **Structural variants** calling. When the pangenome linear alignment is built, SVs can be called using the following command:
-    ```sh
-    features -path_project '${PATH_PROJECT}' \
-        -sv_call  \         # Create output .gff and .fasta files with SVs
-        -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
-        -sv_graph  \        # Construct the graph of SVs
-        -cores 8
-    ```
+The figure below shows these dependencies:
+<div style="width: 40%;">
+<p align="left">
+  <img src="images/features_scheme.png" style="width:100%; object-fit:cover;"/>
+</p>
+</div>
 
-New files will be generated in respective subdirectories:
-```shell 
-PATH_PROJECT/
-├── features/
-│   ├── alignments/        # .h5 files with Alignments
-│   ├── seq/               # Consensus sequence of the pangenome
-│   ├── snp/               # VCF files with SNPs
-│   └── sv/                # GFF and FASTA files with SVs
-└── plots/
-    ├── snp/               # Pi diversity plots
-    ├── sv/                # Plots with SV statistics and SV graphs
-    ├── synteny_pairwise/  # dotplot with REF-based synteny
-    └── synteny_pangenome/ # synteny plots of all accessions
-```
+Extractable features are organized into four main groups, each depending on the previous steps:
+
+**`I`**. These include identifying pangenome synteny and generating consensus sequences, which serve as the foundation for all subsequent analyses.
+
+**`II`**. Focus on single-nucleotide polymorphisms (SNPs) and related metrics such as nucleotide diversity (π).
+
+**`III`**. Focus on structural variants, their properties, and mobile element families.  
+This step also enables comparison of SVs with other sequence features (e.g., transposon annotations).
+
+**`IV`**. Use gene annotations from different accessions and arrange them into common annotation groups through the pangenome coordinate system.

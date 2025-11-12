@@ -29,7 +29,7 @@ while [ $# -gt 0 ]; do
         -cores)   cores="$2";                                           shift 2 ;;
         -path_in|-path_proj|-path_project) path_project="$2"; required_params+=("path_project");shift 2 ;;
         -ref)             ref_pref="$2";                                    shift 2 ;;
-        -blocks)          run_blocks=true;                                  shift 1 ;;
+        -blocks| -synteny)          run_blocks=true;                                  shift 1 ;;
         -seq|-consensus)  run_seq=true;                                     shift 1 ;;
         -snp)             run_snp=true;                                     shift 1 ;;
         -snp_pi)          run_snp_pi=true;                                  shift 1 ;;

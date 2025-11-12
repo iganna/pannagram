@@ -14,6 +14,19 @@ Results you will find in `${PATH_PROJECT}/plots/synteny_pangenome`:
 </p>
 </div>
 
+
+
+* **Extract Alignment Summary** from the pangenome alignment:
+    ```sh
+    features -path_project '${PATH_PROJECT}' \
+        -blocks  \  # Find Synteny block inforamtion for visualisation
+        -seq  \     # Create consensus sequence of the pangenome
+        -snp \      # SNP calling
+        -cores 8
+    ```
+
+    
+
 ## Consensus sequence
 
 

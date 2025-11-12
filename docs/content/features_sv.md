@@ -9,6 +9,17 @@ features -path_in '${PATH_PROJECT}' \
          -cores 8
 ```
 
+
+* **Structural variants** calling. When the pangenome linear alignment is built, SVs can be called using the following command:
+    ```sh
+    features -path_project '${PATH_PROJECT}' \
+        -sv_call  \         # Create output .gff and .fasta files with SVs
+        -sv_sim te.fasta \  # Compare with a set of sequences (e.g., TEs)
+        -sv_graph  \        # Construct the graph of SVs
+        -cores 8
+    ```
+
+
 The data output can be found in `${PATH_PROJECT}/features/sv`
 Newly generated figures will appear in `${PATH_PROJECT}/plots/sv`
 
