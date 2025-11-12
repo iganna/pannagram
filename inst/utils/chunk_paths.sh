@@ -22,8 +22,8 @@ path_extra="${path_inter}/extra/"
 path_plots="${path_project}plots/"
 path_plots_snp="${path_plots}snp/"
 path_plots_sv="${path_plots}sv/"
-path_plots_synteny="${path_plots}synteny_pangenome/"
-path_plots_pairwise="${path_plots}synteny_pairwise/"
+path_plots_synteny="${path_plots}synteny_pan/"
+path_plots_pairwise="${path_plots}synteny_ref/"
 
 
 function check_dir() {

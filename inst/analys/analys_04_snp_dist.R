@@ -76,7 +76,7 @@ p = heatplot(dist.mx)
 # savePDF(p, path=path.figures, name=paste0(file.pi, '_dist'), width = 7, height = 7)
 
 # saveRDS(dist.mx, paste0(path.snp, file.pi, '_dist.rds'))
-write.table(dist.mx, paste0(path.snp, file.pi, '_dist.txt'), quote = F, sep = '\t')
+write.table(dist.mx, paste0(path.snp, gsub("\\.vcf$", "_dist.txt", file.pi), quote = F, sep = '\t')
 
 
 

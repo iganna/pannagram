@@ -140,7 +140,10 @@ However, if you wish, you can explicitly set it.
 
 ## Names of output HDF5-files
 
-File names start with the prefix `ref` contains also two numbers in the format `_N_M`, where `N` is the chromosome number of the query genome and `M` is the chromosome number of the reference genome.
-For `pan` files, the numbers are the same (`_N_N`), indicating that all Nth chromosomes are aligned together in the reference-free manner.
+File names start with the prefix `ref` contains also two numbers in the format `_N_M_`, where:
+- `N` is the chromosome number of the query genome 
+- `M` is the chromosome number of the reference genome.
+
+For `pan` files, the numbers are the same (`_N_N_`), indicating that all Nth chromosomes are aligned together in the reference-free manner.
 
 

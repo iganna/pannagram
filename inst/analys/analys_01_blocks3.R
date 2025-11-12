@@ -173,7 +173,7 @@ for(s.comb in unique(df.all$comb)){
               accessions = accessions, 
               i.order = i.order, 
               wnd.size = wnd.size) 
-  savePDF(p, path = path.figures, name = paste0('fig_synteny_',s.comb), width = 6, height = 4 / 27 * length(accessions))
+  savePDF(p, path = path.figures, name = paste0('pan_synteny_',s.comb), width = 6, height = 4 / 27 * length(accessions))
 }
 
 
