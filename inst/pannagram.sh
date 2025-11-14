@@ -569,17 +569,7 @@ if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
 
             # Temporary file to analyse only the reference genome from the folder
             file_acc_ref=${path_inter}ref_acc.txt
-            echo "${ref0}" > ${file_acc_ref}}
-
-            echo "File: ${file_acc_ref}"
-
-            # Check if the file was created (and optionally not empty)
-            if [[ -f "${file_acc_ref}" ]]; then
-                echo "File ${file_acc_ref} was successfully created."
-            else
-                echo "Error: file ${file_acc_ref} was not created!" >&2
-                exit 1
-            fi
+            echo "${ref0}" > ${file_acc_ref}
 
             # Run the step
             Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
