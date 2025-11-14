@@ -1,6 +1,6 @@
 # Installation
 
-This guide explains how to set up the **Pannagram** environment on various operating systems using popular package managers.
+This guide explains how to set up the **Pannagram** environment on various operating systems using popular package managers.  
 Once the setup is complete and the pannagram environment is activated, you can **run the following commands from anywhere** without having to remember the installation path:
 
 ```bash
@@ -96,7 +96,7 @@ Optionally, you can create a shortcut alias for convenience. For example:
 alias panR="<manager> activate pannagram && open -a RStudio"
 ```
 
-### 6. Installing Pannagram in an Already Running RStudio Session
+### 6. Install Pannagram in Active RStudio Session
 
 While we recommend launching RStudio from the activated environment,  
 you can also install **Pannagram** into an already running RStudio instance:

@@ -1,4 +1,12 @@
-# SNPs
+# SNPs and Diversity
+
+To generate SNP-related features, run the following command:
+
+```bash
+features -path_project '${PATH_PROJECT}' -snp -snp_pi
+```
+
+Below is a detailed description of flags.
 
 ## SNP-Calling
 

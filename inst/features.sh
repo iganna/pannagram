@@ -251,7 +251,7 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
         fi
 
         path_simsearch_out="${path_sv}.simsearch/"
-        # simsearch -in_seq "${path_sv}sv_large_orfs.fasta" \
+        # simsearch -in_seq "${path_sv}seq_sv_large_orfs.fasta" \
         #           -on_seq ${set_file_prot} \
         #           -out ${path_simsearch_out} \
         #           -cores "${cores}" \
@@ -259,14 +259,14 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
         #           -sim 10 \
         #           -cov 80 
 
-        base_set_file_prot="$(basename "$set_file_prot")"
-        makeblastdb -in "$set_file_prot" -dbtype prot -out "${path_simsearch_out}${base_set_file_prot}" > /dev/null
+        set_file_base_prot="$(basename "$set_file_prot")"
+        makeblastdb -in "$set_file_prot" -dbtype prot -out "${path_simsearch_out}${set_file_base_prot}" > /dev/null
 
         # Run blast
         pokaz_stage "BLAST on proteins..."
 
-        blastp -db "${path_simsearch_out}${base_set_file_prot}" \
-               -query "${path_sv}sv_large_orfs.fasta" \
+        blastp -db "${path_simsearch_out}${set_file_base_prot}" \
+               -query "${path_sv}seq_sv_large_orfs.fasta" \
                -out ${file_sv_large_on_set} \
                -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
                -num_threads "${cores}"
@@ -276,35 +276,53 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
 fi
 
-# Annotation groups
-# if [ "$run_sv_sim" = true ]; then # -sv_sim
-#     check_missing_variable "set_file"
+# Similarity with the set of sequences
 
-#     if [ -z "${similarity_value}" ]; then
-#         pokaz_message "Simirarity value is 85% (default)"
-#         similarity_value=85
-#     fi
 
-#     # Check if BLAST database exists
-#     # if [ ! -f "${set_file}.nhr" ]; then
-#         makeblastdb -in "$set_file" -dbtype nucl > /dev/null
-#     # fi
+# Run SV similarity search if requested
+if [[ "${run_sv_sim}" == "true" ]]; then  # -sv_sim
+    check_missing_variable "set_file"
+
     
-#     file_sv_large=${path_consensus}sv/seq_sv_large.fasta
-#     file_sv_large_on_set=${file_sv_large%.fasta}_on_set_blast.txt
+    set_file_base="$(basename "${set_file%.*}")"
+    file_sv_large_on_set="${path_sv}/nestedness_sv_large_on_${set_file_base}.txt"
 
-#     # if [ ! -f "${file_sv_large_on_set}" ]; then
-#         blastn -db "${set_file}" -query "${file_sv_large}" -out "${file_sv_large_on_set}" \
-#            -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
-#            -perc_identity "${similarity_value}" -num_threads "${cores}"
-#     # fi
+    # If result already exists, write to a timestamped file instead of clobbering
+    if [[ -f "$file_sv_large_on_set" ]]; then
+        pokaz_attention "Warning: you have already run the search for ORFs of SVs against a database."
+        timestamp="$(date +%Y%m%d_%H%M%S)"
+        file_sv_large_on_set="${path_sv}/sv_large_on_${set_file_base}_${timestamp}.txt"
+        echo "The result of the new search will be saved in: ${file_sv_large_on_set}"
+    else
+        echo "The result of the search for ORFs of SVs against the database will be saved in: ${file_sv_large_on_set}."
+    fi
 
-#     file_sv_large_on_set_cover=${file_sv_large%.fasta}_on_set_cover.rds
-#     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_large} --db_file ${set_file} --res ${file_sv_large_on_set} \
-#             --out ${file_sv_large_on_set_cover} --sim ${similarity_value} --use_strand F
+    # Temporary output directory for simsearch; keep it hidden (leading dot)
+    path_simsearch_out="${path_sv}/.simsearch_on_${set_file_base}/"
+    mkdir -p "${path_simsearch_out}"
 
-#     rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
-# fi
+    # --- Run simsearch ---
+    simsearch \
+        -in_seq  "${path_sv}/seq_sv_large.fasta" \
+        -on_seq  "${set_file}" \
+        -out     "${path_simsearch_out}" \
+        -cores   "${cores}" \
+        -sim     85 \
+        -cov     85
+
+    # Expected simsearch summary file (adjust if your tool uses a different name)
+    expected_out="${path_simsearch_out}${set_file_base}_85_85.txt"
+
+    if [[ -f "${expected_out}" ]]; then
+        mv -f "${expected_out}" "${file_sv_large_on_set}"
+        rm -rf "${path_simsearch_out}"
+        echo "Search finished. Results saved to: ${file_sv_large_on_set}"
+    else
+        pokaz_attention "simsearch did not produce the expected file: ${expected_out}"
+        echo "Keeping intermediate directory for inspection: ${path_simsearch_out}"
+        exit 1
+    fi
+fi
 
 
 pokaz_message "Script completed successfully"

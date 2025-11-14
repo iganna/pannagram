@@ -1,5 +1,13 @@
 # Alignment Summary
 
+To generate an alignment summary, run the following command:
+
+```bash
+features -path_project '${PATH_PROJECT}' -synteny -consensus
+```
+
+Below is a detailed description of flags.
+
 ## Synteny Blocks
 
 When the `apannagram` alignment is completed, you can generate synteny blocks and visualize the alignment by the following command:

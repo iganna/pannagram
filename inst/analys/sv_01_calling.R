@@ -333,9 +333,11 @@ pokaz('Single-event..')
 sv.se = sv.pos.all[sv.pos.all$single == 1,]
 sv.se.type = rep('indel', nrow(sv.se))
 
+# percent.phasing = 0.11 # Was used for 27-genome paper
+percent.phasing = 0.10
 n.acc = length(accessions)
-val.insert = c(1:n.acc)[(1:n.acc) <= (0.11 * n.acc)]
-val.delet = c(1:n.acc)[(1:n.acc) >= (n.acc - 0.11 * n.acc)]
+val.insert = c(1:n.acc)[(1:n.acc) <= (percent.phasing * n.acc)]
+val.delet = c(1:n.acc)[(1:n.acc) >= (n.acc - percent.phasing * n.acc)]
 
 sv.se.type[sv.se$freq.max %in% val.insert] = 'insertion'
 sv.se.type[sv.se$freq.max %in% val.delet] = 'deletion'
@@ -361,7 +363,7 @@ pokaz('Multiple-event..')
 sv.me = sv.pos.all[sv.pos.all$single != 1,, drop=F]
 
 if(nrow(sv.me) > 0){
-  s.multi = 'multi'
+  s.multi = 'complex'
   sv.me.gff = data.frame(V1 = paste0('PanGen_Chr', sv.me$chr),
                          V2 = 'pannagram',
                          V3 = s.multi, V4 = sv.me$beg, V5 = sv.me$end,
