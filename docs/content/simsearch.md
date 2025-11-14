@@ -70,6 +70,6 @@ simsearch \
 ```
 
 Output files:
-- The same files as described above at `II` for each genome in the collection.
-- A summary file `total_counts_X_Y.txt`, containing total counts of query sequences for each genome.
+- The same files as described above at **`II`** for each genome in the collection.
+- A summary file `total_counts_X_Y.txt`, containing total counts of query sequences for every genome.
 

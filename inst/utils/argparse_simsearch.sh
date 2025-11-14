@@ -86,7 +86,7 @@ count=0
 [ ! -z "$path_genome" ] && count=$((count + 1))
 
 if [ $count -ne 1 ]; then
-    pokaz_error "Error: You must specify exactly one of -on_seq, -on_genome, or -on_path."
+    pokaz_error "Error: One or mode of required paraments were not provided."
     help_in_box
     exit 1
 fi
