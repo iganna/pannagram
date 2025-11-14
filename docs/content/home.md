@@ -11,7 +11,7 @@ The structure of Pannagram is illustrated below:
 
 <div style="width: 70%;">
 <p align="center">
-  <img src="images/pannagram_scheme_v04.png" style="width:70%; object-fit:cover;"/>
+  <img src="images/pannagram_scheme.png" style="width:70%; object-fit:cover;"/>
 </p>
 </div>
 

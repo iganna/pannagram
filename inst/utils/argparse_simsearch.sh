@@ -41,21 +41,21 @@ cmdline="$(basename "$0") $@"
 while [ "$1" != "" ]; do
     case $1 in
         -h | --help )         show_help; exit ;;
-        -in_seq | -in-seq )   file_input=$2;    shift 2 ;;
-        -out )                output_pref=$2;   shift 2 ;;
-        -sim | -similarity )  sim_threshold=$2; shift 2 ;;
-        -cov | -coverage )    coverage=$2;      shift 2 ;;
+        -in_seq | -in-seq | -query_seq )   file_input=$2;    shift 2 ;;
+        -out )                             output_pref=$2;   shift 2 ;;
+        -sim | -similarity )               similarity=$2;    shift 2 ;;
+        -cov | -coverage )                 coverage=$2;      shift 2 ;;
 
-        -on_seq    | -on-seq )    file_seq=$2;    shift 2 ;;
-        -on_genome | -on-genome ) file_genome=$2; shift 2 ;;
-        -on_path   | -on-path )   path_genome=$2; shift 2 ;;
+        -on_seq    | -on-seq    | -target_seq )    file_seq=$2;    shift 2 ;;
+        -on_genome | -on-genome | -target_genome ) file_genome=$2; shift 2 ;;
+        -on_path   | -on-path   | -target_path )   path_genome=$2; shift 2 ;;
 
-        -afterblast ) after_blast_flag=1; shift ;;
-        -keepblast )  keep_blast_flag=1;  shift ;;
+        -afterblast ) after_blast_flag=1;         shift ;;
+        -keepblast )  keep_blast_flag=1;          shift ;;
         -stopafterblast) stop_after_blast_flag=1; shift ;;
-        -aa|-prot )   use_aa=1;           shift ;;
+        -aa|-prot )   use_aa=1;                   shift ;;
 
-        -strandfree ) use_strand=F; shift ;;
+        -strandfree ) use_strand=F;               shift ;;
 
         -cores)
         if [[ -n "${2-}" ]] && [[ "$2" =~ ^[0-9]+$ ]]; then
@@ -165,21 +165,21 @@ if [ -n "$path_genome" ]; then
 fi
 
 # Check if similarity threshold parameter is provided
-if [ -z "$sim_threshold" ]; then
+if [ -z "$similarity" ]; then
     if [ "$use_aa" -eq 1 ]; then
-        sim_threshold=60
-        pokaz_message "Similarity threshold not specified, default for '-aa': ${sim_threshold}"
+        similarity=60
+        pokaz_message "Similarity threshold not specified, default for '-aa': ${similarity}"
     else
-        sim_threshold=85
-        pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
+        similarity=85
+        pokaz_message "Similarity threshold not specified, default: ${similarity}"
     fi
 else
-    pokaz_message "Similarity threshold: ${sim_threshold}"
+    pokaz_message "Similarity threshold: ${similarity}"
 fi
 
 # Check if coverage parameter is provided. If not - set qeual to sim
 if [ -z "$coverage" ]; then
-    coverage=${sim_threshold}
+    coverage=${similarity}
     pokaz_message "Coverage threshold not specified, default: ${coverage}"
 else
     pokaz_message "Coverage threshold: ${coverage}"

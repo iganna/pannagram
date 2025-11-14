@@ -73,7 +73,7 @@ colnames(mx.cnt) = acc.names
 # pokaz(acc.names)
 
 write.table(mx.cnt,
-            file      = paste0(output.dir, "/_total_cnt_", sim.cutoff, "_", coverage, ".tsv"),
+            file      = paste0(output.dir, "/total_counts_", sim.cutoff, "_", coverage, ".txt"),
             sep       = "\t",
             quote     = FALSE,
             row.names = TRUE,

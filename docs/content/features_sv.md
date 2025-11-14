@@ -1,4 +1,4 @@
-# Strsustural Variants (SVs)
+# Structural Variants (SVs)
 
 To generate SV-related features, run the following command:
 
@@ -39,7 +39,7 @@ The **3rd column** (`type`) uses one of:
 - `indel` — simple SV with intermediate presence frequency among accessions
 
 
-### Per-genome SV coordinates
+### Positions of SVs in genomes
 Two RDS tables provide per-genome coordinates for each SV:
 - `sv_pangen_beg.rds`: Start positions  
 - `sv_pangen_end.rds`: End positions

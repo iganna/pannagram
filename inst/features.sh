@@ -324,5 +324,4 @@ if [[ "${run_sv_sim}" == "true" ]]; then  # -sv_sim
     fi
 fi
 
-
 pokaz_message "Script completed successfully"
