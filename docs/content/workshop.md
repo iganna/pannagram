@@ -8,7 +8,7 @@ git clone https://github.com/iganna/pannagram.git
 cd pannagram
 ```
 
-### Replicate the environment
+### Install the environment
 1. Platform-independent dependencies are given in `pannagram_min.yml`. To create the working environment, run one of the following commands depending on which tool you have installed:
     ```shell
     conda env create -f pannagram_min.yml
@@ -31,11 +31,11 @@ PATH_BASE="<enter absolute path>/"
 Specify other directories:
 ```shell
 PATH_TOOLS="${PATH_BASE}"
-PATH_DATA="${PATH_BASE}genomes/"
+PATH_GENOMES="${PATH_BASE}genomes/"
 PATH_PROJECT="${PATH_BASE}alignment/"
-mkdir -p ${PATH_DATA}
+mkdir -p ${PATH_GENOMES}
 
-FILE_IDS="${PATH_DATA}ids.txt"
+FILE_IDS="${PATH_GENOMES}ids.txt"
 ```
 
 ### Create the files with IDs
@@ -52,9 +52,9 @@ git clone https://github.com/iganna/poputils.git
 ### Download genomes
 ```shell
 cd ${PATH_TOOLS}poputils/genomes
-./genbank_download_list.sh -f ${FILE_IDS} -p ${PATH_DATA}
+./genbank_download_list.sh -f ${FILE_IDS} -p ${PATH_GENOMES}
 
-ls -l ${PATH_DATA}*fasta
+ls -l ${PATH_GENOMES}*fasta
 ```
 
 ## 2. Perform the alignment in all modes
@@ -67,7 +67,7 @@ REF_NAME=""
 
 Run the Pannagram:
 ```shell
-pannagram -path_in ${PATH_DATA} -path_out ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
+pannagram -path_genomes ${PATH_GENOMES} -path_project ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
 ```
 
 Check the visualisation:
@@ -87,7 +87,7 @@ mv ${PATH_PROJECT} $(basename "$PATH_PROJECT")_pre
 
 Run the Pannagram:
 ```
-pannagram -path_in ${PATH_DATA} -path_out ${PATH_PROJECT} -cores 8 -nchr 1
+pannagram -path_genomes ${PATH_GENOMES} -path_project ${PATH_PROJECT} -cores 8 -nchr 1
 ```
 
 Check the visualisation:
@@ -99,16 +99,16 @@ cd ${PATH_PROJECT}plots/synteny_pairwise/${REF_NAME}
 
 Run the features script:
 ```
-features -path_in ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
+features -path_genomes ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
 ```
 
 Locations of some important result files:
 ```sh
 workshop/alignment
 ├── features/
-│   ├── msa/
-│   │   └── msa_1_1.h5
-│   ├── seq/
+│   ├── alignments/
+│   │   └── pan_1_1.h5
+│   ├── consensus/
 │   │   ├── seq_1_1.h5
 │   │   └── seq_cons_1.fasta
 │   ├── snp/
@@ -117,23 +117,15 @@ workshop/alignment
 │   │   └── snps_1_1_pangen.vcf
 │   └── sv/
 │       ├── gff/
-│       ├── edges_solved.txt
-│       ├── g_content_sim90.rds
-│       ├── seq_sv_big.fasta
-│       ├── seq_sv_big_on_sv_blast.txt
-│       ├── seq_sv_big_on_sv_cover.rds
-│       ├── seq_sv_small.fasta
-│       ├── sv_in_graph_orfs.fasta
+│       ├── edges_families.txt
+│       ├── seq_sv_large.fasta
+│       ├── seq_sv_short.fasta
 │       ├── sv_pangen_beg.rds
 │       ├── sv_pangen_end.rds
 │       ├── sv_pangen_pos.rds
-│       └── sv_partition_solved.txt
+│       └── sv_families.txt
 └── plots/
     ├── sv/
-    │   ├── graph_01_init.png
-    │   ├── graph_02_refined_4_400.png
-    │   ├── graph_03_louvain.png
-    │   ├── graph_05_solved.png
     │   ├── graph_06_colored.png
     │   ├── graph_07_label.png
     │   ├── sv_chr_minlen15_pangen.pdf
@@ -141,8 +133,8 @@ workshop/alignment
     │   ├── sv_freq_hist_length_minlen15_norm.pdf
     │   ├── sv_freq_hist.pdf
     │   └── sv_pie_chart.pdf
-    ├── synteny_pairwise/
-    └── synteny_pangenome/
+    ├── synteny_ref/
+    └── synteny_pan/
         └── fig_synteny_chr1.pdf
 ```
 
@@ -246,8 +238,8 @@ writeGFF(gff2, file.path(path.analisys, "gff2.gff"))
 
 ```shell
 simsearch \
-    -in_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
-    -on_path ${PATH_DATA} \
+    -query_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
+    -target_path ${PATH_GENOMES} \
     -out "${PATH_BASE}/simsearch"
 cd "${PATH_BASE}/simsearch"
 ls -lrt
@@ -258,8 +250,8 @@ less -S simsearch.total_cnt_85_0.85.txt
 
 ```shell
 simsearch \
-    -in_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
-    -on_seq '<file_with_sequences>' \
+    -query_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
+    -target_seq '<file_with_sequences>' \
     -out "${PATH_BASE}/simsearch"
 ```
 
