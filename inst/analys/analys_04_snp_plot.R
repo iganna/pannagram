@@ -36,7 +36,7 @@ if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 pi.acc = read.table(file.pi, header = 1)
 pi.acc = piVCF(pi.acc, len.wnd)
 
-save(list = ls(), file = "tmp_workspace_good.RData")
+# save(list = ls(), file = "tmp_workspace_good.RData")
 
 p.acc = ggplot(pi.acc, aes(x = pos, y = pi)) +
   geom_point(color = "#176B87", size = 1) +

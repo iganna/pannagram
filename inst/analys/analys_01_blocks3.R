@@ -93,7 +93,7 @@ if(!file.exists(file.blocks)){
       pokaz('Accession', acc)
       v <- h5read(file.comb.in, paste0(gr.accs.e, acc))
       
-      save(list = ls(), file = "tmp_workspace_acc.RData")
+      # save(list = ls(), file = "tmp_workspace_acc.RData")
       
       df.acc <- getBlocks(v, f.split = FALSE)
       if(nrow(df.acc) == 0) {

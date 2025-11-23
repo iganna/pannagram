@@ -40,7 +40,7 @@ while [ $# -gt 0 ]; do
         -sv_graph | \
         -sv_families | -sv_family)     run_sv_graph=true;                                shift 1 ;;
         -plot_families)   plot_families="T";                                shift 1 ;;
-        -sim)             similarity_value="$2";                            shift 2 ;;
+        -sim)             similarity_value="$2";                               shift 2 ;;
         -sv_acc)          acc_anal="$2";                                    shift 2 ;;
         -annogroup)       run_annogroup=true;   path_annot="$2";            shift 2 ;;
         -aln_type)        aln_type="$2";                                    shift 2 ;;
@@ -84,15 +84,20 @@ acc_anal="${acc_anal:-NULL}"
 path_project=$(add_symbol_if_missing "$path_project" "/")
 
 
-# Setup the alignment type
-if [ -z "$aln_type" ]; then
-  aln_type="pan"  # Default
-fi
-
-
 if [ -z "$ref_pref" ]; then
-  ref_pref="NULL"
+
+    # Setup the alignment type
+    if [ -z "$aln_type" ]; then
+      aln_type="pan"  # Default
+    fi
+
+    ref_pref="NULL"
 else
+    # Setup the alignment type
+    if [ -z "$aln_type" ]; then
+      aln_type="ref"  # Default
+    fi
+
     if [[ -z "$aln_type" || "$aln_type" == "ref" ]]; then
       aln_type="ref"
     else

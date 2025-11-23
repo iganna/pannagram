@@ -336,7 +336,7 @@ loop.function <- function(f.maj,
       x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
                                  dimnames = list(NULL, colnames(x.sk))))
     }
-    rmSafe(x.gap)
+    rm(x.gap, x.tmp, df.gap, cnt, idx.good)
     
   } else {
     # Create empty
@@ -484,6 +484,9 @@ loop.function <- function(f.maj,
       pokaz('after3')
     }
     
+    rm(x.gap, x.tmp, pos.shift, id.corresp, num.q, num.r, df.gap, idx.bw, idx.remain)
+    gc()
+    
   } else {
     
     # Create empty
@@ -501,6 +504,9 @@ loop.function <- function(f.maj,
   
   x.comb = glueZero(x.comb)
   
+  rm(x.sk, x.res, x.bw)
+  gc()
+  
   # # To catch possible bugs
   # if(T){
   #   file.ws = "tmp_workspace.RData"
@@ -514,25 +520,28 @@ loop.function <- function(f.maj,
   
   # ---- Check uniqueness ---- 
   
-  x.sk1 = x.comb
+  # x.sk1 = x.comb
+  
   # x.sk1 = x.res
   # x.sk1 = x.bw
   
   # save(list = ls(), file = "tmp_workspace.RData")
   
-  rownames(x.sk1) = NULL
-  pos.q.occup = rep(0, max.chr.len)
-  for(irow in 1:nrow(x.sk1)){
-    pp = x.sk1$V4[irow]:x.sk1$V5[irow]
-    if(sum(pos.q.occup[pp]) > 0) {
-      pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
-      stop('non-unique') 
-    }
-    # pos.q.occup[pp] = pos.q.occup[pp] + 1
-    pos.q.occup[pp] = irow
-  }
-  sum(pos.q.occup > 1)
-  sum(pos.q.occup)
+  # rownames(x.sk1) = NULL
+  # pos.q.occup = rep(0, max.chr.len)
+  # for(irow in 1:nrow(x.sk1)){
+  #   pp = x.sk1$V4[irow]:x.sk1$V5[irow]
+  #   if(sum(pos.q.occup[pp]) > 0) {
+  #     pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
+  #     stop('non-unique') 
+  #   }
+  #   # pos.q.occup[pp] = pos.q.occup[pp] + 1
+  #   pos.q.occup[pp] = irow
+  # }
+  # sum(pos.q.occup > 1)
+  # sum(pos.q.occup)
+  # rm(pos.q.occup)
+  # gc()
   
   # ---- Check genomes ----
   
@@ -586,10 +595,12 @@ if(num.cores == 1){
     registerDoParallel(myCluster)
     
     # Run parallel loop for files in the current batch
-    batch.results <- foreach(f.maj = batch.files, .packages = c('crayon')) %dopar% {
-      loop.function(f.maj, echo.loop = echo.loop)
-    }
-    tmp <- c(tmp, batch.results)
+    invisible(
+      foreach(f.maj = batch.files, .packages = c('crayon')) %dopar% {
+        loop.function(f.maj, echo.loop = echo.loop)
+        NULL 
+      }
+    )
     
     stopCluster(myCluster)  # Stop the cluster after completing the batch
     

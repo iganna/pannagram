@@ -59,7 +59,7 @@ if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.in, ".*\\.*h5$")
-files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.inter.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -90,7 +90,7 @@ loop.function <- function(s.comb,
   
   # --- --- --- --- --- --- --- --- --- --- ---
   pokaz('Combination', s.comb, file=file.log.loop, echo=echo.loop)
-  file.comb.in = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
+  file.comb.in = paste0(path.inter.msa, aln.type.in, s.comb,'.h5')
   file.comb.out = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   
   if(!file.exists(file.comb.in)){

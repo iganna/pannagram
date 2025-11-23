@@ -24,7 +24,8 @@ source(system.file("utils/utils.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons",  type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--path.features.msa",  type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",     type = "character", default = NULL, help = "Path to msa directory (internal)"),
   make_option("--ref0",       type = "character", default = NULL, help = "Reference file 1"),
   make_option("--ref1",       type = "character", default = NULL, help = "Reference file 2"),
   make_option("--cores",      type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
@@ -54,8 +55,11 @@ aln.type.out = paste0(aln.type.comb, '_')
 num.cores <- opt$cores
 
 # Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
+if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop('path_features_msa directory doesn’t exist')
+
+if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
+if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
 
 # Reference genomes
 ref0 <- if (is.null(opt$ref0)) stop("opt$pref is NULL") else opt$ref0
@@ -67,7 +71,7 @@ pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 pattern <- paste0("^", aln.type.in, "[0-9]+_[0-9]+_.*\\.h5$")
-combo_files <- list.files(path = path.cons, pattern = pattern, full.names = F)
+combo_files <- list.files(path = path.features.msa, pattern = pattern, full.names = F)
 combo_files <- combo_files[grep(paste(ref1, ref0, sep = "|"), combo_files)]
 
 extract_xy <- function(filename) {
@@ -98,11 +102,11 @@ loop.function <- function(s.comb,
                           file.log.loop=NULL){
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste0(path.cons, aln.type.in, s.comb, '_', ref0, '.h5')
-  file.comb1 = paste0(path.cons, aln.type.in, s.comb, '_', ref1, '.h5')
+  file.comb0 = paste0(path.features.msa, aln.type.in, s.comb, '_', ref0, '.h5')
+  file.comb1 = paste0(path.features.msa, aln.type.in, s.comb, '_', ref1, '.h5')
   
   # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste0(path.cons, aln.type.out, s.comb, '.h5')
+  file.res = paste0(path.inter.msa, aln.type.out, s.comb, '.h5')
   if(file.exists(file.res)){
     if(v.idx.trust %in% h5ls(file.res)$name) {
       file.comb0 = file.res

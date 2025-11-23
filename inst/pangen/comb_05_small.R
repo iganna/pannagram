@@ -81,7 +81,8 @@ if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-aln.pref = paste0(aln.type.comb, '_')
+aln.type = aln.type.clean
+aln.pref = paste0(aln.type, '_')
 
 s.pattern <- paste0("^", aln.pref, ".*\\.h5$")
 s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
@@ -233,9 +234,7 @@ for(s.comb in s.combinations){
   
   if(length(res.msa) != nrow(ref.pos)){
     pokaz(length(res.msa), nrow(ref.pos), file=file.log.loop, echo=echo.loop)
-    file.ws = "tmp_workspace_x.RData"
-    all.local.objects <- ls()
-    save(list = all.local.objects, file = file.ws)
+    save(list = ls(), file = "tmp_workspace_x.RData")
     stop('Lengths dont match')
   }
     

@@ -1,3 +1,3 @@
-# This is a Test3
+# Functions with sequences
 
 This is a simple test file.

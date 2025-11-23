@@ -188,7 +188,7 @@ if(f.max != 1){
 # ***********************************************************************
 # ---- Length distribution bins ----
 
-save(list = ls(), file = "tmp_workspace_good.RData")
+# save(list = ls(), file = "tmp_workspace_good.RData")
 
 tbl = table(sv.se[(sv.se$len > len.min), c('len.gr', 'freq.max')])
 tbl = tbl[rowSums(tbl) != 0,,drop=F]

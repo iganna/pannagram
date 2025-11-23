@@ -186,7 +186,7 @@ for(s.comb in pref.combinations){
   
   # Check direction
   if (any(sign(v.end - v.beg) < 0)){
-    save(list = ls(), file = paste0("tmp_workspace_checkpoint5_", s.comb,".RData"))
+    # save(list = ls(), file = paste0("tmp_workspace_checkpoint5_", s.comb,".RData"))
     stop('Checkpoint5')
   } 
   

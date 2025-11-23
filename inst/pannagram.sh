@@ -391,8 +391,14 @@ if [[ -f "$file_params" ]]; then
     # Loading previous parameters
     source "$file_params"
 
-    if [[ "${prev_mode_pangen}" != "${mode_pangen}" ]]; then
-        rm -f ${path_log}/*_done
+    if [[ "$prev_mode_pangen" != "$mode_pangen" ]]; then
+        if [[ "$prev_mode_pangen" == "$name_mode_ref" && "$mode_pangen" == "$name_mode_pre" ]]; then
+            rm -f "${path_log}"/*_done
+        fi
+
+        if [[ "$prev_mode_pangen" == "$name_mode_msa" && "$mode_pangen" != "$name_mode_msa" ]]; then
+            rm -f "${path_log}"/*_done
+        fi
     fi
 
     if [[ "$prev_path_in" != "$path_in" || \
@@ -1122,6 +1128,8 @@ with_level 1 pokaz_stage "Pangenome Alignment starts..."
 # Run consensus for a pair of files
 with_level 1 pokaz_stage "Step ${step_num}. Randomization of references.." 
 
+mkdir -p "${path_inter_msa}"
+
 flag_first=true
 
 ref0=${refs_all[0]}
@@ -1151,7 +1159,8 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         fi  
 
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs2.R \
-                --path.cons ${path_features_msa} \
+                --path.features.msa ${path_features_msa} \
+                --path.inter.msa ${path_inter_msa} \
                 --ref0 ${ref0} \
                 --ref1 ${ref1} \
                 --cores ${cores} \
@@ -1167,8 +1176,6 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Remain only the trustable positions
 with_level 1 pokaz_stage "Step ${step_num}. Remain only the trustable syntenic positions.."
-
-mkdir -p "${path_inter_msa}"
 
 # Logs
 step_name="step${step_num}_comb_03_cleanup"

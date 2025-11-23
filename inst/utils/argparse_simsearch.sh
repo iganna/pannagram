@@ -185,6 +185,20 @@ else
     pokaz_message "Coverage threshold: ${coverage}"
 fi
 
+
+# Check if 'similarity' is empty
+if [[ -z "$similarity" ]]; then
+    echo "Error: similarity is empty"
+    exit 1
+fi
+
+# Check if 'coverage' is empty
+if [[ -z "$coverage" ]]; then
+    echo "Error: coverage is empty"
+    exit 1
+fi
+
+
 # Determine BLAST command and database type
 if [ "$use_aa" -eq 1 ]; then
     # pokaz_message "Searching for proteins in nucleotide db"

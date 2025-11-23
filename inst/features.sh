@@ -12,7 +12,7 @@ check_dir ${path_project}
 
 # General alignment processing
 if [ "$run_blocks" = true ]; then # -blocks
-    pokaz_stage "Get blocks."
+    pokaz_stage "Get synteny blocks."
 
     # check_dir "$path_inter_msa"    || exit 1
     check_dir "$path_features_msa" || exit 1
@@ -202,6 +202,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     if [[ ! -f "$file_sv_large_on_sv_mv" ]]; then
         pokaz_message "Run Simsearch.."
+
         simsearch -in_seq ${file_sv_large} \
                   -on_seq ${file_sv_large} \
                   -sim ${similarity_value} \
