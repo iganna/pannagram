@@ -382,8 +382,8 @@ fi
 
 with_level 1 pokaz_attention ${message_mode}
 
-with_level 2 pokaz_message "Number of chromosomes ${nchr}"
-with_level 2 pokaz_message "Number of cores ${cores}"
+with_level 2 pokaz_message "Number of chromosomes: ${nchr}"
+with_level 2 pokaz_message "Number of cores: ${cores}"
 
 
 # Check previous command
@@ -763,6 +763,7 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
+        # rm -rf ${path_parts} 
         
     fi
 

@@ -78,6 +78,18 @@ files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 # Filter files that start with one of the values in accessions
 files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 
+files.maj = c("100025_1_1_maj.rds",
+"100027_1_1_maj.rds",
+"100026_1_1_maj.rds",
+"100030_1_1_maj.rds",
+"100027_2_2_maj.rds",
+"100025_2_2_maj.rds",
+"100026_2_2_maj.rds",
+"100026_3_3_maj.rds",
+"100026_4_4_maj.rds",
+"100025_4_4_maj.rds",
+"100030_2_2_maj.rds")
+
 # Additional filtration when combinations are provided
 if (length(readLines(file.combinations)) != 0) {
   combinations = read.table(file.combinations)
@@ -612,7 +624,12 @@ if(num.cores == 1){
 
 warnings()
 
+stop('all files tested')
+
 pokaz('Done.', file=file.log.main, echo=echo.main)
+
+
+
 
 # ---- Manual testing  ----
 
