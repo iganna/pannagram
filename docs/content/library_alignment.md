@@ -2,7 +2,6 @@
 
 There two main Pangenome functional abilities: liftover annotation from one genome for another and cut a part of the alignment.
 
-## Visualisation of synteny: dotplot + pangenome plot ?
 
 ## Annotation liftover
 

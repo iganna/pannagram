@@ -23,8 +23,8 @@ getPannagramPaths <- function(path.proj = NULL, dot.args = list()) {
     path.seq <- file.path(path.msa, "seq")
   } else {
     if (is.null(path.proj)) stop("Path to the project folder must be provided!")
-    path.msa <- file.path(path.proj, "features", "msa")
-    path.seq <- file.path(path.proj, "features", "seq")
+    path.msa <- file.path(path.proj, "features", "alignments")
+    path.seq <- file.path(path.proj, "features", "consensus")
   }
   path.msa = paste0(path.msa, '/')
   path.seq = paste0(path.seq, '/')
