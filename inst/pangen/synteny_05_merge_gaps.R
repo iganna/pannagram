@@ -78,8 +78,6 @@ files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 # Filter files that start with one of the values in accessions
 files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 
-pokaz(files.maj)
-
 # Additional filtration when combinations are provided
 if (length(readLines(file.combinations)) != 0) {
   combinations = read.table(file.combinations)
