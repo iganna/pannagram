@@ -99,6 +99,9 @@ loop.function <- function(s.comb, echo = T){
   n.acc = length(accessions)
 
   pokaz('Round 1: get positions of differences..')
+  
+  save(list = ls(), file = "tmp_workspace_snp.RData")
+  
   pos.diff = c()
   for(acc in accessions){
     # pokaz('Sequence of accession', acc)
