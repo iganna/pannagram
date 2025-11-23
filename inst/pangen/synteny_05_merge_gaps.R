@@ -78,9 +78,7 @@ files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 # Filter files that start with one of the values in accessions
 files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 
-files.maj = c("100025_1_1_maj.rds",
-"100027_1_1_maj.rds",
-"100026_1_1_maj.rds",
+files.maj = c(
 "100030_1_1_maj.rds",
 "100027_2_2_maj.rds",
 "100025_2_2_maj.rds",
@@ -443,8 +441,8 @@ loop.function <- function(f.maj,
       if(length(tmp) == 0) stop('Wrong, no correspondence')
       id.corresp = rbind(id.corresp, cbind(tmp, irow))
     }
-    id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
-    
+    id.corresp <- as.data.frame(id.corresp)
+    colnames(id.corresp) <- c("init", "new")
     
     # IDX
     if(nrow(x.tmp) == 1){
