@@ -1,6 +1,7 @@
 # Basic analysis via visualisation
 
 Dotplot
+Nt-plot
 ORF Finder
 
 

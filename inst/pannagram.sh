@@ -156,7 +156,7 @@ fi
 
 # Number of chromosomes
 
-
+echo "Num_Chr $nchr Num_Chr_Ref $nchr_ref"
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
     pokaz_stage "Define the number of chromosomes..."
@@ -168,7 +168,7 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
         # Define from files
         # Count the number of chromosomes in files
         counts=()
-        pokaz_message "Acc ChrNum"
+        pokaz_message "Accession Number_of_Chromosomes"
         for ext in "${genome_extensions[@]}"; do
             # Loop over each element in acc_set
             for acc in "${acc_set[@]}"; do
