@@ -90,6 +90,8 @@ files.maj = c("100025_1_1_maj.rds",
 "100025_4_4_maj.rds",
 "100030_2_2_maj.rds")
 
+pokaz(files.maj)
+
 # Additional filtration when combinations are provided
 if (length(readLines(file.combinations)) != 0) {
   combinations = read.table(file.combinations)
