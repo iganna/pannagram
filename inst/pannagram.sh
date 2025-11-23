@@ -156,7 +156,7 @@ fi
 
 # Number of chromosomes
 
-echo "Num_Chr $nchr Num_Chr_Ref $nchr_ref"
+# echo "Num_Chr $nchr Num_Chr_Ref $nchr_ref"
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
     pokaz_stage "Define the number of chromosomes..."
@@ -242,7 +242,7 @@ fi
 
 
 # Define Combinations
-pokaz_stage "Define Combinations"
+# pokaz_stage "Define Combinations"
 
 # File with combinations
 file_combinations="${path_inter}combinations.txt"
@@ -387,7 +387,7 @@ with_level 2 pokaz_message "Number of cores ${cores}"
 
 
 # Check previous command
-pokaz_stage "Setup Logs"
+# pokaz_stage "Setup Logs"
 file_params="${path_log}command.log"
 
 if [[ -f "$file_params" ]]; then
@@ -434,7 +434,7 @@ echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
 pokaz_stage "Check Steps"
 
 # Define the log directory
-step_files=$(find "${path_log}" -type f -name "step*_done")
+step_files=$(find "${path_log}" -maxdepth 1 -type f -name "step*_done")
 
 if [[ $step_start -eq 0 ]]; then
 
