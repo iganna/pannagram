@@ -100,8 +100,6 @@ loop.function <- function(s.comb, echo = T){
 
   pokaz('Round 1: get positions of differences..')
   
-  save(list = ls(), file = "tmp_workspace_snp.RData")
-  
   pos.diff = c()
   for(acc in accessions){
     # pokaz('Sequence of accession', acc)
@@ -120,6 +118,7 @@ loop.function <- function(s.comb, echo = T){
   }
   # Common positions
   pokaz('Round 2: get diffs in common positions..')
+  pos = sort(unique(pos.diff))
   
   snp.matrix = s.pangen[pos]
   snp.val = c()
