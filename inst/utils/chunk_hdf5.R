@@ -16,7 +16,7 @@ v.ref.name = 'ref'
 
 aln.type.ref='ref'
 aln.type.comb='comb'
-aln.type.clean='syntely'
+aln.type.clean='synteny'
 
 aln.type.pre='pre'
 
