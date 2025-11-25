@@ -2,6 +2,11 @@
 
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 
+if [ -z "$INSTALLED_PATH" ]; then
+    echo "Error: package 'pannagram' is not installed." >&2
+    exit 1
+fi
+
 source $INSTALLED_PATH/utils/chunk_error_control.sh
 source $INSTALLED_PATH/utils/utils_bash.sh
 source $INSTALLED_PATH/utils/help_pannagram.sh
