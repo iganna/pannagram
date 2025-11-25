@@ -26,6 +26,7 @@ args = commandArgs(trailingOnly=TRUE)
 option_list <- list(
   make_option("--path.features.msa",  type = "character", default = NULL, help = "Path to msa directory (features)"),
   make_option("--path.inter.msa",     type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  make_option("--accessions",         type = "character", default = NULL, help = "File containing accessions to analyze"),
   make_option("--ref0",       type = "character", default = NULL, help = "Reference file 1"),
   make_option("--ref1",       type = "character", default = NULL, help = "Reference file 2"),
   make_option("--cores",      type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
@@ -47,6 +48,13 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 
 aln.type.in = paste0(aln.type.ref, '_')
 aln.type.out = paste0(aln.type.comb, '_')
+
+# ***********************************************************************
+# ---- Accessions ----
+
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions.specified <- as.character(tmp[,1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -141,6 +149,7 @@ loop.function <- function(s.comb,
   
   accessions = intersect(groups0$name[groups0$group == gr.accs.b], 
                          groups1$name[groups1$group == gr.accs.b])  # full name of accessions
+  accessions = intersect(accessions, accessions.specified)
   
   pokaz('Number of accessions', length(accessions))
   for(acc in accessions){

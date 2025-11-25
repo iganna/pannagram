@@ -1167,6 +1167,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs2.R \
                 --path.features.msa ${path_features_msa} \
                 --path.inter.msa ${path_inter_msa} \
+                --accessions ${file_accessions} \
                 --ref0 ${ref0} \
                 --ref1 ${ref1} \
                 --cores ${cores} \
@@ -1204,6 +1205,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
             --path.features.msa ${path_features_msa} \
             --path.inter.msa ${path_inter_msa} \
+            --accessions ${file_accessions} \
             --cores ${cores} \
             --path.log ${path_log_step} \
             --log.level ${log_level} 
@@ -1238,6 +1240,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_breaks.R \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
+            --accessions ${file_accessions} \
             --cores "${cores}" \
             --path.chromosomes "${path_chrom}" \
             --path.log "${path_log_step}" \
@@ -1465,6 +1468,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.mafft.out ${path_mafft_out} \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
+            --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
 

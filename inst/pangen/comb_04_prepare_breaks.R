@@ -19,6 +19,7 @@ option_list <- list(
   make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa directory (features)"),
   make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa directory (internal)"),
   make_option("--path.chromosomes",  type = "character", default = NULL, help = "Path to directory with chromosomes"),
+  make_option("--accessions",        type = "character", default = NULL, help = "File containing accessions to analyze"),
   
   make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap"),
   
@@ -40,6 +41,13 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 
 aln.type.in <- ifelse(is.null(opt$aln.type.in), aln.type.clean, opt$aln.type.in)
 aln.type.in = paste0(aln.type.in, '_')
+
+# ***********************************************************************
+# ---- Accessions ----
+
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions.specified <- as.character(tmp[,1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -107,6 +115,7 @@ for(s.comb in pref.combinations){
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
+  accessions = intersect(accessions, accessions.specified)
   n.acc = length(accessions)
   
   # ---- Read Breaks ----

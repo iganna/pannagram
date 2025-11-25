@@ -116,6 +116,7 @@ for(s.comb in pref.combinations){
   pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
+  # Load variables from the previous step
   file.ws = paste0(path.inter.msa, 'breaks_ws_', s.comb, '.RData')
   load(file.ws)
   
