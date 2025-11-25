@@ -3,7 +3,7 @@
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 
 if [ -z "$INSTALLED_PATH" ]; then
-    echo "Error: package 'pannagram' is not installed." >&2
+    echo "Error: package 'pannagram' is not installed."
     exit 1
 fi
 
