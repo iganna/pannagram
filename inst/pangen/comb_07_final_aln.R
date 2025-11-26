@@ -29,7 +29,6 @@ opt_parser = OptionParser(option_list=option_list)
 opt = parse_args(opt_parser, args = args)
 
 n.flank = 30
-max.block.elemnt = 3 * 10^ 6
 
 # ***********************************************************************
 # ---- Logging ----
@@ -47,8 +46,7 @@ aln.type.out = paste0(aln.type.msa, '_')
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
-accessions.specified <- as.character(tmp[,1])
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -100,11 +98,9 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   accessions = intersect(accessions, accessions.specified)
   n.acc = length(accessions)
+  if (n.acc == 0) stop(paste("No accessions for combination", s.comb))
+  
   base.len = length(h5read(file.comb, paste0(gr.accs.e, accessions[1])))
-  
-  
-  # n.rows.block = round(max.block.elemnt / n.acc)
-  # seq.blocks = seq(1, base.len - n.rows.block, n.rows.block)
   
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
@@ -393,12 +389,7 @@ for(s.comb in pref.combinations){
   } 
   # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
   
-  
-  # ---- Define blocks before the big alignments ----
-  # pos.beg = fp.main[mafft.res$beg] + 1
-  # pos.beg.bins <- cut(pos.beg, breaks = c(seq.blocks, Inf), labels = FALSE)
-  # pos.block.end = tapply(pos.beg, pos.beg.bins, max)
-  # pos.block.end[length(pos.block.end)] = base.len
+  # ---- Resultant File ----
   
   file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   if (file.exists(file.res)) file.remove(file.res)

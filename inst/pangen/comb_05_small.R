@@ -25,18 +25,11 @@ option_list <- list(
   
   make_option("--cores",             type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option("--path.log",          type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",         type = "character", default = NULL, help = "Level of log to be shown on the screen"),
-  make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap"),
-  make_option("--num.batches",       type = "integer",   default = NA, help = "Max length of the gap")
+  make_option("--log.level",         type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
-
-#TODO: SHOULD BE PARAMATERS
-len.short = 50
-# len.large = 40000
-n.flank = 30
 
 # ***********************************************************************
 # ---- Logging ----
@@ -50,22 +43,9 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 # ***********************************************************************
 # ---- Values of parameters ----
 
-# Max len gap
-if (is.null(opt$max.len.gap)) {
-  stop("Error: max.len.gap is NULL")
-} else {
-  len.large <- opt$max.len.gap
-}
-
 # Number of cores for parallel processing
 num.cores = opt$cores
-if(is.null(num.cores)) stop('Wrong number of cores: NULL')
 pokaz('Number of cores:', num.cores, file=file.log.main, echo=echo.main)
-
-# Number of batches
-if(is.na(opt$num.batches)){
-  num.batches = num.cores
-}
 
 # Path with the MSA output (features)
 path.features.msa <- opt$path.features.msa
@@ -75,8 +55,13 @@ if (is.null(path.features.msa) || is.null(path.inter.msa)) {
   stop("Error: both --path.features.msa and --path.inter.msa must be provided")
 }
 
-if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
-if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
+if (!dir.exists(path.features.msa)) stop('Features MSA directory does not exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory does not exist')
+
+# **************************************************************************
+# ---- Variables ----
+
+max.batch.size <- 100
 
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -204,20 +189,25 @@ for(s.comb in s.combinations){
     myCluster <- makeCluster(num.cores, type = "PSOCK") 
     registerDoParallel(myCluster) 
     
-    # Split the vector of shotp positions into n.core batches
-    idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
-    num.cores = min(num.cores, length(idx.batches))
+    # Split the vector of short positions into n.core batches
+    
+    num.batches <- ceiling(length(idx.short) / max.batch.size)
+    num.batches <- max(num.cores, num.batches)  # Compare with cores
+    
+    idx.batches <- split(idx.short, cut(seq_along(idx.short), num.batches, labels = FALSE))
     
     pokaz('Parallel computing: short sequences', file=file.log.loop, echo=echo.loop)
-    res.msa <- foreach(i.batch = 1:num.cores,
+    res.msa <- foreach(i.batch = 1:num.batches,
                        .packages=c('Biostrings', 'crayon', 'msa', 'muscle'))  %dopar% {
                          return(CODE_ALN_BATCH(i.batch)) 
                        }
     
     res = list()
-    for(i.batch in 1:num.cores){
+    for(i.batch in 1:num.batches){
       res[idx.batches[[i.batch]]] = res.msa[[i.batch]]
     }
+    
+    save(list = ls(), file = "tmp_workspace_good.RData")
     
     res.msa = res
     if(length(res.msa) != max(idx.short)) stop('Something is wrong with indexes')

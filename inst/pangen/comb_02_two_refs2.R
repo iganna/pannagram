@@ -53,8 +53,7 @@ aln.type.out = paste0(aln.type.comb, '_')
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
-accessions.specified <- as.character(tmp[,1])
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -70,8 +69,8 @@ if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
 if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
 
 # Reference genomes
-ref0 <- if (is.null(opt$ref0)) stop("opt$pref is NULL") else opt$ref0
-ref1 <- if (is.null(opt$ref1)) stop("opt$pref is NULL") else opt$ref1
+ref0 <- if (is.null(opt$ref0)) stop("opt$ref0 is NULL") else opt$ref0
+ref1 <- if (is.null(opt$ref1)) stop("opt$ref1 is NULL") else opt$ref1
 
 pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 
@@ -93,7 +92,7 @@ extract_xy <- function(filename) {
 
 pref.combinations <- unique(sapply(combo_files, extract_xy))
 
-if(sum(is.na(pref.combinations)) != 0 ) pokazAttention('Alignments will only be processed in chromosome-to-chromosome mode, i.e. chromosome 1 with chromosome 1, chromosome 2 with chromosome 2, and so on.')
+if (any(is.na(pref.combinations))) pokazAttention('Alignments will only be processed in chromosome-to-chromosome mode, i.e. chromosome 1 with chromosome 1, chromosome 2 with chromosome 2, and so on.')
 pref.combinations <- pref.combinations[!is.na(pref.combinations)]  # THIS IS THE FITURE
 
 if(length(pref.combinations) == 0) {
@@ -106,15 +105,14 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 loop.function <- function(s.comb,
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste0(path.features.msa, aln.type.in, s.comb, '_', ref0, '.h5')
-  file.comb1 = paste0(path.features.msa, aln.type.in, s.comb, '_', ref1, '.h5')
+  file.comb0 <- file.path(path.features.msa, paste0(aln.type.in, s.comb, "_", ref0, ".h5"))
+  file.comb1 <- file.path(path.features.msa, paste0(aln.type.in, s.comb, "_", ref1, ".h5"))
   
   # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste0(path.inter.msa, aln.type.out, s.comb, '.h5')
+  file.res   <- file.path(path.inter.msa, paste0(aln.type.out, s.comb, ".h5"))
   if(file.exists(file.res)){
     if(v.idx.trust %in% h5ls(file.res)$name) {
       file.comb0 = file.res
@@ -184,8 +182,8 @@ loop.function <- function(s.comb,
     v.final[f01[,1]] = v0
     
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
-    if(length(dup.value > 0)){
-      v.final[v.final %in% dup.value] == 0
+    if(length(dup.value) > 0){
+      v.final[v.final %in% dup.value] <- 0
       pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
     }
     
@@ -223,11 +221,8 @@ loop.function <- function(s.comb,
 # ---- Loop  ----
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
   for(s.comb in pref.combinations){
     loop.function(s.comb,
-                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

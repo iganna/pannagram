@@ -31,6 +31,7 @@ opt = parse_args(opt_parser, args = args);
 # print(opt)
 
 max.len.gap = 100000  # This should be a parameter!!!
+min.block.len = 100
 
 # ***********************************************************************
 # ---- Logging ----
@@ -149,7 +150,7 @@ loop.function <- function(s.comb,
       v.b$i.beg = v.idx[v.b$beg]
       v.b$i.end = v.idx[v.b$end]
       
-      v.b.remove = v.b[v.b$len <= 100,]
+      v.b.remove = v.b[v.b$len <= min.block.len,]
       if(nrow(v.b.remove) == 0) break
       for(irow in 1:nrow(v.b.remove)){
         v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
@@ -274,11 +275,4 @@ pokaz('Done.',
       file=file.log.main, echo=echo.main)
 
 
-# ***********************************************************************
-# ---- Testing ----
-if(F){
-  library(rhdf5)
-  path.cons = './'
-  options("width"=200, digits=10)
-}
 

@@ -123,9 +123,12 @@ dotplot.s <- function(seq1, seq2, wsize=15, nmatch=12, ...) {
 
 #' @export
 #'
-dotprot <- function(seq1, seq2, wsize, nmatch) {
+dotprot <- function(seq1, seq2, wsize=10, nmatch=5) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
   
   # Remove gaps
   seq1 = seq1[seq1 != '-']
@@ -191,9 +194,11 @@ dotprot.s <- function(seq1, seq2, wsize, nmatch, ...) {
 #' 
 #' @export
 
-dotself <- function(seq, wsize, nmatch, return.mx=F) {
+dotself <- function(seq, wsize=15, nmatch=12, return.mx=F) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  seq <- prepareNtSeq(seq)
   
   # Remove gaps
   seq = seq[seq != '-']
@@ -276,6 +281,8 @@ dotself.s <- function(seq, wsize, nmatch, ...) {
 #' @export
 dotspiegel <- function(seq, wsize, nmatch) {
   
+  seq <- prepareNtSeq(seq)
+  
   p.fw = dotplot(seq, seq, wsize, nmatch) + ggtitle('seq vs seq')
   p.rev = dotplot(seq, rev(seq), wsize, nmatch) + ggtitle('seq vs rev(seq)')
   
@@ -336,7 +343,6 @@ dotfacet <- function(seq1, seq2, wsize, nmatch.beg=NULL, nmatch.end=NULL, n.row 
   return(pp)
   
 }
-
 
 
 dotfacet.s <- function(seq1, seq2, ...) {
