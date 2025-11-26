@@ -70,7 +70,6 @@ dotself(seq2, wsize=15, nmatch=11)
 ```
 
 The results are shown below:
-
 <div style="width: 20%;">
 <p align="left">
   <img src="images/dotplot_self.png" style="width:100%; object-fit:cover;"/>
@@ -84,16 +83,21 @@ Pairwise dot-plot for protein sequences.
 The function works similarly to dotplot, but Only the forward orientation of the sequences is compared and reverse-complement matches are ignored.
 
 Default parameters: `wsize = 10`, `nmatch = 5`.
-
 ```
 dotprot(prot1, prot2)
 ```
 
+Examples with 80% and 100% similarity:
+```
+dotprot(prot1, prot2, wsize = 10, nmatch = 8)
+dotprot(prot1, prot2, wsize = 10, nmatch = 10)
+```
+
 The results are shown below:
-<div style="width: 20%;">
-<p align="left">
-  <img src="images/dotprot.png" style="width:100%; object-fit:cover;"/>
-</p>
+<div style="width: 50%; display: flex; justify-content: flex-start; gap: 10px;">
+  <img src="images/dotprot.png" style="width: 30%; object-fit: cover;">
+  <img src="images/dotprot80.png" style="width: 30%; object-fit: cover;">
+  <img src="images/dotprot100.png" style="width: 30%; object-fit: cover;">
 </div>
 
 
@@ -113,8 +117,7 @@ seq2 <- seqs[2]
 ```
 
 ### Example protein sequences
-**[View](../examples/seqs_dotplot.txt)** · **[Download](../examples/seqs_dotplot.fasta)**  
-
+**[View](../examples/seqs_dotprot.txt)** · **[Download](../examples/seqs_dotprot.fasta)**  
 This example compares a coding region with an *Arabidopsis thaliana* transposable element and a hypothetical protein from *Cucumis melo*.  
 To load these sequences in R, run:
 
