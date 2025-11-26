@@ -118,7 +118,7 @@ seq2 <- seqs[2]
 
 ### Example protein sequences
 **[View](../examples/seqs_dotprot.txt)** · **[Download](../examples/seqs_dotprot.fasta)**  
-This example compares a coding region with an *Arabidopsis thaliana* transposable element and a hypothetical protein from *Cucumis melo*.  
+This example compares a coding region from an *Arabidopsis thaliana* transposable element and a hypothetical protein from *Cucumis melo*.  
 To load these sequences in R, run:
 
 ```r
