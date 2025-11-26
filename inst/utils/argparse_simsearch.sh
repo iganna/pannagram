@@ -41,12 +41,12 @@ cmdline="$(basename "$0") $@"
 while [ "$1" != "" ]; do
     case $1 in
         -h | --help )         show_help; exit ;;
-        -in_seq | -in-seq | -query_seq )   file_input=$2;    shift 2 ;;
+        -in_seq | -in-seq | -query_seqs )   file_input=$2;    shift 2 ;;
         -out )                             output_pref=$2;   shift 2 ;;
         -sim | -similarity )               similarity=$2;    shift 2 ;;
         -cov | -coverage )                 coverage=$2;      shift 2 ;;
 
-        -on_seq    | -on-seq    | -target_seq )    file_seq=$2;    shift 2 ;;
+        -on_seq    | -on-seq    | -target_seqs )    file_seq=$2;    shift 2 ;;
         -on_genome | -on-genome | -target_genome ) file_genome=$2; shift 2 ;;
         -on_path   | -on-path   | -target_path )   path_genome=$2; shift 2 ;;
 

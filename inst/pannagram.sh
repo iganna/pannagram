@@ -1247,7 +1247,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.inter.msa "${path_inter_msa}" \
             --accessions ${file_accessions} \
             --cores "${cores}" \
-            --path.chromosomes "${path_chrom}" \
             --path.log "${path_log_step}" \
             --log.level "${log_level}" \
             --max.len.gap "${max_len_gap}"
@@ -1334,8 +1333,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
             --path.log "${path_log_step}" \
-            --log.level "${log_level}" \
-            --max.len.gap "${max_len_gap}"
+            --log.level "${log_level}" 
 
     # Done
     touch "${step_file}"

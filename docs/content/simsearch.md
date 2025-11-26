@@ -22,10 +22,10 @@ The module uses BLAST to identify initial matches and then merges neighboring hi
 ## `I.` Search for query sequences in another (target) set of sequences
 
 To run this mode, use the following command:
-```sh
+```bash
 simsearch \
-    -query_seq <query_sequences.fasta> \
-    -target_seq <target_sequences.fasta> \
+    -query_seqs <query_sequences.fasta> \
+    -target_seqs <target_sequences.fasta> \
     -out "<output_path>"
 ```
 
@@ -46,7 +46,7 @@ This file contains the table with the following colmns:
 To run this mode, use the following command:
 ```sh
 simsearch \
-    -query_seq <query_sequences.fasta> \
+    -query_seqs <query_sequences.fasta> \
     -target_genome <target_genome.fasta> \
     -out "<output_path>"
 ```
@@ -64,7 +64,7 @@ simsearch \
 To run this mode, use the following command:
 ```sh
 simsearch \
-    -query_seq <query_sequences.fasta> \
+    -query_seqs <query_sequences.fasta> \
     -target_path <path_with_genomes> \
     -out "<output_path>"
 ```
