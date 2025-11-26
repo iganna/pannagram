@@ -117,8 +117,28 @@ prot2 <- prots[2]
 p.prot = dotprot(prot1, prot2)
 p.prot
 
+p.prot.80 = dotprot(prot1, prot2, wsize = 10, nmatch = 8)
+p.prot.80
+
+p.prot.100 = dotprot(prot1, prot2, wsize = 10, nmatch = 10)
+p.prot.100
+
 savePNG(p.prot, path = '../images/', name = 'dotprot', width = 4, height = 4)
+savePNG(p.prot.80, path = '../images/', name = 'dotprot80', width = 4, height = 4)
+savePNG(p.prot.100, path = '../images/', name = 'dotprot100', width = 4, height = 4)
 
 writeFasta(prots, sub('fasta', 'txt', file.prots))
 ```
+
+DotGrid
+```{r}
+p.grid = dotgrid(seq1, seq2, 15, c(15, 12, 10, 8), nrow = 2)
+p.grid
+
+
+savePNG(p.grid, path = '../images/', name = 'dotgrid', width = 4, height = 4)
+```
+
+
+
 

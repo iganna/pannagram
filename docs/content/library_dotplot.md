@@ -13,6 +13,12 @@ Both sequences start in the bottom-left of the plot:
 (**↑**) moves along sequence 2.
 
 
+The Panngram R library provides 4 handy functions to visualise dotplots:
+1. **`dotplot`** – pairwise dot-plot of two nucleotide sequences.
+2. **`dotself`** – self-comparison of a nucleotide sequence.
+3. **`dotprot`** – pairwise dot-plot for two protein sequences.
+4. **`dotgrid`** – a grid of dot-plots across multiple nmatch thresholds.
+
 ## Input Sequences
 
 All functions accept:
@@ -82,7 +88,7 @@ The results are shown below:
 Pairwise dot-plot for protein sequences.
 The function works similarly to dotplot, but Only the forward orientation of the sequences is compared and reverse-complement matches are ignored.
 
-Default parameters: `wsize = 10`, `nmatch = 5`.
+Default parameters: `wsize = 10`, `nmatch = 5` (~50% similarity).
 ```
 dotprot(prot1, prot2)
 ```
@@ -100,10 +106,26 @@ The results are shown below:
   <img src="images/dotprot100.png" style="width: 30%; object-fit: cover;">
 </div>
 
+## 4. dotgrid
+
+This function generates multiple dot-plots at once using a vector of match thresholds.
+This is useful when the optimal threshold is unclear — for noisy, diverged, or highly repetitive sequences.
+
+```R
+dotgrid(seq1, seq2, 15, c(15, 12, 10, 8), nrow = 2)
+```
+
+The output:
+<div style="width: 40%;">
+<p align="left">
+  <img src="images/dotgrid.png" style="width:100%; object-fit:cover;"/>
+</p>
+</div>
+
 
 ## Examples used above
 
-### Example nucleotide sequences
+### Nucleotide sequences
 **[View](../examples/seqs_dotplot.txt)** · **[Download](../examples/seqs_dotplot.fasta)**  
 This example contains a *Arabidopsis thaliana* transposable element and a sequence with artificial modifications.  
 To load these sequences in R, run:
@@ -116,7 +138,7 @@ seq1 <- seqs[1]
 seq2 <- seqs[2]
 ```
 
-### Example protein sequences
+### Protein sequences
 **[View](../examples/seqs_dotprot.txt)** · **[Download](../examples/seqs_dotprot.fasta)**  
 This example compares a coding region from an *Arabidopsis thaliana* transposable element and a hypothetical protein from *Cucumis melo*.  
 To load these sequences in R, run:

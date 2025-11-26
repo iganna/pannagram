@@ -117,6 +117,7 @@ dotplot <- function(seq1, seq2, wsize=15, nmatch=12) {
 #' @export
 #'
 dotplot.s <- function(seq1, seq2, wsize=15, nmatch=12, ...) {
+  pokazAttention('Please replace this function with dotplot!')
   return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
 }
 
@@ -166,13 +167,6 @@ dotprot <- function(seq1, seq2, wsize=10, nmatch=5) {
   # p
   return(p )
 }
-
-#' @export
-#'
-dotprot.s <- function(seq1, seq2, wsize, nmatch, ...) {
-  return(dotprot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
-}
-
 
 #' Generate a Dotplot for One Nucleotide Sequence
 #' 
@@ -249,18 +243,6 @@ dotself <- function(seq, wsize=15, nmatch=12, return.mx=F) {
 }
 
 
-#'  Generate a Dotplot for One Nucleotide Sequence
-#'
-#' @description
-#' The same as `dotself` but the sequence can be provided as a string
-#' 
-#' @export
-#'
-#'
-dotself.s <- function(seq, wsize, nmatch, ...) {
-  return(dotself(seq2nt(seq), wsize, nmatch, ...))
-}
-
 #' Dotplot for Sequences and Their Reverse Complements
 #'
 #' @description
@@ -291,63 +273,38 @@ dotspiegel <- function(seq, wsize, nmatch) {
   return(pp)
 }
 
-#' Dotplot for Sequences and Their Reverse Complements
-#'
-#' @description
-#' The same as `dotspiegel` but the sequence can be provided as a string
-#'
-#' @param seq Sequence as a string.
-#' @param wsize Comparison window size.
-#' @param nmatch Minimum matches in window.
-#'
-#' @return ggplot of sequence self and reverse comparison.
-#' 
-#' @export
-dotspiegel.s <- function(seq, wsize, nmatch) {
-  return(dotspiegel(seq2nt(seq), wsize, nmatch))
-}
 
 #' Several dotplots with varying nmatch
 #'
 #' @param seq1 The first sequence to be compared.
 #' @param seq2 The second sequence to be compared.
 #' @param wsize The window size to be used in the dot plot.
-#' @param nmatch.beg Optional; the beginning number of matches required. 
-#'                   Defaults to the window size if not specified.
-#' @param nmatch.end Optional; the ending number of matches required.
-#'                   Defaults to the window size minus 5 if not specified.
-#' @param n.row Optional; the number of rows to arrange the plots in the grid.
-#'              Defaults to 2.
+#' @param nmatch.range Optional; a vector of match thresholds to use.
+#'                     If NULL, defaults to wsize:(wsize-5).
+#' @param n.row Optional; number of rows in the output grid (default = 2).
 #' @return A graphical object containing the grid of dotplots.
-#' 
+#'
 #' @export
-dotfacet <- function(seq1, seq2, wsize, nmatch.beg=NULL, nmatch.end=NULL, n.row = 2){
-  if(is.null(nmatch.beg)){
-    nmatch.beg = wsize
-    nmatch.end = NULL
+dotgrid <- function(seq1, seq2, wsize, nmatch.range = NULL, nrow = 1) {
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
+  
+  # If the range is not provided, use default sequence
+  if (is.null(nmatch.range)) {
+    nmatch.range <- wsize:(wsize - 5)
   }
   
-  if(is.null(nmatch.end)){
-    nmatch.end = wsize - 5
+  p.list <- list()
+  for (nmatch in nmatch.range) {
+    p.list[[length(p.list) + 1]] <- dotplot(seq1, seq2, wsize, nmatch)
   }
   
-  nmatch.range = nmatch.beg:nmatch.end
-  # pokaz('Range:', nmatch.range)
-  
-  p.list = list()
-  for(nmatch in nmatch.range){
-    p.list[[length(p.list) + 1]] = dotplot(seq1, seq2, wsize, nmatch)
-  }
-  
-  pp = cowplot::plot_grid(plotlist = p.list, nrow=n.row)
+  pp <- cowplot::plot_grid(plotlist = p.list, nrow = nrow)
   return(pp)
-  
 }
 
 
-dotfacet.s <- function(seq1, seq2, ...) {
-  return(dotfacet(seq2nt(seq1), seq2nt(seq2),...))
-}
 
 
 #' Compare Two Matrices for Dotplot Generation
