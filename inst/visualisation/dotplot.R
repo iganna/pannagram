@@ -1,6 +1,7 @@
 # Dotplots
 
-# Helper function to validate and preprocess input sequences
+#' Helper function to validate and preprocess input sequences
+#' @export
 prepareNtSeq <- function(seq) {
   ## --- Convert and validate a sequence ---
   

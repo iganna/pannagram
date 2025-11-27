@@ -25,6 +25,8 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
                '-' = '#EEEDEF',
                'N' = '#31363F')
   
+  sequence <- prepareNtSeq(sequence)
+  
   sequence = toupper(sequence)
   
   positions <- seq(1, length(sequence) - wnd + 1)
@@ -52,8 +54,5 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
   return(p)
 }
 
-#' @export
-ntplot.s <- function(s,  wnd = 100, nt.separate = F, ...) {
-  return(ntplot(seq2nt(s),  wnd=wnd, nt.separate = nt.separate, ...))
-}
+
 

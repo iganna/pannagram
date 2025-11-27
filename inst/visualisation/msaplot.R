@@ -4,7 +4,7 @@
 #' It supports both nucleotide (`nt`) and amino acid (`aa`) sequences, and colors the alignment according 
 #' to the specified color scheme.
 #'
-#' @param seqs.mx A matrix or vector representing the sequences to be plotted. Each row corresponds to 
+#' @param aln A matrix or vector representing the sequences to be plotted. Each row corresponds to 
 #' a sequence, and each column corresponds to a position in the alignment.
 #' @param msa.cols A named vector of colors to be used for each nucleotide or amino acid. If `NULL`, 
 #' a default color scheme will be used based on the sequence type (`nt` or `aa`).
@@ -19,17 +19,18 @@
 #' to represent each position in the alignment, with colors corresponding to the nucleotide or amino acid 
 #' at each position.
 #'
-#' @examples
-#' # Example nucleotide sequences
-#' nt_sequences <- matrix(c("A", "T", "G", "C", "A", "T", "-", "G", "C", "A"), nrow = 2, byrow = TRUE)
-#' msaplot(nt_sequences, seq.type = 'nt')
-#'
-#' # Example amino acid sequences
-#' aa_sequences <- matrix(c("A", "G", "C", "D", "E", "F", "G", "H", "I", "K"), nrow = 2, byrow = TRUE)
-#' msaplot(aa_sequences, seq.type = 'aa')
-#'
 #' @export
-msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, show.legend=F){
+msaplot <- function(aln, seq.type='nt', msa.cols = NULL, show.legend=F){
+  
+  # Input handling
+  if(is.vector(aln) && is.character(aln)){
+    aln <- aln2mx(aln)
+  }
+  
+  # If input is matrix, ensure correct type
+  if(!is.matrix(aln)){
+    stop("Input must be either a character vector of aligned sequences or a matrix.")
+  }
   
   # Colors
   if(is.null(msa.cols)){
@@ -71,27 +72,27 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, show.legend=F){
   }
   
   # Row names
-  if(is.null(row.names(seqs.mx))){
-    pokazAttention('Names of sequences are not provided. They were modified.')
-    row.names(seqs.mx) = paste0('s.', 1:nrow(seqs.mx))
+  if(is.null(row.names(aln))){
+    pokazAttention('Names of sequences are not provided. They will be .')
+    row.names(aln) = paste0('s.', 1:nrow(aln))
   }
   
-  if(length(unique(row.names(seqs.mx))) != nrow(seqs.mx)){
+  if(length(unique(row.names(aln))) != nrow(aln)){
     pokazAttention('Names of sequences are not unique. They were modified.')
-    row.names(seqs.mx) = paste0('s.', 1:nrow(seqs.mx))
+    row.names(aln) = paste0('s.', 1:nrow(aln))
   }
   
-  if (is.vector(seqs.mx)){
-    seqs.mx = t(matrix(seqs.mx))
+  if (is.vector(aln)){
+    aln = t(matrix(aln))
   }
   
-  if(is.null(rownames(seqs.mx))){
-    rownames(seqs.mx) = paste('s', 1:nrow(seqs.mx), sep = '_')
+  if(is.null(rownames(aln))){
+    rownames(aln) = paste('s', 1:nrow(aln), sep = '_')
   }
   
-  seqs.mx = toupper(seqs.mx)
-  df <- reshape2::melt(seqs.mx)
-  df$Var1 = factor(df$Var1, levels = rev(rownames(seqs.mx)))
+  aln = toupper(aln)
+  df <- reshape2::melt(aln)
+  df$Var1 = factor(df$Var1, levels = rev(rownames(aln)))
   df$Var2 = as.numeric(df$Var2)
   
   names(msa.cols) = toupper(names(msa.cols))
@@ -101,7 +102,7 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, show.legend=F){
     scale_fill_manual(values = msa.cols) +
     scale_color_manual(values = msa.cols) +
     theme_bw() + 
-    scale_x_continuous(limits = c(0, ncol(seqs.mx)+1), expand = c(0, 0)) +
+    scale_x_continuous(limits = c(0, ncol(aln)+1), expand = c(0, 0)) +
     theme(panel.grid = element_blank(),
           panel.border = element_blank()) + ylab('') + 
     xlab(NULL) +
@@ -124,9 +125,9 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, show.legend=F){
 #' to a reference sequence. It marks positions that are the same as, different from, or gaps compared 
 #' to the reference sequence.
 #'
-#' @param seqs.mx A matrix representing the sequences to be analyzed. Each row corresponds to a sequence, 
+#' @param aln A matrix representing the sequences to be analyzed. Each row corresponds to a sequence, 
 #' and each column corresponds to a position in the alignment.
-#' @param i.ref An integer indicating the index of the reference sequence within `seqs.mx`. The default is 1.
+#' @param i.ref An integer indicating the index of the reference sequence within `aln`. The default is 1.
 #'
 #' @return A ggplot object representing the MSA plot, with differences, similarities, and gaps highlighted 
 #' in different colors.
@@ -135,18 +136,23 @@ msaplot <- function(seqs.mx, seq.type='nt', msa.cols = NULL, show.legend=F){
 #' differ from the reference are marked as "diff", positions that are the same are marked as "same", and 
 #' gaps are marked as "gap". These differences are then visualized using the `msaplot` function.
 #'
-#' @examples
-#' # Example sequences
-#' sequences <- matrix(c("A", "T", "G", "C", "A", "T", "-", "G", "C", "A"), nrow = 2, byrow = TRUE)
-#' msadiff(sequences, i.ref = 1)
-#'
 #' @export
-msadiff <- function(seqs.mx, i.ref=1, show.legend=F){
+msadiff <- function(aln, i.ref=1, show.legend=F){
   
-  seqs.mx = toupper(seqs.mx)
-  bin.mx <- t(apply(seqs.mx, 1, function(row) as.integer(row != seqs.mx[i.ref, ]))) + 2
-  bin.mx[,seqs.mx[i.ref,] == '-'] = 2
-  bin.mx[seqs.mx == '-'] = 1
+  # Input handling
+  if(is.vector(aln) && is.character(aln)){
+    aln <- aln2mx(aln)
+  }
+  
+  # If input is matrix, ensure correct type
+  if(!is.matrix(aln)){
+    stop("Input must be either a character vector of aligned sequences or a matrix.")
+  }
+  
+  aln = toupper(aln)
+  bin.mx <- t(apply(aln, 1, function(row) as.integer(row != aln[i.ref, ]))) + 2
+  bin.mx[,aln[i.ref,] == '-'] = 2
+  bin.mx[aln == '-'] = 1
   values = c('gap', 'same', 'diff')
   bin.mx <- t(apply(bin.mx, 1, function(row) values[row]))
   
