@@ -183,36 +183,6 @@ splitSeq <- function(sequence, n = 5000, step = 0, merge = T) {
 }
 
 
-#' Calculate GC Content in DNA Sequences
-#'
-#' This function calculates the GC content for a given set of DNA sequences, using a specified window size.
-#'
-#' @param s A character vector of DNA sequences. Each element of the vector should be a DNA sequence in the form of a string.
-#' @param wnd An integer specifying the window size for calculating the GC content. Default is 1000.
-#' @return A list where each element corresponds to a sequence from the input `s`. Each element is a numeric vector
-#' representing the GC content for each window in the sequence.
-#' @examples
-#' # Example usage
-#' sequences <- c("ATGCGATCGATCG", "GCGCGCGCGCGCG", "ATATATATATAT")
-#' gcContent(sequences, wnd = 5)
-#'
-#' @export
-gcContent <- function(s, wnd = 1000){
-  gc.list = list()
-  for(i.seq in 1:length(s)){
-    if(nchar(s[i.seq]) < wnd) next
-    m = splitSeq(s[i.seq], n = wnd, merge = F)
-    gc.tmp = rowSums(m == 'G') +
-      rowSums(m == 'C') +
-      rowSums(m == 'g') +
-      rowSums(m == 'c')
-    gc.tmp = gc.tmp / wnd
-    gc.list[[i.seq]] = gc.tmp
-  }
-  return(gc.list)
-} 
-
-
 #' Convert a string to a vector of nucleotides
 #'
 #' @param s A single string representing a sequence.
@@ -755,6 +725,13 @@ seq2orf <- function(seq, orf.min.len = 25){
 #' @export
 revCompl <- function(s){
   
+  if(length(s) == 1){
+    flag.merge = T
+  } else {
+    flag.merge = F
+  }
+  s <- prepareNtSeq(s)
+  
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
   complementary_nts <- c(
     A='T', T='A', C='G', G='C', 
@@ -769,6 +746,12 @@ revCompl <- function(s){
   
   seqs.rc = rev(complementary_nts[s])
   if(sum(is.na(seqs.rc)) != 0) stop('Wrong nucleotides are provided')
+  
+  if(flag.merge){
+    seqs.rc = nt2seq(seqs.rc)
+  } else {
+    names(seqs.rc) = NULL
+  }
   return(seqs.rc)
 }
 
@@ -792,7 +775,7 @@ revComplSeq <- function(seq){
   
   seq.rc = c()
   for(s in seq){
-    seq.rc = c(seq.rc, nt2seq(revCompl(seq2nt(s))))
+    seq.rc = c(seq.rc, revCompl(s))
   }
 
   names(seq.rc) = seq.names
@@ -814,6 +797,13 @@ revComplSeq <- function(seq){
 #' @export
 justCompl <- function(s){
   
+  if(length(s) == 1){
+    flag.merge = T
+  } else {
+    flag.merge = F
+  }
+  s <- prepareNtSeq(s)
+  
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
   complementary_nts <- c(
     A='T', T='A', C='G', G='C', 
@@ -828,6 +818,13 @@ justCompl <- function(s){
   
   seqs.c = complementary_nts[s]
   if(sum(is.na(seqs.c)) != 0) stop('Wrong nucleotides are provided')
+  
+  if(flag.merge){
+    seqs.rc = nt2seq(seqs.rc)
+  } else {
+    names(seqs.rc) = NULL
+  }
+  
   return(seqs.c)
 }
 
