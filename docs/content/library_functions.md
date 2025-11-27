@@ -61,8 +61,6 @@ aln2pos
 mx2pos
 
 
-
-
 ## Reverse Complement
 
 degenerated nucleotides are suppotred
