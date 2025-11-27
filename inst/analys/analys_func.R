@@ -58,6 +58,10 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
     ref.suff = paste0('_', ref.acc)
   }
   
+  if(ref.acc != ''){
+    aln.type = 'ref'
+  }
+  
   if(acc1 == acc2) stop('Accessions provided are identical')
   
   # --- Determine the number of chromosomes ---
