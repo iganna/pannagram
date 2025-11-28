@@ -37,8 +37,7 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   v.b$v.beg = abs(v.b$v.beg)
   v.b$v.end = abs(v.b$v.end)
   
-  # Remove
-  
+  # Merge blocks
   n <- nrow(v.b)
   cond <-
     (v.b$r.beg[2:n] - 1 == v.b$r.end[1:(n-1)]) &
@@ -210,7 +209,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
   
   df.blocks <- c()
   for(k in 2:length(i.order)){
-    # pokaz(k)
+    pokaz(k)
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
@@ -218,8 +217,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     
     idx.break.k = idx.break.k[order(idx.break.k$pan.b),]
     
-    # Collect all pangen breakes between these accessions
-    
+    # Collect all pangen breaks between these accessions
     for(i.rep in 1:2){
       idx1 = (idx.break.k$acc == acc1)
       idx2 = (idx.break.k$acc == acc2)
@@ -266,26 +264,31 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     
     if(length(sum.dup) == 0) next
     
-    for(s in sum.dup){
-      # print(s)
-      b1 = idx.break.k[(idx.break.k$sum == s) & (idx.break.k$acc == acc1),]
-      b2 = idx.break.k[(idx.break.k$sum == s) & (idx.break.k$acc == acc2),]
-      df.block = data.frame(
-        pan.b = b1$pan.b,
-        pan.e = b1$pan.e,
-        own1.b = b1$own.b,
-        own1.e = b1$own.e,
-        own2.b = b2$own.b,
-        own2.e = b2$own.e,
-        y1 = k-1,
-        y2 = k,
-        acc1 = b1$acc,
-        acc2 = b2$acc,
-        dir1 = b1$dir == 0,
-        dir2 = b2$dir == 0
-      )
-      df.blocks = rbind(df.blocks, df.block)
-    }
+    # Extract all rows for acc1 and acc2 that have duplicated sum values
+    b1 <- idx.break.k[idx.break.k$acc == acc1 & idx.break.k$sum %in% sum.dup, ]
+    b2 <- idx.break.k[idx.break.k$acc == acc2 & idx.break.k$sum %in% sum.dup, ]
+    
+    # Align rows of b2 so that they match b1 by 'sum'
+    m <- match(b1$sum, b2$sum)
+    b2 <- b2[m, ]
+    
+    # Build all block rows at once
+    df.block <- data.frame(
+      pan.b  = b1$pan.b,
+      pan.e  = b1$pan.e,
+      own1.b = b1$own.b,
+      own1.e = b1$own.e,
+      own2.b = b2$own.b,
+      own2.e = b2$own.e,
+      y1     = k - 1,
+      y2     = k,
+      acc1   = b1$acc,
+      acc2   = b2$acc,
+      dir1   = b1$dir == 0,
+      dir2   = b2$dir == 0
+    )
+    
+    df.blocks <- rbind(df.blocks, df.block)
     
   }
   
@@ -364,54 +367,127 @@ getColorPallete <- function(df.plot){
 }
 
 # Define vertical shades for inversions
-splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
+splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split = 5) {
+  colors.split <- c("#9DB2BF", "#CE1F6A")
+  grad.split   <- colorRamp(colors.split)
   
+  # будем создавать новые ряды в списке, а не через rbind в цикле
+  new_rows_list <- list()
+  new_cols_vec  <- character()
   
-  # Slit blocks
-  colors.split <- c('#9DB2BF', "#CE1F6A")
+  max_t <- max(df.plot$t)
+  t_counter <- 0
   
-  grad.split <- colorRamp(colors.split)
+  t.correct <- unique(df.plot$t[df.plot$dir1 & !df.plot$dir2])
   
-  t.correct = unique(df.plot$t[df.plot$dir1 & !df.plot$dir2])
-  for(i.rep in 1:2){
-    for(i in t.correct){
-      df.tmp = df.plot[df.plot$t == i,]
+  for (i.rep in 1:2) {
+    # для текущего i.rep собираем новые ряды во временный список
+    rep_rows_list <- vector("list", length(t.correct) * n.split)
+    rep_cols_vec  <- character(length(t.correct) * n.split)
+    k <- 1
+    
+    for (i in t.correct) {
+      df.tmp <- df.plot[df.plot$t == i, ]
+      points <- segmentSplit(df.tmp, n.split)
       
-      points = segmentSplit(df.tmp, n.split)
-      
-      for(j in 1:n.split){
-        df.add = df.tmp
-        df.add$t = max(df.plot$t) + 1
-        df.add$x[1] = points$p1$x[j]
-        df.add$x[4] = points$p1$x[j+1]
-        df.add$x[2] = points$p2$x[j]
-        df.add$x[3] = points$p2$x[j+1]
+      for (j in seq_len(n.split)) {
+        df.add <- df.tmp
         
-        df.add$y.val[1] = points$p1$y[j]
-        df.add$y.val[4] = points$p1$y[j+1]
-        df.add$y.val[2] = points$p2$y[j]
-        df.add$y.val[3] = points$p2$y[j+1]
+        # задаём новый t без постоянного max(df.plot$t)
+        t_counter <- t_counter + 1
+        df.add$t <- max_t + t_counter
         
-        # col.new = rgb(grad.split((j-1)/(n.split-1)), maxColorValue = 255)
-        if(i.rep == 1){
-          col.new = rgb(grad.split((j)/(n.split)), maxColorValue = 255)
+        df.add$x[1]     <- points$p1$x[j]
+        df.add$x[4]     <- points$p1$x[j + 1]
+        df.add$x[2]     <- points$p2$x[j]
+        df.add$x[3]     <- points$p2$x[j + 1]
+        
+        df.add$y.val[1] <- points$p1$y[j]
+        df.add$y.val[4] <- points$p1$y[j + 1]
+        df.add$y.val[2] <- points$p2$y[j]
+        df.add$y.val[3] <- points$p2$y[j + 1]
+        
+        if (i.rep == 1) {
+          col.new <- rgb(grad.split(j / n.split), maxColorValue = 255)
         } else {
-          col.new = rgb(grad.split(1-(j-1)/(n.split)), maxColorValue = 255)
+          col.new <- rgb(grad.split(1 - (j - 1) / n.split), maxColorValue = 255)
         }
         
-        gr.col = c(gr.col, col.new)
-        
-        # print(df.add)
-        df.plot = rbind(df.plot, df.add)
+        rep_rows_list[[k]] <- df.add
+        rep_cols_vec[k]    <- col.new
+        k <- k + 1
       }
     }
-    gr.col[t.correct] = '#FFFFFF'
     
-    t.correct = unique(df.plot$t[!df.plot$dir1 & df.plot$dir2])
+    # добавляем то, что насобирали за данный i.rep
+    new_rows_list <- c(new_rows_list, rep_rows_list)
+    new_cols_vec  <- c(new_cols_vec,  rep_cols_vec)
     
+    # перекрашиваем "исходные" блоки в белый
+    gr.col[t.correct] <- "#FFFFFF"
+    
+    # обновляем t.correct для следующего прохода
+    t.correct <- unique(df.plot$t[!df.plot$dir1 & df.plot$dir2])
   }
+  
+  # один раз склеиваем всё, что насобирали
+  if (length(new_rows_list) > 0) {
+    df.new   <- do.call(rbind, new_rows_list)
+    df.plot  <- rbind(df.plot, df.new)
+    gr.col   <- c(gr.col, new_cols_vec)
+  }
+  
   return(list(df.plot, gr.col))
 }
+
+# splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
+#   
+#   
+#   # Slit blocks
+#   colors.split <- c('#9DB2BF', "#CE1F6A")
+#   
+#   grad.split <- colorRamp(colors.split)
+#   
+#   t.correct = unique(df.plot$t[df.plot$dir1 & !df.plot$dir2])
+#   for(i.rep in 1:2){
+#     for(i in t.correct){
+#       df.tmp = df.plot[df.plot$t == i,]
+#       
+#       points = segmentSplit(df.tmp, n.split)
+#       
+#       for(j in 1:n.split){
+#         df.add = df.tmp
+#         df.add$t = max(df.plot$t) + 1
+#         df.add$x[1] = points$p1$x[j]
+#         df.add$x[4] = points$p1$x[j+1]
+#         df.add$x[2] = points$p2$x[j]
+#         df.add$x[3] = points$p2$x[j+1]
+#         
+#         df.add$y.val[1] = points$p1$y[j]
+#         df.add$y.val[4] = points$p1$y[j+1]
+#         df.add$y.val[2] = points$p2$y[j]
+#         df.add$y.val[3] = points$p2$y[j+1]
+#         
+#         # col.new = rgb(grad.split((j-1)/(n.split-1)), maxColorValue = 255)
+#         if(i.rep == 1){
+#           col.new = rgb(grad.split((j)/(n.split)), maxColorValue = 255)
+#         } else {
+#           col.new = rgb(grad.split(1-(j-1)/(n.split)), maxColorValue = 255)
+#         }
+#         
+#         gr.col = c(gr.col, col.new)
+#         
+#         # print(df.add)
+#         df.plot = rbind(df.plot, df.add)
+#       }
+#     }
+#     gr.col[t.correct] = '#FFFFFF'
+#     
+#     t.correct = unique(df.plot$t[!df.plot$dir1 & df.plot$dir2])
+#     
+#   }
+#   return(list(df.plot, gr.col))
+# }
 
 #' Visualization of synteny blocks along genomes
 #'
@@ -446,12 +522,15 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   idx.break = idx.break[idx.break$acc %in% accessions,]
   
   # Blocks into sub-blocks between neighbouring accessions
+  pokaz('getBlocksBwNeiAccs')
   df.blocks = getBlocksBwNeiAccs(idx.break, accessions, i.order)
   
   # Blocks by grid
+  pokaz('splitBlocksByGrid')
   df.plot = splitBlocksByGrid(df.blocks, wnd.size = wnd.size)
   
   # Define color pallete
+  pokaz('getColorPallete')
   gr.col = getColorPallete(df.plot)
   
   # Split vertically inversion blocks
@@ -462,6 +541,7 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   df.plot$y.val = as.numeric(factor(df.plot$y, levels = acc.ord))
   idx.break$acc.val = as.numeric(factor(idx.break$acc, levels = acc.ord))
   
+  pokaz('splitInversionBlocks')
   res = splitInversionBlocks(df.plot, idx.break, gr.col)
   
   df.plot = res[[1]]
@@ -470,6 +550,7 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   # Color of synteny blocks
   idx.break$dir.factor = factor(idx.break$dir * 1, levels = c(0, 1))
   
+  pokaz('Plot')
   p = ggplot() +
     geom_polygon(data=df.plot, 
                  mapping=aes(x=x, y=y.val, group=t, 
@@ -490,7 +571,7 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
     theme(legend.position = "none") + theme(panel.grid.minor.x = element_blank(), 
                                             panel.grid.minor.y = element_blank(), 
                                             panel.grid.major.x = element_blank()) + 
-    scale_y_continuous(labels =  accessions[i.order], breaks = 1:length(i.order), expand = c(0.2, 0.2)) + 
+    scale_y_continuous(labels =  accessions[i.order], breaks = 1:length(i.order), expand = c(0, 0)) + 
     scale_x_continuous(expand = c(0, 0))
   
   
