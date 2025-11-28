@@ -79,7 +79,7 @@ source(system.file("visualisation/panplot.R", package = "pannagram"))
 # ---- MAIN program body ----
 
 file.blocks = paste0(path.inter.msa, aln.pref, 'syn_blocks', ref.suff,'.rds')
-pokaz(file.blocks)
+# pokaz(file.blocks)
 
 if(!file.exists(file.blocks)){
   df.all = c()
