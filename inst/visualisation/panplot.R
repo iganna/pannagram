@@ -13,6 +13,7 @@ getBlocks <- function(v, f.split = T, len.min = 5000){
   v = v[v != 0]
   
   v.r = v.idx
+  v.r = v.idx * sign(v)
   
   v.b = findRuns(v.r)
   
@@ -32,30 +33,30 @@ getBlocks <- function(v, f.split = T, len.min = 5000){
 
   # v.b$dir = sign(v.b$v.end - v.b$v.beg)
   v.b$dir = sign(v.b$beg)
+  v.b$v.beg = abs(v.b$v.beg)
+  v.b$v.end = abs(v.b$v.end)
   
   # Remove
-  irow = 2
-  while (irow <= nrow(v.b)) {
-    if(((v.b$r.beg[irow] - 1) == v.b$r.end[irow - 1]) &
-       (v.b$dir[irow] == v.b$dir[irow - 1]) &
-       ((v.b$v.beg[irow] - 1 - v.b$v.end[irow - 1]) < len.min)){
-      v.b$r.end[irow - 1] = v.b$r.end[irow]
-      v.b$end[irow - 1] = v.b$end[irow]
-      v.b$v.end[irow - 1] = v.b$v.end[irow]
-      v.b = v.b[-irow,]
-    } else {
-      irow = irow + 1
-    }
-  }
-  v.b$len = v.b$end - v.b$beg
-  # Remove small flying objects?
-  v.b = v.b[v.b$len >= len.min,]
-
-  v.b$i.beg = v.idx[v.b$beg]
-  v.b$i.end = v.idx[v.b$end]
+  
+  n <- nrow(v.b)
+  cond <-
+    (v.b$r.beg[2:n] - 1 == v.b$r.end[1:(n-1)]) &
+    (v.b$dir[2:n]     == v.b$dir[1:(n-1)])     &
+    ((v.b$v.beg[2:n] - 1 - v.b$v.end[1:(n-1)]) < len.min)
+  
+  starts <- c(1, which(!cond) + 1)
+  ends <- c(starts[-1] - 1, n)
+  
+  v.b.new = v.b[starts,]
+  
+  v.b.new$r.end = v.b$r.end[ends]
+  v.b.new$end = v.b$end[ends]
+  v.b.new$v.end = v.b$v.end[ends]
+  v.b.new$len = v.b.new$end - v.b.new$beg + 1
+  rownames(v.b.new) = NULL
   
   
-  df = v.b[,c('beg', 'end', 'v.beg', 'v.end')]
+  df = v.b.new[,c('beg', 'end', 'v.beg', 'v.end')]
   df = abs(df)
   rownames(df) = NULL
   colnames(df) <- c('own.b', 'own.e', 'pan.b', 'pan.e')
