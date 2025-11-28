@@ -1,7 +1,7 @@
 #' This file contains functions for visualising synteny between genomes
 #' len.min = 20000  Le length of which gap to consider as to blue the regions
 #' @export
-getBlocks <- function(v, f.split = T, len.min = 5000){
+getBlocks <- function(v, f.split = T, len.min = 10000){
   
   # v <- h5read(file.comb.in, paste0(gr.accs.e, acc))
   
@@ -21,7 +21,8 @@ getBlocks <- function(v, f.split = T, len.min = 5000){
   v.b[,'end'] = v[v.b[,'end']]
   
 
-  vals <- c(abs(v.b$v.beg), abs(v.b$v.end))
+  # vals <- c(abs(v.b$v.beg), abs(v.b$v.end))
+  vals <- c(abs(v.b$beg), abs(v.b$end))
   ranks <- match(vals, sort(unique(vals))) 
   v.b.rank <- matrix(
     ranks,
@@ -209,7 +210,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
   
   df.blocks <- c()
   for(k in 2:length(i.order)){
-    
+    # pokaz(k)
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
@@ -319,23 +320,18 @@ splitBlocksByGrid <- function(df.blocks, wnd.size = 1000000){
   }
   df.blocks = df.blocks[!is.na(df.blocks[,1]),]
   
-  
-  df.plot = c()
-  for(irow in 1:nrow(df.blocks)){
-    bl = data.frame(x = c(df.blocks$own1.b[irow], df.blocks$own1.e[irow], 
-                          df.blocks$own2.e[irow], df.blocks$own2.b[irow]),
-                    y = c(df.blocks$acc1[irow], df.blocks$acc1[irow], 
-                          df.blocks$acc2[irow], df.blocks$acc2[irow]),
-                    t = irow, 
-                    pan.b = df.blocks$pan.b[irow],
-                    # pan.e = df.blocks$pan.e[irow],
-                    dir1 = df.blocks$dir1[irow], dir2 = df.blocks$dir2[irow]
-    )
-    df.plot = rbind(df.plot, bl)
-  }
+  df.plot <- data.frame(
+    x = c(df.blocks$own1.b, df.blocks$own1.e, df.blocks$own2.e, df.blocks$own2.b),
+    y = c(df.blocks$acc1,    df.blocks$acc1,    df.blocks$acc2,    df.blocks$acc2),
+    t = rep(seq_len(nrow(df.blocks)), 4),
+    pan.b = rep(df.blocks$pan.b, 4),
+    dir1  = rep(df.blocks$dir1,  4),
+    dir2  = rep(df.blocks$dir2,  4)
+  )
+  df.plot = df.plot[order(df.plot$t),]
+  rownames(df.plot) = NULL
   
   return(df.plot)
-  
 }
 
 
@@ -383,7 +379,6 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
       
       points = segmentSplit(df.tmp, n.split)
       
-      df.add111 = c()
       for(j in 1:n.split){
         df.add = df.tmp
         df.add$t = max(df.plot$t) + 1
@@ -407,7 +402,6 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split=5){
         gr.col = c(gr.col, col.new)
         
         # print(df.add)
-        df.add111 = rbind(df.add111, df.add)
         df.plot = rbind(df.plot, df.add)
       }
     }
