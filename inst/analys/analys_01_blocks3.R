@@ -7,6 +7,7 @@ suppressMessages({
   library(rhdf5)
   library(pannagram)
   library(optparse)
+  library(ggplot2)
 })
 
 # ***********************************************************************
@@ -42,6 +43,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 num.cores <- opt$cores
 wnd.size <- opt$wnd.size
+block.len.min = 20000
 
 # ***********************************************************************
 # ---- Paths ----
@@ -71,11 +73,13 @@ if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 
 # Common code for aln.pref, ref.suffix and s.combinations
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
+source(system.file("visualisation/panplot.R", package = "pannagram")) 
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
 file.blocks = paste0(path.inter.msa, aln.pref, 'syn_blocks', ref.suff,'.rds')
+pokaz(file.blocks)
 
 if(!file.exists(file.blocks)){
   df.all = c()
@@ -169,11 +173,11 @@ for(s.comb in unique(df.all$comb)){
   
   # save(list = ls(), file = "tmp_workspace_blocks.RData")
   
-  p = panplot(df.tmp, 
+  p = panplotInner(df.tmp, 
               accessions = accessions, 
               i.order = i.order, 
               wnd.size = wnd.size) 
-  savePDF(p, path = path.figures, name = paste0('pan_synteny_',s.comb), width = 6, height = 4 / 27 * length(accessions))
+  savePDF(p, path = path.figures, name = paste0('synteny_', aln.pref, s.comb, ref.suff), width = 6, height = length(accessions) / 5 + 1)
 }
 
 

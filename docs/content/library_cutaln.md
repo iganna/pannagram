@@ -1,4 +1,4 @@
-# Extracting a Specific Region from a Pangenome Alignment
+# Extracting Specific Regions from a Pangenome Alignment
 The Pannagram R library provides a functionality to extract a specific region  
 from a pangenome alignment by choosing a chromosome and accession, and then providing the region’s coordinates.
 
@@ -45,7 +45,7 @@ To visualize the extracted alignment:
 msaplot(aln.seq)
 ```
 
-## Get the region positions
+## Get positions of all accessions in the region 
 If instead of sequences you need a matrix of corresponsing genomic positions, use `pos` mode:
 ```
 aln.seq <- getRegion(

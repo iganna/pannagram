@@ -110,8 +110,16 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   p.beg.acc <- which(v == p.beg)
   p.end.acc <- which(v == p.end)
   
-  if (length(p.beg.acc) == 0) stop(paste("Position", p.beg, "is not found in the alignment of the accession", acc))
-  if (length(p.end.acc) == 0) stop(paste("Position", p.end, "is not found in the alignment of the accession", acc))
+  if (length(p.beg.acc) == 0){
+    pokazAttention("Position", p.beg, "is not found in the alignment of the accession", acc,
+                  '\nReturn empty matrix')
+    return(NULL)
+  } 
+  if (length(p.end.acc) == 0){
+    pokazAttention("Position", p.end, "is not found in the alignment of the accession", acc,
+                   '\nReturn empty matrix')
+    return(NULL)
+  }
   
   v <- v[p.beg.acc:p.end.acc]
   v <- v[v != 0]

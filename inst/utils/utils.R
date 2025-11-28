@@ -820,9 +820,9 @@ justCompl <- function(s){
   if(sum(is.na(seqs.c)) != 0) stop('Wrong nucleotides are provided')
   
   if(flag.merge){
-    seqs.rc = nt2seq(seqs.rc)
+    seqs.c = nt2seq(seqs.c)
   } else {
-    names(seqs.rc) = NULL
+    names(seqs.c) = NULL
   }
   
   return(seqs.c)

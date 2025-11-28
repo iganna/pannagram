@@ -1531,8 +1531,8 @@ pokaz_attention "Extra steps are running.."
 with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments - 1."
 
 # Paths
-path_extra_long="${path_extra}long/"
 mkdir -p "$path_extra"
+path_extra_long="${path_extra}long/"
 mkdir -p "$path_extra_long"
 
 # Logs
@@ -1648,7 +1648,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments - 2."
 
 # Paths
-path_extra_long2="${path_extgra}long2/"
+path_extra_long2="${path_extra}long2/"
 mkdir -p "$path_extra_long2"
 
 # Logs
