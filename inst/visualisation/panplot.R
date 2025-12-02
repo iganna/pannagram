@@ -265,7 +265,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
   
   df.blocks.all <- c()
   for(k in 2:length(i.order)){
-    pokaz(k)
+    # pokaz(k)
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
@@ -570,7 +570,7 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split = 5) {
 #' @return A ggplot object showing synteny blocks, their positions, and optionally centromeric regions.
 #' 
 panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=NULL, file.acc.len=NULL, 
-                      wnd.size = 1000000){
+                      wnd.size = 1000000, echo=F){
   
   wnd.size.min = 10000
   wnd.size = max(wnd.size, wnd.size.min)
@@ -590,15 +590,15 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   idx.break = idx.break[idx.break$acc %in% accessions,]
   
   # Blocks into sub-blocks between neighbouring accessions
-  pokaz('getBlocksBwNeiAccs')
+  if(echo) pokaz('getBlocksBwNeiAccs')
   df.blocks = getBlocksBwNeiAccs(idx.break, accessions, i.order)
   
   # Blocks by grid
-  pokaz('splitBlocksByGrid')
+  if(echo) pokaz('splitBlocksByGrid')
   df.plot = splitBlocksByGrid(df.blocks, wnd.size = wnd.size)
   
   # Define color pallete
-  pokaz('getColorPallete')
+  if(echo) pokaz('getColorPallete')
   gr.col = getColorPallete(df.plot)
   
   # Split vertically inversion blocks
@@ -609,7 +609,7 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   df.plot$y.val = as.numeric(factor(df.plot$y, levels = acc.ord))
   idx.break$acc.val = as.numeric(factor(idx.break$acc, levels = acc.ord))
   
-  pokaz('splitInversionBlocks')
+  if(echo) pokaz('splitInversionBlocks')
   res = splitInversionBlocks(df.plot, idx.break, gr.col)
   
   df.plot = res[[1]]
@@ -618,7 +618,7 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   # Color of synteny blocks
   idx.break$dir.factor = factor(idx.break$dir * 1, levels = c(0, 1))
   
-  pokaz('Plot')
+  if(echo) pokaz('Plot')
   p = ggplot() +
     geom_polygon(data=df.plot, 
                  mapping=aes(x=x, y=y.val, group=t, 
@@ -695,6 +695,12 @@ panplot <- function(path.project, i.chr, accessions = NULL, aln.type='pan', ref.
   p = panplotInner(idx.break, wnd.size = wnd.size, accessions=accessions)
   
   return(p)
+  
+}
+
+
+
+syntenyplot <- function(path.project, ref, acc, i.chr=NULL){
   
 }
 

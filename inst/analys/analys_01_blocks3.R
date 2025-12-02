@@ -140,8 +140,6 @@ if(!file.exists(file.blocks)){
   df.all$pan.b[idx.dir] = df.all$pan.e[idx.dir]
   df.all$pan.e[idx.dir] = tmp
   
-  # save(list = ls(), file = "tmp_workspace_synblocks_test.RData")
-  
   saveRDS(df.all, file.blocks)  
 } else {
   pokaz("File with blocks was generated in advance", file.blocks)
@@ -157,31 +155,6 @@ accessions = unique(df.all$acc)
 
 for(s.comb in unique(df.all$comb)){
   pokaz('Combination', s.comb)
-  
-  # df.tmp = df.all[df.all$comb == s.comb,]
-  # 
-  # accessions = unique(df.tmp$acc)
-  # if(length(accessions) == 1){
-  #   pokazAttention('Synteny plot can not be generated for combination', s.comb)
-  #   next
-  # } else {
-  #   pokaz('Number of accessions is', length(accessions))
-  # }
-  # if(ref.name %in% accessions){
-  #   accessions = c(ref.name, setdiff(accessions, ref.name))
-  # }
-  # 
-  # i.order = 1:length(accessions)
-  # 
-  # df.tmp$acc <- factor(df.tmp$acc, levels = accessions)
-  # 
-  # # save(list = ls(), file = "tmp_workspace_blocks.RData")
-  # 
-  # p = panplotInner(df.tmp, 
-  #             accessions = accessions, 
-  #             i.order = i.order, 
-  #             wnd.size = wnd.size) 
-  # 
   
   i.chr = parseStrings(s.comb, n = 1, split = '_', numeric = T)
   p = panplot(path.project = path.project, i.chr = i.chr, aln.type = aln.type, ref.acc = ref.name)
