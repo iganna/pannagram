@@ -26,6 +26,7 @@ if [ "$run_blocks" = true ]; then # -blocks
     mkdir -p ${path_plots_synteny}
 
     Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
+        --path.project ${path_project} \
         --path.inter.msa ${path_inter_msa} \
         --path.features.msa ${path_features_msa} \
         --path.figures ${path_plots_synteny} \

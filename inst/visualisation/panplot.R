@@ -60,7 +60,6 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   v.b.new$len = v.b.new$end - v.b.new$beg + 1
   rownames(v.b.new) = NULL
   
-  
   df = v.b.new[,c('beg', 'end', 'v.beg', 'v.end')]
   df = abs(df)
   rownames(df) = NULL
@@ -353,10 +352,10 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     df.blocks$acc1 = acc1
     df.blocks$acc2 = acc2
     
-    
-    df.blocks$len1 = abs(df.blocks$own1.e - df.blocks$own1.b) + 1
-    df.blocks$len2 = abs(df.blocks$own2.e - df.blocks$own2.b) + 1
-    plot(df.blocks$len1, df.blocks$len2)
+    # Testing    
+    # df.blocks$len1 = abs(df.blocks$own1.e - df.blocks$own1.b) + 1
+    # df.blocks$len2 = abs(df.blocks$own2.e - df.blocks$own2.b) + 1
+    # plot(df.blocks$len1, df.blocks$len2)
 
     df.blocks.all <- rbind(df.blocks.all, df.blocks)
     
@@ -657,7 +656,30 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   
 }
 
-
+#' Plot Pangenome Synteny
+#'
+#' Pangenome visualization.
+#'
+#' @param path.project Character string. Path to the project directory.
+#' @param i.chr Character or numeric. Chromosome identifier to plot.
+#' @param accessions Optional character vector. 
+#'   Specific accessions to include in the plot in the order to plot.
+#'   If `NULL`, all available accessions are used.
+#' @param aln.type Character string. Alignment type to use. Defaults to `'pan'`.
+#' @param ref.acc Character string. Reference accession name. If empty (`''`), no reference
+#'   suffix is used; otherwise a suffix is added to the synteny block file name.
+#' @param wnd.size Integer. Window size used for summarizing synteny blocks. Default is `100000`.
+#'
+#' @return A plot ggplot2 object.
+#'
+#'
+#' @examples
+#' \dontrun{
+#' panplot("/path/to/project", i.chr = 1)
+#' panplot("/path/project", i.chr = "chr2", accessions = c("A1","A2"))
+#' }
+#'
+#' @export
 panplot <- function(path.project, i.chr, accessions = NULL, aln.type='pan', ref.acc='',
                        wnd.size = 100000){
   path.inter.msa = paste0(path.project, '/.intermediate/msa/')

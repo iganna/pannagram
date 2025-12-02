@@ -19,6 +19,7 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
+  make_option("--path.project",      type = "character", default = NULL, help = "Path to the project"),
   make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa dir (internal)"),
   make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
   make_option("--path.figures",      type = "character", default = "",   help = "Path to folder with figures"),
@@ -47,6 +48,9 @@ block.len.min = 20000
 
 # ***********************************************************************
 # ---- Paths ----
+
+path.project <- opt$path.project
+if(!dir.exists(path.project)) stop('Consensus folder doesn’t exist')
 
 path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
@@ -154,30 +158,35 @@ accessions = unique(df.all$acc)
 for(s.comb in unique(df.all$comb)){
   pokaz('Combination', s.comb)
   
-  df.tmp = df.all[df.all$comb == s.comb,]
+  # df.tmp = df.all[df.all$comb == s.comb,]
+  # 
+  # accessions = unique(df.tmp$acc)
+  # if(length(accessions) == 1){
+  #   pokazAttention('Synteny plot can not be generated for combination', s.comb)
+  #   next
+  # } else {
+  #   pokaz('Number of accessions is', length(accessions))
+  # }
+  # if(ref.name %in% accessions){
+  #   accessions = c(ref.name, setdiff(accessions, ref.name))
+  # }
+  # 
+  # i.order = 1:length(accessions)
+  # 
+  # df.tmp$acc <- factor(df.tmp$acc, levels = accessions)
+  # 
+  # # save(list = ls(), file = "tmp_workspace_blocks.RData")
+  # 
+  # p = panplotInner(df.tmp, 
+  #             accessions = accessions, 
+  #             i.order = i.order, 
+  #             wnd.size = wnd.size) 
+  # 
   
-  accessions = unique(df.tmp$acc)
-  if(length(accessions) == 1){
-    pokazAttention('Synteny plot can not be generated for combination', s.comb)
-    next
-  } else {
-    pokaz('Number of accessions is', length(accessions))
-  }
-  if(ref.name %in% accessions){
-    accessions = c(ref.name, setdiff(accessions, ref.name))
-  }
+  i.chr = parseStrings(s.comb, n = 1, split = '_', numeric = T)
+  p = panplot(path.project = path.project, i.chr = i.chr, aln.type = aln.type, ref.acc = ref.name)
   
-  i.order = 1:length(accessions)
-  
-  df.tmp$acc <- factor(df.tmp$acc, levels = accessions)
-  
-  # save(list = ls(), file = "tmp_workspace_blocks.RData")
-  
-  p = panplotInner(df.tmp, 
-              accessions = accessions, 
-              i.order = i.order, 
-              wnd.size = wnd.size) 
-  savePDF(p, path = path.figures, name = paste0('synteny_', aln.pref, s.comb, ref.suff), width = 6, height = length(accessions) / 5 + 1)
+  savePDF(p, path = path.figures, name = paste0('synteny_', aln.pref, s.comb, ref.suff), width = 6, height = length(accessions) / 6 + 1)
 }
 
 
