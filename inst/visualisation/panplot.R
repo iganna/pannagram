@@ -12,24 +12,28 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   v.idx = v.idx[v != 0]
   v = v[v != 0]
   
+  # v.idx - values are pangenome coordinate
+  # v.r - values are pangenome coordinate, but signed
   v.r = v.idx
   v.r = v.idx * sign(v)
   
+  # beg and end - abstract indexes reflecting reduced v vectior
+  # v.beg - v.end - pangenome coordinate but signed!
   v.b = findRuns(v.r)
   
+  # Now beg and end - values in own accession, also signed
   v.b[,'beg'] = v[v.b[,'beg']]
   v.b[,'end'] = v[v.b[,'end']]
   
-
-  # vals <- c(abs(v.b$v.beg), abs(v.b$v.end))
-  vals <- c(abs(v.b$beg), abs(v.b$end))
+  # Ranking by own genome positions
+  # vals <- c(abs(v.b$beg), abs(v.b$end))
+  vals <- c(v.b$beg, v.b$end)
   ranks <- match(vals, sort(unique(vals))) 
   v.b.rank <- matrix(
     ranks,
     ncol = 2,
     byrow = FALSE,
     dimnames = list(NULL, c("r.beg", "r.end")))
-  
   v.b = cbind(v.b, v.b.rank)
 
   # v.b$dir = sign(v.b$v.end - v.b$v.beg)
@@ -596,7 +600,7 @@ panplot <- function(path.project, i.chr, accessions = NULL, aln.type='pan', ref.
   ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
   if(ref.suff != '') aln.type='ref'
   
-  file.blocks = paste0(path.inter.msa, aln.type, '_syn_blocks', ref.suff,'.rds')
+  file.blocks = paste0(path.inter.msa, 'syn_blocks_', aln.type, ref.suff,'.rds')
   
   idx.break = readRDS(file.blocks)
   idx.break = idx.break[idx.break$comb == paste0(i.chr, '_', i.chr),]

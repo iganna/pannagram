@@ -78,7 +78,7 @@ source(system.file("visualisation/panplot.R", package = "pannagram"))
 # ***********************************************************************
 # ---- MAIN program body ----
 
-file.blocks = paste0(path.inter.msa, aln.pref, 'syn_blocks', ref.suff,'.rds')
+file.blocks = paste0(path.inter.msa, 'syn_blocks_', aln.type, ref.suff,'.rds')
 # pokaz(file.blocks)
 
 if(!file.exists(file.blocks)){
