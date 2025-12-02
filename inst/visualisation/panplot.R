@@ -46,7 +46,8 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   cond <-
     (v.b$r.beg[2:n] - 1 == v.b$r.end[1:(n-1)]) &
     (v.b$dir[2:n]     == v.b$dir[1:(n-1)])     &
-    ((v.b$v.beg[2:n] - 1 - v.b$v.end[1:(n-1)]) < len.min)
+    ((v.b$v.beg[2:n] - 1 - v.b$v.end[1:(n-1)]) < len.min) &
+    ((v.b$beg[2:n] - 1 - v.b$end[1:(n-1)]) < len.min)
   
   starts <- c(1, which(!cond) + 1)
   ends <- c(starts[-1] - 1, n)
@@ -67,53 +68,12 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   df$dir = (df$own.b > df$own.e) * 1
   return(df)
   
-  # 
-  # 
-  # df = v.b[,c('v.beg', 'v.end', 'i.beg', 'i.end')]
-  # 
-  # # Add breaks, if they are with a long gap
-  # if(f.split){
-  #   len.min.split = 50000
-  #   d = diff(v.idx)
-  #   i.d = which(d >= len.min.split)
-  #   for(i.d in which(d >= len.min.split)){
-  #     v.pos = v[i.d]
-  #     i.pos = v.idx[i.d]
-  #     
-  #     i.v = which((df$v.beg < v.pos) & (df$v.end > v.pos))
-  #     i.i = which((df$i.beg < i.pos) & (df$i.end > i.pos))
-  #     
-  #     if(length(i.v) > 0){
-  #       if(length(i.i) == 0){
-  #         # save(list = ls(), file = "tmp_workspace_blocks.RData")
-  #         # stop('Something is wrong with i.i')
-  #         pokazAttention('Something is wrong with i.i')
-  #         next
-  #         # I have found that it's the case, 
-  #         # when i.v points to something between two blocks, 
-  #         # so there is no block to split
-  #       } 
-  #       if(i.v != i.i) stop('Idxs do not match')
-  #       
-  #       df.tmp = df[i.v,]
-  #       
-  #       df.tmp$v.beg = abs(v[i.d + 1])
-  #       df.tmp$i.beg = v.idx[i.d + 1]
-  #       
-  #       df[i.v,]$v.end = v.pos
-  #       df[i.v,]$i.end = i.pos
-  #     
-  #       df = rbind(df, df.tmp)
-  #     }
-  #   }    
-  # }
-  # 
-  # df = df[order(df$i.beg),]
-  # rownames(df) = NULL
-  # 
-  # colnames(df) <- c('own.b', 'own.e', 'pan.b', 'pan.e')
-  # df$dir = (df$own.b > df$own.e) * 1
-  # return(df)
+  # Testing
+  # df$len1 = abs(df$own.e - df$own.b)
+  # df$len2 = abs(df$pan.e - df$pan.b)
+  # plot(df$len1, df$len2)
+  # which((df$len1 > 2* 10**5) & (df$len2 < 10**5))
+  
 }
 
 segmentSplit <- function(df.tmp, n){
@@ -209,8 +169,8 @@ prepareBlocks <- function(idx.break, file.cen.pos=NULL, file.acc.len=NULL){
 }
 
 # Define blocks shared between neighbouring accessions
-getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
-  
+getBlocksBwNeiAccs_old <- function(idx.break, accessions, i.order){
+
   df.blocks <- c()
   for(k in 2:length(i.order)){
     pokaz(k)
@@ -218,16 +178,16 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
                             (idx.break$acc == acc2),]
-    
+
     idx.break.k = idx.break.k[order(idx.break.k$pan.b),]
-    
+
     # Collect all pangen breaks between these accessions
     for(i.rep in 1:2){
       idx1 = (idx.break.k$acc == acc1)
       idx2 = (idx.break.k$acc == acc2)
-      
+
       br1 = idx.break.k[idx1,]
-      
+
       # add beginning breaks
       pan.br.add1 = c(setdiff(idx.break.k$pan.b[idx2], idx.break.k$pan.b[idx1]),
                       setdiff(idx.break.k$pan.e[idx2], idx.break.k$pan.e[idx1]) + 1)
@@ -242,40 +202,40 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
           j = nrow(br1)
           br1$pan.e[i] = pos.br-1
           br1$pan.b[j] = pos.br
-          
-          # Proportion of length 
+
+          # Proportion of length
           p = (pos.br - br1$pan.b[i]) / (br1$pan.e[j] - br1$pan.b[i])
           pos.br.own = round(br1$own.b[i] + p * (br1$own.e[i] - br1$own.b[i]))
           br1$own.e[i] = pos.br.own - 1
           br1$own.b[j] = pos.br.own
-          
+
         }
       }
-      
+
       br1 = br1[order(br1$pan.b),]
       idx.break.k = idx.break.k[!idx1,]
       idx.break.k = rbind(idx.break.k, br1)
-      
+
       tmp = acc1
       acc1 = acc2
       acc2 = tmp
-      
+
     }
-    
-    idx.break.k$sum = idx.break.k$pan.b + idx.break.k$pan.e
+
+    idx.break.k$sum = paste0(idx.break.k$pan.b, '_', idx.break.k$pan.e)
     sum.dup = idx.break.k$sum[duplicated(idx.break.k$sum)]
     idx.break.k = idx.break.k[idx.break.k$sum %in% sum.dup, ]
-    
+
     if(length(sum.dup) == 0) next
-    
+
     # Extract all rows for acc1 and acc2 that have duplicated sum values
     b1 <- idx.break.k[idx.break.k$acc == acc1 & idx.break.k$sum %in% sum.dup, ]
     b2 <- idx.break.k[idx.break.k$acc == acc2 & idx.break.k$sum %in% sum.dup, ]
-    
+
     # Align rows of b2 so that they match b1 by 'sum'
     m <- match(b1$sum, b2$sum)
     b2 <- b2[m, ]
-    
+
     # Build all block rows at once
     df.block <- data.frame(
       pan.b  = b1$pan.b,
@@ -291,15 +251,120 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
       dir1   = b1$dir == 0,
       dir2   = b2$dir == 0
     )
-    
+
     df.blocks <- rbind(df.blocks, df.block)
-    
+
   }
-  
+
   return(df.blocks)
 
 }
 
+
+
+getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
+  
+  df.blocks.all <- c()
+  for(k in 2:length(i.order)){
+    pokaz(k)
+    acc1 = accessions[i.order[k-1]]
+    acc2 = accessions[i.order[k]]
+    idx.break.k = idx.break[(idx.break$acc == acc1) |
+                              (idx.break$acc == acc2),]
+    n.breaks = nrow(idx.break.k)
+    
+    # idx.break1 = idx.break[(idx.break$acc == acc1),]
+    # idx.break2 = idx.break[(idx.break$acc == acc2),]
+    
+    
+    pan.breaks = data.frame(pos = c(idx.break.k$pan.b, idx.break.k$pan.e),
+                    type = c(rep('beg',n.breaks), rep('end',n.breaks)),
+                    acc = c(idx.break.k$acc, idx.break.k$acc),
+                    idx = c(1:n.breaks, 1:n.breaks))
+    
+    pan.breaks = pan.breaks[order(pan.breaks$pos),]
+    idx.complete = which((pan.breaks$type[-nrow(pan.breaks)] == 'beg') & 
+                           (pan.breaks$type[-1] == 'end'))
+    
+    # Acc1
+    names.tmp = c('idx1', 'idx2')
+    names.acc = c(acc1, acc2)
+    for(i.acc in 1:2){
+      a = names.acc[i.acc]
+      idx.name = names.tmp[i.acc]
+      pan.breaks[,idx.name] = pan.breaks$idx
+      pan.breaks[,idx.name][pan.breaks$acc != a] = 0
+      idx.ends = (pan.breaks$acc == a) & (pan.breaks$type == 'end')
+      pan.breaks[,idx.name][idx.ends] = (-1) * pan.breaks[,idx.name][idx.ends]
+      idx.tmp = cumsum(pan.breaks[,idx.name])
+      idx.tmp[idx.ends] =  (-1) * pan.breaks[,idx.name][idx.ends]
+      pan.breaks[,idx.name] = idx.tmp      
+    }
+    
+    
+    # Filtration
+    idx.complete = which((pan.breaks$type[-nrow(pan.breaks)] == 'beg') & 
+                           (pan.breaks$type[-1] == 'end'))
+    pan.breaks = pan.breaks[sort(c(idx.complete, idx.complete + 1)),]
+    
+    pan.breaks = pan.breaks[(pan.breaks$idx1 != 0) & 
+                              (pan.breaks$idx2 != 0),]
+    # Check
+    if (any(pan.breaks$type[seq(1, nrow(pan.breaks), 2)] != "beg")) stop('Beg are wrong')
+    if (any(pan.breaks$type[seq(2, nrow(pan.breaks), 2)] != "end")) stop('End are wrong')
+    if (any(pan.breaks$idx1[seq(1, nrow(pan.breaks), 2)] != 
+            pan.breaks$idx1[seq(2, nrow(pan.breaks), 2)])) stop('idx1 are wrong')
+    if (any(pan.breaks$idx2[seq(1, nrow(pan.breaks), 2)] != 
+            pan.breaks$idx2[seq(2, nrow(pan.breaks), 2)])) stop('idx2 are wrong')
+    
+    # Final Datatable
+    # pan.b   pan.e own1.b  own1.e own2.b  own2.e y1 y2  acc1  acc2 dir1 dir2   len1   len2
+    idx.complete = seq(1, nrow(pan.breaks), 2)
+    
+    df.blocks = data.frame(pan.b = pan.breaks$pos[idx.complete],
+                           pan.e = pan.breaks$pos[idx.complete + 1],
+                           idx1 = pan.breaks$idx1[idx.complete],
+                           idx2 = pan.breaks$idx2[idx.complete])
+    
+    for (k in 1:2) {
+      # Names of columns
+      idx.col  <- paste0("idx", k)
+      own.b.col <- paste0("own", k, ".b")
+      own.e.col <- paste0("own", k, ".e")
+      dir.col <- paste0("dir", k)
+      
+      idx <- df.blocks[[idx.col]]
+      
+      own.d <- idx.break.k$own.e[idx] - idx.break.k$own.b[idx] + 1
+      pan.d <- idx.break.k$pan.e[idx] - idx.break.k$pan.b[idx] + 1
+      scale <- own.d / pan.d
+      
+      pan.d.beg <- df.blocks$pan.b - idx.break.k$pan.b[idx]
+      pan.d.end <- df.blocks$pan.e - idx.break.k$pan.b[idx]
+      
+      df.blocks[[own.b.col]] <- idx.break.k$own.b[idx] + round(pan.d.beg * scale)
+      df.blocks[[own.e.col]] <- idx.break.k$own.b[idx] + round(pan.d.end * scale)
+      
+      df.blocks[[dir.col]] <- (df.blocks[[own.b.col]] < df.blocks[[own.e.col]])
+    }
+    
+    df.blocks$y1 = k - 1
+    df.blocks$y2 = k
+    df.blocks$acc1 = acc1
+    df.blocks$acc2 = acc2
+    
+    
+    df.blocks$len1 = abs(df.blocks$own1.e - df.blocks$own1.b) + 1
+    df.blocks$len2 = abs(df.blocks$own2.e - df.blocks$own2.b) + 1
+    plot(df.blocks$len1, df.blocks$len2)
+
+    df.blocks.all <- rbind(df.blocks.all, df.block)
+    
+  }
+  
+  return(df.blocks.all)
+  
+}
 
 splitBlocksByGrid <- function(df.blocks, wnd.size = 1000000){
   
