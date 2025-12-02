@@ -44,6 +44,8 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
   p = ggplot(df.freq, aes(x = Position, y = Frequency, fill = Base)) +
     geom_bar(stat = "identity", width = 1) +
     theme_minimal()+ scale_fill_manual(values = msa.cols) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
     theme(legend.position = "bottom", legend.direction = "horizontal")
   
   if(nt.separate){
