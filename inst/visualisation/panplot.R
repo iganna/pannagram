@@ -358,7 +358,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     df.blocks$len2 = abs(df.blocks$own2.e - df.blocks$own2.b) + 1
     plot(df.blocks$len1, df.blocks$len2)
 
-    df.blocks.all <- rbind(df.blocks.all, df.block)
+    df.blocks.all <- rbind(df.blocks.all, df.blocks)
     
   }
   
