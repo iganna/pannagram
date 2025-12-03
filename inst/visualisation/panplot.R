@@ -700,7 +700,3 @@ panplot <- function(path.project, i.chr, accessions = NULL, aln.type='pan', ref.
 
 
 
-syntenyplot <- function(path.project, ref, acc, i.chr=NULL){
-  
-}
-

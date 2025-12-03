@@ -104,13 +104,6 @@ loop.function <- function(acc,
   }
   chr.len = chr.len[!is.na(chr.len$acc),]
   
-  # ---- Testing ----
-  # file.ws = "tmp_workspace.RData"
-  # all.local.objects <- ls()
-  # save(list = all.local.objects, file = file.ws)
-  # pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-  # stop('Enough..')
-  
   # ---- Plot ----
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
