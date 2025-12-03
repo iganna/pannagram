@@ -84,4 +84,4 @@ Example output:
 </p>
 </div>
 
-This plot displays all chromosomes aligned between the genomes.
+This plot displays all chromosomes aligned between the accession and reference genomes.

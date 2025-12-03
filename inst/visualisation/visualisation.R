@@ -244,7 +244,21 @@ plotSynAllChr <- function(path.aln,
   return(synteny.plot)
 }
 
-
+#' Plot Genome-wide Synteny Between Two Accessions
+#'
+#' This function produces a genome-wide synteny plot between a accession and a
+#' reference genome.
+#'
+#' @param path.project Path to the Pannagram project directory.
+#' @param acc Accession identifier used as the query (x-axis).
+#' @param ref Accession identifier used as the reference (y-axis). 
+#' This must match an accession from the set of references.
+#'
+#' @return A \code{ggplot2} object showing the genome-wide synteny between
+#'   \code{acc} (x-axis) and \code{ref} (y-axis).
+#'
+#' @import ggplot2
+#' @export
 syntenyplot <- function(path.project, 
                           acc, 
                           ref){
@@ -284,6 +298,17 @@ syntenyplot <- function(path.project,
 
 
 
+#' Plot Pangenome Coordinate Projection for One Accession
+#'
+#' This function visualizes how the coordinates of a single accession map
+#' onto a pangenome coordinate for a given chromosome. 
+#' 
+#' @param path.project Path to the Pannagram project directory.
+#' @param acc Accession identifier whose coordinates will
+#'   be plotted on the y-axis.
+#' @param i.chr Chromosome index.
+#'
+#' @import ggplot2
 #' @export
 pangrowth <- function(path.project, acc, i.chr, aln.type='pan', ref.acc='', size = 0.5){
   

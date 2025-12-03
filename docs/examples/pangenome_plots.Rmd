@@ -14,12 +14,13 @@ library(ggplot2)
 
 ```{r}
 stop("Define!")
-path_ptoject = ''
+path.project = ''
 ```
 
 # Panplot
 ```{r}
-p = panplot(path.project, i.chr = 5, aln.type = 'extra2',wnd.size = )
+p = panplot(path.project = path.project, i.chr = 1, aln.type = 'extra2')
+p
 savePNG(p, path="../images", name = 'panplot', width = 5, height = 4)
 ```
 
