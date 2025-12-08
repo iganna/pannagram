@@ -1,12 +1,12 @@
 #' Save a ggplot2 plot to a PDF file
 #'
 #' @param geom A ggplot2 plot object to be saved
-#' @param path The directory where the PDF file will be saved (default is current working directory)
-#' @param name The base name of the PDF file (default is "some")
+#' @param path The directory where the PDF file will be saved
+#' @param name The base name of the PDF fil
 #' @param width The width of the PDF file in inches (default is 10)
 #' @param height The height of the PDF file in inches (default is 10)
 #' @export
-savePDF <- function(geom, path = '.', name='some', width=10, height=10){
+savePDF <- function(geom, path, name, width=10, height=10){
   invisible(suppressMessages({
     pdf(file.path(path, paste0(name, ".pdf")), width=width, height=height)
     print(geom)
@@ -17,13 +17,13 @@ savePDF <- function(geom, path = '.', name='some', width=10, height=10){
 #' Save a ggplot2 plot to a PNG file
 #'
 #' @param geom A ggplot2 plot object to be saved
-#' @param path The directory where the PNG file will be saved (default is current working directory)
-#' @param name The base name of the PNG file (default is "some")
+#' @param path The directory where the PNG file will be saved
+#' @param name The base name of the PNG file
 #' @param width The width of the PNG file in inches (default is 10)
 #' @param height The height of the PNG file in inches (default is 10)
 #' @param res The resolution of the PNG file in dots per inch (default is 300)
 #' @export
-savePNG <- function(geom, path = '.', name='some', width=10, height=10, res=300){
+savePNG <- function(geom, path, name, width=10, height=10, res=300){
   invisible(suppressMessages({
     png(file.path(path, paste0(name, ".png")), width=width, height=height, units='in', res=res)
     print(geom)

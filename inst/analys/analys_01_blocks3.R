@@ -157,6 +157,8 @@ for(s.comb in unique(df.all$comb)){
   pokaz('Combination', s.comb)
   
   i.chr = parseStrings(s.comb, n = 1, split = '_', numeric = T)
+  # save(list = ls(), file = "tmp_workspace.RData")
+  
   p = panplot(path.project = path.project, i.chr = i.chr, aln.type = aln.type, ref.acc = ref.name)
   
   savePDF(p, path = path.figures, name = paste0('synteny_', aln.pref, s.comb, ref.suff), width = 6, height = length(accessions) / 6 + 1)

@@ -1,7 +1,390 @@
 ---
 title: "SV analysis"
-output: md_document
+output: null_document
 ---
+
+
+# Setup
+```{r}
+library(pannagram)
+library(ggplot2)
+
+library(igraph)
+library(GGally)
+library(network)
+
+library("cowplot")
+
+Sys.setenv(PATH = paste("/Users/annaigolkina/micromamba/envs/pannagram/bin", 
+                          Sys.getenv("PATH"), sep = ":"))
+```
+
+## Plot variables
+```{r}
+seed.value = 239
+plot.size = 4
+```
+
+```{r}
+path.figures = '../images/families/'
+```
+
+
+```{r}
+file.nestedness <- 'seq_sv_large_80_80.txt'
+file.nestedness = "~/Sources/pannagram_test/test_ref_free_acc/features/sv/simsearch_sv_80_80/seq_sv_large_80_80.txt"
+file.nestedness <-"~/Sources/pannagram_test/test_ref_free_acc/features/sv/tmp/seq_sv_large_85_85.txt"
+```
+
+
+```{r}
+nestedness = read.table(file.nestedness, header = T)
+```
+
+
+# Filter by length and visualisation
+```{r}
+min.len = 200
+nestedness = filterNestedness(nestedness,
+                               min.len = min.len)
+
+cov.cutoff = 80
+edges = getGraphFromNestedness(nestedness, cov.cutoff = cov.cutoff)
+
+g <- network(edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+set.seed(seed.value)
+p <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+)
+# p
+
+# Save
+i.plot = 1
+name.output = sprintf("graph_%02d_init", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size, height = plot.size)
+```
+
+
+# Remain those nodes, that have at least two sequences + Length cutoff
+```{r}
+cov.cutoff.strict = 90
+min.copy = 3
+nestedness.major = filterNestedness(nestedness,
+                                     cov.cutoff = cov.cutoff.strict,
+                                     min.copy = min.copy)
+
+edges.major = getGraphFromNestedness(nestedness.major)
+
+g <- network(edges.major, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+set.seed(seed.value)
+p <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+)
+# p
+
+# Save
+i.plot = 2
+name.output = sprintf("graph_%02d_no_singletons", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size, height = plot.size)
+```
+
+# Create a compact graph
+```{r}
+graph.compact = getGraphCompact(edges.major)
+edges.compact = graph.compact$edges
+
+g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add node size
+g %v% "size" <- graph.compact$nodes.size[g.names]
+
+set.seed(seed.value)
+p <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 'size',
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+) + theme(legend.position = "none")
+# p
+
+# Save
+i.plot = 3
+name.output = sprintf("graph_%02d_compact", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size, height = plot.size)
+```
+
+
+# Remove shortcut edges
+```{r}
+
+edges.no.shortcut <- filterEdgesShortcut(edges.major)
+    
+graph.compact = getGraphCompact(edges.no.shortcut)
+edges.compact = graph.compact$edges
+
+g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add cluster size
+g %v% "size" <- graph.compact$nodes.size[g.names]
+set.seed(seed.value)
+p <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 'size',
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+) + theme(legend.position = "none")
+p 
+
+i.plot = 4
+name.output = sprintf("graph_%02d_compact_no_shortcut", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size, height = plot.size)
+```
+
+
+```{r}
+seqs = readFasta("~/Sources/pannagram_test/test_ref_free_acc/features/sv/tmp/seq_sv_large.fasta")
+
+
+edges.major.no.forks <- filterEdgesForks(edges = edges.no.shortcut,
+                                         seqs = seqs)
+
+
+graph.compact = getGraphCompact(edges.major.no.forks)
+edges.compact = graph.compact$edges
+
+g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add cluster size
+g %v% "size" <- graph.compact$nodes.size[g.names]
+set.seed(seed.value)
+p <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 'size',
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+) + theme(legend.position = "none")
+p 
+
+i.plot = 5
+name.output = sprintf("graph_%02d_compact_no_forks", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size, height = plot.size)
+
+```
+
+# Filter Umbrela Edges
+```{r}
+
+
+edges.major.no.umbrella <- filterEdgesUmbrella(edges = edges.major.no.forks,
+                                         seqs = seqs, show.echo=T)
+
+
+g <- network(edges.major.no.umbrella, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+set.seed(seed.value)
+p <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 0.1,
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+) + theme(legend.position = "none")
+p
+
+
+graph.compact = getGraphCompact(edges.major.no.umbrella)
+edges.compact = graph.compact$edges
+
+g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add cluster size
+g %v% "size" <- graph.compact$nodes.size[g.names]
+set.seed(seed.value)
+p.compact <- ggnet2(g, label = F, edge.color = "black",
+            node.size = 'size',
+            color = '#468B97',
+            arrow.gap = 0.01, arrow.size = 2,
+) + theme(legend.position = "none")
+p.compact
+
+p2 = cowplot::plot_grid(p, p.compact, ncol = 2)
+
+i.plot = 6
+name.output = sprintf("graph_%02d_no_umbrella", i.plot)
+savePNG(p2, path = path.figures, name = name.output,
+        width = plot.size * 2, height = plot.size)
+
+```
+
+# Partition
+```{r}
+
+partition = getGraphCommunities(edges.major.no.umbrella) 
+
+g <- network(edges.major.no.umbrella, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add cluster color
+g %v% "partition" <- as.character(partition[g.names])
+
+# labels
+g.label = rep('', length(g.names))
+names(g.label) = g.names
+g.label[names(partition)] = as.character(partition)
+g.label[duplicated(g.label)] = ''
+
+g %v% "labels" = g.label
+
+set.seed(seed.value)
+p <- ggnet2(
+  g,
+  label = 'labels',
+  label.size = 3,
+  edge.color = "grey70",
+  node.size = 0.1,
+  color = "partition",
+  arrow.gap = 0.01,
+  arrow.size = 2
+) + theme(legend.position = "none") +
+  scale_color_viridis_d(name = "partition")
+
+i.plot = 7
+name.output = sprintf("graph_%02d_partition", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size * 2, height = plot.size * 2)
+
+rm(partition)
+```
+
+# Put sequences back
+```{r}
+
+dominant.effect = 0.7
+
+edges.solved = putEdgesBack(edges = edges.major.no.umbrella, 
+                            edges.init = edges,
+                            dominant.effect = dominant.effect, show.echo=T,
+                            small.only = T)
+
+partition.solved = getGraphComponents(edges.solved) 
+partition.solved = partition.solved$membership
+
+g <- network(edges.solved, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add cluster color
+g %v% "partition" <- as.character(partition.solved[g.names])
+
+# labels
+g.label = rep('', length(g.names))
+names(g.label) = g.names
+g.label[names(partition.solved)] = as.character(partition.solved)
+g.label[duplicated(g.label)] = ''
+
+g %v% "labels" = g.label
+
+set.seed(seed.value)
+p <- ggnet2(
+  g,
+  label = 'labels',
+  label.size = 3,
+  edge.color = "grey70",
+  node.size = 0.1,
+  color = "partition",
+  arrow.gap = 0.01,
+  arrow.size = 2
+) + theme(legend.position = "none") +
+  scale_color_viridis_d(name = "partition")
+
+i.plot = 8
+name.output = sprintf("graph_%02d_solved", i.plot)
+savePNG(p, path = path.figures, name = name.output,
+        width = plot.size * 2, height = plot.size * 2)
+
+
+```
+
+
+
+```{r}
+stop()
+```
+
+
+# Separate components!
+```{r}
+
+i.comp = 2
+
+seqs.names.comp = names(partition.solved)[partition.solved == i.comp]
+
+
+seqs.comp <- getComponentSequences(seqs.names.comp = seqs.names.comp,
+                              seqs, 
+                              nestedness)
+
+dotplot(seqs.comp[1], seqs.comp[1])
+
+hist(nchar(seqs.comp), 50)
+
+
+```
+
+
+## Alignment
+```{r}
+
+
+path.mafft = "~/Sources/pannagram_test/test_ref_free_acc/features/sv/tmp/mafft/"
+
+  tmp.fasta = paste(path.mafft, 'tmp_',i.comp,'.fasta', sep = '')
+  aln.fasta = paste(path.mafft, 'aln_',i.comp,'.fasta', sep = '')
+  
+  writeFasta(seqs.comp, tmp.fasta)
+  
+  pokaz('Mafft...')
+  system(paste('mafft --op 5 --quiet --maxiterate 100 ', tmp.fasta, '>', aln.fasta,  sep = ' '))
+  
+  pokaz('Plot...')
+  alignment = readFasta(aln.fasta)
+  
+  msaplot(alignment)
+  p = msadiff(alignment)
+  
+  p
+  
+   
+
+  dotplot(alignment[20], alignment[30])
+  
+  ntplot(alignment[1],nt.separate = T)
+```
+
+
+```{r}
+orf.info = orfFinder(seqs.comp[1])
+orfplot(orf.info$pos)
+
+orf.info$orf[1]
+
+
+```
+
+
+
+
+# OLD
 
 # Setup
 ## Functions
@@ -96,6 +479,8 @@ res.nest = readRDS(paste(path.sv, res.cover.file, sep = ''))
 g.content = getGraphFromBlast(res.nest = res.nest, sim.cutoff = sim.cutoff, collapse = T)
 
 ```
+
+
 ## Take only copies as proxy to the Mobilome
 ```{r}
 min.cnt = 2

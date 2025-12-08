@@ -79,7 +79,7 @@ traitsSeqToNode <- function(nodes, seqs.trait, explain.mix = F,
       if(length(x) == 0){
         return(NA)
       }
-       else if(length(x) == 1){
+      else if(length(x) == 1){
         return(x)
       } else {
         x = table(x)
@@ -167,215 +167,41 @@ getGraphCommunities <- function(edges) {
 }
 
 
-
-#' Create a graph from BLAST results
-#'
-#' This function takes BLAST results in tabular format and generates a graph
-#'
-#' @param bl.res The BLAST results in tabular format, basically a table with columns:
-#' V1 and V8 contain names
-#' V2-V3 - positions of match in sequence "query"
-#' V4-V5 - positions of match in sequence "subject"
-#' V6 - similarity from 0 to 100
-#' V7 - length
-#' 
-#' @param res.nest A dataframe resulting from the nestedness detection procedure.
-#' This dataframe must contain specific columns, either \code{c("V1", "V8", "p1", 'p8')} 
-#' or \code{c("C1", "C8", "V1", "V8", "len1", "len8")}. In case it contains the latter set 
-#' of columns and not the former, two new columns \code{p1} and \code{p8} will be computed.
-#' 
-#' If both \code{bl.res} and 
-#' \code{res.nest} are either NULL or not NULL, an error will be thrown.
-#' 
-#' @param sim.cutoff similarity to establish an edge between sequences
-#' this is for both: (1) sequence blast similarity, (2) length similarity.
-#' 
-#' @param i.len.field index for the field, where you see the length of the sequence in names
-#' @param collapse a boolean value indicating whether to collapse sequences with mutual similarity into nodes (default is TRUE).
-#' @param refine An indicating whether to refine the graph (default is TRUE).
-#' Example list of edges:
-#' (1) -> (2)
-#' (2) -> (3)
-#' (1) -> (3)
-#' 
-#' The edge (1) -> (3) should de removed, because path (1) -> (2) -> (3) exists.
-#'
-#' @param min.length The minimum sequence length to be included in the graph (default is 0).
-#' @param max.length The maximum sequence length to be included in the graph (default is Inf).
-#'
-#' @param return.nest An indicating whether to return the initial nestedness to create the graph (default is FALSE).
-#' 
-#' @param echo An indicating whether to print progress messages steps (default is TRUE).
-#'
-#' @return The graph represented as the list with the following components:
-#'   \itemize{
-#'     \item{edges}{A matrix representing the edges of the graph}
-#'     \item{nodes}{A matrix reflecting the relationship between BLAST queries and collapsed nodes.}
-#'     \item{node.traits}{A data frame representing traits associated with nodes.}
-#'     \term{nestedness}{A dataframe resulting from the nestedness detection procedure.}
-#'   }
-#' @export
-getGraphFromBlast <- function(bl.res = NULL, 
-                              res.nest = NULL,
-                              sim.cutoff = 0.85, 
-                              i.len.field = 5, 
-                              collapse = T, 
-                              refine = T,
-                              min.length = 0,
-                              max.length = Inf,
-                              return.nest = F,
-                              echo = T){
-  
-  if (is.null(bl.res) == is.null(res.nest)) {
-    stop("Both parameters cannot be NULL or both not NULL.")
-  }
-  
-  if(is.null(res.nest)){
-    
-    # nestedness
-    bl.res = bl.res[bl.res$V1 != bl.res$V8,]
-    bl.res = bl.res[bl.res$V6 >= sim.cutoff * 100,]
-    if(nrow(bl.res) == 0) return(NULL)
-    
-    # Length of sequences (optimised approach)
-    res.nest.len = sapply(unique(c(bl.res$V1, bl.res$V8)), function(s) as.numeric(strsplit(s, '\\|')[[1]][i.len.field]))
-    if(sum(is.na(res.nest.len)) != 0){
-      stop(paste('Be careful with extracting sequence lengths.\n',
-                 'It a positionsl information in their names.\n',
-                 'Current length slot is ', i.len.field, sep = ''))
-    }
-    # lengths are different from the default
-    arg.defaults <- formals(sys.function(sys.nframe()))
-    if((min.length != arg.defaults$min.length) | (max.length != arg.defaults$max.length)){
-      message(paste('New lengths', min.length, max.length))
-      res.nest.len = res.nest.len[res.nest.len >= min.length]
-      res.nest.len = res.nest.len[res.nest.len <= max.length]
-      bl.res = bl.res[bl.res$V1 %in% names(res.nest.len),]
-      bl.res = bl.res[bl.res$V8 %in% names(res.nest.len),]
-    }
-    
-    # Find nestedness
-    cat('Find Nestedness...')
-    res.nest = findNestedness(bl.res, use.strand = F)
-    cat(' done!\n')
-    
-  
-    # Gen lengths
-    res.nest$len1 = res.nest.len[res.nest$V1]
-    res.nest$len8 = res.nest.len[res.nest$V8]
-    res.nest$p1 = res.nest$C1 / res.nest$len1
-    res.nest$p8 = res.nest$C8 / res.nest$len8
-  
-  } else {
-    
-    required.cols <- c("V1", "V8", "p1", 'p8')
-    if (!all(required.cols %in% names(res.nest))) {
-      required.cols <- c("C1", "C8", "V1", "V8", "len1", "len8")
-      if (!all(required.cols %in% names(res.nest))) {
-        stop(paste0(c("res.nest must have the following columns:", required.cols), collapse = ', '))
-      }
-      res.nest$p1 = res.nest$C1 / res.nest$len1
-      res.nest$p8 = res.nest$C8 / res.nest$len8
-    }
-  }
-  
-  
-  # Remain only those blast hits, which satisfy sim.cutoff
-  res.nest.sim = res.nest[(res.nest$p1 >= sim.cutoff) | 
-                            (res.nest$p8 >= sim.cutoff),]
-  
-  # get edges of nestedness: (1) -> (2), i.e. (1) is covered by (2)
-  idx.1.to.2 = res.nest$p1 >= sim.cutoff
-  edges = cbind(res.nest$V1[idx.1.to.2], res.nest$V8[idx.1.to.2])
-  idx.2.to.1 = res.nest$p8 >= sim.cutoff
-  edges = rbind(edges, cbind(res.nest$V8[idx.2.to.1], res.nest$V1[idx.2.to.1]))
-  
-  if(!collapse){
-    res.list = list(edges = edges, nodes = c(), nodes.traits = c())
-    if(return.nest){
-      res.list[['nestedness']] = res.nest
-    }
-    return(res.list)
-  }
-  
-  # define nodes
-  # if some have mutual arrows - they should go to one node
-  # Idea: create the graph on those elements, which have mutual arrows and take the connected components
-  idx.mutual = idx.1.to.2 & idx.2.to.1
-  edges.mutual = cbind(res.nest$V1[idx.mutual], res.nest$V8[idx.mutual])
-  names.rest = setdiff(c(edges), c(edges.mutual))
-  
-  graph.mutual <- igraph::simplify(igraph::make_graph(t(edges.mutual), directed = T))
-  graph.mutual.comp <- igraph::components(graph.mutual)
-  
-  nodes.mutual = data.frame(node = paste0('N', graph.mutual.comp$membership), 
-                            name = names(graph.mutual.comp$membership))
-  if(length(names.rest) > 0){
-    nodes.rest = data.frame(node = paste('R', (1:length(names.rest)), sep = ''), 
-                            name = names.rest)  
-  } else {
-    nodes.rest = c()
-  }
-  
-  nodes = rbind(nodes.mutual, nodes.rest)
-  rownames(nodes) = nodes$name
-  
-  nodes.traits = data.frame(cnt = c(table(nodes$node)))
-  nodes.traits$node = rownames(nodes.traits)
-  
-  # Redefine edges but with node names
-  edges.compact = cbind(nodes[edges[,1], 'node'], nodes[edges[,2], 'node'])
-  edges.compact = edges.compact[edges.compact[,1] != edges.compact[,2],]
-  edges.compact = unique(edges.compact)
-  
-  
-  nodes.traits$in.graph = nodes.traits$node %in% c(edges.compact)
-  
-  # Some sequences are the same, but do not form any unmutual nestedness,so no edges in the graph
-  table(nodes.traits$cnt[!nodes.traits$in.graph])
-  
-  if(refine){
-    cat('Refine...')
-    if(nrow(edges.compact) > 1){
-      edges.compact = refineDirectEdges(edges.compact, echo = F)  
-    }
-    cat(' done!\n')
-  }
-  
-  res.list = list(edges = edges.compact, nodes = nodes, nodes.traits = nodes.traits)
-  if(return.nest){
-    res.list[['nestedness']] = res.nest
-  }
-  return(res.list)
-  
-}
-
 #' Generate Graph Edges from Nestedness Results
 #'
 #' This function extracts directed edges between query and target names
 #' based on a similarity cutoff from nestedness analysis results.
 #'
-#' @param res.nest A list or data frame containing \code{name.query},
+#' @param nestedness A list or data frame containing \code{name.query},
 #'   \code{name.target}, \code{coverage.query}, and \code{coverage.target}.
-#' @param coverage.cutoff Numeric value specifying the similarity cutoff.
+#' @param cov.cutoff Numeric value specifying the similarity cutoff.
 #'   Values between 0–1 or 10–100 (interpreted as %) are accepted.
 #'
 #' @return A two-column matrix of unique edges representing connections
 #'   that meet the similarity threshold.
 #' @export
-getGraphFromNestedness <- function(res.nest,
-                                   coverage.cutoff){
-  
-  if (coverage.cutoff >= 10 && coverage.cutoff <= 100) {
-    coverage.cutoff <- coverage.cutoff / 100
-  } else if (coverage.cutoff < 0 || coverage.cutoff > 1) {
-    stop("coverage.cutoff does not make sense")
+getGraphFromNestedness <- function(nestedness,
+                                   cov.cutoff=NULL){
+  if(is.null(cov.cutoff)){
+    cov.cutoff = round(100 * min(rowMax(nestedness.major[,c('coverage.query', 'coverage.target')])))
+    pokazAttention("Coverage for edges was set to", cov.cutoff, "\n",
+                   "If you want to use a larger cov.cutoff, please provide the parameter.")
+    # 
+    # idx.1.to.2 = nestedness$coverage.query <= nestedness$coverage.target
+    # edges = cbind(nestedness$name.query[idx.1.to.2], nestedness$name.target[idx.1.to.2])
+    # idx.2.to.1 = nestedness$coverage.query >= nestedness$coverage.target
+    # edges = rbind(edges, cbind(nestedness$name.target[idx.2.to.1], nestedness$name.query[idx.2.to.1]))
+    # 
+    # edges = unique(edges)
+    # return(edges) 
   }
   
-  idx.1.to.2 = res.nest$coverage.query >= coverage.cutoff
-  edges = cbind(res.nest$name.query[idx.1.to.2], res.nest$name.target[idx.1.to.2])
-  idx.2.to.1 = res.nest$coverage.target >= coverage.cutoff
-  edges = rbind(edges, cbind(res.nest$name.target[idx.2.to.1], res.nest$name.query[idx.2.to.1]))
+  cov.cutoff <- normalizeСovСutoff(cov.cutoff)
+  
+  idx.1.to.2 = nestedness$coverage.query >= cov.cutoff
+  edges = cbind(nestedness$name.query[idx.1.to.2], nestedness$name.target[idx.1.to.2])
+  idx.2.to.1 = nestedness$coverage.target >= cov.cutoff
+  edges = rbind(edges, cbind(nestedness$name.target[idx.2.to.1], nestedness$name.query[idx.2.to.1]))
   
   edges = unique(edges)
   
@@ -407,12 +233,13 @@ getGraphFromNestedness <- function(res.nest,
 #' }
 #' @export
 getGraphCompact <- function(edges, 
-                              echo = T){
+                            echo = T){
   
   g  <- graph_from_data_frame(edges, directed = TRUE)
   compsStrong <- components(g, mode = "strong")
-  names.mutual = names(compsStrong$membership)[compsStrong$membership != 1]
-  names.rest =  names(compsStrong$membership)[compsStrong$membership == 1]
+  clustersStrons = which(compsStrong$csize != 1)
+  names.mutual = names(compsStrong$membership)[compsStrong$membership %in% clustersStrons]
+  names.rest =  names(compsStrong$membership)[!(compsStrong$membership %in% clustersStrons)]
   
   if(length(names.mutual) > 0){
     nodes.mutual = data.frame(node = paste0('N', compsStrong$membership[names.mutual]), 
@@ -423,22 +250,23 @@ getGraphCompact <- function(edges,
   }
   if(length(names.rest) > 0){
     nodes.rest = data.frame(node = paste0('R', compsStrong$membership[names.rest]), 
-                              name = names(compsStrong$membership[names.rest]))  
+                            name = names(compsStrong$membership[names.rest]))  
   } else {
     nodes.rest <- data.frame(node = character(), name = character(), 
-                               stringsAsFactors = FALSE)  
+                             stringsAsFactors = FALSE)  
   }
   
   nodes.info = rbind(nodes.mutual, nodes.rest)
   rownames(nodes.info) = nodes.info$name
   
   edges.compact = cbind(nodes.info[edges[,1],]$node,
-                      nodes.info[edges[,2],]$node)
+                        nodes.info[edges[,2],]$node)
   edges.compact <- unique(edges.compact)
   edges.compact = edges.compact[edges.compact[,1] != edges.compact[,2],,drop=F]
   
   
   nodes.list <- split(nodes.info$name, nodes.info$node)
+  table(nodes.info$node)
   nodes.size <- unlist(lapply(nodes.list, length))
   
   res.list = list(edges = edges.compact, 
@@ -457,9 +285,9 @@ getGraphCompact <- function(edges,
 #' @return Integer vector of indices of bypassed edges.
 #' @examples
 #' edges <- matrix(c("A","B","B","C","A","C"), ncol=2, byrow=TRUE)
-#' getBypassedEdgeIdx(edges)
+#' getEdgesIdxShortcut(edges)
 #' @export
-getBypassedEdgeIdx <- function(edges.compact) {
+getEdgesIdxShortcut <- function(edges.compact) {
   # Get unique node names
   node.names <- unique(c(edges.compact))
   node.n <- length(node.names)
@@ -469,7 +297,7 @@ getBypassedEdgeIdx <- function(edges.compact) {
   id2 <- match(edges.compact[,2], node.names)
   
   # Build sparse adjacency matrix
-  A <- sparseMatrix(i = id1, j = id2, x = TRUE, dims = c(node.n, node.n))
+  A <- Matrix::sparseMatrix(i = id1, j = id2, x = TRUE, dims = c(node.n, node.n))
   
   # Get paths of length 2
   A2 <- A %*% A
@@ -618,10 +446,10 @@ refineDirectEdges <- function(edges.compact, echo = T){
 
 #' Filter a coverage matrix by various criteria
 #'
-#' Filters a coverage matrix (`mx.cov`) based on coverage percentage, sequence 
+#' Filters a coverage matrix (`nestedness`) based on coverage percentage, sequence 
 #' length, and minimum copy number.
 #'
-#' @param mx.cov Data frame with coverage and length information. Must contain 
+#' @param nestedness Data frame with coverage and length information. Must contain 
 #'   columns: `name.query`, `name.target`, 
 #'            `length.query`, `length.target`,
 #'            `coverage.query`, `coverage.target` .
@@ -630,60 +458,60 @@ refineDirectEdges <- function(edges.compact, echo = T){
 #' @param max.len Integer. Maximum sequence length to retain entries (default = NULL).
 #' @param min.copy Integer. Minimum number of copies to retain entries (default = NULL).
 #'
-#' @return A filtered data frame with the same structure as `mx.cov`.
+#' @return A filtered data frame with the same structure as `nestedness`.
 #' @examples
-#' filtered <- filterCoverageMatrix(mx.cov, cov.cutoff = 80, min.len = 500)
+#' filtered <- filterNestedness(nestedness, cov.cutoff = 80, min.len = 500)
 #' @export
-filterCoverageMatrix <- function(mx.cov,
-                                 cov.cutoff = NULL,
-                                 min.len    = NULL,
-                                 max.len    = NULL,
-                                 min.copy   = NULL,
-                                 names.remove = NULL,
-                                 echo = F) {
+filterNestedness <- function(nestedness,
+                             cov.cutoff = NULL,
+                             min.len    = NULL,
+                             max.len    = NULL,
+                             min.copy   = NULL,
+                             names.remove = NULL,
+                             echo = F) {
   
   if(echo){
-    pokaz('Initial number of rows:', nrow(mx.cov))
+    pokaz('Initial number of rows:', nrow(nestedness))
   }
   
   # ---- Filter by names to remove ----
   if(!is.null(names.remove)){
-    mx.cov = res.sim[!(mx.cov$name.query %in% names.remove) & 
-                        !(mx.cov$name.target %in% names.remove),]
+    nestedness = nestedness[!(nestedness$name.query %in% names.remove) & 
+                              !(nestedness$name.target %in% names.remove),]
     
     if(echo){
-      pokaz('Number of rows after name filtration:', nrow(mx.cov))
+      pokaz('Number of rows after name filtration:', nrow(nestedness))
     }
   }
   
   # ---- Filter by coverage cutoff (percentage) ----
   if (!is.null(cov.cutoff)) {
-    thr <- cov.cutoff / 100
-    mx.cov2 <- mx.cov[(mx.cov$coverage.query  >= thr) |
-                       (mx.cov$coverage.target >= thr), ]
+    cov.cutoff <- normalizeСovСutoff(cov.cutoff)
+    nestedness <- nestedness[(nestedness$coverage.query  >= cov.cutoff) |
+                               (nestedness$coverage.target >= cov.cutoff), ]
     
     if(echo){
-      pokaz('Number of rows after filtration by coverage:', nrow(mx.cov))
+      pokaz('Number of rows after filtration by coverage:', nrow(nestedness))
     }
   }
   
   # ---- Filter by minimum length ----
   if (!is.null(min.len)) {
-    mx.cov <- mx.cov[(mx.cov$length.query  >= min.len) &
-                       (mx.cov$length.target >= min.len), , drop = FALSE]
+    nestedness <- nestedness[(nestedness$length.query  >= min.len) &
+                               (nestedness$length.target >= min.len), , drop = FALSE]
     
     if(echo){
-      pokaz('Number of rows after filtration by minimum length:', nrow(mx.cov))
+      pokaz('Number of rows after filtration by minimum length:', nrow(nestedness))
     }
   }
   
   # ---- Filter by maximum length ----
   if (!is.null(max.len)) {
-    mx.cov <- mx.cov[(mx.cov$length.query  <= max.len) &
-                       (mx.cov$length.target <= max.len), , drop = FALSE]
+    nestedness <- nestedness[(nestedness$length.query  <= max.len) &
+                               (nestedness$length.target <= max.len), , drop = FALSE]
     
     if(echo){
-      pokaz('Number of rows after filtration by maximum length:', nrow(mx.cov))
+      pokaz('Number of rows after filtration by maximum length:', nrow(nestedness))
     }
   }
   
@@ -693,38 +521,39 @@ filterCoverageMatrix <- function(mx.cov,
     if (is.null(cov.cutoff)) {
       warning("'cov.cutoff' sould be provided to filter by copy-number")
     }
-    thr <- cov.cutoff / 100
     
-    mx.cov.equal <- mx.cov[(mx.cov$coverage.query  >= thr) &
-                             (mx.cov$coverage.target >= thr), , drop = FALSE]
+    cov.cutoff <- normalizeСovСutoff(cov.cutoff)
     
-    if (nrow(mx.cov.equal) > 0) {
+    nestedness.equal <- nestedness[(nestedness$coverage.query  >= cov.cutoff) &
+                                     (nestedness$coverage.target >= cov.cutoff), , drop = FALSE]
+    
+    if (nrow(nestedness.equal) > 0) {
       
       if(min.copy == 2){
-        sv.passed = c(mx.cov.equal$name.query, mx.cov.equal$name.target)
+        sv.passed = c(nestedness.equal$name.query, nestedness.equal$name.target)
       } else {
         # getGraphComponents should return:
         #   $membership — vector of component IDs (names = vertices)
         #   $csize      — vector of component sizes (index = component ID)
-        g.comp <- getGraphComponents(mx.cov.equal[, c("name.query", "name.target")])
+        g.comp <- getGraphComponents(nestedness.equal[, c("name.query", "name.target")])
         
         comp.passed <- which(g.comp$csize >= min.copy)
         sv.passed   <- names(g.comp$membership)[g.comp$membership %in% comp.passed]
       }
       
-      mx.cov <- mx.cov[(mx.cov$name.query  %in% sv.passed) &
-                         (mx.cov$name.target %in% sv.passed), , drop = FALSE]        
+      nestedness <- nestedness[(nestedness$name.query  %in% sv.passed) &
+                                 (nestedness$name.target %in% sv.passed), , drop = FALSE]        
       
     } else {
       # Return an empty data frame with the same structure if no edges remain
-      mx.cov <- mx.cov[0, , drop = FALSE]
+      nestedness <- nestedness[0, , drop = FALSE]
     }
     if(echo){
-      pokaz('Number of rows after filtration by copies:', nrow(mx.cov))
+      pokaz('Number of rows after filtration by copies:', nrow(nestedness))
     }
   }
   
-  return(mx.cov)
+  return(nestedness)
 }
 
 
@@ -798,6 +627,58 @@ filterEdges <- function(edges,
   return(edges)
 }
 
+#' @export
+filterEdgesShortcut <- function(edges.major, show.echo = F){
+  
+  
+  if(nrow(edges.major) == 0) stop('Edge matrix is empty')
+  
+  graph.compact = getGraphCompact(edges.major)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) == 0){
+    if(show.echo) pokazAttention('The compact graph has no edges')
+    return(edges.major)
+  }
+  
+  # Components with two nodes are not needed to be filtered, therefore min.comp.size = 3
+  edges.compact = filterEdges(edges.compact, min.comp.size = 3)
+  
+  if(nrow(edges.compact) == 0){
+    if(show.echo) pokazAttention('The compact graph has no edges')
+    return(edges.major)
+  }
+  
+  idx.bypassed = getEdgesIdxShortcut(edges.compact)
+  
+  if(length(idx.bypassed) == 0){
+    if(show.echo) pokazAttention('No baypassed Edges in the initial graph')
+    return(edges.major)
+  }
+  
+  # Remove corresponding edges from edges.major
+  idx.edges.remove = c()
+  for(i.edge in idx.bypassed){
+    nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
+    nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
+    i.edges.remove = which((edges.major[,1] %in% nodes.from) & (edges.major[,2] %in% nodes.to))
+    idx.edges.remove = c(idx.edges.remove, i.edges.remove)
+  }
+  
+  if(show.echo) pokaz('Number of bypass edges is', length(idx.edges.remove))
+  if(length(idx.edges.remove) > 0){
+    comp.before = getGraphComponents(edges.major)
+    edges.major = edges.major[-idx.edges.remove,]
+    comp.after = getGraphComponents(edges.major)
+    # Check number of components
+    if(comp.before$no != comp.after$no){
+      stop("Some deleted edges were crucial")
+    }
+  }
+  
+  return(edges.major)
+  
+}
 
 #' Restore missing SV edges to the graph
 #'
@@ -812,14 +693,21 @@ filterEdges <- function(edges,
 #'
 #' @return Updated edge list with restored SV edges.
 #' @export
-putEdgesBack <- function(edges, edges.init, echo=F, dominant.effect = 0.7){
+putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
+                         small.only = F){
   
-  sv.back = setdiff(c(as.matrix(edges.init)), c(as.matrix(edges)))
+  if(small.only){
+    sv.back = setdiff(c(as.matrix(edges.init[,1])), c(as.matrix(edges)))
+  } else {
+    sv.back = setdiff(c(as.matrix(edges.init)), c(as.matrix(edges)))  
+  }
+  
+  sv.len = parseStrings(unique(c(as.matrix(edges.init))), 2, numeric = T)
   if(length(sv.back) == 0){
-    if(echo) pokaz('No SVs to put back', length(sv.back))
+    if(show.echo) pokaz('No SVs to put back', length(sv.back))
     return(edges)
   } else {
-    if(echo) pokaz('Number of SVs to put back', length(sv.back))  
+    if(show.echo) pokaz('Number of SVs to put back', length(sv.back))  
   }
   
   
@@ -871,6 +759,7 @@ putEdgesBack <- function(edges, edges.init, echo=F, dominant.effect = 0.7){
       max.part = max.part + 1
       next
     }
+    # stop()
     sv.node.connect.part = partition.add[sv.node.connect]
     sv.node.connect.part = sv.node.connect.part[!is.na(sv.node.connect.part)]
     part.cnt = table(sv.node.connect.part)
@@ -880,22 +769,31 @@ putEdgesBack <- function(edges, edges.init, echo=F, dominant.effect = 0.7){
     
     if(max(part.cnt)/sum(part.cnt) > dominant.effect){
       i.part = as.numeric(names(part.cnt)[which.max(part.cnt)])
-    } else {
-      sv.node.connect.part.len = as.numeric(sapply(names(sv.node.connect.part), function(s) strsplit(s, '\\|')[[1]][2]))
-      s.sv.len = as.numeric(sapply(s.sv, function(s) strsplit(s, '\\|')[[1]][2]))
-      idx.max.len = which.max(sv.node.connect.part.len)
-      if(sv.node.connect.part.len[idx.max.len] / s.sv.len > 0.7){
-        i.part = sv.node.connect.part[idx.max.len]  
-      }
-    }
+    } 
+    # else {
+    #   sv.node.connect.part.len = sv.len[names(sv.node.connect.part)]
+    #   s.sv.len = sv.len[s.sv]
+    #   idx.max.len = which.max(sv.node.connect.part.len)
+    #   if(sv.node.connect.part.len[idx.max.len] / s.sv.len > 0.7){
+    #     i.part = sv.node.connect.part[idx.max.len]  
+    #   }
+    # }
     
     if(!is.na(i.part)){
       partition.add[s.sv] = i.part
       sv.part = names(partition.add)[partition.add == i.part]
       sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
                                         (sv.edges.connect[,2] %in% sv.part), , drop=F]
+      
       if (nrow(sv.edges.add) > 0) {
-        sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add
+        # Add only one arrow?
+        
+        sv.edges.add.delta = abs(sv.len[sv.edges.add[,1]] - sv.len[sv.edges.add[,2]])
+        idx.delta.ok = which(sv.edges.add.delta <= (min(sv.edges.add.delta) / 0.95))
+        
+        # pokaz(nrow(sv.edges.add), length(idx.delta.ok))
+        
+        sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add[idx.delta.ok,,drop=F]
         sv.edges.add.counter = sv.edges.add.counter + 1
       } else {
         stop('Something is wrong')
@@ -903,7 +801,7 @@ putEdgesBack <- function(edges, edges.init, echo=F, dominant.effect = 0.7){
     } 
   }
   
-  if(echo) pokaz('Number of edges to put back:', sv.edges.add.counter)
+  if(show.echo) pokaz('Number of edges to put back:', sv.edges.add.counter)
   
   if (length(sv.edges.add.list) > 0) {
     edges.add = do.call(rbind, sv.edges.add.list)
@@ -912,10 +810,342 @@ putEdgesBack <- function(edges, edges.init, echo=F, dominant.effect = 0.7){
   }
   
   edges = rbind(edges, edges.add)
-  return(edges)
+  return(rbind(edges, edges.add))
   
 }
 
+#' @export
+filterEdgesForks <- function(edges,
+                             seqs,
+                             cutoff.remain.edges = 0.7,
+                             flank.cover.cutoff = 0.8,
+                             show.echo = FALSE)
+{
+  
+  graph.compact <- getGraphCompact(edges)
+  edges.compact <- graph.compact$edges
+  
+  if (nrow(edges.compact) == 0) {
+    return(edges)
+  }
+  
+  comp.before <- NULL
+  comp.after  <- NULL
+  
+  # Consider all nodes that have at least two outgoing edges
+  stat.neighbours.all <- NULL
+  nodes.parasite <- unique(edges.compact[duplicated(edges.compact[, 1]), 1])
+  
+  for (node.from in nodes.parasite) {
+    stat.neighbours <- data.frame(edge.id = which(edges.compact[, 1] == node.from))
+    
+    stat.neighbours$node.from <- node.from
+    stat.neighbours$node.to   <- edges.compact[stat.neighbours$edge.id, 2]
+    stat.neighbours$size.from <- graph.compact$nodes.size[node.from]
+    stat.neighbours$size.to   <- graph.compact$nodes.size[stat.neighbours$node.to]
+    
+    edges.nei <- edges[edges[, 1] %in% graph.compact$nodes.list[[node.from]], ]
+    
+    # Find how many are connected on the "from"-side
+    edges.nei.mod <- edges.nei
+    edges.nei.mod[, 2] <- graph.compact$nodes[edges.nei[, 2], ]$node
+    edges.nei.mod <- unique(edges.nei.mod)
+    
+    connect.from     <- split(edges.nei.mod[, 1], edges.nei.mod[, 2])
+    connect.from.len <- unlist(lapply(connect.from, length))
+    stat.neighbours$n.from <- connect.from.len[stat.neighbours$node.from]
+    
+    # Find how many are connected on the "to"-side
+    names.to <- unique(edges.nei[, 2])
+    nodes.to <- graph.compact$nodes[names.to, ]$node
+    
+    cnt.nodes.to <- table(nodes.to)
+    stat.neighbours$n.to <- cnt.nodes.to[stat.neighbours$node.to]
+    
+    if (sum(is.na(stat.neighbours)) > 0)
+      stop("Wrong names of neighbours.")
+    
+    # Compute proportions
+    stat.neighbours$p.from <- stat.neighbours$n.from / stat.neighbours$size.from
+    stat.neighbours$p.to   <- stat.neighbours$n.to   / stat.neighbours$size.to
+    
+    stat.neighbours$remain <-
+      (stat.neighbours$p.to   >= cutoff.remain.edges) &
+      (stat.neighbours$p.from >= cutoff.remain.edges)
+    
+    # Check whether the sequences are intersect by flanking regions
+    
+    edges.nei.mod <- edges.nei
+    edges.nei.mod[, 2] <- graph.compact$nodes[edges.nei[, 2], ]$node
+    
+    for (irow in which(stat.neighbours$remain)) {
+      node.to <- stat.neighbours$node.to[irow]
+      
+      idx.tmp <- which(edges.nei.mod[, 2] == node.to)[1]
+      edge.tmp <- edges.nei[idx.tmp, ]
+      
+      s1 <- seq2nt(seqs[edge.tmp[1]])
+      s2 <- seq2nt(seqs[edge.tmp[2]])
+      
+      n.cut <- min(round(length(s1) / flank.cover.cutoff), length(s2))
+      
+      score.beg <- dotcover(s1, s2[1:n.cut], 15, 12)
+      score.end <- dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12)
+      score.tot <- max(score.beg, score.end)
+      
+      if (score.tot < flank.cover.cutoff) {
+        stat.neighbours$remain[irow] <- FALSE
+      }
+    }
+    
+    stat.neighbours.all <- rbind(stat.neighbours.all, stat.neighbours)
+  }
+  
+  if(!is.null(stat.neighbours.all)){
+    idx.edge.remove = stat.neighbours.all$edge.id[!stat.neighbours.all$remain]  
+  } else {
+    idx.edge.remove = c()
+  }
+  
+  # Remove corresponding edges from edges
+  if(length(idx.edge.remove) > 0){
+    idx.edges.remove = c()
+    for(i.edge in idx.edge.remove){
+      nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
+      nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
+      i.edges.remove = which((edges[,1] %in% nodes.from) & (edges[,2] %in% nodes.to))
+      idx.edges.remove = c(idx.edges.remove, i.edges.remove)
+    }
+    
+    if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
+    if(length(idx.edges.remove) > 0){
+      comp.before = getGraphComponents(edges)
+      edges = edges[-idx.edges.remove,]
+      comp.after = getGraphComponents(edges)
+      # Check number of components
+    }
+  }
+  
+  return(edges)
+}
 
+#' @export
+filterEdgesUmbrella <- function(edges,
+                                seqs, 
+                                coverage.umbrella.children = 100,
+                                cutoff.remain.edges = 0.7,
+                                flank.cover.cutoff = 0.8,
+                                show.echo = FALSE){
+  
+  graph.compact = getGraphCompact(edges)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) > 0){
+    stat.neighbours.all = c()
+    nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
+                             edges.compact[,1])
+    for(node.to in nodes.umbrella){
+      stat.neighbours = data.frame(edge.id = which(edges.compact[,2] == node.to))
+      
+      stat.neighbours$node.from = edges.compact[stat.neighbours$edge.id,1]
+      stat.neighbours$node.to = node.to
+      stat.neighbours$size.from = graph.compact$nodes.size[stat.neighbours$node.from] 
+      stat.neighbours$size.to = graph.compact$nodes.size[stat.neighbours$node.to] 
+      
+      edges.nei = edges[edges[,2] %in% graph.compact$nodes.list[[node.to]], ]
+      
+      # Find how many are connected on the "to"-side
+      edges.nei.mod = edges.nei
+      edges.nei.mod[,1] = graph.compact$nodes[edges.nei[,1],]$node
+      edges.nei.mod = unique(edges.nei.mod)
+      
+      connect.to = split(edges.nei.mod[,2], edges.nei.mod[,1])
+      connect.to.len = unlist(lapply(connect.to, length))
+      stat.neighbours$n.to = connect.to.len[stat.neighbours$node.from]
+      
+      # Find how many are connected on the "from"-side
+      names.from = unique(edges.nei[,1])
+      nodes.from = graph.compact$nodes[names.from,]$node
+      
+      cnt.nodes.from = table(nodes.from)
+      stat.neighbours$n.from = cnt.nodes.from[stat.neighbours$node.from]
+      if(sum(is.na(stat.neighbours)) > 0) stop('Wrong names of neighbours.')
+      
+      # Compute proportions
+      stat.neighbours$p.from = stat.neighbours$n.from / stat.neighbours$size.from
+      stat.neighbours$p.to = stat.neighbours$n.to / stat.neighbours$size.to
+      
+      stat.neighbours$remain = (stat.neighbours$p.to >= cutoff.remain.edges) & 
+        (stat.neighbours$p.from >= cutoff.remain.edges)
+      
+      # Check whether the sequences are intersect by flanking regions
+      
+      edges.nei.mod = edges.nei
+      edges.nei.mod[,1] = graph.compact$nodes[edges.nei[,1],]$node
+      stat.neighbours$len.from = 0
+      stat.neighbours$len.to = 0
+      for(irow in which(stat.neighbours$remain)){
+        node.from = stat.neighbours$node.from[irow]
+        # stop()
+        
+        idx.tmp = which(edges.nei.mod[,1] == node.from)[1]
+        edge.tmp = edges.nei[idx.tmp,]
+        
+        s1 = seq2nt(seqs[edge.tmp[1]])
+        s2 = seq2nt(seqs[edge.tmp[2]])
+        
+        stat.neighbours$len.from[irow] = length(s1)
+        stat.neighbours$len.to[irow] = length(s2)
+        
+        n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
+        
+        score.beg = dotcover(s1, s2[1:n.cut], 15, 12)
+        score.end = dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12)
+        score.tot = max(score.beg, score.end)
+        
+        if(score.tot < flank.cover.cutoff){
+          stat.neighbours$remain[irow] = F
+        }
+      }
+      
+      # Remain the longest and those which match with the longest
+      if(sum(stat.neighbours$remain) > 1){
+        stat.neighbours$len.from[!stat.neighbours$remain] = 0
+        irow.longest = which.max(stat.neighbours$len.from)
+        
+        # TODO
+        # for(irow in which(stat.neighbours$remain)){
+        #   if(irow == irow.longest) next
+        #   
+        #   s1 = 
+        #   s2 = 
+        #   score.tot = dotcover(s1, s2, 15, 12)
+        #   if(score.tot < coverage.umbrella.children){
+        #     stat.neighbours$remain[irow] = F
+        #   }
+        # }
+        
+      }
+      
+      # Keep the results in the common dataframe
+      stat.neighbours.all = rbind(stat.neighbours.all, stat.neighbours)
+      # stop()
+    }
+    
+    if(!is.null(stat.neighbours.all)){
+      idx.edge.remove = stat.neighbours.all$edge.id[!stat.neighbours.all$remain]
+    } else {
+      idx.edge.remove = c()
+    }
+    
+    # Remove corresponding edges from edges
+    if(length(idx.edge.remove) > 0){
+      idx.edges.remove = c()
+      for(i.edge in idx.edge.remove){
+        nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
+        nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
+        i.edges.remove = which((edges[,1] %in% nodes.from) & (edges[,2] %in% nodes.to))
+        idx.edges.remove = c(idx.edges.remove, i.edges.remove)
+      }
+      
+      if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
+      if(length(idx.edges.remove) > 0){
+        comp.before = getGraphComponents(edges)
+        edges = edges[-idx.edges.remove,]
+        comp.after = getGraphComponents(edges)
+      }
+    }
+  }
+  
+  return(edges)
+}
+
+#' @export
+normalizeСovСutoff <- function(cov.cutoff) {
+  if (cov.cutoff >= 10 && cov.cutoff <= 100) {
+    cov.cutoff <- cov.cutoff / 100
+  } else if (cov.cutoff < 0 || cov.cutoff > 1) {
+    stop("cov.cutoff does not make sense")
+  }
+  return(cov.cutoff)
+}
+
+#' @export
+getComponentSequences <- function(seqs.names.comp, 
+                                  seqs, 
+                                  nestedness){
+  
+  seqs.names.comp = seqs.names.comp[seqs.names.comp %in% names(seqs)]
+  if(length(seqs.names.comp) == 0){
+    stop('Names of sequences (seqs.names.comp) were not found among the provided sequences (seqs).') 
+  }
+  
+  # Nestedness for the component
+  nest.target = nestedness[(nestedness$name.query %in% seqs.names.comp) & (nestedness$name.target %in% seqs.names.comp),]
+  
+  # Get remained names
+  seqs.names.comp = unique(c(nest.target$name.query, nest.target$name.target))
+  if(length(seqs.names.comp) == 0){
+    stop('Names of sequences (seqs.names.comp) were not found in nestedness matrix (nestedness).') 
+  }
+  
+  # Get sequences and Lengths
+  seqs.target = seqs[seqs.names.comp]
+  seqs.target.len = as.numeric(parseStrings(seqs.names.comp, 2))
+  
+  # Sorting by length
+  seqs.target = seqs.target[order(-seqs.target.len)]
+  seqs.names.comp = names(seqs.target)
+  
+  # Find orientations of sequences
+  orientation.target = rep('.', length(seqs.target))
+  names(orientation.target) = seqs.names.comp
+  
+  # Define the first orientation by the longest ORF in the first sequence
+  s = seqs[seqs.names.comp[1]]
+  orf.res = orfFinder(s)
+  orientation.target[1] = orf.res$pos$strand[1]
+  
+  dir.seq = c('-', '+')
+  
+  n.dot = 0
+  while (n.dot != sum(orientation.target == '.')) {
+    n.dot = sum(orientation.target == '.')
+    for(i in 1:(length(orientation.target) - 1)){
+      if(orientation.target[i] == '.') next
+      nest.tmp = data.frame(name = c(nest.target[nest.target$name.query == seqs.names.comp[i],]$name.target,
+                                     nest.target[nest.target$name.target == seqs.names.comp[i],]$name.query),
+                            strand = c(nest.target[nest.target$name.query == seqs.names.comp[i],]$strand,
+                                       nest.target[nest.target$name.target == seqs.names.comp[i],]$strand))
+        
+      nest.tmp = nest.tmp[!duplicated(nest.tmp$name),]
+      nest.tmp = nest.tmp[orientation.target[nest.tmp$name] == '.',]
+      if(nrow(nest.tmp) == 0) next
+      
+      for(irow in 1:nrow(nest.tmp)){
+        if(nest.tmp$strand[irow] == '+'){
+          orientation.target[nest.tmp$name[irow]] = orientation.target[i]
+        } else {
+          orientation.target[nest.tmp$name[irow]] = setdiff(dir.seq, orientation.target[i])
+        }
+      }
+      if(sum(orientation.target == '.') == 0) break
+    }
+  }
+  table(orientation.target)
+  # 
+  for(i in which(orientation.target == '-')){
+    seqs.target[i] = revComplSeq(seqs.target[i])
+  }
+  
+  # seqs.target.msa = unlist(lapply(seqs.target, function(s) paste0(s, collapse = '')))
+  # seqs.target.msa <- DNAStringSet(seqs.target.msa)
+  # alignment <- msa(seqs.target.msa)
+  
+  # Run the alignment
+  
+  return(seqs.target)
+  
+}
 
 

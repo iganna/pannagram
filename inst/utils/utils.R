@@ -1647,6 +1647,7 @@ parseStrings <- function(strings, n, split = "\\|", numeric = FALSE) {
   parts <- stringr::str_split_fixed(strings, split, m)
   res <- parts[, n]
   if (numeric) res <- as.numeric(res)
-  res
+  names(res) = strings
+  return(res)
 }
 

@@ -104,6 +104,9 @@ loop.function <- function(acc,
   }
   chr.len = chr.len[!is.na(chr.len$acc),]
   
+  pokaz(acc)
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   # ---- Plot ----
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
@@ -135,6 +138,8 @@ if(num.cores == 1){
     
     end <- min(start + batch.size - 1, length(accessions))  # Define the end of the current batch
     batch.accessions <- accessions[start:end]  # Subset accessions for the current batch
+    
+    pokaz(batch.accessions)
     
     # Create and register a new cluster for the current batch
     myCluster <- makeCluster(num.cores, type = "PSOCK")

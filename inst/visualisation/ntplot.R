@@ -26,6 +26,7 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
                'N' = '#31363F')
   
   sequence <- prepareNtSeq(sequence)
+  sequence = sequence[sequence != '-']
   
   sequence = toupper(sequence)
   

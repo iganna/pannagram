@@ -4,6 +4,7 @@
 getBlocks <- function(v, f.split = T, len.min = 10000){
   
   # v <- h5read(file.comb.in, paste0(gr.accs.e, acc))
+  # save(list = ls(), file = "tmp_workspace.RData")
   
   v.init = v
   v = v.init
@@ -43,28 +44,37 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   
   # Merge blocks
   n <- nrow(v.b)
-  cond <-
-    (v.b$r.beg[2:n] - 1 == v.b$r.end[1:(n-1)]) &
-    (v.b$dir[2:n]     == v.b$dir[1:(n-1)])     &
-    ((v.b$v.beg[2:n] - 1 - v.b$v.end[1:(n-1)]) < len.min) &
-    ((v.b$beg[2:n] - 1 - v.b$end[1:(n-1)]) < len.min)
-  
-  starts <- c(1, which(!cond) + 1)
-  ends <- c(starts[-1] - 1, n)
-  
-  v.b.new = v.b[starts,]
-  
-  v.b.new$r.end = v.b$r.end[ends]
-  v.b.new$end = v.b$end[ends]
-  v.b.new$v.end = v.b$v.end[ends]
-  v.b.new$len = v.b.new$end - v.b.new$beg + 1
-  rownames(v.b.new) = NULL
-  
+  if(n != 1){
+    cond <-
+      (v.b$r.beg[2:n] - 1 == v.b$r.end[1:(n-1)]) &
+      (v.b$dir[2:n]     == v.b$dir[1:(n-1)])     &
+      ((v.b$v.beg[2:n] - 1 - v.b$v.end[1:(n-1)]) < len.min) &
+      ((v.b$beg[2:n] - 1 - v.b$end[1:(n-1)]) < len.min)
+    
+    starts <- c(1, which(!cond) + 1)
+    ends <- c(starts[-1] - 1, n)
+    
+    v.b.new = v.b[starts,] 
+    
+    v.b.new$r.end = v.b$r.end[ends]
+    v.b.new$end = v.b$end[ends]
+    v.b.new$v.end = v.b$v.end[ends]
+    v.b.new$len = v.b.new$end - v.b.new$beg + 1
+    rownames(v.b.new) = NULL
+  } else {
+    v.b.new = v.b
+  }
+
   df = v.b.new[,c('beg', 'end', 'v.beg', 'v.end')]
   df = abs(df)
   rownames(df) = NULL
   colnames(df) <- c('own.b', 'own.e', 'pan.b', 'pan.e')
   df$dir = (df$own.b > df$own.e) * 1
+  
+  if(sum(is.na(df)) != 0){
+    stop('NA in getBlocks found')
+  }
+  
   return(df)
   
   # Testing
@@ -265,7 +275,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
   
   df.blocks.all <- c()
   for(k in 2:length(i.order)){
-    # pokaz(k)
+    pokaz(k)
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |

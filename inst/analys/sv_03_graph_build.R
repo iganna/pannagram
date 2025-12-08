@@ -47,8 +47,8 @@ if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exi
 
 # ***********************************************************************
 # ---- Variables ----
-sim.cutoff.true = 85
-sim.cutoff = 90  # have no together with the similarity cutoffs for the initial simsearch results
+cov.cutoff.true = 85
+cov.cutoff.strict = 90  # have no together with the similarity cutoffs for the initial simsearch results
 dominant.effect = 0.7
 
 # Filtration of the graph
@@ -97,7 +97,7 @@ res.sim = filterCoverageMatrix(res.sim,
                                min.len = min.len,
                                echo = show.echo)
 
-edges = getGraphFromNestedness(res.sim, coverage.cutoff = sim.cutoff.true)
+edges = getGraphFromNestedness(res.sim, cov.cutoff = cov.cutoff.true)
 
 # if(flag.plot){
 if(F){
@@ -128,16 +128,13 @@ if(F){
 
 if(show.echo) pokaz('Remain those node, that have at least two sequences + Length cutoff...')
 res.sim.major = filterCoverageMatrix(res.sim,
-                                     cov.cutoff = sim.cutoff,
+                                     cov.cutoff = cov.cutoff.strict,
                                      min.copy = min.copy, 
                                      echo = show.echo)
 
-# edges2 = res.sim.major[, c("name.query", "name.target")]
-# edges2 = unique(edges2)
+edges.major = getGraphFromNestedness(res.sim.major)
 
-edges2 = getGraphFromNestedness(res.sim.major, coverage.cutoff = 85)
-
-if(nrow(edges2) == 0){
+if(nrow(edges.major) == 0){
   pokaz('Not echough SVs to build the graph')
   quit(save = "no")
 }
@@ -145,7 +142,7 @@ if(nrow(edges2) == 0){
 if(flag.plot){
   suppressMessages(suppressWarnings({
     
-  g <- network(edges2, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+  g <- network(edges.major, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
     
   set.seed(seed.value)
   p <- ggnet2(g, label = F, edge.color = "black",
@@ -154,7 +151,7 @@ if(flag.plot){
               arrow.gap = 0.01, arrow.size = 2,
   )
   
-  name.output = sprintf("graph_%02d_no_doubletons", i.plot)
+  name.output = sprintf("graph_%02d_no_singletons", i.plot)
   i.plot = i.plot + 1
   savePNG(p, path = path.figures, name = name.output,
           width = plot.size, height = plot.size)
@@ -174,7 +171,7 @@ if(flag.plot){
 
 if(show.echo) pokaz('Create a compact graph...')
 
-graph.compact = getGraphCompact(edges2)
+graph.compact = getGraphCompact(edges.major)
 edges.compact = graph.compact$edges
 
 if(nrow(edges.compact) > 0){
@@ -186,7 +183,7 @@ if(T){
     g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
     g.names = network.vertex.names(g)
     
-    # Add cluster color
+    # Add cluster size
     g %v% "size" <- graph.compact$nodes.size[g.names]
     
     set.seed(seed.value)
@@ -210,46 +207,14 @@ if(T){
 }
 
 # ***********************************************************************
-# Components with two nodes are not needed to be filtered, therefore min.comp.size = 3
+# ---- Remove Shortcut edges ----
 
-if(nrow(edges.compact) > 0){
-  edges.compact = filterEdges(edges.compact, min.comp.size = 3)
-}
+edges.no.shortcut <- filterEdgesShortcut(edges.major)
 
 # ***********************************************************************
-# ---- Refine baypass edges ----
+# ---- Update the compact structure and visualize again  ----
 
-if(nrow(edges.compact) > 0){
-    
-  idx.bypassed = getBypassedEdgeIdx(edges.compact)
-  
-  # Remove corresponding edges from edges2
-  if(length(idx.bypassed) > 0){
-    idx.edges.remove = c()
-    for(i.edge in idx.bypassed){
-      nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
-      nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
-      i.edges.remove = which((edges2[,1] %in% nodes.from) & (edges2[,2] %in% nodes.to))
-      idx.edges.remove = c(idx.edges.remove, i.edges.remove)
-    }
-    
-    if(show.echo) pokaz('Number of bypass edges is', length(idx.edges.remove))
-    if(length(idx.edges.remove) > 0){
-      comp.before = getGraphComponents(edges2)
-      edges2 = edges2[-idx.edges.remove,]
-      comp.after = getGraphComponents(edges2)
-      # Check number of components
-      if(comp.before$no != comp.after$no){
-        stop("Some deleted edges were crucial")
-      }
-    }
-  }
-}
-
-# ***********************************************************************
-# Update the compact structure and visualize again
-
-graph.compact = getGraphCompact(edges2)
+graph.compact = getGraphCompact(edges.no.shortcut)
 edges.compact = graph.compact$edges
 
 if(nrow(edges.compact) > 0){
@@ -260,7 +225,7 @@ if(T){
     g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
     g.names = network.vertex.names(g)
     
-    # Add cluster color
+    # Add cluster size
     g %v% "size" <- graph.compact$nodes.size[g.names]
     
     set.seed(seed.value)
@@ -271,7 +236,7 @@ if(T){
     ) + theme(legend.position = "none")
     p
     
-    name.output = sprintf("graph_%02d_compact_no_baypass", i.plot)
+    name.output = sprintf("graph_%02d_compact_no_shortcut", i.plot)
     i.plot = i.plot + 1
     savePNG(p, path = path.figures, name = name.output,
             width = plot.size, height = plot.size)
@@ -284,7 +249,7 @@ if(T){
 }
 
 # ***********************************************************************
-# Remove parasitic edges
+# ---- Remove parasitic edges  ----
 
 cutoff.remain.edges = 0.7
 flank.cover.cutoff = 0.8
