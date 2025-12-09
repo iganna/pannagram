@@ -66,6 +66,7 @@ if [ ${#acc_target[@]} -ne 0 ]; then
     # Find common elements between acc_set and acc_target
     common_acc=()
     for acc in "${acc_target[@]}"; do
+        echo ${acc}
         if [[ " ${acc_set[@]} " =~ " ${acc} " ]]; then
             common_acc+=("$acc")
         else
