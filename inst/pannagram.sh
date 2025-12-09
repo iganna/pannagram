@@ -57,6 +57,7 @@ if [ -n "${acc_file}" ] && [ -f "${acc_file}" ]; then
     pokaz_message "File with accessions is provided"
     # Read names from the file into an array
     while IFS= read -r name; do
+        [ -z "$name" ] && continue  # skip empty lines
         acc_target+=("$name")
     done < "$acc_file"
 fi
