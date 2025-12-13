@@ -833,10 +833,10 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
 
 #' @export
 solveForkNodes <- function(edges,
-                             seqs,
-                             cutoff.remain.edges = 0.7,
-                             flank.cover.cutoff = 0.8,
-                             show.echo = FALSE)
+                           seqs,
+                           cutoff.remain.edges = 0.7,
+                           flank.cover.cutoff = 0.8,
+                           show.echo = FALSE)
 {
   
   graph.compact <- getGraphCompact(edges)
@@ -956,119 +956,122 @@ solveForkNodes <- function(edges,
 
 #' @export
 solveUmbrellaNodes <- function(edges,
-                                seqs, 
-                                coverage.umbrella.children = 100,
-                                cutoff.remain.edges = 0.7,
-                                flank.cover.cutoff = 0.8,
-                                show.echo = FALSE){
+                               seqs, 
+                               coverage.umbrella.children = 100,
+                               cutoff.remain.edges = 0.7,
+                               flank.cover.cutoff = 0.8,
+                               show.echo = FALSE){
   
   graph.compact = getGraphCompact(edges)
   edges.compact = graph.compact$edges
   
-  if(nrow(edges.compact) > 0){
-    stat.neighbours.all = c()
-    nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
-                             edges.compact[,1])
-    for(node.to in nodes.umbrella){
-      stat.neighbours = data.frame(edge.id = which(edges.compact[,2] == node.to))
-      
-      stat.neighbours$node.from = edges.compact[stat.neighbours$edge.id,1]
-      stat.neighbours$node.to = node.to
-      stat.neighbours$size.from = graph.compact$nodes.size[stat.neighbours$node.from] 
-      stat.neighbours$size.to = graph.compact$nodes.size[stat.neighbours$node.to] 
-      
-      edges.nei = edges[edges[,2] %in% graph.compact$nodes.list[[node.to]], ]
-      
-      # Find how many are connected on the "to"-side
-      edges.nei.mod = edges.nei
-      edges.nei.mod[,1] = graph.compact$nodes[edges.nei[,1],]$node
-      edges.nei.mod = unique(edges.nei.mod)
-      
-      connect.to = split(edges.nei.mod[,2], edges.nei.mod[,1])
-      connect.to.len = unlist(lapply(connect.to, length))
-      stat.neighbours$n.to = connect.to.len[stat.neighbours$node.from]
-      
-      # Find how many are connected on the "from"-side
-      names.from = unique(edges.nei[,1])
-      nodes.from = graph.compact$nodes[names.from,]$node
-      
-      cnt.nodes.from = table(nodes.from)
-      stat.neighbours$n.from = cnt.nodes.from[stat.neighbours$node.from]
-      if(sum(is.na(stat.neighbours)) > 0) stop('Wrong names of neighbours.')
-      
-      # Compute proportions
-      stat.neighbours$p.from = stat.neighbours$n.from / stat.neighbours$size.from
-      stat.neighbours$p.to = stat.neighbours$n.to / stat.neighbours$size.to
-      
-      stat.neighbours$remain = (stat.neighbours$p.to >= cutoff.remain.edges) & 
-        (stat.neighbours$p.from >= cutoff.remain.edges)
-      
-      # Check whether the sequences are intersect by flanking regions
-      
-      edges.nei.mod = edges.nei
-      edges.nei.mod[,1] = graph.compact$nodes[edges.nei[,1],]$node
-      stat.neighbours$len.from = 0
-      stat.neighbours$len.to = 0
-      for(irow in which(stat.neighbours$remain)){
-        node.from = stat.neighbours$node.from[irow]
-        # stop()
-        
-        idx.tmp = which(edges.nei.mod[,1] == node.from)[1]
-        edge.tmp = edges.nei[idx.tmp,drop=F]
-        
-        s1 = seq2nt(seqs[edge.tmp[1]])
-        s2 = seq2nt(seqs[edge.tmp[2]])
-        
-        stat.neighbours$len.from[irow] = length(s1)
-        stat.neighbours$len.to[irow] = length(s2)
-        
-        n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
-        
-        score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
-        
-        if(score.tot < flank.cover.cutoff){
-          stat.neighbours$remain[irow] = F
-        }
-      }
-      
-      # # Remain the longest and those which match with the longest
-      # if(sum(stat.neighbours$remain) > 1){
-      #   stat.neighbours$len.from[!stat.neighbours$remain] = 0
-      #   irow.longest = which.max(stat.neighbours$len.from)
-      #   
-      #   stat.neighbours$remain = F
-      #   stat.neighbours$remain[irow.longest] = T
-      # }
-      
-      # Keep the results in the common dataframe
-      stat.neighbours.all = rbind(stat.neighbours.all, stat.neighbours)
+  if(nrow(edges.compact) == 0){
+    return(edges)
+  }
+  
+  stat.neighbours.all = c()
+  nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
+                           edges.compact[,1])
+  for(node.to in nodes.umbrella){
+    stat.neighbours = data.frame(edge.id = which(edges.compact[,2] == node.to))
+    
+    stat.neighbours$node.from = edges.compact[stat.neighbours$edge.id,1]
+    stat.neighbours$node.to = node.to
+    stat.neighbours$size.from = graph.compact$nodes.size[stat.neighbours$node.from] 
+    stat.neighbours$size.to = graph.compact$nodes.size[stat.neighbours$node.to] 
+    
+    edges.nei = edges[edges[,2] %in% graph.compact$nodes.list[[node.to]], ]
+    
+    # Find how many are connected on the "to"-side
+    edges.nei.mod = edges.nei
+    edges.nei.mod[,1] = graph.compact$nodes[edges.nei[,1],]$node
+    edges.nei.mod = unique(edges.nei.mod)
+    
+    connect.to = split(edges.nei.mod[,2], edges.nei.mod[,1])
+    connect.to.len = unlist(lapply(connect.to, length))
+    stat.neighbours$n.to = connect.to.len[stat.neighbours$node.from]
+    
+    # Find how many are connected on the "from"-side
+    names.from = unique(edges.nei[,1])
+    nodes.from = graph.compact$nodes[names.from,]$node
+    
+    cnt.nodes.from = table(nodes.from)
+    stat.neighbours$n.from = cnt.nodes.from[stat.neighbours$node.from]
+    if(sum(is.na(stat.neighbours)) > 0) stop('Wrong names of neighbours.')
+    
+    # Compute proportions
+    stat.neighbours$p.from = stat.neighbours$n.from / stat.neighbours$size.from
+    stat.neighbours$p.to = stat.neighbours$n.to / stat.neighbours$size.to
+    
+    stat.neighbours$remain = (stat.neighbours$p.to >= cutoff.remain.edges) & 
+      (stat.neighbours$p.from >= cutoff.remain.edges)
+    
+    # Check whether the sequences are intersect by flanking regions
+    
+    edges.nei.mod = edges.nei
+    edges.nei.mod[,1] = graph.compact$nodes[edges.nei[,1],]$node
+    stat.neighbours$len.from = 0
+    stat.neighbours$len.to = 0
+    for(irow in which(stat.neighbours$remain)){
+      node.from = stat.neighbours$node.from[irow]
       # stop()
-    }
-    
-    if(!is.null(stat.neighbours.all)){
-      idx.edge.remove = stat.neighbours.all$edge.id[!stat.neighbours.all$remain]
-    } else {
-      idx.edge.remove = c()
-    }
-    
-    # Remove corresponding edges from edges
-    if(length(idx.edge.remove) > 0){
-      idx.edges.remove = c()
-      for(i.edge in idx.edge.remove){
-        nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
-        nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
-        i.edges.remove = which((edges[,1] %in% nodes.from) & (edges[,2] %in% nodes.to))
-        idx.edges.remove = c(idx.edges.remove, i.edges.remove)
-      }
       
-      if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
-      if(length(idx.edges.remove) > 0){
-        comp.before = getGraphComponents(edges)
-        edges = edges[-idx.edges.remove,drop=F]
-        comp.after = getGraphComponents(edges)
+      idx.tmp = which(edges.nei.mod[,1] == node.from)[1]
+      edge.tmp = edges.nei[idx.tmp,,drop=F]
+      
+      s1 = seq2nt(seqs[edge.tmp[1]])
+      s2 = seq2nt(seqs[edge.tmp[2]])
+      
+      stat.neighbours$len.from[irow] = length(s1)
+      stat.neighbours$len.to[irow] = length(s2)
+      
+      n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
+      
+      score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
+      
+      if(score.tot < flank.cover.cutoff){
+        stat.neighbours$remain[irow] = F
       }
+    }
+    
+    # # Remain the longest and those which match with the longest
+    # if(sum(stat.neighbours$remain) > 1){
+    #   stat.neighbours$len.from[!stat.neighbours$remain] = 0
+    #   irow.longest = which.max(stat.neighbours$len.from)
+    #   
+    #   stat.neighbours$remain = F
+    #   stat.neighbours$remain[irow.longest] = T
+    # }
+    
+    # Keep the results in the common dataframe
+    stat.neighbours.all = rbind(stat.neighbours.all, stat.neighbours)
+    # stop()
+  }
+  
+  if(!is.null(stat.neighbours.all)){
+    idx.edge.remove = stat.neighbours.all$edge.id[!stat.neighbours.all$remain]
+  } else {
+    idx.edge.remove = c()
+  }
+  
+  # Remove corresponding edges from edges
+  if(length(idx.edge.remove) > 0){
+    idx.edges.remove = c()
+    for(i.edge in idx.edge.remove){
+      nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
+      nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
+      i.edges.remove = which((edges[,1] %in% nodes.from) & (edges[,2] %in% nodes.to))
+      idx.edges.remove = c(idx.edges.remove, i.edges.remove)
+    }
+    
+    if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
+    if(length(idx.edges.remove) > 0){
+      comp.before = getGraphComponents(edges)
+      edges = edges[-idx.edges.remove,,drop=F]
+      comp.after = getGraphComponents(edges)
     }
   }
+  
   
   return(edges)
 }
@@ -1132,7 +1135,7 @@ getComponentSequences <- function(seqs.names.comp,
                                        nest.target[nest.target$name.target == seqs.names.comp[i],]$strand),
                             coverage = c(nest.target[nest.target$name.query == seqs.names.comp[i],]$coverage.query,
                                          nest.target[nest.target$name.target == seqs.names.comp[i],]$coverage.target))
-        
+      
       nest.tmp = nest.tmp[order(-nest.tmp$coverage),]
       nest.tmp = nest.tmp[order(nest.tmp$name),]
       nest.tmp = nest.tmp[!duplicated(nest.tmp$name),]
@@ -1239,7 +1242,7 @@ reduceAlnFlank <- function(aln,
   idx.fit.diff[idx.fit.diff != 1] = 0
   idx.stretch = findOnes(idx.fit.diff)
   idx.stretch$len = idx.stretch$end - idx.stretch$beg + 1
-  idx.stretch = idx.stretch[idx.stretch$len >= stretch.length,drop=F]
+  idx.stretch = idx.stretch[idx.stretch$len >= stretch.length,,drop=F]
   
   idx.start = idx.fit[idx.stretch$beg[1]]
   idx.end = idx.fit[idx.stretch$end[nrow(idx.stretch)] + 1]
