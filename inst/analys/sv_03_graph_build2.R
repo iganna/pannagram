@@ -341,6 +341,8 @@ if(nrow(edges.compact) > 0){
 # ---- Put back all of the SVs ----
 if(show.echo)  pokaz('Put all SVs back with dominant effect...')
 
+save(list = ls(), file = "tmp_workspace.RData")
+
 edges.solved = putEdgesBack(edges = edges.major.no.umbrella, 
                             edges.init = edges.init,
                             dominant.effect = dominant.effect, show.echo=T,

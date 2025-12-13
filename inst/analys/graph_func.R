@@ -717,7 +717,7 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
   sv.back = sv.back[order(- sv.len[sv.back])]
   
   edges.back = edges.init
-  edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),]
+  edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),, drop=F]
   edges.back = as.matrix(edges.back)
   
   g.comp <- getGraphComponents(edges)
@@ -733,7 +733,7 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
   # Map of "in which Edges every SV play the role"
   idx.names = rbind(cbind(edges.back[,1], 1:nrow(edges.back)),
                     cbind(edges.back[,2], 1:nrow(edges.back)))
-  idx.names = idx.names[idx.names[,1] %in% sv.back,]
+  idx.names = idx.names[idx.names[,1] %in% sv.back,, drop=F]
   idx.map = split(idx.names[,2], idx.names[,1])
   
   sv.edges.add.list = list() 
@@ -945,7 +945,7 @@ solveForkNodes <- function(edges,
     if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
     if(length(idx.edges.remove) > 0){
       comp.before = getGraphComponents(edges)
-      edges = edges[-idx.edges.remove,]
+      edges = edges[-idx.edges.remove,,drop=F]
       comp.after = getGraphComponents(edges)
       # Check number of components
     }
@@ -1014,7 +1014,7 @@ solveUmbrellaNodes <- function(edges,
         # stop()
         
         idx.tmp = which(edges.nei.mod[,1] == node.from)[1]
-        edge.tmp = edges.nei[idx.tmp,]
+        edge.tmp = edges.nei[idx.tmp,drop=F]
         
         s1 = seq2nt(seqs[edge.tmp[1]])
         s2 = seq2nt(seqs[edge.tmp[2]])
@@ -1064,7 +1064,7 @@ solveUmbrellaNodes <- function(edges,
       if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
       if(length(idx.edges.remove) > 0){
         comp.before = getGraphComponents(edges)
-        edges = edges[-idx.edges.remove,]
+        edges = edges[-idx.edges.remove,drop=F]
         comp.after = getGraphComponents(edges)
       }
     }
@@ -1239,7 +1239,7 @@ reduceAlnFlank <- function(aln,
   idx.fit.diff[idx.fit.diff != 1] = 0
   idx.stretch = findOnes(idx.fit.diff)
   idx.stretch$len = idx.stretch$end - idx.stretch$beg + 1
-  idx.stretch = idx.stretch[idx.stretch$len >= stretch.length,]
+  idx.stretch = idx.stretch[idx.stretch$len >= stretch.length,drop=F]
   
   idx.start = idx.fit[idx.stretch$beg[1]]
   idx.end = idx.fit[idx.stretch$end[nrow(idx.stretch)] + 1]

@@ -207,8 +207,6 @@ for(s.comb in s.combinations){
       res[idx.batches[[i.batch]]] = res.msa[[i.batch]]
     }
     
-    save(list = ls(), file = "tmp_workspace_good.RData")
-    
     res.msa = res
     if(length(res.msa) != max(idx.short)) stop('Something is wrong with indexes')
     
