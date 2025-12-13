@@ -138,7 +138,7 @@ loop.function <- function(s.comb,
     
     v.init = v
     
-    check.word = paste('Cleanup in accession', acc, 'processed.')
+    check.word = paste('Cleanup finished for', acc)
     if(!checkDone(file.log.loop, check.word)){
       # Define blocks
       for(i in 1:2){
@@ -184,7 +184,7 @@ loop.function <- function(s.comb,
   for(acc in accessions){
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
-    check.word = paste('Remove zeros in accession', acc, 'processed.')
+    check.word = paste('Remove zeros finished for', acc)
     if(!checkDone(file.log.loop, check.word)) {
       s.acc = paste0(gr.accs.e, acc)
       v = h5read(file.comb.out, s.acc)
@@ -212,7 +212,7 @@ loop.function <- function(s.comb,
     v.idx = v.idx[v != 0]
     v = v[v != 0]
     
-    check.word = paste('Find breaks in accession', acc, 'processed.')
+    check.word = paste('Find breaks finished for', acc)
     if(!checkDone(file.log.loop, check.word)){
       # Define blocks
       

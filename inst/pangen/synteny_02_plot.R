@@ -104,9 +104,6 @@ loop.function <- function(acc,
   }
   chr.len = chr.len[!is.na(chr.len$acc),]
   
-  pokaz(acc)
-  save(list = ls(), file = "tmp_workspace.RData")
-  
   # ---- Plot ----
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
