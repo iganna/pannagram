@@ -107,12 +107,17 @@ loop.function <- function(s.comb,
   }
   
   # Create the output file
-  suppressMessages({
-    file.remove(file.comb.out)
-    h5createFile(file.comb.out)
-    h5createGroup(file.comb.out, gr.blocks)
-    h5createGroup(file.comb.out, gr.accs.e)
-  })
+  # suppressMessages({
+  #   file.remove(file.comb.out)
+  #   h5createFile(file.comb.out)
+  #   h5createGroup(file.comb.out, gr.blocks)
+  #   h5createGroup(file.comb.out, gr.accs.e)
+  # })
+  if(!file.exists(file.comb.out)){
+      h5createFile(file.comb.out)
+      h5createGroup(file.comb.out, gr.blocks)
+      h5createGroup(file.comb.out, gr.accs.e)
+  }
   
   idx.trust = h5read(file.comb.in, v.idx.trust)
   idx.trust = idx.trust != 0
@@ -124,7 +129,8 @@ loop.function <- function(s.comb,
   pokaz('Cleanup..', file=file.log.loop, echo=echo.loop)
   idx.nonzero = 0
   for(acc in accessions){
-    pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
+    
+    pokaz('Accession cleanup', acc, file=file.log.loop, echo=echo.loop)
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.in, s.acc)
@@ -132,35 +138,40 @@ loop.function <- function(s.comb,
     
     v.init = v
     
-    # Define blocks
-    for(i in 1:2){
-      v = v.init
-    
-      v.idx = 1:length(v)
-      
-      v.idx = v.idx[v != 0]
-      v = v[v != 0]
-      v.r = rank(abs(v))
-      v.r[v < 0] = v.r[v < 0] * (-1)
-      v.b = findRuns(v.r)
-      
-      v.b$v.beg = v[v.b$beg]
-      v.b$v.end = v[v.b$end]
-      
-      v.b$i.beg = v.idx[v.b$beg]
-      v.b$i.end = v.idx[v.b$end]
-      
-      v.b.remove = v.b[v.b$len <= min.block.len,]
-      if(nrow(v.b.remove) == 0) break
-      for(irow in 1:nrow(v.b.remove)){
-        v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
+    check.word = paste('Cleanup in accession', acc, 'processed.')
+    if(!checkDone(file.log.loop, check.word)){
+      # Define blocks
+      for(i in 1:2){
+        v = v.init
+        
+        v.idx = 1:length(v)
+        
+        v.idx = v.idx[v != 0]
+        v = v[v != 0]
+        v.r = rank(abs(v))
+        v.r[v < 0] = v.r[v < 0] * (-1)
+        v.b = findRuns(v.r)
+        
+        v.b$v.beg = v[v.b$beg]
+        v.b$v.end = v[v.b$end]
+        
+        v.b$i.beg = v.idx[v.b$beg]
+        v.b$i.end = v.idx[v.b$end]
+        
+        v.b.remove = v.b[v.b$len <= min.block.len,]
+        if(nrow(v.b.remove) == 0) break
+        for(irow in 1:nrow(v.b.remove)){
+          v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
+        }
       }
+      
+      suppressMessages({
+        h5write(v.init, file.comb.out, s.acc)
+      })
+      
+      pokaz(check.word, file=file.log.loop, echo=echo.loop)
     }
     
-    suppressMessages({
-      h5write(v.init, file.comb.out, s.acc)
-    })
-  
     idx.nonzero = idx.nonzero + (abs(v.init) > 0) * 1
   }
   
@@ -169,19 +180,24 @@ loop.function <- function(s.comb,
   idx.nonzero = idx.nonzero > 0
   # pokaz(length(idx.nonzero), sum(idx.nonzero))
   
+  
   for(acc in accessions){
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
-    s.acc = paste0(gr.accs.e, acc)
-    v = h5read(file.comb.out, s.acc)
-    
-    v = v[idx.nonzero]
-    
-    # Rewrite  
-    suppressMessages({
-      h5delete(file.comb.out, s.acc)
-      h5write(v, file.comb.out, s.acc)
-    })
+    check.word = paste('Remove zeros in accession', acc, 'processed.')
+    if(!checkDone(file.log.loop, check.word)) {
+      s.acc = paste0(gr.accs.e, acc)
+      v = h5read(file.comb.out, s.acc)
+      
+      v = v[idx.nonzero]
+      
+      # Rewrite  
+      suppressMessages({
+        h5delete(file.comb.out, s.acc)
+        h5write(v, file.comb.out, s.acc)
+      })
+      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+    }
   }
   
   # ---- Breaks ----
@@ -192,34 +208,40 @@ loop.function <- function(s.comb,
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
-
-    # Define blocks
     v.idx = 1:length(v)
-    
     v.idx = v.idx[v != 0]
     v = v[v != 0]
-    v.r = rank(abs(v))
-    v.r[v < 0] = v.r[v < 0] * (-1)
-    v.b = findRuns(v.r)
     
-    v.b$v.beg = v[v.b$beg]
-    v.b$v.end = v[v.b$end]
-    
-    v.b$i.beg = v.idx[v.b$beg]
-    v.b$i.end = v.idx[v.b$end]
-    
-    v.b = v.b[order(abs(v.b$v.beg)),]
-    
-    blocks.acc = rep(0, max(abs(v)))
-    for(irow in 1:nrow(v.b)){
-      blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
-    }
-    
-    suppressMessages({
+    check.word = paste('Find breaks in accession', acc, 'processed.')
+    if(!checkDone(file.log.loop, check.word)){
+      # Define blocks
+      
+      v.r = rank(abs(v))
+      v.r[v < 0] = v.r[v < 0] * (-1)
+      v.b = findRuns(v.r)
+      
+      v.b$v.beg = v[v.b$beg]
+      v.b$v.end = v[v.b$end]
+      
+      v.b$i.beg = v.idx[v.b$beg]
+      v.b$i.end = v.idx[v.b$end]
+      
+      v.b = v.b[order(abs(v.b$v.beg)),]
+      
+      blocks.acc = rep(0, max(abs(v)))
+      for(irow in 1:nrow(v.b)){
+        blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+      }
+      
+      suppressMessages({
+        s.acc = paste0(gr.blocks, acc)
+        h5write(blocks.acc, file.comb.out, s.acc)
+      })
+      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+    } else {
       s.acc = paste0(gr.blocks, acc)
-      h5write(blocks.acc, file.comb.out, s.acc)
-    })
-    
+      blocks.acc = h5read(file.comb.out, s.acc)
+    }
     # Find breaks
     i.br.acc = which(abs(diff(v)) != 1)
     if(length(i.br.acc) == 0) next

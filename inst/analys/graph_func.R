@@ -198,9 +198,13 @@ getGraphFromNestedness <- function(nestedness,
   
   cov.cutoff <- normalizeСovСutoff(cov.cutoff)
   
-  idx.1.to.2 = nestedness$coverage.query >= cov.cutoff
+  # idx.1.to.2 = nestedness$coverage.query >= cov.cutoff
+  idx.1.to.2 = (nestedness$coverage.query >= cov.cutoff) & 
+    (nestedness$length.target / nestedness$length.query >= cov.cutoff)
   edges = cbind(nestedness$name.query[idx.1.to.2], nestedness$name.target[idx.1.to.2])
-  idx.2.to.1 = nestedness$coverage.target >= cov.cutoff
+  # idx.2.to.1 = nestedness$coverage.target >= cov.cutoff
+  idx.2.to.1 = (nestedness$coverage.target >= cov.cutoff) & 
+    (nestedness$length.query / nestedness$length.target >= cov.cutoff)
   edges = rbind(edges, cbind(nestedness$name.target[idx.2.to.1], nestedness$name.query[idx.2.to.1]))
   
   edges = unique(edges)
@@ -468,9 +472,9 @@ filterNestedness <- function(nestedness,
                              max.len    = NULL,
                              min.copy   = NULL,
                              names.remove = NULL,
-                             echo = F) {
+                             show.echo = F) {
   
-  if(echo){
+  if(show.echo){
     pokaz('Initial number of rows:', nrow(nestedness))
   }
   
@@ -479,7 +483,7 @@ filterNestedness <- function(nestedness,
     nestedness = nestedness[!(nestedness$name.query %in% names.remove) & 
                               !(nestedness$name.target %in% names.remove),]
     
-    if(echo){
+    if(show.echo){
       pokaz('Number of rows after name filtration:', nrow(nestedness))
     }
   }
@@ -490,7 +494,7 @@ filterNestedness <- function(nestedness,
     nestedness <- nestedness[(nestedness$coverage.query  >= cov.cutoff) |
                                (nestedness$coverage.target >= cov.cutoff), ]
     
-    if(echo){
+    if(show.echo){
       pokaz('Number of rows after filtration by coverage:', nrow(nestedness))
     }
   }
@@ -500,7 +504,7 @@ filterNestedness <- function(nestedness,
     nestedness <- nestedness[(nestedness$length.query  >= min.len) &
                                (nestedness$length.target >= min.len), , drop = FALSE]
     
-    if(echo){
+    if(show.echo){
       pokaz('Number of rows after filtration by minimum length:', nrow(nestedness))
     }
   }
@@ -510,7 +514,7 @@ filterNestedness <- function(nestedness,
     nestedness <- nestedness[(nestedness$length.query  <= max.len) &
                                (nestedness$length.target <= max.len), , drop = FALSE]
     
-    if(echo){
+    if(show.echo){
       pokaz('Number of rows after filtration by maximum length:', nrow(nestedness))
     }
   }
@@ -548,7 +552,7 @@ filterNestedness <- function(nestedness,
       # Return an empty data frame with the same structure if no edges remain
       nestedness <- nestedness[0, , drop = FALSE]
     }
-    if(echo){
+    if(show.echo){
       pokaz('Number of rows after filtration by copies:', nrow(nestedness))
     }
   }
@@ -585,7 +589,7 @@ filterEdges <- function(edges,
                         min.comp.size = NULL,
                         remove.intercommunity = FALSE,
                         remove.bridges = FALSE,
-                        echo = F) {
+                        show.echo = F) {
   
   # ---- Filter by component size ----
   if (!is.null(min.comp.size)) {
@@ -611,18 +615,17 @@ filterEdges <- function(edges,
     
     sv.remain = c(edges.no.bridges[,1], edges.no.bridges[,2])
     
-    if(echo){
+    if(show.echo){
       pokaz('Number of edges after bridge filtration (undirected):', nrow(edges.no.bridges))
     }
     
     edges = edges[(edges[,1] %in% sv.remain) & 
                     (edges[,2] %in% sv.remain),, drop= F]
     
-    if(echo){
+    if(show.echo){
       pokaz('Number of edges after bridge filtration:', nrow(edges))
     }
   }
-  
   
   return(edges)
 }
@@ -710,6 +713,8 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
     if(show.echo) pokaz('Number of SVs to put back', length(sv.back))  
   }
   
+  # Sort by length (from longest to shortest)
+  sv.back = sv.back[order(- sv.len[sv.back])]
   
   edges.back = edges.init
   edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),]
@@ -764,7 +769,6 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
     sv.node.connect.part = sv.node.connect.part[!is.na(sv.node.connect.part)]
     part.cnt = table(sv.node.connect.part)
     
-    
     i.part = NA  # In case one want to remove the "else" branch in the following if
     
     if(max(part.cnt)/sum(part.cnt) > dominant.effect){
@@ -780,26 +784,35 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
     # }
     
     if(!is.na(i.part)){
-      partition.add[s.sv] = i.part
       sv.part = names(partition.add)[partition.add == i.part]
+      sv.part = c(sv.part, s.sv)
       sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
                                         (sv.edges.connect[,2] %in% sv.part), , drop=F]
       
+      # sv.edges.add = sv.edges.add[sv.edges.add[,1] == s.sv,,drop=F]  # Only s.sv -> something
+      # pokaz(1, nrow(sv.edges.add))
+      # sv.edges.add = sv.edges.add[sv.edges.add[,2] %in% names(partition.add),,drop=F]
+      # pokaz(2, nrow(sv.edges.add))
+      
+      # if(s.sv %in% 'SVgr_2_id_249548|16643'){
+      #   print(sv.edges.add)
+      #   stop()
+      # }
+      
       if (nrow(sv.edges.add) > 0) {
-        # Add only one arrow?
         
-        sv.edges.add.delta = abs(sv.len[sv.edges.add[,1]] - sv.len[sv.edges.add[,2]])
-        idx.delta.ok = which(sv.edges.add.delta <= (min(sv.edges.add.delta) / 0.95))
-        
-        # pokaz(nrow(sv.edges.add), length(idx.delta.ok))
-        
-        sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add[idx.delta.ok,,drop=F]
+        partition.add[s.sv] = i.part
+        sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add
         sv.edges.add.counter = sv.edges.add.counter + 1
+        
       } else {
-        stop('Something is wrong')
+        partition.add[s.sv] = 0
+        #pokaz('No edges to add')
+        # stop('Something is wrong')
       }
     } 
   }
+  partition.add = partition.add[partition.add != 0]
   
   if(show.echo) pokaz('Number of edges to put back:', sv.edges.add.counter)
   
@@ -810,12 +823,16 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
   }
   
   edges = rbind(edges, edges.add)
+  
+  # if(show.echo) pokaz('Remove shortcuts...')
+  # edges <- filterEdgesShortcut(edges)
+  
   return(rbind(edges, edges.add))
   
 }
 
 #' @export
-filterEdgesForks <- function(edges,
+solveForkNodes <- function(edges,
                              seqs,
                              cutoff.remain.edges = 0.7,
                              flank.cover.cutoff = 0.8,
@@ -853,7 +870,8 @@ filterEdgesForks <- function(edges,
     
     connect.from     <- split(edges.nei.mod[, 1], edges.nei.mod[, 2])
     connect.from.len <- unlist(lapply(connect.from, length))
-    stat.neighbours$n.from <- connect.from.len[stat.neighbours$node.from]
+    # stat.neighbours$n.from <- connect.from.len[stat.neighbours$node.from]
+    stat.neighbours$n.from <- connect.from.len[stat.neighbours$node.to]
     
     # Find how many are connected on the "to"-side
     names.to <- unique(edges.nei[, 2])
@@ -889,14 +907,21 @@ filterEdgesForks <- function(edges,
       
       n.cut <- min(round(length(s1) / flank.cover.cutoff), length(s2))
       
-      score.beg <- dotcover(s1, s2[1:n.cut], 15, 12)
-      score.end <- dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12)
-      score.tot <- max(score.beg, score.end)
+      score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
       
       if (score.tot < flank.cover.cutoff) {
         stat.neighbours$remain[irow] <- FALSE
       }
     }
+    
+    # # Remain the shortest?
+    # if(sum(stat.neighbours$remain) > 1){
+    #   stat.neighbours$len.to[!stat.neighbours$remain] = 0
+    #   irow.shortest = which.min(stat.neighbours$len.to)
+    #   
+    #   stat.neighbours$remain = F
+    #   stat.neighbours$remain[irow.shortest] = T
+    # }
     
     stat.neighbours.all <- rbind(stat.neighbours.all, stat.neighbours)
   }
@@ -930,7 +955,7 @@ filterEdgesForks <- function(edges,
 }
 
 #' @export
-filterEdgesUmbrella <- function(edges,
+solveUmbrellaNodes <- function(edges,
                                 seqs, 
                                 coverage.umbrella.children = 100,
                                 cutoff.remain.edges = 0.7,
@@ -999,33 +1024,21 @@ filterEdgesUmbrella <- function(edges,
         
         n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
         
-        score.beg = dotcover(s1, s2[1:n.cut], 15, 12)
-        score.end = dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12)
-        score.tot = max(score.beg, score.end)
+        score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
         
         if(score.tot < flank.cover.cutoff){
           stat.neighbours$remain[irow] = F
         }
       }
       
-      # Remain the longest and those which match with the longest
-      if(sum(stat.neighbours$remain) > 1){
-        stat.neighbours$len.from[!stat.neighbours$remain] = 0
-        irow.longest = which.max(stat.neighbours$len.from)
-        
-        # TODO
-        # for(irow in which(stat.neighbours$remain)){
-        #   if(irow == irow.longest) next
-        #   
-        #   s1 = 
-        #   s2 = 
-        #   score.tot = dotcover(s1, s2, 15, 12)
-        #   if(score.tot < coverage.umbrella.children){
-        #     stat.neighbours$remain[irow] = F
-        #   }
-        # }
-        
-      }
+      # # Remain the longest and those which match with the longest
+      # if(sum(stat.neighbours$remain) > 1){
+      #   stat.neighbours$len.from[!stat.neighbours$remain] = 0
+      #   irow.longest = which.max(stat.neighbours$len.from)
+      #   
+      #   stat.neighbours$remain = F
+      #   stat.neighbours$remain[irow.longest] = T
+      # }
       
       # Keep the results in the common dataframe
       stat.neighbours.all = rbind(stat.neighbours.all, stat.neighbours)
@@ -1111,14 +1124,19 @@ getComponentSequences <- function(seqs.names.comp,
   n.dot = 0
   while (n.dot != sum(orientation.target == '.')) {
     n.dot = sum(orientation.target == '.')
-    for(i in 1:(length(orientation.target) - 1)){
+    for(i in 1:(length(orientation.target))){
       if(orientation.target[i] == '.') next
       nest.tmp = data.frame(name = c(nest.target[nest.target$name.query == seqs.names.comp[i],]$name.target,
                                      nest.target[nest.target$name.target == seqs.names.comp[i],]$name.query),
                             strand = c(nest.target[nest.target$name.query == seqs.names.comp[i],]$strand,
-                                       nest.target[nest.target$name.target == seqs.names.comp[i],]$strand))
+                                       nest.target[nest.target$name.target == seqs.names.comp[i],]$strand),
+                            coverage = c(nest.target[nest.target$name.query == seqs.names.comp[i],]$coverage.query,
+                                         nest.target[nest.target$name.target == seqs.names.comp[i],]$coverage.target))
         
+      nest.tmp = nest.tmp[order(-nest.tmp$coverage),]
+      nest.tmp = nest.tmp[order(nest.tmp$name),]
       nest.tmp = nest.tmp[!duplicated(nest.tmp$name),]
+      
       nest.tmp = nest.tmp[orientation.target[nest.tmp$name] == '.',]
       if(nrow(nest.tmp) == 0) next
       
@@ -1132,7 +1150,10 @@ getComponentSequences <- function(seqs.names.comp,
       if(sum(orientation.target == '.') == 0) break
     }
   }
-  table(orientation.target)
+  
+  if(sum(orientation.target == '.') > 0){
+    stop('Not all of the sequences were oriended')
+  }
   # 
   for(i in which(orientation.target == '-')){
     seqs.target[i] = revComplSeq(seqs.target[i])
@@ -1148,4 +1169,131 @@ getComponentSequences <- function(seqs.names.comp,
   
 }
 
+#' @export
+reduceAlnFreq <- function(aln, 
+                          min.presence.freq = 3,
+                          show.echo = F){
+  
+  aln.str.flag = F
+  
+  # Input handling
+  if(is.vector(aln) && is.character(aln)){
+    aln <- aln2mx(aln)
+    aln.str.flag = T
+  }
+  
+  # If input is matrix, ensure correct type
+  if(!is.matrix(aln)){
+    stop("Input must be either a character vector of aligned sequences or a matrix.")
+  }
+  
+  if(min.presence.freq > nrow(aln)) stop('Number of aligned sequences is less than min.gap.freq')
+  
+  nongap.freq = colSums(aln != '-')
+  
+  aln = aln[, nongap.freq >= min.presence.freq, drop=F]
+  
+  idx.removed = which(rowSums(aln != 0) == 0)
+  if(length(idx.removed) > 0){
+    if(show.echo) pokazAttention('The amount of removes sequences is', length(idx.removed))
+    aln = aln[-idx.removed, , drop=F]
+  }
+  
+  if(aln.str.flag){
+    aln = mx2aln(aln)
+  }
+  
+  return(aln)
+  
+}
+
+#' @export
+reduceAlnFlank <- function(aln, 
+                           freq.min.presence = 3,
+                           prop.same = 0.9,
+                           stretch.length = 5,
+                           show.echo = F){
+  
+  aln.str.flag = F
+  
+  # Input handling
+  if(is.vector(aln) && is.character(aln)){
+    aln <- aln2mx(aln)
+    aln.str.flag = T
+  }
+  
+  # If input is matrix, ensure correct type
+  if(!is.matrix(aln)){
+    stop("Input must be either a character vector of aligned sequences or a matrix.")
+  }
+  
+  if(freq.min.presence > nrow(aln)) stop('Number of aligned sequences is less than freq.min.presence')
+  
+  
+  profile = mx2profile(aln)
+  freq.max = colMax(profile)
+  freq.cnt = colSums(profile)
+  
+  idx.fit = which( (freq.max >= freq.min.presence) & ((freq.max / freq.cnt) >= prop.same) )
+  idx.fit.diff = diff(idx.fit)
+  idx.fit.diff[idx.fit.diff != 1] = 0
+  idx.stretch = findOnes(idx.fit.diff)
+  idx.stretch$len = idx.stretch$end - idx.stretch$beg + 1
+  idx.stretch = idx.stretch[idx.stretch$len >= stretch.length,]
+  
+  idx.start = idx.fit[idx.stretch$beg[1]]
+  idx.end = idx.fit[idx.stretch$end[nrow(idx.stretch)] + 1]
+  
+  
+  # msaplot(aln[,1:(idx.start+4)])
+  # msaplot(aln[,(idx.end - 4):ncol(aln)])
+  
+  aln = aln[, idx.start:idx.end, drop = F]
+  
+  idx.removed = which(rowSums(aln != 0) == 0)
+  if(length(idx.removed) > 0){
+    if(show.echo) pokazAttention('The amount of removes sequences is', length(idx.removed))
+    aln = aln[-idx.removed, , drop=F]
+  }
+  
+  if(aln.str.flag){
+    aln = mx2aln(aln)
+  }
+  
+  return(aln)
+  
+}
+
+#' @export
+getFmilyEdges <- function(edges, components, i.comp){
+  sv.comp = names(components)[components == i.comp]
+  if(length(sv.comp) == 0){
+    pokazAttention('Component', i.comp, 'does not exist')
+    return(NULL)
+  }
+  
+  edges.comp = edges[(edges[,1] %in% sv.comp) & (edges[,2] %in% sv.comp),,drop=F]
+  
+  return(edges.comp)
+  
+}
+
+scoreFlankCoverage <- function(s1, s2, n.cut, wsize = 15, nmatch = 12) {
+  score.beg.1 <- max(dotcover(s1, s2[1:n.cut], 15, 12, strand = 1), 
+                     dotcover(s1, s2[1:n.cut], 15, 12, strand = -1))
+  score.end.1 <- max(dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12, strand = 1),
+                     dotcover(s1, s2[length(s2) - n.cut + (1:n.cut)], 15, 12, strand = -1))
+  
+  score.beg.2 <- max(dotcover(s2[1:n.cut], s1, 15, 12, strand = 1), 
+                     dotcover(s2[1:n.cut], s1, 15, 12, strand = -1))
+  score.end.2 <- max(dotcover(s2[length(s2) - n.cut + (1:n.cut)], s1, 15, 12, strand = 1),
+                     dotcover(s2[length(s2) - n.cut + (1:n.cut)], s1, 15, 12, strand = -1))
+  
+  score.beg = max(score.beg.1, score.beg.2)  # min or max?
+  score.end = max(score.end.1, score.end.2)  # min or max?
+  
+  score.tot <- max(score.beg, score.end)
+  
+  return(score.tot)
+}
 

@@ -426,7 +426,8 @@ dotscore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
 #'
 #' @return Numeric value — proportion of seq1 covered by matches with seq2 or its reverse complement.
 #' @export
-dotcover <- function(seq1, seq2, wsize=10, nmatch=9) {
+dotcover <- function(seq1, seq2, wsize=10, nmatch=9,
+                     strand=0) {
   
   mx1 = toupper(seq2mx(seq1, wsize))
   mx2 = toupper(seq2mx(seq2, wsize))
@@ -434,9 +435,17 @@ dotcover <- function(seq1, seq2, wsize=10, nmatch=9) {
   
   seq2.rc = revCompl(seq2)
   mx2.rc = toupper(seq2mx(seq2.rc, wsize))
-  
   result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
-  n.cover = length(unique(c(result.rc$row, result$row)))
+  
+  if(strand == 0){
+    n.cover = length(unique(c(result.rc$row, result$row)))  
+  } else if (strand == 1){
+    n.cover = length(unique(c(result$row)))  
+  } else if (strand == -1){
+    n.cover = length(unique(c(result.rc$row)))  
+  } else {
+    stop('Wrong strand value. Allowed: -1, 0, 1.')
+  }
   
   n = (length(seq1))
   return(n.cover / n)

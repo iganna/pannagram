@@ -225,7 +225,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     fi
 
     pokaz_stage "Building SV-Graph for Mobile Element Families..."
-    Rscript $INSTALLED_PATH/analys/sv_03_graph_build.R \
+    Rscript $INSTALLED_PATH/analys/sv_03_graph_build2.R \
         --path.sv ${path_sv} \
         --path.figures ${path_plots_sv} \
         --file.nestedness ${file_sv_large_on_sv_mv} \

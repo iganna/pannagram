@@ -1542,14 +1542,14 @@ colMin <- function(mx) {
 #' 
 #' @author Anna A. Igolkina 
 #' @export
-checkDone <- function(file.log) {
+checkDone <- function(file.log, word = "Done") {
   
   if (!file.exists(file.log)) {
     return(FALSE)
   }
   
   log.content <- readLines(file.log, warn = FALSE)
-  contains.done <- any(grepl("Done", log.content, ignore.case = TRUE))
+  contains.done <- any(grepl(word, log.content, ignore.case = TRUE))
   if (contains.done) {
     return(TRUE)
   } else {

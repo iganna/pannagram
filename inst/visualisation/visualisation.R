@@ -192,6 +192,10 @@ plotSynAllChr <- function(path.aln,
     }
   }
   
+  if(nrow(df) == 0){
+    pokazAttention('Alignment of', acc, 'on', ref, 'was not performed')
+  }
+  
   v.sep.acc = cum.acc[-length(cum.acc)]
   h.sep.ref = cum.ref[-length(cum.ref)]
   
