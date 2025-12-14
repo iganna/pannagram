@@ -348,6 +348,7 @@ edges.solved = putEdgesBack(edges = edges.major.no.umbrella,
                             dominant.effect = dominant.effect, show.echo=T,
                             small.only = T)
 
+save(list = ls(), file = psate0(path.sv, "tmp_workspace.RData"))
 
 edges.solved <- filterEdgesShortcut(edges.solved)
 edges.solved <- solveForkNodes(edges = edges.solved, seqs = seqs)
