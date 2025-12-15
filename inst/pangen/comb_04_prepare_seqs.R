@@ -5,9 +5,10 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(muscle)
+  library(pannagram)
 })
 
-source(system.file("utils/utils.R", package = "pannagram"))
+# source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
 
 # ***********************************************************************
