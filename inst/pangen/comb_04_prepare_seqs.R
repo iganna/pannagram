@@ -113,7 +113,7 @@ for(s.comb in pref.combinations){
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
   
   # Check log Done
-  if(checkDone(file.log.loop)) return(NULL)
+  if(checkDone(file.log.loop)) next
   
   pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
   q.chr = strsplit(s.comb, '_')[[1]][1]
