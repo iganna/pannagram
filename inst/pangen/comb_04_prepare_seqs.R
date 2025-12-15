@@ -106,6 +106,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 for(s.comb in pref.combinations){
+  pokaz(s.comb)
   
   # Log files
   file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
@@ -270,7 +271,7 @@ for(s.comb in pref.combinations){
                            append = T)
               }
     }
-    pokaz('.. done!', file=file.log.loop, echo=echo.loop)
+    pokaz('.. finished!', file=file.log.loop, echo=echo.loop)
     
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)

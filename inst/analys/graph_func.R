@@ -834,6 +834,7 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
 #' @export
 solveForkNodes <- function(edges,
                            seqs,
+                           flank.length = 100,
                            cutoff.remain.edges = 0.7,
                            flank.cover.cutoff = 0.8,
                            show.echo = FALSE)
@@ -905,7 +906,9 @@ solveForkNodes <- function(edges,
       s1 <- seq2nt(seqs[edge.tmp[1]])
       s2 <- seq2nt(seqs[edge.tmp[2]])
       
-      n.cut <- min(round(length(s1) / flank.cover.cutoff), length(s2))
+      # n.cut <- min(round(length(s1) / flank.cover.cutoff), length(s2))
+      # n.cut = min(n.cut, flank.length)
+      n.cut = min(c(flank.length, length(s1), length(s2)))
       
       score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
       
@@ -957,7 +960,7 @@ solveForkNodes <- function(edges,
 #' @export
 solveUmbrellaNodes <- function(edges,
                                seqs, 
-                               coverage.umbrella.children = 100,
+                               flank.length = 200,
                                cutoff.remain.edges = 0.7,
                                flank.cover.cutoff = 0.8,
                                show.echo = FALSE){
@@ -972,6 +975,7 @@ solveUmbrellaNodes <- function(edges,
   stat.neighbours.all = c()
   nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
                            edges.compact[,1])
+  if(show.echo) pokaz('Number of Nodes to add is', length(nodes.umbrella))
   for(node.to in nodes.umbrella){
     stat.neighbours = data.frame(edge.id = which(edges.compact[,2] == node.to))
     
@@ -1013,6 +1017,7 @@ solveUmbrellaNodes <- function(edges,
     stat.neighbours$len.from = 0
     stat.neighbours$len.to = 0
     for(irow in which(stat.neighbours$remain)){
+      # if(show.echo) pokaz(nrow(stat.neighbours))
       node.from = stat.neighbours$node.from[irow]
       # stop()
       
@@ -1025,7 +1030,8 @@ solveUmbrellaNodes <- function(edges,
       stat.neighbours$len.from[irow] = length(s1)
       stat.neighbours$len.to[irow] = length(s2)
       
-      n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
+      # n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
+      n.cut = min(c(flank.length, length(s1), length(s2)))
       
       score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
       
