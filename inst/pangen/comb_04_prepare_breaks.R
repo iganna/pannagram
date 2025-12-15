@@ -246,7 +246,6 @@ for(s.comb in pref.combinations){
   H5close()
   gc()
   pokaz('Done.', file=file.log.loop, echo=echo.loop)
-  return(NULL)
 }
 
 warnings()
