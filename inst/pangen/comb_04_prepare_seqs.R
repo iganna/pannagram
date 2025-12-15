@@ -295,6 +295,7 @@ for(s.comb in pref.combinations){
   
   rm(aln.seqs)
   rm(aln.seqs.names)
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
 }
 
 if(num.cores > 1){
