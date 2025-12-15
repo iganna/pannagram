@@ -263,7 +263,7 @@ for(s.comb in pref.combinations){
     } else { # Many cores
       pokaz('Save sequences with parallel...', file=file.log.loop, echo=echo.loop)
       foreach(i = idx.save,
-              .packages=c('crayon'))  %dopar% {
+              .packages=c('crayon', 'pannagram'))  %dopar% {
                 writeFasta(aln.seqs[[i]], 
                            file = paste0(path.mafft.in,breaks$file[i]), 
                            seq.names = aln.seqs.names[[i]],
