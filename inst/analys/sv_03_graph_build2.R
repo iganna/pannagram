@@ -339,22 +339,22 @@ if(nrow(edges.compact) > 0){
 
 # ***********************************************************************
 # ---- Put back all of the SVs ----
-if(show.echo)  pokaz('Put all SVs back with dominant effect...')
 
-save(list = ls(), file = "tmp_workspace.RData")
+file.intermediate = psate0(path.sv, "tmp_workspace.RData")
+save(list = ls("edges.major.no.umbrella", "edges.init"), file = file.intermediate)
+
+if(show.echo)  pokaz('Put all SVs back with dominant effect...')
 
 edges.solved = putEdgesBack(edges = edges.major.no.umbrella, 
                             edges.init = edges.init,
                             dominant.effect = dominant.effect, show.echo=T,
                             small.only = T)
 
-save(list = ls(), file = psate0(path.sv, "tmp_workspace.RData"))
-
 edges.solved <- filterEdgesShortcut(edges.solved)
 edges.solved <- solveForkNodes(edges = edges.solved, seqs = seqs)
 edges.solved <- solveUmbrellaNodes(edges = edges.solved, seqs = seqs)
 
-components.info = getGraphComponents(edges.solved) 
+components.info = getGraphComponents(edges.solved) ``
 components.solved = components.info$membership
 
 
