@@ -23,6 +23,7 @@ option_list = list(
   make_option("--path.figures", type = "character", default = "", help = "Path to folder with figures"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option("--file.nestedness", type = "character", default = NULL, help = "File with nestedness"),
+  make_option("--coverage", type = "integer", default = 85, help = "Coverage"),
   make_option("--cores", type = "integer", default = 1, help = "Number of cores to use for parallel processing"),
   make_option("--flag.plot", type = "logical", default = TRUE, help = "Enable plotting (default: TRUE)")
 )
@@ -47,20 +48,17 @@ if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exi
 
 # ***********************************************************************
 # ---- Variables ----
-cov.cutoff = 85
-cov.cutoff.strict = 90  # have no together with the similarity cutoffs for the initial simsearch results
+cov.cutoff = opt$coverage
 dominant.effect = 0.7
 
 # Filtration of the graph
-len.cutoff = 400
-min.comp.size = 4
 min.len = 200
-
 min.copy = 2
+min.comp.size = 3
 
+# Plot variables
 seed.value = 239
-plot.size = 8
-
+plot.size = 7
 
 # Binning
 source(system.file("analys/sv_variables.R", package = "pannagram"))
@@ -127,7 +125,7 @@ if(F){
 
 if(show.echo) pokaz('Remain those node, that have at least two sequences + Length cutoff...')
 nestedness.major = filterNestedness(nestedness,
-                                    cov.cutoff = cov.cutoff.strict,
+                                    cov.cutoff = cov.cutoff,
                                     min.copy = min.copy)
 
 edges.major = getGraphFromNestedness(nestedness.major, cov.cutoff = cov.cutoff)
@@ -340,21 +338,22 @@ if(nrow(edges.compact) > 0){
 # ***********************************************************************
 # ---- Put back all of the SVs ----
 
-file.intermediate = psate0(path.sv, "tmp_workspace.RData")
-save(list = ls("edges.major.no.umbrella", "edges.init"), file = file.intermediate)
+# file.intermediate = paste0(path.sv, "tmp_workspace.RData")
+# save(list = ls("edges.major.no.umbrella", "edges.init"), file = file.intermediate)
 
 if(show.echo)  pokaz('Put all SVs back with dominant effect...')
 
 edges.solved = putEdgesBack(edges = edges.major.no.umbrella, 
                             edges.init = edges.init,
-                            dominant.effect = dominant.effect, show.echo=T,
-                            small.only = T)
+                            dominant.effect = dominant.effect, 
+                            show.echo=T)
 
+edges.solved <- filterEdges(edges.solved, min.comp.size = min.comp.size)
 edges.solved <- filterEdgesShortcut(edges.solved)
 edges.solved <- solveForkNodes(edges = edges.solved, seqs = seqs)
 edges.solved <- solveUmbrellaNodes(edges = edges.solved, seqs = seqs)
 
-components.info = getGraphComponents(edges.solved) ``
+components.info = getGraphComponents(edges.solved)
 components.solved = components.info$membership
 
 

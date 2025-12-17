@@ -470,8 +470,8 @@ filterNestedness <- function(nestedness,
                              cov.cutoff = NULL,
                              min.len    = NULL,
                              max.len    = NULL,
-                             min.copy   = NULL,
                              names.remove = NULL,
+                             min.copy = NULL,
                              show.echo = F) {
   
   if(show.echo){
@@ -521,18 +521,20 @@ filterNestedness <- function(nestedness,
   
   # ---- Filter by minimum number of copies ----
   if (!is.null(min.copy)) {
-    
+
     if (is.null(cov.cutoff)) {
       warning("'cov.cutoff' sould be provided to filter by copy-number")
     }
-    
+
     cov.cutoff <- normalizeСovСutoff(cov.cutoff)
-    
+
     nestedness.equal <- nestedness[(nestedness$coverage.query  >= cov.cutoff) &
-                                     (nestedness$coverage.target >= cov.cutoff), , drop = FALSE]
-    
+                                     (nestedness$coverage.target >= cov.cutoff) &
+                                     (nestedness$length.query/nestedness$length.target >= cov.cutoff) &
+                                     (nestedness$length.target/nestedness$length.query >= cov.cutoff), , drop = FALSE]
+
     if (nrow(nestedness.equal) > 0) {
-      
+
       if(min.copy == 2){
         sv.passed = c(nestedness.equal$name.query, nestedness.equal$name.target)
       } else {
@@ -540,14 +542,14 @@ filterNestedness <- function(nestedness,
         #   $membership — vector of component IDs (names = vertices)
         #   $csize      — vector of component sizes (index = component ID)
         g.comp <- getGraphComponents(nestedness.equal[, c("name.query", "name.target")])
-        
+
         comp.passed <- which(g.comp$csize >= min.copy)
         sv.passed   <- names(g.comp$membership)[g.comp$membership %in% comp.passed]
       }
-      
+
       nestedness <- nestedness[(nestedness$name.query  %in% sv.passed) &
-                                 (nestedness$name.target %in% sv.passed), , drop = FALSE]        
-      
+                                 (nestedness$name.target %in% sv.passed), , drop = FALSE]
+
     } else {
       # Return an empty data frame with the same structure if no edges remain
       nestedness <- nestedness[0, , drop = FALSE]
@@ -589,6 +591,7 @@ filterEdges <- function(edges,
                         min.comp.size = NULL,
                         remove.intercommunity = FALSE,
                         remove.bridges = FALSE,
+                        remove.singletons = FALSE,
                         show.echo = F) {
   
   # ---- Filter by component size ----
@@ -625,6 +628,27 @@ filterEdges <- function(edges,
     if(show.echo){
       pokaz('Number of edges after bridge filtration:', nrow(edges))
     }
+  }
+  
+  # ---- Remove Singletons ----
+  if(remove.singletons){
+
+    key.dir <- paste(edges[,1], edges[,2], sep="__")
+    key.rev <- paste(edges[,2], edges[,1], sep="__")
+    
+    idx.passed = which(key.dir %in% key.rev)
+    sv.passed = c(edges[idx.passed,1], edges[idx.passed,2])
+    
+    if (length(sv.passed) > 0) {
+
+      edges <- edges[(edges[,1]  %in% sv.passed) &
+                       (edges[,1] %in% sv.passed), , drop = FALSE]
+
+    } else {
+      # Return an empty data frame with the same structure if no edges remain
+      edges <- edges[0, , drop = FALSE]
+    }
+
   }
   
   return(edges)
@@ -834,7 +858,7 @@ putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
 #' @export
 solveForkNodes <- function(edges,
                            seqs,
-                           flank.length = 100,
+                           flank.length = 200,
                            cutoff.remain.edges = 0.7,
                            flank.cover.cutoff = 0.8,
                            show.echo = FALSE)
@@ -975,7 +999,7 @@ solveUmbrellaNodes <- function(edges,
   stat.neighbours.all = c()
   nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
                            edges.compact[,1])
-  if(show.echo) pokaz('Number of Nodes to add is', length(nodes.umbrella))
+  if(show.echo) pokaz('Number of Umbrella Nodes', length(nodes.umbrella))
   for(node.to in nodes.umbrella){
     stat.neighbours = data.frame(edge.id = which(edges.compact[,2] == node.to))
     

@@ -177,6 +177,7 @@ for(s.comb in pref.combinations){
   k = 10
   order.acc = ceiling(1:length(accessions) / k)
   for(i.k in min(order.acc):max(order.acc)){
+    i.k.string = paste0('Round ', i.k, 'finished.')
     
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
@@ -242,7 +243,7 @@ for(s.comb in pref.combinations){
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
       
-      rm(genome)
+      rmSafe(genome)
     }
     idx.save = c(idx.large, idx.extra)
     
@@ -270,7 +271,8 @@ for(s.comb in pref.combinations){
                            append = T)
               }
     }
-    pokaz('.. finished!', file=file.log.loop, echo=echo.loop)
+    
+    pokaz(i.k.string, file=file.log.loop, echo=echo.loop)
     
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)

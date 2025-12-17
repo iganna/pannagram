@@ -20,6 +20,13 @@
 #' @author Anna A. Igolkina 
 #' @export
 orfFinder <- function(seq.init, orf.min.len = 25){
+  
+  # Prepare sequence and remove gaps
+  seq.init <- prepareNtSeq(seq.init)
+  seq.init = seq.init[seq.init != '-']
+  seq.init = nt2seq(seq.init)
+  
+  # Start
   seq.len = nchar(seq.init) # Calculate the length of the initial sequence
   seq = seq.init
   

@@ -30,7 +30,7 @@ plot.size = 4
 min.len = 200
 
 cov.cutoff = 85
-cov.cutoff.strict = 90
+cov.cutoff.strict = 85
 
 min.copy = 2
 ```
@@ -87,7 +87,7 @@ savePNG(p, path = path.figures, name = name.output,
 ```{r}
 
 nestedness.major = filterNestedness(nestedness,
-                                     cov.cutoff = cov.cutoff.strict,
+                                     cov.cutoff = cov.cutoff,
                                      min.copy = min.copy)
 
 edges.major = getGraphFromNestedness(nestedness.major)
@@ -255,8 +255,7 @@ savePNG(p, path = path.figures, name = name.output,
 ```{r}
 
 edges.major.no.forks <- solveForkNodes(edges = edges.no.shortcut,
-                                         seqs = seqs)
-
+                                       seqs = seqs)
 
 graph.compact = getGraphCompact(edges.major.no.forks)
 edges.compact = graph.compact$edges
@@ -416,17 +415,22 @@ savePNG(p, path = path.figures, name = name.output,
 # rm(components)
 ```
 
+```{r}
+stop()
+```
+
+
 # Put sequences back
 ```{r}
 dominant.effect = 0.7
 
 edges.solved = putEdgesBack(edges = edges.major.no.umbrella, 
                             edges.init = edges.init,
-                            dominant.effect = dominant.effect, show.echo=T,
-                            small.only = T)
+                            dominant.effect = dominant.effect, 
+                            show.echo=T)
 
 nrow(edges.solved)
-
+edges.solved <- filterEdges(edges.solved, min.comp.size = 3)
 edges.solved <- filterEdgesShortcut(edges.solved)
 
 nrow(edges.solved)
@@ -533,7 +537,7 @@ savePNG(p.compact, path = path.figures, name = name.output,
 ```
 
 
-
+# Stop
 ```{r}
 stop()
 ```
@@ -563,7 +567,7 @@ hist(nchar(seqs.comp), 50)
 ## plot Families
 ```{r}
 
- edges.fam = getFmilyEdges(edges.solved.filter, components, i.comp = i.comp)
+edges.fam = getFmilyEdges(edges.solved.filter, components, i.comp = i.comp)
 
 g <- network(edges.fam, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
 g.names = network.vertex.names(g)
@@ -658,32 +662,35 @@ orf.info$orf[1]
 
 # Plot Families
 ```{r}
-path.fam = "~/Sources/pannagram_test/families/"
+
+components.info = getGraphComponents(edges.solved.filter) 
+components = components.info$membership
+
+path.fam = "~/Sources/alignments/mosqioto/families/"
 for(i.comp in 1:max(components)){
   
   pokaz(i.comp)
 
-seqs.names.comp = names(components)[components == i.comp]
+  seqs.names.comp = names(components)[components == i.comp]
+  
+  seqs.comp <- getComponentSequences(seqs.names.comp = seqs.names.comp,
+                                seqs, 
+                                nestedness)
 
-
-seqs.comp <- getComponentSequences(seqs.names.comp = seqs.names.comp,
-                              seqs, 
-                              nestedness)
-
-path.mafft = "~/Sources/pannagram_test/families/tmp/"
+  path.mafft = "~/Sources/alignments/mosqioto/families/tmp/"
 
   tmp.fasta = paste(path.mafft, 'tmp_',i.comp,'.fasta', sep = '')
   aln.fasta = paste(path.mafft, 'aln_',i.comp,'.fasta', sep = '')
   
-if(!(file.exists("aln.fasta") && file.info("aln.fasta")$size > 0) ) {
-
+  if(!(file.exists("aln.fasta") && file.info("aln.fasta")$size > 0) ) {
   
-  writeFasta(seqs.comp, tmp.fasta)
-  
-  pokaz('Mafft...')
-  system(paste('mafft --op 5 --quiet --maxiterate 100 ', tmp.fasta, '>', aln.fasta,  sep = ' '))
-  
-}
+    
+    writeFasta(seqs.comp, tmp.fasta)
+    
+    pokaz('Mafft...')
+    system(paste('mafft --op 5 --quiet --maxiterate 100 ', tmp.fasta, '>', aln.fasta,  sep = ' '))
+    
+  }
   pokaz('Plot...')
   alignment = readFasta(aln.fasta)
   
