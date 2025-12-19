@@ -83,7 +83,7 @@ savePNG(p, path = path.figures, name = name.output,
 ```
 
 
-# Remain those nodes, that have at least two sequences + Length cutoff
+# Remain those nodes, that have at least two sequences + Length cutoff + Remain dominant edges
 ```{r}
 
 nestedness.major = filterNestedness(nestedness,
@@ -156,7 +156,8 @@ p.compact <- ggnet2(g,
                     edge.color = "grey30",
             node.size = 'size',
             color = 'partition',
-            arrow.gap = 0.01, arrow.size = 2,
+            # arrow.gap = 0.01, 
+            arrow.size = 2,
 ) + theme(legend.position = "none") + scale_color_viridis_d(name = "partition")
 
 # --- Plot Partition ---
@@ -251,10 +252,107 @@ savePNG(p, path = path.figures, name = name.output,
         width = plot.size, height = plot.size)
 ```
 
+# Remove dominants
+```{r}
+
+edges.no.dominant <- filterEdgesDominant(edges.no.shortcut)
+
+```
+
+
+# Plot compact
+```{r}
+
+# --- Partition ---
+components.info = getGraphComponents(edges.no.dominant) 
+components = components.info$membership
+
+# --- Compact ---
+graph.compact = getGraphCompact(edges.no.dominant)
+edges.compact = graph.compact$edges
+
+# --- Common Components ---
+svs.in.compact = graph.compact$nodes$name[graph.compact$nodes$node %in% edges.compact]
+components.in.compact = data.frame(comp = components[svs.in.compact],
+                              node = graph.compact$nodes[svs.in.compact,]$node)
+components.in.compact = unique(components.in.compact)
+if(nrow(components.in.compact) !=  length(unique(components.in.compact$node))) 
+  stop('Wring assignment nodes to components')
+components.in.compact = setNames(components.in.compact$comp,
+                                 components.in.compact$node)
+
+
+# --- Plot Compact ---
+g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add labels
+g.label = rep('', length(g.names))
+names(g.label) = g.names
+g.label[names(components.in.compact)] = as.character(components.in.compact)
+g.label[duplicated(g.label)] = ''
+g %v% "labels" = g.label
+
+# Add cluster color
+g %v% "partition" <- as.character(components.in.compact[g.names])
+
+# Add cluster size
+g %v% "size" <- graph.compact$nodes.size[g.names]
+
+# Plot
+set.seed(seed.value)
+p.compact <- ggnet2(g, 
+                    label = 'labels', label.size = 3,
+                    edge.color = "grey30",
+            node.size = 'size',
+            color = 'partition',
+            # arrow.gap = 0.01, 
+            arrow.size = 2,
+) + theme(legend.position = "none") + scale_color_viridis_d(name = "partition")
+
+# --- Plot Partition ---
+g <- network(edges.no.dominant, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g.names = network.vertex.names(g)
+
+# Add labels
+components.reduced = components
+components.reduced[!(components.reduced %in% components.in.compact)] = NA
+
+g.label = rep('', length(g.names))
+names(g.label) = g.names
+g.label[names(components.reduced)] = as.character(components.reduced)
+g.label[duplicated(g.label)] = ''
+g.label[is.na(g.label)] = ''
+g %v% "labels" = g.label
+
+# Add cluster color
+g %v% "partition" <- as.character(components.reduced[g.names])
+
+# Plot
+set.seed(seed.value)
+p <- ggnet2(g, label = 'labels', 
+            label.size = 3,
+            edge.color = "grey",
+            node.size = 0.3,
+            color = 'partition',
+) + theme(legend.position = "none") + 
+  scale_color_viridis_d(name = "partition", na.value = "grey50")
+
+
+p2 = cowplot::plot_grid(p.compact, p, ncol = 2)
+
+i.plot = 4
+name.output = sprintf("graph_%02d_no_dominant", i.plot)
+savePNG(p2, path = path.figures, name = name.output,
+        width = plot.size * 3, height = plot.size * 1.5)
+
+```
+
+
 # Remove forks
 ```{r}
 
-edges.major.no.forks <- solveForkNodes(edges = edges.no.shortcut,
+edges.major.no.forks <- solveForkNodes(edges = edges.no.dominant,
                                        seqs = seqs)
 
 graph.compact = getGraphCompact(edges.major.no.forks)
@@ -415,6 +513,7 @@ savePNG(p, path = path.figures, name = name.output,
 # rm(components)
 ```
 
+# Stop
 ```{r}
 stop()
 ```
@@ -422,17 +521,16 @@ stop()
 
 # Put sequences back
 ```{r}
-dominant.effect = 0.7
+dominant.effect = 0.7 
 
 edges.solved = putEdgesBack(edges = edges.major.no.umbrella, 
                             edges.init = edges.init,
                             dominant.effect = dominant.effect, 
                             show.echo=T)
-
 nrow(edges.solved)
 edges.solved <- filterEdges(edges.solved, min.comp.size = 3)
-edges.solved <- filterEdgesShortcut(edges.solved)
-
+nrow(edges.solved)
+edges.solved <- filterEdgesShortcut(edges.solved, show.echo = T)
 nrow(edges.solved)
 
 ```
@@ -440,12 +538,17 @@ nrow(edges.solved)
 ## Remove umbrella & Forks
 ```{r}
 
-nrow(edges.solved)
-edges.solved.filter <- solveForkNodes(edges = edges.solved,
-                                         seqs = seqs)
+edges.solved.filter = edges.solved
+
 nrow(edges.solved.filter)
 edges.solved.filter <- solveUmbrellaNodes(edges = edges.solved.filter,
                                          seqs = seqs, show.echo=T)
+nrow(edges.solved.filter)
+edges.solved.filter <- solveForkNodes(edges = edges.solved.filter,
+                                         seqs = seqs, show.echo = T)
+
+nrow(edges.solved.filter)
+edges.solved.filter <- filterEdgesDominant(edges.solved.filter)
 nrow(edges.solved.filter)
 
 ```
@@ -547,7 +650,10 @@ stop()
 ```{r}
 
 
-i.comp = 236
+components.info = getGraphComponents(edges.solved.filter) 
+components = components.info$membership
+
+i.comp = 40
 
 seqs.names.comp = names(components)[components == i.comp]
 
@@ -556,7 +662,7 @@ seqs.comp <- getComponentSequences(seqs.names.comp = seqs.names.comp,
                               seqs, 
                               nestedness)
 
-dotplot(seqs.comp[1], seqs.comp[2])
+# dotplot(seqs.comp[1], seqs.comp[2])
 
 
 hist(nchar(seqs.comp), 50)
@@ -580,23 +686,65 @@ p <- ggnet2(g, label = F, edge.color = "black",
 )
 p
 
-edges.fam <- filterEdgesForks(edges.fam,seqs = seqs)
 
-edges.fam.copact <- getGraphCompact(edges.fam)
+# # --- Compact ---
+# graph.compact = getGraphCompact(edges.fam)
+# edges.compact = graph.compact$edges
+# 
+# # --- Plot Compact ---
+# g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+# g.names = network.vertex.names(g)
+# 
+# # Add labels
+# g %v% "labels" = g.names
+# 
+# # Add cluster size
+# g %v% "size" <- graph.compact$nodes.size[g.names]
+# 
+# # Plot
+# set.seed(seed.value)
+# p.compact <- ggnet2(g, 
+#                     label = 'labels', label.size = 3,
+#                     edge.color = "grey30",
+#             node.size = 'size',
+#             arrow.gap = 0.1,
+#             arrow.size = 2,
+# ) + theme(legend.position = "none") 
+# p.compact
 
-g <- network(edges.fam.copact$edges, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
-g.names = network.vertex.names(g)
-g %v% "size" <- edges.fam.copact$nodes.size[g.names]
-set.seed(seed.value)
-p <- ggnet2(g, label = F, edge.color = "black",
-            node.size = 'size',
-            color = '#468B97',
-            arrow.gap = 0.05, arrow.size = 3,
-)
-p
-
-
-
+# 
+# sv1 = graph.compact$nodes$name[graph.compact$nodes$node == 'N15']
+# 
+# g <- network(edges.fam, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+# g.names = network.vertex.names(g)
+# g %v% "highlight" <- g.names %in% sv1
+# p <- ggnet2(
+#   g,
+#   label = FALSE,
+#   edge.color = "black",
+#   node.size = 1,
+#   color = "highlight",
+#   arrow.gap = 0.01,
+#   arrow.size = 2
+# ) +
+#   scale_color_manual(
+#     values = c(`TRUE` = "red", `FALSE` = "#468B97"),
+#     guide = "none"
+#   )
+# 
+# p
+# 
+# 
+# graph.compact$nodes$node[graph.compact$nodes$name == 'SVgr_3_id_24499|361']
+# 
+# sv1 = graph.compact$nodes$name[graph.compact$nodes$node == 'N15']
+# sv2 = graph.compact$nodes$name[graph.compact$nodes$node == 'N14']
+# 
+# edges.init[(edges.init[,1] %in% sv2) & (edges.init[,2] %in% sv1),]
+# 
+# dotplot(seqs[sv1[1]], seqs[sv2[1]])
+# 
+# dotplot(seqs["SVgr_1_id_043169|369"], seqs["SVgr_1_id_133369|3181"])
 
 ```
 
@@ -623,7 +771,7 @@ path.mafft = "~/Sources/pannagram_test/test_ref_free_acc_old/features/sv/tmp/maf
   
   p
 
-  # dotplot(alignment[20], alignment[30])
+  dotplot(alignment[20], alignment[30])
   
   ntplot(alignment[1],nt.separate = T)
 ```

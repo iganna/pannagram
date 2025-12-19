@@ -207,8 +207,9 @@ if(nrow(edges.compact) > 0){
 
 edges.no.shortcut <- filterEdgesShortcut(edges.major)
 
+
 # ***********************************************************************
-# ---- Update the compact structure and visualize again  ----
+## ---- Update the compact structure and visualize again  ----
 
 graph.compact = getGraphCompact(edges.no.shortcut)
 edges.compact = graph.compact$edges
@@ -245,13 +246,57 @@ if(nrow(edges.compact) > 0){
 }
 
 # ***********************************************************************
+# ---- Remain only dominant edges ----
+
+
+edges.no.dominant <- filterEdgesDominant(edges.no.shortcut)
+
+
+# ***********************************************************************
+## ---- Update the compact structure and visualize again  ----
+
+graph.compact = getGraphCompact(edges.no.dominant)
+edges.compact = graph.compact$edges
+
+if(nrow(edges.compact) > 0){
+  if(T){
+    # if(flag.plot){
+    suppressMessages(suppressWarnings({
+      
+      g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+      g.names = network.vertex.names(g)
+      
+      # Add cluster size
+      g %v% "size" <- graph.compact$nodes.size[g.names]
+      
+      set.seed(seed.value)
+      p <- ggnet2(g, label = F, edge.color = "black",
+                  node.size = 'size',
+                  color = '#468B97',
+                  arrow.gap = 0.01, arrow.size = 2,
+      ) + theme(legend.position = "none")
+      p
+      
+      name.output = sprintf("graph_%02d_compact_no_shortcut", i.plot)
+      i.plot = i.plot + 1
+      savePNG(p, path = path.figures, name = name.output,
+              width = plot.size, height = plot.size)
+      
+      rmSafe(g)
+      rmSafe(p)
+      
+    }))
+  }
+}
+
+# ***********************************************************************
 # ---- Solve forks ----
 
-edges.major.no.forks <- solveForkNodes(edges = edges.no.shortcut,
+edges.major.no.forks <- solveForkNodes(edges = edges.no.dominant,
                                          seqs = seqs)
 
 # ***********************************************************************
-# ---- Update the compact structure and visualize again ----
+## ---- Update the compact structure and visualize again ----
 
 graph.compact = getGraphCompact(edges.major.no.forks)
 edges.compact = graph.compact$edges
@@ -297,7 +342,7 @@ edges.major.no.umbrella <- solveUmbrellaNodes(edges = edges.major.no.forks,
 
 
 # ***********************************************************************
-# ---- Update the compact structure and visualize again ----
+## ---- Update the compact structure and visualize again ----
 
 graph.compact = getGraphCompact(edges.major.no.umbrella)
 edges.compact = graph.compact$edges
@@ -348,9 +393,15 @@ edges.solved = putEdgesBack(edges = edges.major.no.umbrella,
                             dominant.effect = dominant.effect, 
                             show.echo=T)
 
+pokaz('Filter components')
 edges.solved <- filterEdges(edges.solved, min.comp.size = min.comp.size)
+pokaz('Filter shortcuts')
 edges.solved <- filterEdgesShortcut(edges.solved)
+pokaz('Remain Dominants')
+edges.solved <- filterEdgesDominant(edges.solved)
+pokaz('Filter Forks')
 edges.solved <- solveForkNodes(edges = edges.solved, seqs = seqs)
+pokaz('Filter Umbrella')
 edges.solved <- solveUmbrellaNodes(edges = edges.solved, seqs = seqs)
 
 components.info = getGraphComponents(edges.solved)

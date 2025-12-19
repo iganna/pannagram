@@ -655,17 +655,63 @@ filterEdges <- function(edges,
 }
 
 #' @export
-filterEdgesShortcut <- function(edges.major, show.echo = F){
+filterEdgesDominant <- function(edges,
+                                dominant.effect = 0.7,
+                                show.echo = F){
   
-  
-  if(nrow(edges.major) == 0) stop('Edge matrix is empty')
-  
-  graph.compact = getGraphCompact(edges.major)
+  graph.compact = getGraphCompact(edges)
   edges.compact = graph.compact$edges
+  names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
+  
+  # For every edge - number of supperted combinations from both sides. 
+  # It should be more than dominant.effect
+  
+  edges.expand = data.frame(sv1 = edges[,1],
+                            sv2 = edges[,2],
+                            n1 = names2nodes[edges[,1]],
+                            n2 = names2nodes[edges[,2]])
+  edges.expand = edges.expand[edges.expand$n1 != edges.expand$n2,]
+  edges.expand$comb = paste(edges.expand$n1, edges.expand$n2, sep = '|')
+  
+  
+  cnt <- aggregate(cbind(sv1, sv2) ~ comb, data = edges.expand, FUN = function(x) length(unique(x)))
+  nodes <- aggregate(cbind(n1, n2) ~ comb, data = edges.expand, FUN = unique)
+  cnt <- merge(nodes, cnt, by = "comb")
+  
+  cnt$p1 = cnt$sv1 / graph.compact$nodes.size[cnt$n1]
+  cnt$p2 = cnt$sv2 / graph.compact$nodes.size[cnt$n2]
+  
+  comb.remove = cnt$comb[(cnt$p1 < dominant.effect) |
+                           (cnt$p2 < dominant.effect)]
+  
+  comb.edges = paste(edges.compact[,1], edges.compact[,2], sep = '|')
+  
+  idx.edge.remove = which(comb.edges %in% comb.remove)
+  
+  if(length(idx.edge.remove) > 0){
+    edges.remove = edges.compact[idx.edge.remove,,drop=F]
+    combination.remove = paste(edges.remove[,1], edges.remove[,2])
+    
+    combination.edges = paste(names2nodes[edges[,1]], names2nodes[edges[,2]])
+    edges = edges[! (combination.edges %in% combination.remove) ,, drop=F]
+  }
+  
+}
+
+
+#' @export
+filterEdgesShortcut <- function(edges, show.echo = F){
+  
+  
+  if(nrow(edges) == 0) stop('Edge matrix is empty')
+  
+  graph.compact = getGraphCompact(edges)
+  edges.compact = graph.compact$edges
+  names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
   
   if(nrow(edges.compact) == 0){
     if(show.echo) pokazAttention('The compact graph has no edges')
-    return(edges.major)
+    return(edges)
   }
   
   # Components with two nodes are not needed to be filtered, therefore min.comp.size = 3
@@ -673,38 +719,25 @@ filterEdgesShortcut <- function(edges.major, show.echo = F){
   
   if(nrow(edges.compact) == 0){
     if(show.echo) pokazAttention('The compact graph has no edges')
-    return(edges.major)
+    return(edges)
   }
   
   idx.bypassed = getEdgesIdxShortcut(edges.compact)
   
   if(length(idx.bypassed) == 0){
     if(show.echo) pokazAttention('No baypassed Edges in the initial graph')
-    return(edges.major)
+    return(edges)
   }
   
-  # Remove corresponding edges from edges.major
-  idx.edges.remove = c()
-  for(i.edge in idx.bypassed){
-    nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
-    nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
-    i.edges.remove = which((edges.major[,1] %in% nodes.from) & (edges.major[,2] %in% nodes.to))
-    idx.edges.remove = c(idx.edges.remove, i.edges.remove)
+  if(length(idx.bypassed) > 0){
+    edges.bypassed = edges.compact[idx.bypassed,,drop=F]
+    combination.baypassed = paste(edges.bypassed[,1], edges.bypassed[,2])
+    
+    combination.edges = paste(names2nodes[edges[,1]], names2nodes[edges[,2]])
+    edges = edges[! (combination.edges %in% combination.baypassed) ,, drop=F]  
   }
   
-  if(show.echo) pokaz('Number of bypass edges is', length(idx.edges.remove))
-  if(length(idx.edges.remove) > 0){
-    comp.before = getGraphComponents(edges.major)
-    edges.major = edges.major[-idx.edges.remove,]
-    comp.after = getGraphComponents(edges.major)
-    # Check number of components
-    if(comp.before$no != comp.after$no){
-      stop("Some deleted edges were crucial")
-    }
-  }
-  
-  return(edges.major)
-  
+  return(edges)
 }
 
 #' Restore missing SV edges to the graph
@@ -720,139 +753,131 @@ filterEdgesShortcut <- function(edges.major, show.echo = F){
 #'
 #' @return Updated edge list with restored SV edges.
 #' @export
-putEdgesBack <- function(edges, edges.init, show.echo=F, dominant.effect = 0.7,
-                         small.only = F){
+putEdgesBack <- function(edges, 
+                         edges.init,
+                         dominant.effect = 0.7,
+                         show.echo=F){
   
-  if(small.only){
-    sv.back = setdiff(c(as.matrix(edges.init[,1])), c(as.matrix(edges)))
-  } else {
-    sv.back = setdiff(c(as.matrix(edges.init)), c(as.matrix(edges)))  
-  }
-  
+  # Length of SVs
   sv.len = parseStrings(unique(c(as.matrix(edges.init))), 2, numeric = T)
+  
+  # SVs to put back
+  sv.edges = unique(c(as.matrix(edges)))
+  sv.back = setdiff(c(as.matrix(edges.init)), sv.edges)  
+  
+  # Don't put back new top nodes to the existing components, 
+  # New nodes to the existing components should have existing sequences as a cap.
+  sv.back = sv.back[sv.back %in% edges.init[edges.init[,2] %in% sv.edges,1]]
+  
   if(length(sv.back) == 0){
     if(show.echo) pokaz('No SVs to put back', length(sv.back))
     return(edges)
   } else {
     if(show.echo) pokaz('Number of SVs to put back', length(sv.back))  
   }
-  
-  # Sort by length (from longest to shortest)
-  sv.back = sv.back[order(- sv.len[sv.back])]
-  
+
+  # Edges back
   edges.back = edges.init
   edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),, drop=F]
   edges.back = as.matrix(edges.back)
   
-  g.comp <- getGraphComponents(edges)
-  partition <- g.comp$membership
-  partition.add = partition
+  # Components
+  components.info = getGraphComponents(edges) 
+  components = components.info$membership
   
-  if(!is.null(partition.add)){
-    max.part = max(partition.add)  
-  } else {
-    max.part = 0
-  }
+  # Get SVs from the "top" vertices
+  graph.compact = getGraphCompact(edges)
+  edges.compact = graph.compact$edges 
+  top.nodes = setdiff(edges.compact[,2], edges.compact[,1])
+  top.svs = graph.compact$nodes$name[graph.compact$nodes$node %in% top.nodes]
   
-  # Map of "in which Edges every SV play the role"
-  idx.names = rbind(cbind(edges.back[,1], 1:nrow(edges.back)),
-                    cbind(edges.back[,2], 1:nrow(edges.back)))
-  idx.names = idx.names[idx.names[,1] %in% sv.back,, drop=F]
-  idx.map = split(idx.names[,2], idx.names[,1])
+  # Filter edges.back not to cover to top nodes
+  edges.back = edges.back[!(edges.back[,1] %in% top.svs),]
   
-  sv.edges.add.list = list() 
-  sv.edges.add.counter = 1  
-  
-  for(s.sv in sv.back){
+  n.edges.back = -1
+  while (n.edges.back != nrow(edges.back)) {
+    if(show.echo) pokaz('Iteration')
+    n.edges.back = nrow(edges.back)
+    if(n.edges.back == 0) break
     
-    idx = as.numeric(idx.map[[s.sv]])
-    if (is.null(idx)) {
-      stop()
-      next 
+    edges.data = data.frame(comp1 = components[edges.back[,1]],
+                            comp2 = components[edges.back[,2]])
+    edges.data[is.na(edges.data)] = 0
+    edges.data$comp = rowSums(edges.data)
+    
+    idx.remove = (edges.data$comp1 != edges.data$comp2) & 
+      (edges.data$comp1 != 0) & 
+      (edges.data$comp2 != 0)
+    if(any(idx.remove)){
+      edges.data = edges.data[!idx.remove,]
+      edges.back = edges.back[!idx.remove,]
     }
     
-    # Get neighbours
-    sv.edges.connect = edges.back[idx,,drop=F]
-    
-    if(nrow(sv.edges.connect) == 0){
-      stop('WHY')
-      next
-    } 
-    
-    sv.node.connect = unique(c(sv.edges.connect))
-    sv.node.connect = sv.node.connect[sv.node.connect != s.sv]
-    sv.node.connect = intersect(sv.node.connect, names(partition.add))
-    
-    if(length(sv.node.connect) == 0) {
-      partition.add[s.sv] = max.part + 1
-      max.part = max.part + 1
-      next
+    idx.back.sure = which((edges.data$comp1 == edges.data$comp2) & 
+                            (edges.data$comp1 != 0))
+    if(length(idx.back.sure) > 0){
+      edges.data[idx.back.sure, 1:3] = 0  
     }
-    # stop()
-    sv.node.connect.part = partition.add[sv.node.connect]
-    sv.node.connect.part = sv.node.connect.part[!is.na(sv.node.connect.part)]
-    part.cnt = table(sv.node.connect.part)
     
-    i.part = NA  # In case one want to remove the "else" branch in the following if
+    edges.data$sv = ''
+    if(sum(edges.data$comp1 * edges.data$comp2) != 0) stop('Sonething wrong with edges.data')
+    idx.tmp = edges.data$comp1 == 0
+    edges.data$sv[idx.tmp] = edges.back[idx.tmp, 1]
+    idx.tmp = edges.data$comp2 == 0
+    edges.data$sv[idx.tmp] = edges.back[idx.tmp, 2]
+    if(any((edges.data$sv %in% sv.edges))) stop('Sonething wrong with SVs in edges.data')
+    edges.data$sv[edges.data$comp == 0] = ''
     
-    if(max(part.cnt)/sum(part.cnt) > dominant.effect){
-      i.part = as.numeric(names(part.cnt)[which.max(part.cnt)])
+    edges.data$combination = paste(edges.data$sv, edges.data$comp)
+    
+    cnt <- aggregate(
+      cbind(sv.cnt = 1, n.top = comp2) ~ combination,
+      data = edges.data,
+      FUN = sum
+    )
+    comb.sv <- aggregate(
+      sv ~ combination,
+      data = edges.data,
+      FUN = unique
+    )
+    cnt.sv = table(edges.data$sv)
+    cnt <- merge(cnt, comb.sv, by = "combination", all.x = TRUE)
+    cnt$percent = cnt$sv.cnt / cnt.sv[cnt$sv]
+    cnt = cnt[cnt$sv != '',]
+    
+    if(sum(is.na(cnt$percent)) > 0) stop('NA in %')
+    
+    cnt.dominant = (cnt$percent >= dominant.effect) & (cnt$n.top > 0)
+    
+    idx.back.sure = c(idx.back.sure, which(edges.data$combination %in% cnt$combination[cnt.dominant]))
+
+    if(length(idx.back.sure) > 0){
+      if(show.echo) pokaz('Number of edges to put back:', length(idx.back.sure))  
+      components[edges.data$sv[idx.back.sure]] = edges.data$comp[idx.back.sure]
+      edges = rbind(edges, edges.back[idx.back.sure,,drop=F])
+      
+      # Checkup
+      components.info1 = getGraphComponents(edges) 
+      if(components.info1$no != components.info$no) stop('Number of components is wrong')
+      
+      # edges.back = edges.back[(edges.data$comp == 0),,drop=F]
+      
+      edges.back = edges.back[-idx.back.sure,,drop=F]
+      edges.data = edges.data[-idx.back.sure,]
+      
     } 
-    # else {
-    #   sv.node.connect.part.len = sv.len[names(sv.node.connect.part)]
-    #   s.sv.len = sv.len[s.sv]
-    #   idx.max.len = which.max(sv.node.connect.part.len)
-    #   if(sv.node.connect.part.len[idx.max.len] / s.sv.len > 0.7){
-    #     i.part = sv.node.connect.part[idx.max.len]  
-    #   }
-    # }
-    
-    if(!is.na(i.part)){
-      sv.part = names(partition.add)[partition.add == i.part]
-      sv.part = c(sv.part, s.sv)
-      sv.edges.add = sv.edges.connect[(sv.edges.connect[,1] %in% sv.part) & 
-                                        (sv.edges.connect[,2] %in% sv.part), , drop=F]
-      
-      # sv.edges.add = sv.edges.add[sv.edges.add[,1] == s.sv,,drop=F]  # Only s.sv -> something
-      # pokaz(1, nrow(sv.edges.add))
-      # sv.edges.add = sv.edges.add[sv.edges.add[,2] %in% names(partition.add),,drop=F]
-      # pokaz(2, nrow(sv.edges.add))
-      
-      # if(s.sv %in% 'SVgr_2_id_249548|16643'){
-      #   print(sv.edges.add)
-      #   stop()
-      # }
-      
-      if (nrow(sv.edges.add) > 0) {
-        
-        partition.add[s.sv] = i.part
-        sv.edges.add.list[[sv.edges.add.counter]] = sv.edges.add
-        sv.edges.add.counter = sv.edges.add.counter + 1
-        
-      } else {
-        partition.add[s.sv] = 0
-        #pokaz('No edges to add')
-        # stop('Something is wrong')
-      }
-    } 
-  }
-  partition.add = partition.add[partition.add != 0]
+    edges.back = edges.back[!(edges.data$combination %in% cnt$combination[!cnt.dominant]),,drop=F]
   
-  if(show.echo) pokaz('Number of edges to put back:', sv.edges.add.counter)
-  
-  if (length(sv.edges.add.list) > 0) {
-    edges.add = do.call(rbind, sv.edges.add.list)
-  } else{
-    return(edges)
   }
   
-  edges = rbind(edges, edges.add)
+  if(nrow(edges.back) != 0){
+    edges.data = data.frame(comp1 = components[edges.back[,1]],
+                            comp2 = components[edges.back[,2]])
+    
+    edges = rbind(edges, edges.back)  
+  }
   
-  # if(show.echo) pokaz('Remove shortcuts...')
-  # edges <- filterEdgesShortcut(edges)
-  
-  return(rbind(edges, edges.add))
-  
+  return(edges)
 }
 
 #' @export
@@ -861,11 +886,13 @@ solveForkNodes <- function(edges,
                            flank.length = 200,
                            cutoff.remain.edges = 0.7,
                            flank.cover.cutoff = 0.8,
-                           show.echo = FALSE)
+                           show.echo = FALSE,
+                           check.all.double = F)
 {
   
   graph.compact <- getGraphCompact(edges)
   edges.compact <- graph.compact$edges
+  names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
   
   if (nrow(edges.compact) == 0) {
     return(edges)
@@ -876,9 +903,20 @@ solveForkNodes <- function(edges,
   
   # Consider all nodes that have at least two outgoing edges
   stat.neighbours.all <- NULL
-  nodes.parasite <- unique(edges.compact[duplicated(edges.compact[, 1]), 1])
+  
+  if(!check.all.double){
+    nodes.parasite <- unique(edges.compact[duplicated(edges.compact[, 1]), 1])  
+  } else {
+    if(show.echo) pokaz('Check all inner arrows')
+    nodes.parasite = names(graph.compact$nodes.size)[graph.compact$nodes.size > 1]
+    nodes.parasite = nodes.parasite[nodes.parasite %in% edges.compact[,1]] 
+  }
+  
+  
+  if(show.echo) pokaz('Number of Fork nodes', length(nodes.parasite))
   
   for (node.from in nodes.parasite) {
+    pokaz(node.from)
     stat.neighbours <- data.frame(edge.id = which(edges.compact[, 1] == node.from))
     
     stat.neighbours$node.from <- node.from
@@ -959,23 +997,13 @@ solveForkNodes <- function(edges,
     idx.edge.remove = c()
   }
   
-  # Remove corresponding edges from edges
+  
   if(length(idx.edge.remove) > 0){
-    idx.edges.remove = c()
-    for(i.edge in idx.edge.remove){
-      nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
-      nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
-      i.edges.remove = which((edges[,1] %in% nodes.from) & (edges[,2] %in% nodes.to))
-      idx.edges.remove = c(idx.edges.remove, i.edges.remove)
-    }
+    edges.remove = edges.compact[idx.edge.remove,,drop=F]
+    combination.remove = paste(edges.remove[,1], edges.remove[,2])
     
-    if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
-    if(length(idx.edges.remove) > 0){
-      comp.before = getGraphComponents(edges)
-      edges = edges[-idx.edges.remove,,drop=F]
-      comp.after = getGraphComponents(edges)
-      # Check number of components
-    }
+    combination.edges = paste(names2nodes[edges[,1]], names2nodes[edges[,2]])
+    edges = edges[! (combination.edges %in% combination.remove) ,, drop=F]
   }
   
   return(edges)
@@ -991,16 +1019,32 @@ solveUmbrellaNodes <- function(edges,
   
   graph.compact = getGraphCompact(edges)
   edges.compact = graph.compact$edges
+  names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
   
   if(nrow(edges.compact) == 0){
     return(edges)
   }
-  
-  stat.neighbours.all = c()
+
+  # Umbrella nodes  
   nodes.umbrella = setdiff(unique(edges.compact[duplicated(edges.compact[,2]),2]),
                            edges.compact[,1])
+  
+  # Umbrella node with the frequency = 1 is a fake for sure! just remove it
+  nodes.umbrella.remove = intersect(nodes.umbrella,
+                                  names(graph.compact$nodes.size)[graph.compact$nodes.size == 1])
+  names.umbrella.remove = graph.compact$nodes$name[graph.compact$nodes$node %in% nodes.umbrella.remove]
+  edges = edges[!(edges[,2] %in% names.umbrella.remove),,drop=F]
+  nodes.umbrella = setdiff(nodes.umbrella, nodes.umbrella.remove)
+  
+  if(length(nodes.umbrella) == 0){
+    return(edges)
+  }
+  
   if(show.echo) pokaz('Number of Umbrella Nodes', length(nodes.umbrella))
+  stat.neighbours.all = c()
   for(node.to in nodes.umbrella){
+    if(show.echo) pokaz(node.to)
+    
     stat.neighbours = data.frame(edge.id = which(edges.compact[,2] == node.to))
     
     stat.neighbours$node.from = edges.compact[stat.neighbours$edge.id,1]
@@ -1084,24 +1128,13 @@ solveUmbrellaNodes <- function(edges,
     idx.edge.remove = c()
   }
   
-  # Remove corresponding edges from edges
   if(length(idx.edge.remove) > 0){
-    idx.edges.remove = c()
-    for(i.edge in idx.edge.remove){
-      nodes.from = graph.compact$nodes.list[[edges.compact[i.edge, 1]]]
-      nodes.to = graph.compact$nodes.list[[edges.compact[i.edge, 2]]]
-      i.edges.remove = which((edges[,1] %in% nodes.from) & (edges[,2] %in% nodes.to))
-      idx.edges.remove = c(idx.edges.remove, i.edges.remove)
-    }
+    edges.remove = edges.compact[idx.edge.remove,,drop=F]
+    combination.remove = paste(edges.remove[,1], edges.remove[,2])
     
-    if(show.echo) pokaz('Number of edges to remove', length(idx.edges.remove))
-    if(length(idx.edges.remove) > 0){
-      comp.before = getGraphComponents(edges)
-      edges = edges[-idx.edges.remove,,drop=F]
-      comp.after = getGraphComponents(edges)
-    }
+    combination.edges = paste(names2nodes[edges[,1]], names2nodes[edges[,2]])
+    edges = edges[! (combination.edges %in% combination.remove) ,, drop=F]
   }
-  
   
   return(edges)
 }
