@@ -165,15 +165,17 @@ if(flag.plot){
 # ***********************************************************************
 # ---- Create a compact graph ----
 
-if(show.echo) pokaz('Create a compact graph...')
-
-graph.compact = getGraphCompact(edges.major)
-edges.compact = graph.compact$edges
-
-if(nrow(edges.compact) > 0){
+if(T){
+  # if(flag.plot){
   
-  if(T){
-    # if(flag.plot){
+  if(show.echo) pokaz('Create a compact graph...')
+  
+  graph.compact = getGraphCompact(edges.major)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) > 0){
+    
+    
     suppressMessages(suppressWarnings({
       
       g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -211,12 +213,14 @@ edges.no.shortcut <- filterEdgesShortcut(edges.major)
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again  ----
 
-graph.compact = getGraphCompact(edges.no.shortcut)
-edges.compact = graph.compact$edges
-
-if(nrow(edges.compact) > 0){
-  if(T){
-    # if(flag.plot){
+if(T){
+  # if(flag.plot){
+  
+  graph.compact = getGraphCompact(edges.no.shortcut)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) > 0){
+    
     suppressMessages(suppressWarnings({
       
       g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -248,19 +252,17 @@ if(nrow(edges.compact) > 0){
 # ***********************************************************************
 # ---- Remain only dominant edges ----
 
-
 edges.no.dominant <- filterEdgesDominant(edges.no.shortcut)
-
 
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again  ----
-
-graph.compact = getGraphCompact(edges.no.dominant)
-edges.compact = graph.compact$edges
-
-if(nrow(edges.compact) > 0){
-  if(T){
-    # if(flag.plot){
+if(T){
+  # if(flag.plot){
+  graph.compact = getGraphCompact(edges.no.dominant)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) > 0){
+    
     suppressMessages(suppressWarnings({
       
       g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -293,17 +295,18 @@ if(nrow(edges.compact) > 0){
 # ---- Solve forks ----
 
 edges.major.no.forks <- solveForkNodes(edges = edges.no.dominant,
-                                         seqs = seqs)
+                                       seqs = seqs)
 
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again ----
-
-graph.compact = getGraphCompact(edges.major.no.forks)
-edges.compact = graph.compact$edges
-
-if(nrow(edges.compact) > 0){
-  if(T){
-    # if(flag.plot){
+if(T){
+  # if(flag.plot){
+  
+  graph.compact = getGraphCompact(edges.major.no.forks)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) > 0){
+    
     suppressMessages(suppressWarnings({
       
       g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -338,18 +341,18 @@ if(nrow(edges.compact) > 0){
 # ---- Solve Umbrella ----
 
 edges.major.no.umbrella <- solveUmbrellaNodes(edges = edges.major.no.forks,
-                                               seqs = seqs, show.echo=T)
+                                              seqs = seqs, show.echo=T)
 
 
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again ----
-
-graph.compact = getGraphCompact(edges.major.no.umbrella)
-edges.compact = graph.compact$edges
-
-if(nrow(edges.compact) > 0){
-  if(T){
-    # if(flag.plot){
+if(T){
+  # if(flag.plot){
+  graph.compact = getGraphCompact(edges.major.no.umbrella)
+  edges.compact = graph.compact$edges
+  
+  if(nrow(edges.compact) > 0){
+    
     suppressMessages(suppressWarnings({
       
       g <- network(edges.compact, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -427,7 +430,8 @@ if(!flag.plot){
 # ***********************************************************************
 # ---- Plot ----
 
-if(flag.plot){
+if(T){
+  # if(flag.plot){
   suppressMessages(suppressWarnings({
     
     g <- network(edges.solved, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -461,7 +465,8 @@ if(flag.plot){
 # ---- Colored by length ----
 
 
-if(flag.plot){
+if(T){
+  # if(flag.plot){
   suppressMessages(suppressWarnings({
     
     g.names.len = as.numeric(sapply(g.names, function(s) strsplit(s, '\\|')[[1]][2]))
@@ -494,7 +499,8 @@ if(flag.plot){
 # ***********************************************************************
 # ---- With labels ----
 
-if(flag.plot){
+if(T){
+  # if(flag.plot){
   suppressMessages(suppressWarnings({
     
     g.label = rep('', length(g.names))

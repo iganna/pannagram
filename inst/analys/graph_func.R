@@ -912,11 +912,10 @@ solveForkNodes <- function(edges,
     nodes.parasite = nodes.parasite[nodes.parasite %in% edges.compact[,1]] 
   }
   
-  
   if(show.echo) pokaz('Number of Fork nodes', length(nodes.parasite))
   
   for (node.from in nodes.parasite) {
-    pokaz(node.from)
+    if(show.echo) pokaz(node.from)
     stat.neighbours <- data.frame(edge.id = which(edges.compact[, 1] == node.from))
     
     stat.neighbours$node.from <- node.from

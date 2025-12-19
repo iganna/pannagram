@@ -110,18 +110,6 @@ dotplot <- function(seq1, seq2, wsize=15, nmatch=12) {
   return(p )
 }
 
-#'  Create a Dotplot for Two Nucleotide Sequences
-#'
-#' @description
-#' The same as `dotplot` but the sequences can be provided as strings
-#' 
-#' @export
-#'
-dotplot.s <- function(seq1, seq2, wsize=15, nmatch=12, ...) {
-  pokazAttention('Please replace this function with dotplot!')
-  return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
-}
-
 
 #' @export
 #'
