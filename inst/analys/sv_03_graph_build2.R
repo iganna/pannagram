@@ -96,8 +96,8 @@ nestedness = filterNestedness(nestedness,
 
 edges.init = getGraphFromNestedness(nestedness, cov.cutoff = cov.cutoff)
 
-# if(flag.plot){
-if(F){
+if(flag.plot){
+# if(F){
   g <- network(edges.init, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
   g.names = network.vertex.names(g)
   
@@ -165,8 +165,8 @@ if(flag.plot){
 # ***********************************************************************
 # ---- Create a compact graph ----
 
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   
   if(show.echo) pokaz('Create a compact graph...')
   
@@ -213,8 +213,8 @@ edges.no.shortcut <- filterEdgesShortcut(edges.major)
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again  ----
 
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   
   graph.compact = getGraphCompact(edges.no.shortcut)
   edges.compact = graph.compact$edges
@@ -256,8 +256,8 @@ edges.no.dominant <- filterEdgesDominant(edges.no.shortcut)
 
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again  ----
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   graph.compact = getGraphCompact(edges.no.dominant)
   edges.compact = graph.compact$edges
   
@@ -299,8 +299,8 @@ edges.major.no.forks <- solveForkNodes(edges = edges.no.dominant,
 
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again ----
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   
   graph.compact = getGraphCompact(edges.major.no.forks)
   edges.compact = graph.compact$edges
@@ -346,8 +346,8 @@ edges.major.no.umbrella <- solveUmbrellaNodes(edges = edges.major.no.forks,
 
 # ***********************************************************************
 ## ---- Update the compact structure and visualize again ----
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   graph.compact = getGraphCompact(edges.major.no.umbrella)
   edges.compact = graph.compact$edges
   
@@ -430,8 +430,8 @@ if(!flag.plot){
 # ***********************************************************************
 # ---- Plot ----
 
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   suppressMessages(suppressWarnings({
     
     g <- network(edges.solved, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
@@ -464,9 +464,8 @@ if(T){
 # ***********************************************************************
 # ---- Colored by length ----
 
-
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   suppressMessages(suppressWarnings({
     
     g.names.len = as.numeric(sapply(g.names, function(s) strsplit(s, '\\|')[[1]][2]))
@@ -499,8 +498,8 @@ if(T){
 # ***********************************************************************
 # ---- With labels ----
 
-if(T){
-  # if(flag.plot){
+# if(T){
+if(flag.plot){
   suppressMessages(suppressWarnings({
     
     g.label = rep('', length(g.names))
