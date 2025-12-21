@@ -90,6 +90,8 @@ if(show.echo) pokaz('Get initial edges...')
 # edges = res.sim[, c("name.query", "name.target")]
 # edges = unique(edges)
 
+save(list = ls(), file = "tmp_workspace.RData")
+
 nestedness = filterNestedness(nestedness,
                               min.len = min.len,
                               show.echo=show.echo)
