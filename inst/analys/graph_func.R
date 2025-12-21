@@ -663,6 +663,7 @@ filterEdgesDominant <- function(edges,
   edges.compact = graph.compact$edges
   names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
   
+  if(nrow(edges.compact) == 0) return(edges)
   # For every edge - number of supperted combinations from both sides. 
   # It should be more than dominant.effect
   
@@ -708,6 +709,8 @@ filterEdgesShortcut <- function(edges, show.echo = F){
   graph.compact = getGraphCompact(edges)
   edges.compact = graph.compact$edges
   names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
+  
+  if(nrow(edges.compact) == 0) return(edges)
   
   if(nrow(edges.compact) == 0){
     if(show.echo) pokazAttention('The compact graph has no edges')
@@ -894,6 +897,8 @@ solveForkNodes <- function(edges,
   edges.compact <- graph.compact$edges
   names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
   
+  if(nrow(edges.compact) == 0) return(edges)
+  
   if (nrow(edges.compact) == 0) {
     return(edges)
   }
@@ -1019,6 +1024,8 @@ solveUmbrellaNodes <- function(edges,
   graph.compact = getGraphCompact(edges)
   edges.compact = graph.compact$edges
   names2nodes = setNames(graph.compact$nodes$node, nm = graph.compact$nodes$name)
+  
+  if(nrow(edges.compact) == 0) return(edges)
   
   if(nrow(edges.compact) == 0){
     return(edges)

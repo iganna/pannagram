@@ -123,9 +123,6 @@ if(flag.plot){
 # ***********************************************************************
 # ---- Remain those nodes, that have at least two sequences + Length cutoff ----
 
-save(list = ls(), file = "tmp_workspace.RData")
-stop()
-
 if(show.echo) pokaz('Remain those node, that have at least two sequences + Length cutoff...')
 nestedness.major = filterNestedness(nestedness,
                                     cov.cutoff = cov.cutoff,
