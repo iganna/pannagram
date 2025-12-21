@@ -395,9 +395,6 @@ edges.solved = putEdgesBack(edges = edges.major.no.umbrella,
 
 pokaz('Filter shortcuts')
 edges.solved <- filterEdgesShortcut(edges.solved)
-
-save(list = ls(), file = "tmp_workspace.RData")
-
 pokaz('Remain Dominants')
 edges.solved <- filterEdgesDominant(edges.solved)
 pokaz('Filter Forks')
@@ -450,6 +447,7 @@ if(flag.plot){
       label = FALSE,
       edge.color = "grey70",
       node.size = 1,
+      arrow.size = 5,
       color = "partition",
     ) + theme(legend.position = "none") + scale_color_viridis_d(name = "Partition")
     

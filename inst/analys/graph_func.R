@@ -697,6 +697,7 @@ filterEdgesDominant <- function(edges,
     edges = edges[! (combination.edges %in% combination.remove) ,, drop=F]
   }
   
+  return(edges)
 }
 
 
