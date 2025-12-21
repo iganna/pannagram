@@ -87,11 +87,6 @@ seqs = readFasta(file.path(path.sv, 'seq_sv_large.fasta'))
 # ---- Get initial edges ----
 if(show.echo) pokaz('Get initial edges...')
 
-# edges = res.sim[, c("name.query", "name.target")]
-# edges = unique(edges)
-
-save(list = ls(), file = "tmp_workspace.RData")
-
 nestedness = filterNestedness(nestedness,
                               min.len = min.len,
                               show.echo=show.echo)
@@ -398,8 +393,6 @@ edges.solved = putEdgesBack(edges = edges.major.no.umbrella,
                             dominant.effect = dominant.effect, 
                             show.echo=T)
 
-pokaz('Filter components')
-edges.solved <- filterEdges(edges.solved, min.comp.size = min.comp.size)
 pokaz('Filter shortcuts')
 edges.solved <- filterEdgesShortcut(edges.solved)
 pokaz('Remain Dominants')
@@ -408,6 +401,13 @@ pokaz('Filter Forks')
 edges.solved <- solveForkNodes(edges = edges.solved, seqs = seqs)
 pokaz('Filter Umbrella')
 edges.solved <- solveUmbrellaNodes(edges = edges.solved, seqs = seqs)
+pokaz('Filter components')
+edges.solved <- filterEdges(edges.solved, min.comp.size = min.comp.size)
+
+if(nrow(edges.solved) == 0){
+  pokaz('Not echough SVs to build the graph')
+  quit(save = "no")
+}
 
 components.info = getGraphComponents(edges.solved)
 components.solved = components.info$membership
