@@ -395,6 +395,9 @@ edges.solved = putEdgesBack(edges = edges.major.no.umbrella,
 
 pokaz('Filter shortcuts')
 edges.solved <- filterEdgesShortcut(edges.solved)
+
+save(list = ls(), file = "tmp_workspace.RData")
+
 pokaz('Remain Dominants')
 edges.solved <- filterEdgesDominant(edges.solved)
 pokaz('Filter Forks')
