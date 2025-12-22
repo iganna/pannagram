@@ -885,6 +885,115 @@ putEdgesBack <- function(edges,
 }
 
 #' @export
+attributeNodes <- function(edges,
+                           edges.init,
+                           dominant.effect = 0.7,
+                           show.echo=F){
+  # Length of SVs
+  sv.len = parseStrings(unique(c(as.matrix(edges.init))), 2, numeric = T)
+  
+  # SVs to put back
+  sv.edges = unique(c(as.matrix(edges)))
+  sv.back = setdiff(c(as.matrix(edges.init)), sv.edges)  
+  
+  if(length(sv.back) == 0){
+    if(show.echo) pokaz('No SVs to put back', length(sv.back))
+    return(edges)
+  } else {
+    if(show.echo) pokaz('Number of SVs to put back', length(sv.back))  
+  }
+  
+  # Edges back
+  edges.back = edges.init
+  edges.back = edges.back[(edges.back[,1] %in% sv.back) | (edges.back[,2] %in% sv.back),, drop=F]
+  edges.back = as.matrix(edges.back)
+  
+  # Components
+  components.info = getGraphComponents(edges) 
+  components = components.info$membership
+  
+  n.edges.before = nrow(edges)
+  n.edges.back = -1
+  while (n.edges.back != nrow(edges.back)) {
+    if(show.echo) pokaz('Iteration')
+    n.edges.back = nrow(edges.back)
+    if(n.edges.back == 0) break
+    
+    edges.data = data.frame(comp1 = components[edges.back[,1]],
+                            comp2 = components[edges.back[,2]])
+    edges.data[is.na(edges.data)] = 0
+    edges.data$comp = rowSums(edges.data)
+    
+    idx.remove = (edges.data$comp1 != edges.data$comp2) & 
+      (edges.data$comp1 != 0) & 
+      (edges.data$comp2 != 0)
+    if(any(idx.remove)){
+      edges.data = edges.data[!idx.remove,]
+      edges.back = edges.back[!idx.remove,]
+    }
+    
+    idx.back.sure = which((edges.data$comp1 == edges.data$comp2) & 
+                            (edges.data$comp1 != 0))
+    if(length(idx.back.sure) > 0){
+      edges.data[idx.back.sure, 1:3] = 0  
+    }
+    
+    edges.data$sv = ''
+    if(sum(edges.data$comp1 * edges.data$comp2) != 0) stop('Sonething wrong with edges.data')
+    idx.tmp = edges.data$comp1 == 0
+    edges.data$sv[idx.tmp] = edges.back[idx.tmp, 1]
+    idx.tmp = edges.data$comp2 == 0
+    edges.data$sv[idx.tmp] = edges.back[idx.tmp, 2]
+    if(any((edges.data$sv %in% sv.edges))) stop('Sonething wrong with SVs in edges.data')
+    edges.data$sv[edges.data$comp == 0] = ''
+    
+    edges.data$combination = paste(edges.data$sv, edges.data$comp)
+    
+    cnt <- aggregate(
+      cbind(sv.cnt = 1, n.top = comp2) ~ combination,
+      data = edges.data,
+      FUN = sum
+    )
+    comb.sv <- aggregate(
+      sv ~ combination,
+      data = edges.data,
+      FUN = unique
+    )
+    cnt.sv = table(edges.data$sv)
+    cnt <- merge(cnt, comb.sv, by = "combination", all.x = TRUE)
+    cnt$percent = cnt$sv.cnt / cnt.sv[cnt$sv]
+    cnt = cnt[cnt$sv != '',]
+    
+    if(sum(is.na(cnt$percent)) > 0) stop('NA in %')
+    
+    cnt.dominant = (cnt$percent >= dominant.effect)
+    
+    idx.back.sure = c(idx.back.sure, which(edges.data$combination %in% cnt$combination[cnt.dominant]))
+    
+    if(length(idx.back.sure) > 0){
+      if(show.echo) pokaz('Number of edges to put back:', length(idx.back.sure))  
+      components[edges.data$sv[idx.back.sure]] = edges.data$comp[idx.back.sure]
+      edges = rbind(edges, edges.back[idx.back.sure,,drop=F])
+      
+      # Checkup
+      components.info1 = getGraphComponents(edges) 
+      if(components.info1$no != components.info$no) stop('Number of components is wrong')
+      
+      # edges.back = edges.back[(edges.data$comp == 0),,drop=F]
+      
+      edges.back = edges.back[-idx.back.sure,,drop=F]
+      edges.data = edges.data[-idx.back.sure,]
+      
+    } 
+    edges.back = edges.back[!(edges.data$combination %in% cnt$combination[!cnt.dominant]),,drop=F]
+  }
+  
+  components.sv.back = components[names(components) %in% sv.back]
+  
+  return(components.sv.back)
+}
+
+#' @export
 solveForkNodes <- function(edges,
                            seqs,
                            flank.length = 200,

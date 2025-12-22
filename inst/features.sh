@@ -225,16 +225,22 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     fi
 
     pokaz_stage "Building SV-Graph for Mobile Element Families..."
-    Rscript $INSTALLED_PATH/analys/sv_03_graph_build2.R \
-        --path.sv ${path_sv} \
-        --path.figures ${path_plots_sv} \
-        --file.nestedness ${file_sv_large_on_sv_mv} \
-        --flag.plot ${plot_families}
+    # Rscript $INSTALLED_PATH/analys/sv_03_graph_build2.R \
+    #     --path.sv ${path_sv} \
+    #     --path.figures ${path_plots_sv} \
+    #     --file.nestedness ${file_sv_large_on_sv_mv} \
+    #     --flag.plot ${plot_families}
 
-    pokaz_stage "Get ORFs from Families..."
-    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.features.msa ${path_features_msa} \
-        --path.sv ${path_sv} 
+    Rscript $INSTALLED_PATH/analys/sv_03_graph_candidates_only.R \
+            --path.sv ${path_sv} \
+            --path.figures ${path_plots_sv} \
+            --file.nestedness ${file_sv_large_on_sv_mv} \
+            --flag.plot ${plot_families}
+
+    # pokaz_stage "Get ORFs from Families..."
+    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+    #     --path.features.msa ${path_features_msa} \
+    #     --path.sv ${path_sv} 
 
     pokaz_message "Step -sv_graph is done!"
 fi

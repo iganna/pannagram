@@ -414,11 +414,18 @@ components.solved = components.info$membership
 
 
 # ***********************************************************************
+# ---- Attribute the lost Nodes is possible ----
+
+components.lost = attributeNodes(edges.solved, edges.init)
+
+# ***********************************************************************
 # ---- Save ----
 
 # Clustering safe
 saveRDS(components.solved, paste0(path.sv, 'sv_families.rds'))
 write.table(as.matrix(components.solved), paste0(path.sv, 'sv_families.txt'), 
+            row.names = T, col.names = F, sep = '\t', quote = F)
+write.table(as.matrix(components.lost), paste0(path.sv, 'sv_families_candidates.txt'), 
             row.names = T, col.names = F, sep = '\t', quote = F)
 
 ## Save edges

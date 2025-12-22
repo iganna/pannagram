@@ -39,6 +39,7 @@ min.copy = 2
 ```{r}
 path.data = '../examples/'
 path.figures = '../images/families/'
+
 ```
 
 ## Files
@@ -48,6 +49,17 @@ file.nestedness <- file.path(path.data, 'seq_sv_large_85_85.txt')
 file.seqs = file.path(path.data, 'seq_sv_large.fasta')
 
 ```
+
+
+```{r}
+path.data = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_meta/01_data/tmp"
+path.figures = "~/Library/CloudStorage/OneDrive-Personal/iglab/projects/pannagram_meta/01_data/tmp/figures"
+
+file.nestedness <- file.path(path.data, 'nestedness_sv_large_85_85.txt')
+file.seqs = file.path(path.data, 'seq_sv_large.fasta')
+
+```
+
 
 # Read the data
 ```{r}
@@ -527,10 +539,11 @@ edges.solved = putEdgesBack(edges = edges.major.no.umbrella,
                             edges.init = edges.init,
                             dominant.effect = dominant.effect, 
                             show.echo=T)
-nrow(edges.solved)
-edges.solved <- filterEdges(edges.solved, min.comp.size = 3)
+
 nrow(edges.solved)
 edges.solved <- filterEdgesShortcut(edges.solved, show.echo = T)
+nrow(edges.solved)
+edges.solved <- filterEdgesDominant(edges.solved)
 nrow(edges.solved)
 
 ```
@@ -538,27 +551,34 @@ nrow(edges.solved)
 ## Remove umbrella & Forks
 ```{r}
 
-edges.solved.filter = edges.solved
+edges.solved = edges.solved
 
-nrow(edges.solved.filter)
-edges.solved.filter <- solveUmbrellaNodes(edges = edges.solved.filter,
-                                         seqs = seqs, show.echo=T)
-nrow(edges.solved.filter)
-edges.solved.filter <- solveForkNodes(edges = edges.solved.filter,
+nrow(edges.solved)
+edges.solved <- solveForkNodes(edges = edges.solved,
                                          seqs = seqs, show.echo = T)
+nrow(edges.solved)
+edges.solved <- solveUmbrellaNodes(edges = edges.solved,
+                                         seqs = seqs, show.echo=T)
+nrow(edges.solved)
+edges.solved <- filterEdges(edges.solved, min.comp.size = 3)
+nrow(edges.solved)
 
-nrow(edges.solved.filter)
-edges.solved.filter <- filterEdgesDominant(edges.solved.filter)
-nrow(edges.solved.filter)
+
+```
+
+## Attribute back
+```{r}
+
+components.lost = attributeNodes(edges.solved, edges.init, show.echo=T)
 
 ```
 
 
 ```{r}
-components.info = getGraphComponents(edges.solved.filter) 
+components.info = getGraphComponents(edges.solved) 
 components = components.info$membership
 
-g <- network(edges.solved.filter, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
+g <- network(edges.solved, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
 g.names = network.vertex.names(g)
 
 # Add cluster color
@@ -599,7 +619,7 @@ savePNG(p, path = path.figures, name = name.output,
 ## Compact
 ```{r}
 
-graph.compact = getGraphCompact(edges.solved.filter)
+graph.compact = getGraphCompact(edges.solved)
 edges.compact = graph.compact$edges 
 
 graph.compact$nodes$comp = components[graph.compact$nodes$name]
@@ -650,7 +670,7 @@ stop()
 ```{r}
 
 
-components.info = getGraphComponents(edges.solved.filter) 
+components.info = getGraphComponents(edges.solved) 
 components = components.info$membership
 
 i.comp = 40
@@ -673,7 +693,7 @@ hist(nchar(seqs.comp), 50)
 ## plot Families
 ```{r}
 
-edges.fam = getFmilyEdges(edges.solved.filter, components, i.comp = i.comp)
+edges.fam = getFmilyEdges(edges.solved, components, i.comp = i.comp)
 
 g <- network(edges.fam, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
 g.names = network.vertex.names(g)
@@ -811,7 +831,7 @@ orf.info$orf[1]
 # Plot Families
 ```{r}
 
-components.info = getGraphComponents(edges.solved.filter) 
+components.info = getGraphComponents(edges.solved) 
 components = components.info$membership
 
 path.fam = "~/Sources/alignments/mosqioto/families/"
