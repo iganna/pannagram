@@ -192,7 +192,7 @@ for(s.comb in pref.combinations){
     if(came.from.previous.round){
       file.ws.small.round.prev = paste0(path.inter.msa, 'small_ws_', s.comb, '_round_', i.k-1,'.RData')
       if(file.exists(file.ws.small.round.prev)){
-        load(file.ws.small.round)  
+        load(file.ws.small.round.prev)  
       } else {
         stop('No file with short sequences from the previous round')
       }
