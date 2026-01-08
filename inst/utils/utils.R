@@ -726,6 +726,7 @@ seq2orf <- function(seq, orf.min.len = 25){
 revCompl <- function(s){
   
   if(length(s) == 1){
+    s.name = names(s)
     flag.merge = T
   } else {
     flag.merge = F
@@ -749,6 +750,7 @@ revCompl <- function(s){
   
   if(flag.merge){
     seqs.rc = nt2seq(seqs.rc)
+    names(seqs.rc) = s.name
   } else {
     names(seqs.rc) = NULL
   }

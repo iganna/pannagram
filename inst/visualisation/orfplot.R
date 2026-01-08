@@ -175,6 +175,8 @@ orfplot <- function(df, optimal = F,
             axis.ticks.y = element_blank())
   }
   
+  # p.orf = p.orf + scale_x_continuous(expand = c(0, 0), 
+  #                                    limits = c(0, 1 + max(c(df$beg, df$end))))
   
   return(p.orf) 
 }

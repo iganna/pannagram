@@ -167,6 +167,7 @@ for(s.comb in pref.combinations){
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.inter.msa, 'singletons_',s.comb,'.rds'), compress = F)
   
+  pokaz('Singletons saved')
   ## ---- Analyse by portions ----
   
   idx.remained = setdiff(1:nrow(breaks), idx.singl)
@@ -177,6 +178,7 @@ for(s.comb in pref.combinations){
   k = 10
   order.acc = ceiling(1:length(accessions) / k)
   for(i.k in min(order.acc):max(order.acc)){
+    pokaz('Round', i.k, 'out of', max(order.acc))
     i.k.string = paste0('Round ', i.k, 'finished.')
     
     accessions.tmp = accessions[which(order.acc == i.k)]

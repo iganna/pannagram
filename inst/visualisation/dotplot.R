@@ -385,7 +385,10 @@ seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
 #' @param nmatch Integer. Minimum number of matches required within a window to count it as a match (default: 9).
 #'
 #' @export
-dotscore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
+dotscore <- function(seq1, seq2, wsize=10, nmatch=9, method='dotplot') {
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
   
   mx1 = toupper(seq2mx(seq1, wsize))
   mx2 = toupper(seq2mx(seq2, wsize))
