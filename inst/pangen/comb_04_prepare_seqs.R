@@ -181,6 +181,8 @@ for(s.comb in pref.combinations){
     pokaz('Round', i.k, 'out of', max(order.acc))
     i.k.string = paste0('Round ', i.k, 'finished.')
     
+    if(checkDone(file.log.loop, word = i.k.string)) next
+    
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
       pokaz(acc, file=file.log.loop, echo=echo.loop)
