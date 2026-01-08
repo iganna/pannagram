@@ -105,6 +105,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
+pokaz('Test script')
 for(s.comb in pref.combinations){
   
   # Log files
@@ -177,17 +178,25 @@ for(s.comb in pref.combinations){
   
   k = 10
   order.acc = ceiling(1:length(accessions) / k)
+  came.from.previous.round = F
   for(i.k in min(order.acc):max(order.acc)){
     pokaz('Round', i.k, 'out of', max(order.acc))
     i.k.string = paste0('Round ', i.k, 'finished.')
     
-    if(checkDone(file.log.loop, word = i.k.string)) next
-    
-    file.ws.small.round = paste0(path.inter.msa, 'small_ws_', s.comb, '_round_', i.k-1,'.RData')
-    if(file.exists(file.ws.small.round)){
-      load(file.ws.small.round)
+    if(checkDone(file.log.loop, word = i.k.string)) {
+      came.from.previous.round = T
+      next
     }
     
+    
+    if(came.from.previous.round){
+      file.ws.small.round.prev = paste0(path.inter.msa, 'small_ws_', s.comb, '_round_', i.k-1,'.RData')
+      if(file.exists(file.ws.small.round.prev)){
+        load(file.ws.small.round)  
+      } else {
+        stop('No file with short sequences from the previous round')
+      }
+    }
     
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
@@ -290,6 +299,7 @@ for(s.comb in pref.combinations){
     n.null <- sum(sapply(aln.seqs, Negate(is.null)))
     
     # Save short sequences from the round
+    file.ws.small.round = paste0(path.inter.msa, 'small_ws_', s.comb, '_round_', i.k,'.RData')
     all.local.objects <- c("aln.seqs", "aln.seqs.names", "n.null")
     save(list = all.local.objects, file = file.ws.small.round)
     
