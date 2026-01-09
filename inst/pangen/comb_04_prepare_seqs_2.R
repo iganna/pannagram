@@ -105,7 +105,8 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-pokaz('Test script')
+pref.combinations = '2_2'
+pokaz('Test script 2_2')
 for(s.comb in pref.combinations){
   
   # Log files
