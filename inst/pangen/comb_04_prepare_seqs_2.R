@@ -105,8 +105,8 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-pref.combinations = '2_2'
-pokaz('Test script 2_2')
+pref.combinations = '1_1'
+pokaz('Test script', pref.combinations)
 for(s.comb in pref.combinations){
   
   # Log files
@@ -330,3 +330,5 @@ if(num.cores > 1){
 }
 
 warnings()
+
+stop('Script has been finished')
