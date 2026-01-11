@@ -105,7 +105,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-pref.combinations = '2_'
+pref.combinations = '4_4'
 pokaz('Test script', pref.combinations)
 for(s.comb in pref.combinations){
   
