@@ -168,8 +168,10 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   
   ## Reverse complement
   seqs[idx.neg] <- sapply(seqs[idx.neg], revCompl)
+  print(seqs[1:5])
   
-  list(df = df, seqs = seqs)
+  return(list(df = df, 
+              seqs = seqs))
 }
 
 
