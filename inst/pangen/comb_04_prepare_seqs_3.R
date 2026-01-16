@@ -162,7 +162,7 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
     stop("Check empty strings did not pass")
   }
   
-  save(list = c("seqs", "idx.neg"), file = "tmp_workspace1.RData")
+  # save(list = c("seqs", "idx.neg"), file = "tmp_workspace1.RData")
   
   ## Reverse complement
   seqs[idx.neg] <- unlist(sapply(seqs[idx.neg], revCompl))
@@ -279,7 +279,7 @@ for(s.comb in pref.combinations){
       file.df   <- paste0(path.inter.msa, acc, "_", type, "_", s.comb, "_df.rds")
       
       
-      save(list = c("res", "acc", "seqs.save", "file.seqs"), file = "tmp_workspace.RData")
+      # save(list = c("res", "acc", "seqs.save", "file.seqs"), file = "tmp_workspace.RData")
       
       writeLines(c(acc, seqs.save), file.seqs)
       saveRDS(df.save, file.df)
