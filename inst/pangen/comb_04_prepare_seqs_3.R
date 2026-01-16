@@ -240,7 +240,7 @@ for(s.comb in pref.combinations){
   )
   
   for(acc in accessions){
-    pokaz(aa)
+    pokaz(acc)
     pokaz(acc, file=file.log.loop, echo=echo.loop)
     file.chromosome = paste(path.chromosomes, 
                             acc, 
