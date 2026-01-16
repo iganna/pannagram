@@ -239,6 +239,7 @@ for(s.comb in pref.combinations){
   )
   
   for(acc in accessions.tmp){
+    pokaz(aa)
     pokaz(acc, file=file.log.loop, echo=echo.loop)
     file.chromosome = paste(path.chromosomes, 
                             acc, 
@@ -250,6 +251,7 @@ for(s.comb in pref.combinations){
     genome = readFasta(file.chromosome)
     
     for (type in names(idx.list)) {
+      pokaz(type)
       
       idx.save <- idx.list[[type]]
       
