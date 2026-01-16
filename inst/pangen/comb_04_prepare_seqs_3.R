@@ -271,6 +271,9 @@ for(s.comb in pref.combinations){
       file.seqs <- paste0(path.inter.msa, acc, "_", type, "_", s.comb, ".txt")
       file.df   <- paste0(path.inter.msa, acc, "_", type, "_", s.comb, "_df.rds")
       
+      
+      save(list = ls(), file = "tmp_workspace.RData")
+      
       writeLines(c(acc, seqs.save), file.seqs)
       saveRDS(df.save, file.df)
       
