@@ -1294,7 +1294,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_inter_msa}small_ws_*.RData
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_seqs_2.R \
+    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_seqs_3.R \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
