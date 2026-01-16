@@ -133,7 +133,7 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   df$p2.own[idx.pos] <- df$p2[idx.pos]
   
   ## Negative strand
-  idx.neg <- df$strand == "-"
+   <- df$strand == "-"
   tmp <- df$p1[idx.neg]
   df$p1[idx.neg] <- -df$p2[idx.neg] + 1
   df$p2[idx.neg] <- -tmp - 1
@@ -166,8 +166,10 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
     stop("Check empty strings did not pass")
   }
   
+  save(list = c("seqs", "idx.neg"), file = "tmp_workspace1.RData")
+  
   ## Reverse complement
-  seqs[idx.neg] <- sapply(seqs[idx.neg], revCompl)
+  seqs[idx.neg] <- unlist(sapply(seqs[idx.neg], revCompl))
   print(seqs[1:5])
   
   return(list(df = df, 
