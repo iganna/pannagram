@@ -263,6 +263,9 @@ for(s.comb in pref.combinations){
       res <- getSeqsByIdx(idx.save, v.beg, v.end, acc, genome)
       df.save   <- res$df
       seqs.save <- res$seqs
+      
+      print(seqs.save[1:5])
+      
       if (any(df.save$len != nchar(seqs.save))) stop("No match in sequence length")
       
       if (type != "short") {
