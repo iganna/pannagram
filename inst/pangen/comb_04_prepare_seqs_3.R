@@ -148,7 +148,7 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
     stop("Check table did not pass")
   }
   
-  seqs <- vapply(
+  seqs <- mapply(
     function(a, b) substr(genome, a, b),
     df$p1,
     df$p2,
