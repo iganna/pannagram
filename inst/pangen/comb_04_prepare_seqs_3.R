@@ -155,12 +155,8 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
     SIMPLIFY = TRUE
   )
   
-  print(seqs[1:5])
-  
   seqs = unlist(seqs, use.names = FALSE)
   names(seqs) <- NULL
-  
-  print(seqs[1:5])
   
   if (sum(seqs[df$strand == ""] != "") > 0) {
     stop("Check empty strings did not pass")
@@ -170,7 +166,6 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   
   ## Reverse complement
   seqs[idx.neg] <- unlist(sapply(seqs[idx.neg], revCompl))
-  print(seqs[1:5])
   
   return(list(df = df, 
               seqs = seqs))
@@ -272,8 +267,6 @@ for(s.comb in pref.combinations){
       res <- getSeqsByIdx(idx.save, v.beg, v.end, acc, genome)
       df.save   <- res$df
       seqs.save <- res$seqs
-      
-      print(seqs.save[1:5])
       
       if (any(df.save$len != nchar(seqs.save))) stop("No match in sequence length")
       
