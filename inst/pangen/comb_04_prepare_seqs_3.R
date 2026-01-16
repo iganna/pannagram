@@ -154,6 +154,7 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
     df$p2,
     SIMPLIFY = TRUE
   )
+  seqs = unlist(seqs)
   names(seqs) <- NULL
   
   if (sum(seqs[df$strand == ""] != "") > 0) {
