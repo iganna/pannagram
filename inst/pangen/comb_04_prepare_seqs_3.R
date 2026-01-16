@@ -154,8 +154,13 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
     df$p2,
     SIMPLIFY = TRUE
   )
+  
+  print(seqs[1:5])
+  
   seqs = unlist(seqs, use.names = FALSE)
   names(seqs) <- NULL
+  
+  print(seqs[1:5])
   
   if (sum(seqs[df$strand == ""] != "") > 0) {
     stop("Check empty strings did not pass")
