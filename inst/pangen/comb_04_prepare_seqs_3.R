@@ -151,7 +151,8 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   seqs <- mapply(
     function(a, b) substr(genome, a, b),
     df$p1,
-    df$p2
+    df$p2,
+    SIMPLIFY = TRUE
   )
   names(seqs) <- NULL
   
@@ -272,7 +273,7 @@ for(s.comb in pref.combinations){
       file.df   <- paste0(path.inter.msa, acc, "_", type, "_", s.comb, "_df.rds")
       
       
-      save(list = c("acc", "seqs.save", "file.seqs"), file = "tmp_workspace.RData")
+      save(list = c("res", "acc", "seqs.save", "file.seqs"), file = "tmp_workspace.RData")
       
       writeLines(c(acc, seqs.save), file.seqs)
       saveRDS(df.save, file.df)
