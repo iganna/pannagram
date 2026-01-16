@@ -133,7 +133,7 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   df$p2.own[idx.pos] <- df$p2[idx.pos]
   
   ## Negative strand
-   <- df$strand == "-"
+  idx.neg <- df$strand == "-"
   tmp <- df$p1[idx.neg]
   df$p1[idx.neg] <- -df$p2[idx.neg] + 1
   df$p2[idx.neg] <- -tmp - 1
