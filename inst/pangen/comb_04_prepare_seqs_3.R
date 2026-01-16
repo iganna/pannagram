@@ -108,6 +108,7 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   
   df <- data.frame(
+    idx = idx,
     p1 = v.beg[idx, acc],
     p2 = v.end[idx, acc]
   )
@@ -221,8 +222,8 @@ for(s.comb in pref.combinations){
   # } 
   
   # Save breaks
-  file.breaks.merged = paste0(path.inter.msa, 'breaks_merged_', s.comb,'.rds')
-  saveRDS(breaks, file.breaks.merged)
+  # file.breaks.merged = paste0(path.inter.msa, 'breaks_merged_', s.comb,'.rds')
+  # saveRDS(breaks, file.breaks.merged)
   
   ## ---- Save singletons ----
   saveRDS(list(pos.beg = v.beg[idx.singl,],
@@ -238,7 +239,7 @@ for(s.comb in pref.combinations){
     extra = idx.extra
   )
   
-  for(acc in accessions.tmp){
+  for(acc in accessions){
     pokaz(aa)
     pokaz(acc, file=file.log.loop, echo=echo.loop)
     file.chromosome = paste(path.chromosomes, 
