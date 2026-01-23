@@ -1270,11 +1270,15 @@ mkdir -p ${path_log_step}
 # Paths for MAFFT, common for the next code too
 path_mafft_in="${path_mafft}in/"
 path_mafft_out="${path_mafft}out/"
-if [ ! -d "$path_mafft_in" ]; then
-    mkdir -p "$path_mafft_in"
-fi
-if [ ! -d "$path_mafft_out" ]; then
-    mkdir -p "$path_mafft_out"
+# if [ ! -d "$path_mafft_in" ]; then
+#     mkdir -p "$path_mafft_in"
+# fi
+# if [ ! -d "$path_mafft_out" ]; then
+#     mkdir -p "$path_mafft_out"
+# fi
+
+if [ ! -d "$path_inter_synteny" ]; then
+    mkdir -p "$path_inter_synteny"
 fi
 
 # Start
