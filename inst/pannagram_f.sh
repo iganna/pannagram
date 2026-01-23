@@ -1345,23 +1345,23 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     #     rm -f ${path_log_step}*
     # fi  
 
-    # SHORT SEQUENCES
-    for ((i=1; i<=nchr; i++)); do
-        log_chromosome=${path_log_step}chr_${i}_short.log
-        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
-            continue
-        fi
+    # # SHORT SEQUENCES
+    # for ((i=1; i<=nchr; i++)); do
+    #     log_chromosome=${path_log_step}chr_${i}_short.log
+    #     if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+    #         continue
+    #     fi
 
-        path_inter_synteny_short="${path_inter_synteny}short_${i}_${i}/"
-        mkdir -p "${path_inter_synteny_short}"
+    #     path_inter_synteny_short="${path_inter_synteny}short_${i}_${i}/"
+    #     mkdir -p "${path_inter_synteny_short}"
 
-        "${INSTALLED_PATH}/pangen/comb_new_05_align.py" \
-            --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
-            --outdir "${path_inter_synteny_short}"
+    #     "${INSTALLED_PATH}/pangen/comb_new_05_align.py" \
+    #         --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
+    #         --outdir "${path_inter_synteny_short}"
 
-        echo "Done" >> "$log_chromosome"
+    #     echo "Done" >> "$log_chromosome"
 
-    done
+    # done
 
     # LONG SEQUENCES
     for ((i=1; i<=nchr; i++)); do
