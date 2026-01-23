@@ -1366,7 +1366,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     # done
 
     # LONG SEQUENCES
-    Clean up the log files
+    # Clean up the log files
     if [ "$clean" == "T" ]; then 
         touch ${path_log_step}fake_large.log
         rm -f ${path_log_step}*large*
