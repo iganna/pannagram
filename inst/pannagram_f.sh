@@ -1339,11 +1339,11 @@ mkdir -p ${path_log_step}
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # # ---- Clean up the output folders ----
-    # if [ "$clean" == "T" ]; then 
-    #     touch ${path_log_step}fake.log
-    #     rm -f ${path_log_step}*
-    # fi  
+    # ---- Clean up the output folders ----
+    if [ "$clean" == "T" ]; then 
+        touch ${path_log_step}fake.log
+        rm -f ${path_log_step}*
+    fi  
 
     # # SHORT SEQUENCES
     # for ((i=1; i<=nchr; i++)); do
@@ -1386,7 +1386,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aligner mafft \
             --threads ${cores} \
             --dump-fasta-dir ${path_inter_synteny_large_refine} \
-            --chunksize 1
+            --chunksize 1 \
+            --block-size 2000
 
         echo "Done" >> "$log_chromosome"
     done

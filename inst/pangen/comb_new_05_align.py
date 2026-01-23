@@ -14,6 +14,11 @@ ADDED (as requested):
     * if ANY block in ANY sequence has pi > 0.2 => alignment is BAD
   If BAD => output timeout_mark ('*' by default) for ALL genomes at this locus.
 
+ADDED (as requested):
+- Within each block, loci are scheduled "hard first" using complexity =
+  unique_total_len = sum(length(seq)) over UNIQUE present sequences at the locus.
+  This reduces tail latency and improves throughput, especially with MAFFT.
+
 Notes:
 - Gap char is fixed to '-'
 - Variation ignores gaps and ignores non-ACGT letters (e.g. N) the same way
@@ -79,7 +84,7 @@ def parse_args() -> argparse.Namespace:
 
     # Timeout / failure marker
     p.add_argument("--timeout-sec", type=int, default=180,
-                   help="Per-locus timeout for aligner call in seconds (default: 600).")
+                   help="Per-locus timeout for aligner call in seconds (default: 180 = 3 mins).")
     p.add_argument("--timeout-mark", default="*",
                    help="String to output for a timed-out/failed/bad locus (default: '*').")
 
@@ -92,7 +97,6 @@ def parse_args() -> argparse.Namespace:
     # dump problematic loci
     p.add_argument("--dump-fasta-dir", default="",
                    help="If set (non-empty), write locus_X.fasta for loci that output timeout_mark ('*').")
-
 
     return p.parse_args()
 
@@ -259,11 +263,8 @@ def is_bad_alignment_like_r(aligned: List[str],
             # If aligner produced inconsistent lengths, treat as bad (safer)
             return True
 
-    # uppercase (R code: toupper(mx))
     aligned_u = [s.upper() for s in aligned]
 
-    # Compute per-column variation
-    # R logic corresponds to: variation = 0 only when exactly 1 of A/C/G/T is present
     pos_variation = [0] * L
     acgt = {"A", "C", "G", "T"}
     for j in range(L):
@@ -276,7 +277,6 @@ def is_bad_alignment_like_r(aligned: List[str],
                     break
         pos_variation[j] = 0 if len(present) == 1 else 1
 
-    # For each sequence, find non-gap blocks and compute pi
     for s in aligned_u:
         bits = [1 if ch != GAP else 0 for ch in s]
         blocks = _find_ones_blocks(bits)
@@ -284,9 +284,7 @@ def is_bad_alignment_like_r(aligned: List[str],
             continue
         for beg, end in blocks:
             blen = end - beg + 1
-            # pi = fraction of variable columns in that block
             v = 0
-            # tight loop
             for k in range(beg, end + 1):
                 v += pos_variation[k]
             pi = v / blen
@@ -294,6 +292,29 @@ def is_bad_alignment_like_r(aligned: List[str],
                 return True
 
     return False
+
+
+# -------------------------
+# Complexity (unique_total_len) for scheduling
+# -------------------------
+
+def locus_complexity_unique_total_len(locus_lines: List[str], uppercase: bool) -> int:
+    """
+    Complexity = sum(length(seq)) across UNIQUE present sequences.
+    This matches the actual work because we align only unique_seqs.
+    """
+    seen = set()
+    total = 0
+    for s in locus_lines:
+        if not s:
+            continue
+        if uppercase:
+            s = s.upper()
+        if s in seen:
+            continue
+        seen.add(s)
+        total += len(s)
+    return total
 
 
 # -------------------------
@@ -550,15 +571,13 @@ def dump_locus_fasta(dump_dir: str,
     tmp_path = out_path + ".tmp"
 
     with open(tmp_path, "w", encoding="utf-8", newline="\n") as f:
-        wrote = False
         for name, seq in zip(genome_names, locus_lines):
             if seq == "":
                 continue
             s = seq.upper() if uppercase else seq
             f.write(f">{name}\n{s}\n")
-            wrote = True
 
-    # If everything was empty, remove file (per your requirement: empty lines not represented)
+    # If everything was empty, remove file
     if not os.path.getsize(tmp_path):
         try:
             os.remove(tmp_path)
@@ -606,14 +625,49 @@ def main() -> int:
 
     cfg = _Cfg(args)
     locus_idx = 0  # number of loci read so far (1-based will be locus_idx)
-    block: List[List[str]] = []
-    block_nums: List[int] = []  # 1-based locus numbers aligned with block entries
+
+    # block entries: (locus_no_1based, locus_lines, complexity)
+    block: List[Tuple[int, List[str], int]] = []
 
     pool = ProcessPoolExecutor(
         max_workers=args.threads,
         initializer=_init_worker,
         initargs=(cfg,),
     )
+
+    def process_block(cur_block: List[Tuple[int, List[str], int]]) -> None:
+        if not cur_block:
+            return
+
+        # schedule hard-first inside the block
+        block_sorted = sorted(cur_block, key=lambda x: x[2], reverse=True)
+        sorted_locus_nos = [x[0] for x in block_sorted]
+        sorted_locus_lines = [x[1] for x in block_sorted]
+
+        aligned_sorted = list(pool.map(align_one_locus, sorted_locus_lines, chunksize=args.chunksize))
+        aligned_by_no = {no: out for no, out in zip(sorted_locus_nos, aligned_sorted)}
+
+        # restore original order within this block
+        aligned_block = [aligned_by_no[no] for (no, _, _) in cur_block]
+
+        # dump problematic loci (all outputs are timeout_mark)
+        if args.dump_fasta_dir:
+            for (loc_no, orig_lines, _), locus_out in zip(cur_block, aligned_block):
+                if locus_out and all(x == args.timeout_mark for x in locus_out):
+                    dump_locus_fasta(
+                        dump_dir=args.dump_fasta_dir,
+                        locus_number_1based=loc_no,
+                        locus_lines=orig_lines,
+                        genome_names=genome_names,
+                        uppercase=args.uppercase,
+                    )
+
+        per_genome_buf: List[List[str]] = [[] for _ in range(n_genomes)]
+        for locus_out in aligned_block:
+            for gi, s2 in enumerate(locus_out):
+                per_genome_buf[gi].append(s2 + "\n")
+
+        write_block_striped(out_paths, per_genome_buf, args.out_stripe)
 
     try:
         while True:
@@ -643,56 +697,20 @@ def main() -> int:
             if args.expected_lines > 0 and locus_idx > args.expected_lines:
                 raise RuntimeError(f"Read more than expected-lines={args.expected_lines}.")
 
-            block.append(locus_line_strs)
-            block_nums.append(locus_idx)
+            comp = locus_complexity_unique_total_len(locus_line_strs, uppercase=args.uppercase)
+            block.append((locus_idx, locus_line_strs, comp))
 
             if len(block) >= args.block_size:
-                aligned_block = list(pool.map(align_one_locus, block, chunksize=args.chunksize))
-
-                # dump problematic loci (all outputs are timeout_mark)
-                if args.dump_fasta_dir:
-                    for loc_no, orig_lines, locus_out in zip(block_nums, block, aligned_block):
-                        if locus_out and all(x == args.timeout_mark for x in locus_out):
-                            dump_locus_fasta(
-                                dump_dir=args.dump_fasta_dir,
-                                locus_number_1based=loc_no,
-                                locus_lines=orig_lines,
-                                genome_names=genome_names,
-                                uppercase=args.uppercase,
-                            )
-
-                per_genome_buf: List[List[str]] = [[] for _ in range(n_genomes)]
-                for locus_out in aligned_block:
-                    for gi, s2 in enumerate(locus_out):
-                        per_genome_buf[gi].append(s2 + "\n")
-
-                write_block_striped(out_paths, per_genome_buf, args.out_stripe)
+                process_block(block)
                 block.clear()
-                block_nums.clear()
 
                 if args.progress_every and locus_idx % args.progress_every == 0:
                     print(f"[progress] loci processed: {locus_idx}", file=sys.stderr)
 
         # flush tail
         if block:
-            aligned_block = list(pool.map(align_one_locus, block, chunksize=args.chunksize))
-
-            if args.dump_fasta_dir:
-                for loc_no, orig_lines, locus_out in zip(block_nums, block, aligned_block):
-                    if locus_out and all(x == args.timeout_mark for x in locus_out):
-                        dump_locus_fasta(
-                            dump_dir=args.dump_fasta_dir,
-                            locus_number_1based=loc_no,
-                            locus_lines=orig_lines,
-                            genome_names=genome_names,
-                            uppercase=args.uppercase,
-                        )
-
-            per_genome_buf: List[List[str]] = [[] for _ in range(n_genomes)]
-            for locus_out in aligned_block:
-                for gi, s2 in enumerate(locus_out):
-                    per_genome_buf[gi].append(s2 + "\n")
-            write_block_striped(out_paths, per_genome_buf, args.out_stripe)
+            process_block(block)
+            block.clear()
 
         if args.expected_lines > 0 and locus_idx != args.expected_lines:
             raise RuntimeError(f"Expected exactly {args.expected_lines} loci, but read {locus_idx}.")
