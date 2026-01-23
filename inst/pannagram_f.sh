@@ -1385,7 +1385,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --outdir "${path_inter_synteny_large}" \
             --aligner mafft \
             --threads ${cores} \
-            --dump-fasta-dir ${path_inter_synteny_large_refine}
+            --dump-fasta-dir ${path_inter_synteny_large_refine} \
+            --chunksize 1
 
         echo "Done" >> "$log_chromosome"
     done
