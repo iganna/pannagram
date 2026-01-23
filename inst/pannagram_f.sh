@@ -1339,13 +1339,15 @@ mkdir -p ${path_log_step}
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # ---- Clean up the output folders ----
-    if [ "$clean" == "T" ]; then 
-        touch ${path_log_step}fake.log
-        rm -f ${path_log_step}*
-    fi  
+    
+
 
     # # SHORT SEQUENCES
+    # Clean up the log files
+    # if [ "$clean" == "T" ]; then 
+    #     touch ${path_log_step}fake_short.log
+    #     rm -f ${path_log_step}*short*
+    # fi  
     # for ((i=1; i<=nchr; i++)); do
     #     log_chromosome=${path_log_step}chr_${i}_short.log
     #     if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
@@ -1364,6 +1366,11 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     # done
 
     # LONG SEQUENCES
+    Clean up the log files
+    if [ "$clean" == "T" ]; then 
+        touch ${path_log_step}fake_large.log
+        rm -f ${path_log_step}*large*
+    fi  
     for ((i=1; i<=nchr; i++)); do
 
         log_chromosome=${path_log_step}chr_${i}_large.log
