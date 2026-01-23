@@ -20,7 +20,7 @@ option_list <- list(
   make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa directory (features)"),
   make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa directory (internal)"),
   make_option("--path.chromosomes",  type = "character", default = NULL, help = "Path to directory with chromosomes"),
-  make_option("--path.mafft.in",     type = "character", default = NULL, help = "Path to directory where to combine fasta files for mafft runs"),
+  make_option("--path.inter.synteny",type = "character", default = NULL, help = "Path to directory with loci between synteny blocks"),
   
   make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap"),
   
@@ -86,7 +86,7 @@ if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
 if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
 
 # Path to mafft input
-if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
+if (!is.null(opt$path.inter.synteny)) path.inter.synteny <- opt$path.inter.synteny
 
 # ***************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -178,7 +178,7 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
 for(s.comb in pref.combinations){
   
   # Log files
-  file.log.loop = paste0(path.log, 'test_loop_', s.comb, '.log')
+  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
   
   # Check log Done
@@ -275,8 +275,8 @@ for(s.comb in pref.combinations){
         seqs.save[df.save$len == 0] <- ""
       }
       
-      file.seqs <- paste0(path.inter.msa, acc, "_", type, "_", s.comb, ".txt")
-      file.df   <- paste0(path.inter.msa, acc, "_", type, "_", s.comb, "_df.rds")
+      file.seqs <- paste0(path.inter.synteny, acc, "_", type, "_", s.comb, ".txt")
+      file.df   <- paste0(path.inter.synteny, acc, "_", type, "_", s.comb, "_df.rds")
       
       
       # save(list = c("res", "acc", "seqs.save", "file.seqs"), file = "tmp_workspace.RData")
@@ -298,5 +298,3 @@ if(num.cores > 1){
 }
 
 warnings()
-
-stop('TEST Script has been finished')

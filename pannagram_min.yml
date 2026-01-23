@@ -3,6 +3,16 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
+  # --- Python runtime ---
+  - python >=3.8
+  - pip
+
+  # --- Aligners used by the script ---
+  - abpoa
+  - mafft
+  - famsa
+
+  # --- Existing R stack ---
   - r-base
   - r-devtools
   - r-testthat
@@ -22,13 +32,17 @@ dependencies:
   - r-network
   - r-igraph
   - r-sna
+
+  # --- Bioconductor ---
   - bioconductor-rhdf5
   - bioconductor-muscle
   - bioconductor-msa
   - bioconductor-ggtree
+
+  # --- Bio tools ---
   - blast
-  - mafft
-  - parallel
   - vcftools
   - plink
-  
+
+  # --- System ---
+  - parallel

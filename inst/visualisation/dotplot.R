@@ -1,31 +1,5 @@
 # Dotplots
 
-#' Helper function to validate and preprocess input sequences
-#' @export
-prepareNtSeq <- function(seq) {
-  ## --- Convert and validate a sequence ---
-  
-  # If input is a single string, convert it to a character vector
-  if (is.character(seq) && length(seq) == 1) {
-    # Convert string to vector of letters (assumes seq2nt is available)
-    seq <- seq2nt(seq)
-  }
-  
-  # Ensure the result is a character vector
-  if (!is.character(seq)) {
-    stop("Input sequence must be a character vector or a convertible string.")
-  }
-  
-  # Ensure the vector of characters
-  if (any(nchar(seq) != 1)) {
-    # seq.long = seq[nchar(seq) > 1]
-    stop("Sequence contains elements longer than one character.")
-  }
-  
-  return(seq)
-}
-
-
 #' Create a Dotplot for Two Nucleotide Sequences
 #'
 #' @description
