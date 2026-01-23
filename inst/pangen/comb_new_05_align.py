@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
                    help="Aligner for non-trivial loci (default: abpoa).")
 
     # Timeout / failure marker
-    p.add_argument("--timeout-sec", type=int, default=600,
+    p.add_argument("--timeout-sec", type=int, default=180,
                    help="Per-locus timeout for aligner call in seconds (default: 600).")
     p.add_argument("--timeout-mark", default="*",
                    help="String to output for a timed-out/failed/bad locus (default: '*').")
