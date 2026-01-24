@@ -55,6 +55,7 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 n.flank = 30
 
 files.extra <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
+files.extra = files.extra[!grepl('_aligned', files.extra)]
 
 if(length(files.extra) == 0){
   pokaz('Number of files for extra alignment')

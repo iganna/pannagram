@@ -1289,13 +1289,11 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         touch ${path_inter_synteny}fake_file.txt
 
-        find ${path_inter_synteny} -name "*.txt" -type f -exec rm -f {} +
-        find ${path_inter_synteny} -name "*.rds" -type f -exec rm -f {} +
-
+        find "${path_inter_synteny}" -maxdepth 1 -type f -name "*.txt" -exec rm -f {} +
+        find "${path_inter_synteny}" -maxdepth 1 -type f -name "*.rds" -exec rm -f {} +
 
         touch ${path_log_step}fake.log
         rm -f ${path_log_step}*
-        
     fi  
 
     mkdir -p "${path_inter_synteny}"
@@ -1309,17 +1307,12 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --log.level "${log_level}" \
             --max.len.gap "${max_len_gap}"
 
-    # Combine all short together
+    # Combine files with short and long into input files for the next steps
     for ((i=1; i<=nchr; i++)); do
-        echo "=== i=$i short ==="
-        ls "${path_inter_synteny}"*"short_${i}_${i}.txt" | tee "${path_inter_msa}loci_short_${i}_${i}.txt"
 
-        echo "=== i=$i large ==="
+        ls "${path_inter_synteny}"*"short_${i}_${i}.txt" | tee "${path_inter_msa}loci_short_${i}_${i}.txt"
         ls "${path_inter_synteny}"*"large_${i}_${i}.txt" | tee "${path_inter_msa}loci_large_${i}_${i}.txt"
     done
-
-
-    # Combine all long together
 
     # Done
     touch "${step_file}"
@@ -1327,79 +1320,91 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# ---- Perform small and large alignments ---- 
-with_level 1 pokaz_stage "Step ${step_num}. Align short and long sequences."
+# ==============================
+# Align SHORT sequences.
+# ==============================
+with_level 1 pokaz_stage "Step ${step_num}. Align SHORT sequences."
 
-# Logs
-step_name="step${step_num}_comb_05_small"
+step_name="step${step_num}_comb_05_short"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
 
-# Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    
-
-
-    # # SHORT SEQUENCES
     # Clean up the log files
-    # if [ "$clean" == "T" ]; then 
-    #     touch ${path_log_step}fake_short.log
-    #     rm -f ${path_log_step}*short*
-    # fi  
-    # for ((i=1; i<=nchr; i++)); do
-    #     log_chromosome=${path_log_step}chr_${i}_short.log
-    #     if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
-    #         continue
-    #     fi
+    if [ "$clean" == "T" ]; then
+        touch ${path_log_step}fake_short.log
+        rm -f ${path_log_step}*short*
+    fi
 
-    #     path_inter_synteny_short="${path_inter_synteny}short_${i}_${i}/"
-    #     mkdir -p "${path_inter_synteny_short}"
+    for ((i=1; i<=nchr; i++)); do
+        log_chromosome=${path_log_step}chr_${i}_short.log
+        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+            continue
+        fi
 
-    #     "${INSTALLED_PATH}/pangen/comb_new_05_align.py" \
-    #         --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
-    #         --outdir "${path_inter_synteny_short}"
+        path_inter_synteny_short="${path_inter_synteny}short_${i}_${i}/"
+        mkdir -p "${path_inter_synteny_short}"
 
-    #     echo "Done" >> "$log_chromosome"
+        "${INSTALLED_PATH}/pangen/comb_new_05_align.py" \
+            --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
+            --outdir "${path_inter_synteny_short}"
 
-    # done
+        echo "Done" >> "$log_chromosome"
+    done
 
-    # LONG SEQUENCES
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# ==============================
+# Align LONG sequences.
+# ==============================
+with_level 1 pokaz_stage "Step ${step_num}. Align LONG sequences."
+
+step_name="step${step_num}_comb_05_long"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
+
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
     # Clean up the log files
-    if [ "$clean" == "T" ]; then 
+    if [ "$clean" == "T" ]; then
         touch ${path_log_step}fake_large.log
         rm -f ${path_log_step}*large*
-    fi  
-    for ((i=1; i<=nchr; i++)); do
+    fi
 
+    for ((i=1; i<=nchr; i++)); do
         log_chromosome=${path_log_step}chr_${i}_large.log
         if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
             continue
         fi
 
-        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}/"
-        path_inter_synteny_large_refine="${path_inter_synteny}large_${i}_${i}_refine/"
+        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
+        path_inter_synteny_large_second="${path_inter_synteny}large_${i}_${i}_second/"
         mkdir -p "${path_inter_synteny_large}"
 
-        if [ "$clean" == "T" ]; then 
+        if [ "$clean" == "T" ]; then
             touch ${path_inter_synteny_large}large.txt
             rm -f ${path_inter_synteny_large}*large*.txt
-        fi 
+        fi
 
-        "${INSTALLED_PATH}/pangen/comb_new_05_align.py" \
+        "${INSTALLED_PATH}/pangen/comb_new_06_mafft.py" \
             --inputs-list "${path_inter_msa}loci_large_${i}_${i}.txt" \
             --outdir "${path_inter_synteny_large}" \
-            --aligner mafft \
+            --baddir ${path_inter_synteny_large_second} \
             --threads ${cores} \
-            --dump-fasta-dir ${path_inter_synteny_large_refine} \
-            --chunksize 1 \
-            --block-size 2000
+            --timeout-sec 180 \
+            --uppercase \
+            --strip-spaces \
+            --aligner mafft
 
         echo "Done" >> "$log_chromosome"
     done
 
-    # Done
     touch "${step_file}"
 fi
 
@@ -1435,28 +1440,22 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             continue
         fi
 
-        path_inter_synteny_large_refine="${path_inter_synteny}large_${i}_${i}_refine/"
+        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
+        path_inter_synteny_large_second="${path_inter_synteny}large_${i}_${i}_second/"
 
         # if [ "$clean" == "T" ]; then 
         #     touch ${path_inter_synteny_large}large.txt
         #     rm -f ${path_inter_synteny_large}*large*.txt
         # fi 
 
-        # "${INSTALLED_PATH}/pangen/comb_new_05_align.py" \
-        #     --inputs-list "${path_inter_msa}loci_large_${i}_${i}.txt" \
-        #     --outdir "${path_inter_synteny_large}" \
-        #     --aligner mafft \
-        #     --threads ${cores} \
-        #     --dump-fasta-dir ${path_inter_synteny_large_refine}
-
         Rscript $INSTALLED_PATH/pangen/comb_new_06_mafft2.R \
             --cores ${cores} \
-            --path.mafft.in ${path_inter_synteny_large_refine} \
-            --path.mafft.out ${path_inter_synteny_large_refine} \
+            --path.mafft.in ${path_inter_synteny_large_second} \
+            --path.mafft.out ${path_inter_synteny_large} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
 
-        rm -rf "${path_inter_synteny_large_refine}tmp/"
+        rm -rf "${path_inter_synteny_large_second}tmp/"
         echo "Done" >> "$log_chromosome"
     done
 
@@ -1466,7 +1465,60 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Combine all together
+# ---- Long alignments into genome files ----
+
+with_level 1 pokaz_stage "Step ${step_num}. Combine long alignments by genome files."
+
+# Logs
+step_name="step${step_num}_comb_07"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    if   [ "$clean" == "T" ]; then 
+        touch ${path_features_msa}pan_fake_h5
+        touch ${path_log_step}fake.log
+
+        rm -f ${path_features_msa}pan*h5
+        rm -f ${path_log_step}*
+    fi
+
+    for ((i=1; i<=nchr; i++)); do
+
+        log_chromosome=${path_log_step}chr_${i}_large.log
+        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+            continue
+        fi
+
+        # if [ "$clean" == "T" ]; then 
+        #     touch ${path_inter_synteny_large}large.txt
+        #     rm -f ${path_inter_synteny_large}*large*.txt
+        # fi 
+
+        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
+        path_inter_synteny_large_aln="${path_inter_synteny}large_${i}_${i}/"
+
+        "${INSTALLED_PATH}/pangen/comb_new_07_mafft_combine.py"   -i "${path_inter_msa}loci_large_${i}_${i}.txt" \
+          -d ${path_inter_synteny_large} \
+           -o ${path_inter_synteny_large_aln} \
+           -b 1000
+
+        echo "Done" >> "$log_chromosome"
+   done
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+
+# ---- Combine all together ----
 
 with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 

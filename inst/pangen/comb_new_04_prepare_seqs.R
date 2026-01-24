@@ -216,6 +216,12 @@ for(s.comb in pref.combinations){
         length(idx.large), 
         length(idx.extra), file=file.log.loop, echo=echo.loop)
   
+  breaks$id.annot = 0
+  breaks$id.annot[idx.singl] = 1:length(idx.singl)
+  breaks$id.annot[idx.short] = 1:length(idx.short)
+  breaks$id.annot[idx.large] = 1:length(idx.large)
+  breaks$id.annot[idx.extra] = 1:length(idx.extra)
+  
   # ----
   
   # IMPORTANT: THERE ARE SOME BREAKS WITH LOOK LIKE SINGLETONS < BUT THEY ARE NOT
@@ -228,8 +234,8 @@ for(s.comb in pref.combinations){
   # } 
   
   # Save breaks
-  # file.breaks.merged = paste0(path.inter.msa, 'breaks_merged_', s.comb,'.rds')
-  # saveRDS(breaks, file.breaks.merged)
+  file.breaks.merged = paste0(path.inter.msa, 'breaks_annotated_', s.comb,'.rds')
+  saveRDS(breaks, file.breaks.merged)
   
   ## ---- Save singletons ----
   saveRDS(list(pos.beg = v.beg[idx.singl,],
@@ -281,7 +287,8 @@ for(s.comb in pref.combinations){
       
       # save(list = c("res", "acc", "seqs.save", "file.seqs"), file = "tmp_workspace.RData")
       
-      writeLines(c(acc, seqs.save), file.seqs)
+      # writeLines(c(acc, seqs.save), file.seqs)
+      writeLines(seqs.save, file.seqs)
       saveRDS(df.save, file.df)
       
       rm(res, df.save, seqs.save)

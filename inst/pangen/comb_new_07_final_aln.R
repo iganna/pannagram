@@ -102,6 +102,88 @@ for(s.comb in pref.combinations){
   
   base.len = length(h5read(file.comb, paste0(gr.accs.e, accessions[1])))
   
+  # ---- Read breaks ----
+  # The most important is to get estimates of delta!
+  # Then read everything by accession and insert corresponding positions
+  df.breaks = readRDS("~/Sources/alignments/s_mel/.intermediate/msa/breaks_annotated_1_1.rds")
+  df.breaks = df.breaks[,c("idx.beg", "idx.end", "type", "id.annot")]
+  df.breaks$delta = 0
+  
+  # ---- Read singletons results ----
+  data.single = readRDS("~/Sources/alignments/s_mel/.intermediate/msa/singletons_1_1.rds")
+  df.single = data.single$ref.pos
+  
+  idx.beg <- which(data.single$pos.beg != 0, arr.ind = TRUE)
+  idx.end <- which(data.single$pos.end != 0, arr.ind = TRUE)
+  if(sum(idx.beg != idx.end) != 0) stop('Wrong data for singletons')
+  
+  df.single <- cbind(df.single, data.frame(
+    acc.beg   = data.single$pos.beg[idx],
+    acc.end   = data.single$pos.end[idx],
+    acc = colnames(data.single$pos.beg)[idx[, "col"]]
+  ))
+  df.single$extra.pos = df.single$acc.end - df.single$acc.beg - 1  # -1 is important!!!
+  
+  df.breaks$delta[df.breaks$type == 'single'] = df.single$extra.pos
+  
+  # ---- Read delta from short results ----
+  
+  data.short = readRDS("~/Sources/alignments/s_mel/.intermediate/inter_synteny/ml2-AR_short_1_1_df.rds")
+  df.short = 
+    
+    
+  # ---- Read delta the Mafft results ----
+  
+  # ---- New combined coordinated ----
+  
+  # Length of new alignment
+  aln.len.new = 0
+  
+  # Mapping old coordinates to new
+  idx.map = 1
+  
+  # Break positions in new coordinates
+  
+  
+  
+  # ---- Get results by accessions ----
+  for(acc in accessions){
+    
+    # Read accession alignment
+    v = h5read()
+    v.new = rep(0, aln.len.new)
+    v.new[idx.map] = v
+    
+    # Fill up singletons
+    df.br.tmp = df.breaks[df.breaks$type == 'single',]
+    for(irow in which(df.single$colname == acc)){
+      v.new[df.br.tmp$new.beg:df.br.tmp$new.end] = df.single$acc.beg:df.single$acc.end
+    }
+    
+    # Fill up short alignments
+    df.br.tmp = df.breaks[df.breaks$type == 'short',]
+    df.short.acc = readRDS("~/Sources/alignments/s_mel/.intermediate/inter_synteny/ml2-AR_short_1_1_df.rds")
+    file.short.aln.acc = ''
+    aln.short = readLines(file.short.aln.acc)
+    for(i in 1:length(aln.short)){
+      
+      if(df.short.acc$p1[i] == 0) next
+      
+      p.own = df.short.acc$p1.own[i]:df.short.acc$p2.own[i]
+      p.insert = rep(0, df.br.tmp$delta[i])
+      p.insert[c(gregexpr("[^-]", x)[[1]])] = p.own
+      
+      v.new[(df.br.tmp$new.beg + 1):(df.br.tmp$new.end - 1)] = p.insert
+    }
+    
+    # Fill up large alignments
+    
+    # Save
+    
+  }
+  
+  
+  
   # ---- All MAFFT results for the combination ----
   pref = paste('Gap', s.comb, sep = '_')
   
