@@ -1434,7 +1434,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     fi
 
     for ((i=1; i<=nchr; i++)); do
-
+        echo "Chromosome ${i}"
         path_log_step_chr="${path_log_step}chromosome_${i}/"
         mkdir -p ${path_log_step}
 
