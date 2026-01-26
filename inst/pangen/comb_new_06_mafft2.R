@@ -80,6 +80,7 @@ loop.function <- function(f.in,
   file.log.loop = paste0(path.log, 'loop_file_', 
                          sub("\\.[^.]*$", "", basename(f.in)),
                          '.log')
+  
   if(!file.exists(file.log.loop)){
     invisible(file.create(file.log.loop))
   }

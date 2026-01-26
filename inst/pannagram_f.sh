@@ -1435,6 +1435,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     for ((i=1; i<=nchr; i++)); do
 
+        path_log_step_chr="${path_log_step}chromosome_${i}/"
+        mkdir -p ${path_log_step}
+
         log_chromosome=${path_log_step}chr_${i}_large.log
         if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
             continue
@@ -1452,7 +1455,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --cores ${cores} \
             --path.mafft.in ${path_inter_synteny_large_second} \
             --path.mafft.out ${path_inter_synteny_large} \
-            --path.log ${path_log_step} \
+            --path.log ${path_log_step_chr} \
             --log.level ${log_level}
 
         rm -rf "${path_inter_synteny_large_second}tmp/"
@@ -1502,7 +1505,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
         path_inter_synteny_large_aln="${path_inter_synteny}large_${i}_${i}/"
 
-        "${INSTALLED_PATH}/pangen/comb_new_07_mafft_combine.py"   -i "${path_inter_msa}loci_large_${i}_${i}.txt" \
+        "${INSTALLED_PATH}/pangen/comb_new_07_mafft_combine.py"   \
+        -i "${path_inter_msa}loci_large_${i}_${i}.txt" \
           -d ${path_inter_synteny_large} \
            -o ${path_inter_synteny_large_aln} \
            -b 1000
@@ -1540,11 +1544,12 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_07_final_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_new_07_final_aln.R  \
             --cores ${cores} \
             --path.mafft.out ${path_mafft_out} \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
+            --path.inter.synteny "${path_inter_synteny}"\
             --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level}

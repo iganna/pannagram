@@ -18,6 +18,7 @@ option_list <- list(
   make_option("--path.mafft.out",   type = "character", default = NULL, help = "Path to directory where mafft results are"),
   make_option("--path.features.msa",type = "character", default = NULL, help = "Path to msa directory (features)"),
   make_option("--path.inter.msa",   type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  make_option("--path.inter.synteny",type = "character", default = NULL, help = "Path to alignments the between synteny blocks"),
   make_option("--accessions",        type = "character", default = NULL, help = "File containing accessions to analyze"),
   
   make_option("--cores",            type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
@@ -59,13 +60,14 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 # Path with the MSA output (features)
 path.features.msa <- opt$path.features.msa
 path.inter.msa <- opt$path.inter.msa
+path.inter.synteny <- opt$path.inter.synteny
 
 if (is.null(path.features.msa) || is.null(path.inter.msa)) {
   stop("Error: both --path.features.msa and --path.inter.msa must be provided")
 }
 
-if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
-if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
+if (!dir.exists(path.features.msa)) stop('Features MSA directory does not exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory does not exist')
 
 # ***********************************************************************
 
@@ -90,6 +92,27 @@ stat.comb <- data.frame(comb = character(),
 for(s.comb in pref.combinations){
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
+  
+  # ---- PRE-Resultant File ----
+  
+  file.res.pre = paste0(path.inter.msa, aln.type.out, s.comb,'.h5')
+  if (file.exists(file.res.pre)) file.remove(file.res.pre)
+  h5createFile(file.res.pre)
+  suppressMessages({
+    h5createGroup(file.res.pre, gr.accs.e)
+  })
+  
+  # ---- Resultant File ----
+  file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
+  if (file.exists(file.res)) file.remove(file.res)
+  h5createFile(file.res)
+  suppressMessages({
+    h5createGroup(file.res, gr.accs.e)
+  })
+  
+  # Paths
+  path.short.aln = paste0(path.inter.synteny, 'short_',s.comb,'/')
+  path.large.aln = paste0(path.inter.synteny, 'large_',s.comb,'/')
 
   # Get accessions
   file.comb = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
@@ -100,457 +123,216 @@ for(s.comb in pref.combinations){
   n.acc = length(accessions)
   if (n.acc == 0) stop(paste("No accessions for combination", s.comb))
   
-  base.len = length(h5read(file.comb, paste0(gr.accs.e, accessions[1])))
+  len.aln.synteny = length(h5read(file.comb, paste0(gr.accs.e, accessions[1])))
   
   # ---- Read breaks ----
-  # The most important is to get estimates of delta!
+  # The most important is to get estimates of len.new!
   # Then read everything by accession and insert corresponding positions
-  df.breaks = readRDS("~/Sources/alignments/s_mel/.intermediate/msa/breaks_annotated_1_1.rds")
+  df.breaks = readRDS(paste0(path.inter.msa, "breaks_annotated_", s.comb,".rds"))
   df.breaks = df.breaks[,c("idx.beg", "idx.end", "type", "id.annot")]
-  df.breaks$delta = 0
+  df.breaks$len.new = 0
   
   # ---- Read singletons results ----
-  data.single = readRDS("~/Sources/alignments/s_mel/.intermediate/msa/singletons_1_1.rds")
+  data.single = readRDS(paste0(path.inter.msa, "singletons_", s.comb, ".rds"))
   df.single = data.single$ref.pos
   
   idx.beg <- which(data.single$pos.beg != 0, arr.ind = TRUE)
   idx.end <- which(data.single$pos.end != 0, arr.ind = TRUE)
   if(sum(idx.beg != idx.end) != 0) stop('Wrong data for singletons')
+  idx.beg = idx.beg[order(idx.beg[,1]),]
+  if(nrow(idx.beg) != idx.beg[nrow(idx.beg),1]) stop('Indexes in singleton are wrong')
   
   df.single <- cbind(df.single, data.frame(
-    acc.beg   = data.single$pos.beg[idx],
-    acc.end   = data.single$pos.end[idx],
-    acc = colnames(data.single$pos.beg)[idx[, "col"]]
+    acc.beg   = data.single$pos.beg[idx.beg],
+    acc.end   = data.single$pos.end[idx.beg],
+    acc = colnames(data.single$pos.beg)[idx.beg[, "col"]]
   ))
   df.single$extra.pos = df.single$acc.end - df.single$acc.beg - 1  # -1 is important!!!
   
-  df.breaks$delta[df.breaks$type == 'single'] = df.single$extra.pos
+  df.breaks$len.new[df.breaks$type == 'single'] = df.single$extra.pos
   
-  # ---- Read delta from short results ----
+  # ---- Read len.new from short results ----
   
-  data.short = readRDS("~/Sources/alignments/s_mel/.intermediate/inter_synteny/ml2-AR_short_1_1_df.rds")
-  df.short = 
+  data.short = readLines(paste0(path.short.aln, accessions[1], "_short_", s.comb, ".txt.aln.txt"))
+
+  if(length(data.short) != sum(df.breaks$type == 'short')) stop('Short alignments do not match')
+  df.breaks$len.new[df.breaks$type == 'short'] = nchar(data.short)
+  
+  rm(data.short)
     
-    
-  # ---- Read delta the Mafft results ----
+  # ---- Read len.new the Mafft results ----
+  
+  data.large = readLines(paste0(path.large.aln, accessions[1], "_large_", s.comb, ".txt.txt"))
+  
+  if(length(data.large) != sum(df.breaks$type == 'long')) stop('Short alignments do not match')
+  df.breaks$len.new[df.breaks$type == 'long'] = nchar(data.large)
+  
+  rm(data.large)
+  
+  # Checkup
+  tmp = table(df.breaks$type, df.breaks$len.new != 0)
+  if (any(tmp[,1] * tmp[,2]) != 0) stop('Wrong types and len.new')
   
   # ---- New combined coordinated ----
   
-  # Length of new alignment
-  aln.len.new = 0
+  # Remove those, who do not change the len.new: extra alignments
+  df.breaks = df.breaks[df.breaks$len.new > 0,]
+  df.breaks$len = df.breaks$idx.end - df.breaks$idx.beg - 1
+  df.breaks$extra = df.breaks$len.new - df.breaks$len
+  
+  # TODO
+  # if(any(df.breaks$extra < 0)) stop('Why negative extra?')
   
   # Mapping old coordinates to new
-  idx.map = 1
+  idx.extra = rep(0, len.aln.synteny)
+  idx.extra[df.breaks$idx.beg + 1] = df.breaks$extra
+  idx.extra = cumsum(idx.extra)
+  idx.map = (1:len.aln.synteny) + idx.extra
   
-  # Break positions in new coordinates
+  if(any(idx.map <= 0)) stop('Wrong mapping: zeros or negative')
   
+  df.breaks$new.beg = idx.map[df.breaks$idx.beg] + 1
+  df.breaks$new.end = idx.map[df.breaks$idx.end] - 1
   
+  if(any(df.breaks$new.beg > df.breaks$new.end)) stop('Beging is highre than end')
+  
+  tmp = df.breaks$new.end - df.breaks$new.beg + 1
+  if(any(df.breaks$len.new != tmp)) stop('Wrong mapping: length mismatch')
+  
+  # Length of new alignment
+  len.aln.new = max(idx.map)
+  
+  if(len.aln.new != sum(df.breaks$extra) + len.aln.synteny) stop('Wrong mapping: pangenome length')
+  
+  # Idx which should be zero after mapping
+  idx.zero = rep(0, len.aln.new)
+  idx.zero[df.breaks$new.beg] = 1
+  idx.zero[df.breaks$new.end] = idx.zero[df.breaks$new.end] - 1
+  idx.zero = cumsum(idx.zero)
+  idx.zero[df.breaks$new.beg] = 1
+  idx.zero[df.breaks$new.end] = 1
+  
+  if(sum(idx.zero) != sum(df.breaks$len.new)) stop('Idx.zero are wrongly defined')
   
   # ---- Get results by accessions ----
+  idx.all.acc.zeros = rep(0, len.aln.new)
   for(acc in accessions){
     
+    pokaz('Accession', acc)
+    
     # Read accession alignment
-    v = h5read()
-    v.new = rep(0, aln.len.new)
+    v = h5read(file.comb, paste0(gr.accs.e, acc))
+    
+    # Map new alignment
+    v.new = rep(0, len.aln.new)
     v.new[idx.map] = v
+    v.new[idx.zero] = 0
     
     # Fill up singletons
     df.br.tmp = df.breaks[df.breaks$type == 'single',]
-    for(irow in which(df.single$colname == acc)){
-      v.new[df.br.tmp$new.beg:df.br.tmp$new.end] = df.single$acc.beg:df.single$acc.end
+    for(irow in which(df.single$acc == acc)){
+      # stop()
+      v.new[df.br.tmp$new.beg[irow]:df.br.tmp$new.end[irow]] = (df.single$acc.beg[irow]+1):(df.single$acc.end[irow]-1)
+      
+      # tmp = c(df.br.tmp$new.beg[irow] - 1,
+      #         df.br.tmp$new.beg[irow],
+      #         df.br.tmp$new.end[irow],
+      #         df.br.tmp$new.end[irow] + 1)
+      # pokaz(v.new[tmp])
     }
+    
+    # Check duplicates
+    if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop('Duplicated after singletons')
     
     # Fill up short alignments
-    df.br.tmp = df.breaks[df.breaks$type == 'short',]
-    df.short.acc = readRDS("~/Sources/alignments/s_mel/.intermediate/inter_synteny/ml2-AR_short_1_1_df.rds")
-    file.short.aln.acc = ''
-    aln.short = readLines(file.short.aln.acc)
-    for(i in 1:length(aln.short)){
+    for(s.type in c('short', 'large')){
+      pokaz('Insert type', s.type)
       
-      if(df.short.acc$p1[i] == 0) next
+      if(s.type == 'large'){
+        df.br.tmp = df.breaks[df.breaks$type == 'long',]  
+      } else {
+        df.br.tmp = df.breaks[df.breaks$type == s.type,]
+      }
       
-      p.own = df.short.acc$p1.own[i]:df.short.acc$p2.own[i]
-      p.insert = rep(0, df.br.tmp$delta[i])
-      p.insert[c(gregexpr("[^-]", x)[[1]])] = p.own
       
-      v.new[(df.br.tmp$new.beg + 1):(df.br.tmp$new.end - 1)] = p.insert
+      file.df.acc = paste0(path.inter.synteny, acc, "_",s.type,"_", s.comb, "_df.rds")
+      
+      if(s.type == 'short'){
+        s.ext = ".txt.aln.txt"
+      } else {
+        s.ext = ".txt.txt"
+      }
+      
+      file.aln.acc = paste0(path.inter.synteny, s.type, "_", s.comb, '/' , 
+                            acc, "_",s.type,"_", s.comb, s.ext)
+      
+      df.acc = readRDS(file.df.acc)
+      aln.acc = readLines(file.aln.acc)
+      
+      if (length(unique(c(nrow(df.br.tmp),
+                          length(aln.acc),
+                          nrow(df.acc)))) != 1) {
+        stop('Alignment wrong lengths')
+      }
+      
+      for(i in 1:length(aln.acc)){
+        
+        if(df.br.tmp$extra[i] < 0) next
+        
+        # if(s.type == 'large') stop()
+        if(df.acc$p1[i] == 0) next
+        
+        p.own = df.acc$p1.own[i]:df.acc$p2.own[i]
+        
+        if( -2776036 %in% p.own) stop('blya')
+        
+        p.insert = rep(0, df.br.tmp$len.new[i])
+        idx.tmp.aln = c(gregexpr("[^-]", aln.acc[i])[[1]])
+        if(length(idx.tmp.aln) != length(p.own)) {
+          idx.tmp.aln <- idx.tmp.aln[(n.flank + 1):(length(idx.tmp.aln) - n.flank)]
+        }
+        
+        if(length(idx.tmp.aln) != length(p.own)) stop('Wrong length aligned')
+        p.insert[idx.tmp.aln] = p.own
+        
+        v.new[(df.br.tmp$new.beg[i]):(df.br.tmp$new.end[i])] = p.insert
+        
+        # tmp = (df.br.tmp$new.beg[i] - 1) : (df.br.tmp$new.end[i] + 1)
+        # pokaz(v.new[tmp])
+      }
+      
+      # Check duplicates
+      if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop(paste('Duplicated after', s.type))
     }
     
-    # Fill up large alignments
+    # Save positions which are zeros
+    idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
     
     # Save
-    
-  }
-  
-  
-  
-  # ---- All MAFFT results for the combination ----
-  pref = paste('Gap', s.comb, sep = '_')
-  
-  
-  files.mafft1 = list.files(path = path.mafft.out, 
-                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned\\.fasta$'))
-  files.mafft2 = list.files(path = path.mafft.out, 
-                            pattern = paste0('^', pref, '.*_flank_', n.flank, '.*_aligned2\\.fasta$'))
-  
-  files.mafft1.pref = sapply(files.mafft1, function(s) strsplit(s, '_aligned')[[1]][1])
-  files.mafft2.pref = sapply(files.mafft2, function(s) strsplit(s, '_aligned')[[1]][1])
-  
-  idx1.dup = which(files.mafft1.pref %in% files.mafft2.pref)
-  if(length(idx1.dup) > 0){
-    pokazAttention('duplicated alignments were found')
-    files.mafft1 = files.mafft1[-idx1.dup]
-  }
-  
-  files.mafft = c(files.mafft1,
-                  files.mafft2)
-  
-  
-  mafft.res = data.frame(file = files.mafft)
-  
-  if(nrow(mafft.res) > 0){
-    y = lapply(mafft.res$file, function(s) strsplit(s, '_')[[1]][1:6])
-    z = t(matrix(unlist(y), ncol = length(y)))
-    mafft.res$comb = paste(z[,2], z[,3], sep = '_')
-    mafft.res$beg = as.numeric(z[,5])
-    mafft.res$end = as.numeric(z[,6])
-    mafft.res$id = as.numeric(z[,3])  
-  }
-  
-  # ---- Get long alignment positions ----
-  pokaz('Read Long alignments..', file=file.log.main, echo=echo.main)
-  idx.skip = c()
-  mafft.aln.pos = list()
-  
-  pokaz('Number of mafft files', nrow(mafft.res), file=file.log.main, echo=echo.main)
-  if(nrow(mafft.res) > 0){
-
-    for(i in 1:nrow(mafft.res)){
-      
-      # pokaz('Aln', i, mafft.res$file[i], file=file.log.main, echo=echo.main)
-      
-      file.aln = paste0(path.mafft.out, mafft.res$file[i])
-      
-      if(!file.exists(file.aln)) {
-        idx.skip = c(idx.skip, i)
-        next
-      }
-      
-      if (grepl("_aligned2", mafft.res$file[i])) {
-        remove.flank = F
-      } else {
-        remove.flank = T
-      }
-      
-      aln.seq = readFasta(file.aln)
-      
-      
-      # ---
-      # WITHOUT REFINEMENT
-      n.aln.seq = length(aln.seq)
-      name.aln.seq = names(aln.seq)
-      name.acc = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][1])
-      pos.aln = sapply(name.aln.seq, function(s) strsplit(s, '\\|')[[1]][3:4])
-      
-      
-      len.aln.seq <- nchar(aln.seq[1])
-      # aln.mx <- matrix(, nrow = n.aln.seq, ncol = len.aln.seq)
-      pos.mx <- matrix(0, nrow = n.aln.seq, ncol = len.aln.seq)
-      for (i.seq in 1:length(aln.seq)) {
-        tmp = strsplit(aln.seq[i.seq], "")[[1]]
-        tmp.nongap = which(tmp != '-')
-        
-        if(remove.flank){
-          tmp.nongap = tmp.nongap[-(1:(n.flank))]
-          tmp.nongap <- tmp.nongap[1:(length(tmp.nongap) - n.flank)]  
-        }
-        
-        p1 = pos.aln[1, i.seq]
-        p2 = pos.aln[2, i.seq]
-        pos.tmp = p1:p2
-        if(length(pos.tmp) > length(tmp.nongap)){
-          save(list = ls(), file = "tmp_workspace_final.RData")
-        }
-        pos.mx[i.seq, tmp.nongap] = pos.tmp
-      }
-      # aln.mx = aln.mx[,colSums(aln.mx != '-') != 0]
-      pos.mx = pos.mx[,colSums(pos.mx != 0) != 0, drop=F]
-      row.names(pos.mx) = name.acc
-      
-      if(min(colSums(pos.mx != 0)) == 0){
-        pokaz(mafft.res$file[i])
-        stop('Zeros in the alignment')
-      }
-      
-      
-      mafft.aln.pos[[mafft.res$file[i]]] = pos.mx
-      # ---
-      
-    }
-    
-    if(length(idx.skip) > 0){
-      mafft.aln.pos = mafft.aln.pos[-idx.skip]
-      mafft.res = mafft.res[-idx.skip,,drop=F]
-    }
-    
-    # warnings()
-    mafft.res$len = unlist(lapply(mafft.aln.pos, ncol))
-    mafft.res$extra = mafft.res$len - (mafft.res$end - mafft.res$beg - 1)
-    
-    # Skip if some are shorter than the initial aligned block
-    idx.confusing = which(mafft.res$extra < 0)
-    if(length(idx.confusing) > 0){
-      pokazAttention('Long: Wrong lengths of alignment and gaps')
-      pokazAttention("N confusing:", length(idx.confusing))
-      
-      mafft.res = mafft.res[-idx.confusing,,drop=F]
-      mafft.aln.pos = mafft.aln.pos[-idx.confusing]
-    } 
-    # if(min(mafft.res$extra) < 0) stop()
-    mafft.res$extra[mafft.res$extra < 0] = 0
-  } else {
-    mafft.res = data.frame()
-  }
-  
-  # ---- Short alignments ----
-  pokaz('Read Short alignments..', file=file.log.main, echo=echo.main)
-  file.msa.res = paste0(path.inter.msa, 'aln_short_', s.comb, '.rds')
-  if(file.exists(file.msa.res)){
-    msa.res = readRDS(file.msa.res)
-    msa.res$len = unlist(lapply(msa.res$aln, nrow))
-    msa.res$extra = msa.res$len - (msa.res$ref.pos$end - msa.res$ref.pos$beg - 1)
-    
-    idx.confusing = which(msa.res$extra < 0)
-    if(length(idx.confusing) > 0){
-      pokazAttention('Short: Wrong lengths of alignment and gaps')
-      pokazAttention("Confusing:", idx.confusing)
-      
-      msa.res$ref.pos = msa.res$ref.pos[-idx.confusing,,drop=F]
-      msa.res$aln = msa.res$aln[-idx.confusing]
-      msa.res$len = msa.res$len[-idx.confusing]
-      msa.res$extra = msa.res$extra[-idx.confusing]
-    } 
-  
-  } else {
-    msa.res = data.frame()
-  }
-
-  # ---- Singletons alignments ----
-  pokaz('Read Singletons..', file=file.log.main, echo=echo.main)
-  file.single.res = paste0(path.inter.msa, 'singletons_', s.comb, '.rds')
-  if(file.exists(file.single.res)){
-    single.res = readRDS(file.single.res)
-    
-    # save(list = ls(), file = "tmp_workspace_x.RData")
-    
-    if(is.null(dim(single.res$pos.end))){
-      single.res$pos.end = t(as.matrix(single.res$pos.end))
-    }
-    
-    if(is.null(dim(single.res$pos.beg))){
-      single.res$pos.beg = t(as.matrix(single.res$pos.beg))
-    }
-    
-    single.res$len = rowSums(single.res$pos.end) - rowSums(single.res$pos.beg)  + 1  
-    
-    single.res$extra = single.res$len - (single.res$ref.pos$end - single.res$ref.pos$beg - 1) - 2
-    
-    idx.confusing = which((single.res$ref.pos$end - single.res$ref.pos$beg - 1) != 0)
-    if(length(idx.confusing) > 0){
-      pokazAttention('Singletons: Wrong lengths of alignment and gaps')
-      pokazAttention("Number of confusing singletons:", length(idx.confusing))
-      
-      single.res$len = single.res$len[-idx.confusing]
-      single.res$extra = single.res$extra[-idx.confusing]
-      
-      single.res$pos.beg = single.res$pos.beg[-idx.confusing, ,drop = F]
-      single.res$pos.end = single.res$pos.end[-idx.confusing, ,drop = F]
-      single.res$ref.pos = single.res$ref.pos[-idx.confusing, ,drop = F]
-    }
-      
-  } else {
-    single.res = data.frame()
-  }
-
-  pokaz("Checkpoint 1", file=file.log.main, echo=echo.main)
-  
-  # ---- Analysis of positions ----
-  # Here I wouls like fo find function of positions corresponcences between 4 things: 
-  # old coordinates, long, short and singleton coordinates
-  
-  n.shift = rep(0, base.len)
-  
-  n.shift[mafft.res$end] = mafft.res$extra  # Long extra
-  n.shift[msa.res$ref.pos$end] = msa.res$extra  # Short extra
-  n.shift[single.res$ref.pos$end] = single.res$extra # Singletons extra
-  n.shift = cumsum(n.shift)
-  
-  fp.main = (1:base.len) + n.shift
-  
-  pokaz("Checkpoint 2", file=file.log.main, echo=echo.main)
-  
-  # -- 
-  # Singletons
-  fp.single = list()
-  if(length(single.res) != 0){
-    if(length(single.res$len) != 0){
-      for(i in 1:length(single.res$len)){
-        n.pos = single.res$len[i] - 2
-        fp.single[[i]] = fp.main[single.res$ref.pos$beg[i]] + (1:n.pos)
-      } 
-    }
-  }
-
-  pokaz("Checkpoint 3", file=file.log.main, echo=echo.main)
-  # save(list = ls(), file = "tmp_workspace_3_oo.RData")
-  
-  # Short
-  fp.short = list()
-  if(length(msa.res) != 0){
-    for(i in 1:length(msa.res$len)){
-      n.pos = msa.res$len[i]
-      fp.short[[i]] = fp.main[msa.res$ref.pos$beg[i]] + (1:n.pos)
-    }    
-    pokaz("Checkpoint 4", file=file.log.main, echo=echo.main)
-    
-    # Check short
-    for(i in 1:length(msa.res$len)){
-      if(is.null(msa.res$aln[[i]])) next
-      if(length(fp.short[[i]]) != nrow(msa.res$aln[[i]])){
-        # save(list = ls(), file = "tmp_workspace.RData")
-        stop(paste0('Short', i)) 
-      }
-    }
-  }
-
-  pokaz("Checkpoint 5", file=file.log.main, echo=echo.main)
-  
-  # Long
-  fp.long = list()
-  if(length(mafft.aln.pos) != 0){
-    for(i in 1:length(mafft.aln.pos)){
-      n.pos = ncol(mafft.aln.pos[[i]])
-      fp.long[[i]] = fp.main[mafft.res$beg[i]] + (1:n.pos)
-    }  
-  }
-  
-  pos.beg.all = list(single.res$ref.pos$beg, msa.res$ref.pos$beg, mafft.res$beg)
-  pos.end.all = list(single.res$ref.pos$end, msa.res$ref.pos$end, mafft.res$end)
-  
-  pos.delete.all = 0
-  for(i.pos in 1:3){
-    pos.beg = pos.beg.all[[i.pos]]
-    pos.end = pos.end.all[[i.pos]]
-    pos.delete = rep(0, base.len)
-    pos.delete[pos.beg] = 1
-    pos.delete[pos.end] = pos.delete[pos.end] - 1
-    pos.delete = cumsum(pos.delete)
-    pos.delete[pos.beg] = 0
-    pos.delete[pos.end] = 0
-    
-    pos.delete.all = pos.delete.all + pos.delete
-  }
-  pos.delete = pos.delete.all
-
-  if(sum(unlist(pos.end.all) - unlist(pos.beg.all) - 1) != sum(pos.delete)){
-    # save(list = ls(), file = 'tmx_workspace_step18.RData')
-    stop('Wrong identification of positions to delete')
-  } 
-  
-  pos.remain = pos.delete == 0
-  
-  fp.main[pos.delete != 0] = 0
-  
-  base.len.aln = max(fp.main)
-  
-  # Check-points
-  fp.add = c(unlist(fp.single), unlist(fp.short), unlist(fp.long))
-  if(sum(duplicated(c(fp.main[fp.main != 0], fp.add))) != 0) {
-    # save(list = ls(), file = paste0("tmp_workspace1_",s.comb,"_pointa.RData"))
-    stop('Something is wrong with positions; Point A')
-  } 
-  # if(length(unique(c(fp.main, fp.add))) != (max(fp.main) + 1)) stop('Something if wrotng with positions; Point B')  # it's not trow anymore
-  
-  # ---- Resultant File ----
-  
-  file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
-  if (file.exists(file.res)) file.remove(file.res)
-  h5createFile(file.res)
-  
-  suppressMessages({
-    h5createGroup(file.res, gr.accs.e)
-  })
-  
-  pos.nonzero = fp.main != 0
-  for(acc in accessions){
-    pokaz('Accession', acc, file=file.log.main, echo=echo.main)
-    v = h5read(file.comb, paste0(gr.accs.e, acc))
-    v.aln = rep(0, base.len.aln)
-    v.aln[fp.main[pos.nonzero]] = v[pos.nonzero]
-    # v.aln[fp.main[pos.remain]] = v[pos.remain]
-    
-    # save(list = ls(), file = 'tmx_workspace_step18.RData')
-    
-    # Add singletons
-    if(length(single.res$len) != 0){
-      for(i in 1:length(single.res$len)){
-        if(single.res$pos.beg[i, acc] != 0){
-          pos = single.res$pos.beg[i, acc]:single.res$pos.end[i, acc]
-          pos = pos[-c(1, length(pos))]
-          
-          v.aln[fp.single[[i]]] = pos
-          # if(length(unique(v.aln)) != (sum(v.aln != 0) + 1)) stop('1')
-        } 
-      }   
-      v.aln.nozero = v.aln[v.aln != 0]
-      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        # save(list = ls(), file = "tmp_workspace.RData")
-        stop('1: Duplicated positions in Singletons')
-      } 
-    }
-
-    # Add short
-    if(length(msa.res$len) != 0){
-      for(i in 1:length(msa.res$len)){
-        if(acc %in% colnames(msa.res$aln[[i]])){
-          v.aln[fp.short[[i]]] = msa.res$aln[[i]][,acc]
-        } 
-      }
-      v.aln.nozero = v.aln[v.aln != 0]
-      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        # save(list = ls(), file = "tmp_workspace.RData")
-        stop('2: Duplicated positions in short alignments')
-      }       
-    }
-
-    
-    # add long
-    if(length(mafft.aln.pos) != 0){
-      for(i in 1:length(mafft.aln.pos)){
-        if(acc %in% rownames(mafft.aln.pos[[i]])){
-          v.aln[fp.long[[i]]] = mafft.aln.pos[[i]][acc,]
-        } 
-      }      
-      v.aln.nozero = v.aln[v.aln != 0]
-      if(length(unique(v.aln.nozero)) != (sum(v.aln.nozero != 0))){
-        # save(list = ls(), file = "tmp_workspace.RData")
-        stop('3: Duplicated positions in long alignments')
-      } 
-    }
-    
-    # Maybe something was overlapped by accident
-    
     suppressMessages({
-      h5write(v.aln, file.res, paste0(gr.accs.e, acc))
+      h5write(v.new, file.res.pre, paste0(gr.accs.e, acc)) })
       
-      stat.comb <- rbind(stat.comb, 
-                         data.frame(acc = acc, 
-                                    coverage = sum(v.aln != 0),
-                                    comb = s.comb))
-      
-    })
     
   }
+  
+  idx.remain = (idx.all.acc.zeros != length(accessions))
+  
+  # Remove zeros
+  pokaz('remove seros')
+  for(acc in accessions){
+    
+    pokaz('Accession', acc)
+    
+    # Read accession alignment
+    v = h5read(file.res.pre, paste0(gr.accs.e, acc))
+    v.remain = v[idx.remain]
+    
+    # Save
+    suppressMessages({
+      h5write(v.remain, file.res, paste0(gr.accs.e, acc)) })
+    
+  }
+
   H5close()
   gc()
   
@@ -558,12 +340,5 @@ for(s.comb in pref.combinations){
 
 warnings()
 
-saveRDS(stat.comb, paste0(path.inter.msa, 'stat_coverage.rds'))
-
 pokaz('Done.', file=file.log.main, echo=echo.main)
-
-# ***********************************************************************
-# ---- Manual testing ----
-
-
 
