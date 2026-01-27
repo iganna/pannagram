@@ -307,7 +307,7 @@ for(s.comb in pref.combinations){
       # }
       
       for(i in 1:length(aln.acc)){
-        pokaz(i)
+        # pokaz(i)
         
         if(df.br.tmp$fail[i]) next  # Kostyl
         if(df.br.tmp$extra[i] < 0) next
@@ -333,10 +333,10 @@ for(s.comb in pref.combinations){
         if(length(idx.tmp.aln) != length(p.own)) stop('Wrong length aligned')
         p.insert[idx.tmp.aln] = p.own
         
-        if(p.own[1] %in% v.new) {  # Kostyl
-          pokaz('Duplicates?', i)
-          next
-        }
+        # if(p.own[1] %in% v.new) {  # Kostyl
+        #   pokaz('Duplicates?', i)
+        #   next
+        # }
         
         v.new[(df.br.tmp$new.beg[i]):(df.br.tmp$new.end[i])] = p.insert
         
