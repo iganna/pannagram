@@ -155,6 +155,8 @@ for(s.comb in pref.combinations){
   
   data.short = readLines(paste0(path.short.aln, accessions[1], "_short_", s.comb, ".txt.aln.txt"))
 
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   if(length(data.short) != sum(df.breaks$type == 'short')) stop('Short alignments do not match')
   df.breaks$len.new[df.breaks$type == 'short'] = nchar(data.short)
   
