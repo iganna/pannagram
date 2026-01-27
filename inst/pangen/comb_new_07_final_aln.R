@@ -171,7 +171,12 @@ for(s.comb in pref.combinations){
   
   data.large = readLines(paste0(path.large.aln, accessions[1], "_large_", s.comb, ".txt.txt"))
   
-  if(length(data.large) != sum(df.breaks$type == 'long')) stop('Short alignments do not match')
+  # REMOVE LATER:
+  if((length(data.large) - 1) == sum(df.breaks$type == 'long')){
+    data.large = data.large[-1]
+  }
+  
+  if(length(data.large) != sum(df.breaks$type == 'long')) stop('Large alignments do not match')
   df.breaks$len.new[df.breaks$type == 'long'] = nchar(data.large)
   
   rm(data.large)
