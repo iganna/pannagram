@@ -129,7 +129,7 @@ for(s.comb in pref.combinations){
   # The most important is to get estimates of len.new!
   # Then read everything by accession and insert corresponding positions
   df.breaks = readRDS(paste0(path.inter.msa, "breaks_annotated_", s.comb,".rds"))
-  df.breaks = df.breaks[,c("idx.beg", "idx.end", "type", "id.annot")]
+  df.breaks = df.breaks[,c("idx.beg", "idx.end", "type")]
   df.breaks$len.new = 0
   
   # ---- Read singletons results ----
