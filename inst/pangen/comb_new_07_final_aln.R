@@ -300,11 +300,12 @@ for(s.comb in pref.combinations){
         stop('Alignment wrong lengths')
       }
       
-      if(s.type == 'large'){
-        save(list = ls(), file = "tmp_workspace_large.RData")
-      }
+      # if(s.type == 'large'){
+      #   save(list = ls(), file = "tmp_workspace_large.RData")
+      # }
       
       for(i in 1:length(aln.acc)){
+        pokaz(i)
         
         if(df.br.tmp$fail[i]) next  # Kostyl
         if(df.br.tmp$extra[i] < 0) next
@@ -330,7 +331,18 @@ for(s.comb in pref.combinations){
         if(length(idx.tmp.aln) != length(p.own)) stop('Wrong length aligned')
         p.insert[idx.tmp.aln] = p.own
         
+        if(p.own[1] %in% v.new) {  # Kostyl
+          pokaz(i)
+          next
+        }
+        
         v.new[(df.br.tmp$new.beg[i]):(df.br.tmp$new.end[i])] = p.insert
+        
+        # if(i > 2000){
+        #   if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop('problem')
+        #   stop('stop')
+        # }
+        
         
         # tmp = (df.br.tmp$new.beg[i] - 1) : (df.br.tmp$new.end[i] + 1)
         # pokaz(v.new[tmp])
