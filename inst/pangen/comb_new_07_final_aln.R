@@ -294,11 +294,14 @@ for(s.comb in pref.combinations){
       if((length(aln.acc) - 1) == nrow(df.br.tmp)){
         aln.acc = aln.acc[-1]
       }
-      
       if (length(unique(c(nrow(df.br.tmp),
                           length(aln.acc),
                           nrow(df.acc)))) != 1) {
         stop('Alignment wrong lengths')
+      }
+      
+      if(s.type == 'large'){
+        save(list = ls(), file = "tmp_workspace_large.RData")
       }
       
       for(i in 1:length(aln.acc)){
@@ -328,11 +331,6 @@ for(s.comb in pref.combinations){
         p.insert[idx.tmp.aln] = p.own
         
         v.new[(df.br.tmp$new.beg[i]):(df.br.tmp$new.end[i])] = p.insert
-        
-        if(sum(duplicated(abs(v.new[v.new != 0]))) > 0){
-          pokaz(i)
-          stop(paste('Duplicated after', s.type))
-        } 
         
         # tmp = (df.br.tmp$new.beg[i] - 1) : (df.br.tmp$new.end[i] + 1)
         # pokaz(v.new[tmp])
