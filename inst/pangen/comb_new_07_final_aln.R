@@ -314,10 +314,12 @@ for(s.comb in pref.combinations){
         p.insert = rep(0, df.br.tmp$len.new[i])
         idx.tmp.aln = c(gregexpr("[^-]", aln.acc[i])[[1]])
         
-        if(idx.tmp.aln == -1) next  # Kostyl
-        
         if(length(idx.tmp.aln) != length(p.own)) {
-          # pokaz(i, length(idx.tmp.aln), length(p.own))
+          
+          if((length(idx.tmp.aln) - 60) != length(p.own)){
+            pokaz(i, length(idx.tmp.aln), length(p.own))
+            next  # Kostyl
+          } 
           
           idx.tmp.aln <- idx.tmp.aln[(n.flank + 1):(length(idx.tmp.aln) - n.flank)]
         }
