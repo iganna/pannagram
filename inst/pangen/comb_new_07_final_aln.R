@@ -154,8 +154,6 @@ for(s.comb in pref.combinations){
   # ---- Read len.new from short results ----
   
   data.short = readLines(paste0(path.short.aln, accessions[1], "_short_", s.comb, ".txt.aln.txt"))
-
-  save(list = ls(), file = "tmp_workspace.RData")
   
   # REMOVE LATER:
   if((length(data.short) - 1) == sum(df.breaks$type == 'short')){
@@ -180,6 +178,8 @@ for(s.comb in pref.combinations){
   df.breaks$len.new[df.breaks$type == 'long'] = nchar(data.large)
   
   rm(data.large)
+  
+  save(list = ls(), file = "tmp_workspace.RData")
   
   # Checkup
   tmp = table(df.breaks$type, df.breaks$len.new != 0)
