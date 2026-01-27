@@ -248,7 +248,7 @@ for(s.comb in pref.combinations){
     # Map new alignment
     v.new = rep(0, len.aln.new)
     v.new[idx.map] = v
-    v.new[idx.zero] = 0
+    v.new[idx.zero == 1] = 0
     
     # Fill up singletons
     df.br.tmp = df.breaks[df.breaks$type == 'single',]
@@ -262,6 +262,8 @@ for(s.comb in pref.combinations){
       #         df.br.tmp$new.end[irow] + 1)
       # pokaz(v.new[tmp])
     }
+    
+    pokaz(v.new[672:825])
     
     # Check duplicates
     if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop('Duplicated after singletons')
@@ -332,7 +334,7 @@ for(s.comb in pref.combinations){
         p.insert[idx.tmp.aln] = p.own
         
         if(p.own[1] %in% v.new) {  # Kostyl
-          pokaz(i)
+          pokaz('Duplicates?', i)
           next
         }
         
