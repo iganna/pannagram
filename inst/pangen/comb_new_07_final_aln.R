@@ -157,6 +157,11 @@ for(s.comb in pref.combinations){
 
   save(list = ls(), file = "tmp_workspace.RData")
   
+  # REMOVE LATER:
+  if((length(data.short) - 1) == sum(df.breaks$type == 'short')){
+    data.short = data.short[-1]
+  }
+  
   if(length(data.short) != sum(df.breaks$type == 'short')) stop('Short alignments do not match')
   df.breaks$len.new[df.breaks$type == 'short'] = nchar(data.short)
   
@@ -256,7 +261,6 @@ for(s.comb in pref.combinations){
         df.br.tmp = df.breaks[df.breaks$type == s.type,]
       }
       
-      
       file.df.acc = paste0(path.inter.synteny, acc, "_",s.type,"_", s.comb, "_df.rds")
       
       if(s.type == 'short'){
@@ -270,6 +274,11 @@ for(s.comb in pref.combinations){
       
       df.acc = readRDS(file.df.acc)
       aln.acc = readLines(file.aln.acc)
+      
+      # REMOVE LATER:
+      if((length(aln.acc) - 1) == nrow(df.br.tmp)){
+        aln.acc = aln.acc[-1]
+      }
       
       if (length(unique(c(nrow(df.br.tmp),
                           length(aln.acc),
@@ -285,8 +294,6 @@ for(s.comb in pref.combinations){
         if(df.acc$p1[i] == 0) next
         
         p.own = df.acc$p1.own[i]:df.acc$p2.own[i]
-        
-        if( -2776036 %in% p.own) stop('blya')
         
         p.insert = rep(0, df.br.tmp$len.new[i])
         idx.tmp.aln = c(gregexpr("[^-]", aln.acc[i])[[1]])
