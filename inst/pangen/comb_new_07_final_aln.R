@@ -303,7 +303,7 @@ for(s.comb in pref.combinations){
       
       for(i in 1:length(aln.acc)){
         
-        if(df.br.tmp$fail[irow]) next
+        if(df.br.tmp$fail[i]) next  # Kostyl
         if(df.br.tmp$extra[i] < 0) next
         
         # if(s.type == 'large') stop()
@@ -314,15 +314,10 @@ for(s.comb in pref.combinations){
         p.insert = rep(0, df.br.tmp$len.new[i])
         idx.tmp.aln = c(gregexpr("[^-]", aln.acc[i])[[1]])
         
-
+        if(idx.tmp.aln == -1) next  # Kostyl
         
         if(length(idx.tmp.aln) != length(p.own)) {
-          pokaz(i, length(idx.tmp.aln), length(p.own))
-          
-          if(i == 534){
-            save(list = ls(), file = "tmp_workspace_534.RData")
-            stop()
-          }
+          # pokaz(i, length(idx.tmp.aln), length(p.own))
           
           idx.tmp.aln <- idx.tmp.aln[(n.flank + 1):(length(idx.tmp.aln) - n.flank)]
         }
