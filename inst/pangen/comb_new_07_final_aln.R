@@ -329,6 +329,11 @@ for(s.comb in pref.combinations){
         
         v.new[(df.br.tmp$new.beg[i]):(df.br.tmp$new.end[i])] = p.insert
         
+        if(sum(duplicated(abs(v.new[v.new != 0]))) > 0){
+          pokaz(i)
+          stop(paste('Duplicated after', s.type))
+        } 
+        
         # tmp = (df.br.tmp$new.beg[i] - 1) : (df.br.tmp$new.end[i] + 1)
         # pokaz(v.new[tmp])
       }
