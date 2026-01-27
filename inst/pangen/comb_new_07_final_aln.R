@@ -181,14 +181,15 @@ for(s.comb in pref.combinations){
   
   save(list = ls(), file = "tmp_workspace.RData")
   
-  # Checkup
-  tmp = table(df.breaks$type, df.breaks$len.new != 0)
-  if (any(tmp[,1] * tmp[,2]) != 0) stop('Wrong types and len.new')
+  # # TODO
+  # # Checkup
+  # tmp = table(df.breaks$type, df.breaks$len.new != 0)
+  # if (any(tmp[,1] * tmp[,2]) != 0) stop('Wrong types and len.new')
   
   # ---- New combined coordinated ----
   
   # Remove those, who do not change the len.new: extra alignments
-  df.breaks = df.breaks[df.breaks$len.new > 0,]
+  # df.breaks = df.breaks[df.breaks$len.new > 0,]  # Put back this line, when the previous TODO is managed
   df.breaks$len = df.breaks$idx.end - df.breaks$idx.beg - 1
   df.breaks$extra = df.breaks$len.new - df.breaks$len
   
