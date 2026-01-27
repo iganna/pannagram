@@ -319,7 +319,7 @@ for(s.comb in pref.combinations){
         idx.tmp.aln = c(gregexpr("[^-]", aln.acc[i])[[1]])
         
         if(length(idx.tmp.aln) != length(p.own)) {
-          
+  
           if((length(idx.tmp.aln) - 60) != length(p.own)){
             pokaz(i, length(idx.tmp.aln), length(p.own))
             next  # Kostyl
@@ -331,26 +331,19 @@ for(s.comb in pref.combinations){
         if(length(idx.tmp.aln) != length(p.own)) stop('Wrong length aligned')
         p.insert[idx.tmp.aln] = p.own
         
-        # if(p.own[1] %in% v.new) {  # Kostyl
-        #   pokaz('Duplicates?', i)
-        #   next
-        # }
-        
         v.new[(df.br.tmp$new.beg[i]):(df.br.tmp$new.end[i])] = p.insert
-        
-        # if(i > 2000){
-        #   if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop('problem')
-        #   stop('stop')
-        # }
-        
         
         # tmp = (df.br.tmp$new.beg[i] - 1) : (df.br.tmp$new.end[i] + 1)
         # pokaz(v.new[tmp])
       }
       
-      # Check duplicates
-      if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop(paste('Duplicated after', s.type, 
-                                                                 sum(duplicated(abs(v.new[v.new != 0]))) ))
+      # Check duplicates # Kostyl
+      if(sum(duplicated(abs(v.new[v.new != 0]))) > 0){
+        pokaz('Duplicated in', s.type, sum(duplicated(abs(v.new[v.new != 0]))))
+        dup.values = abs(v.new[duplicated(abs(v.new))])
+        v.new[abs(v.new) %in% dup.values] = 0
+        pokaz('Duplicated after', sum(duplicated(abs(v.new[v.new != 0]))))
+      } 
     }
     
     # Save positions which are zeros
