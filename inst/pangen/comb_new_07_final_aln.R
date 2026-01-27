@@ -169,9 +169,6 @@ for(s.comb in pref.combinations){
   
   data.large = readLines(paste0(path.large.aln, accessions[1], "_large_", s.comb, ".txt.txt"))
   
-  save(list = ls(), file = "tmp_workspace_long.RData")
-  stop()
-  
   # REMOVE LATER:
   if((length(data.large) - 1) == sum(df.breaks$type == 'long')){
     data.large = data.large[-1]
@@ -189,7 +186,9 @@ for(s.comb in pref.combinations){
   # tmp = table(df.breaks$type, df.breaks$len.new != 0)
   # if (any(tmp[,1] * tmp[,2]) != 0) stop('Wrong types and len.new')
   df.breaks = df.breaks[df.breaks$type != 'extra',]
-  # ---- New combined coordinated ----
+  df.breaks = df.breaks[df.breaks$type != '-',]
+  
+  # ---- New combined coordinates ----
   
   # Remove those, who do not change the len.new: extra alignments
   # df.breaks = df.breaks[df.breaks$len.new > 0,]  # Put back this line, when the previous TODO is managed
@@ -197,10 +196,13 @@ for(s.comb in pref.combinations){
   df.breaks$extra = df.breaks$len.new - df.breaks$len
   
   # TODO
+  df.breaks$fail = df.breaks$len.new == 0
+  df.breaks$extra[df.breaks$fail] = 0
+  
   if(any(df.breaks$extra < 0)){
-    df.breaks$extra[df.breaks$extra < 0] = 0
-    # stop('Why negative extra?')
+    stop('Why negative extra?')
   } 
+  
   
   # Mapping old coordinates to new
   idx.extra = rep(0, len.aln.synteny)
@@ -212,11 +214,10 @@ for(s.comb in pref.combinations){
   
   df.breaks$new.beg = idx.map[df.breaks$idx.beg] + 1
   df.breaks$new.end = idx.map[df.breaks$idx.end] - 1
+  df.breaks$len.new[df.breaks$fail] = df.breaks$new.end[df.breaks$fail] - df.breaks$new.beg[df.breaks$fail] + 1
   
-  df.breaks$new.beg[df.breaks$len.new == 0] = 0  # REMOVE
   if(any(df.breaks$new.beg > df.breaks$new.end)) stop('Beging is highre than end')
   
-  df.breaks$new.end[df.breaks$len.new == 0] = 1  # REMOVE
   tmp = df.breaks$new.end - df.breaks$new.beg + 1
   if(any(df.breaks$len.new != tmp)) stop('Wrong mapping: length mismatch')
   
@@ -302,6 +303,7 @@ for(s.comb in pref.combinations){
       
       for(i in 1:length(aln.acc)){
         
+        if(df.br.tmp$fail[irow]) next
         if(df.br.tmp$extra[i] < 0) next
         
         # if(s.type == 'large') stop()
