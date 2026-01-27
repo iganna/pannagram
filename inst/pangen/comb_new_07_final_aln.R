@@ -263,8 +263,6 @@ for(s.comb in pref.combinations){
       # pokaz(v.new[tmp])
     }
     
-    pokaz(v.new[672:825])
-    
     # Check duplicates
     if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop('Duplicated after singletons')
     
@@ -351,7 +349,8 @@ for(s.comb in pref.combinations){
       }
       
       # Check duplicates
-      if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop(paste('Duplicated after', s.type))
+      if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop(paste('Duplicated after', s.type, 
+                                                                 sum(duplicated(abs(v.new[v.new != 0]))) ))
     }
     
     # Save positions which are zeros
