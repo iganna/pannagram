@@ -88,7 +88,7 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
-pref.combinations = '5_5'
+pref.combinations = '2_2'
 for(s.comb in pref.combinations){
   
   # Log files
