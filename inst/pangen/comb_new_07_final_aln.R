@@ -203,7 +203,7 @@ for(s.comb in pref.combinations){
   df.breaks$extra = df.breaks$len.new - df.breaks$len
   
   # TODO
-  df.breaks$fail = df.breaks$len.new == 0
+  df.breaks$fail = (df.breaks$len.new == 0) | (df.breaks$extra < 0)
   df.breaks$extra[df.breaks$fail] = 0
   
   if(any(df.breaks$extra < 0)){
@@ -248,6 +248,18 @@ for(s.comb in pref.combinations){
   for(acc in accessions){
     
     pokaz('Accession', acc)
+    
+    # Log files
+    file.log.loop.acc = paste0(path.log, 'loop_', s.comb, '_', acc, '.log')
+    if(!file.exists(file.log.loop.acc)) invisible(file.create(file.log.loop.acc))
+    
+    # Check log Done
+    if(checkDone(file.log.loop.acc)){
+      v.new = h5read(file.res.pre, paste0(gr.accs.e, acc))
+      idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
+      next
+    }
+    
     
     # Read accession alignment
     v = h5read(file.comb, paste0(gr.accs.e, acc))
@@ -360,7 +372,7 @@ for(s.comb in pref.combinations){
     suppressMessages({
       h5write(v.new, file.res.pre, paste0(gr.accs.e, acc)) })
       
-    
+    pokaz('Done.', file=file.log.loop.acc, echo=echo.loop)
   }
   
   idx.remain = (idx.all.acc.zeros != length(accessions))
@@ -383,6 +395,8 @@ for(s.comb in pref.combinations){
 
   H5close()
   gc()
+  
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
   
 }
 
