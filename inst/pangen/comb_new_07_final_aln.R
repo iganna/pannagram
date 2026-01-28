@@ -88,8 +88,15 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
-
+pref.combinations = '2_2'
 for(s.comb in pref.combinations){
+  
+  # Log files
+  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
+  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
+  
+  # Check log Done
+  if(checkDone(file.log.loop)) next
   
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
