@@ -103,19 +103,16 @@ for(s.comb in pref.combinations){
   # ---- PRE-Resultant File ----
   
   file.res.pre = paste0(path.inter.msa, aln.type.out, s.comb,'.h5')
-  if (file.exists(file.res.pre)) file.remove(file.res.pre)
-  h5createFile(file.res.pre)
-  suppressMessages({
-    h5createGroup(file.res.pre, gr.accs.e)
-  })
+  # if (file.exists(file.res.pre)) file.remove(file.res.pre)
+  if (!file.exists(file.res.pre)){
+    h5createFile(file.res.pre)
+    suppressMessages({
+      h5createGroup(file.res.pre, gr.accs.e)
+    })  
+  } else {
+    pokaz('Preliminary file exists')
+  }
   
-  # ---- Resultant File ----
-  file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
-  if (file.exists(file.res)) file.remove(file.res)
-  h5createFile(file.res)
-  suppressMessages({
-    h5createGroup(file.res, gr.accs.e)
-  })
   
   # Paths
   path.short.aln = paste0(path.inter.synteny, 'short_',s.comb,'/')
@@ -210,7 +207,6 @@ for(s.comb in pref.combinations){
     stop('Why negative extra?')
   } 
   
-  
   # Mapping old coordinates to new
   idx.extra = rep(0, len.aln.synteny)
   idx.extra[df.breaks$idx.beg + 1] = df.breaks$extra
@@ -247,19 +243,19 @@ for(s.comb in pref.combinations){
   idx.all.acc.zeros = rep(0, len.aln.new)
   for(acc in accessions){
     
-    pokaz('Accession', acc)
-    
     # Log files
     file.log.loop.acc = paste0(path.log, 'loop_', s.comb, '_', acc, '.log')
     if(!file.exists(file.log.loop.acc)) invisible(file.create(file.log.loop.acc))
     
     # Check log Done
     if(checkDone(file.log.loop.acc)){
+      pokaz('Accession', acc ,'was analysed before')
       v.new = h5read(file.res.pre, paste0(gr.accs.e, acc))
       idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
       next
     }
     
+    pokaz('Accession', acc)
     
     # Read accession alignment
     v = h5read(file.comb, paste0(gr.accs.e, acc))
@@ -378,8 +374,18 @@ for(s.comb in pref.combinations){
   idx.remain = (idx.all.acc.zeros != length(accessions))
   
   # Remove zeros
-  pokaz('remove seros')
+  pokaz('Resultant file: remove seros')
   for(acc in accessions){
+    
+    # ---- Resultant File ----
+    file.res = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
+    # if (file.exists(file.res)) file.remove(file.res)
+    if (!file.exists(file.res)) {
+      h5createFile(file.res)
+      suppressMessages({
+        h5createGroup(file.res, gr.accs.e)
+      })  
+    }
     
     pokaz('Accession', acc)
     
