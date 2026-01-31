@@ -146,7 +146,7 @@ for(s.comb in s.combinations){
   pokaz('Combine SV info from accessions...')
   sv.cover = 0
   for(acc in accessions){
-    # pokaz('Positions of accession', acc)
+    pokaz('Positions of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     

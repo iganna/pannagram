@@ -25,7 +25,8 @@ option_list = list(
   make_option("--path.seq",          type = "character", default = NULL,         help = "Path to seq dir"),
   make_option("--path.features.msa", type = "character", default = NULL,         help = "Path to msa dir (features)"),
   make_option("--cores",             type = "integer",   default = 1,            help = "number of cores to use for parallel processing"),
-  make_option("--aln.type",          type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', 'extra1', etc)")
+  make_option("--aln.type",          type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', 'extra1', etc)"),
+  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -97,7 +98,7 @@ loop.function <- function(s.comb, echo = T){
   h5createGroup(file.seq, gr.accs.e)
   
   mx.consensus = NULL
-  idx.negative = c()
+  # idx.negative = c()
   for(acc in accessions){
     # pokaz('Sequence of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
@@ -135,7 +136,7 @@ loop.function <- function(s.comb, echo = T){
       s[idx.mins] = justCompl(genome[abs(v[idx.mins])])
     }
     
-    idx.negative = c(idx.negative, which(idx.mins))
+    # idx.negative = c(idx.negative, which(idx.mins))
     
     for(s.nt in s.nts){
       mx.consensus[,s.nt] = mx.consensus[,s.nt] + (s == s.nt)
