@@ -123,6 +123,7 @@ for(s.comb in s.combinations){
   }
   
   pokaz('Run for combination', s.comb, "...")
+  print(Sys.time())
   
   # Get file for the combination
   file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff,'.h5')
@@ -144,13 +145,19 @@ for(s.comb in s.combinations){
   n.acc = length(accessions)
   
   pokaz('Combine SV info from accessions...')
+  print(Sys.time())
+  
   sv.cover = 0
   for(acc in accessions){
     pokaz('Positions of accession', acc)
+    print(Sys.time())
+    
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     
-    # pokaz('Find gaps..')
+    pokaz('Find gaps..')
+    print(Sys.time())
+    
     sv.acc = findOnes(v == 0)
     if(nrow(sv.acc) == 0) next
     
@@ -158,7 +165,9 @@ for(s.comb in s.combinations){
     if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
     v.r = rank(abs(v)) * sign(v)
     
-    # pokaz('Exclude gaps around inversions..')
+    pokaz('Exclude gaps around inversions..')
+    print(Sys.time())
+    
     sv.acc$beg.r = v.r[sv.acc$beg - 1]
     sv.acc$end.r = v.r[sv.acc$end + 1]
     sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
@@ -175,6 +184,7 @@ for(s.comb in s.combinations){
   
   # SV groups
   pokaz('Create SV groups...')
+  print(Sys.time())
   
   sv.pos = findOnes((sv.cover != 0)*1)
   if(nrow(sv.pos) == 0){
@@ -190,7 +200,9 @@ for(s.comb in s.combinations){
   sv.beg = c()
   sv.end = c()
   for(acc in accessions){
-    # pokaz('Positions of accession', acc)
+    pokaz('Positions of accession', acc)
+    print(Sys.time())
+    
     v = h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] = 0
     sv.beg = cbind(sv.beg, v[sv.pos$beg])
@@ -204,6 +216,8 @@ for(s.comb in s.combinations){
   
   # Check ranks
   pokaz('Check ranks...')
+  print(Sys.time())
+  
   for(acc in accessions){
     acc.r = c(sv.beg[,acc] + 0.1, sv.end[,acc] - 0.1)
     acc.r = rank(abs(acc.r)) * sign(acc.r)
@@ -219,6 +233,8 @@ for(s.comb in s.combinations){
   
   # Clean up empty
   pokaz('Clean up empty...')
+  print(Sys.time())
+  
   sv.na = (rowSums(sv.beg) == 0) | (rowSums(sv.end) == 0)
   sv.pos = sv.pos[!sv.na,]
   sv.beg = sv.beg[!sv.na,]
@@ -304,7 +320,6 @@ saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
 
 
-
 sv.mismatch = (sv.beg.all[, accessions] * sv.end.all[,accessions])  < 0
 for(acc in accessions){
   sv.beg.all[sv.end.all[,acc] == 0, acc] = 0
@@ -319,6 +334,8 @@ for(acc in accessions){
 
 # ---- GFF files ----
 pokaz('Gff files for accessions..')
+print(Sys.time())
+
 sv.version = 6
 file.sv.gff = paste(path.gff, 'svs_pangen_v',sprintf("%02d", sv.version),'.gff', sep = '')
 
@@ -330,6 +347,8 @@ rownames(sv.pos.all) = sv.pos.all$gr
 
 ## ---- Single-event ----
 pokaz('Single-event..')
+print(Sys.time())
+
 sv.se = sv.pos.all[sv.pos.all$single == 1,]
 sv.se.type = rep('indel', nrow(sv.se))
 
@@ -360,6 +379,8 @@ sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
 
 ## ---- Multiple-event ----
 pokaz('Multiple-event..')
+print(Sys.time())
+
 sv.me = sv.pos.all[sv.pos.all$single != 1,, drop=F]
 
 if(nrow(sv.me) > 0){
@@ -385,9 +406,12 @@ options(scipen = 0)
 
 # ---- GFF In accessions ----
 pokaz('Gff files for accessions comb..')
+print(Sys.time())
+
 for(i.acc in 1:length(accessions)){
   acc = accessions[i.acc]
-  # pokaz('Generate GFF for accession', acc)
+  pokaz('Generate GFF for accession', acc)
+  print(Sys.time())
   
   df = sv.gff
   df$V1 = paste0(acc, '_Chr', sv.pos.all$chr)
@@ -440,6 +464,8 @@ seqs.big = c()
 for(s.comb in s.combinations){
   i.chr = comb2ref(s.comb)
   pokaz('Chromosome', i.chr)
+  print(Sys.time())
+  
   file.chr = paste0(path.seq, 'seq_cons_', s.comb, ref.suff ,'.fasta')
   if(!file.exists(file.chr)) stop(paste0('File with the consensus sequence does not exist:', file.chr))
   s.chr = readFasta(file.chr)
