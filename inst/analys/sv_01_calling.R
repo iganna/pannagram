@@ -48,16 +48,7 @@ path.log <- opt$path.log
 if (!is.null(path.log) & !is.null(log.level)) {
   if (!dir.exists(path.log)){
     dir.create(path.log)
-  } else {
-    log_files <- list.files(path.log,
-                            pattern = "^log.*\\.log$", 
-                            full.names = TRUE)
-    pokaz('Number of log files', length(log_files))
-    if (length(log_files) > 0) {
-      file.remove(log_files)
-    }
   }
-  
 }
 
 # ***********************************************************************
@@ -198,6 +189,14 @@ for(s.comb in s.combinations){
       file.log.loop = paste0(path.log, 'log_', acc, '.log')
       if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
       
+      file.loop.save = paste0(path.log, acc, '.rds')
+      
+      # ---- Check log Done ----
+      if(checkDone(file.log.loop)){
+        out = readRDS(file.loop.save)
+        return(out)
+      }
+      
       v <- h5read(file.comb, paste0(gr.accs.e, acc))
       v[is.na(v)] <- 0
       
@@ -251,6 +250,7 @@ for(s.comb in s.combinations){
       # Close HDF5 handles inside worker
       rhdf5::H5close()
       
+      saveRDS(out, file.loop.save)
       pokaz('Done.', file=file.log.loop, echo=T)
       return(out)
     }
