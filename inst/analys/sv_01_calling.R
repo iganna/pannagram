@@ -176,10 +176,10 @@ for(s.comb in s.combinations){
   if(checkDone(file.sv.cover.log)){
     sv.cover = readRDS(file.sv.cover)
   } else {
-    sv.cover <- foreach::foreach(acc = accessions,
-                                 .combine = "+",
-                                 .inorder = FALSE,
-                                 .packages = c("rhdf5", "pannagram")
+    foreach::foreach(
+      acc = accessions,
+      .inorder = FALSE,
+      .packages = c("rhdf5", "pannagram")
     ) %dopar% {
       
       
@@ -193,8 +193,7 @@ for(s.comb in s.combinations){
       
       # ---- Check log Done ----
       if(checkDone(file.log.loop)){
-        out = readRDS(file.loop.save)
-        return(out)
+        return(NULL)
       }
       
       v <- h5read(file.comb, paste0(gr.accs.e, acc))
@@ -252,8 +251,21 @@ for(s.comb in s.combinations){
       
       saveRDS(out, file.loop.save)
       pokaz('Done.', file=file.log.loop, echo=T)
-      return(out)
+      return(NULL)
     }
+    
+    pokaz('Combine sv.cover')
+    sv.cover <- 0
+    for (acc in accessions) {
+      pokaz('Acc', acc)
+      file.loop.save <- paste0(path.log, acc, '.rds')
+      
+      if (!file.exists(file.loop.save)) stop('Problem')
+      
+      x <- readRDS(file.loop.save)
+      sv.cover <- sv.cover + x
+    }
+    
     
     saveRDS(sv.cover, file.sv.cover)
     pokaz('Done.', file=file.sv.cover.log, echo=T)
