@@ -149,6 +149,8 @@ for(s.comb in s.combinations){
   if(checkDone(file.sv.pos.log) &&
      checkDone(file.sv.beg.log) &&
      checkDone(file.sv.end.log)){
+    
+    pokaz('Reading beg-end', s.comb)
     sv.pos = readRDS(file.sv.pos.rds)
     sv.beg = readRDS(file.sv.beg.rds)
     sv.end = readRDS(file.sv.end.rds)
@@ -351,16 +353,44 @@ for(s.comb in s.combinations){
     dimnames = list(NULL, accessions)
   )
   
-  for (acc in accessions) {
-    pokaz('Positions of accession', acc)
-    print(Sys.time())
+  # for (acc in accessions) {
+  #   pokaz('Positions of accession', acc)
+  #   print(Sys.time())
+  #   
+  #   v <- h5read(file.comb, paste0(gr.accs.e, acc))
+  #   v[is.na(v)] <- 0
+  #   
+  #   sv.beg[, acc] <- v[sv.pos$beg]
+  #   sv.end[, acc] <- v[sv.pos$end]
+  # }
+  
+  pokaz('Parallel starts')
+  # The same code as above but paralleled
+  myCluster <- parallel::makeCluster(num.cores, type = "PSOCK")
+  doParallel::registerDoParallel(myCluster)
+  
+  res <- foreach(acc = accessions, 
+                 .packages = "rhdf5"
+                 ) %dopar% {
     
     v <- h5read(file.comb, paste0(gr.accs.e, acc))
     v[is.na(v)] <- 0
     
-    sv.beg[, acc] <- v[sv.pos$beg]
-    sv.end[, acc] <- v[sv.pos$end]
+    list(
+      acc = acc,
+      beg = v[sv.pos$beg],
+      end = v[sv.pos$end]
+    )
   }
+  parallel::stopCluster(myCluster)
+  
+  # Combine results together
+  pokaz('Combine results together after parallel')
+  accs <- vapply(res, `[[`, "", "acc")
+  sv.beg <- do.call(cbind, lapply(res, `[[`, "beg"))
+  sv.end <- do.call(cbind, lapply(res, `[[`, "end"))
+  colnames(sv.beg) <- accs
+  colnames(sv.end) <- accs
   
   # save(list = ls(), file = "tmp_workspace_sv.RData")
   
@@ -375,6 +405,19 @@ for(s.comb in s.combinations){
     
     d = acc.r[,2] - acc.r[,1]
     idx = which(d != 1)
+    if(length(idx) > 0){
+      sv.beg[idx, acc] = 0
+      sv.end[idx, acc] = 0
+    }
+  }
+  
+  
+  # Clean up mismatches
+  for(acc in accessions){
+    sv.beg[sv.end[,acc] == 0, acc] = 0
+    sv.end[sv.beg[,acc] == 0, acc] = 0
+    
+    idx = which(sv.beg[, acc] * sv.end[,acc] < 0)
     if(length(idx) > 0){
       sv.beg[idx, acc] = 0
       sv.end[idx, acc] = 0
@@ -408,6 +451,7 @@ for(s.comb in s.combinations){
   }
   
   # Calculate frequencies
+  pokaz('Calculate frequencies')
   sv.pos$freq.min = 0
   sv.pos$freq.max = 0
   for(i.col in 1:n.acc){
@@ -422,6 +466,7 @@ for(s.comb in s.combinations){
   # save(list = ls(), file = "tmp_workspace_sv.RData")
   
   # Clean up
+  pokaz('Additional Clean up..')
   idx = !((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc))
   sv.pos = sv.pos[idx,]
   sv.beg = sv.beg[idx,]
@@ -452,7 +497,7 @@ for(s.comb in s.combinations){
   # sv.end.all = rbind(sv.end.all, sv.end)
   
   if (nrow(sv.pos) == 0) next
-  
+  pokaz('Save posisiotns')
   saveRDS(sv.pos, file.sv.pos.rds)
   saveRDS(sv.beg, file.sv.beg.rds)
   saveRDS(sv.end, file.sv.end.rds)
@@ -489,17 +534,7 @@ saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
 
 
-sv.mismatch = (sv.beg.all[, accessions] * sv.end.all[,accessions])  < 0
-for(acc in accessions){
-  sv.beg.all[sv.end.all[,acc] == 0, acc] = 0
-  sv.end.all[sv.beg.all[,acc] == 0, acc] = 0
-  
-  idx = which(sv.beg.all[, acc] * sv.end.all[,acc] < 0)
-  if(length(idx) > 0){
-    sv.beg.all[idx, acc] = 0
-    sv.end.all[idx, acc] = 0
-  }
-}
+
 
 
 # ---- FASTA of seSVs ----
