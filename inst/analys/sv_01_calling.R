@@ -49,7 +49,9 @@ if (!is.null(path.log) & !is.null(log.level)) {
   if (!dir.exists(path.log)){
     dir.create(path.log)
   } else {
-    log_files <- list.files(path.log, pattern = "\\.log$", full.names = TRUE)
+    log_files <- list.files(path.log,
+                            pattern = "^log.*\\.log$", 
+                            full.names = TRUE)
     pokaz('Number of log files', length(log_files))
     if (length(log_files) > 0) {
       file.remove(log_files)
@@ -176,78 +178,87 @@ for(s.comb in s.combinations){
   # sv.cover = 0
   # for(acc in accessions){
   
-  sv.cover <- foreach::foreach(acc = accessions,
-                               .combine = "+",
-                               .inorder = FALSE,
-                               .packages = c("rhdf5", "pannagram")
-                               ) %dopar% {
-    
-                                 
-     pokaz('Positions of accession', acc)
-     print(Sys.time())
-     
-     file.log.loop = paste0(path.log, 'log_', acc, '.log')
-     if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
-     
-     v <- h5read(file.comb, paste0(gr.accs.e, acc))
-     v[is.na(v)] <- 0
-     
-     pokaz('Find gaps..')
-     print(Sys.time())
-     
-     sv.acc <- findOnes(v == 0)
-     if (nrow(sv.acc) == 0) {
-       out <- 0
-       rhdf5::H5close()
-       return(out)
-     }
-     
-     if (sv.acc$beg[1] == 1) sv.acc <- sv.acc[-1, , drop = FALSE]
-     if (sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc <- sv.acc[-nrow(sv.acc), , drop = FALSE]
-     
-     v.r <- rank(abs(v)) * sign(v)
-     
-     pokaz('Exclude gaps around inversions..')
-     print(Sys.time())
-    
-    # sv.acc$beg.r = v.r[sv.acc$beg - 1]
-    # sv.acc$end.r = v.r[sv.acc$end + 1]
-    # sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
-    # if(nrow(sv.acc.na) > 0){
-    #   for(irow in 1:nrow(sv.acc.na)){
-    #     v[sv.acc.na$beg[irow]:sv.acc.na$end[irow]] = Inf
-    #   }  
-    # }
-    
-    idx.bad <- which((v.r[sv.acc$end + 1] - v.r[sv.acc$beg - 1]) != 1)
-    # if (length(idx.bad) > 0) {
-    #   for (i in idx.bad) {
-    #     v[sv.acc$beg[i] : sv.acc$end[i]] <- Inf
-    #   }
-    # }
-    if (length(idx.bad) > 0) {
-      b <- sv.acc$beg[idx.bad]
-      e <- sv.acc$end[idx.bad]
+  file.sv.cover = paste0(path.log, 'sv_cover.rds')
+  file.sv.cover.log = paste0(path.log, 'sv_cover.log')
+  if(!file.exists(file.sv.cover.log)) invisible(file.create(file.sv.cover.log))
+  
+  if(checkDone(file.sv.cover.log)){
+    sv.cover = readRDS(file.sv.cover)
+  } else {
+    sv.cover <- foreach::foreach(acc = accessions,
+                                 .combine = "+",
+                                 .inorder = FALSE,
+                                 .packages = c("rhdf5", "pannagram")
+    ) %dopar% {
       
-      # Difference array trick: mark interval coverage in O(L + k)
-      d <- integer(length(v) + 1L)
-      d[b] <- d[b] + 1L
-      d[e + 1L] <- d[e + 1L] - 1L
       
-      v[cumsum(d[-(length(v) + 1L)]) > 0L] <- Inf
+      pokaz('Positions of accession', acc)
+      print(Sys.time())
+      
+      file.log.loop = paste0(path.log, 'log_', acc, '.log')
+      if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
+      
+      v <- h5read(file.comb, paste0(gr.accs.e, acc))
+      v[is.na(v)] <- 0
+      
+      pokaz('Find gaps..')
+      print(Sys.time())
+      
+      sv.acc <- findOnes(v == 0)
+      if (nrow(sv.acc) == 0) {
+        out <- 0
+        rhdf5::H5close()
+        return(out)
+      }
+      
+      if (sv.acc$beg[1] == 1) sv.acc <- sv.acc[-1, , drop = FALSE]
+      if (sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc <- sv.acc[-nrow(sv.acc), , drop = FALSE]
+      
+      v.r <- rank(abs(v)) * sign(v)
+      
+      pokaz('Exclude gaps around inversions..')
+      print(Sys.time())
+      
+      # sv.acc$beg.r = v.r[sv.acc$beg - 1]
+      # sv.acc$end.r = v.r[sv.acc$end + 1]
+      # sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
+      # if(nrow(sv.acc.na) > 0){
+      #   for(irow in 1:nrow(sv.acc.na)){
+      #     v[sv.acc.na$beg[irow]:sv.acc.na$end[irow]] = Inf
+      #   }  
+      # }
+      
+      idx.bad <- which((v.r[sv.acc$end + 1] - v.r[sv.acc$beg - 1]) != 1)
+      # if (length(idx.bad) > 0) {
+      #   for (i in idx.bad) {
+      #     v[sv.acc$beg[i] : sv.acc$end[i]] <- Inf
+      #   }
+      # }
+      if (length(idx.bad) > 0) {
+        b <- sv.acc$beg[idx.bad]
+        e <- sv.acc$end[idx.bad]
+        
+        # Difference array trick: mark interval coverage in O(L + k)
+        d <- integer(length(v) + 1L)
+        d[b] <- d[b] + 1L
+        d[e + 1L] <- d[e + 1L] - 1L
+        
+        v[cumsum(d[-(length(v) + 1L)]) > 0L] <- Inf
+      }
+      
+      out <- as.integer(v == 0)
+      
+      # Close HDF5 handles inside worker
+      rhdf5::H5close()
+      
+      pokaz('Done.', file=file.log.loop, echo=T)
+      return(out)
     }
     
-    out <- as.integer(v == 0)
-    
-    # Close HDF5 handles inside worker
-    rhdf5::H5close()
-    
-    pokaz('Done.', file=file.log.loop, echo=T)
-    return(out)
+    saveRDS(sv.cover, file.sv.cover)
+    pokaz('Done.', file=file.sv.cover.log, echo=T)
   }
   
-  # save(list = ls(), file = "tmp_workspace_sv.RData")
-  # stop()
   
   # SV groups
   pokaz('Create SV groups...')
