@@ -107,9 +107,13 @@ source(system.file("utils/chunk_combinations.R", package = "pannagram"))
 # ***********************************************************************
 # ---- Positions of SVs ----
 
-sv.pos.all = c()
-sv.beg.all = c()
-sv.end.all = c()
+# sv.pos.all = c()
+# sv.beg.all = c()
+# sv.end.all = c()
+
+sv.pos.list <- list()
+sv.beg.list <- list()
+sv.end.list <- list()
 
 for(s.comb in s.combinations){
   
@@ -318,14 +322,25 @@ for(s.comb in s.combinations){
   sv.beg$chr = i.chr
   sv.end$chr = i.chr
   
-  sv.pos.all = rbind(sv.pos.all, sv.pos)
-  sv.beg.all = rbind(sv.beg.all, sv.beg)
-  sv.end.all = rbind(sv.end.all, sv.end)
+  # sv.pos.all = rbind(sv.pos.all, sv.pos)
+  # sv.beg.all = rbind(sv.beg.all, sv.beg)
+  # sv.end.all = rbind(sv.end.all, sv.end)
+  
+  if (nrow(sv.pos) == 0) next
+  
+  k <- length(list) + 1
+  sv.pos.list[[k]] <- sv.pos
+  sv.beg.list[[k]] <- sv.beg
+  sv.end.list[[k]] <- sv.end
   
   H5close()
   gc()
   
 }
+
+sv.pos.all <- do.call(rbind, sv.pos.list)
+sv.beg.all <- do.call(rbind, sv.beg.list)
+sv.end.all <- do.call(rbind, sv.end.list)
 
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 saveRDS(sv.pos.all, file.sv.pos)
