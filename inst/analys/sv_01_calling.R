@@ -46,7 +46,16 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 
 path.log <- opt$path.log
 if (!is.null(path.log) & !is.null(log.level)) {
-  if (!dir.exists(path.log)) dir.create(path.log)
+  if (!dir.exists(path.log)){
+    dir.create(path.log)
+  } else {
+    log_files <- list.files(path.log, pattern = "\\.log$", full.names = TRUE)
+    pokaz('Number of log files', length(log_files))
+    if (length(log_files) > 0) {
+      file.remove(log_files)
+    }
+  }
+  
 }
 
 # ***********************************************************************
@@ -189,7 +198,7 @@ for(s.comb in s.combinations){
      sv.acc <- findOnes(v == 0)
      if (nrow(sv.acc) == 0) {
        out <- 0
-       # rhdf5::H5close()
+       rhdf5::H5close()
        return(out)
      }
      
@@ -231,7 +240,7 @@ for(s.comb in s.combinations){
     out <- as.integer(v == 0)
     
     # Close HDF5 handles inside worker
-    # rhdf5::H5close()
+    rhdf5::H5close()
     
     pokaz('Done.', file=file.log.loop, echo=T)
     return(out)
