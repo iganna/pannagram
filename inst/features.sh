@@ -154,7 +154,9 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
         --path.gff ${path_gff} \
         --ref  ${ref_pref} \
         --aln.type ${aln_type} \
-        --acc.anal ${acc_anal}
+        --acc.anal ${acc_anal} \
+        --cores ${cores} \
+        --path.log "${path_log}sv_calling/"
     
     mkdir -p $path_plots_sv
 

@@ -30,7 +30,9 @@ option_list = list(
   make_option("--cutoff", type = "numeric", default = 0.9, help = "Frequency cutoff"),
   make_option("--min.len", type = "integer", default = 15, help = ""),
   make_option("--big.len", type = "integer", default = 50, help = ""),
-  make_option("--max.len", type = "integer", default = 30000, help = "")
+  make_option("--max.len", type = "integer", default = 30000, help = ""),
+  make_option("--cores",             type = "integer",   default = 1,            help = "number of cores to use for parallel processing"),
+  make_option("--path.log",         type = "character", default = NULL, help = "Path for log files")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -41,6 +43,11 @@ opt = parse_args(opt_parser, args = args);
 # ---- Logging ----
 
 source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+path.log <- opt$path.log
+if (!is.null(path.log) & !is.null(log.level)) {
+  if (!dir.exists(path.log)) dir.create(path.log)
+}
 
 # ***********************************************************************
 # ---- Modes ----
@@ -81,6 +88,12 @@ if(!dir.exists(path.gff)) stop(paste0('No GFF directory found!', path.features.m
 
 # ***********************************************************************
 # ---- Variables ----
+
+num.cores <- opt$cores 
+pokaz('Number of cores', num.cores)
+
+myCluster <- parallel::makeCluster(num.cores, type = "PSOCK")
+doParallel::registerDoParallel(myCluster)
 
 cutoff <- opt$cutoff
 min.len <- opt$min.len
@@ -151,36 +164,77 @@ for(s.comb in s.combinations){
   pokaz('Combine SV info from accessions...')
   print(Sys.time())
   
-  sv.cover = 0
-  for(acc in accessions){
-    pokaz('Positions of accession', acc)
-    print(Sys.time())
+  # sv.cover = 0
+  # for(acc in accessions){
+  
+  sv.cover <- foreach::foreach(acc = accessions,
+                               .combine = "+",
+                               .inorder = FALSE,
+                               .packages = c("rhdf5", "pannagram")
+                               ) %dopar% {
     
-    v = h5read(file.comb, paste0(gr.accs.e, acc))
-    v[is.na(v)] = 0
+                                 
+     pokaz('Positions of accession', acc)
+     print(Sys.time())
+     
+     file.log.loop = paste0(path.log, 'log_', acc, '.log')
+     if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
+     
+     v <- h5read(file.comb, paste0(gr.accs.e, acc))
+     v[is.na(v)] <- 0
+     
+     pokaz('Find gaps..')
+     print(Sys.time())
+     
+     sv.acc <- findOnes(v == 0)
+     if (nrow(sv.acc) == 0) {
+       out <- 0
+       # rhdf5::H5close()
+       return(out)
+     }
+     
+     if (sv.acc$beg[1] == 1) sv.acc <- sv.acc[-1, , drop = FALSE]
+     if (sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc <- sv.acc[-nrow(sv.acc), , drop = FALSE]
+     
+     v.r <- rank(abs(v)) * sign(v)
+     
+     pokaz('Exclude gaps around inversions..')
+     print(Sys.time())
     
-    pokaz('Find gaps..')
-    print(Sys.time())
+    # sv.acc$beg.r = v.r[sv.acc$beg - 1]
+    # sv.acc$end.r = v.r[sv.acc$end + 1]
+    # sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
+    # if(nrow(sv.acc.na) > 0){
+    #   for(irow in 1:nrow(sv.acc.na)){
+    #     v[sv.acc.na$beg[irow]:sv.acc.na$end[irow]] = Inf
+    #   }  
+    # }
     
-    sv.acc = findOnes(v == 0)
-    if(nrow(sv.acc) == 0) next
-    
-    if(sv.acc$beg[1] == 1) sv.acc = sv.acc[-1,]
-    if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
-    v.r = rank(abs(v)) * sign(v)
-    
-    pokaz('Exclude gaps around inversions..')
-    print(Sys.time())
-    
-    sv.acc$beg.r = v.r[sv.acc$beg - 1]
-    sv.acc$end.r = v.r[sv.acc$end + 1]
-    sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
-    if(nrow(sv.acc.na) > 0){
-      for(irow in 1:nrow(sv.acc.na)){
-        v[sv.acc.na$beg[irow]:sv.acc.na$end[irow]] = Inf
-      }  
+    idx.bad <- which((v.r[sv.acc$end + 1] - v.r[sv.acc$beg - 1]) != 1)
+    # if (length(idx.bad) > 0) {
+    #   for (i in idx.bad) {
+    #     v[sv.acc$beg[i] : sv.acc$end[i]] <- Inf
+    #   }
+    # }
+    if (length(idx.bad) > 0) {
+      b <- sv.acc$beg[idx.bad]
+      e <- sv.acc$end[idx.bad]
+      
+      # Difference array trick: mark interval coverage in O(L + k)
+      d <- integer(length(v) + 1L)
+      d[b] <- d[b] + 1L
+      d[e + 1L] <- d[e + 1L] - 1L
+      
+      v[cumsum(d[-(length(v) + 1L)]) > 0L] <- Inf
     }
-    sv.cover = sv.cover + (v == 0) * 1
+    
+    out <- as.integer(v == 0)
+    
+    # Close HDF5 handles inside worker
+    # rhdf5::H5close()
+    
+    pokaz('Done.', file=file.log.loop, echo=T)
+    return(out)
   }
   
   # save(list = ls(), file = "tmp_workspace_sv.RData")
@@ -368,367 +422,11 @@ for(acc in accessions){
   }
 }
 
-# Get SV positions, GFF files, dencity files and consensys sequences
-# Find SVs and create GFF file
-
-suppressMessages({ library(Biostrings)
-  library(rhdf5)
-  library(foreach)
-  library(doParallel)
-  library(optparse)
-  library(pannagram)
-  library(crayon)
-})
-
-# ***********************************************************************
-# ---- Alignment types ----
-
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
-
-# ***********************************************************************
-args = commandArgs(trailingOnly=TRUE)
-
-option_list = list(
-  make_option(c("--ref"),  type = "character", default = NULL, help = "prefix of the reference file"),
-  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
-  make_option("--path.seq", type = "character", default = NULL, help = "Path to seq dir"),
-  make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
-  make_option("--path.gff", type = "character", default = NULL, help = "Path to gff dir"),
-  make_option(c("--aln.type"),  type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', etc)"),
-  make_option(c("--acc.anal"),  type = "character", default = NULL, help = "files with accessions to analyze"),
-  make_option(c("--stat.only"), type = "character", default = NULL, help = "files with accessions to analyze"),
-  make_option("--cutoff", type = "numeric", default = 0.9, help = "Frequency cutoff"),
-  make_option("--min.len", type = "integer", default = 15, help = ""),
-  make_option("--big.len", type = "integer", default = 50, help = ""),
-  make_option("--max.len", type = "integer", default = 30000, help = "")
-);
-
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser, args = args);
-
-
-# ***********************************************************************
-# ---- Logging ----
-
-source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
-
-# ***********************************************************************
-# ---- Modes ----
-
-# If only the statistics is needed
-if (!is.null(opt$stat.only)) {
-  flag.stat.only = T
-} else {
-  flag.stat.only = F
-}
-
-# Accessions to analyse
-acc.anal <- opt$acc.anal
-if(acc.anal == 'NULL') acc.anal = NULL
-if(!is.null(acc.anal)){
-  if (!file.exists(acc.anal)) {
-    acc.anal = NULL
-    pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.')
-  } else {
-    tmp = read.table(acc.anal, stringsAsFactors = F)
-    acc.anal = tmp[,1]
-  }
-}
-
-# ***********************************************************************
-# ---- Paths ----
-path.features.msa <- opt$path.features.msa
-if(!dir.exists(path.features.msa)) stop(paste0('No Consensus directory found!', path.features.msa))
-
-path.seq <- opt$path.seq
-if(!dir.exists(path.seq)) stop(paste0('No Consensus directory found!', path.seq))
-
-path.sv <- opt$path.sv
-if(!dir.exists(path.sv)) stop(paste0('No SV directory found!', path.features.msa))
-
-path.gff <- opt$path.gff
-if(!dir.exists(path.gff)) stop(paste0('No GFF directory found!', path.features.msa))
-
-# ***********************************************************************
-# ---- Variables ----
-
-cutoff <- opt$cutoff
-min.len <- opt$min.len
-big.len <- opt$big.len
-max.len <- opt$max.len
-
-# ***********************************************************************
-# ---- Combinations of chromosomes query-base to create the alignments ----
-
-# Alignment prefix
-if (!is.null(opt$aln.type)) {
-  aln.type = opt$aln.type
-} else {
-  aln.type = aln.type.msa
-}
-
-# Reference genome
-ref.name <- opt$ref
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
-
-# Common code for aln.pref, ref.suffix and s.combinations
-source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
-
-# ***********************************************************************
-# ---- Positions of SVs ----
-
-sv.pos.all = c()
-sv.beg.all = c()
-sv.end.all = c()
-
-for(s.comb in s.combinations){
-  
-  q.chr = strsplit(s.comb, '_')[[1]][1]
-  r.chr = strsplit(s.comb, '_')[[1]][2]
-  if(q.chr != r.chr) {
-    pokazAttention('Alignment of query chromosome', q.chr, 
-                   'to the reference chromosome', r.chr, 'will be skipped.',
-                   'For SV calling, only matching chromosome IDs are allowed.')
-    next
-  }
-  
-  pokaz('Run for combination', s.comb, "...")
-  print(Sys.time())
-  
-  # Get file for the combination
-  file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff,'.h5')
-  if(!file.exists(file.comb)) stop('Alignment file does not exist')
-  # pokaz('Alignment file', file.comb)
-  
-  # Get accessions
-  groups = h5ls(file.comb)
-  accessions = groups$name[groups$group == gr.accs.b]
-  
-  # If the set of accessions to analyze has been provided, then focus only on them.
-  if(!is.null(acc.anal)){
-    accessions = intersect(accessions, acc.anal)
-    if(length(setdiff(acc.anal, accessions)) > 0) {
-      pokazAttention('Not all the accessions of interest are in the Alignment.') 
-    }
-  }
-  
-  n.acc = length(accessions)
-  
-  pokaz('Combine SV info from accessions...')
-  print(Sys.time())
-  
-  sv.cover = 0
-  for(acc in accessions){
-    pokaz('Positions of accession', acc)
-    print(Sys.time())
-    
-    v = h5read(file.comb, paste0(gr.accs.e, acc))
-    v[is.na(v)] = 0
-    
-    pokaz('Find gaps..')
-    print(Sys.time())
-    
-    sv.acc = findOnes(v == 0)
-    if(nrow(sv.acc) == 0) next
-    
-    if(sv.acc$beg[1] == 1) sv.acc = sv.acc[-1,]
-    if(sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc = sv.acc[-nrow(sv.acc),]
-    v.r = rank(abs(v)) * sign(v)
-    
-    pokaz('Exclude gaps around inversions..')
-    print(Sys.time())
-    
-    sv.acc$beg.r = v.r[sv.acc$beg - 1]
-    sv.acc$end.r = v.r[sv.acc$end + 1]
-    sv.acc.na = sv.acc[(sv.acc$end.r - sv.acc$beg.r) != 1,]
-    if(nrow(sv.acc.na) > 0){
-      for(irow in 1:nrow(sv.acc.na)){
-        v[sv.acc.na$beg[irow]:sv.acc.na$end[irow]] = Inf
-      }  
-    }
-    sv.cover = sv.cover + (v == 0) * 1
-  }
-  
-  # save(list = ls(), file = "tmp_workspace_sv.RData")
-  # stop()
-  
-  # SV groups
-  pokaz('Create SV groups...')
-  print(Sys.time())
-  
-  sv.pos = findOnes((sv.cover != 0)*1)
-  if(nrow(sv.pos) == 0){
-    pokazAttention('SVs were not generaed, and IT IS OK!')
-    next
-  } 
-  sv.pos$len = abs(sv.pos$beg - sv.pos$end) + 1 # do not change
-  sv.pos$beg = sv.pos$beg - 1
-  sv.pos$end = sv.pos$end + 1
-  sv.pos$beg[sv.pos$beg == 0] = 1
-  sv.pos$end[sv.pos$end > length(sv.cover)] = length(sv.cover)
-  
-  # sv.beg = c()
-  # sv.end = c()
-  # for(acc in accessions){
-  #   pokaz('Positions of accession', acc)
-  #   print(Sys.time())
-  #   
-  #   v = h5read(file.comb, paste0(gr.accs.e, acc))
-  #   v[is.na(v)] = 0
-  #   sv.beg = cbind(sv.beg, v[sv.pos$beg])
-  #   sv.end = cbind(sv.end, v[sv.pos$end])
-  # }
-  # colnames(sv.beg) = accessions
-  # colnames(sv.end) = accessions
-  
-  n.sv = nrow(sv.pos)
-  n.acc = length(accessions)
-  
-  sv.beg <- matrix(0, nrow = n.sv, ncol = n.acc,
-                   dimnames = list(NULL, accessions)
-  )
-  
-  sv.end <- matrix(0, nrow = n.sv, ncol = n.acc,
-                   dimnames = list(NULL, accessions)
-  )
-  
-  for (acc in accessions) {
-    pokaz('Positions of accession', acc)
-    print(Sys.time())
-    
-    v <- h5read(file.comb, paste0(gr.accs.e, acc))
-    v[is.na(v)] <- 0
-    
-    sv.beg[, acc] <- v[sv.pos$beg]
-    sv.end[, acc] <- v[sv.pos$end]
-  }
-  
-  # save(list = ls(), file = "tmp_workspace_sv.RData")
-  
-  # Check ranks
-  pokaz('Check ranks...')
-  print(Sys.time())
-  
-  for(acc in accessions){
-    acc.r = c(sv.beg[,acc] + 0.1, sv.end[,acc] - 0.1)
-    acc.r = rank(abs(acc.r)) * sign(acc.r)
-    acc.r = matrix(acc.r, ncol = 2)
-    
-    d = acc.r[,2] - acc.r[,1]
-    idx = which(d != 1)
-    if(length(idx) > 0){
-      sv.beg[idx, acc] = 0
-      sv.end[idx, acc] = 0
-    }
-  }
-  
-  # Clean up empty
-  pokaz('Clean up empty...')
-  print(Sys.time())
-  
-  sv.na = (rowSums(sv.beg) == 0) | (rowSums(sv.end) == 0)
-  sv.pos = sv.pos[!sv.na,]
-  sv.beg = sv.beg[!sv.na,]
-  sv.end = sv.end[!sv.na,]
-  
-  # Calculate lengths
-  sv.len.acc = abs(sv.beg - sv.end) - 1  # do not change
-  colnames(sv.len.acc) = accessions
-  
-  
-  # Remove those, which length in more that the length of SV
-  idx = rowMax(sv.len.acc) <= sv.pos$len
-  sv.pos = sv.pos[idx,]
-  sv.beg = sv.beg[idx,]
-  sv.end = sv.end[idx,]
-  sv.len.acc = sv.len.acc[idx,]
-  
-  if(nrow(sv.pos) == 0){
-    pokazAttention('SVs were not generaed, and IT IS OK!')
-    next
-  }
-  
-  # Calculate frequencies
-  sv.pos$freq.min = 0
-  sv.pos$freq.max = 0
-  for(i.col in 1:n.acc){
-    sv.pos$freq.min = sv.pos$freq.min + 1*((sv.len.acc[,i.col] <= (1-cutoff) * sv.pos$len) & (!is.na(sv.len.acc[,i.col])))
-    sv.pos$freq.max = sv.pos$freq.max + 1*((sv.len.acc[,i.col] >= cutoff * sv.pos$len) & (!is.na(sv.len.acc[,i.col])))
-  }
-  
-  sv.pos$freq.sum = sv.pos$freq.min + sv.pos$freq.max 
-  sv.pos$single = (sv.pos$freq.sum == n.acc) * 1
-  sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc])
-  
-  # save(list = ls(), file = "tmp_workspace_sv.RData")
-  
-  # Clean up
-  idx = !((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc))
-  sv.pos = sv.pos[idx,]
-  sv.beg = sv.beg[idx,]
-  sv.end = sv.end[idx,]
-  sv.len.acc = sv.len.acc[idx,]
-  
-  idx = !((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc))
-  sv.pos = sv.pos[idx,]
-  sv.beg = sv.beg[idx,]
-  sv.end = sv.end[idx,]
-  sv.len.acc = sv.len.acc[idx,]
-  
-  if(sum((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG1')
-  if(sum((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG2')
-  
-  s.gr.len <- nchar(as.character(nrow(sv.pos)))
-  i.chr = strsplit(s.comb, '_')[[1]][1]
-  gr = paste('SVgr', i.chr, 'id', sprintf("%0*d", s.gr.len, 1:nrow(sv.pos)), sep = '_')
-  sv.pos = cbind(gr, sv.pos)
-  sv.beg = cbind(gr, as.data.frame(sv.beg))
-  sv.end = cbind(gr, as.data.frame(sv.end))
-  sv.pos$chr = i.chr
-  sv.beg$chr = i.chr
-  sv.end$chr = i.chr
-  
-  sv.pos.all = rbind(sv.pos.all, sv.pos)
-  sv.beg.all = rbind(sv.beg.all, sv.beg)
-  sv.end.all = rbind(sv.end.all, sv.end)
-  
-  H5close()
-  gc()
-  
-}
-
-file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
-saveRDS(sv.pos.all, file.sv.pos)
-
-if(flag.stat.only){
-  pokaz('Stat was generated')
-  quit(save="no")
-} 
-
-## ---- Stop for Stat ----
-file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
-file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
-saveRDS(sv.beg.all, file.sv.pos.beg)
-saveRDS(sv.end.all, file.sv.pos.end)
-
-
-sv.mismatch = (sv.beg.all[, accessions] * sv.end.all[,accessions])  < 0
-for(acc in accessions){
-  sv.beg.all[sv.end.all[,acc] == 0, acc] = 0
-  sv.end.all[sv.beg.all[,acc] == 0, acc] = 0
-  
-  idx = which(sv.beg.all[, acc] * sv.end.all[,acc] < 0)
-  if(length(idx) > 0){
-    sv.beg.all[idx, acc] = 0
-    sv.end.all[idx, acc] = 0
-  }
-}
 
 # ---- FASTA of seSVs ----
 
 file.sv.small =  paste0(path.sv, 'seq_sv_short.fasta')
 file.sv.big =  paste0(path.sv, 'seq_sv_large.fasta')
-
 
 seqs.small = c()
 seqs.big = c()
