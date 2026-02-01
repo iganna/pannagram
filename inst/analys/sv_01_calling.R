@@ -74,6 +74,9 @@ if(!is.null(acc.anal)){
   }
 }
 
+accessions = acc.anal
+# pokaz('Accessions', acc.anal)
+
 # ***********************************************************************
 # ---- Paths ----
 path.features.msa <- opt$path.features.msa
@@ -94,8 +97,6 @@ if(!dir.exists(path.gff)) stop(paste0('No GFF directory found!', path.features.m
 num.cores <- opt$cores 
 pokaz('Number of cores', num.cores)
 
-myCluster <- parallel::makeCluster(num.cores, type = "PSOCK")
-doParallel::registerDoParallel(myCluster)
 
 cutoff <- opt$cutoff
 min.len <- opt$min.len
@@ -131,6 +132,34 @@ sv.beg.list <- list()
 sv.end.list <- list()
 
 for(s.comb in s.combinations){
+  
+  
+  file.sv.pos.log = paste0(path.log, 'sv.pos_', s.comb, '.log')
+  file.sv.pos.rds = paste0(path.log, 'sv.pos_', s.comb, '.rds')
+  file.sv.beg.log = paste0(path.log, 'sv.beg_', s.comb, '.log')
+  file.sv.beg.rds = paste0(path.log, 'sv.beg_', s.comb, '.rds')
+  file.sv.end.log = paste0(path.log, 'sv.end_', s.comb, '.log')
+  file.sv.end.rds = paste0(path.log, 'sv.end_', s.comb, '.rds')
+  
+  
+  if(!file.exists(file.sv.pos.log)) invisible(file.create(file.sv.pos.log))
+  if(!file.exists(file.sv.beg.log)) invisible(file.create(file.sv.beg.log))
+  if(!file.exists(file.sv.end.log)) invisible(file.create(file.sv.end.log))
+  
+  if(checkDone(file.sv.pos.log) &&
+     checkDone(file.sv.beg.log) &&
+     checkDone(file.sv.end.log)){
+    sv.pos = readRDS(file.sv.pos.rds)
+    sv.beg = readRDS(file.sv.beg.rds)
+    sv.end = readRDS(file.sv.end.rds)
+    
+    k <- length(sv.pos.list) + 1
+    sv.pos.list[[k]] <- sv.pos
+    sv.beg.list[[k]] <- sv.beg
+    sv.end.list[[k]] <- sv.end
+    next
+  } 
+  
   
   q.chr = strsplit(s.comb, '_')[[1]][1]
   r.chr = strsplit(s.comb, '_')[[1]][2]
@@ -169,13 +198,17 @@ for(s.comb in s.combinations){
   # sv.cover = 0
   # for(acc in accessions){
   
-  file.sv.cover = paste0(path.log, 'sv_cover.rds')
-  file.sv.cover.log = paste0(path.log, 'sv_cover.log')
+  file.sv.cover = paste0(path.log, 'sv_cover_',s.comb,'.rds')
+  file.sv.cover.log = paste0(path.log, 'sv_cover_',s.comb,'.log')
   if(!file.exists(file.sv.cover.log)) invisible(file.create(file.sv.cover.log))
   
   if(checkDone(file.sv.cover.log)){
     sv.cover = readRDS(file.sv.cover)
   } else {
+    
+    myCluster <- parallel::makeCluster(num.cores, type = "PSOCK")
+    doParallel::registerDoParallel(myCluster)
+    
     foreach::foreach(
       acc = accessions,
       .inorder = FALSE,
@@ -186,10 +219,10 @@ for(s.comb in s.combinations){
       pokaz('Positions of accession', acc)
       print(Sys.time())
       
-      file.log.loop = paste0(path.log, 'log_', acc, '.log')
+      file.log.loop = paste0(path.log, 'log_', acc, '_', s.comb, '.log')
       if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
       
-      file.loop.save = paste0(path.log, acc, '.rds')
+      file.loop.save = paste0(path.log, acc, '_', s.comb, '.rds')
       
       # ---- Check log Done ----
       if(checkDone(file.log.loop)){
@@ -251,14 +284,20 @@ for(s.comb in s.combinations){
       
       saveRDS(out, file.loop.save)
       pokaz('Done.', file=file.log.loop, echo=T)
+      
+      rm(v, v.r, out, sv.acc, idx.bad, b, e, d)
+      gc()
+      
       return(NULL)
     }
+    
+    parallel::stopCluster(myCluster)
     
     pokaz('Combine sv.cover')
     sv.cover <- 0
     for (acc in accessions) {
       pokaz('Acc', acc)
-      file.loop.save <- paste0(path.log, acc, '.rds')
+      file.loop.save = paste0(path.log, acc, '_', s.comb, '.rds')
       
       if (!file.exists(file.loop.save)) stop('Problem')
       
@@ -414,7 +453,15 @@ for(s.comb in s.combinations){
   
   if (nrow(sv.pos) == 0) next
   
-  k <- length(list) + 1
+  saveRDS(sv.pos, file.sv.pos.rds)
+  saveRDS(sv.beg, file.sv.beg.rds)
+  saveRDS(sv.end, file.sv.end.rds)
+  
+  pokaz('Done.', file=file.sv.pos.log, echo=T)
+  pokaz('Done.', file=file.sv.beg.log, echo=T)
+  pokaz('Done.', file=file.sv.end.log, echo=T)
+  
+  k <- length(sv.pos.list) + 1
   sv.pos.list[[k]] <- sv.pos
   sv.beg.list[[k]] <- sv.beg
   sv.end.list[[k]] <- sv.end

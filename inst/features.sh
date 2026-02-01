@@ -147,6 +147,8 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     mkdir -p $path_sv
     mkdir -p $path_gff
 
+    file_accessions="${path_inter}accessions.txt"
+    echo ${file_accessions}
     Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
         --path.features.msa ${path_features_msa} \
         --path.seq ${path_seq} \
@@ -154,7 +156,7 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
         --path.gff ${path_gff} \
         --ref  ${ref_pref} \
         --aln.type ${aln_type} \
-        --acc.anal ${acc_anal} \
+        --acc.anal ${file_accessions} \
         --cores ${cores} \
         --path.log "${path_log}sv_calling/"
     
