@@ -198,7 +198,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     if [ -z "${similarity_value}" ]; then
         similarity_value=85
     fi
-    coverage_value=${similarity_value}
+
     pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}."
 
     check_dir "$path_features_msa" || exit 1
@@ -207,7 +207,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     file_sv_large=${path_sv}seq_sv_large.fasta
     file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
-    file_sv_large_on_sv_mv="${path_sv}nestedness_sv_large_85_85.txt"
+    file_sv_large_on_sv_mv="${path_sv}nestedness_sv_large_${similarity_value}_${coverage_value}.txt"
 
     if [[ ! -f "$file_sv_large_on_sv_mv" ]]; then
         pokaz_message "Run Simsearch.."
@@ -219,8 +219,8 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
                   -out ${path_sv_simsearch} \
                   -cores "${cores}"
 
-        if [ -f "${path_sv_simsearch}seq_sv_large_85_85.txt" ]; then
-            mv "${path_sv_simsearch}seq_sv_large_85_85.txt" "${file_sv_large_on_sv_mv}"
+        if [ -f "${path_sv_simsearch}seq_sv_large_${similarity_value}_${coverage_value}.txt" ]; then
+            mv "${path_sv_simsearch}seq_sv_large_${similarity_value}_${coverage_value}.txt" "${file_sv_large_on_sv_mv}"
             rm -rf ${path_sv_simsearch}
         fi
     else
@@ -232,13 +232,17 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
         --path.sv ${path_sv} \
         --path.figures ${path_plots_sv} \
         --file.nestedness ${file_sv_large_on_sv_mv} \
-        --flag.plot ${plot_families}
+        --flag.plot ${plot_families} \
+        --similarity ${similarity_value} \
+        --coverage ${coverage_value}
 
     Rscript $INSTALLED_PATH/analys/sv_03_graph_candidates_only.R \
             --path.sv ${path_sv} \
             --path.figures ${path_plots_sv} \
             --file.nestedness ${file_sv_large_on_sv_mv} \
-            --flag.plot ${plot_families}
+            --flag.plot ${plot_families} \
+            --similarity ${similarity_value} \
+            --coverage ${coverage_value}
 
     # pokaz_stage "Get ORFs from Families..."
     # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \

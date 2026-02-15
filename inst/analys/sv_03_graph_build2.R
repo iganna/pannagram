@@ -23,6 +23,7 @@ option_list = list(
   make_option("--path.figures", type = "character", default = "", help = "Path to folder with figures"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option("--file.nestedness", type = "character", default = NULL, help = "File with nestedness"),
+  make_option("--similarity", type = "integer", default = 85, help = "Similarity"),
   make_option("--coverage", type = "integer", default = 85, help = "Coverage"),
   make_option("--cores", type = "integer", default = 1, help = "Number of cores to use for parallel processing"),
   make_option("--flag.plot", type = "logical", default = TRUE, help = "Enable plotting (default: TRUE)")
@@ -44,11 +45,16 @@ path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop(paste0('No SV figures dir', path.figures))
 
 file.nestedness <- opt$file.nestedness
+pokaz(file.nestedness)
 if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exist', file.nestedness))
 
 # ***********************************************************************
 # ---- Variables ----
+sim.cutoff = opt$similarity
 cov.cutoff = opt$coverage
+
+suff.cutoffs = paste0(sim.cutoff, '_', cov.cutoff)
+
 dominant.effect = 0.7
 
 # Filtration of the graph
@@ -422,15 +428,20 @@ components.lost = attributeNodes(edges.solved, edges.init)
 # ---- Save ----
 
 # Clustering safe
-saveRDS(components.solved, paste0(path.sv, 'sv_families.rds'))
-write.table(as.matrix(components.solved), paste0(path.sv, 'sv_families.txt'), 
+saveRDS(components.solved, 
+        paste0(path.sv, 'sv_families_',suff.cutoffs,'.rds'))
+write.table(as.matrix(components.solved), 
+            paste0(path.sv, 'sv_families_',suff.cutoffs,'.txt'), 
             row.names = T, col.names = F, sep = '\t', quote = F)
-write.table(as.matrix(components.lost), paste0(path.sv, 'sv_families_candidates.txt'), 
+write.table(as.matrix(components.lost), 
+            paste0(path.sv, 'sv_families_',suff.cutoffs,'_candidates.txt'), 
             row.names = T, col.names = F, sep = '\t', quote = F)
 
 ## Save edges
-saveRDS(edges.solved, paste0(path.sv, 'edges_families.rds'))
-write.table(edges.solved, paste0(path.sv, 'edges_families.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
+saveRDS(edges.solved, 
+        paste0(path.sv, 'edges_families_',suff.cutoffs,'.rds'))
+write.table(edges.solved, 
+            paste0(path.sv, 'edges_families_',suff.cutoffs,'.txt'), quote = F, sep = '\t', row.names = F, col.names = F)
 
 if(!flag.plot){
   quit(save = "no", status = 0)

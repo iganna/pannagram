@@ -23,6 +23,7 @@ option_list = list(
   make_option("--path.figures", type = "character", default = "", help = "Path to folder with figures"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option("--file.nestedness", type = "character", default = NULL, help = "File with nestedness"),
+  make_option("--similarity", type = "integer", default = 85, help = "Similarity"),
   make_option("--coverage", type = "integer", default = 85, help = "Coverage"),
   make_option("--cores", type = "integer", default = 1, help = "Number of cores to use for parallel processing"),
   make_option("--flag.plot", type = "logical", default = TRUE, help = "Enable plotting (default: TRUE)")
@@ -48,7 +49,10 @@ if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exi
 
 # ***********************************************************************
 # ---- Variables ----
+sim.cutoff = opt$similarity
 cov.cutoff = opt$coverage
+suff.cutoffs = paste0(sim.cutoff, '_', cov.cutoff)
+
 dominant.effect = 0.7
 
 # Filtration of the graph
@@ -93,12 +97,13 @@ nestedness = filterNestedness(nestedness,
 
 edges.init = getGraphFromNestedness(nestedness, cov.cutoff = cov.cutoff)
 
-edges.solved = readRDS(paste0(path.sv, 'edges_families.rds'))
+edges.solved = readRDS(paste0(path.sv, 'edges_families_', suff.cutoffs, '.rds'))
 
 components.lost = attributeNodes(edges.solved, edges.init)
 
 # ***********************************************************************
 # ---- Save ----
 
-write.table(as.matrix(components.lost), paste0(path.sv, 'sv_families_candidates.txt'), 
+write.table(as.matrix(components.lost), 
+            paste0(path.sv, 'sv_families_',suff.cutoffs,'_candidates.txt'), 
             row.names = T, col.names = F, sep = '\t', quote = F)

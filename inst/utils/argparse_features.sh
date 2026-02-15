@@ -38,9 +38,10 @@ while [ $# -gt 0 ]; do
         -sv_sim_prot)     run_sv_sim_prot=true; set_file_prot="$2";         shift 2 ;;
         -sv_orf)          run_sv_orf=true;                                  shift 1 ;;
         -sv_graph | \
-        -sv_families | -sv_family)     run_sv_graph=true;                                shift 1 ;;
-        -plot_families)   plot_families="T";                                shift 1 ;;
-        -sim)             similarity_value="$2";                               shift 2 ;;
+        -sv_families | -sv_family)      run_sv_graph=true;                  shift 1 ;;
+        -plot_families)                 plot_families="T";                  shift 1 ;;
+        -sim | -similarity)             similarity_value="$2";              shift 2 ;;
+        -cov | -coverage)               coverage_value="$2";                shift 2 ;;
         -sv_acc)          acc_anal="$2";                                    shift 2 ;;
         -annogroup)       run_annogroup=true;   path_annot="$2";            shift 2 ;;
         -aln_type)        aln_type="$2";                                    shift 2 ;;
@@ -106,6 +107,10 @@ else
     fi
 fi
 
+
+if [ -z "$coverage_value" ]; then
+    coverage_value="$similarity_value"
+fi
 
 
 
