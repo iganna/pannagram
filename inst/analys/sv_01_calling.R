@@ -520,6 +520,9 @@ sv.pos.all <- do.call(rbind, sv.pos.list)
 sv.beg.all <- do.call(rbind, sv.beg.list)
 sv.end.all <- do.call(rbind, sv.end.list)
 
+sv.pos.all$name = paste0(sv.pos.all$gr, '|', sv.pos.all$len)
+rownames(sv.pos.all) = sv.pos.all$name
+
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 saveRDS(sv.pos.all, file.sv.pos)
 
@@ -527,14 +530,12 @@ if(flag.stat.only){
   pokaz('Stat was generated')
   quit(save="no")
 } 
+
 ## ---- Stop for Stat ----
 file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
 file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
 saveRDS(sv.end.all, file.sv.pos.end)
-
-
-
 
 
 # ---- FASTA of seSVs ----
@@ -561,7 +562,7 @@ for(s.comb in s.combinations){
   for(irow in idx.small){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
     if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
-    seqs.small[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
+    seqs.small[sv.pos.all$name[irow]] = nt2seq(s.tmp)
   }
   
   # Big sequence
@@ -571,10 +572,8 @@ for(s.comb in s.combinations){
   # print(head(idx.big))
   for(irow in idx.big){
     s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
-    # print(sum(s.tmp == 'N'))
-    # print((0.5 * length(s.tmp)))
     if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
-    seqs.big[paste(sv.pos.all$gr[irow],sv.pos.all$len[irow], sep = '|')] = paste0(s.tmp, collapse = '')
+    seqs.big[sv.pos.all$name[irow]] = nt2seq(s.tmp)
   }
   pokaz('Number of large sequences', length(seqs.big))
   pokaz('Number of short sequences', length(seqs.small))
@@ -582,7 +581,6 @@ for(s.comb in s.combinations){
 
 writeFasta(seqs.small, file.sv.small)
 writeFasta(seqs.big, file.sv.big)
-
 
 
 # ---- GFF files ----

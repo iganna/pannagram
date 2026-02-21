@@ -5,7 +5,7 @@ This section describes how to extract families of Mobile Elements from the graph
 ## 0. Initial data
 To start extracting Mobile Element Families, you need either:
 – a FASTA file containing the sequences of structural variants, or
-– a file with nested similarity information produced by comparing SVs to each other (85% similarity and coverage).
+– a file with nested similarity information produced by comparing SVs to each other (for example, 85% similarity and coverage).
 
 Both files are expected to be located in:
 ```
@@ -52,7 +52,7 @@ After completion, the file you will use for downstream processing will be locate
 library(pannagram)
 library(ggplot2)
 
-file.nestedness <- 'seq_sv_large_80_80.txt'
+file.nestedness <- 'nestedness_sv_large_85_85.txt'  # or the output of simsearch
 
 
 res.sim = read.table(res.sim.file, header = T)

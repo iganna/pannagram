@@ -102,7 +102,7 @@ loop.function <- function(s.comb, echo = T){
   
   pos.diff = c()
   for(acc in accessions){
-    # pokaz('Sequence of accession', acc)
+    pokaz('Difference in accession', acc)
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     pos = which((v != s.pangen) & (v != '-'))
@@ -123,7 +123,7 @@ loop.function <- function(s.comb, echo = T){
   snp.matrix = s.pangen[pos]
   snp.val = c()
   for(acc in accessions){
-    # pokaz('Sequence of accession', acc)
+    pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     tmp = (v[pos] != s.pangen[pos]) * 1

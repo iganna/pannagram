@@ -54,6 +54,7 @@ sim.cutoff = opt$similarity
 cov.cutoff = opt$coverage
 
 suff.cutoffs = paste0(sim.cutoff, '_', cov.cutoff)
+pokaz('Cutoff suffix', suff.cutoffs)
 
 dominant.effect = 0.7
 
