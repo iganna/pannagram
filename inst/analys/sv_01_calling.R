@@ -523,6 +523,7 @@ sv.end.all <- do.call(rbind, sv.end.list)
 sv.pos.all$name = paste0(sv.pos.all$gr, '|', sv.pos.all$len)
 rownames(sv.pos.all) = sv.pos.all$name
 
+pokaz('Save pos-file...')
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
 saveRDS(sv.pos.all, file.sv.pos)
 
@@ -532,6 +533,7 @@ if(flag.stat.only){
 } 
 
 ## ---- Stop for Stat ----
+pokaz('Save beg-end files...')
 file.sv.pos.beg = paste0(path.sv, 'sv_pangen_beg.rds')
 file.sv.pos.end = paste0(path.sv, 'sv_pangen_end.rds')
 saveRDS(sv.beg.all, file.sv.pos.beg)
@@ -539,6 +541,7 @@ saveRDS(sv.end.all, file.sv.pos.end)
 
 
 # ---- FASTA of seSVs ----
+pokaz('Generate Fasta...')
 
 file.sv.small =  paste0(path.sv, 'seq_sv_short.fasta')
 file.sv.big =  paste0(path.sv, 'seq_sv_large.fasta')
@@ -579,6 +582,7 @@ for(s.comb in s.combinations){
   pokaz('Number of short sequences', length(seqs.small))
 }
 
+pokaz('Save Fasta...')
 writeFasta(seqs.small, file.sv.small)
 writeFasta(seqs.big, file.sv.big)
 
