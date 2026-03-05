@@ -107,10 +107,14 @@ else
     fi
 fi
 
+# Default values of Similarity and Coverage
+
+if [ -z "${similarity_value}" ]; then
+    similarity_value=85
+fi
 
 if [ -z "$coverage_value" ]; then
     coverage_value="$similarity_value"
 fi
-
 
 

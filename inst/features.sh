@@ -195,9 +195,6 @@ fi
 if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     pokaz_stage "Graph on SVs"
-    if [ -z "${similarity_value}" ]; then
-        similarity_value=85
-    fi
 
     pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}."
 
@@ -327,11 +324,11 @@ if [[ "${run_sv_sim}" == "true" ]]; then  # -sv_sim
         -on_seq  "${set_file}" \
         -out     "${path_simsearch_out}" \
         -cores   "${cores}" \
-        -sim     85 \
-        -cov     85
+        -sim     "${similarity_value}" \
+        -cov     "${coverage_value}"
 
     # Expected simsearch summary file (adjust if your tool uses a different name)
-    expected_out="${path_simsearch_out}${set_file_base}_85_85.txt"
+    expected_out="${path_simsearch_out}${set_file_base}_${similarity_value}_${coverage_value}.txt"
 
     if [[ -f "${expected_out}" ]]; then
         mv -f "${expected_out}" "${file_sv_large_on_set}"
