@@ -22,8 +22,8 @@ After the alignment step is complete, run the feature-calling module to identify
 
 ```bash
 features  -path_project ${PATH_PROJECT} \
-          -blocks \
-          -seq \
+          -synteny \
+          -consensus \
           -snp \
           -snp_pi \
           -sv \
