@@ -5,9 +5,10 @@ suppressMessages({
   library(crayon)
   library(rhdf5)
   library(muscle)
+  library(pannagram)
 })
 
-source(system.file("utils/utils.R", package = "pannagram"))
+# source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
 
 # ***********************************************************************
@@ -49,6 +50,7 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 aln.type.in = aln.type.clean
+aln.type.in = paste0(aln.type.in, '_')
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -110,11 +112,12 @@ for(s.comb in pref.combinations){
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
   
   # Check log Done
-  if(checkDone(file.log.loop)) return(NULL)
+  if(checkDone(file.log.loop)) next
   
   pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
+  # Load variables from the previous step
   file.ws = paste0(path.inter.msa, 'breaks_ws_', s.comb, '.RData')
   load(file.ws)
   
@@ -164,6 +167,7 @@ for(s.comb in pref.combinations){
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.inter.msa, 'singletons_',s.comb,'.rds'), compress = F)
   
+  pokaz('Singletons saved')
   ## ---- Analyse by portions ----
   
   idx.remained = setdiff(1:nrow(breaks), idx.singl)
@@ -174,6 +178,10 @@ for(s.comb in pref.combinations){
   k = 10
   order.acc = ceiling(1:length(accessions) / k)
   for(i.k in min(order.acc):max(order.acc)){
+    pokaz('Round', i.k, 'out of', max(order.acc))
+    i.k.string = paste0('Round ', i.k, 'finished.')
+    
+    if(checkDone(file.log.loop, word = i.k.string)) next
     
     accessions.tmp = accessions[which(order.acc == i.k)]
     for(acc in accessions.tmp){
@@ -181,6 +189,10 @@ for(s.comb in pref.combinations){
       file.chromosome = paste(path.chromosomes, 
                               acc, 
                               '_chr', q.chr, '.fasta', sep = '')
+      if(!file.exists(file.chromosome)){
+        pokaz('File', file.chromosome, 'does not exist')
+        stop()
+      }
       genome = readFasta(file.chromosome)
       genome = seq2nt(genome)
       
@@ -235,7 +247,7 @@ for(s.comb in pref.combinations){
       aln.seqs[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs[idx.tmp.acc], subsets, SIMPLIFY = FALSE)
       aln.seqs.names[idx.tmp.acc] <- mapply(function(x, y) c(x, y), aln.seqs.names[idx.tmp.acc], names(subsets), SIMPLIFY = FALSE)
       
-      rm(genome)
+      rmSafe(genome)
     }
     idx.save = c(idx.large, idx.extra)
     
@@ -256,14 +268,15 @@ for(s.comb in pref.combinations){
     } else { # Many cores
       pokaz('Save sequences with parallel...', file=file.log.loop, echo=echo.loop)
       foreach(i = idx.save,
-              .packages=c('crayon'))  %dopar% {
+              .packages=c('crayon', 'pannagram'))  %dopar% {
                 writeFasta(aln.seqs[[i]], 
                            file = paste0(path.mafft.in,breaks$file[i]), 
                            seq.names = aln.seqs.names[[i]],
                            append = T)
               }
     }
-    pokaz('.. done!', file=file.log.loop, echo=echo.loop)
+    
+    pokaz(i.k.string, file=file.log.loop, echo=echo.loop)
     
     aln.seqs[idx.save] <- list(NULL)
     aln.seqs.names[idx.save] <- list(NULL)
@@ -288,6 +301,7 @@ for(s.comb in pref.combinations){
   
   rm(aln.seqs)
   rm(aln.seqs.names)
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
 }
 
 if(num.cores > 1){

@@ -28,8 +28,10 @@
 #'
 #' @export
 #'
-dotplot <- function(seq1, seq2, wsize, nmatch) {
+dotplot <- function(seq1, seq2, wsize=15, nmatch=12) {
   
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
   
   # Remove gaps
@@ -54,7 +56,9 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   len1 = length(seq1) - wsize + 2
   len2 = length(seq2) - wsize + 2
   
-  pokaz(len1, len2, max(result$row), max(result$col))
+  result = result[order(result$values),]
+  
+  # pokaz(len1, len2, max(result$row), max(result$col))
   p = invisible(
         ggplot(result, aes(x = row, y = col, fill = values, color = values)) +
         geom_tile(width = 1, height = 1, linewidth = 0.5) +
@@ -80,23 +84,15 @@ dotplot <- function(seq1, seq2, wsize, nmatch) {
   return(p )
 }
 
-#'  Create a Dotplot for Two Nucleotide Sequences
-#'
-#' @description
-#' The same as `dotplot` but the sequences can be provided as strings
-#' 
-#' @export
-#'
-dotplot.s <- function(seq1, seq2, wsize, nmatch, ...) {
-  return(dotplot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
-}
-
 
 #' @export
 #'
-dotprot <- function(seq1, seq2, wsize, nmatch) {
+dotprot <- function(seq1, seq2, wsize=10, nmatch=5) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
   
   # Remove gaps
   seq1 = seq1[seq1 != '-']
@@ -135,13 +131,6 @@ dotprot <- function(seq1, seq2, wsize, nmatch) {
   return(p )
 }
 
-#' @export
-#'
-dotprot.s <- function(seq1, seq2, wsize, nmatch, ...) {
-  return(dotprot(seq2nt(seq1), seq2nt(seq2), wsize, nmatch, ...))
-}
-
-
 #' Generate a Dotplot for One Nucleotide Sequence
 #' 
 #' @description
@@ -162,9 +151,11 @@ dotprot.s <- function(seq1, seq2, wsize, nmatch, ...) {
 #' 
 #' @export
 
-dotself <- function(seq, wsize, nmatch, return.mx=F) {
+dotself <- function(seq, wsize=15, nmatch=12, return.mx=F) {
   
   if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  seq <- prepareNtSeq(seq)
   
   # Remove gaps
   seq = seq[seq != '-']
@@ -215,18 +206,6 @@ dotself <- function(seq, wsize, nmatch, return.mx=F) {
 }
 
 
-#'  Generate a Dotplot for One Nucleotide Sequence
-#'
-#' @description
-#' The same as `dotself` but the sequence can be provided as a string
-#' 
-#' @export
-#'
-#'
-dotself.s <- function(seq, wsize, nmatch, ...) {
-  return(dotself(seq2nt(seq), wsize, nmatch, ...))
-}
-
 #' Dotplot for Sequences and Their Reverse Complements
 #'
 #' @description
@@ -247,6 +226,8 @@ dotself.s <- function(seq, wsize, nmatch, ...) {
 #' @export
 dotspiegel <- function(seq, wsize, nmatch) {
   
+  seq <- prepareNtSeq(seq)
+  
   p.fw = dotplot(seq, seq, wsize, nmatch) + ggtitle('seq vs seq')
   p.rev = dotplot(seq, rev(seq), wsize, nmatch) + ggtitle('seq vs rev(seq)')
   
@@ -255,64 +236,38 @@ dotspiegel <- function(seq, wsize, nmatch) {
   return(pp)
 }
 
-#' Dotplot for Sequences and Their Reverse Complements
-#'
-#' @description
-#' The same as `dotspiegel` but the sequence can be provided as a string
-#'
-#' @param seq Sequence as a string.
-#' @param wsize Comparison window size.
-#' @param nmatch Minimum matches in window.
-#'
-#' @return ggplot of sequence self and reverse comparison.
-#' 
-#' @export
-dotspiegel.s <- function(seq, wsize, nmatch) {
-  return(dotspiegel(seq2nt(seq), wsize, nmatch))
-}
 
 #' Several dotplots with varying nmatch
 #'
 #' @param seq1 The first sequence to be compared.
 #' @param seq2 The second sequence to be compared.
 #' @param wsize The window size to be used in the dot plot.
-#' @param nmatch.beg Optional; the beginning number of matches required. 
-#'                   Defaults to the window size if not specified.
-#' @param nmatch.end Optional; the ending number of matches required.
-#'                   Defaults to the window size minus 5 if not specified.
-#' @param n.row Optional; the number of rows to arrange the plots in the grid.
-#'              Defaults to 2.
+#' @param nmatch.range Optional; a vector of match thresholds to use.
+#'                     If NULL, defaults to wsize:(wsize-5).
+#' @param n.row Optional; number of rows in the output grid (default = 2).
 #' @return A graphical object containing the grid of dotplots.
-#' 
+#'
 #' @export
-dotfacet <- function(seq1, seq2, wsize, nmatch.beg=NULL, nmatch.end=NULL, n.row = 2){
-  if(is.null(nmatch.beg)){
-    nmatch.beg = wsize
-    nmatch.end = NULL
+dotgrid <- function(seq1, seq2, wsize, nmatch.range = NULL, nrow = 1) {
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
+  
+  # If the range is not provided, use default sequence
+  if (is.null(nmatch.range)) {
+    nmatch.range <- wsize:(wsize - 5)
   }
   
-  if(is.null(nmatch.end)){
-    nmatch.end = wsize - 5
+  p.list <- list()
+  for (nmatch in nmatch.range) {
+    p.list[[length(p.list) + 1]] <- dotplot(seq1, seq2, wsize, nmatch)
   }
   
-  nmatch.range = nmatch.beg:nmatch.end
-  # pokaz('Range:', nmatch.range)
-  
-  p.list = list()
-  for(nmatch in nmatch.range){
-    p.list[[length(p.list) + 1]] = dotplot(seq1, seq2, wsize, nmatch)
-  }
-  
-  pp = cowplot::plot_grid(plotlist = p.list, nrow=n.row)
+  pp <- cowplot::plot_grid(plotlist = p.list, nrow = nrow)
   return(pp)
-  
 }
 
 
-
-dotfacet.s <- function(seq1, seq2, ...) {
-  return(dotfacet(seq2nt(seq1), seq2nt(seq2),...))
-}
 
 
 #' Compare Two Matrices for Dotplot Generation
@@ -404,7 +359,10 @@ seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
 #' @param nmatch Integer. Minimum number of matches required within a window to count it as a match (default: 9).
 #'
 #' @export
-dotscore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
+dotscore <- function(seq1, seq2, wsize=10, nmatch=9, method='dotplot') {
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
   
   mx1 = toupper(seq2mx(seq1, wsize))
   mx2 = toupper(seq2mx(seq2, wsize))
@@ -419,6 +377,43 @@ dotscore <- function(seq1, seq2, method='dotplot', wsize=10, nmatch=9) {
   
   n = (length(seq1) + length(seq2)) / 2
   return(c(n.forward, n.backward) / n)
+}
+
+#' Calculate dotplot-based sequence coverage
+#'
+#' Computes the fraction of a sequence covered by matching windows between two sequences
+#' using a dotplot comparison, including reverse complement matches.
+#'
+#' @param seq1 Character string, first DNA sequence.
+#' @param seq2 Character string, second DNA sequence.
+#' @param wsize Integer, window size (default: 10).
+#' @param nmatch Integer, minimum number of matching characters per window (default: 9).
+#'
+#' @return Numeric value — proportion of seq1 covered by matches with seq2 or its reverse complement.
+#' @export
+dotcover <- function(seq1, seq2, wsize=10, nmatch=9,
+                     strand=0) {
+  
+  mx1 = toupper(seq2mx(seq1, wsize))
+  mx2 = toupper(seq2mx(seq2, wsize))
+  result = mxComp(mx1, mx2, wsize, nmatch)
+  
+  seq2.rc = revCompl(seq2)
+  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
+  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  
+  if(strand == 0){
+    n.cover = length(unique(c(result.rc$row, result$row)))  
+  } else if (strand == 1){
+    n.cover = length(unique(c(result$row)))  
+  } else if (strand == -1){
+    n.cover = length(unique(c(result.rc$row)))  
+  } else {
+    stop('Wrong strand value. Allowed: -1, 0, 1.')
+  }
+  
+  n = (length(seq1))
+  return(n.cover / n)
 }
 
 dotScore <- function(...) {

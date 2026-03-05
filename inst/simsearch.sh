@@ -2,6 +2,11 @@
 
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 
+if [ -z "$INSTALLED_PATH" ]; then
+    echo "Error: package 'pannagram' is not installed."
+    exit 1
+fi
+
 FASTA_SUFFIX=("fa" "fasta" "fas" "fna" "fn" "ffn" "faa")
 
 source "$INSTALLED_PATH/utils/chunk_error_control.sh"
@@ -14,12 +19,12 @@ source "$INSTALLED_PATH/utils/argparse_simsearch.sh"
 # ----------------------------------------------------------------------------
 
 output_pref=$(add_symbol_if_missing "$output_pref" "/")
-pokaz_message "Prefex for the output file was changed to ${output_pref}"
+# pokaz_message "Prefex for the output file was changed to ${output_pref}"
 
 # Create intermediate directory
 intermediate_dir="${output_pref}.intermediate"
 mkdir -p "$intermediate_dir"
-pokaz_message "Intermediate files will be stored in $intermediate_dir"
+# pokaz_message "Intermediate files will be stored in $intermediate_dir"
 
 
 # Add all FASTA files from path_genome to db_files if path_genome is not empty
@@ -56,10 +61,9 @@ fi
 for db_file in "${db_files[@]}"; do
     db_pref=$(basename "$db_file")
     db_pref=${db_pref%%.*}
-    file_out_cnt="${output_pref}${db_pref}_${sim_threshold}_${coverage}.cnt"
-    pokaz_message "File with counts ${file_out_cnt}"
+    file_out_cnt="${output_pref}${db_pref}_${similarity}_${coverage}.cnt"
     if [ -f "$file_out_cnt" ]; then
-       pokaz_message "Counts for ${db_pref} estimated."
+       pokaz_message "Counts for ${db_pref} have been estimated."
        continue
     fi
 
@@ -71,7 +75,7 @@ for db_file in "${db_files[@]}"; do
     # Create DB in intermediate_dir
     db_path_intermediate="${intermediate_dir}/${db_name}"
     if [ ! -f "${db_path_intermediate}.phr" ] && [ ! -f "${db_path_intermediate}.nhr" ]; then
-        pokaz_stage "Creating database for $db_file in intermediate directory..."
+        pokaz_stage "Creating database for $db_file..."
         makeblastdb -in "$db_file_full" -dbtype "$dbtype" -out "$db_path_intermediate" > /dev/null
     fi
 
@@ -85,7 +89,8 @@ for db_file in "${db_files[@]}"; do
         fi
     else
         # Perform BLAST search
-        pokaz_stage "BLAST search in $db_file..."
+        pokaz_stage "BLAST search $(basename "$file_input") in $(basename "$db_file")"
+        pokaz_message "Running BLAST on ${cores} threads..."
         if [ "$use_aa" -eq 1 ]; then
             blast_res_pre="${blast_res}.pre"
 
@@ -108,7 +113,7 @@ for db_file in "${db_files[@]}"; do
                 -query "$file_input" \
                 -out "$blast_res" \
                 -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" \
-                -perc_identity "$((sim_threshold - 1))" \
+                -perc_identity "$((similarity - 1))" \
                 -num_threads "$cores"
         fi
     fi
@@ -119,9 +124,14 @@ for db_file in "${db_files[@]}"; do
         continue
     fi
 
+    if [ "$stop_after_blast_flag" -eq 1 ]; then
+        pokaz_message "Simsearch was stopped after BLAST, but before the output file was created."
+        exit 0
+    fi
+
     # ---------------------------------------------
     # Proceed to similarity search
-    pokaz_stage "Search in ${db_file}: similarity ${sim_threshold}, coverage ${coverage}..."
+    pokaz_stage "Processing BLAST-results..."
 
     # Determine if the search is on a set of sequences or a genome
     if [ -n "$file_seq" ]; then
@@ -130,7 +140,7 @@ for db_file in "${db_files[@]}"; do
             --in_file "$file_input" \
             --res "$blast_res" \
             --out "${output_pref}${db_name}.rds" \
-            --sim "$sim_threshold" \
+            --sim "$similarity" \
             --use_strand "$use_strand" \
             --db_file "$db_file_full" \
             --coverage "${coverage}"
@@ -140,8 +150,10 @@ for db_file in "${db_files[@]}"; do
             --in_file "$file_input" \
             --res "$blast_res" \
             --out "${output_pref}${db_name}" \
-            --sim "$sim_threshold" \
+            --sim "$similarity" \
             --coverage "$coverage"
+
+        # pokaz_message "File with counts was generated: ${file_out_cnt}"
     fi
 
     # Remove the BLAST temporary file if not needed
@@ -156,7 +168,7 @@ done
 if [[ -z "$file_seq" && -z "$file_genome" ]]; then
     Rscript "$INSTALLED_PATH/sim/sim_in_genome_combine.R" \
         --out_dir "$output_pref" \
-        --sim "$sim_threshold" \
+        --sim "$similarity" \
         --coverage "$coverage"
 fi
 

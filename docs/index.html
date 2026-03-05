@@ -76,37 +76,65 @@
         <nav class="sidebar">
             <ul>
                 <li>
-                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/home.md" data-content="fileContent1">Home</a>
+                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/home.md" data-content="fileContent1">Getting Started</a>
                     <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/home.md" data-content="fileContent1">Overview</a>
                         <a href="#" class="clickable" data-file="content/home_install.md" data-content="fileContent1">Installation</a>
-                        <a href="#" class="clickable" data-file="content/home_options.md" data-content="fileContent1">Common options</a>
+                        <a href="#" class="clickable" data-file="content/home_input_data.md" data-content="fileContent2">Input Data</a>
+                        <a href="#" class="clickable" data-file="content/home_quick_start.md" data-content="fileContent1">Quick Start</a>
+                        <!-- <a href="#" class="clickable" data-file="content/home_options.md" data-content="fileContent1">Common options</a> -->
+                        <a href="#" class="clickable" data-file="content/home_output_data.md" data-content="fileContent2">Output Data</a>
+                        
                     </div>
                 </li>
                 <li>
-                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/alignment.md" data-content="fileContent1">Alignment</a>
+                    <a href="#" class="dropdown-btn" id="alignmentLink" data-content="fileContent1" onclick="event.preventDefault();">Pangenome Alignment</a>
                     <div class="dropdown-container">
-                        <a href="#" class="clickable" data-file="content/alignment_data.md" data-content="fileContent1">Test dataset</a>
-                        <a href="#" class="clickable" data-file="content/alignment_options.md" data-content="fileContent2">Auxiliary options</a>
+                        <a href="#" class="clickable" data-file="content/alignment.md" data-content="fileContent1">Overview</a>
+                        <a href="#" class="clickable" data-file="content/alignment_modes.md" data-content="fileContent1">Build Alignments</a>
+                        <a href="#" class="clickable" data-file="content/alignment_options.md" data-content="fileContent2">Extra parameters</a>
+
                     </div>
                 </li>
                 <li>
-                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/analys.md" data-content="fileContent1">Features</a>
+                    <a href="#" class="dropdown-btn" id="alignmentLink" data-content="fileContent1" onclick="event.preventDefault();">Feature-calling</a>
                     <div class="dropdown-container">
-                        <a href="#" class="clickable" data-file="content/analys_blocks.md" data-content="fileContent1">Blocks</a>
-                        <a href="#" class="clickable" data-file="content/analys_sv.md" data-content="fileContent1">SV-calling</a>
-                        <a href="#" class="clickable" data-file="content/analys_snp.md" data-content="fileContent2">SNP-calling</a>
-                        <!-- <a href="#" class="clickable" data-file="content/analys_genes.md" data-content="fileContent2">Gene annotation</a> -->
+                        <a href="#" class="clickable" data-file="content/features.md" data-content="fileContent1">Overview</a>
+                        <a href="#" class="clickable" data-file="content/features_summary.md" data-content="fileContent1">Alignment Summary</a>
+                        <a href="#" class="clickable" data-file="content/features_snp.md" data-content="fileContent2">SNPs and Diversity</a>
+                        <a href="#" class="clickable" data-file="content/features_sv.md" data-content="fileContent1">SVs and Mobilome Families</a>
+                        <!-- <a href="#" class="clickable" data-file="content/features_genes.md" data-content="fileContent2">Gene annotation</a> -->
                     </div>
                 </li>
-                <!-- <li>
-                    <a href="#" class="dropdown-btn clickable" id="alignmentLink" data-file="content/visual.md" data-content="fileContent1">Visualisation</a>
-                    <div class="dropdown-container">
-                        <a href="#" class="clickable" data-file="content/visual_pangen.md" data-content="fileContent1">Pangenome</a>
-                        <a href="#" class="clickable" data-file="content/visual_r.md" data-content="fileContent2">SV-graph</a>
-                    </div>
-                </li> -->
                 <li>
                     <a href="#" class="clickable" data-file="content/simsearch.md" data-content="fileContent1" id="homeLink">Simsearch</a>
+                </li>
+                <li>
+                    <a href="#" class="clickable" data-file="content/chromotools.md" data-content="fileContent1" id="homeLink">Chromotools</a>
+                </li>
+                <li>
+                    <a href="#" class="dropdown-btn" id="alignmentLink" data-content="fileContent1" onclick="event.preventDefault();">R library: Sequences</a>
+                    <div class="dropdown-container">
+                        <!-- <a href="#" class="clickable" data-file="content/library.md" data-content="fileContent1">Overview</a> -->
+                        <a href="#" class="clickable" data-file="content/library_functions.md" data-content="fileContent1">Handy Functions</a>
+                        <a href="#" class="clickable" data-file="content/library_dotplot.md" data-content="fileContent2">Dotplots</a>
+                        <a href="#" class="clickable" data-file="content/library_orffinder.md" data-content="fileContent2">ORF-Finder</a>
+                        <a href="#" class="clickable" data-file="content/library_msaplot.md" data-content="fileContent2">Sequence Alignment Plots</a>
+                    </div>
+
+                    <a href="#" class="dropdown-btn" id="alignmentLink" data-content="fileContent1" onclick="event.preventDefault();">R library: Pangenome</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/library_panplot.md" data-content="fileContent2">Pangenome Plots</a>
+                        <a href="#" class="clickable" data-file="content/library_liftover.md" data-content="fileContent2">Coordinate Conversion & Liftover</a>
+                        <a href="#" class="clickable" data-file="content/library_cutaln.md" data-content="fileContent2">Extracting Specific Regions</a>
+                    </div>
+
+
+                    <!-- <a href="#" class="dropdown-btn" id="alignmentLink" data-content="fileContent1" onclick="event.preventDefault();">R library: Mobilome</a>
+                    <div class="dropdown-container">
+                        <a href="#" class="clickable" data-file="content/library_family.md" data-content="fileContent2">Mobilome Families</a>
+                    </div> -->
+
                 </li>
                 <li>
                     <a href="#" class="clickable" data-file="content/workshop.md" data-content="fileContent1" id="homeLink">Workshop</a>

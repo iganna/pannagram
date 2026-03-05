@@ -2,6 +2,11 @@
 
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 
+if [ -z "$INSTALLED_PATH" ]; then
+    echo "Error: package 'pannagram' is not installed." >&2
+    exit 1
+fi
+
 source $INSTALLED_PATH/utils/chunk_error_control.sh
 source $INSTALLED_PATH/utils/utils_bash.sh
 source $INSTALLED_PATH/utils/help_pannagram.sh
@@ -11,6 +16,9 @@ source $INSTALLED_PATH/utils/chunk_paths.sh
 # Make folders
 mkdir -p "${path_project}"
 check_dir "${path_project}"
+
+mkdir -p "${path_inter}"
+mkdir -p ${path_log}
 
 # Handling accessions
 genome_extensions=('fasta' 'fna' 'fa' 'fas')
@@ -49,6 +57,7 @@ if [ -n "${acc_file}" ] && [ -f "${acc_file}" ]; then
     pokaz_message "File with accessions is provided"
     # Read names from the file into an array
     while IFS= read -r name; do
+        [ -z "$name" ] && continue  # skip empty lines
         acc_target+=("$name")
     done < "$acc_file"
 fi
@@ -100,7 +109,7 @@ if [ "${mode_pangen}" != "${name_mode_msa}" ]; then
 
     refs_all=("${ref_name}")
 
-# Handling reference genomes in MSA modes
+# Handling reference genomes in Pangenome modes
 else
     # Check the number of reference genomes for randomization
     if [ -z "${ref_num}" ]; then
@@ -129,7 +138,7 @@ else
         IFS=',' read -ra refs_all <<< "$ref_set"
 
         # Check if the number of reference genomes is sufficient
-        if (( ${#refs_all[@]} -lt ref_num )); then
+        if (( ${#refs_all[@]} < $ref_num )); then
             genomes_needed=$((ref_num - ${#refs_all[@]}))
             with_level 1 pokaz_attention "Not enough reference genomes. Adding $genomes_needed genome(s)."
 
@@ -153,6 +162,7 @@ fi
 
 # Number of chromosomes
 
+# echo "Num_Chr $nchr Num_Chr_Ref $nchr_ref"
 if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are not defined.
     # Try to define options for number of chromosomes
     pokaz_stage "Define the number of chromosomes..."
@@ -160,11 +170,11 @@ if [ -z "${nchr}" ] && [ -z "${nchr_ref}" ]; then  # Both nchr and nchr_ref are 
     if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
         nchr=0
         nchr_ref=0
-    else   # REF and MSA mode
+    else   # REF and PAN mode
         # Define from files
         # Count the number of chromosomes in files
         counts=()
-        pokaz_message "Acc ChrNum"
+        pokaz_message "Accession Number_of_Chromosomes"
         for ext in "${genome_extensions[@]}"; do
             # Loop over each element in acc_set
             for acc in "${acc_set[@]}"; do
@@ -236,7 +246,9 @@ fi
 #     done
 # fi
 
-mkdir -p "${path_inter}"
+
+# Define Combinations
+# pokaz_stage "Define Combinations"
 
 # File with combinations
 file_combinations="${path_inter}combinations.txt"
@@ -261,7 +273,6 @@ if [ -z "${comb_file}" ]; then
         fi
 
     else
-
         # Write combinations
         if [ "$nchr" -ne 0 ] && [ "$nchr_ref" -ne 0 ]; then
             for N in $(seq 1 $nchr); do
@@ -339,8 +350,6 @@ if ! [[ "$log_level" =~ ^[0-3]$ ]]; then
     exit 1
 fi
 
-mkdir -p ${path_log}
-
 # File with steps logs
 file_log="${path_log}steps.log"
 > "${file_log}"
@@ -370,7 +379,7 @@ if [ "${mode_pangen}" == "${name_mode_pre}" ]; then  # PRE mode
 elif [ "${mode_pangen}" == "${name_mode_ref}" ]; then  # PRE mode
     message_mode="Pannagram runs in the REFENRECE-based mode with reference $ref_name."
 elif [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
-    message_mode="Pannagram runs in the Multiple Genome Alignment mode."
+    message_mode="Pannagram runs in the REFENRECE-FREE Alignment mode (Pangenome Alignment)."
 else 
     with_level 1 pokaz_error "Error: Wrong running mode"
     help_in_box
@@ -379,16 +388,12 @@ fi
 
 with_level 1 pokaz_attention ${message_mode}
 
-if [ "${mode_pangen}" == "${name_mode_msa}" ]; then  # PRE mode
-    with_level 1 pokaz_attention "Path with consensus MSA: ${path_features_msa}"
-fi
-
-with_level 2 pokaz_message "Number of chromosomes ${nchr}"
-with_level 2 pokaz_message "Number of cores ${cores}"
+with_level 2 pokaz_message "Number of chromosomes: ${nchr}"
+with_level 2 pokaz_message "Number of cores: ${cores}"
 
 
 # Check previous command
-
+# pokaz_stage "Setup Logs"
 file_params="${path_log}command.log"
 
 if [[ -f "$file_params" ]]; then
@@ -396,8 +401,14 @@ if [[ -f "$file_params" ]]; then
     # Loading previous parameters
     source "$file_params"
 
-    if [[ "${prev_mode_pangen}" != "${mode_pangen}" ]]; then
-        rm -f ${path_log}/*_done
+    if [[ "$prev_mode_pangen" != "$mode_pangen" ]]; then
+        if [[ "$prev_mode_pangen" == "$name_mode_ref" && "$mode_pangen" == "$name_mode_pre" ]]; then
+            rm -f "${path_log}"/*_done
+        fi
+
+        if [[ "$prev_mode_pangen" == "$name_mode_msa" && "$mode_pangen" != "$name_mode_msa" ]]; then
+            rm -f "${path_log}"/*_done
+        fi
     fi
 
     if [[ "$prev_path_in" != "$path_in" || \
@@ -426,9 +437,10 @@ echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
 
 
 # Check Steps
+pokaz_stage "Check Steps"
 
 # Define the log directory
-step_files=$(find "${path_log}" -type f -name "step*_done")
+step_files=$(find "${path_log}" -maxdepth 1 -type f -name "step*_done")
 
 if [[ $step_start -eq 0 ]]; then
 
@@ -550,16 +562,11 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # Done
     touch "${step_file}"
-    
 fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
 # Split reference fasta into chromosomes if additionally needed
-if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
-
-    ((step_num = step_num - 1))
+if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
 
     with_level 1 pokaz_stage "Additional step. Reference genome into chromosomes."  # IT SHOULD BE INSIDE THE "IF"
     for ref0 in "${refs_all[@]}"; do
@@ -583,7 +590,8 @@ if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
 
             # Run the step
             Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
-                    --path.in ${path_ref} --path.out ${path_chrom}   \
+                    --path.in ${path_ref} \
+                    --path.out ${path_chrom}   \
                     --cores ${cores} \
                     --accessions ${file_acc_ref} \
                     --n.chr ${nchr_ref}  \
@@ -596,15 +604,10 @@ if [[ "${path_in}" != "$path_ref" || "$nchr_ref" != "$nchr" ]]; then
             touch "${step_file}"
         fi
     done
-
-    source $INSTALLED_PATH/utils/chunk_step_done.sh
 fi
 
 # ORF-Finder
-
 if [ ! -z "${flag_orf}" ]; then
-
-    ((step_num = step_num - 1))
 
     with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
@@ -640,10 +643,11 @@ if [ ! -z "${flag_orf}" ]; then
         # Done
         touch "${step_file}"
     fi
-
-    source $INSTALLED_PATH/utils/chunk_step_done.sh
 fi
 
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# -------------------------------------------------
 # Split query chromosomes into parts
 
 with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
@@ -765,6 +769,7 @@ for ref0 in "${refs_all[@]}"; do
 
         # Done
         touch "${step_file}"
+        # rm -rf ${path_parts} 
         
     fi
 
@@ -1126,14 +1131,16 @@ fi
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════╗       ______
 # ║                                                                                   ║      /|_||_\`.__
-# ║                                  MSA                                              ║     (   _    _ _\
+# ║                           Pangenome Alignment                                     ║     (   _    _ _\
 # ║                                                                                   ║     =`-(_)--(_)-'
 # ╚═══════════════════════════════════════════════════════════════════════════════════╝ 
 
-with_level 1 pokaz_stage "MGA starts...  (^>^)"
+with_level 1 pokaz_stage "Pangenome Alignment starts..."
 
 # Run consensus for a pair of files
 with_level 1 pokaz_stage "Step ${step_num}. Randomization of references.." 
+
+mkdir -p "${path_inter_msa}"
 
 flag_first=true
 
@@ -1164,7 +1171,9 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
         fi  
 
         Rscript $INSTALLED_PATH/pangen/comb_02_two_refs2.R \
-                --path.cons ${path_features_msa} \
+                --path.features.msa ${path_features_msa} \
+                --path.inter.msa ${path_inter_msa} \
+                --accessions ${file_accessions} \
                 --ref0 ${ref0} \
                 --ref1 ${ref1} \
                 --cores ${cores} \
@@ -1180,8 +1189,6 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Remain only the trustable positions
 with_level 1 pokaz_stage "Step ${step_num}. Remain only the trustable syntenic positions.."
-
-mkdir -p "${path_inter_msa}"
 
 # Logs
 step_name="step${step_num}_comb_03_cleanup"
@@ -1204,6 +1211,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     Rscript $INSTALLED_PATH/pangen/comb_03_cleanup.R \
             --path.features.msa ${path_features_msa} \
             --path.inter.msa ${path_inter_msa} \
+            --accessions ${file_accessions} \
             --cores ${cores} \
             --path.log ${path_log_step} \
             --log.level ${log_level} 
@@ -1238,8 +1246,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_breaks.R \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
+            --accessions ${file_accessions} \
             --cores "${cores}" \
-            --path.chromosomes "${path_chrom}" \
             --path.log "${path_log_step}" \
             --log.level "${log_level}" \
             --max.len.gap "${max_len_gap}"
@@ -1318,6 +1326,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     if [ "$clean" == "T" ]; then 
         touch ${path_log_step}fake.log
         rm -f ${path_log_step}*
+        rm -f ${path_inter_msa}aln_short*rds
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_05_small.R \
@@ -1325,8 +1334,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
             --path.log "${path_log_step}" \
-            --log.level "${log_level}" \
-            --max.len.gap "${max_len_gap}"
+            --log.level "${log_level}" 
 
     # Done
     touch "${step_file}"
@@ -1452,10 +1460,10 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_features_msa}msa_fake_h5
+        touch ${path_features_msa}pan_fake_h5
         touch ${path_log_step}fake.log
 
-        rm -f ${path_features_msa}msa*h5
+        rm -f ${path_features_msa}pan*h5
         rm -f ${path_log_step}*
     fi  
 
@@ -1464,6 +1472,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.mafft.out ${path_mafft_out} \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
+            --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
 
@@ -1512,6 +1521,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # EXTRA STEPS
 if [[ "$extra_steps" == "F" ]]; then
+    with_level 1 pokaz_message "Script completed successfully"
     exit 0
 fi
 
@@ -1519,11 +1529,11 @@ pokaz_attention "Extra steps are running.."
 
 # Get sequences of extra long fragments - 1
 
-with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments - 1."
 
 # Paths
-path_extra_long="${path_extra}long/"
 mkdir -p "$path_extra"
+path_extra_long="${path_extra}long/"
 mkdir -p "$path_extra_long"
 
 # Logs
@@ -1553,7 +1563,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
             --len.cutoff 25000 \
-            --aln.type.in 'msa_'
+            --aln.type.in 'pan'
 
     # Done
     touch "${step_file}"
@@ -1562,7 +1572,7 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Align extra long fragments - 1
-with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments - 1."
 
 # Logs
 step_name="step${step_num}_comb_10"
@@ -1591,7 +1601,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'msa_'
+            --aln.type.in 'pan'
 
     # Done
     touch "${step_file}"
@@ -1601,7 +1611,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Insert extra long fragments - 1
 
-with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments - 1."
 
 # Logs
 step_name="step${step_num}_comb_11"
@@ -1627,7 +1637,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'msa_'
+            --aln.type.in 'pan'
 
     # Done
     touch "${step_file}"
@@ -1636,10 +1646,10 @@ fi
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Get sequences of extra long fragments - 2
-with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Get sequences of extra long fragments - 2."
 
 # Paths
-path_extra_long2="${path_extgra}long2/"
+path_extra_long2="${path_extra}long2/"
 mkdir -p "$path_extra_long2"
 
 # Logs
@@ -1669,7 +1679,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
             --len.cutoff 200000 \
-            --aln.type.in 'extra1_'
+            --aln.type.in 'extra1'
 
     # Done
     touch "${step_file}"
@@ -1682,7 +1692,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # ----------------------------------------------
 # Align extra long fragments - 2
 
-with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments - 2."
 
 # Logs
 step_name="step${step_num}_comb_10"
@@ -1711,7 +1721,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'extra1_'
+            --aln.type.in 'extra1'
 
     # Done
     touch "${step_file}"
@@ -1723,7 +1733,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # ----------------------------------------------
 # Insert extra long fragments - 2
 
-with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments."
+with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments - 2."
 
 # Logs
 step_name="step${step_num}_comb_11"
@@ -1749,8 +1759,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level} \
-            --aln.type.in 'extra1_' \
-            --aln.type.out 'extra2_'
+            --aln.type.in 'extra1' \
+            --aln.type.out 'extra2'
 
     # Done
     touch "${step_file}"

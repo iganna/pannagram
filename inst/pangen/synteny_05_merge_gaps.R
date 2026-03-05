@@ -78,6 +78,18 @@ files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
 # Filter files that start with one of the values in accessions
 files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 
+# files.maj = c(
+#   "100326_1_1_maj.rds",
+#   "100324_1_1_maj.rds",
+#   "100325_1_1_maj.rds",
+#   "100323_3_3_maj.rds",
+#   "100324_3_3_maj.rds",
+#   "100323_4_4_maj.rds",
+#   "100326_4_4_maj.rds",
+#   "100325_3_3_maj.rds")
+# 
+# pokaz(files.maj)
+
 # Additional filtration when combinations are provided
 if (length(readLines(file.combinations)) != 0) {
   combinations = read.table(file.combinations)
@@ -336,7 +348,7 @@ loop.function <- function(f.maj,
       x.res <- data.frame(matrix(NA, nrow = 0, ncol = length(colnames(x.sk)), 
                                  dimnames = list(NULL, colnames(x.sk))))
     }
-    rmSafe(x.gap)
+    rm(x.gap, x.tmp, df.gap, cnt, idx.good)
     
   } else {
     # Create empty
@@ -429,8 +441,8 @@ loop.function <- function(f.maj,
       if(length(tmp) == 0) stop('Wrong, no correspondence')
       id.corresp = rbind(id.corresp, cbind(tmp, irow))
     }
-    id.corresp <- setNames(as.data.frame(id.corresp), c('init', 'new'))
-    
+    id.corresp <- as.data.frame(id.corresp)
+    colnames(id.corresp) <- c("init", "new")
     
     # IDX
     if(nrow(x.tmp) == 1){
@@ -484,6 +496,9 @@ loop.function <- function(f.maj,
       pokaz('after3')
     }
     
+    rm(x.gap, x.tmp, pos.shift, id.corresp, num.q, num.r, df.gap, idx.bw, idx.remain)
+    gc()
+    
   } else {
     
     # Create empty
@@ -501,6 +516,9 @@ loop.function <- function(f.maj,
   
   x.comb = glueZero(x.comb)
   
+  rm(x.sk, x.res, x.bw)
+  gc()
+  
   # # To catch possible bugs
   # if(T){
   #   file.ws = "tmp_workspace.RData"
@@ -514,25 +532,28 @@ loop.function <- function(f.maj,
   
   # ---- Check uniqueness ---- 
   
-  x.sk1 = x.comb
+  # x.sk1 = x.comb
+  
   # x.sk1 = x.res
   # x.sk1 = x.bw
   
   # save(list = ls(), file = "tmp_workspace.RData")
   
-  rownames(x.sk1) = NULL
-  pos.q.occup = rep(0, max.chr.len)
-  for(irow in 1:nrow(x.sk1)){
-    pp = x.sk1$V4[irow]:x.sk1$V5[irow]
-    if(sum(pos.q.occup[pp]) > 0) {
-      pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
-      stop('non-unique') 
-    }
-    # pos.q.occup[pp] = pos.q.occup[pp] + 1
-    pos.q.occup[pp] = irow
-  }
-  sum(pos.q.occup > 1)
-  sum(pos.q.occup)
+  # rownames(x.sk1) = NULL
+  # pos.q.occup = rep(0, max.chr.len)
+  # for(irow in 1:nrow(x.sk1)){
+  #   pp = x.sk1$V4[irow]:x.sk1$V5[irow]
+  #   if(sum(pos.q.occup[pp]) > 0) {
+  #     pokaz('Non-unique', file=file.log.loop, echo=echo.loop)
+  #     stop('non-unique') 
+  #   }
+  #   # pos.q.occup[pp] = pos.q.occup[pp] + 1
+  #   pos.q.occup[pp] = irow
+  # }
+  # sum(pos.q.occup > 1)
+  # sum(pos.q.occup)
+  # rm(pos.q.occup)
+  # gc()
   
   # ---- Check genomes ----
   
@@ -586,10 +607,12 @@ if(num.cores == 1){
     registerDoParallel(myCluster)
     
     # Run parallel loop for files in the current batch
-    batch.results <- foreach(f.maj = batch.files, .packages = c('crayon')) %dopar% {
-      loop.function(f.maj, echo.loop = echo.loop)
-    }
-    tmp <- c(tmp, batch.results)
+    invisible(
+      foreach(f.maj = batch.files, .packages = c('crayon')) %dopar% {
+        loop.function(f.maj, echo.loop = echo.loop)
+        NULL 
+      }
+    )
     
     stopCluster(myCluster)  # Stop the cluster after completing the batch
     
@@ -601,7 +624,12 @@ if(num.cores == 1){
 
 warnings()
 
+# stop('all files tested')
+
 pokaz('Done.', file=file.log.main, echo=echo.main)
+
+
+
 
 # ---- Manual testing  ----
 

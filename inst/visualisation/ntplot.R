@@ -25,6 +25,9 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
                '-' = '#EEEDEF',
                'N' = '#31363F')
   
+  sequence <- prepareNtSeq(sequence)
+  sequence = sequence[sequence != '-']
+  
   sequence = toupper(sequence)
   
   positions <- seq(1, length(sequence) - wnd + 1)
@@ -42,6 +45,8 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
   p = ggplot(df.freq, aes(x = Position, y = Frequency, fill = Base)) +
     geom_bar(stat = "identity", width = 1) +
     theme_minimal()+ scale_fill_manual(values = msa.cols) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
     theme(legend.position = "bottom", legend.direction = "horizontal")
   
   if(nt.separate){
@@ -52,8 +57,51 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
   return(p)
 }
 
+#' Calculate GC Content in DNA Sequences
+#'
+#' This function calculates the GC content for a given set of DNA sequences, using a specified window size.
+#'
+#' @param sequences A character vector of DNA sequences. Each element of the vector should be a DNA sequence in the form of a string.
+#' @param wnd An integer specifying the window size for calculating the GC content. Default is 100.
+#' @return A list where each element corresponds to a sequence from the input `s`. Each element is a numeric vector
+#' representing the GC content for each window in the sequence.
+#' @examples
+#' # Example usage
+#' sequences <- c("ATGCGATCGATCG", "GCGCGCGCGCGCG", "ATATATATATAT")
+#' gcContent(sequences, wnd = 5)
+#'
 #' @export
-ntplot.s <- function(s,  wnd = 100, nt.separate = F, ...) {
-  return(ntplot(seq2nt(s),  wnd=wnd, nt.separate = nt.separate, ...))
+gcContent <- function(sequences, wnd = NULL){
+
+  if(is.null(wnd)){
+    gc.list = c()
+  } else {
+    gc.list = list()
+  }
+  
+  sequences = toupper(sequences)
+  
+  for(i.s in seq_along(sequences)){
+    s = sequences[i.s]
+    
+    if(is.null(wnd)){
+      s = seq2nt(s)
+      gc.tmp = sum((s == 'G') | (s == 'C')) / length(s)
+      gc.list[i.s] = gc.tmp
+    } else if(nchar(s[i.seq]) <= wnd){
+      s = seq2nt(s)
+      gc.tmp = sum((s == 'G') | (s == 'C')) / length(s)
+      gc.list[[i.s]] = gc.tmp
+    } else {
+      m = splitSeq(s[i.seq], n = wnd, merge = F)
+      gc.tmp = rowSums(m == 'G') + rowSums(m == 'C')
+      gc.tmp = gc.tmp / wnd  
+      gc.list[[i.s]] = gc.tmp
+    }
+  }
+  names(gc.list) = names(sequences)
+  return(gc.list)
 }
+
+
 

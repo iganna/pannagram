@@ -30,29 +30,32 @@ else
 fi
 
 after_blast_flag=0
+stop_after_blast_flag=0
 keep_blast_flag=0
 use_strand=T
 use_aa=0
 cores=1
 
 # Read arguments
+cmdline="$(basename "$0") $@"
 while [ "$1" != "" ]; do
     case $1 in
         -h | --help )         show_help; exit ;;
-        -in_seq | -in-seq )   file_input=$2;    shift 2 ;;
-        -out )                output_pref=$2;   shift 2 ;;
-        -sim | -similarity )  sim_threshold=$2; shift 2 ;;
-        -cov | -coverage )    coverage=$2;      shift 2 ;;
+        -in_seq | -in-seq | -query_seqs )   file_input=$2;    shift 2 ;;
+        -out )                             output_pref=$2;   shift 2 ;;
+        -sim | -similarity )               similarity=$2;    shift 2 ;;
+        -cov | -coverage )                 coverage=$2;      shift 2 ;;
 
-        -on_seq    | -on-seq )    file_seq=$2;    shift 2 ;;
-        -on_genome | -on-genome ) file_genome=$2; shift 2 ;;
-        -on_path   | -on-path )   path_genome=$2; shift 2 ;;
+        -on_seq    | -on-seq    | -target_seqs )    file_seq=$2;    shift 2 ;;
+        -on_genome | -on-genome | -target_genome ) file_genome=$2; shift 2 ;;
+        -on_path   | -on-path   | -target_path )   path_genome=$2; shift 2 ;;
 
-        -afterblast ) after_blast_flag=1; shift ;;
-        -keepblast )  keep_blast_flag=1;  shift ;;
-        -aa|-prot )   use_aa=1;           shift ;;
+        -afterblast ) after_blast_flag=1;         shift ;;
+        -keepblast )  keep_blast_flag=1;          shift ;;
+        -stopafterblast) stop_after_blast_flag=1; shift ;;
+        -aa|-prot )   use_aa=1;                   shift ;;
 
-        -strandfree ) use_strand=F; shift ;;
+        -strandfree ) use_strand=F;               shift ;;
 
         -cores)
         if [[ -n "${2-}" ]] && [[ "$2" =~ ^[0-9]+$ ]]; then
@@ -64,7 +67,9 @@ while [ "$1" != "" ]; do
         fi
         ;;
 
-        * ) pokaz_error "Unknown parameter: $1"; help_in_box; exit 1;;
+        * ) pokaz_error "Unknown parameter: $1"; 
+            pokaz_attention "!!! Please check your command: ${cmdline}";
+            help_in_box; exit 1;;
     esac
 done
 
@@ -73,7 +78,6 @@ if (( cores < 1 )); then
 elif (( cores > max_cores )); then
   cores=$max_cores
 fi
-pokaz_message "Running BLAST on ${cores} threads."
 
 # Ensure only one of -on_seq, -on_genome, -on_path is set
 count=0
@@ -82,7 +86,7 @@ count=0
 [ ! -z "$path_genome" ] && count=$((count + 1))
 
 if [ $count -ne 1 ]; then
-    pokaz_error "Error: You must specify exactly one of -on_seq, -on_genome, or -on_path."
+    pokaz_error "Error: One or mode of required paraments were not provided."
     help_in_box
     exit 1
 fi
@@ -161,29 +165,47 @@ if [ -n "$path_genome" ]; then
 fi
 
 # Check if similarity threshold parameter is provided
-if [ -z "$sim_threshold" ]; then
+if [ -z "$similarity" ]; then
     if [ "$use_aa" -eq 1 ]; then
-        sim_threshold=60
-        pokaz_message "Similarity threshold not specified, default for '-aa': ${sim_threshold}"
+        similarity=60
+        pokaz_message "Similarity threshold not specified, default for '-aa': ${similarity}"
     else
-        sim_threshold=85
-        pokaz_message "Similarity threshold not specified, default: ${sim_threshold}"
+        similarity=85
+        pokaz_message "Similarity threshold not specified, default: ${similarity}"
     fi
+else
+    pokaz_message "Similarity threshold: ${similarity}"
 fi
 
 # Check if coverage parameter is provided. If not - set qeual to sim
 if [ -z "$coverage" ]; then
-    coverage=${sim_threshold}
-    pokaz_message "Coverage not specified, set to default: ${sim_threshold}"
+    coverage=${similarity}
+    pokaz_message "Coverage threshold not specified, default: ${coverage}"
+else
+    pokaz_message "Coverage threshold: ${coverage}"
 fi
+
+
+# Check if 'similarity' is empty
+if [[ -z "$similarity" ]]; then
+    echo "Error: similarity is empty"
+    exit 1
+fi
+
+# Check if 'coverage' is empty
+if [[ -z "$coverage" ]]; then
+    echo "Error: coverage is empty"
+    exit 1
+fi
+
 
 # Determine BLAST command and database type
 if [ "$use_aa" -eq 1 ]; then
-    pokaz_message "Searching for proteins in nucleotide db"
+    # pokaz_message "Searching for proteins in nucleotide db"
     blast_cmd="tblastn"
     dbtype="nucl"
 else
-    pokaz_message "Searching for nucleotides in nucleotide db"
+    # pokaz_message "Searching for nucleotides in nucleotide db"
     blast_cmd="blastn"
     dbtype="nucl"
 fi

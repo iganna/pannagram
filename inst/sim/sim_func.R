@@ -298,8 +298,10 @@ findNestedness <- function(v.res, use.strand = T){
   
   v.res$V1 = v.res$comb
   v.res$V8 = v.res$comb
-  cover1 = getOneSideCoverage(v.res)
-  cover8 = getOneSideCoverage(v.res, side = 1)
+  cover1.info = getOneSideCoverage(v.res)
+  cover1 = cover1.info$coverage
+  cover8.info = getOneSideCoverage(v.res, side = 1)
+  cover8 = cover8.info$coverage
   
   
   v.cover = data.frame(C1 = cover1)
@@ -385,7 +387,12 @@ getOneSideCoverage <- function(v.rest, side = 0){
   v.rest$cover = v.rest$cover + v.rest$overlap
   
   coverage = tapply(v.rest$cover, v.rest$V1, sum)
-  return(coverage)
+  
+  beg = tapply(v.rest$cover, v.rest$V2, min)
+  end = tapply(v.rest$cover, v.rest$V3, max)
+  return(list(coverage = coverage,
+              beg = beg,
+              end = end))
 }
 
 

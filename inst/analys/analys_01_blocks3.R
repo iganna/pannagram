@@ -7,14 +7,19 @@ suppressMessages({
   library(rhdf5)
   library(pannagram)
   library(optparse)
+  library(ggplot2)
 })
 
-source(system.file("utils/chunk_hdf5.R", package = "pannagram"))
+# ***********************************************************************
+# ---- Alignment types ----
 
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
+  make_option("--path.project",      type = "character", default = NULL, help = "Path to the project"),
   make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa dir (internal)"),
   make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
   make_option("--path.figures",      type = "character", default = "",   help = "Path to folder with figures"),
@@ -29,19 +34,26 @@ opt = parse_args(opt_parser, args = args);
 
 # print(opt)
 
-source(system.file("utils/chunk_logging.R", package = "pannagram"))
+# ***********************************************************************
+# ---- Logging ----
 
-aln.type <- opt$aln.type
-ref.name <- opt$ref
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ***********************************************************************
+# ---- Variables ----
+
 num.cores <- opt$cores
 wnd.size <- opt$wnd.size
+block.len.min = 20000
 
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+# ***********************************************************************
+# ---- Paths ----
+
+path.project <- opt$path.project
+if(!dir.exists(path.project)) stop('Consensus folder doesn’t exist')
 
 path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
-
-# pokaz(path.features.msa)
 
 path.inter.msa <- opt$path.inter.msa
 if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
@@ -49,42 +61,29 @@ if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
 path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
 
+# ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
-s.pattern <- paste0("^", aln.type, ".*h5")
-# pokaz(aln.type)
-s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-# pokaz(s.combinations)
-s.combinations = gsub(aln.type, "", s.combinations)
-# pokaz(s.combinations)
-s.combinations = gsub(".h5", "", s.combinations)
-# pokaz(s.combinations)
 
-
-# pokaz('Reference:', ref.name)
-if(ref.name != ""){
-  ref.suff = paste0('_', ref.name)
-  
-  pokaz('Reference:', ref.name)
-  s.combinations <- s.combinations[grep(ref.suff, s.combinations)]
-  s.combinations = gsub(ref.suff, "", s.combinations)
-  
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
 } else {
-  ref.suff = ''
+  aln.type = aln.type.msa
 }
 
-if(length(s.combinations) == 0){
-  # save(list = ls(), file = "tmp_workspace_s.RData")
-  stop('No Combinations found.')
-} else {
-  pokaz('Combinations', s.combinations)  
-  if(!checkCombinations(s.combinations)){
-    stop("Wrong combination format.\nPossible hint: check that you have provided the name of the reference genome -ref.")
-  }
-}
+# Reference genome
+ref.name <- opt$ref
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
+source(system.file("visualisation/panplot.R", package = "pannagram")) 
+
 # ***********************************************************************
 # ---- MAIN program body ----
 
-file.blocks = paste0(path.inter.msa, aln.type, 'syn_blocks', ref.suff,'.rds')
+file.blocks = paste0(path.inter.msa, 'syn_blocks_', aln.type, ref.suff,'.rds')
+# pokaz(file.blocks)
 
 if(!file.exists(file.blocks)){
   df.all = c()
@@ -93,7 +92,7 @@ if(!file.exists(file.blocks)){
     pokaz('Combination', s.comb)
     # --- --- --- --- --- --- --- --- --- --- ---
     
-    file.comb.in = paste0(path.features.msa, aln.type, s.comb, ref.suff,'.h5')
+    file.comb.in = paste0(path.features.msa, aln.pref, s.comb, ref.suff,'.h5')
     
     groups = h5ls(file.comb.in)
     accessions = groups$name[groups$group == gr.accs.b]
@@ -102,7 +101,7 @@ if(!file.exists(file.blocks)){
       pokaz('Accession', acc)
       v <- h5read(file.comb.in, paste0(gr.accs.e, acc))
       
-      save(list = ls(), file = "tmp_workspace_acc.RData")
+      # save(list = ls(), file = "tmp_workspace_acc.RData")
       
       df.acc <- getBlocks(v, f.split = FALSE)
       if(nrow(df.acc) == 0) {
@@ -141,8 +140,6 @@ if(!file.exists(file.blocks)){
   df.all$pan.b[idx.dir] = df.all$pan.e[idx.dir]
   df.all$pan.e[idx.dir] = tmp
   
-  # save(list = ls(), file = "tmp_workspace_synblocks_test.RData")
-  
   saveRDS(df.all, file.blocks)  
 } else {
   pokaz("File with blocks was generated in advance", file.blocks)
@@ -159,30 +156,12 @@ accessions = unique(df.all$acc)
 for(s.comb in unique(df.all$comb)){
   pokaz('Combination', s.comb)
   
-  df.tmp = df.all[df.all$comb == s.comb,]
+  i.chr = parseStrings(s.comb, n = 1, split = '_', numeric = T)
+  # save(list = ls(), file = "tmp_workspace.RData")
   
-  accessions = unique(df.tmp$acc)
-  if(length(accessions) == 1){
-    pokazAttention('Synteny plot can not be generated for combination', s.comb)
-    next
-  } else {
-    pokaz('Number of accessions is', length(accessions))
-  }
-  if(ref.name %in% accessions){
-    accessions = c(ref.name, setdiff(accessions, ref.name))
-  }
+  p = panplot(path.project = path.project, i.chr = i.chr, aln.type = aln.type, ref.acc = ref.name)
   
-  i.order = 1:length(accessions)
-  
-  df.tmp$acc <- factor(df.tmp$acc, levels = accessions)
-  
-  # save(list = ls(), file = "tmp_workspace_blocks.RData")
-  
-  p = panplot(df.tmp, 
-              accessions = accessions, 
-              i.order = i.order, 
-              wnd.size = wnd.size) 
-  savePDF(p, path = path.figures, name = paste0('fig_synteny_',s.comb), width = 6, height = 4 / 27 * length(accessions))
+  savePDF(p, path = path.figures, name = paste0('synteny_', aln.pref, s.comb, ref.suff), width = 6, height = length(accessions) / 6 + 1)
 }
 
 

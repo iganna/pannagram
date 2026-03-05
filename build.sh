@@ -18,5 +18,6 @@ Rscript -e 'devtools::install()'
 # Linking executable scripts to PATH
 ln -sf $PREFIX/lib/R/library/pannagram/features.sh $PREFIX/bin/features
 ln -sf $PREFIX/lib/R/library/pannagram/pannagram.sh $PREFIX/bin/pannagram
+ln -sf $PREFIX/lib/R/library/pannagram/pannagram_f.sh $PREFIX/bin/pannagram_f
 ln -sf $PREFIX/lib/R/library/pannagram/simsearch.sh $PREFIX/bin/simsearch
 ln -sf $PREFIX/lib/R/library/pannagram/chromotools.sh $PREFIX/bin/chromotools

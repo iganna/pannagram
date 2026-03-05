@@ -1,0 +1,43 @@
+---
+title: "Pangenome plots"
+output: null_document
+---
+
+
+```{r}
+
+library(pannagram)
+library(ggplot2)
+
+```
+
+
+```{r}
+stop("Define!")
+path.project = ''
+```
+
+# Panplot
+```{r}
+p = panplot(path.project = path.project, i.chr = 1, aln.type = 'extra2')
+p
+savePNG(p, path="../images", name = 'panplot', width = 5, height = 4)
+```
+
+
+
+# StntenyDot
+```{r}
+p = syntenyplot(path.project = path.project, acc = 'GCA_000008865.2', ref='GCA_000005845.2')
+p
+savePNG(p, path="../images", name = 'syntenyplot', width = 4, height = 4)
+```
+
+# Pan Growth
+```{r}
+p = pangrowth(path.project=path.project, acc='6909', i.chr=1, aln.type='extra2')
+p
+
+savePNG(p, path="../images", name = 'pangrowth', width = 5, height = 4)
+```
+

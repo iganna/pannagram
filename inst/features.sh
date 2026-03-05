@@ -2,6 +2,11 @@
 
 INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 
+if [ -z "$INSTALLED_PATH" ]; then
+    echo "Error: package 'pannagram' is not installed." >&2
+    exit 1
+fi
+
 source "$INSTALLED_PATH/utils/chunk_error_control.sh"
 source "$INSTALLED_PATH/utils/utils_bash.sh"
 source "$INSTALLED_PATH/utils/help_features.sh"
@@ -12,7 +17,7 @@ check_dir ${path_project}
 
 # General alignment processing
 if [ "$run_blocks" = true ]; then # -blocks
-    pokaz_stage "Get blocks."
+    pokaz_stage "Get synteny blocks."
 
     # check_dir "$path_inter_msa"    || exit 1
     check_dir "$path_features_msa" || exit 1
@@ -21,6 +26,7 @@ if [ "$run_blocks" = true ]; then # -blocks
     mkdir -p ${path_plots_synteny}
 
     Rscript $INSTALLED_PATH/analys/analys_01_blocks3.R \
+        --path.project ${path_project} \
         --path.inter.msa ${path_inter_msa} \
         --path.features.msa ${path_features_msa} \
         --path.figures ${path_plots_synteny} \
@@ -109,18 +115,26 @@ if [ "$run_snp_pi" = true ]; then # -snp_pi
             --file.pi "${output_file}.sites.pi"
 
         echo "Plink.."
-        plink --vcf "${vcf_file}" --distance --out "${vcf_file}.dist" --allow-extra-chr &>/dev/null
+        plink --vcf "${vcf_file}" --distance --out "${vcf_file}.dist" --allow-extra-chr > /dev/null
 
         Rscript $INSTALLED_PATH/analys/analys_04_snp_dist.R \
             --path.figures ${path_plots_snp} \
             --file.pi ${vcf_file} \
             --path.snp ${path_snp}
+
+
+        rm -f "${path_snp}"*FORMAT
+        rm -f "${path_snp}"*nosex
+        rm -f "${path_snp}"*log
+        rm -f "${path_snp}"*dist
+        rm -f "${path_snp}"*id
+        
     done
     pokaz_message "Step -snp_pi is done!"
 fi
 
 
-# Sv calling
+# SV calling
 if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     pokaz_stage "SV-calling"
     # Philosophy: GFF does not make any sense without a pangenome consensus fasta. 
@@ -133,6 +147,7 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     mkdir -p $path_sv
     mkdir -p $path_gff
 
+    file_accessions="${path_inter}accessions.txt"
     Rscript $INSTALLED_PATH/analys/sv_01_calling.R \
         --path.features.msa ${path_features_msa} \
         --path.seq ${path_seq} \
@@ -140,7 +155,9 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
         --path.gff ${path_gff} \
         --ref  ${ref_pref} \
         --aln.type ${aln_type} \
-        --acc.anal ${acc_anal}
+        --acc.anal ${file_accessions} \
+        --cores ${cores} \
+        --path.log "${path_log}sv_calling/"
     
     mkdir -p $path_plots_sv
 
@@ -158,7 +175,6 @@ if [ "$run_sv_orf" = true ]; then # -sv_orf
     pokaz_stage "Get ORFs from SVs"
 
     Rscript $INSTALLED_PATH/analys/sv_05_orfs.R \
-        --path.features.msa ${path_features_msa} \
         --path.sv ${path_sv}
 fi
 
@@ -179,56 +195,56 @@ fi
 if [ "$run_sv_graph" = true ]; then # -sv_graph
 
     pokaz_stage "Graph on SVs"
-    if [ -z "${similarity_value}" ]; then
-        pokaz_message "Simirarity value is 85% (default)"
-        similarity_value=85
-    fi
-    coverage_value=${similarity_value}
-    pokaz_message "Coverage value is set to ${coverage_value}%"
+
+    pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}."
 
     check_dir "$path_features_msa" || exit 1
     check_dir "$path_sv"           || exit 1
     check_dir "$path_plots_sv"     || exit 1
 
-    file_sv_big=${path_sv}seq_sv_big.fasta
-    file_sv_big_on_sv=${file_sv_big%.fasta}_on_sv_blast.txt
+    file_sv_large=${path_sv}seq_sv_large.fasta
+    file_sv_large_on_sv=${file_sv_large%.fasta}_on_sv_blast.txt
+    file_sv_large_on_sv_mv="${path_sv}nestedness_sv_large_${similarity_value}_${coverage_value}.txt"
 
-    # Check if BLAST database exists
-    makeblastdb -in "$file_sv_big" -dbtype nucl > /dev/null
-    
-    # if [ ! -f "${file_sv_big_on_sv}" ]; then
-        blastn -db ${file_sv_big} -query ${file_sv_big} -out ${file_sv_big_on_sv} \
-           -perc_identity ${similarity_value} \
-           -num_threads "${cores}" \
-           -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen"
-           
-    # fi
-    pokaz_message "Blast is done."
-    pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}"
+    if [[ ! -f "$file_sv_large_on_sv_mv" ]]; then
+        pokaz_message "Run Simsearch.."
 
-    file_sv_big_on_sv_cover=${file_sv_big%.fasta}_on_sv_cover.rds
-    Rscript $INSTALLED_PATH/sim/sim_in_seqs.R \
-        --in_file ${file_sv_big} \
-        --db_file ${file_sv_big} \
-        --res ${file_sv_big_on_sv} \
-        --out ${file_sv_big_on_sv_cover} \
-        --use_strand T \
-        --sim ${similarity_value} \
+        simsearch -in_seq ${file_sv_large} \
+                  -on_seq ${file_sv_large} \
+                  -sim ${similarity_value} \
+                  -cov ${coverage_value} \
+                  -out ${path_sv_simsearch} \
+                  -cores "${cores}"
+
+        if [ -f "${path_sv_simsearch}seq_sv_large_${similarity_value}_${coverage_value}.txt" ]; then
+            mv "${path_sv_simsearch}seq_sv_large_${similarity_value}_${coverage_value}.txt" "${file_sv_large_on_sv_mv}"
+            rm -rf ${path_sv_simsearch}
+        fi
+    else
+        pokaz_message "Simsearch was executed before."
+    fi
+
+    pokaz_stage "Building SV-Graph for Mobile Element Families..."
+    Rscript $INSTALLED_PATH/analys/sv_03_graph_build2.R \
+        --path.sv ${path_sv} \
+        --path.figures ${path_plots_sv} \
+        --file.nestedness ${file_sv_large_on_sv_mv} \
+        --flag.plot ${plot_families} \
+        --similarity ${similarity_value} \
         --coverage ${coverage_value}
 
-    rm "$file_sv_big".nin
-    rm "$file_sv_big".nhr
-    rm "$file_sv_big".nsq
+    Rscript $INSTALLED_PATH/analys/sv_03_graph_candidates_only.R \
+            --path.sv ${path_sv} \
+            --path.figures ${path_plots_sv} \
+            --file.nestedness ${file_sv_large_on_sv_mv} \
+            --flag.plot ${plot_families} \
+            --similarity ${similarity_value} \
+            --coverage ${coverage_value}
 
-    pokaz_stage "Plotting SV-Graph..."
-    Rscript $INSTALLED_PATH/analys/sv_03_plot_graph.R \
-        --path.features.msa ${path_features_msa} \
-        --path.sv ${path_sv} \
-        --path.figures ${path_plots_sv}
-
-    Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
-        --path.features.msa ${path_features_msa} \
-        --path.sv ${path_sv}
+    # pokaz_stage "Get ORFs from Families..."
+    # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
+    #     --path.features.msa ${path_features_msa} \
+    #     --path.sv ${path_sv} 
 
     pokaz_message "Step -sv_graph is done!"
 fi
@@ -238,20 +254,37 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
     if [ ! -f "${set_file_prot}" ]; then
         pokaz_error "File with proteins does not exist, provide an existing file."
-    elif [ -f "${path_sv}/sv_big_orfs.fasta" ]; then
-        pokaz_stage "BLAST on proteins..."
+    elif [ -f "${path_sv}/sv_large_orfs.fasta" ]; then
+
+        # Define the output file
+        file_sv_large_on_set="${path_sv}sv_large_orfs_on_set.txt"
+        if [ -f "$file_sv_large_on_set" ]; then
+            pokaz_attention "Warning: you have already run the search for ORFs of SVs against a database."
+            timestamp=$(date +%Y%m%d_%H%M%S)
+            file_sv_large_on_set="${path_sv}sv_large_orfs_on_set_${timestamp}.txt"
+            echo "The result of the new search will be saved in: ${file_sv_large_on_set}"
+        else
+            echo "The result of the search for ORFs of SVs against the database will be saved in: ${file_sv_large_on_set}."
+        fi
 
         path_simsearch_out="${path_sv}.simsearch/"
-        echo "Output ${path_simsearch_out}"
-        # simsearch -in_seq "${path_sv}sv_big_orfs.fasta" -on_seq ${set_file_prot} -out ${path_simsearch_out} -cores "${cores}" -prot
+        # simsearch -in_seq "${path_sv}seq_sv_large_orfs.fasta" \
+        #           -on_seq ${set_file_prot} \
+        #           -out ${path_simsearch_out} \
+        #           -cores "${cores}" \
+        #           -prot \
+        #           -sim 10 \
+        #           -cov 80 
 
+        set_file_base_prot="$(basename "$set_file_prot")"
+        makeblastdb -in "$set_file_prot" -dbtype prot -out "${path_simsearch_out}${set_file_base_prot}" > /dev/null
 
-        base_set_file_prot="$(basename "$set_file_prot")"
-        makeblastdb -in "$set_file_prot" -dbtype prot -out "${path_simsearch_out}${base_set_file_prot}" > /dev/null
+        # Run blast
+        pokaz_stage "BLAST on proteins..."
 
-        blastp -db "${path_simsearch_out}${base_set_file_prot}" \
-               -query "${path_sv}sv_big_orfs.fasta" \
-               -out "${path_sv}blast_sv_big_orfs_on_set.txt" \
+        blastp -db "${path_simsearch_out}${set_file_base_prot}" \
+               -query "${path_sv}seq_sv_large_orfs.fasta" \
+               -out ${file_sv_large_on_set} \
                -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
                -num_threads "${cores}"
     else
@@ -260,35 +293,52 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
 fi
 
-# Annotation groups
-# if [ "$run_sv_sim" = true ]; then # -sv_sim
-#     check_missing_variable "set_file"
+# Similarity with the set of sequences
 
-#     if [ -z "${similarity_value}" ]; then
-#         pokaz_message "Simirarity value is 85% (default)"
-#         similarity_value=85
-#     fi
 
-#     # Check if BLAST database exists
-#     # if [ ! -f "${set_file}.nhr" ]; then
-#         makeblastdb -in "$set_file" -dbtype nucl > /dev/null
-#     # fi
+# Run SV similarity search if requested
+if [[ "${run_sv_sim}" == "true" ]]; then  # -sv_sim
+    check_missing_variable "set_file"
+
     
-#     file_sv_big=${path_consensus}sv/seq_sv_big.fasta
-#     file_sv_big_on_set=${file_sv_big%.fasta}_on_set_blast.txt
+    set_file_base="$(basename "${set_file%.*}")"
+    file_sv_large_on_set="${path_sv}/nestedness_sv_large_on_${set_file_base}.txt"
 
-#     # if [ ! -f "${file_sv_big_on_set}" ]; then
-#         blastn -db "${set_file}" -query "${file_sv_big}" -out "${file_sv_big_on_set}" \
-#            -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
-#            -perc_identity "${similarity_value}" -num_threads "${cores}"
-#     # fi
+    # If result already exists, write to a timestamped file instead of clobbering
+    if [[ -f "$file_sv_large_on_set" ]]; then
+        pokaz_attention "Warning: you have already run the search for ORFs of SVs against a database."
+        timestamp="$(date +%Y%m%d_%H%M%S)"
+        file_sv_large_on_set="${path_sv}/sv_large_on_${set_file_base}_${timestamp}.txt"
+        echo "The result of the new search will be saved in: ${file_sv_large_on_set}"
+    else
+        echo "The result of the search for ORFs of SVs against the database will be saved in: ${file_sv_large_on_set}."
+    fi
 
-#     file_sv_big_on_set_cover=${file_sv_big%.fasta}_on_set_cover.rds
-#     Rscript $INSTALLED_PATH/sim/sim_in_seqs.R --in_file ${file_sv_big} --db_file ${set_file} --res ${file_sv_big_on_set} \
-#             --out ${file_sv_big_on_set_cover} --sim ${similarity_value} --use_strand F
+    # Temporary output directory for simsearch; keep it hidden (leading dot)
+    path_simsearch_out="${path_sv}/.simsearch_on_${set_file_base}/"
+    mkdir -p "${path_simsearch_out}"
 
-#     rm "${set_file}.nin" "${set_file}.nhr" "${set_file}.nsq"
-# fi
+    # --- Run simsearch ---
+    simsearch \
+        -in_seq  "${path_sv}/seq_sv_large.fasta" \
+        -on_seq  "${set_file}" \
+        -out     "${path_simsearch_out}" \
+        -cores   "${cores}" \
+        -sim     "${similarity_value}" \
+        -cov     "${coverage_value}"
 
+    # Expected simsearch summary file (adjust if your tool uses a different name)
+    expected_out="${path_simsearch_out}${set_file_base}_${similarity_value}_${coverage_value}.txt"
+
+    if [[ -f "${expected_out}" ]]; then
+        mv -f "${expected_out}" "${file_sv_large_on_set}"
+        rm -rf "${path_simsearch_out}"
+        echo "Search finished. Results saved to: ${file_sv_large_on_set}"
+    else
+        pokaz_attention "simsearch did not produce the expected file: ${expected_out}"
+        echo "Keeping intermediate directory for inspection: ${path_simsearch_out}"
+        exit 1
+    fi
+fi
 
 pokaz_message "Script completed successfully"

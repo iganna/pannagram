@@ -14,7 +14,7 @@
 #' @param gr.accs.e Path to access data in the HDF5 file (default is "accs/").
 #' @param echo Logical flag for messages during execution (default is TRUE).
 #' @param ref.acc String identifier for the accession, which was used to sort the MSA position order.
-#' @param aln.type String specifying the prefix or type of alignment data being used; this might include prefixes such as 'msa_' for generic MSA or 'comb_' for combined reference-based alignments.
+#' @param aln.type String specifying the prefix or type of alignment data being used; this might include prefixes such as 'pan' for generic MSA or 'comb_' for combined reference-based alignments.
 #' @param pangenome.name String specifying a name to represent the pangenomic coordinate system if one of the accessions is named 'pangen', enabling transfers with pangenome coordinates.
 #' @param s.chr String used to split the chromosomal name and extract the chromosome number, following a specific pattern such as '*_ChrX' where 'X' denotes a chromosome number.
 #' 
@@ -30,7 +30,7 @@
 gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', then transfer is with pangenome coordinate
                     gff1, 
                     path.proj=NULL,
-                    aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                    aln.type = 'pan',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                     ref.acc='',
                     exact.match=T, 
                     s.chr = '_Chr', # in this case the pattern is "*_ChrX", where X is the number
@@ -58,13 +58,17 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
     ref.suff = paste0('_', ref.acc)
   }
   
+  if(ref.acc != ''){
+    aln.type = 'ref'
+  }
+  
   if(acc1 == acc2) stop('Accessions provided are identical')
   
   # --- Determine the number of chromosomes ---
   
   i.chr <- 1
   while (TRUE) {
-    file.msa.tmp <- paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.msa.tmp <- paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
     if (!file.exists(file.msa.tmp)) break
     i.chr <- i.chr + 1
   }
@@ -72,13 +76,21 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
   if (n.chr == 0) {
     pokaz(path.cons)
     pokaz(aln.type)
-    pokazAttention('Required format:', paste0(path.cons, aln.type, 'X_X', ref.suff, '.h5'))
+    pokazAttention('Required format:', paste0(path.cons, aln.type, '_', 'X_X', ref.suff, '.h5'))
     stop('Files in the required format do not exist.')
   }
   if(echo) pokaz("Number of chromosome is", n.chr)
+ 
+  # Remove zero or negative positions
+  idx_negative <- ((gff1$V4 <= 0) | (gff1$V5 <= 0))
+  if (any(idx_negative)) {
+    pokazAttention("Some positions in the input data are <= 0. They will be removed")
+    gff1 <- gff1[!idx_negative, ]
+  }
   
-  
+  # Indexing
   gff1$idx = 1:nrow(gff1)
+  
   # Get chromosomes by format
   gff1 =  extractChrByFormat(gff1, s.chr)
   gff1 = gff1[order(gff1$chr),]
@@ -94,11 +106,12 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
   gff2$len.init = gff2$V5 - gff2$V4 + 1
   gff2$V9 = paste0(gff2$V9, ';len_init=', gff2$len.init)
   gff2$V2 = 'pannagram'
-  gff2$V4 = -1
-  gff2$V5 = -1
+  gff2$V4 = 0
+  gff2$V5 = 0
   gff2$V1 = gsub(acc1, acc2, gff2$V1)
   
   for(i.chr in 1:n.chr){
+    pokaz('Chromosome', i.chr)
     
     # ---
     # If there some regions to annotate from the chromosome i.chr
@@ -107,7 +120,7 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
     # ---
     
     if(echo) pokaz('Chromosome', i.chr)
-    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+    file.msa = paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
     
     if(tolower(acc1) %in% tolower(pangenome.names)){
       v = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc2))
@@ -121,6 +134,7 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
     }
     
     max.chr.len = max(nrow(v), max(abs(v[!is.na(v)])))
+    idx.chr = idx.chr[gff1$V5[idx.chr] <= max.chr.len]
     
     v = v[v[,1]!=0,]
     v = v[!is.na(v[,1]),]
@@ -143,8 +157,20 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
       gff2$V5[idx.chr] = v.corr[gff1$V5[idx.chr]]
     } else {
       w = getPrevNext(v.corr)
+      w$v.next[is.na(w$v.next)] = 0
+      w$v.prev[is.na(w$v.prev)] = 0
+      
       gff2$V4[idx.chr] = w$v.next[gff1$V4[idx.chr]]
       gff2$V5[idx.chr] = w$v.prev[gff1$V5[idx.chr]]
+      
+      # save(list = ls(), file = "tmp_workspace_gff2gff.RData")
+      
+      # If ids > length of the alignment, it will introduce NAs
+      # gff2$V4[is.na(gff2$V4)] = 0
+      # gff2$V5[is.na(gff2$V5)] = 0
+      
+      # if(sum(is.na(gff2$V4[idx.chr]) > 0)) stop('NA in gff2$V4[idx.chr]')
+      # if(sum(is.na(gff2$V5[idx.chr]) > 0)) stop('NA in gff2$V5[idx.chr]')
     }
     idx.chr = idx.chr[(gff2$V4[idx.chr] != 0) & (gff2$V5[idx.chr] != 0)]
     
@@ -159,12 +185,12 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
     idx.noneq[is.na(idx.noneq)] = 1
     
     if(sum(idx.noneq) > 0){
-      gff2$V4[idx.chr][idx.noneq == 1] = 0
-      gff2$V5[idx.chr][idx.noneq == 1] = 0  
+      gff2$V4[idx.chr[idx.noneq == 1]] = 0
+      gff2$V5[idx.chr[idx.noneq == 1]] = 0  
     }
     
-    if(sum(is.na(gff2$V4[idx.chr]) > 0)) stop('NA in gff2$V4[idx.chr]')
-    if(sum(is.na(gff2$V5[idx.chr]) > 0)) stop('NA in gff2$V5[idx.chr]')
+    if(sum(is.na(gff2$V4[idx.chr])) > 0) stop('NA in gff2$V4[idx.chr]')
+    if(sum(is.na(gff2$V5[idx.chr])) > 0) stop('NA in gff2$V5[idx.chr]')
   }
   
   idx.wrong.blocks = (sign(gff2$V4 * gff2$V5) != 1)
@@ -240,14 +266,14 @@ gff2gff <- function(acc1, acc2, # if one of the accessions is called 'pangen', t
 bed2bed <- function(bed1, 
                     ... # Use '...' to capture all other arguments
 ) {
-  
+  pokaz('bed2bed')
   # Convert BED to GFF-like format
   colnames.bed1 = colnames(bed1)
   colnames(bed1) = c('chrom', 'beg', 'end', 'name', 'score', 'strand')
   gff1 = data.frame(V1 = bed1$chrom,
                     V2 = 'tmp',
                     V3 = 'type',
-                    V4 = bed1$beg,
+                    V4 = bed1$beg + 1, # counting starts from 0
                     V5 = bed1$end,
                     V6 = bed1$score,
                     V7 = bed1$strand,
@@ -258,6 +284,7 @@ bed2bed <- function(bed1,
   # Call gff2gff function, passing all additional parameters through '...'
   gff2 = gff2gff(gff1 = gff1, 
                  ...)
+  gff2$V4 = gff2$V4 - 1  # counting starts from 0
   
   # Convert the output back to BED format
   bed2 = gff2[,c(1, 4, 5, 9, 6, 7)]
@@ -315,13 +342,11 @@ pos2pos <- function(pos1,
 extractChrByFormat <- function(gff, s.chr){
   
   n.gff = nrow(gff)
-  matched.chr.format <- grep(paste0(".*",s.chr,"\\d+"), gff$V1, value = TRUE)
-  if(length(matched.chr.format) < 0.7 * n.gff) stop('Check the chromosome formats (#1)')
-  
   # Cheromosome ID
-  idx.chr.format <- grep(paste0(".*",s.chr,"\\d+"), gff$V1, value = F)
-  gff = gff[idx.chr.format,]
-  if(nrow(gff) < 0.7 * n.gff) stop('Check the chromosome formats (#2)')
+  gff.matched.chr.format <- grepl(paste0(".*",s.chr,"\\d+"), gff$V1)
+  if(sum(gff.matched.chr.format) < 0.7 * n.gff) stop('Check the chromosome formats (#1)')
+  
+  gff = gff[gff.matched.chr.format,]
   
   gff$chr <- sub(paste(".*",s.chr,"(\\d+)", sep = ''), "\\1", gff$V1)
   if(sum(is.na(gff$chr)) > 0) stop('Check the chromosome formats (#3)')
@@ -342,7 +367,7 @@ plotMsaFragment <- function(path.cons,
                        ref.acc = '0', 
                        exact.match=T,
                        gr.accs.e = "accs/",
-                       aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                       aln.type = 'pan',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                        echo=T,
                        pangenome.name='Pangen',
                        s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
@@ -382,7 +407,7 @@ getMxFragment <- function(path.cons,
                             ref.acc = '0', 
                             exact.match=T,
                             gr.accs.e = "accs/",
-                            aln.type = 'msa_',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
+                            aln.type = 'pan',  # please provide correct prefix. For example, in case of reference-based, it's 'comb_'
                             echo=T,
                             pangenome.name='Pangen',
                             s.chr = '_Chr' # in this case the pattern is "*_ChrX", where X is the number
@@ -408,7 +433,7 @@ getMxFragment <- function(path.cons,
     pos1.acc = pos1
     pos2.acc = pos2
   } else {
-    file.msa = paste0(path.cons, aln.type, i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
+    file.msa = paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')
     v.acc = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
     pos1.acc = which(v.acc == pos1)
     pos2.acc = which(v.acc == pos2)  
@@ -611,7 +636,13 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
     # Print the VCF header
     cat("##fileformat=VCFv4.2\n", file = file.vcf.conn)
     sample_names <- colnames(snp.val) # Exclude the first column (reference)
-    cat("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT", paste(sample_names, collapse="\t"), "\n", sep="\t", file = file.vcf.conn)
+    
+    info.line <- paste(
+      c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", sample_names),
+      collapse = "\t"
+    )
+    cat(info.line, "\n", file = file.vcf.conn, sep = "")
+    
   } else {
     file.vcf.conn <- file(file.vcf, "a")
   }
@@ -725,7 +756,7 @@ filterBlocks <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, 
       gff.chr <- gff[idx.chr, ]
       
       # Generate the MSA file name
-      file.msa <- paste0(path.cons, aln.type, i.chr, '_', i.chr, ref.suff, '.h5')
+      file.msa <- paste0(path.cons, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
       
       # Check if the MSA file exists before reading
       if (file.exists(file.msa)) {

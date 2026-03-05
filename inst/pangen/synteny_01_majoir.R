@@ -68,6 +68,7 @@ pokaz('Names of genomes for the analysis:', accessions,
 
 file.combinations <- ifelse(!is.null(opt$combinations), opt$combinations, stop("File with combinations are not specified"))
 files.blast <- list.files(path.blast, pattern = "\\.txt$", full.names = F)
+if(length(files.blast) == 0) stop('No blast results found')
 files.blast <- files.blast[sapply(files.blast, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
 
 if (length(readLines(file.combinations)) != 0) {

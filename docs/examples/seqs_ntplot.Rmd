@@ -1,0 +1,55 @@
+---
+title: "NT-plot"
+output: null_document
+---
+
+# Setup
+```{r}
+library(pannagram)
+library(ggplot2)
+library(muscle)
+
+```
+
+# Files
+```{r}
+
+file.seqs = 'seqs_te.fasta'
+
+```
+
+# Read
+```{r}
+seqs = readFasta(file.seqs)
+seq = seqs[1]
+seq = revComplSeq(seq)
+
+
+
+dotplot(seq, seq)
+```
+
+
+```{r}
+p1 = ntplot(seq)
+p1
+
+```
+
+
+```{r}
+p2 = ntplot(seq, nt.separate = T)
+p2
+
+```
+
+
+# Save
+```{r}
+
+savePNG(p1, path = '../images/', name = 'ntplot', width = 5, height = 3)
+savePNG(p2, path = '../images/', name = 'ntplot_separate', width = 5, height = 3)
+
+
+```
+

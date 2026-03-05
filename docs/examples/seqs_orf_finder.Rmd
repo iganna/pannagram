@@ -1,0 +1,57 @@
+---
+title: "ORF Finder"
+output: null_document
+---
+
+# Setup
+```{r}
+library(pannagram)
+library(ggplot2)
+
+```
+
+# Files
+```{r}
+
+file.seqs = 'seqs_orf_finder.fasta'
+
+```
+
+# Read
+```{r}
+
+seq = readFasta(file.seqs)
+
+```
+
+# Finder
+```{r}
+orf.info = orfFinder(seq)
+
+head(orf.info$pos)
+head(orf.info$orf)
+```
+
+# Visualisation
+```{r}
+p.orf = orfplot(orf.info$pos)
+
+p.dot = dotplot(seq, seq)
+
+p.orf
+p.dot
+
+```
+
+
+# Save
+```{r}
+
+
+writeFasta(seq, sub('fasta', 'txt', file.seqs))
+
+savePNG(p.orf, path = '../images/', name = 'orf_orfplot', width = 7, height = 4)
+savePNG(p.dot, path = '../images/', name = 'orf_dotplot', width = 4, height = 4)
+
+```
+

@@ -100,13 +100,15 @@ run_blast() {
     echo ${file_out} >> ${file_log}
 
     if [ ! -f ${file_acc} ]; then
-        # exit 1
-        return 0
+        echo "File does not exist ${file_acc}"
+        exit 1
+        # return 0
     fi
 
     if [ ! -f ${file_ref} ]; then
-        # exit 1
-        return 0
+        echo "File does not exist ${file_ref}"
+        exit 1
+        # return 0
     fi
 
     # Run BLAST

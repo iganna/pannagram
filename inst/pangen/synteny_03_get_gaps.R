@@ -526,7 +526,7 @@ if(num.cores == 1){
     pokaz(batch.files, file=file.log.loop, echo=echo.loop)
     
     # Run parallel loop for files in the current batch
-    batch.results <- foreach(f.maj = batch.files, .packages = c('crayon'), .verbose = FALSE) %dopar% {
+    batch.results <- foreach(f.maj = batch.files, .packages = c('crayon', 'pannagram'), .verbose = FALSE) %dopar% {
       loop.function(f.maj, echo.loop = echo.loop)
     }
     

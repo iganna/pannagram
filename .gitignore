@@ -10,5 +10,8 @@ loop*
 R/
 man/
 NAMESPACE
+docs/content/paths.R
 
-
+docs/examples/seq_sv_large_85_85.txt
+docs/examples/seq_sv_large.fasta
+docs/examples/seq_sv_large_85_85.txt

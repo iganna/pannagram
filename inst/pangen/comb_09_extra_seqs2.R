@@ -32,14 +32,12 @@ option_list = list(
   make_option(c("-c", "--cores"),      type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
   make_option(c("--path.log"),         type = "character", default = NULL, help = "Path for log files"),
   make_option(c("--log.level"),        type = "character", default = NULL, help = "Level of log to be shown on the screen"),
-  make_option(c("--len.cutoff"),       type = "integer",   default = 1e+10, help = "Max break considered"),
+  make_option(c("--len.cutoff"),       type = "integer",   default = 1e9, help = "Max break considered"),
   make_option(c("--aln.type.in"),      type = "character", default = NULL, help = "Alignment type")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
-
-print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -87,6 +85,8 @@ if (!dir.exists(path.work)) {
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
+aln.type.in = paste0(aln.type.in, '_')
+
 s.pattern <- paste0("^", aln.type.in, "\\d+_\\d+\\.h5$")
 # s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
@@ -94,7 +94,7 @@ pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
-  stop('No files with the ref-based alignments are found')
+  stop('No files alignments are found')
 }
 
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
@@ -124,6 +124,9 @@ for(s.comb in pref.combinations){
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
     v[is.na(v)] = 0
+    
+    save(list = ls(), file = "tmp_workspace_good.RData")
+    
     breaks.acc = findBreaks(v)
     idx.bad.orientation = which(breaks.acc$val.beg > breaks.acc$val.end)
     if(length(idx.bad.orientation) > 0){

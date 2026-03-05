@@ -1,0 +1,97 @@
+---
+title: "MSAplot"
+output: null_document
+---
+
+# Setup
+```{r}
+library(pannagram)
+library(ggplot2)
+library(muscle)
+
+```
+
+# Files
+```{r}
+
+file.seqs = 'seqs_te.fasta'
+file.aln = 'seqs_te_aln.fasta'
+
+```
+
+# Read
+```{r}
+seqs = readFasta(file.seqs)
+seqs.strand = parseStrings(names(seqs), 6)
+seqs.names = parseStrings(names(seqs), 7)
+
+for(i.seq in seq_along(seqs)){
+  if(seqs.strand[i.seq] == '-'){
+    seqs[i.seq] = revComplSeq(seqs[i.seq])
+  }
+}
+
+names(seqs) = seqs.names
+```
+
+
+# Alignment
+```{r}
+seqs <- Biostrings::DNAStringSet(seqs)
+alignment <- muscle(seqs, quiet = TRUE)
+aln = as.character(alignment)
+
+writeFasta(aln, file.aln)
+writeFasta(aln, sub('fasta', 'txt', file.aln))
+```
+
+# Start
+```{r}
+aln = readFasta(file.aln)
+mx = aln2mx(aln)
+```
+
+
+```{r}
+p1 = msaplot(mx)
+p1
+
+```
+
+
+```{r}
+p2 = msadiff(mx)
+p2
+
+```
+
+
+```{r}
+p3 = msadiff(mx, i.ref = 3, show.legend=T)
+p3
+
+```
+
+
+
+# Save
+```{r}
+
+savePNG(p1, path = '../images/', name = 'msaplot', width = 7, height = 4)
+savePNG(p2, path = '../images/', name = 'msadiff', width = 7, height = 4)
+savePNG(p3, path = '../images/', name = 'msadiff_ref3', width = 7, height = 4)
+
+```
+
+# Dotplot
+```{r}
+
+p = dotgrid(aln[1],aln[1], 15, c(12, 10, 8))
+p
+
+savePNG(p, path = '../images/', name = 'msaplot_dot', width = 12, height = 4)
+
+```
+
+
+

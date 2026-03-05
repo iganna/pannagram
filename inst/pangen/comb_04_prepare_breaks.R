@@ -18,7 +18,7 @@ args = commandArgs(trailingOnly=TRUE)
 option_list <- list(
   make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa directory (features)"),
   make_option("--path.inter.msa",    type = "character", default = NULL, help = "Path to msa directory (internal)"),
-  make_option("--path.chromosomes",  type = "character", default = NULL, help = "Path to directory with chromosomes"),
+  make_option("--accessions",        type = "character", default = NULL, help = "File containing accessions to analyze"),
   
   make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap"),
   
@@ -39,6 +39,14 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
 aln.type.in <- ifelse(is.null(opt$aln.type.in), aln.type.clean, opt$aln.type.in)
+aln.type.in = paste0(aln.type.in, '_')
+
+# ***********************************************************************
+# ---- Accessions ----
+
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
+
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -52,12 +60,7 @@ if (is.null(opt$max.len.gap)) {
 
 # Number of cores for parallel processing
 num.cores = opt$cores
-if(is.null(num.cores)) stop('Wrong number of cores: NULL')
 pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
-if(num.cores > 1){
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-}
 
 # Path with the MSA output (features)
 path.features.msa <- opt$path.features.msa
@@ -67,11 +70,8 @@ if (is.null(path.features.msa) || is.null(path.inter.msa)) {
   stop("Error: both --path.features.msa and --path.inter.msa must be provided")
 }
 
-if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
-if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
-
-# Path to chromosomes
-if (!is.null(opt$path.chromosomes)) path.chromosomes <- opt$path.chromosomes
+if (!dir.exists(path.features.msa)) stop('Features MSA directory does not exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory does not exist')
 
 # ***************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -97,19 +97,24 @@ for(s.comb in pref.combinations){
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
   
   # Check log Done
-  if(checkDone(file.log.loop)) return(NULL)
+  if(checkDone(file.log.loop)) next
   
   pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
-  file.comb = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
+  file.comb <- file.path(path.features.msa, paste0(aln.type.in, s.comb, ".h5"))
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
+  accessions = intersect(accessions, accessions.specified)
   n.acc = length(accessions)
   
   # ---- Read Breaks ----
-  file.breaks = paste0(path.inter.msa, 'breaks_', s.comb,'.rds')
+  file.breaks <- file.path(path.inter.msa,    paste0("breaks_", s.comb, ".rds"))
+  if(!file.exists(file.breaks)) {
+    pokaz('File', file.breaks, 'does not exist')
+    stop()
+  }
   breaks = readRDS(file.breaks)
   n.init = nrow(breaks)
   
@@ -137,13 +142,20 @@ for(s.comb in pref.combinations){
   if((sum(breaks$cnt) + nrow(breaks.extra)) != n.init) stop('Checkout length')
   
   pokaz('Save extra breaks..', file=file.log.loop, echo=echo.loop)
-  file.breaks.extra = paste0(path.inter.msa, 'breaks_extra_', s.comb,'.rds')
+  
+  file.breaks.extra <- file.path(path.inter.msa, paste0("breaks_extra_", s.comb, ".rds"))
   saveRDS(breaks.extra, file.breaks.extra)
   
   ## ---- Get begin-end positions of gaps ----
-  v.beg = c()
-  v.end = c()
-  for(acc in accessions){
+
+  n.breaks <- nrow(breaks)
+  n.acc    <- length(accessions)
+  v.beg <- matrix(0, nrow = n.breaks, ncol = n.acc)
+  v.end <- matrix(0, nrow = n.breaks, ncol = n.acc)
+  
+  for (i in seq_along(accessions)) {
+    acc <- accessions[i]
+    
     pokaz(acc, file=file.log.loop, echo=echo.loop)
     
     x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
@@ -158,8 +170,8 @@ for(s.comb in pref.combinations){
     x.beg[!idx.no.zero] = 0
     x.end[!idx.no.zero] = 0
     
-    v.beg = cbind(v.beg, x.beg)
-    v.end = cbind(v.end, x.end)
+    v.beg[, i] <- x.beg
+    v.end[, i] <- x.end
     
   }
   colnames(v.beg) = accessions
@@ -181,7 +193,7 @@ for(s.comb in pref.combinations){
   
   # Check direction
   if (any(sign(v.end - v.beg) < 0)){
-    save(list = ls(), file = paste0("tmp_workspace_checkpoint5_", s.comb,".RData"))
+    # save(list = ls(), file = paste0("tmp_workspace_checkpoint5_", s.comb,".RData"))
     stop('Checkpoint5')
   } 
   
@@ -195,7 +207,6 @@ for(s.comb in pref.combinations){
   v.len[zero.mask] = 0
   
   if (any(v.len < 0)) stop('Checkpoint6')
-  v.len[zero.mask] = 0
   
   zero.len.mask = (v.len == 0)
   v.end[zero.len.mask] = 0
@@ -205,11 +216,11 @@ for(s.comb in pref.combinations){
   for(icol in 1:ncol(v.len)){
     idx.dup = unique(v.beg[duplicated(v.beg[,icol]),icol])
     if(length(setdiff(idx.dup, 0)) != 0) {
-      stop(paste('Duplicated in column', icol, 'in v.beg, amount:', length(idx.dup) - 1))
+      stop(paste('Duplicated in column', icol, 'in v.beg, amount:', length(idx.dup) - 1))  # WHY -1 ?!
     }
     idx.dup = unique(v.end[duplicated(v.end[,icol]),icol])
     if(length(setdiff(idx.dup, 0)) != 0) {
-      stop(paste('Duplicated in column', icol, 'in v.end, amount:', length(idx.dup) - 1))
+      stop(paste('Duplicated in column', icol, 'in v.end, amount:', length(idx.dup) - 1))  # WHY -1 ?!
     }
   }
   
@@ -229,14 +240,12 @@ for(s.comb in pref.combinations){
   breaks$len.mean = rowMeans(v.len, na.rm = TRUE)
   
   all.local.objects <- c("breaks", "v.end", "v.beg", "accessions")
-  file.ws = paste0(path.inter.msa, 'breaks_ws_', s.comb, '.RData')
+  file.ws <- file.path(path.inter.msa, paste0("breaks_ws_", s.comb, ".RData"))
   save(list = all.local.objects, file = file.ws)
   
   H5close()
   gc()
+  pokaz('Done.', file=file.log.loop, echo=echo.loop)
 }
 
-if(num.cores > 1){
-  stopCluster(myCluster)
-}
 warnings()

@@ -58,7 +58,13 @@ files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names =
 files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
 files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
 
-pokaz('Number of files to align', length(files.extra))
+
+if(length(files.extra) == 0){
+  pokaz('Number of files for extra alignment')
+  quit(status = 0)
+} else {
+  pokaz('Number of files to align', length(files.extra))
+}
 
 path.mafft.in.tmp = paste0(path.mafft.in, 'tmp/')
 
@@ -108,7 +114,7 @@ loop.function <- function(f.in,
     return()
   }
   
-  path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
+  path.work = paste0(path.mafft.in.tmp, sub('\\.fasta', '', basename(f.in)), '_')
   pokaz(path.work)
   res = refineAlignment(seqs.clean, path.work)
   
@@ -118,7 +124,7 @@ loop.function <- function(f.in,
   
   alignment.seq = mx2aln(alignment)
   
-  file.out = paste0(path.mafft.out, sub('.fasta', '', basename(f.in)), "_aligned2.fasta")
+  file.out = paste0(path.mafft.out, sub('\\.fasta', '', basename(f.in)), "_aligned2.fasta")
   writeFasta(alignment.seq, file.out)
   
   pokaz('Done.', file=file.log.loop, echo=echo.loop)
@@ -161,7 +167,7 @@ pokaz('Done.', file=file.log.main, echo=echo.main)
 #   seqs.clean = seq2clean(seqs,n.flank)
 #   
 #   
-#   path.work = paste0(path.mafft.in.tmp, sub('.fasta', '', basename(f.in)), '_')
+#   path.work = paste0(path.mafft.in.tmp, sub('\\.fasta', '', basename(f.in)), '_')
 #   pokaz(path.work)
 #   res = refineAlignment(seqs.clean, path.work)
 #   

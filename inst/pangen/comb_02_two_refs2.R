@@ -24,7 +24,9 @@ source(system.file("utils/utils.R", package = "pannagram"))
 args = commandArgs(trailingOnly=TRUE)
 
 option_list <- list(
-  make_option("--path.cons",  type = "character", default = NULL, help = "Path to consensus directory"),
+  make_option("--path.features.msa",  type = "character", default = NULL, help = "Path to msa directory (features)"),
+  make_option("--path.inter.msa",     type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  make_option("--accessions",         type = "character", default = NULL, help = "File containing accessions to analyze"),
   make_option("--ref0",       type = "character", default = NULL, help = "Reference file 1"),
   make_option("--ref1",       type = "character", default = NULL, help = "Reference file 2"),
   make_option("--cores",      type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
@@ -44,8 +46,14 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- HDF5 ----
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
-aln.type.in = aln.type.ref
-aln.type.out = aln.type.comb
+aln.type.in = paste0(aln.type.ref, '_')
+aln.type.out = paste0(aln.type.comb, '_')
+
+# ***********************************************************************
+# ---- Accessions ----
+
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -54,12 +62,15 @@ aln.type.out = aln.type.comb
 num.cores <- opt$cores
 
 # Path with the consensus output
-if (!is.null(opt$path.cons)) path.cons <- opt$path.cons
-if(!dir.exists(path.cons)) stop('Consensus folder doesn’t exist')
+if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
+if(!dir.exists(path.features.msa)) stop('path_features_msa directory doesn’t exist')
+
+if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
+if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
 
 # Reference genomes
-ref0 <- if (is.null(opt$ref0)) stop("opt$pref is NULL") else opt$ref0
-ref1 <- if (is.null(opt$ref1)) stop("opt$pref is NULL") else opt$ref1
+ref0 <- if (is.null(opt$ref0)) stop("opt$ref0 is NULL") else opt$ref0
+ref1 <- if (is.null(opt$ref1)) stop("opt$ref1 is NULL") else opt$ref1
 
 pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 
@@ -67,7 +78,7 @@ pokaz('References:', ref0, ref1, file=file.log.main, echo=echo.main)
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 pattern <- paste0("^", aln.type.in, "[0-9]+_[0-9]+_.*\\.h5$")
-combo_files <- list.files(path = path.cons, pattern = pattern, full.names = F)
+combo_files <- list.files(path = path.features.msa, pattern = pattern, full.names = F)
 combo_files <- combo_files[grep(paste(ref1, ref0, sep = "|"), combo_files)]
 
 extract_xy <- function(filename) {
@@ -75,11 +86,14 @@ extract_xy <- function(filename) {
   x <- parts[2]
   y <- parts[3]
   
-  if(x != y) return(NULL)  # CHANGE IN FUTURE
+  if(x != y) return(NA)  # CHANGE IN FUTURE
   return(paste(x, y, sep = '_'))
 }
 
 pref.combinations <- unique(sapply(combo_files, extract_xy))
+
+if (any(is.na(pref.combinations))) pokazAttention('Alignments will only be processed in chromosome-to-chromosome mode, i.e. chromosome 1 with chromosome 1, chromosome 2 with chromosome 2, and so on.')
+pref.combinations <- pref.combinations[!is.na(pref.combinations)]  # THIS IS THE FITURE
 
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
@@ -91,15 +105,14 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 loop.function <- function(s.comb,
-                          echo.loop=T, 
-                          file.log.loop=NULL){
+                          echo.loop=T){
   
   # --- --- --- --- --- --- --- --- --- --- ---
-  file.comb0 = paste0(path.cons, aln.type.in, s.comb, '_', ref0, '.h5')
-  file.comb1 = paste0(path.cons, aln.type.in, s.comb, '_', ref1, '.h5')
+  file.comb0 <- file.path(path.features.msa, paste0(aln.type.in, s.comb, "_", ref0, ".h5"))
+  file.comb1 <- file.path(path.features.msa, paste0(aln.type.in, s.comb, "_", ref1, ".h5"))
   
   # Combined file. If it exists, then use it for the growing correspondence
-  file.res = paste0(path.cons, aln.type.out, s.comb, '.h5')
+  file.res   <- file.path(path.inter.msa, paste0(aln.type.out, s.comb, ".h5"))
   if(file.exists(file.res)){
     if(v.idx.trust %in% h5ls(file.res)$name) {
       file.comb0 = file.res
@@ -134,6 +147,7 @@ loop.function <- function(s.comb,
   
   accessions = intersect(groups0$name[groups0$group == gr.accs.b], 
                          groups1$name[groups1$group == gr.accs.b])  # full name of accessions
+  accessions = intersect(accessions, accessions.specified)
   
   pokaz('Number of accessions', length(accessions))
   for(acc in accessions){
@@ -168,8 +182,8 @@ loop.function <- function(s.comb,
     v.final[f01[,1]] = v0
     
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
-    if(length(dup.value > 0)){
-      v.final[v.final %in% dup.value] == 0
+    if(length(dup.value) > 0){
+      v.final[v.final %in% dup.value] <- 0
       pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
     }
     
@@ -207,11 +221,8 @@ loop.function <- function(s.comb,
 # ---- Loop  ----
 
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
   for(s.comb in pref.combinations){
     loop.function(s.comb,
-                  # file.log.loop = file.log.loop, 
                   echo.loop=echo.loop)
   }
 } else {

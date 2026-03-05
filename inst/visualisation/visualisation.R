@@ -100,57 +100,6 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
 }
 
 
-#' @export
-plotSynDot <- function(..., alpha = 1) {
-  pokazAttention('Please use plotSynteny(..., show.dot=T)')
-  p = plotSynteny(...) + geom_point(show.legend = FALSE, size = 1, alpha = alpha)
-  return(p)
-}
-
-
-#' Plot Synteny Blocks Between Two Genomic Regions (Alias for \code{\link{plotSynteny}})
-#'
-#' This function is an alias for the \code{\link{plotSynteny}} function and 
-#' generates a ggplot2-based visualization of synteny in the alignment. 
-#' 
-#' @export
-plotSyntenyBlocks <- function(...) {
-  plotSynteny(...)
-}
-
-#' @export
-plotPanAcc <- function(file.msa, acc){
-  
-  # Setup
-  gr.accs.e <- "accs/"
-  axis.breaks = seq(0, 30, by = 5)
-  idx.step = 10000
-  idx = seq(1, pan.len, idx.step)
-  c.red = '#872341'
-  c.grey = '#EBEBEB'
-  
-  # Read the correpondence for one accession
-  v.acc = h5read(file.msa, paste0(gr.accs.e, acc))
-  v.acc = data.frame(pan = idx, acc = v.acc[idx])
-  v.acc = v.acc[v.acc$acc != 0,]
-  
-  # Generate a ggplot for each accession
-  p = ggplot(v.acc, aes(x = pan, y = abs(acc), color=as.factor(sign(acc)))) + 
-    geom_abline(slope = 1, intercept = 0, color = c.grey) +
-    geom_point(size = 0.01) + 
-    theme_minimal() +
-    labs(x = "Pangenome coord, Mbp", 
-         y = paste0(acc, ', Mbp'), 
-         title = NULL) +
-    scale_color_manual(values = c("-1" = c.red, "1" = "black")) +
-    theme(legend.position = "none") + 
-    scale_y_continuous(breaks = axis.breaks * 10^6, labels = axis.breaks) + 
-    scale_x_continuous(breaks = axis.breaks * 10^6, labels = axis.breaks)
-  
-  return(p)
-  
-}
-
 
 #' Plot Synteny Between Two Genomes
 #'
@@ -166,7 +115,6 @@ plotPanAcc <- function(file.msa, acc){
 #' @return A `ggplot2` plot object.
 #'
 #' @import ggplot2
-#' @export
 plotSynAllChr <- function(path.aln, 
                                acc, 
                                ref,
@@ -223,7 +171,7 @@ plotSynAllChr <- function(path.aln,
   
   # === === === === Main === === === ===
   
-  # Cummulative lengths
+  # Cumulative lengths
   cum.acc <- c(0, cumsum(chr.len.acc$len[order.acc]))
   cum.ref <- c(0, cumsum(chr.len.ref$len[order.ref]))
   
@@ -242,6 +190,10 @@ plotSynAllChr <- function(path.aln,
         df <- rbind(df, data.ij)
       }
     }
+  }
+  
+  if(nrow(df) == 0){
+    pokazAttention('Alignment of', acc, 'on', ref, 'was not performed')
   }
   
   v.sep.acc = cum.acc[-length(cum.acc)]
@@ -280,7 +232,6 @@ plotSynAllChr <- function(path.aln,
                              ref.label = ref,
                    hlines = h.sep.ref,
                    vlines = v.sep.acc,
-                   col.line = "#3530D966",
                    show.point = TRUE,
                    expand = c(0, 0)
   ) +
@@ -295,6 +246,116 @@ plotSynAllChr <- function(path.aln,
              size = 2.7,
              color = "#7D7D7D")
   return(synteny.plot)
+}
+
+#' Plot Genome-wide Synteny Between Two Accessions
+#'
+#' This function produces a genome-wide synteny plot between a accession and a
+#' reference genome.
+#'
+#' @param path.project Path to the Pannagram project directory.
+#' @param acc Accession identifier used as the query (x-axis).
+#' @param ref Accession identifier used as the reference (y-axis). 
+#' This must match an accession from the set of references.
+#'
+#' @return A \code{ggplot2} object showing the genome-wide synteny between
+#'   \code{acc} (x-axis) and \code{ref} (y-axis).
+#'
+#' @import ggplot2
+#' @export
+syntenyplot <- function(path.project, 
+                          acc, 
+                          ref){
+  
+  path.aln = paste0(path.project, '/.intermediate/alignments/', ref, '/')
+  path.chr = paste0(path.project, '/.intermediate/chromosomes/')
+  
+  chr.len = c()
+  for(id in c(ref, acc)){
+    file.chr.len = paste0(path.chr, id, '_chr_len.txt')  
+    # pokaz(file.chr.len)
+    if(file.exists(file.chr.len)){
+      chr.len.id = read.table(file.chr.len, header=T)
+      chr.len = rbind(chr.len, chr.len.id)  
+    } else {
+      pokazAttention('File with chromosoma length does not exist. Lengths will be recalculated')
+      for(i.chr in 1:1e10){
+        file.chr =  paste0(path.chr, id, '_chr',i.chr,'.fasta')
+        # pokaz('Chromosomel file', file.chr)
+        if(!file.exists(file.chr)) break
+        seq.chr = readFastaMy(file.chr)
+        chr.len.tmp = data.frame(acc = id,
+                                 chr = i.chr,
+                                 len = nchar(seq.chr))
+        chr.len = rbind(chr.len, chr.len.tmp)
+      }
+      write.table(chr.len, file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
+    }
+  }
+  chr.len = chr.len[!is.na(chr.len$acc),]
+  
+  p = plotSynAllChr(path.aln = path.aln, acc = acc, ref = ref, chr.len = chr.len)
+  
+  return(p)
+  
+} 
+
+
+
+#' Plot Pangenome Coordinate Projection for One Accession
+#'
+#' This function visualizes how the coordinates of a single accession map
+#' onto a pangenome coordinate for a given chromosome. 
+#' 
+#' @param path.project Path to the Pannagram project directory.
+#' @param acc Accession identifier whose coordinates will
+#'   be plotted on the y-axis.
+#' @param i.chr Chromosome index.
+#'
+#' @import ggplot2
+#' @export
+pangrowth <- function(path.project, acc, i.chr, aln.type='pan', ref.acc='', size = 0.5){
+  
+  ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
+  if(ref.suff != '') aln.type='ref'
+  
+  path.msa = paste0(path.project, '/', 'features/alignments/')
+  file.msa = paste0(path.msa, aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5')
+  
+  # Setup
+  gr.accs.e <- "accs/"
+  axis.breaks = seq(0, 30, by = 5)
+  idx.step = 10000
+  
+  c.red = '#CE1F6A'
+  c.black = '#27374D'
+  c.grey = '#EBEBEB'
+  
+  # Read the correspondence for one accession
+  v.acc = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
+  pan.len = length(v.acc)
+  idx = seq(1, pan.len, idx.step)
+  v.acc = data.frame(pan = idx, acc = v.acc[idx])
+  v.acc = v.acc[v.acc$acc != 0,]
+  
+  pokaz(sum(v.acc < 0))
+  
+  # Generate a ggplot for the accession
+  p = ggplot(v.acc, aes(x = pan, y = abs(acc), color=as.factor(sign(acc)))) + 
+    # geom_abline(slope = 1, intercept = 0, color = c.grey) +
+    geom_point(size = size) + 
+    theme_bw() +
+    labs(x = "Pangenome, Mbp", 
+         y = paste0(acc, ', Mbp'), 
+         title = NULL) +
+    scale_color_manual(values = c("-1" = c.red, "1" = c.black)) +
+    theme(legend.position = "none") +
+    scale_x_continuous(limits = c(0, max(v.acc$pan)), expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, max(abs(v.acc$acc))), expand = c(0, 0)) +
+    coord_fixed(ratio=1) 
+  
+  return(p)
+  
 }
 
 

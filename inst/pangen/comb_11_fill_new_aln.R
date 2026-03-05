@@ -90,6 +90,9 @@ if (!dir.exists(path.work)) {
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
+aln.type.in = paste0(aln.type.in, '_')
+aln.type.out = paste0(aln.type.out, '_')
+
 s.pattern <- paste0("^", aln.type.in, "\\d+_\\d+\\.h5$")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)

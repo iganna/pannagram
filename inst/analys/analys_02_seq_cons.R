@@ -10,40 +10,45 @@ suppressMessages({
   library(crayon)
 })
 
+
+# ***********************************************************************
+# ---- Alignment types ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
+
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
-  make_option("--ref",               type = "character", default = "",   help = "Prefix of the reference file"),
-  make_option("--path.chr",          type = "character", default = NULL, help = "path to directory with chromosomes"),
-  make_option("--path.seq",          type = "character", default = NULL, help = "Path to seq dir"),
-  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
-  make_option("--cores",             type = "integer",   default = 1,    help = "number of cores to use for parallel processing"),
-  make_option("--aln.type",          type = "character", default = NULL, help = "type of alignment ('msa_', 'comb_', 'extra1_', etc)")
+  make_option("--ref",               type = "character", default = "",           help = "Prefix of the reference file"),
+  make_option("--path.chr",          type = "character", default = NULL,         help = "path to directory with chromosomes"),
+  make_option("--path.seq",          type = "character", default = NULL,         help = "Path to seq dir"),
+  make_option("--path.features.msa", type = "character", default = NULL,         help = "Path to msa dir (features)"),
+  make_option("--cores",             type = "integer",   default = 1,            help = "number of cores to use for parallel processing"),
+  make_option("--aln.type",          type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', 'extra1', etc)"),
+  make_option("--log.level",        type = "character", default = NULL, help = "Level of log to be shown on the screen")
 );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
-path.seq <- opt$path.seq
-if (!dir.exists(path.seq)) stop(paste0('No path.seq dir found!'))
+# ***********************************************************************
+# ---- Logging ----
 
-source(system.file("utils/chunk_hdf5.R", package = "pannagram"))
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ***********************************************************************
+# ---- Variables ----
 
-# Set the number of cores for parallel processing
-num.cores <- opt$cores
+num.cores <- opt$cores  # Set the number of cores for parallel processing
 
-ref.name <- opt$ref
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+s.nts = c('A', 'C', 'G', 'T', '-')
 
-# Alignment prefix
-if (!is.null(opt$aln.type)) {
-  aln.type = opt$aln.type
-} else {
-  aln.type = aln.type.msa
-  pokazAttention('The defaul anighment type is used:', aln.type)
-}
+# ***********************************************************************
+# ---- Paths ----
+
+path.seq <- opt$path.seq
+if (!dir.exists(path.seq)) stop(paste0('No path.seq dir found!'))
 
 path.features.msa <- opt$path.features.msa
 if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
@@ -51,35 +56,22 @@ if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
 path.chr <- opt$path.chr
 if(!dir.exists(path.chr)) stop('intermediate/chromosomes dir doesn’t exist')
 
+# ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
-s.pattern <- paste0("^", aln.type, ".*h5")
-s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-s.combinations = gsub(aln.type, "", s.combinations)
-s.combinations = gsub(".h5", "", s.combinations)
 
-# pokaz('Reference:', ref.name)
-if(ref.name != ""){
-  ref.suff = paste0('_', ref.name)
-  
-  pokaz('Reference:', ref.name)
-  s.combinations <- s.combinations[grep(ref.suff, s.combinations)]
-  s.combinations = gsub(ref.suff, "", s.combinations)
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
 } else {
-  ref.suff = ''
+  aln.type = aln.type.msa
 }
 
-if(length(s.combinations) == 0){
-  # save(list = ls(), file = "tmp_workspace_s.RData")
-  stop('No Combinations found.')
-  
-} else {
-  pokaz('Combinations', s.combinations)  
-}
+# Reference genome
+ref.name <- opt$ref
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 
-
-# ---- Variables ----
-
-s.nts = c('A', 'C', 'G', 'T', '-')
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -90,7 +82,7 @@ loop.function <- function(s.comb, echo = T){
   pokaz('* Combination', s.comb)
   
   # Get accessions
-  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff, '.h5')
+  file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, '.h5')
   
   groups = h5ls(file.comb)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -106,7 +98,7 @@ loop.function <- function(s.comb, echo = T){
   h5createGroup(file.seq, gr.accs.e)
   
   mx.consensus = NULL
-  idx.negative = c()
+  # idx.negative = c()
   for(acc in accessions){
     # pokaz('Sequence of accession', acc)
     v = h5read(file.comb, paste0(gr.accs.e, acc))
@@ -144,7 +136,7 @@ loop.function <- function(s.comb, echo = T){
       s[idx.mins] = justCompl(genome[abs(v[idx.mins])])
     }
     
-    idx.negative = c(idx.negative, which(idx.mins))
+    # idx.negative = c(idx.negative, which(idx.mins))
     
     for(s.nt in s.nts){
       mx.consensus[,s.nt] = mx.consensus[,s.nt] + (s == s.nt)

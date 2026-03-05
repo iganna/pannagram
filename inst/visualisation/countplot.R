@@ -3,7 +3,7 @@ library(reshape2)
 library(dplyr)
 library(cowplot)
 
-countplot <- function(data, sv.class, show.legend = F) {
+countplot <- function(data, sv.class, show.legend = F, colormap = NULL) {
 
   # Collapse each row into a unique key and count occurrences
   keys <- apply(data, 1, paste, collapse = "_")
@@ -99,6 +99,10 @@ countplot <- function(data, sv.class, show.legend = F) {
       legend.title = element_blank(),
       legend.box = "horizontal"
     )
+  
+  if(!is.null(colormap)){
+    main_plot = main_plot + scale_color_manual(values = colormap)
+  }
   
   # Barplot for counts
   df.counts <- data.frame(

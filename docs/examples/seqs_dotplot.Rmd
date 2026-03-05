@@ -1,0 +1,144 @@
+---
+title: "Example sequences for dotplot"
+output: null_document
+---
+
+# Setup
+```{r}
+library(pannagram)
+library(ggplot2)
+
+```
+
+# Files
+```{r}
+file.seq1 = 'seq1.fasta'
+file.seqs = 'seqs_dotplot.fasta'
+
+```
+
+# Reading
+```{r}
+
+seqs = readFasta(file.seq1)
+seq1 = seqs[1]
+seq1 = toupper(seq1)
+
+```
+
+# Manipulations
+```{r}
+# start from original sequence
+seq2 <- seq2nt(seq1)
+
+# delete region 3000–3500 (if it exists)
+if (length(seq2) >= 3500) {
+  seq2 <- seq2[-(3000:3500)]
+}
+
+# Local duplications
+seq2 <- c(
+  seq2[1:2000],
+  seq2[2001:2200],
+  seq2[2001:length(seq2)]
+)
+
+seq2 <- c(
+  seq2[1:2000],
+  seq2[2001:2500],
+  seq2[2001:length(seq2)]
+)
+
+# Reverse complement of a region
+seq2 <- c(
+  seq2[1:800],
+  revCompl(seq2[801:1200]),
+  seq2[1201:length(seq2)]
+)
+
+
+# Reverse complement of a region
+seq2 <- c(
+  seq2[1:4000],
+  revCompl(seq2[4001:4200]),
+  seq2[4001:length(seq2)]
+)
+
+# Introduce random substitutions into 20% of positions
+n <- length(seq2)
+k <- ceiling(n * 0.20)   # fraction of positions to mutate
+
+idx <- sample.int(n, k)
+seq2[idx] <- sample(c("A", "C", "G", "T"), k, replace = TRUE)
+
+
+```
+
+# Dotplot
+```{r}
+
+p = dotplot(seq1, seq2)
+p
+
+p.80 = dotplot(seq1, seq2, 100, 80)
+p.80
+
+```
+
+# Save
+```{r}
+
+seqs.new = c(seq1, seq1_artificial=nt2seq(seq2))
+writeFasta(seqs.new, file.seqs)
+writeFasta(seqs.new, sub('fasta', 'txt', file.seqs))
+
+savePNG(p, path = '../images/', name = 'dotplot', width = 4, height = 4)
+savePNG(p.80, path = '../images/', name = 'dotplot80', width = 4, height = 4)
+
+```
+
+# Dotplot-self
+```{r}
+
+p.self = dotself(seq2, 15, 11)
+p.self
+
+savePNG(p.self, path = '../images/', name = 'dotplot_self', width = 4, height = 4)
+
+```
+
+# Dotprot
+```{r}
+file.prots = "seqs_dotprot.fasta"
+prots <- readFasta(file.prots)
+prot1 <- prots[1]
+prot2 <- prots[2]
+
+p.prot = dotprot(prot1, prot2)
+p.prot
+
+p.prot.80 = dotprot(prot1, prot2, wsize = 10, nmatch = 8)
+p.prot.80
+
+p.prot.100 = dotprot(prot1, prot2, wsize = 10, nmatch = 10)
+p.prot.100
+
+savePNG(p.prot, path = '../images/', name = 'dotprot', width = 4, height = 4)
+savePNG(p.prot.80, path = '../images/', name = 'dotprot80', width = 4, height = 4)
+savePNG(p.prot.100, path = '../images/', name = 'dotprot100', width = 4, height = 4)
+
+writeFasta(prots, sub('fasta', 'txt', file.prots))
+```
+
+DotGrid
+```{r}
+p.grid = dotgrid(seq1, seq2, 15, c(15, 12, 10, 8), nrow = 2)
+p.grid
+
+
+savePNG(p.grid, path = '../images/', name = 'dotgrid', width = 4, height = 4)
+```
+
+
+
+

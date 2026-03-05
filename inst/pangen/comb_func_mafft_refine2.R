@@ -1,4 +1,3 @@
-
 #' Refine Sequence Alignment
 #'
 #' This function refines sequence alignments by clustering sequences, removing flanking gaps, 
@@ -18,10 +17,25 @@
 refineAlignment <- function(seqs.clean, path.work){
   
   n.seqs = length(seqs.clean)
+  seqs.clean = toupper(seqs.clean)
+  
+  # ---- Handle N in sequences ----
+  # n.n = sapply(gregexpr("N", seqs.clean, ignore.case = TRUE), function(m) sum(m > 0))
+  # seqs.names.n = names(seqs.clean)[n.n != 0]
+  # if(length(seqs.names.n) > 0){
+  #   pos.replace = list()
+  #   for(s.name in seqs.names.n){
+  #     s = seqs.clean[s.name]
+  #     s = seq2nt(s)
+  #     pos.replace[[s.name]] = which((s != 'n') & (s != 'N'))
+  #     s = s[pos.replace[[s.name]]]
+  #     seqs.clean[s.name] = nt2seq(s)
+  #   }
+  # }
   
   # ---- Distance matrix ----
   # 
-  # dist.mx = calсDistAln(seqs.mx)
+  # dist.mx = calcDistAln(seqs.mx)
   dist.mx = calcDistKmer(seqs.clean)
   
   # save(list = ls(), file = "tmp_workspace_refine_aln.RData")
@@ -105,9 +119,10 @@ refineAlignment <- function(seqs.clean, path.work){
   # ---- Merge clusters ----
   
   for(i.merge in which(df.merge$cl > max(clusters))){
+    
+    # if(df.merge$cl[i.merge] == 17) stop()
     pokaz(i.merge, df.merge$cl[i.merge])
     
-    # if(i.merge == 23) stop()
     
     i.cl1 = df.merge$id1[i.merge]
     i.cl2 = df.merge$id2[i.merge]
@@ -127,9 +142,31 @@ refineAlignment <- function(seqs.clean, path.work){
     
     mafft.res = mafftAdd(seq1, seq2, path.work)
     
-    result = mafft.res$result
     df = mafft.res$df
     pos.mx = mafft.res$pos.mx
+    result = mafft.res$result
+    result$support = 0
+    
+    len.chunk.merge = 8
+    irow = 1
+    while(irow < nrow(result)){
+      irow.d = result$beg[irow + 1] - result$end[irow] - 1
+      if(irow.d <= len.chunk.merge){
+        # Merge chunks
+        result$end[irow] = result$end[irow + 1]
+        result$len[irow] = result$end[irow] - result$beg[irow] + 1
+        result = result[-(irow + 1),]
+        
+        result$support[irow] = result$support[irow] + irow.d
+        
+        df$V3[irow] = df$V3[irow + 1]
+        df$V5[irow] = df$V5[irow + 1]
+        df = df[-(irow + 1),]
+        df$len = result$len
+      }
+      irow = irow + 1
+    }
+    
     
     ## ---- Check all the synteny chunks ----
     mafft.mx = matrix('-', nrow = 2, ncol = ncol(pos.mx))
@@ -140,15 +177,18 @@ refineAlignment <- function(seqs.clean, path.work){
     
     irow_support = c()
     cnunk.min.len = 25
-    sim.score = 0.9
+    sim.score = 0.8
     for(irow in 1:nrow(result)){
-      if(result$len[irow] < min(c(nchar(s1)/3, nchar(s2)/3, cnunk.min.len))) next
+      if((irow != 1) & (irow != nrow(result))){
+        if(result$len[irow] < min(c(nchar(s1)/3, nchar(s2)/3, cnunk.min.len))) next  
+      }
       idx = result$beg[irow]:result$end[irow]
-      score = sum(mafft.mx[1,idx] == mafft.mx[2,idx]) / result$len[irow]
+      score = sum(mafft.mx[1,idx] == mafft.mx[2,idx]) / (result$len[irow] - result$support[irow])
       if(score >= sim.score){
         irow_support = c(irow_support, irow)
       }
     }
+    result$support = NULL
     
     ## ---- BLAST----
     
@@ -354,9 +394,22 @@ refineAlignment <- function(seqs.clean, path.work){
     
   }
   
+  # # ---- Put N back ----
+  # if(length(seqs.names.n) > 0){
+  #   for(i.p in 1:length(positions)){
+  #     pos = positions[[i.p]]
+  #     for(s.name in seqs.names.n){
+  #       if(s.name %in% row.names(pos)){
+  #         pos.s = pos[s.name,]
+  #         pos.s[pos.s != 0] = pos.replace[[s.name]]
+  #         # stop()
+  #       }
+  #     }
+  #   }
+  # }
+  
   return(list(pos = positions,
               aln = alignments))
-  
 }
 
 #' Align two Alignments with MAFFT
@@ -517,7 +570,7 @@ blastTwoSeqs <- function(s1, s2, path.work){
   colnames(x2)[c(1,10)] = colnames(x2)[c(10,1)]
   
   colnames(x2)[8:9] = c('V9', 'V8') 
-
+  
   
   # Merge both groups into a single data frame
   x = rbind(x1, x2)

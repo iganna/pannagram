@@ -1,0 +1,152 @@
+---
+title: "Fix Bad alignment"
+output: null_dociment
+---
+
+# Setup
+## Libs
+```{r}
+library(pannagram)
+```
+
+## Paths
+```{r}
+
+path.aln = "~/Sources/tmp3/mafft_out/"
+path.fig = "~/Sources/tmp3/mafft_figures/"
+dir.create(path.fig)
+
+
+path.work = "~/Sources/tmp3/mafft_tmp/"
+dir.create(path.work)
+```
+
+## For MAFFT
+```{r}
+
+Sys.setenv(PATH = paste("/Users/annaigolkina/micromamba/envs/pannagram/bin", 
+                          Sys.getenv("PATH"), sep = ":"))
+
+```
+
+# Make msaplots
+```{r}
+
+files = list.files(path.aln, pattern = 'aligned2.fasta$')
+
+files.sub <- files[1:200]
+
+pb <- txtProgressBar(min = 0, max = length(files.sub), style = 3)
+
+for (i in seq_along(files.sub)) {
+  f <- files.sub[i]
+  aln = readFasta(paste0(path.aln, f))
+  mx  = aln2mx(aln)
+  p   = msaplot(mx)
+  savePNG(p, path = path.fig, name = sub(".fasta", "", f))
+  
+  setTxtProgressBar(pb, i)  # обновляем прогрессбар
+}
+
+close(pb)
+
+
+```
+
+# Examples
+
+
+```{r}
+
+f = 'Gap_1_1_001067_269323_269569_flank_30_aligned2.fasta'
+f = sub('png', 'fasta', f)
+  
+aln = readFasta(paste0(path.aln, f))
+seqs = seq2clean(aln)
+mx = aln2mx(aln)
+msaplot(mx)
+
+dotplot.s(seqs[1], seqs[3], 15, 12)
+
+seqs.clean = seqs
+res = refineAlignment(seqs.clean, path.work)
+
+msaplot(res$aln[[16]])
+# 
+# mx = res$aln[[10]]
+# msaplot(mx)
+# dotplot(mx[1,], mx[2,], 15, 12)
+
+
+alignments = res$aln
+alignment = alignments[[length(alignments)]]
+
+msaplot(alignment)
+
+
+```
+
+
+```{r}
+
+# f = 'Gap_1_1_000175_55558_56556_flank_30_aligned2.fasta'
+# # f = 'Gap_1_1_000263_77502_77509_flank_30_aligned2.fasta'
+# f = 'Gap_1_1_000814_205906_206140_flank_30_aligned2.fasta'
+
+files.figures = list.files(path = path.aln, pattern = 'ligned2.fasta$')
+length(files.figures)
+
+for(f in files.figures){
+  
+  f2 = sub("ligned2.fasta", "ligned2.png", f)
+  if(file.exists(paste0(path.fig,f2))){
+    pokaz('Next2')
+    next
+  } 
+  aln = readFasta(paste0(path.aln, f))
+  seqs = seq2clean(aln)
+  mx = aln2mx(aln)
+  p = msaplot(mx)
+  savePNG(p, path = path.fig, name = sub(".fasta", "", f))
+  
+  # dotplot.s(seqs[1], seqs[20], 15, 12)
+  
+  
+  f2 = sub("ligned2.fasta", "ligned22.png", f)
+  if(file.exists(paste0(path.fig,f2))){
+    pokaz('Next22')
+    next
+  } 
+  
+  seqs.clean = seqs
+  res = refineAlignment(seqs.clean, path.work)
+  
+  # msaplot(res$aln[[10]])
+  # 
+  # mx = res$aln[[10]]
+  # msaplot(mx)
+  # dotplot(mx[1,], mx[2,], 15, 12)
+  
+  
+  alignments = res$aln
+  alignment = alignments[[length(alignments)]]
+  
+  p = msaplot(alignment)
+   savePNG(p, path = path.fig, name = sub(".fasta", "2", f))
+}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

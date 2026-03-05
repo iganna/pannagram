@@ -19,6 +19,7 @@ args = commandArgs(trailingOnly=TRUE)
 option_list <- list(
   make_option("--path.features.msa",  type = "character", default = NULL, help = "Path to msa directory (features)"),
   make_option("--path.inter.msa",     type = "character", default = NULL, help = "Path to msa directory (internal)"),
+  make_option("--accessions",         type = "character", default = NULL, help = "File containing accessions to analyze"),
   make_option("--cores",              type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option("--path.log",           type = "character", default = NULL, help = "Path for log files"),
   make_option("--log.level",          type = "character", default = NULL, help = "Level of log to be shown on the screen")
@@ -30,6 +31,7 @@ opt = parse_args(opt_parser, args = args);
 # print(opt)
 
 max.len.gap = 100000  # This should be a parameter!!!
+min.block.len = 100
 
 # ***********************************************************************
 # ---- Logging ----
@@ -38,8 +40,15 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ---- HDF5 ----
 source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
 
-aln.type.in = aln.type.comb
-aln.type.out = aln.type.clean
+aln.type.in = paste0(aln.type.comb, '_')
+aln.type.out = paste0(aln.type.clean, '_')
+
+# ***********************************************************************
+# ---- Accessions ----
+
+file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
+tmp <- read.table(file.acc, stringsAsFactors = F)
+accessions.specified <- as.character(tmp[,1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -59,7 +68,7 @@ if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
 s.pattern <- paste0("^", aln.type.in, ".*\\.*h5$")
-files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
+files <- list.files(path = path.inter.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
@@ -90,7 +99,7 @@ loop.function <- function(s.comb,
   
   # --- --- --- --- --- --- --- --- --- --- ---
   pokaz('Combination', s.comb, file=file.log.loop, echo=echo.loop)
-  file.comb.in = paste0(path.features.msa, aln.type.in, s.comb,'.h5')
+  file.comb.in = paste0(path.inter.msa, aln.type.in, s.comb,'.h5')
   file.comb.out = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   
   if(!file.exists(file.comb.in)){
@@ -98,23 +107,30 @@ loop.function <- function(s.comb,
   }
   
   # Create the output file
-  suppressMessages({
-    file.remove(file.comb.out)
-    h5createFile(file.comb.out)
-    h5createGroup(file.comb.out, gr.blocks)
-    h5createGroup(file.comb.out, gr.accs.e)
-  })
+  # suppressMessages({
+  #   file.remove(file.comb.out)
+  #   h5createFile(file.comb.out)
+  #   h5createGroup(file.comb.out, gr.blocks)
+  #   h5createGroup(file.comb.out, gr.accs.e)
+  # })
+  if(!file.exists(file.comb.out)){
+      h5createFile(file.comb.out)
+      h5createGroup(file.comb.out, gr.blocks)
+      h5createGroup(file.comb.out, gr.accs.e)
+  }
   
   idx.trust = h5read(file.comb.in, v.idx.trust)
   idx.trust = idx.trust != 0
   groups = h5ls(file.comb.in)
   accessions = groups$name[groups$group == gr.accs.b]
+  accessions = intersect(accessions, accessions.specified)
   
   # ---- Cleanup ----
   pokaz('Cleanup..', file=file.log.loop, echo=echo.loop)
   idx.nonzero = 0
   for(acc in accessions){
-    pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
+    
+    pokaz('Accession cleanup', acc, file=file.log.loop, echo=echo.loop)
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.in, s.acc)
@@ -122,35 +138,40 @@ loop.function <- function(s.comb,
     
     v.init = v
     
-    # Define blocks
-    for(i in 1:2){
-      v = v.init
-    
-      v.idx = 1:length(v)
-      
-      v.idx = v.idx[v != 0]
-      v = v[v != 0]
-      v.r = rank(abs(v))
-      v.r[v < 0] = v.r[v < 0] * (-1)
-      v.b = findRuns(v.r)
-      
-      v.b$v.beg = v[v.b$beg]
-      v.b$v.end = v[v.b$end]
-      
-      v.b$i.beg = v.idx[v.b$beg]
-      v.b$i.end = v.idx[v.b$end]
-      
-      v.b.remove = v.b[v.b$len <= 100,]
-      if(nrow(v.b.remove) == 0) break
-      for(irow in 1:nrow(v.b.remove)){
-        v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
+    check.word = paste('Cleanup finished for', acc)
+    if(!checkDone(file.log.loop, check.word)){
+      # Define blocks
+      for(i in 1:2){
+        v = v.init
+        
+        v.idx = 1:length(v)
+        
+        v.idx = v.idx[v != 0]
+        v = v[v != 0]
+        v.r = rank(abs(v))
+        v.r[v < 0] = v.r[v < 0] * (-1)
+        v.b = findRuns(v.r)
+        
+        v.b$v.beg = v[v.b$beg]
+        v.b$v.end = v[v.b$end]
+        
+        v.b$i.beg = v.idx[v.b$beg]
+        v.b$i.end = v.idx[v.b$end]
+        
+        v.b.remove = v.b[v.b$len <= min.block.len,]
+        if(nrow(v.b.remove) == 0) break
+        for(irow in 1:nrow(v.b.remove)){
+          v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
+        }
       }
+      
+      suppressMessages({
+        h5write(v.init, file.comb.out, s.acc)
+      })
+      
+      pokaz(check.word, file=file.log.loop, echo=echo.loop)
     }
     
-    suppressMessages({
-      h5write(v.init, file.comb.out, s.acc)
-    })
-  
     idx.nonzero = idx.nonzero + (abs(v.init) > 0) * 1
   }
   
@@ -159,19 +180,24 @@ loop.function <- function(s.comb,
   idx.nonzero = idx.nonzero > 0
   # pokaz(length(idx.nonzero), sum(idx.nonzero))
   
+  
   for(acc in accessions){
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
-    s.acc = paste0(gr.accs.e, acc)
-    v = h5read(file.comb.out, s.acc)
-    
-    v = v[idx.nonzero]
-    
-    # Rewrite  
-    suppressMessages({
-      h5delete(file.comb.out, s.acc)
-      h5write(v, file.comb.out, s.acc)
-    })
+    check.word = paste('Remove zeros finished for', acc)
+    if(!checkDone(file.log.loop, check.word)) {
+      s.acc = paste0(gr.accs.e, acc)
+      v = h5read(file.comb.out, s.acc)
+      
+      v = v[idx.nonzero]
+      
+      # Rewrite  
+      suppressMessages({
+        h5delete(file.comb.out, s.acc)
+        h5write(v, file.comb.out, s.acc)
+      })
+      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+    }
   }
   
   # ---- Breaks ----
@@ -182,34 +208,40 @@ loop.function <- function(s.comb,
     
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb.out, s.acc)
-
-    # Define blocks
     v.idx = 1:length(v)
-    
     v.idx = v.idx[v != 0]
     v = v[v != 0]
-    v.r = rank(abs(v))
-    v.r[v < 0] = v.r[v < 0] * (-1)
-    v.b = findRuns(v.r)
     
-    v.b$v.beg = v[v.b$beg]
-    v.b$v.end = v[v.b$end]
-    
-    v.b$i.beg = v.idx[v.b$beg]
-    v.b$i.end = v.idx[v.b$end]
-    
-    v.b = v.b[order(abs(v.b$v.beg)),]
-    
-    blocks.acc = rep(0, max(abs(v)))
-    for(irow in 1:nrow(v.b)){
-      blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
-    }
-    
-    suppressMessages({
+    check.word = paste('Find breaks finished for', acc)
+    if(!checkDone(file.log.loop, check.word)){
+      # Define blocks
+      
+      v.r = rank(abs(v))
+      v.r[v < 0] = v.r[v < 0] * (-1)
+      v.b = findRuns(v.r)
+      
+      v.b$v.beg = v[v.b$beg]
+      v.b$v.end = v[v.b$end]
+      
+      v.b$i.beg = v.idx[v.b$beg]
+      v.b$i.end = v.idx[v.b$end]
+      
+      v.b = v.b[order(abs(v.b$v.beg)),]
+      
+      blocks.acc = rep(0, max(abs(v)))
+      for(irow in 1:nrow(v.b)){
+        blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
+      }
+      
+      suppressMessages({
+        s.acc = paste0(gr.blocks, acc)
+        h5write(blocks.acc, file.comb.out, s.acc)
+      })
+      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+    } else {
       s.acc = paste0(gr.blocks, acc)
-      h5write(blocks.acc, file.comb.out, s.acc)
-    })
-    
+      blocks.acc = h5read(file.comb.out, s.acc)
+    }
     # Find breaks
     i.br.acc = which(abs(diff(v)) != 1)
     if(length(i.br.acc) == 0) next
@@ -265,11 +297,4 @@ pokaz('Done.',
       file=file.log.main, echo=echo.main)
 
 
-# ***********************************************************************
-# ---- Testing ----
-if(F){
-  library(rhdf5)
-  path.cons = './'
-  options("width"=200, digits=10)
-}
 

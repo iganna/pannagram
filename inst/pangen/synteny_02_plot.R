@@ -104,13 +104,6 @@ loop.function <- function(acc,
   }
   chr.len = chr.len[!is.na(chr.len$acc),]
   
-  # ---- Testing ----
-  # file.ws = "tmp_workspace.RData"
-  # all.local.objects <- ls()
-  # save(list = all.local.objects, file = file.ws)
-  # pokaz('Workspace is saved in', file.ws, file=file.log.loop, echo=echo.loop)
-  # stop('Enough..')
-  
   # ---- Plot ----
   # Get ggplot with the synteny
   p <- plotSynAllChr(path.aln,
@@ -122,6 +115,7 @@ loop.function <- function(acc,
   pdf.name <- paste0(ref, "-", id)
   # savePDF(p, path = path.plot, name = pdf.name)
   savePNG(p, path = path.plot, name = pdf.name)
+  # saveRDS(p, paste0(path.plot, pdf.name, '.rds'))
   
 }
 
@@ -141,6 +135,8 @@ if(num.cores == 1){
     
     end <- min(start + batch.size - 1, length(accessions))  # Define the end of the current batch
     batch.accessions <- accessions[start:end]  # Subset accessions for the current batch
+    
+    pokaz(batch.accessions)
     
     # Create and register a new cluster for the current batch
     myCluster <- makeCluster(num.cores, type = "PSOCK")

@@ -183,36 +183,6 @@ splitSeq <- function(sequence, n = 5000, step = 0, merge = T) {
 }
 
 
-#' Calculate GC Content in DNA Sequences
-#'
-#' This function calculates the GC content for a given set of DNA sequences, using a specified window size.
-#'
-#' @param s A character vector of DNA sequences. Each element of the vector should be a DNA sequence in the form of a string.
-#' @param wnd An integer specifying the window size for calculating the GC content. Default is 1000.
-#' @return A list where each element corresponds to a sequence from the input `s`. Each element is a numeric vector
-#' representing the GC content for each window in the sequence.
-#' @examples
-#' # Example usage
-#' sequences <- c("ATGCGATCGATCG", "GCGCGCGCGCGCG", "ATATATATATAT")
-#' gcContent(sequences, wnd = 5)
-#'
-#' @export
-gcContent <- function(s, wnd = 1000){
-  gc.list = list()
-  for(i.seq in 1:length(s)){
-    if(nchar(s[i.seq]) < wnd) next
-    m = splitSeq(s[i.seq], n = wnd, merge = F)
-    gc.tmp = rowSums(m == 'G') +
-      rowSums(m == 'C') +
-      rowSums(m == 'g') +
-      rowSums(m == 'c')
-    gc.tmp = gc.tmp / wnd
-    gc.list[[i.seq]] = gc.tmp
-  }
-  return(gc.list)
-} 
-
-
 #' Convert a string to a vector of nucleotides
 #'
 #' @param s A single string representing a sequence.
@@ -571,7 +541,7 @@ mx2profile <- function(mx, gap.flag = F){
 seq2mx <- function(seq, wsize){
   
   m <- embed(seq, wsize)
-  matrix_seq <- m[, ncol(m):1]
+  matrix_seq <- m[, ncol(m):1, drop = F]
   
   return(matrix_seq)
 }
@@ -743,86 +713,6 @@ seq2orf <- function(seq, orf.min.len = 25){
 }
 
 
-
-#' Identify Open Reading Frames (ORFs) in Both DNA Strands
-#'
-#' This function searches for open reading frames (ORFs) in both the forward and reverse complement
-#' of the given DNA sequence. It detects ORFs in all three possible reading frames for each strand,
-#' calculates their positions, lengths, and on which strand they are located.
-#'
-#' @param seq.init A character string representing the DNA sequence.
-#' @param seq A character string or named character string representing the nucleotide sequence.
-#' @return A list with two elements:
-#'   \item{pos}{A data frame of ORF positions including columns for start (`beg`), end (`end`), length in nucleotides (`len`), 
-#'   length in amino acids (`aalen`), and strand (`strand`).}
-#'   \item{orf}{A character vector of the amino acid sequences for each ORF, named with their positions, strand, and length.}
-#'
-#' @examples
-#' seq <- "ATGGCCATGGCCCCCGCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTCTTAG"
-#' orfFinderResult <- orfFinder(seq)
-#' print(orfFinderResult$pos)
-#' print(orfFinderResult$orf)
-#'
-#' @author Anna A. Igolkina 
-#' @export
-orfFinder <- function(seq.init, orf.min.len = 25){
-  seq.len = nchar(seq.init) # Calculate the length of the initial sequence
-  seq = seq.init
-  
-  orfs = c() # Initialize vector to store ORFs
-  pos = c() # Initialize vector to store positions
-  
-  # Iterate over both strands
-  for(i.strand in 1:2){
-    # Iterate over the three possible reading frames
-    for(i.orf in 0:2){
-      # Adjust sequence for reading frames 2 and 3
-      if(i.orf != 0){
-        seq <- substr(seq, 2, nchar(seq))  
-      }
-      
-      # Find ORFs in the current frame and strand
-      orf.res = seq2orf(seq, orf.min.len = orf.min.len)
-      if(is.null(orf.res$pos)) next
-      
-      # Adjust positions based on the reading frame and strand
-      pos.tmp = orf.res$pos + i.orf
-      if(i.strand == 2){
-        pos.tmp = seq.len - pos.tmp + 1
-      }
-      pos.tmp$shift = i.orf
-      
-      # Store ORFs and their positions
-      orfs = c(orfs, orf.res$orf)
-      pos = rbind(pos, pos.tmp)
-      
-      if(nrow(pos) != length(orfs)) stop('Something went wrong')
-      
-    }
-    # Reverse and complement the sequence for the second strand
-    seq = revComplSeq(seq.init)
-  }
-  
-  if(is.null(pos)){
-    return(list(pos = NULL, orf = NULL))
-  }
-  
-  # Calculate additional position info and order by ORF length
-  pos$len = abs(pos[,2] - pos[,1]) + 1
-  pos$aalen = nchar(orfs)
-  pos$strand = c('+', '-')[(pos[,1] > pos[,2]) + 1]
-  idx.order = order(-pos$len)
-  pos = pos[idx.order,]
-  orfs = orfs[idx.order]
-  
-  # Name ORFs with position, strand, and length info
-  names(orfs) = paste('ORF', pos[,1], pos[,2], pos$strand, 'aaLEN', pos$aalen, sep = '|')
-  
-  # Return positions and ORFs
-  return(list(pos = pos, orf = orfs))
-}
-
-
 #' Generate the reverse complement of a vectorized sequence
 #'
 #' @param s A character vector where each element is a single nucleotide.
@@ -834,6 +724,14 @@ orfFinder <- function(seq.init, orf.min.len = 25){
 #' @author Anna A. Igolkina 
 #' @export
 revCompl <- function(s){
+  
+  if(length(s) == 1){
+    s.name = names(s)
+    flag.merge = T
+  } else {
+    flag.merge = F
+  }
+  s <- prepareNtSeq(s)
   
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
   complementary_nts <- c(
@@ -849,6 +747,13 @@ revCompl <- function(s){
   
   seqs.rc = rev(complementary_nts[s])
   if(sum(is.na(seqs.rc)) != 0) stop('Wrong nucleotides are provided')
+  
+  if(flag.merge){
+    seqs.rc = nt2seq(seqs.rc)
+    names(seqs.rc) = s.name
+  } else {
+    names(seqs.rc) = NULL
+  }
   return(seqs.rc)
 }
 
@@ -870,10 +775,11 @@ revComplSeq <- function(seq){
   
   seq.names = names(seq)
   
-  seq = seq2nt(seq)
-  seq.rc = revCompl(seq)
-  seq.rc = nt2seq(seq.rc)
-  
+  seq.rc = c()
+  for(s in seq){
+    seq.rc = c(seq.rc, revCompl(s))
+  }
+
   names(seq.rc) = seq.names
   
   return(seq.rc)
@@ -893,6 +799,13 @@ revComplSeq <- function(seq){
 #' @export
 justCompl <- function(s){
   
+  if(length(s) == 1){
+    flag.merge = T
+  } else {
+    flag.merge = F
+  }
+  s <- prepareNtSeq(s)
+  
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
   complementary_nts <- c(
     A='T', T='A', C='G', G='C', 
@@ -907,6 +820,13 @@ justCompl <- function(s){
   
   seqs.c = complementary_nts[s]
   if(sum(is.na(seqs.c)) != 0) stop('Wrong nucleotides are provided')
+  
+  if(flag.merge){
+    seqs.c = nt2seq(seqs.c)
+  } else {
+    names(seqs.c) = NULL
+  }
+  
   return(seqs.c)
 }
 
@@ -1624,14 +1544,14 @@ colMin <- function(mx) {
 #' 
 #' @author Anna A. Igolkina 
 #' @export
-checkDone <- function(file.log) {
+checkDone <- function(file.log, word = "Done") {
   
   if (!file.exists(file.log)) {
     return(FALSE)
   }
   
   log.content <- readLines(file.log, warn = FALSE)
-  contains.done <- any(grepl("Done", log.content, ignore.case = TRUE))
+  contains.done <- any(grepl(word, log.content, ignore.case = TRUE))
   if (contains.done) {
     return(TRUE)
   } else {
@@ -1709,3 +1629,51 @@ checkCombinations <- function(vec) {
   all(grepl(pattern, vec))
 }
 
+
+#' Parse specific part of split strings
+#'
+#' @param strings Character vector to parse.
+#' @param n Index of the part to extract (integer).
+#' @param split Split pattern (default "\\|").
+#' @param numeric Logical; convert output to numeric (default FALSE).
+#'
+#' @return A character or numeric vector with the extracted elements.
+#' @examples
+#' parseStrings(c("A|B|C", "D|E|F"), 2)
+#' parseStrings(c("1|2|3", "4|5|6"), 3, numeric = TRUE)
+#'
+#' @export
+parseStrings <- function(strings, n, split = "\\|", numeric = FALSE) {
+  if (missing(n)) stop("`n` is required")
+  m = length(strsplit(strings[1], split)[[1]])
+  parts <- stringr::str_split_fixed(strings, split, m)
+  res <- parts[, n]
+  if (numeric) res <- as.numeric(res)
+  names(res) = strings
+  return(res)
+}
+
+#' Helper function to validate and preprocess input sequences
+#' @export
+prepareNtSeq <- function(seq) {
+  ## --- Convert and validate a sequence ---
+  
+  # If input is a single string, convert it to a character vector
+  if (is.character(seq) && length(seq) == 1) {
+    # Convert string to vector of letters (assumes seq2nt is available)
+    seq <- seq2nt(seq)
+  }
+  
+  # Ensure the result is a character vector
+  if (!is.character(seq)) {
+    stop("Input sequence must be a character vector or a convertible string.")
+  }
+  
+  # Ensure the vector of characters
+  if (any(nchar(seq) != 1)) {
+    # seq.long = seq[nchar(seq) > 1]
+    stop("Sequence contains elements longer than one character.")
+  }
+  
+  return(seq)
+}

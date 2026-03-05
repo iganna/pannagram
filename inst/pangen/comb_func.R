@@ -22,7 +22,7 @@ mergeOverlaps <- function(breaks){
     stop("'idx.beg' and 'idx.end' must be numeric.")
   }
   
-  # ---- Merge coverages ----
+  # ---- Merge coverage ----
   n.init = nrow(breaks)
   breaks = breaks[,c('idx.beg', 'idx.end')]
   
@@ -64,105 +64,6 @@ mergeOverlaps <- function(breaks){
   return(breaks)
 }
 
-
-
-# mergeOverlaps2 <- function(breaks){
-#   
-#   # Input validation: check if the input is a data frame
-#   if (!is.data.frame(breaks)) {
-#     stop("Input must be a data frame.")
-#   }
-#   
-#   # Input validation: check if the data frame is empty
-#   if (nrow(breaks) == 0) {
-#     warning("Input data frame is empty.")
-#     return(breaks)
-#   }
-#   
-#   # Input validation: check if the required columns are present
-#   required_cols <- c('idx.beg', 'idx.end')
-#   if (!all(required_cols %in% colnames(breaks))) {
-#     stop("The input data frame must contain the following columns: 'idx.beg', 'idx.end'.")
-#   }
-#   
-#   # Input validation: check if 'idx.beg' and 'idx.end' are numeric
-#   if (!is.numeric(breaks$idx.beg) || !is.numeric(breaks$idx.end)) {
-#     stop("'idx.beg' and 'idx.end' must be numeric.")
-#   }
-#   
-#   # ---- Merge coverages ----
-#   n.init = nrow(breaks)
-#   
-#   breaks <- breaks[order(-breaks$idx.end), ]
-#   breaks <- breaks[order(breaks$idx.beg), ]
-#   breaks$id = 1:nrow(breaks)
-#   breaks$cnt = 1
-#   
-#   breaks$len.add = breaks$len.acc - breaks$len.comb
-#   
-#   breaks = breaks[,c('idx.beg', 'idx.end', 'len.add')]
-#   breaks = breaks[!duplicated(breaks[, c('idx.beg', 'idx.end')]),]
-#   
-#   breaks <- aggregate(len.add ~ idx.beg + idx.end, data = breaks, FUN = mean)
-#   
-#   breaks.len = breaks$len.add + breaks$idx.end - breaks$idx.beg + 1
-#   
-#   # Merge overlaps
-#   n = 0
-#   while (n != nrow(breaks)) {
-#     n = nrow(breaks)
-#     
-#     idx_full_cover = which(breaks$idx.beg[-1] <= breaks$idx.end[-nrow(breaks)])
-#     # 
-#     new.lengths = pmax(breaks$idx.end[idx_full_cover], breaks$idx.end[idx_full_cover + 1]) - 
-#       breaks$idx.beg[idx_full_cover] + (breaks$len.plus[idx_full_cover] + breaks$
-#     
-#     if(any(is.na(new.lengths))) stop("NA are found")
-#     
-#     idx.large = new.lengths > len.large
-#     if(sum(idx.large) > 0){
-#       idx.rm = idx_full_cover[idx.large]  # Deside which to remove
-#       
-#       # Do not consider both in this iteration
-#       idx_full_cover = setdiff(idx_full_cover, idx.rm)
-#       idx_full_cover = setdiff(idx_full_cover, idx.rm + 1)
-#       
-#       idx.rm = ifelse(breaks$cnt[idx.rm] < breaks$cnt[idx.rm+1], idx.rm, idx.rm+1)
-#     } else {
-#       idx.rm = c()
-#     }
-#     
-#     idx_full_cover = setdiff(idx_full_cover, idx_full_cover + 1)
-#     
-#     if (length(idx_full_cover) == 0) break
-#     
-#     breaks$cnt[idx_full_cover] = breaks$cnt[idx_full_cover] + breaks$cnt[idx_full_cover + 1]
-#     breaks$idx.end[idx_full_cover] = pmax(breaks$idx.end[idx_full_cover], breaks$idx.end[idx_full_cover + 1])
-#     
-#     b.len[breaks$id[idx_full_cover]] = b.len[breaks$id[idx_full_cover]] + b.len[breaks$id[idx_full_cover+1]]
-#     
-#     if(length(idx.rm) == 0){
-#       b.len[breaks$id[idx_full_cover+1],] = NA
-#       breaks = breaks[-(idx_full_cover + 1), ]
-#     } else {
-#       stop('test')
-#       idx.rm = c(idx.rm, idx_full_cover+1)
-#       if(length(idx.rm) != length(unique(idx.rm))) stop('Problem with idx.rm')
-#       b.len[breaks$id[idx.rm],] = NA
-#       breaks = breaks[-idx.rm, ]
-#     }
-#   }
-#   
-#   
-#   
-#   
-#   if(is.unsorted(breaks$idx.beg)) stop('Chrckpoint sorted 1')
-#   if(is.unsorted(breaks$idx.end)) stop('Chrckpoint sorted 2')
-#   
-#   breaks$len = breaks$idx.end - breaks$idx.beg + 1
-#   
-#   return(breaks)
-# }
 
 
 
@@ -277,20 +178,33 @@ findBreaks <- function(v) {
   
   # Identify breaks where consecutive values differ by more than 1
   i.br.acc <- which(abs(diff(v)) != 1)
-  df <- data.frame(
-    val.beg = v[i.br.acc],
-    val.end = v[i.br.acc + 1],
-    idx.beg = v.idx[i.br.acc],
-    idx.end = v.idx[i.br.acc + 1]
-  )
-  
-  # Filter based on blocks
-  df <- df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
-  
-  # Add attributes: accuracy and lengths
-  df$acc <- acc
-  df$len.acc <- abs(df$val.end - df$val.beg) - 1
-  df$len.comb <- abs(df$idx.end - df$idx.beg) - 1
-  
+  if(length(i.br.acc) == 0){
+    df <- data.frame(
+      val.beg  = numeric(0),
+      val.end  = numeric(0),
+      idx.beg  = numeric(0),
+      idx.end  = numeric(0),
+      acc      = character(0),
+      len.acc  = numeric(0),
+      len.comb = numeric(0)
+    )
+    
+  } else {
+    df <- data.frame(
+      val.beg = v[i.br.acc],
+      val.end = v[i.br.acc + 1],
+      idx.beg = v.idx[i.br.acc],
+      idx.end = v.idx[i.br.acc + 1]
+    )
+    
+    # Filter based on blocks
+    df <- df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
+    
+    # Add attributes: accuracy and lengths
+    df$acc <- acc
+    df$len.acc <- abs(df$val.end - df$val.beg) - 1
+    df$len.comb <- abs(df$idx.end - df$idx.beg) - 1
+  }
+ 
   return(df)
 }

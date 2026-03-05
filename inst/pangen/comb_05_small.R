@@ -25,20 +25,11 @@ option_list <- list(
   
   make_option("--cores",             type = "integer",   default = 1,    help = "Number of cores to use for parallel processing"),
   make_option("--path.log",          type = "character", default = NULL, help = "Path for log files"),
-  make_option("--log.level",         type = "character", default = NULL, help = "Level of log to be shown on the screen"),
-  make_option("--max.len.gap",       type = "integer",   default = NULL, help = "Max length of the gap")
+  make_option("--log.level",         type = "character", default = NULL, help = "Level of log to be shown on the screen")
 )
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
-
-
-#TODO: SHOULD BE PARAMATERS
-len.short = 50
-# len.large = 40000
-n.flank = 30
-
-# print(opt)
 
 # ***********************************************************************
 # ---- Logging ----
@@ -52,17 +43,9 @@ source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code
 # ***********************************************************************
 # ---- Values of parameters ----
 
-# Max len gap
-if (is.null(opt$max.len.gap)) {
-  stop("Error: max.len.gap is NULL")
-} else {
-  len.large <- opt$max.len.gap
-}
-
 # Number of cores for parallel processing
 num.cores = opt$cores
-if(is.null(num.cores)) stop('Wrong number of cores: NULL')
-pokaz('Number of cores', num.cores, file=file.log.main, echo=echo.main)
+pokaz('Number of cores:', num.cores, file=file.log.main, echo=echo.main)
 
 # Path with the MSA output (features)
 path.features.msa <- opt$path.features.msa
@@ -72,26 +55,39 @@ if (is.null(path.features.msa) || is.null(path.inter.msa)) {
   stop("Error: both --path.features.msa and --path.inter.msa must be provided")
 }
 
-if (!dir.exists(path.features.msa)) stop('Features MSA directory doesn???t exist')
-if (!dir.exists(path.inter.msa)) stop('Internal MSA directory doesn???t exist')
+if (!dir.exists(path.features.msa)) stop('Features MSA directory does not exist')
+if (!dir.exists(path.inter.msa)) stop('Internal MSA directory does not exist')
+
+# **************************************************************************
+# ---- Variables ----
+
+max.batch.size <- 100
 
 # **************************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
 
-s.pattern <- paste0("^", aln.type.comb, ".*")
-files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-pref.combinations = gsub(aln.type.comb, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+aln.type = aln.type.clean
+aln.pref = paste0(aln.type, '_')
 
-if(length(pref.combinations) == 0) {
-  stop('No files with the ref-based alignments are found')
+s.pattern <- paste0("^", aln.pref, ".*\\.h5$")
+s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
+if (!length(s.combinations)) stop(paste("No .h5 files matching", aln.type, "prefix found."))
+s.combinations = sub(aln.pref, "", s.combinations)
+s.combinations = sub("\\.h5$", "", s.combinations)
+
+if(length(s.combinations) == 0){
+  stop('No Combinations found.')
+} else {
+  if(!checkCombinations(s.combinations)){
+    stop("Wrong combination format.\nPossible hint: check that you have provided the name of the reference genome -ref.")
+  }
+  pokaz('Combinations:', s.combinations, file=file.log.main, echo=echo.main)
 }
-pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-for(s.comb in pref.combinations){
+for(s.comb in s.combinations){
   # Log files
   file.log.loop = paste0(path.log, 'loop_file_', s.comb, '.log')
   if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop)) 
@@ -126,12 +122,26 @@ for(s.comb in pref.combinations){
       seqs = aln.seqs[[idx.aln]]
       names(seqs) = aln.seqs.names[[idx.aln]]
       
-      seqs <- DNAStringSet(seqs)
       
-      alignment = muscle(seqs, quiet = T)
-      aln = as.character(alignment)
-      
-      # save(list = ls(), file = "tmp_workspace_s.RData")
+      if(length(unique(seqs)) == 1){
+        # Everything is already aligned
+        aln = seqs 
+      }
+      if(max(nchar(seqs)) == 1){
+        # Everything is already aligned
+        aln = seqs
+      } else {
+        seqs <- DNAStringSet(seqs)
+        
+        gc(); gc(reset = TRUE)
+        before <- sum(gc()[, "used"])
+        alignment <- muscle(seqs, quiet = TRUE)
+        after <- sum(gc()[, "used"])
+        cat("Delta muscle", after - before, "\n")
+        
+        aln = as.character(alignment)
+        rm(alignment)
+      }
       
       n.pos = nchar(aln[1])
       
@@ -145,12 +155,19 @@ for(s.comb in pref.combinations){
         mx.pos[s != '-', acc] = aln.info$V3[i.s]:aln.info$V4[i.s]
       }
       mx.list[[i.aln]] = mx.pos
+      
+      gc(); gc(reset = TRUE)
+      before <- sum(gc()[, "used"])
+      
       rm(aln.info)
       rm(aln)
       rm(mx.pos)
-      rm(alignment)
+      
       rm(seqs)
       gc()
+      
+      after <- sum(gc()[, "used"])
+      cat("Delta free up space", after - before, "\n")
     }
     
     gc()
@@ -172,18 +189,21 @@ for(s.comb in pref.combinations){
     myCluster <- makeCluster(num.cores, type = "PSOCK") 
     registerDoParallel(myCluster) 
     
-    # Split the vector of shotp positions into n.core batches
-    idx.batches <- split(idx.short, cut(seq_along(idx.short), num.cores, labels = FALSE))
-    num.cores = min(num.cores, length(idx.batches))
+    # Split the vector of short positions into n.core batches
+    
+    num.batches <- ceiling(length(idx.short) / max.batch.size)
+    num.batches <- max(num.cores, num.batches)  # Compare with cores
+    
+    idx.batches <- split(idx.short, cut(seq_along(idx.short), num.batches, labels = FALSE))
     
     pokaz('Parallel computing: short sequences', file=file.log.loop, echo=echo.loop)
-    res.msa <- foreach(i.batch = 1:num.cores,
+    res.msa <- foreach(i.batch = 1:num.batches,
                        .packages=c('Biostrings', 'crayon', 'msa', 'muscle'))  %dopar% {
                          return(CODE_ALN_BATCH(i.batch)) 
                        }
     
     res = list()
-    for(i.batch in 1:num.cores){
+    for(i.batch in 1:num.batches){
       res[idx.batches[[i.batch]]] = res.msa[[i.batch]]
     }
     
@@ -202,9 +222,7 @@ for(s.comb in pref.combinations){
   
   if(length(res.msa) != nrow(ref.pos)){
     pokaz(length(res.msa), nrow(ref.pos), file=file.log.loop, echo=echo.loop)
-    file.ws = "tmp_workspace_x.RData"
-    all.local.objects <- ls()
-    save(list = all.local.objects, file = file.ws)
+    save(list = ls(), file = "tmp_workspace_x.RData")
     stop('Lengths dont match')
   }
     

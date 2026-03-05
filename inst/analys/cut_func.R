@@ -23,8 +23,8 @@ getPannagramPaths <- function(path.proj = NULL, dot.args = list()) {
     path.seq <- file.path(path.msa, "seq")
   } else {
     if (is.null(path.proj)) stop("Path to the project folder must be provided!")
-    path.msa <- file.path(path.proj, "features", "msa")
-    path.seq <- file.path(path.proj, "features", "seq")
+    path.msa <- file.path(path.proj, "features", "alignments")
+    path.seq <- file.path(path.proj, "features", "consensus")
   }
   path.msa = paste0(path.msa, '/')
   path.seq = paste0(path.seq, '/')
@@ -35,26 +35,26 @@ getPannagramPaths <- function(path.proj = NULL, dot.args = list()) {
 
 #' Extract a subregion from an alignment matrix
 #'
-#' This function extracts a region from a multiple sequence alignment (MSA)
+#' This function extracts a region from a Pangenome alignment
 #' or sequence coordinate matrix for a specific chromosome and accession.
 #'
-#' @param acc Accession name (or 'pangenome', 'pannagram' etc. for the pangenome coordinate).
 #' @param i.chr Chromosome number.
+#' @param acc Accession name (or 'pangenome', 'pannagram' etc. for the pangenome coordinate).
 #' @param p.beg Start position in the Accession.
 #' @param p.end End position in the Accession.
 #' @param path.proj Path to project folder.
 #' @param mode Mode of extraction: either `"seq"` (sequence coordinates) or `"pos"` (alignment coordinates).
-#' @param aln.type Prefix for alignment files (default `"msa_"`).
+#' @param aln.type Prefix for alignment files (default `"pan"`).
 #' @param ref.acc Reference accession ID if you built in the reference-based alignment.
 #' @param echoWhether to print verbose messages (default `FALSE`).
 #'
 #' @return A matrix where each row corresponds to an accession and columns represent aligned bases in the specified region.
 #'
 #' @export
-cutAln <- function(acc, i.chr, p.beg, p.end,
+getRegion <- function(i.chr, acc, p.beg, p.end,
                    path.proj = NULL,
                    mode = 'seq',
-                   aln.type = "msa_", 
+                   aln.type = "pan", 
                    ref.acc = '',
                    echo = FALSE, ...) {
   
@@ -76,7 +76,8 @@ cutAln <- function(acc, i.chr, p.beg, p.end,
   
   # --- Construct file suffix and MSA file path ---
   ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
-  file.msa <- file.path(path.msa, paste0(aln.type, i.chr, '_', i.chr, ref.suff, '.h5'))
+  if(ref.suff != '') aln.type='ref'
+  file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))
   
   if (!file.exists(file.msa)) stop(paste("File", file.msa, "does not exist"))
   
@@ -109,8 +110,16 @@ cutAln <- function(acc, i.chr, p.beg, p.end,
   p.beg.acc <- which(v == p.beg)
   p.end.acc <- which(v == p.end)
   
-  if (length(p.beg.acc) == 0) stop(paste("Position", p.beg, "is not found in the alignment of the accession", acc))
-  if (length(p.end.acc) == 0) stop(paste("Position", p.end, "is not found in the alignment of the accession", acc))
+  if (length(p.beg.acc) == 0){
+    pokazAttention("Position", p.beg, "is not found in the alignment of the accession", acc,
+                  '\nReturn empty matrix')
+    return(NULL)
+  } 
+  if (length(p.end.acc) == 0){
+    pokazAttention("Position", p.end, "is not found in the alignment of the accession", acc,
+                   '\nReturn empty matrix')
+    return(NULL)
+  }
   
   v <- v[p.beg.acc:p.end.acc]
   v <- v[v != 0]
@@ -132,3 +141,10 @@ cutAln <- function(acc, i.chr, p.beg, p.end,
   rownames(aln.mx) <- accessions
   return(aln.mx)
 }
+
+
+cutAln <- function(...) {
+  pokazAttention("Function 'cutAln()' is deprecated. Please use 'getRegion()' instead.")
+  getRegion(...)
+}
+

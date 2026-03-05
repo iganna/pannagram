@@ -11,6 +11,12 @@ suppressMessages({ library(Biostrings)
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("analys/analys_func.R", package = "pannagram"))
 
+# ***********************************************************************
+# ---- Alignment types ----
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
+
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
@@ -25,6 +31,22 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+# ***********************************************************************
+# ---- Logging ----
+
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+
+# ***********************************************************************
+# ---- Variables ----
+# Set the number of cores for parallel processing
+num.cores <- opt$cores
+
+
+# ***********************************************************************
+# ---- Paths ----
+
+path.features.msa <- if (!is.null(opt$path.features.msa)) opt$path.features.msa else stop("Error: 'path.features.msa' is NULL. Please provide a valid path.")
 
 path.seq <- opt$path.seq
 if (!dir.exists(path.seq)) stop('Folder `path.seq` does not exist')
@@ -37,56 +59,24 @@ if (!dir.exists(path.snp)){
   stop(paste0('The output folder was not created'))
 } 
 
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
-
+if(!dir.exists(path.features.msa)) stop(paste('The consensus folder does not exist:', path.features.msa))
 
 # ***********************************************************************
-
-# Set the number of cores for parallel processing
-num.cores <- opt$cores
-
-# Reference genome
-ref.name <- opt$ref
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+# ---- Combinations of chromosomes query-base to create the alignments ----
 
 # Alignment prefix
 if (!is.null(opt$aln.type)) {
   aln.type = opt$aln.type
 } else {
   aln.type = aln.type.msa
-  pokazAttention('The defaul anighment type is used:', aln.type)
 }
 
-path.features.msa <- if (!is.null(opt$path.features.msa)) opt$path.features.msa else stop("Error: 'path.features.msa' is NULL. Please provide a valid path.")
+# Reference genome
+ref.name <- opt$ref
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 
-# Paths
-if(!dir.exists(path.features.msa)) stop(paste('The consensus folder does not exist:', path.features.msa))
-
-# ---- Combinations of chromosomes query-base to create the alignments ----
-s.pattern <- paste0("^", aln.type, ".*h5")
-s.combinations <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
-s.combinations = gsub(aln.type, "", s.combinations)
-s.combinations = gsub(".h5", "", s.combinations)
-
-# pokaz('Reference:', ref.name)
-if(ref.name != ""){
-  ref.suff = paste0('_', ref.name)
-  
-  pokaz('Reference:', ref.name)
-  s.combinations <- s.combinations[grep(ref.suff, s.combinations)]
-  s.combinations = gsub(ref.suff, "", s.combinations)
-  
-} else {
-  ref.suff = ''
-}
-
-if(length(s.combinations) == 0){
-  # save(list = ls(), file = "tmp_workspace_s.RData")
-  stop('No Combinations found.')
-  
-} else {
-  pokaz('Combinations', s.combinations)  
-}
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -109,9 +99,10 @@ loop.function <- function(s.comb, echo = T){
   n.acc = length(accessions)
 
   pokaz('Round 1: get positions of differences..')
+  
   pos.diff = c()
   for(acc in accessions){
-    # pokaz('Sequence of accession', acc)
+    pokaz('Difference in accession', acc)
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     pos = which((v != s.pangen) & (v != '-'))
@@ -127,11 +118,12 @@ loop.function <- function(s.comb, echo = T){
   }
   # Common positions
   pokaz('Round 2: get diffs in common positions..')
+  pos = sort(unique(pos.diff))
   
   snp.matrix = s.pangen[pos]
   snp.val = c()
   for(acc in accessions){
-    # pokaz('Sequence of accession', acc)
+    pokaz('Sequence of accession', acc)
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     
     tmp = (v[pos] != s.pangen[pos]) * 1
@@ -160,7 +152,7 @@ loop.function <- function(s.comb, echo = T){
   saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   # Create the VCF-file for the first accession, the main reference.
-  file.comb = paste0(path.features.msa, aln.type, s.comb, ref.suff, '.h5')
+  file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, '.h5')
   # pokaz(file.comb)
   if(ref.name != ''){
     acc = ref.name
@@ -174,7 +166,7 @@ loop.function <- function(s.comb, echo = T){
   pos.acc = abs(pos.acc[pos.acc != 0])
 
   pokaz('Save VCF-file for the accession', acc, '...')
-  file.vcf.acc = paste0(path.snp, 'snps_', s.comb, ref.suff, '_',acc,'.vcf')
+  file.vcf.acc = paste0(path.snp, 'snps_', s.comb, ref.suff, '_', acc,'.vcf')
   saveVCF(snp.val.acc, pos.acc, chr.name=paste0(acc,'_Chr', i.chr), file.vcf = file.vcf.acc)
   
 }
