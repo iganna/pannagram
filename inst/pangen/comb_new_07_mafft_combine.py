@@ -14,8 +14,8 @@ LOCUS_RE = re.compile(
 
 def parse_input_genomes(input_txt: Path) -> list[str]:
     """
-    input.txt содержит пути. Имя генома = basename пути.
-    Порядок сохраняется. Дубликаты убираются (берём первый).
+    input.txt contains paths. Genome name = basename of the path.
+    Order is preserved. Duplicates are removed (first occurrence kept).
     """
     genomes = []
     seen = set()
@@ -32,7 +32,7 @@ def parse_input_genomes(input_txt: Path) -> list[str]:
 
 def index_locus_files(folder: Path) -> dict[int, Path]:
     """
-    Возвращает mapping: locus_number -> filepath
+    Returns mapping: locus_number -> filepath
     """
     idx: dict[int, Path] = {}
     for p in folder.iterdir():
@@ -45,8 +45,9 @@ def index_locus_files(folder: Path) -> dict[int, Path]:
 
 def read_one_line_fasta(path: Path) -> dict[str, str]:
     """
-    FASTA, где после каждого заголовка >name ровно ОДНА строка последовательности.
-    Берём только первую строку после заголовка (если вдруг встретятся лишние — игнорируем).
+    FASTA where each header >name is followed by exactly ONE sequence line.
+    Only the first sequence line after the header is taken
+    (extra lines, if any, are ignored).
     """
     data: dict[str, str] = {}
     current = None
@@ -78,16 +79,16 @@ def safe_filename(name: str) -> str:
 def main():
     ap = argparse.ArgumentParser(
         description=(
-            "Переворот locus_*.fasta в файлы по геномам; "
-            "пропущенные локусы -> пустая строка, "
-            "пропущенные геномы в локусе -> строка гэпов нужной длины. "
-            "Чтение локусов батчами."
+            "Transpose locus_*.fasta files into genome-based files; "
+            "missing loci -> empty line, "
+            "missing genomes in a locus -> gap string of required length. "
+            "Loci are processed in batches."
         )
     )
-    ap.add_argument("-i", "--input", default="input.txt", help="Файл со списком путей (basename = имя генома).")
-    ap.add_argument("-d", "--dir", default=".", help="Папка, где лежат locus_*.fasta.")
-    ap.add_argument("-o", "--out", default="out", help="Папка для выходных файлов по геномам.")
-    ap.add_argument("-b", "--batch", type=int, default=1000, help="Размер батча локусов (по умолчанию 1000).")
+    ap.add_argument("-i", "--input", default="input.txt", help="File containing path list (basename = genome name).")
+    ap.add_argument("-d", "--dir", default=".", help="Directory containing locus_*.fasta files.")
+    ap.add_argument("-o", "--out", default="out", help="Output directory for genome files.")
+    ap.add_argument("-b", "--batch", type=int, default=1000, help="Locus batch size (default 1000).")
     args = ap.parse_args()
 
     folder = Path(args.dir).resolve()
@@ -95,23 +96,23 @@ def main():
     out_dir = Path(args.out).resolve()
 
     if not input_txt.exists():
-        print(f"ERROR: input.txt не найден: {input_txt}", file=sys.stderr)
+        print(f"ERROR: input.txt not found: {input_txt}", file=sys.stderr)
         sys.exit(1)
 
     genomes = parse_input_genomes(input_txt)
     if not genomes:
-        print("ERROR: input.txt не содержит валидных путей/имён.", file=sys.stderr)
+        print("ERROR: input.txt does not contain valid paths/genome names.", file=sys.stderr)
         sys.exit(1)
 
     locus_idx = index_locus_files(folder)
     if not locus_idx:
-        print(f"ERROR: в папке {folder} не найдено файлов вида locus_*.fasta", file=sys.stderr)
+        print(f"ERROR: no files matching locus_*.fasta found in folder {folder}", file=sys.stderr)
         sys.exit(1)
 
     max_locus = max(locus_idx.keys())
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Подготовим выходные файлы: очистим/создадим, чтобы дальше только дописывать.
+    # Prepare output files: create/clear them so we only append later.
     out_paths: dict[str, Path] = {}
     for genome in genomes:
         out_path = out_dir / f"{safe_filename(genome)}.txt"
@@ -122,11 +123,11 @@ def main():
     batch_size = max(1, args.batch)
     missing_files_total = 0
 
-    # Идём батчами по локусам
+    # Process loci in batches
     for start in range(1, max_locus + 1, batch_size):
         end = min(max_locus, start + batch_size - 1)
 
-        # 1) читаем батч локусов в память
+        # 1) read locus batch into memory
         locus_maps: dict[int, dict[str, str] | None] = {}
         locus_lens: dict[int, int] = {}
 
@@ -141,14 +142,14 @@ def main():
                 locus_maps[i] = mp
                 locus_lens[i] = alignment_length(mp)
 
-        # 2) дописываем строки для каждого генома за этот батч
+        # 2) append lines for each genome for this batch
         for genome in genomes:
             out_path = out_paths[genome]
             with out_path.open("a", encoding="utf-8", newline="\n") as out:
                 for i in range(start, end + 1):
                     mp = locus_maps[i]
                     if mp is None:
-                        out.write("\n")  # пустая строка
+                        out.write("\n")  # empty line
                     else:
                         if genome in mp:
                             out.write(mp[genome] + "\n")
@@ -156,14 +157,14 @@ def main():
                             L = locus_lens[i]
                             out.write(("-" * L if L > 0 else "") + "\n")
 
-        # (необязательно) прогресс
-        print(f"OK: обработан батч локусов {start}..{end}")
+        # optional progress
+        print(f"OK: processed locus batch {start}..{end}")
 
-    print(f"OK: создано файлов: {len(genomes)}")
-    print(f"Диапазон локусов: 1..{max_locus}")
+    print(f"OK: files created: {len(genomes)}")
+    print(f"Locus range: 1..{max_locus}")
     if missing_files_total:
-        print(f"Пропущенных locus_*.fasta в диапазоне: {missing_files_total} (в этих позициях пустые строки у всех)")
-    print(f"Выходная папка: {out_dir}")
+        print(f"Missing locus_*.fasta files in range: {missing_files_total} (empty lines inserted)")
+    print(f"Output directory: {out_dir}")
 
 if __name__ == "__main__":
     main()

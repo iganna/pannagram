@@ -45,7 +45,7 @@ for (i in seq_along(files.sub)) {
   p   = msaplot(mx)
   savePNG(p, path = path.fig, name = sub(".fasta", "", f))
   
-  setTxtProgressBar(pb, i)  # обновляем прогрессбар
+  setTxtProgressBar(pb, i) 
 }
 
 close(pb)

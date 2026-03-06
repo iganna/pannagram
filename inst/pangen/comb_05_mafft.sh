@@ -78,7 +78,7 @@ mafft_task() {
     elif command -v gtimeout >/dev/null 2>&1; then
         TIMEOUT_CMD="gtimeout --foreground 60"
     else
-        TIMEOUT_CMD=""  # нет timeout — запускаем напрямую
+        TIMEOUT_CMD=""
     fi
 
     # Run MAFFT

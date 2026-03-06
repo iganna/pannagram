@@ -5,7 +5,6 @@ create_temp_fasta <- function() {
   tempfile(fileext = ".fasta")
 }
 
-# Вспомогательная функция для чтения содержимого файла
 read_fasta_content <- function(file) {
   readLines(file)
 }

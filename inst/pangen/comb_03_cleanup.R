@@ -59,10 +59,10 @@ num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores
 
 # Path with the consensus output
 if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
-if(!dir.exists(path.features.msa)) stop('path_features_msa directory doesn’t exist')
+if(!dir.exists(path.features.msa)) stop('path_features_msa directory does not exist')
 
 if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
-if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
+if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder does not exist')
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -103,7 +103,7 @@ loop.function <- function(s.comb,
   file.comb.out = paste0(path.features.msa, aln.type.out, s.comb,'.h5')
   
   if(!file.exists(file.comb.in)){
-    stop('File with combined references doesn’t exist')
+    stop('File with combined references does not exist')
   }
   
   # Create the output file

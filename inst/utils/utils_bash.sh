@@ -123,15 +123,12 @@ print_fancy_frame() {
   local message="$1"
   local len=${#message}
   
-  # Верхняя граница
   echo -n "┌"
   printf -- '─%.0s' $(seq 1 $((len + 2)))
   echo "┐"
 
-  # Текст
   echo "│ $message │"
 
-  # Нижняя граница
   echo -n "└"
   printf -- '─%.0s' $(seq 1 $((len + 2)))
   echo "┘"

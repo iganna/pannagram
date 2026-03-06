@@ -94,24 +94,24 @@ d[d == 0] = 1
 ```{r}
 
 
-# Пример матрицы весов рёбер
+# Example of an edge weight matrix
 weights_matrix <- d
 
-# Преобразование матрицы в граф
+# Convert the matrix into a graph
 graph <- graph_from_adjacency_matrix(weights_matrix, mode = "undirected", weighted = TRUE)
 
-# Поиск кратчайшего пути из вершины 1 в вершину 5
+# Find the shortest path from vertex 1 to vertex 5
 shortest_path <- shortest_paths(graph, from = 1, to = nrow(b), weights = E(graph)$weight)
 
-# Вывод кратчайшего пути
+# Output the shortest path
 path.v = shortest_path$vpath[[1]]
 
 path_cost <- sum(
   sapply(seq_along(path.v[-length(path.v)]), function(i) {
-    # Индексы начальной и конечной вершины текущего ребра
+    # Indices of the start and end vertices of the current edge
     v1 <- path.v[i]
     v2 <- path.v[i + 1]
-    # Стоимость ребра
+    # Edge cost
     weights_matrix[v1, v2]
   })
 )

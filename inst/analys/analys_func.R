@@ -439,8 +439,8 @@ getMxFragment <- function(path.cons,
     pos2.acc = which(v.acc == pos2)  
   }
   
-  if(length(pos1.acc) == 0) stop('First position doesn’t exist')
-  if(length(pos2.acc) == 0) stop('Second position doesn’t exist')
+  if(length(pos1.acc) == 0) stop('First position does not exist')
+  if(length(pos2.acc) == 0) stop('Second position does not exist')
   
   # Get Alignment
   file.seq.msa = paste0(path.cons, 'seq_', i.chr, '_', i.chr, '_ref_',ref.acc,'.h5')

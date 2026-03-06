@@ -129,7 +129,7 @@ gff$chr = as.numeric(gsub('Chr', '', gff$V1))
 
 # ---- Read the genome ----
 
-if(!file.exists(file.genome)) stop('Genome file doesn’t exist')
+if(!file.exists(file.genome)) stop('Genome file does not exist')
 genome = readFastaMy(file.genome)
 
 genome.list = list()

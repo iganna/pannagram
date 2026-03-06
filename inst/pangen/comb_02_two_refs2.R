@@ -63,10 +63,10 @@ num.cores <- opt$cores
 
 # Path with the consensus output
 if (!is.null(opt$path.features.msa)) path.features.msa <- opt$path.features.msa
-if(!dir.exists(path.features.msa)) stop('path_features_msa directory doesn’t exist')
+if(!dir.exists(path.features.msa)) stop('path_features_msa directory does not exist')
 
 if (!is.null(opt$path.inter.msa)) path.inter.msa <- opt$path.inter.msa
-if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder doesn’t exist')
+if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder does not exist')
 
 # Reference genomes
 ref0 <- if (is.null(opt$ref0)) stop("opt$ref0 is NULL") else opt$ref0
