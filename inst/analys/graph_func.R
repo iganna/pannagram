@@ -196,7 +196,7 @@ getGraphFromNestedness <- function(nestedness,
     # return(edges) 
   }
   
-  cov.cutoff <- normalizeСovСutoff(cov.cutoff)
+  cov.cutoff <- normalizeCovCutoff(cov.cutoff)
   
   # idx.1.to.2 = nestedness$coverage.query >= cov.cutoff
   idx.1.to.2 = (nestedness$coverage.query >= cov.cutoff) & 
@@ -490,7 +490,7 @@ filterNestedness <- function(nestedness,
   
   # ---- Filter by coverage cutoff (percentage) ----
   if (!is.null(cov.cutoff)) {
-    cov.cutoff <- normalizeСovСutoff(cov.cutoff)
+    cov.cutoff <- normalizeCovCutoff(cov.cutoff)
     nestedness <- nestedness[(nestedness$coverage.query  >= cov.cutoff) |
                                (nestedness$coverage.target >= cov.cutoff), ]
     
@@ -526,7 +526,7 @@ filterNestedness <- function(nestedness,
       warning("'cov.cutoff' sould be provided to filter by copy-number")
     }
 
-    cov.cutoff <- normalizeСovСutoff(cov.cutoff)
+    cov.cutoff <- normalizeCovCutoff(cov.cutoff)
 
     nestedness.equal <- nestedness[(nestedness$coverage.query  >= cov.cutoff) &
                                      (nestedness$coverage.target >= cov.cutoff) &
@@ -1256,7 +1256,7 @@ solveUmbrellaNodes <- function(edges,
 }
 
 #' @export
-normalizeСovСutoff <- function(cov.cutoff) {
+normalizeCovCutoff <- function(cov.cutoff) {
   if (cov.cutoff >= 10 && cov.cutoff <= 100) {
     cov.cutoff <- cov.cutoff / 100
   } else if (cov.cutoff < 0 || cov.cutoff > 1) {

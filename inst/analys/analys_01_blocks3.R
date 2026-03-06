@@ -50,16 +50,16 @@ block.len.min = 20000
 # ---- Paths ----
 
 path.project <- opt$path.project
-if(!dir.exists(path.project)) stop('Consensus folder doesn’t exist')
+if(!dir.exists(path.project)) stop('Consensus folder does not exist')
 
 path.features.msa <- opt$path.features.msa
-if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
+if(!dir.exists(path.features.msa)) stop('features/msa dir does not exist')
 
 path.inter.msa <- opt$path.inter.msa
-if(!dir.exists(path.inter.msa)) stop('internal/msa dir doesn’t exist')
+if(!dir.exists(path.inter.msa)) stop('internal/msa dir does not exist')
 
 path.figures <- opt$path.figures
-if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
+if(!dir.exists(path.figures)) stop('Consensus folder does not exist')
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----

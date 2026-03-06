@@ -27,11 +27,11 @@ len.wnd <- opt$len.wnd
 
 # Path with the consensus output
 file.pi <- opt$file.pi
-if(!file.exists(file.pi)) stop('File with pi doesn’t exist')
+if(!file.exists(file.pi)) stop('File with pi does not exist')
 
 # Path with the figures folder
 path.figures <- opt$path.figures
-if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
+if(!dir.exists(path.figures)) stop('Consensus folder does not exist')
 
 pi.acc = read.table(file.pi, header = 1)
 pi.acc = piVCF(pi.acc, len.wnd)

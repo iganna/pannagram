@@ -203,7 +203,7 @@ def process_one_locus(locus_no: int,
                       uppercase: bool,
                       strip_spaces: bool) -> Tuple[int, str]:
 
-    # собираем только непустые
+    # Collect only non-empty ones.
     headers: List[str] = []
     seqs: List[str] = []
     for name, s in zip(genome_names, locus_lines):
@@ -219,12 +219,12 @@ def process_one_locus(locus_no: int,
     out_path = os.path.join(outdir, f"locus_{locus_no}.fasta")
     bad_path = os.path.join(baddir, f"locus_{locus_no}.fasta")
 
-    # если все пустые — пишем пустой локус и ок
+    # If all are empty, we write an empty locus and OK.
     if not seqs:
         write_locus_fasta(out_path, [], [])
         return locus_no, "ok"
 
-    # SAFE IDS (чтобы aligner не “портил” headers)
+    # SAFE IDS (that aligner don't change headers)
     safe_headers = [f"s{i+1:06d}" for i in range(len(headers))]
     safe2orig = dict(zip(safe_headers, headers))
     orig2safe = dict(zip(headers, safe_headers))
@@ -237,19 +237,19 @@ def process_one_locus(locus_no: int,
 
         m_safe: Dict[str, str] = {i: a for i, a in zip(ids, aln)}
 
-        # строго требуем, чтобы все непустые вернулись
+        # We strictly require that all non-empty ones are returned.
         missing_safe = [sh for sh in safe_headers if sh not in m_safe]
         if missing_safe:
             ex = [safe2orig[x] for x in missing_safe[:5]]
             raise RuntimeError(f"Aligner output missing {len(missing_safe)} sequences, e.g. {ex}")
 
-        # восстановим порядок + исходные заголовки
+        # restore the order and the original headers
         aligned_in_input_order = [m_safe[orig2safe[h]] for h in headers]
 
         # write_locus_fasta(out_path, headers, aligned_in_input_order)
 
         if is_bad_alignment_like_r(aligned_in_input_order):
-            # в bad кладём СЫРЬЁ (как у тебя)
+            # write into bad initial sequences
             write_locus_fasta(bad_path, headers, seqs)
             return locus_no, "bad"
 

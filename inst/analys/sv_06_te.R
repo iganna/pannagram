@@ -261,7 +261,7 @@ for(i.acc in 1:length(accessions)){
 # ---- FASTA of seSVs ----
 path.seq = paste0(path.cons, 'seq/')
 if (!dir.exists(path.seq)) {
-  pokazAttention('Consensus sequence doesn’t exist')
+  pokazAttention('Consensus sequence does not exist')
   stop('Please generate the pangenome consensus sequence first')
 }
 

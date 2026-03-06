@@ -34,13 +34,13 @@ if (!dir.exists(path.snp)) stop('Folder `path.snp` does not exist')
 
 # Path with the consensus output
 file.pi <- opt$file.pi
-if(!file.exists(file.pi)) stop('File with pi doesn’t exist')
+if(!file.exists(file.pi)) stop('File with pi does not exist')
 file.pi = basename(file.pi)
 
 
 # Path with the figures folder
 path.figures <- opt$path.figures
-if(!dir.exists(path.figures)) stop('Consensus folder doesn’t exist')
+if(!dir.exists(path.figures)) stop('Consensus folder does not exist')
 
 
 file.dist = paste0(path.snp, file.pi, '.dist.dist' )

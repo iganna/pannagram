@@ -449,7 +449,7 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split = 5) {
   colors.split <- c("#9DB2BF", "#CE1F6A")
   grad.split   <- colorRamp(colors.split)
   
-  # будем создавать новые ряды в списке, а не через rbind в цикле
+  # Create new rows in the list instead of using rbind in a loop.
   new_rows_list <- list()
   new_cols_vec  <- character()
   
@@ -459,7 +459,7 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split = 5) {
   t.correct <- unique(df.plot$t[df.plot$dir1 & !df.plot$dir2])
   
   for (i.rep in 1:2) {
-    # для текущего i.rep собираем новые ряды во временный список
+    # For the current i.rep, ollect new rows into a temporary list
     rep_rows_list <- vector("list", length(t.correct) * n.split)
     rep_cols_vec  <- character(length(t.correct) * n.split)
     k <- 1
@@ -471,7 +471,7 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split = 5) {
       for (j in seq_len(n.split)) {
         df.add <- df.tmp
         
-        # задаём новый t без постоянного max(df.plot$t)
+        # Set a new t without constantly calling max(df.plot$t)
         t_counter <- t_counter + 1
         df.add$t <- max_t + t_counter
         
@@ -497,18 +497,18 @@ splitInversionBlocks <- function(df.plot, idx.break, gr.col, n.split = 5) {
       }
     }
     
-    # добавляем то, что насобирали за данный i.rep
+    # Add what we collected for the current i.rep
     new_rows_list <- c(new_rows_list, rep_rows_list)
     new_cols_vec  <- c(new_cols_vec,  rep_cols_vec)
     
-    # перекрашиваем "исходные" блоки в белый
+    # Recolor the original blocks to white
     gr.col[t.correct] <- "#FFFFFF"
     
-    # обновляем t.correct для следующего прохода
+    # Update t.correct for the next iteration
     t.correct <- unique(df.plot$t[!df.plot$dir1 & df.plot$dir2])
   }
   
-  # один раз склеиваем всё, что насобирали
+  # Concatenate everything
   if (length(new_rows_list) > 0) {
     df.new   <- do.call(rbind, new_rows_list)
     df.plot  <- rbind(df.plot, df.new)

@@ -51,10 +51,10 @@ path.seq <- opt$path.seq
 if (!dir.exists(path.seq)) stop(paste0('No path.seq dir found!'))
 
 path.features.msa <- opt$path.features.msa
-if(!dir.exists(path.features.msa)) stop('features/msa dir doesn’t exist')
+if(!dir.exists(path.features.msa)) stop('features/msa dir does not exist')
 
 path.chr <- opt$path.chr
-if(!dir.exists(path.chr)) stop('intermediate/chromosomes dir doesn’t exist')
+if(!dir.exists(path.chr)) stop('intermediate/chromosomes dir does not exist')
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----

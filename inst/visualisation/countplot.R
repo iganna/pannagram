@@ -59,7 +59,7 @@ countplot <- function(data, sv.class, show.legend = F, colormap = NULL) {
     ymax = strip_rows + 0.5,
     fill = rep(#c("gray95", "#f0fcfd"), 
                c("gray95", "gray95"),
-               length.out = length(strip_rows))  # чередующиеся цвета
+               length.out = length(strip_rows))
   )
   
   
