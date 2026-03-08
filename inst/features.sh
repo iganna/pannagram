@@ -76,7 +76,7 @@ if [ "$run_snp" = true ]; then # -snp
 
     mkdir -p $path_snp
 
-    Rscript $INSTALLED_PATH/analys/analys_04_snp.R \
+    Rscript $INSTALLED_PATH/analys/analys_04_snp_2.R \
         --path.features.msa ${path_features_msa} \
         --path.snp ${path_snp} \
         --path.seq ${path_seq} \

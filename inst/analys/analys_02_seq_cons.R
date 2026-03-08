@@ -146,12 +146,12 @@ loop.function <- function(s.comb, echo = T){
       h5write(s, file.seq, paste0(gr.accs.e, acc))
     })
     
-    rmSafe(v)
-    rmSafe(v.na)
-    rmSafe(genome)
-    rmSafe(s)
-    rmSafe(idx.plus)
-    rmSafe(idx.mins)
+    rm(v)
+    rm(v.na)
+    rm(genome)
+    rm(s)
+    rm(idx.plus)
+    rm(idx.mins)
     gc()
     
   }
