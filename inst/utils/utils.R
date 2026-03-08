@@ -21,7 +21,7 @@ suppressMessages({
 #' 
 #' @author Anna A. Igolkina 
 #' @export
-readFasta <- function(file.fasta, stop.on.error = T) {
+readFasta <- function(file.fasta, stop.on.error = T, keep.spaces.in.names = F) {
   
   if(!file.exists(file.fasta)){
     stop(paste('readFasta: File', file.fasta, 'does not exist'))
@@ -73,8 +73,10 @@ readFasta <- function(file.fasta, stop.on.error = T) {
   seq.names <- substr(file.content[header.idx], 2, nchar(file.content[header.idx]))
   names(sequences) <- seq.names
   
-  names(sequences) = gsub('\t', '_', names(sequences))
-  names(sequences) = gsub(' ', '_', names(sequences))
+  if(!keep.spaces.in.names){
+    names(sequences) = gsub('\t', '_', names(sequences))
+    names(sequences) = gsub(' ', '_', names(sequences))    
+  }
   
   return(sequences)
 }
