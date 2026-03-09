@@ -108,6 +108,9 @@ for (s.comb in s.combinations) {
       pos
     })
   } else {
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
     pos.diff.list <- foreach(
       acc = accessions,
       .packages = c("rhdf5", "crayon", "pannagram"),
@@ -120,6 +123,8 @@ for (s.comb in s.combinations) {
       gc()
       pos
     }
+    
+    stopCluster(myCluster)
   }
   
   pos.diff = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
@@ -152,6 +157,9 @@ for (s.comb in s.combinations) {
       list(acc = acc, tmp = tmp, val = val)
     })
   } else {
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
     res.list <- foreach(
       acc = accessions,
       .packages = c("rhdf5", "crayon", "pannagram"),
@@ -171,9 +179,12 @@ for (s.comb in s.combinations) {
       
       list(acc = acc, tmp = tmp, val = val)
     }
+    
+    stopCluster(myCluster)
   }
   
   # Build matrices
+  pokaz("Build matrices...")
   snp.ref = s.pangen[pos]
   snp.tmp.mat = do.call(cbind, lapply(res.list, `[[`, "tmp"))
   snp.val = do.call(cbind, lapply(res.list, `[[`, "val"))
