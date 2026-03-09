@@ -129,6 +129,12 @@ for (s.comb in s.combinations) {
   
   pos.diff = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
   
+  # Checkup
+  lens <- lengths(pos.diff.list)
+  pokaz("Min length pos.diff.list:", min(lens), "\n")
+  pokaz("Max length pos.diff.list:", max(lens), "\n")
+  pokaz("Length pos.diff:", length(pos.diff), "\n")
+  
   if (length(pos.diff) == 0) {
     pokaz("No SNPs were found..")
     next
