@@ -165,7 +165,9 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
     Rscript $INSTALLED_PATH/analys/sv_02_plot_stat.R \
         --path.features.msa ${path_features_msa} \
         --path.sv ${path_sv} \
-        --path.figures ${path_plots_sv}
+        --path.figures ${path_plots_sv} \
+        --ref  ${ref_pref} \
+        --aln.type ${aln_type}
 
     pokaz_message "Step -sv is done!"
 fi

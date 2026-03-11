@@ -11,10 +11,17 @@ suppressMessages({ library(Biostrings)
   library(ggplot2)
 })
 
+# ***********************************************************************
+# ---- Alignment types ----
 
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
+
+# ***********************************************************************
 args = commandArgs(trailingOnly=TRUE)
 
 option_list = list(
+  make_option(c("--ref"),  type = "character", default = NULL, help = "prefix of the reference file"),
+  make_option(c("--aln.type"),  type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', etc.)"),
   make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option("--path.figures", type = "character", default = "",   help = "Path to folder with figures"),
@@ -41,6 +48,8 @@ if(!dir.exists(path.figures)) stop(paste0('Folder for SV figures does nto exist'
 
 len.min <- opt$len.min
 
+# ***********************************************************************
+# Variables 
 
 # Binning
 len.bins <- c(0, 100, 200, 400, 800, 1000, 3000, 5000, 7000, 12000, Inf)
@@ -59,10 +68,37 @@ color.len <- c(
   "12k+" = "#7f7f7f"
 )
 
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
+
+# ***********************************************************************
+# ---- Combinations of chromosomes query-base to create the alignments ----
+
+# Alignment prefix
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
+} else {
+  aln.type = aln.type.msa
+}
+
+# Reference genome
+ref.name <- opt$ref
+if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
+
+# ***********************************************************************
+# ---- Separate paths with figures for ref-base approach ----
+
+if(ref.suff != ''){
+  path.figures = paste0(path.figures, ref.name, '/')
+  dir.create(path.figures)
+}
+
 # ***********************************************************************
 # ---- Reading the data ----
 
-file.sv.pos = paste0(path.sv, 'sv_pangen_pos.rds')
+file.sv.pos = paste0(path.sv, 'sv_pangen_pos',ref.suff,'.rds')
 if(!file.exists(file.sv.pos)){
   stop('SVs were not generated.')
 }
