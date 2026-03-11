@@ -57,7 +57,7 @@ if (ref.name == "NULL" || is.null(ref.name)) ref.name <- ""
 
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
-s.combinations = "5_5"
+# s.combinations = "5_5"
 
 # --------------------------------------------------
 # cluster only once
@@ -130,10 +130,10 @@ for (s.comb in s.combinations) {
   pos.diff = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
   
   # Checkup
-  lens <- lengths(pos.diff.list)
-  pokaz("Min length pos.diff.list:", min(lens), "\n")
-  pokaz("Max length pos.diff.list:", max(lens), "\n")
-  pokaz("Length pos.diff:", length(pos.diff), "\n")
+  # lens <- lengths(pos.diff.list)
+  # pokaz("Min length pos.diff.list:", min(lens), "\n")
+  # pokaz("Max length pos.diff.list:", max(lens), "\n")
+  # pokaz("Length pos.diff:", length(pos.diff), "\n")
   
   if (length(pos.diff) == 0) {
     pokaz("No SNPs were found..")
