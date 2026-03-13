@@ -185,6 +185,9 @@ for (s.comb in s.combinations) {
   snp.val = do.call(cbind, lapply(res.list, `[[`, "val"))
   colnames(snp.val) = acc.names
   
+  
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   # Clean up the memory
   rm(res.list)
   
