@@ -76,13 +76,18 @@ if [ "$run_snp" = true ]; then # -snp
 
     mkdir -p $path_snp
 
-    Rscript $INSTALLED_PATH/analys/analys_04_snp_2.R \
-        --path.features.msa ${path_features_msa} \
-        --path.snp ${path_snp} \
-        --path.seq ${path_seq} \
-        --ref  ${ref_pref} \
-        --aln.type ${aln_type} \
-        --cores ${cores}
+    if [[ -n "$acc_snp" ]]; then
+        acc_arg="--acc $acc_snp"
+    fi
+
+    Rscript "$INSTALLED_PATH/analys/analys_04_snp_2.R" \
+        --path.features.msa "${path_features_msa}" \
+        --path.snp "${path_snp}" \
+        --path.seq "${path_seq}" \
+        --ref "${ref_pref}" \
+        --aln.type "${aln_type}" \
+        --cores "${cores}" \
+        $acc_arg
 
     pokaz_message "Step -snp is done!"
 

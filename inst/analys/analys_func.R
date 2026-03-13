@@ -626,7 +626,7 @@ getGeneBlocks <- function(g.tmp, len.pan, v.acc){
                     idx = g[idx.beg,1]))
 }
 
-saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
+saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NULL) {
   
   if(length(snp.pos) != nrow(snp.val)) stop('Dimentions of the SNP matrix and the vectop of positions should match')
   
@@ -648,11 +648,17 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   }
   
   for (i in 1:nrow(snp.val)) {
-    ref <- snp.val[i, 1] # Reference nucleotide
-    if(ref == '-'){
-      alts.cnt = table(snp.val[i,snp.val[i,] != '-'])
-      ref = names(alts.cnt[alts.cnt == max(alts.cnt)])[1]
+    
+    if(!is.null(snp.ref)){
+      ref <- snp.ref[i]  
+    } else {
+      ref <- snp.val[i, 1] # Reference nucleotide
+      if(ref == '-'){
+        alts.cnt = table(snp.val[i,snp.val[i,] != '-'])
+        ref = names(alts.cnt[alts.cnt == max(alts.cnt)])[1]
+      }
     }
+    
     alts <- unique(snp.val[i,]) # Unique alternative nucleotides, excluding reference
     alts <- alts[alts != "-" & alts != ref] # Exclude dashes and reference nucleotides
     alt <- paste(alts, collapse = ",") # Concatenate alternative nucleotides
@@ -689,6 +695,121 @@ saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F) {
   }
   
   # Close the file connection
+  close(file.vcf.conn)
+}
+
+
+saveVCF2 <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NULL) {
+  
+  if(length(snp.pos) != nrow(snp.val)) stop("Dimensions of the SNP matrix and the vector of positions must match")
+  
+  if (!is.null(snp.ref)) {
+    if (length(snp.ref) != nrow(snp.val)) {
+      stop("Length of snp.ref must equal nrow(snp.val)")
+    }
+  }
+  
+  # ---- Matrix of nucleotides ----
+  nts = c('A', 'C', 'G', 'T')
+  mx = matrix(0, nrow = nrow(snp.val), ncol = 4, 
+              dimnames = list(NULL, nts))
+  for(nt in nts){
+    mx[, nt] <- rowSums(snp.val == nt, na.rm = TRUE)
+  }
+  if(any(rowSums(mx) == 0)) stop('NA SNP position')
+  
+  
+  # ---- Reference nucleotides ----
+  if(!is.null(snp.ref)){
+    ref.vec <- snp.ref
+  } else {
+    ref.vec <- nts[max.col(mx, ties.method = "first")]
+  }
+  # If there are gaps in ref.vec
+  idx.gap <- ref.vec == '-'
+  if (any(idx.gap)) {
+    ref.vec[idx.gap] <- nts[
+      max.col(mx[idx.gap, , drop = FALSE], ties.method = "first")
+    ]
+  }
+  
+  # ---- Matrix of Alternative nucleotides ----
+  # REF + ALT1 + ALT2 + ALT3
+  alleles <- matrix("", nrow = length(ref.vec), ncol = 4)
+  colnames(alleles) <- c("REF", "ALT1", "ALT2", "ALT3")
+  alleles[, 1] <- ref.vec
+  
+  mx.tmp <- mx
+  for (i.alt in 2:4) {
+    prev <- alleles[, i.alt - 1]
+    idx.prev <- which(prev != '-')
+    mx.tmp[cbind(idx.prev, 
+                 match(prev[idx.prev], nts))] <- 0
+    
+    irow.alt <- rowSums(mx.tmp) > 0
+    if (!any(irow.alt)) break
+    
+    alleles[irow.alt, i.alt] <- nts[
+      max.col(mx.tmp[irow.alt, , drop = FALSE], ties.method = "first")
+    ]
+  }
+  
+  
+  # ---- Numeric SNP matrix ----
+  genotypes <- matrix('./.', nrow = nrow(snp.val), ncol = ncol(snp.val),
+                      dimnames = dimnames(snp.val))
+  
+  for (j in 1:ncol(alleles)) {
+    idx <- snp.val == alleles[, j]
+    genotypes[idx] <- sprintf("%d/%d", j - 1L, j - 1L)
+  }
+  
+  genotypes[is.na(snp.val)] <- "./."
+  
+  # ---- ALT column for VCF ----
+  alt <- apply(alleles[, c("ALT1", "ALT2", "ALT3"), drop = FALSE], 1, function(x) {
+    x <- x[x != ""]
+    if (length(x) == 0) "." else paste(x, collapse = ",")
+  })
+  
+  # ---- Build full VCF table ----
+  vcf <- data.frame(
+    CHROM  = rep(chr.name, nrow(snp.val)),
+    POS    = snp.pos,
+    ID     = ".",
+    REF    = alleles[, "REF"],
+    ALT    = alt,
+    QUAL   = ".",
+    FILTER = "PASS",
+    INFO   = ".",
+    FORMAT = "GT",
+    genotypes,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  colnames(vcf)[1] <- "#CHROM"
+  
+  # ---- Open file connection ----
+  mode <- if (append) "at" else "wt"
+  file.vcf.conn <- file(file.vcf, open = mode)
+  
+  # ---- Write VCF header only for new file ----
+  if (!append) {
+    cat("##fileformat=VCFv4.2\n", file = file.vcf.conn)
+    cat('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n',
+        file = file.vcf.conn)
+  }
+  
+  write.table(
+    vcf,
+    file = file.vcf.conn,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE,
+    col.names = !append
+  )
+  
+  # ---- Close file connection ----
   close(file.vcf.conn)
 }
 

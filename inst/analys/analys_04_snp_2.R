@@ -19,7 +19,8 @@ option_list = list(
   make_option("--path.seq",          type = "character", default = NULL, help = "Path to seq dir"),
   make_option("--cores",             type = "integer", default = 1,       help = "number of cores to use for parallel processing"),
   make_option("--aln.type",          type="character", default="default", help="type of alignment ('msa_', 'comb_', 'v_', etc)"),
-  make_option("--ref",               type="character", default=NULL,      help="prefix of the reference file")
+  make_option("--ref",               type="character", default=NULL,      help="prefix of the reference file"),
+  make_option("--acc",               type="character", default='',      help="For which accession to generate the VCF file")
 )
 
 opt_parser = OptionParser(option_list=option_list)
@@ -57,17 +58,11 @@ if (ref.name == "NULL" || is.null(ref.name)) ref.name <- ""
 
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
-# s.combinations = "5_5"
-
-# --------------------------------------------------
-# cluster only once
-# --------------------------------------------------
-if (num.cores > 1) {
-  myCluster <- makeCluster(num.cores, type = "PSOCK")
-  registerDoParallel(myCluster)
-} else {
-  myCluster <- NULL
+acc.vcf <- opt$acc
+if(acc.vcf == ''){
+  pokaz('Empty acc')
 }
+
 
 # --------------------------------------------------
 # main loop by s.comb, parallel inside by acc
@@ -152,15 +147,12 @@ for (s.comb in s.combinations) {
       
       v = h5read(file.seq, paste0(gr.accs.e, acc))
       
-      tmp = as.integer(v[pos] != s.pangen[pos])
-      tmp[v[pos] == "-"] = -1
-      
       val = v[pos]
       
       rmSafe(v)
       gc()
       
-      list(acc = acc, tmp = tmp, val = val)
+      list(acc = acc, val = val)
     })
   } else {
     myCluster <- makeCluster(num.cores, type = "PSOCK")
@@ -175,15 +167,12 @@ for (s.comb in s.combinations) {
       
       v = h5read(file.seq, paste0(gr.accs.e, acc))
       
-      tmp = as.integer(v[pos] != s.pangen[pos])
-      tmp[v[pos] == "-"] = -1
-      
       val = v[pos]
       
       rmSafe(v)
       gc()
       
-      list(acc = acc, tmp = tmp, val = val)
+      list(acc = acc, val = val)
     }
     
     stopCluster(myCluster)
@@ -191,50 +180,53 @@ for (s.comb in s.combinations) {
   
   # Build matrices
   pokaz("Build matrices...")
-  snp.ref = s.pangen[pos]
-  snp.tmp.mat = do.call(cbind, lapply(res.list, `[[`, "tmp"))
-  snp.val = do.call(cbind, lapply(res.list, `[[`, "val"))
   acc.names = vapply(res.list, `[[`, character(1), "acc")
-  
-  colnames(snp.tmp.mat) = acc.names
+  snp.ref = s.pangen[pos]
+  snp.val = do.call(cbind, lapply(res.list, `[[`, "val"))
   colnames(snp.val) = acc.names
   
-  snp.matrix = cbind(
-    pos = pos,
-    ref = snp.ref,
-    snp.tmp.mat
-  )
-  colnames(snp.matrix)[2] = s.pangen.name
-  
-  pokaz("Save table...")
-  file.snps = paste0(path.snp, "snps_", s.comb, ref.suff, "_pangen.txt")
-  write.table(snp.matrix, file.snps, row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+  # Clean up the memory
+  rm(res.list)
   
   pokaz("Save VCF-file...")
   file.vcf = paste0(path.snp, "snps_", s.comb, ref.suff, "_pangen.vcf")
-  saveVCF(snp.val, pos, chr.name = paste0("PanGen_Chr", i.chr), file.vcf = file.vcf)
+  saveVCF2(snp.val, pos, chr.name = paste0("PanGen_Chr", i.chr), file.vcf = file.vcf,
+           snp.ref = snp.ref)
   
   # Create the VCF-file for the reference accession
   file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, ".h5")
   
+  acc = ''
   if (ref.name != "") {
     acc = ref.name
-  } else {
-    acc = accessions[1]
+  } 
+  
+  if(acc.vcf != ""){
+    acc = acc.vcf
   }
+  
+  if(acc == ''){
+    quit(save = "no")
+  }
+  
+  pokaz('Generating VCF-file for accession', acc)
   
   pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))
   pos.acc = pos.acc[pos]
   snp.val.acc = snp.val[pos.acc != 0, , drop = FALSE]
+  snp.ref.acc = snp.val.acc[, acc]
   pos.acc = abs(pos.acc[pos.acc != 0])
+  
+  # Sort positions
+  ord = order(pos.acc)
+  pos.acc = pos.acc[ord]
+  snp.val.acc = snp.val.acc[ord, , drop = FALSE]
+  snp.ref.acc = snp.ref.acc[ord]
   
   pokaz("Save VCF-file for the accession", acc, "...")
   file.vcf.acc = paste0(path.snp, "snps_", s.comb, ref.suff, "_", acc, ".vcf")
-  saveVCF(snp.val.acc, pos.acc, chr.name = paste0(acc, "_Chr", i.chr), file.vcf = file.vcf.acc)
-}
-
-if (!is.null(myCluster)) {
-  stopCluster(myCluster)
+  saveVCF2(snp.val.acc, pos.acc, chr.name = paste0(acc, "_Chr", i.chr), file.vcf = file.vcf.acc,
+           snp.ref = snp.ref.acc)
 }
 
 warnings()

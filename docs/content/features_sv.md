@@ -38,6 +38,25 @@ The **3rd column** (`type`) uses one of:
 - `insertion` — simple SV, likely an insertion (present in ≤10% of accessions)  
 - `indel` — simple SV with intermediate presence frequency among accessions
 
+### General SV information
+
+Stored in `sv_pangen_pos.rds`.
+
+This table has the following columns:
+
+- `gr` — SV group identifier
+- `beg` — start position in pangenome coordinates
+- `end` — end position in pangenome coordinates
+- `len` — SV length in the pangenome
+- `single` — indicator of SV type  
+  - `1` — simple SV  
+  - `0` — complex SV
+- accession columns — length of the presence allele in each accession  
+  - `0` — absence allele  
+  - positive number — allele length  
+  - `-1` — missing information
+- `chr` — chromosome number  
+
 
 ### Positions of SVs in genomes
 Two RDS tables provide per-genome coordinates for each SV:

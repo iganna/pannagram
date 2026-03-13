@@ -19,6 +19,7 @@ run_sv_graph=false
 run_annogroup=false
 run_sv_orf=false
 plot_families="F"
+acc_snp=""
 
 required_params=()
 
@@ -32,6 +33,7 @@ while [ $# -gt 0 ]; do
         -blocks| -synteny)          run_blocks=true;                                  shift 1 ;;
         -seq|-consensus)  run_seq=true;                                     shift 1 ;;
         -snp)             run_snp=true;                                     shift 1 ;;
+        -snp_acc)         acc_snp="$2";                                     shift 2 ;;
         -snp_pi)          run_snp_pi=true;                                  shift 1 ;;
         -sv)              run_sv_call=true;                                 shift 1 ;;
         -sv_sim)          run_sv_sim=true;      set_file="$2";              shift 2 ;;
