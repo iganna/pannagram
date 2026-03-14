@@ -69,6 +69,21 @@ if(acc.vcf == ''){
 # --------------------------------------------------
 for (s.comb in s.combinations) {
   
+  # ---------------------------------
+  # Cleanup from previous iteration
+  # ---------------------------------
+  rm(list = intersect(
+    c("i.chr", "file.seq.cons", "s.pangen", "s.pangen.name",
+      "file.seq", "groups", "accessions", "n.acc",
+      "pos.diff.list", "pos",
+      "acc.names", "n.pos", "snp.ref", "snp.val",
+      "file.vcf", "file.comb", "acc",
+      "pos.acc", "idx", "ord", "snp.val.acc", "snp.ref.acc",
+      "file.vcf.acc"),
+    ls()
+  ))
+  gc()
+  
   pokaz("Combination", s.comb)
   
   # Get Consensus
@@ -88,18 +103,21 @@ for (s.comb in s.combinations) {
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
   
-  pokaz("Round 1: get positions of differences..")
+  rm(groups)
+  gc()
   
   # -----------------------------
   # ROUND 1: parallel by acc
   # -----------------------------
+  pokaz("Round 1: get positions of differences..")
+  
   if (num.cores == 1) {
     pos.diff.list <- lapply(accessions, function(acc) {
       pokaz("Difference in accession", acc)
       v = h5read(file.seq, paste0(gr.accs.e, acc))
       pos = which((v != s.pangen) & (v != "-"))
-      rmSafe(v)
-      gc()
+      rm(v)
+      gc(verbose = FALSE)
       pos
     })
   } else {
@@ -114,29 +132,26 @@ for (s.comb in s.combinations) {
       pokaz("Difference in accession", acc)
       v = h5read(file.seq, paste0(gr.accs.e, acc))
       pos = which((v != s.pangen) & (v != "-"))
-      rmSafe(v)
+      rm(v)
       gc()
       pos
     }
     
     stopCluster(myCluster)
+    rm(myCluster)
+    gc()
   }
   
-  pos.diff = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
+  pos = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
+  rm(pos.diff.list)
+  gc()
   
-  # Checkup
-  # lens <- lengths(pos.diff.list)
-  # pokaz("Min length pos.diff.list:", min(lens), "\n")
-  # pokaz("Max length pos.diff.list:", max(lens), "\n")
-  # pokaz("Length pos.diff:", length(pos.diff), "\n")
-  
-  if (length(pos.diff) == 0) {
+  if (length(pos) == 0) {
     pokaz("No SNPs were found..")
     next
   }
   
   pokaz("Round 2: get diffs in common positions..")
-  pos = pos.diff
   
   # -----------------------------
   # ROUND 2: parallel by acc
@@ -149,7 +164,7 @@ for (s.comb in s.combinations) {
       
       val = v[pos]
       
-      rmSafe(v)
+      rm(v)
       gc()
       
       list(acc = acc, val = val)
@@ -169,13 +184,15 @@ for (s.comb in s.combinations) {
       
       val = v[pos]
       
-      rmSafe(v)
+      rm(v)
       gc()
       
       list(acc = acc, val = val)
     }
     
     stopCluster(myCluster)
+    rm(myCluster)
+    gc()
   }
   
   # Build matrices
@@ -192,6 +209,8 @@ for (s.comb in s.combinations) {
   file.vcf = paste0(path.snp, "snps_", s.comb, ref.suff, "_pangen.vcf")
   saveVCF2(snp.val, pos, chr.name = paste0("PanGen_Chr", i.chr), file.vcf = file.vcf,
            snp.ref = snp.ref)
+  
+  gc()
   
   # Create the VCF-file for the reference accession
   file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, ".h5")
@@ -216,6 +235,37 @@ for (s.comb in s.combinations) {
   snp.val.acc = snp.val[pos.acc != 0, , drop = FALSE]
   snp.ref.acc = snp.val.acc[, acc]
   pos.acc = abs(pos.acc[pos.acc != 0])
+  
+  # -------------------------------------------------
+  # MAXIMUM cleanup before accession-specific VCF save
+  # -------------------------------------------------
+  
+  rm(
+    s.pangen,
+    s.pangen.name,
+    file.seq.cons,
+    file.seq,
+    file.comb,
+    n.acc,
+    n.pos,
+    pos,
+    acc.names,
+    snp.ref,
+    snp.val,
+    file.vcf,
+    idx,
+    ord
+  )
+  
+  try(rhdf5::h5closeAll(), silent = TRUE)
+  
+  invisible(gc())
+  invisible(gc())
+  invisible(gc())
+  
+  # -------------------------------------------------
+  #     Save
+  # -------------------------------------------------
   
   # Sort positions
   ord = order(pos.acc)
