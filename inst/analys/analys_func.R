@@ -711,13 +711,20 @@ saveVCF2 <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NUL
   
   # ---- Matrix of nucleotides ----
   nts = c('A', 'C', 'G', 'T')
-  mx = matrix(0, nrow = nrow(snp.val), ncol = 4, 
+  mx = matrix(0, nrow = nrow(snp.val), ncol = length(nts), 
               dimnames = list(NULL, nts))
   for(nt in nts){
     mx[, nt] <- rowSums(snp.val == nt, na.rm = TRUE)
   }
-  if(any(rowSums(mx) == 0)) stop('NA SNP position')
-  
+  # Remove non-standard positions
+  idx.remove = which(rowSums(mx > 0) < 2)
+  if(length(idx.remove) > 0){
+    snp.val = snp.val[-idx.remove, ,drop=F]
+    snp.pos = snp.pos[-idx.remove]
+    if(!is.null(snp.ref)){
+      snp.ref = snp.ref[-idx.remove]
+    }
+  }
   
   # ---- Reference nucleotides ----
   if(!is.null(snp.ref)){
@@ -735,12 +742,12 @@ saveVCF2 <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NUL
   
   # ---- Matrix of Alternative nucleotides ----
   # REF + ALT1 + ALT2 + ALT3
-  alleles <- matrix("", nrow = length(ref.vec), ncol = 4)
+  alleles <- matrix("", nrow = length(ref.vec), ncol = length(nts))
   colnames(alleles) <- c("REF", "ALT1", "ALT2", "ALT3")
   alleles[, 1] <- ref.vec
   
   mx.tmp <- mx
-  for (i.alt in 2:4) {
+  for (i.alt in 2:length(nts)) {
     prev <- alleles[, i.alt - 1]
     idx.prev <- which(prev != '-')
     mx.tmp[cbind(idx.prev, 
