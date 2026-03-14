@@ -721,6 +721,7 @@ saveVCF2 <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NUL
   if(length(idx.remove) > 0){
     snp.val = snp.val[-idx.remove, ,drop=F]
     snp.pos = snp.pos[-idx.remove]
+    mx      = mx[-idx.remove, , drop=FALSE]
     if(!is.null(snp.ref)){
       snp.ref = snp.ref[-idx.remove]
     }
