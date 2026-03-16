@@ -132,13 +132,20 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   groups <- rhdf5::h5ls(file.mode)
   accessions <- groups$name[groups$group == gr.accs.b]
   
-  aln.mx = c()
-  for(acc in accessions){
-    if(echo) pokaz('Sequence of accession', acc)
-    v = rhdf5::h5read(file.mode, paste0(gr.accs.e, acc))
-    aln.mx = rbind(aln.mx, v[p.beg:p.end])
+  n_acc <- length(accessions)
+  w <- p.end - p.beg + 1
+  aln.mx <- matrix(NA, nrow = n_acc, ncol = w,
+                   dimnames = list(accessions, NULL))
+  
+  for (i in seq_along(accessions)) {
+    acc_i <- accessions[i]
+    if (echo) pokaz("Sequence of accession", acc_i)
+    aln.mx[i, ] <- rhdf5::h5read(
+      file.mode,
+      paste0(gr.accs.e, acc_i),
+      index = list(p.beg:p.end)
+    )
   }
-  rownames(aln.mx) <- accessions
   return(aln.mx)
 }
 
