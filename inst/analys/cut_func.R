@@ -77,7 +77,12 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   # --- Construct file suffix and MSA file path ---
   ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
   if(ref.suff != '') aln.type='ref'
-  file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))
+  
+  file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '_chunked.h5'))
+  if(!file.exists(file.msa)){
+    file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))  
+  }
+  
   
   if (!file.exists(file.msa)) stop(paste("File", file.msa, "does not exist"))
   
@@ -88,12 +93,18 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   # --- Determine file path depending on mode ---
   if (mode == "seq") {
     if (!dir.exists(path.seq)) stop("Please run script 'features' with flag -seq.")
-    file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, ".h5"))
+    file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, "_chunked.h5"))
+    if(!file.exists(file.mode)){
+      file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, ".h5"))
+    }
   } else if (mode == "pos") {
     file.mode <- file.msa
   }
   
   if (!file.exists(file.mode)) stop(paste("File", file.mode, "does not exist"))
+  
+  pokaz(file.msa)
+  pokaz(file.mode)
   
   # --- Map genomic positions to alignment indices ---
   if (echo) pokaz("Define new pos based on the accession", acc)
