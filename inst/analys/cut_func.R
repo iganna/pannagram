@@ -77,11 +77,7 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   # --- Construct file suffix and MSA file path ---
   ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
   if(ref.suff != '') aln.type='ref'
-  
-  file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '_chunked.h5'))
-  if(!file.exists(file.msa)){
-    file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))  
-  }
+  file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))  
   
   
   if (!file.exists(file.msa)) stop(paste("File", file.msa, "does not exist"))
@@ -98,7 +94,11 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
       file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, ".h5"))
     }
   } else if (mode == "pos") {
-    file.mode <- file.msa
+    
+    file.mode <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '_chunked.h5'))
+    if(!file.exists(file.mode)){
+      file.mode <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))  
+    }
   }
   
   if (!file.exists(file.mode)) stop(paste("File", file.mode, "does not exist"))
