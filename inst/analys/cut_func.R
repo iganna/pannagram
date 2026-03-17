@@ -52,12 +52,12 @@ getPannagramPaths <- function(path.proj = NULL, dot.args = list()) {
 #'
 #' @export
 getRegion <- function(i.chr, acc, p.beg, p.end,
-                   path.proj = NULL,
-                   mode = 'seq',
-                   aln.type = "pan", 
-                   ref.acc = '',
-                   echo = FALSE, 
-                   acc.aln = NULL,...) {
+                      path.proj = NULL,
+                      mode = 'seq',
+                      aln.type = "pan", 
+                      ref.acc = '',
+                      echo = FALSE, 
+                      acc.aln = NULL,...) {
   
   # --- Variables ---
   s.pangenome <- c("pangen", "pannagram", "pangenome")
@@ -120,39 +120,32 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   # --- Map genomic positions to alignment indices ---
   if (echo) pokaz("Define new pos based on the accession", acc)
   
-  if (tolower(acc) %in% s.pangenome) {
-    info <- rhdf5::h5ls(file.msa)
-    info <- info[info$group == gr.accs.b, ]
-    v <- 1:as.numeric(info$dim[1])
-  } else {
+  if (!(tolower(acc) %in% s.pangenome)) {
+    
     if (!(acc %in% accessions)) stop("Provided acc is not in the alignment")
     v <- rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
+    
+    p.beg <- which(v == p.beg)
+    p.end <- which(v == p.end)
+    
+    if (length(p.beg) == 0){
+      pokazAttention("Position", p.beg, "is not found in the alignment of the accession", acc,
+                     '\nReturn empty matrix')
+      return(NULL)
+    } 
+    if (length(p.end) == 0){
+      pokazAttention("Position", p.end, "is not found in the alignment of the accession", acc,
+                     '\nReturn empty matrix')
+      return(NULL)
+    }
+    
+    v <- v[p.beg:p.end]
+    v <- v[v != 0]
+    if (is.unsorted(v)) stop("The region is not in one synteny block")
+    
   }
-  
-  p.beg.acc <- which(v == p.beg)
-  p.end.acc <- which(v == p.end)
-  
-  if (length(p.beg.acc) == 0){
-    pokazAttention("Position", p.beg, "is not found in the alignment of the accession", acc,
-                  '\nReturn empty matrix')
-    return(NULL)
-  } 
-  if (length(p.end.acc) == 0){
-    pokazAttention("Position", p.end, "is not found in the alignment of the accession", acc,
-                   '\nReturn empty matrix')
-    return(NULL)
-  }
-  
-  v <- v[p.beg.acc:p.end.acc]
-  v <- v[v != 0]
-  if (is.unsorted(v)) stop("The region is not in one synteny block")
-  
-  p.beg <- p.beg.acc
-  p.end <- p.end.acc
   
   # --- Read aligned sequences for all accessions ---
-  groups <- rhdf5::h5ls(file.mode)
-  accessions <- groups$name[groups$group == gr.accs.b]
   
   n_acc <- length(accessions)
   w <- p.end - p.beg + 1
