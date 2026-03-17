@@ -2,7 +2,7 @@
 The Pannagram R library provides a functionality to extract a specific region  
 from a pangenome alignment by choosing a chromosome and accession, and then providing the region’s coordinates.
 
-Before extraction, specify the chromosome index, accession name, region start and end positions,  
+Before extraction, specify the chromosome index, accession name, region start and end positions in that accession,  
 and the path to the alignment project (the same value used for the `-path_project` option in `pannagram`):
 
 ```R
@@ -12,9 +12,10 @@ library(pannagram)
 i.chr <- 1
 
 # Accession (genome) name
-acc <- "name_genome"
+acc <- "name_genome" 
+# acc <- "pangenome"   # use this if coordinates are in pangenome coordinate
 
-# Start and end positions of the region
+# Start and end positions of the region in the coordinate system of acc
 pos.beg <- 10000
 pos.end <- 20000
 
