@@ -83,10 +83,12 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   if (!file.exists(file.msa)) stop(paste("File", file.msa, "does not exist"))
   
   # --- Extract accessions from MSA file ---
+  if(echo) pokaz("Extract accessions from MSA file")
   groups <- rhdf5::h5ls(file.msa)
   accessions <- groups$name[groups$group == gr.accs.b]
   
   # --- Determine file path depending on mode ---
+  if(echo) pokaz("Determine file path depending on mode")
   if (mode == "seq") {
     if (!dir.exists(path.seq)) stop("Please run script 'features' with flag -seq.")
     file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, "_chunked.h5"))
