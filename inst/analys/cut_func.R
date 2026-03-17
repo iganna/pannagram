@@ -56,7 +56,8 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
                    mode = 'seq',
                    aln.type = "pan", 
                    ref.acc = '',
-                   echo = FALSE, ...) {
+                   echo = FALSE, 
+                   acc.aln = NULL,...) {
   
   # --- Variables ---
   s.pangenome <- c("pangen", "pannagram", "pangenome")
@@ -86,6 +87,14 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   if(echo) pokaz("Extract accessions from MSA file")
   groups <- rhdf5::h5ls(file.msa)
   accessions <- groups$name[groups$group == gr.accs.b]
+  
+  if(!is.null(acc.aln)){
+    accessions = intersect(accessions, acc.aln)
+    if(length(accessions) == 0) stop('Please provide relevant accession names')
+    if(length(accessions) == length(acc.aln)) pokazAttention('Some accession names are not relevant:', 
+                                                             setdiff(acc.aln, accessions))
+    pokaz('Generating alignment for', length(accessions), 'accessions')
+  }
   
   # --- Determine file path depending on mode ---
   if(echo) pokaz("Determine file path depending on mode")
