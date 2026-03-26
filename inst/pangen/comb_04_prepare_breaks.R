@@ -126,17 +126,17 @@ for(s.comb in pref.combinations){
   
   # ---- Merge coverages ----
   pokaz('Merge coverages..', file=file.log.loop, echo=echo.loop)
-  breaks <- mergeOverlaps(breaks)
+  breaks <- mergeOverlapsTolerance(breaks)
   
   if(sum(breaks$cnt) != nrow(breaks.init)) stop('Checkpoint3')
   
   # ---- Solve long ----
   pokaz('Solve long..', file=file.log.loop, echo=echo.loop)
-  idx.rem.init = solveLong(breaks, breaks.init, len.large)
+  idx.rem.init = solveLong2(breaks, breaks.init, len.large)
   if(length(idx.rem.init) > 0){
     breaks.extra = rbind(breaks.extra, breaks.init[idx.rem.init,])
     breaks.init = breaks.init[-idx.rem.init,]  
-    breaks = mergeOverlaps(breaks.init)
+    breaks = mergeOverlapsTolerance(breaks.init)
   }
   
   if((sum(breaks$cnt) + nrow(breaks.extra)) != n.init) stop('Checkout length')

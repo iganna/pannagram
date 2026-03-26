@@ -26,7 +26,7 @@ path.project <- "path_to_alignment_project/"
 ## Get the region sequences
 To extract the multiple-sequence alignment for a selected genomic region:
 ```
-aln.seq <- getRegion(
+region.mx <- getRegion(
   i.chr     = i.chr,
   acc       = acc,
   p.beg     = pos.beg,
@@ -43,13 +43,20 @@ The output is a character matrix where:
 To visualize the extracted alignment:
 
 ```
-msaplot(aln.seq)
+msaplot(region.mx)
+msadiff(region.mx)
+```
+
+To save as fasta:
+```
+region.seq <- mx2aln(region.mx)
+writeFasta(region.seq, 'region_alignment.fasta')
 ```
 
 ## Get positions of all accessions in the region 
 If instead of sequences you need a matrix of corresponsing genomic positions, use `pos` mode:
 ```
-aln.seq <- getRegion(
+region.pos <- getRegion(
   i.chr     = i.chr,
   acc       = acc,
   p.beg     = pos.beg,
@@ -65,7 +72,7 @@ aln.seq <- getRegion(
 For reference-based alignments, specify the reference name: `ref='name_of_reference'`.
 
 ```
-aln.seq <- getRegion(
+region.mx.ref <- getRegion(
   i.chr     = i.chr,
   acc       = acc,
   p.beg     = pos.beg,

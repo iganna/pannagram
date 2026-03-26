@@ -65,6 +65,129 @@ mergeOverlaps <- function(breaks){
 }
 
 
+mergeOverlapsTolerance <- function(breaks, 
+                                   len.tol = 0.95,
+                                   dist.tol = 0.5){
+  
+  # Input validation: check if the input is a data frame
+  if (!is.data.frame(breaks)) {
+    stop("Input must be a data frame.")
+  }
+  
+  # Input validation: check if the data frame is empty
+  if (nrow(breaks) == 0) {
+    warning("Input data frame is empty.")
+    return(breaks)
+  }
+  
+  # Input validation: check if the required columns are present
+  required_cols <- c('idx.beg', 'idx.end')
+  if (!all(required_cols %in% colnames(breaks))) {
+    stop("The input data frame must contain the following columns: 'idx.beg', 'idx.end'.")
+  }
+  
+  # Input validation: check if 'idx.beg' and 'idx.end' are numeric
+  if (!is.numeric(breaks$idx.beg) || !is.numeric(breaks$idx.end)) {
+    stop("'idx.beg' and 'idx.end' must be numeric.")
+  }
+  
+  # ---- Merge coverage ----
+  n.init = nrow(breaks)
+  breaks = breaks[,c('idx.beg', 'idx.end', 'len.acc')]
+
+  breaks <- breaks[order(breaks$idx.beg,
+                         -breaks$idx.end,
+                         -breaks$len.acc), ]
+  
+  breaks$id = 1:nrow(breaks)
+  
+  # Remove duplicates
+  idx.keep = c(T, diff(breaks$idx.beg) != 0 | diff(breaks$idx.end) != 0)
+  breaks = breaks[idx.keep,]
+  
+  breaks$cnt = c(breaks$id[-1], n.init+1) - breaks$id
+  if(!(sum(breaks$cnt) == n.init)) stop('Checkpoint1')
+  if (any(breaks$cnt < 0)) stop('Checkpoint2')
+  
+  
+  # Merge overlaps
+  n = 0
+  while (n != nrow(breaks)) {
+    n = nrow(breaks)
+    
+    idx_full_cover = which(breaks$idx.beg[-1] <= breaks$idx.end[-nrow(breaks)])
+    idx_full_cover = setdiff(idx_full_cover, idx_full_cover + 1)
+    
+    if (length(idx_full_cover) == 0) break
+    
+    breaks$cnt[idx_full_cover] = breaks$cnt[idx_full_cover] + breaks$cnt[idx_full_cover + 1]
+    
+    breaks$idx.end[idx_full_cover] = pmax(breaks$idx.end[idx_full_cover], 
+                                          breaks$idx.end[idx_full_cover + 1])
+    
+    breaks$len.acc[idx_full_cover] = pmax(breaks$len.acc[idx_full_cover],
+                                          breaks$len.acc[idx_full_cover + 1])
+    
+    breaks = breaks[-(idx_full_cover + 1), ]
+  }
+  
+  len.max.sv = 15000
+  gap.max = 5000
+  
+  breaks$merge = 0
+  if(nrow(breaks) > 1){
+    for(i in 1:(nrow(breaks)-1)){
+      if(breaks$len.acc[i] > len.max.sv)  next
+      
+      for(j in (i+1):nrow(breaks)){
+        len.sim = min(breaks$len.acc[i], breaks$len.acc[j]) / 
+          max(breaks$len.acc[i], breaks$len.acc[j])
+        
+        gap =  (breaks$idx.beg[j] - breaks$idx.end[i] + 1)
+        if(gap > gap.max) break
+        
+        dist.sim = gap / max(breaks$len.acc[i], breaks$len.acc[j])
+        if(dist.sim > dist.tol) break
+        
+        if(len.sim >= len.tol){
+          breaks$merge[i:j] = 1
+        }
+      }
+    }  
+  }
+  
+  
+  if(sum(breaks$merge) > 0){
+    df.merges = findOnes((breaks$merge > 0) * 1)
+    breaks.add = data.frame(matrix(0, nrow = nrow(df.merges), 
+                                   ncol = ncol(breaks),
+                                   dimnames = list(NULL, colnames(breaks))))
+    for(irow in 1:nrow(df.merges)){
+      breaks.add$idx.beg[irow] = breaks$idx.beg[df.merges$beg[irow]]
+      breaks.add$idx.end[irow] = breaks$idx.end[df.merges$end[irow]]
+      breaks.add$len.acc[irow] = max(breaks$len.acc[df.merges$beg[irow]:
+                                                      df.merges$end[irow]])
+      breaks.add$cnt[irow] = sum(breaks$cnt[df.merges$beg[irow]:
+                                                  df.merges$end[irow]])
+      breaks.add$id = breaks.add$idx.beg
+      
+      breaks$merge[df.merges$beg[irow]:df.merges$end[irow]] = irow
+    }
+    breaks = rbind(breaks[breaks$merge == 0,], breaks.add)
+    
+    breaks <- breaks[order(breaks$idx.beg,
+                           -breaks$idx.end,
+                           -breaks$len.acc), ]
+  }
+  
+  
+  if(is.unsorted(breaks$idx.beg)) stop('Chrckpoint sorted 1')
+  if(is.unsorted(breaks$idx.end)) stop('Chrckpoint sorted 2')
+  
+  breaks$len = breaks$idx.end - breaks$idx.beg + 1
+  
+  return(breaks)
+}
 
 
 solveLong <- function(breaks, breaks.init, len.large) {
@@ -138,6 +261,97 @@ solveLong <- function(breaks, breaks.init, len.large) {
   }
   
   return(idx.rem.init)
+}
+
+
+
+solveLong2 <- function(breaks, breaks.init, len.large) {
+  # Identify breaks where the length exceeds the len.large
+  idx.to.solve = which(breaks$len > len.large)
+  
+  breaks.init$id <- 1:nrow(breaks.init)
+  
+  idx.rem.init <- c()
+  for (irow in idx.to.solve) {
+    pokaz(irow)
+    pos.b <- breaks$idx.beg[irow]
+    pos.e <- breaks$idx.end[irow]
+    n <- pos.e - pos.b + 1
+    
+    # Select initial breaks that fit within the current merged break
+    breaks.tmp <- breaks.init[(breaks.init$idx.beg >= pos.b) & (breaks.init$idx.end <= pos.e),]
+    
+    # Remove some breaks pased on idx
+    breaks.tmp.len = pos.e - pos.b + 1
+    pos.cov = rep(0, breaks.tmp.len)
+    for(irow in 1:nrow(breaks.tmp)){
+      irow.idx = (breaks.tmp$idx.beg[irow]:breaks.tmp$idx.end[irow]) - pos.b + 1
+      pos.cov[irow.idx] = pos.cov[irow.idx] + 1
+    }
+    
+    idx.rem = removePositionsOverlap(pos.cov, len.max)
+    idx.rem = c()
+    for(i.pos in removed){
+      pos.remove = i.pos - 1 + pos.b  
+      idx.rem = c(idx.rem, which((breaks.tmp$idx.beg <= pos.remove) & (breaks.tmp$idx.end >= pos.remove)))
+    }
+    idx.rem = unique(idx.rem)
+    idx.rem.init = c(idx.rem.init, breaks.tmp[idx.rem,]$id)
+    
+  }
+  
+  return(idx.rem.init)
+}
+
+removePositionsOverlap  <- function(pos.cov, len.max) {
+  # Remove minimum of sequences to split into streaches of 25000
+  n <- length(pos.cov)
+  
+  # a[1] = dummy 0 on the left
+  # a[2..n+1] = original array
+  # a[n+2] = dummy 0 on the right
+  a <- c(0, pos.cov, 0)
+  
+  dp <- rep(0, n + 2)
+  prev_pos <- rep(-1, n + 2)
+  
+  # deque implemented with arrays head..tail, storing indices of positions in dp
+  q <- integer(n + 2)
+  head <- 1
+  tail <- 1
+  q[1] <- 1   # index of the left dummy position
+  
+  # i = 2..n+2 corresponds to original positions 1..n and the right dummy position
+  for (i in 2:(n + 2)) {
+    # remove positions that are too far:
+    # (i-1) - (j-1) > len.max  <=>  j < i - len.max
+    while (head <= tail && q[head] < i - len.max) {
+      head <- head + 1
+    }
+    
+    best_j <- q[head]
+    dp[i] <- dp[best_j] + a[i]
+    prev_pos[i] <- best_j
+    
+    while (head <= tail && dp[q[tail]] >= dp[i]) {
+      tail <- tail - 1
+    }
+    tail <- tail + 1
+    q[tail] <- i
+  }
+  
+  # reconstruct removed positions
+  removed <- integer()
+  cur <- n + 2
+  while (cur != 1) {
+    if (cur != n + 2) {
+      # convert index from R-model back to array position: cur -> cur - 1
+      removed <- c(cur - 1, removed)
+    }
+    cur <- prev_pos[cur]
+  }
+
+  return(removed)
 }
 
 
