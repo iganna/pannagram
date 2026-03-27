@@ -149,35 +149,83 @@ for(s.comb in pref.combinations){
   saveRDS(breaks.extra, file.breaks.extra)
   
   ## ---- Get begin-end positions of gaps ----
-
+  pokaz('Get begin-end positions of gaps..', file=file.log.loop, echo=echo.loop)
+  
+  # n.breaks <- nrow(breaks)
+  # n.acc    <- length(accessions)
+  # v.beg <- matrix(0, nrow = n.breaks, ncol = n.acc)
+  # v.end <- matrix(0, nrow = n.breaks, ncol = n.acc)
+  # 
+  # for (i in seq_along(accessions)) {
+  #   acc <- accessions[i]
+  #   
+  #   pokaz(acc, file=file.log.loop, echo=echo.loop)
+  #   
+  #   x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
+  #   b.acc = h5read(file.comb, paste0(gr.blocks, acc))
+  #   
+  #   x.beg = fillPrev(x.acc)[breaks$idx.beg]
+  #   x.end = fillNext(x.acc)[breaks$idx.end]
+  #   
+  #   idx.no.zero = (x.beg != 0) & (x.end != 0)
+  #   idx.no.zero[idx.no.zero] = b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
+  #   
+  #   x.beg[!idx.no.zero] = 0
+  #   x.end[!idx.no.zero] = 0
+  #   
+  #   v.beg[, i] <- x.beg
+  #   v.end[, i] <- x.end
+  #   
+  # }
+  # colnames(v.beg) = accessions
+  # colnames(v.end) = accessions
+  # 
+  # -------
   n.breaks <- nrow(breaks)
   n.acc    <- length(accessions)
-  v.beg <- matrix(0, nrow = n.breaks, ncol = n.acc)
-  v.end <- matrix(0, nrow = n.breaks, ncol = n.acc)
   
-  for (i in seq_along(accessions)) {
+  idx.beg <- breaks$idx.beg
+  idx.end <- breaks$idx.end
+  
+  cl <- parallel::makeCluster(num.cores)
+  registerDoParallel(cl)
+  
+  res <- foreach(
+    i = seq_along(accessions),
+    .packages = c("rhdf5", "pannagram")
+  ) %dopar% {
+    
     acc <- accessions[i]
     
-    pokaz(acc, file=file.log.loop, echo=echo.loop)
+    x.acc <- h5read(file.comb, paste0(gr.accs.e, acc))
+    b.acc <- h5read(file.comb, paste0(gr.blocks, acc))
     
-    x.acc = h5read(file.comb, paste0(gr.accs.e, acc))
-    b.acc = h5read(file.comb, paste0(gr.blocks, acc))
+    x.beg <- fillPrev(x.acc)[idx.beg]
+    x.end <- fillNext(x.acc)[idx.end]
     
-    x.beg = fillPrev(x.acc)[breaks$idx.beg]
-    x.end = fillNext(x.acc)[breaks$idx.end]
+    idx.no.zero <- (x.beg != 0L) & (x.end != 0L)
     
-    idx.no.zero = (x.beg != 0) & (x.end != 0)
-    idx.no.zero[idx.no.zero] = b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
+    if (any(idx.no.zero)) {
+      idx.no.zero[idx.no.zero] <-
+        b.acc[abs(x.beg[idx.no.zero])] == b.acc[abs(x.end[idx.no.zero])]
+    }
     
-    x.beg[!idx.no.zero] = 0
-    x.end[!idx.no.zero] = 0
+    x.beg[!idx.no.zero] <- 0L
+    x.end[!idx.no.zero] <- 0L
     
-    v.beg[, i] <- x.beg
-    v.end[, i] <- x.end
-    
+    list(beg = x.beg, end = x.end)
   }
-  colnames(v.beg) = accessions
-  colnames(v.end) = accessions
+  
+  stopCluster(cl)
+  
+  pokaz('Combine..', file=file.log.loop, echo=echo.loop)
+  v.beg <- do.call(cbind, lapply(res, `[[`, "beg"))
+  v.end <- do.call(cbind, lapply(res, `[[`, "end"))
+  
+  colnames(v.beg) <- accessions
+  colnames(v.end) <- accessions
+  
+  # -------
   
   # Filter "extra" breaks
   for(acc in accessions){
