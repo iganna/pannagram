@@ -190,9 +190,9 @@ mergeOverlapsTolerance <- function(breaks,
 }
 
 
-solveLong <- function(breaks, breaks.init, len.large) {
-  # Identify breaks where the length exceeds the len.large
-  idx.to.solve = which(breaks$len > len.large)
+solveLong <- function(breaks, breaks.init, len.max) {
+  # Identify breaks where the length exceeds the len.max
+  idx.to.solve = which(breaks$len > len.max)
   
   breaks.init$id <- 1:nrow(breaks.init)
   
@@ -211,7 +211,7 @@ solveLong <- function(breaks, breaks.init, len.large) {
     # Determine the number of breaks which should be removed
     for (n.rem in 1:nrow(breaks.tmp)) {
       breaks.tmp.m <- mergeOverlaps(breaks.tmp[-(1:n.rem),])  # Merge overlaps for remaining breaks
-      if (max(breaks.tmp.m$len) < len.large) break
+      if (max(breaks.tmp.m$len) < len.max) break
     }
     
     # pokaz('Potential removes:', n.rem)
@@ -246,7 +246,7 @@ solveLong <- function(breaks, breaks.init, len.large) {
       # Adjust boundaries 
       p.b <- min(breaks.tmp.m$idx.beg[k], breaks.tmp$idx.beg[i])
       p.e <- max(breaks.tmp.m$idx.end[k], breaks.tmp$idx.end[i])
-      if ((p.e - p.b + 1) < len.large) {
+      if ((p.e - p.b + 1) < len.max) {
         breaks.tmp.m$idx.beg[k] <- p.b
         breaks.tmp.m$idx.end[k] <- p.e
       } else {
@@ -265,9 +265,9 @@ solveLong <- function(breaks, breaks.init, len.large) {
 
 
 
-solveLong2 <- function(breaks, breaks.init, len.large) {
-  # Identify breaks where the length exceeds the len.large
-  idx.to.solve = which(breaks$len > len.large)
+solveLong2 <- function(breaks, breaks.init, len.max) {
+  # Identify breaks where the length exceeds the len.max
+  idx.to.solve = which(breaks$len > len.max)
   
   breaks.init$id <- 1:nrow(breaks.init)
   
@@ -289,7 +289,7 @@ solveLong2 <- function(breaks, breaks.init, len.large) {
       pos.cov[irow.idx] = pos.cov[irow.idx] + 1
     }
     
-    idx.rem = removePositionsOverlap(pos.cov, len.max)
+    removed = removePositionsOverlap(pos.cov, len.max)
     idx.rem = c()
     for(i.pos in removed){
       pos.remove = i.pos - 1 + pos.b  
