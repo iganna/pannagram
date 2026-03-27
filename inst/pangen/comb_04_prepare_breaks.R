@@ -81,6 +81,8 @@ files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = 
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
+save(list = ls(), file = "tmp_workspace.RData")
+
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
