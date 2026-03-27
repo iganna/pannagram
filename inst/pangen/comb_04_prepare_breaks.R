@@ -263,6 +263,7 @@ for(s.comb in pref.combinations){
   v.beg[zero.len.mask] = 0
   
   # ---- Checkups for duplicates ----
+  pokaz("Checkups for duplicates...")
   for(icol in 1:ncol(v.len)){
     idx.dup = unique(v.beg[duplicated(v.beg[,icol]),icol])
     if(length(setdiff(idx.dup, 0)) != 0) {
@@ -284,11 +285,13 @@ for(s.comb in pref.combinations){
   }
   
   # ---- Subdivide into categories ----
+  pokaz("Subdivide into categories...")
   breaks$single = rowSums(v.len != 0)
   breaks$len.acc = rowMax(v.len)
   v.len[v.len == 0] <- NA
   breaks$len.mean = rowMeans(v.len, na.rm = TRUE)
   
+  pokaz("Save...")
   all.local.objects <- c("breaks", "v.end", "v.beg", "accessions")
   file.ws <- file.path(path.inter.msa, paste0("breaks_ws_", s.comb, ".RData"))
   save(list = all.local.objects, file = file.ws)
