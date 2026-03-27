@@ -248,6 +248,7 @@ for(s.comb in pref.combinations){
   } 
   
   # ---- Zero-positions mask ----
+  pokaz("Zero-positions mask...")
   zero.mask = (v.end == 0) | (v.beg == 0)
   v.end[zero.mask] = 0
   v.beg[zero.mask] = 0
