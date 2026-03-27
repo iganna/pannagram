@@ -81,8 +81,6 @@ files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = 
 pref.combinations = gsub(aln.type.in, "", files)
 pref.combinations <- sub(".h5", "", pref.combinations)
 
-save(list = ls(), file = "tmp_workspace.RData")
-
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
 }
@@ -150,6 +148,7 @@ for(s.comb in pref.combinations){
   
   ## ---- Get begin-end positions of gaps ----
   pokaz('Get begin-end positions of gaps..', file=file.log.loop, echo=echo.loop)
+  pokaz('Get begin-end positions of gaps..')
   
   # n.breaks <- nrow(breaks)
   # n.acc    <- length(accessions)
@@ -219,6 +218,7 @@ for(s.comb in pref.combinations){
   stopCluster(cl)
   
   pokaz('Combine..', file=file.log.loop, echo=echo.loop)
+  pokaz('Combine..')
   v.beg <- do.call(cbind, lapply(res, `[[`, "beg"))
   v.end <- do.call(cbind, lapply(res, `[[`, "end"))
   
@@ -226,7 +226,7 @@ for(s.comb in pref.combinations){
   colnames(v.end) <- accessions
   
   # -------
-  
+  pokaz('Filter...')
   # Filter "extra" breaks
   for(acc in accessions){
     breaks.acc = breaks.extra[breaks.extra$acc == acc,]
