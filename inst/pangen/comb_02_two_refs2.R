@@ -137,6 +137,7 @@ loop.function <- function(s.comb,
   s.ref0 = paste0(gr.accs.e, ref0)
   s.ref1 = paste0(gr.accs.e, ref1)
   f01 <- cbind(h5read(file.comb0, s.ref0), h5read(file.comb0, s.ref1))
+  
   len.aln = nrow(f01)
   f01 = f01[f01[,1] != 0,,drop=F]
   f01 = f01[f01[,2] != 0,,drop=F]

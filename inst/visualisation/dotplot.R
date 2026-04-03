@@ -57,6 +57,7 @@ dotplot <- function(seq1, seq2, wsize=15, nmatch=12) {
   len2 = length(seq2) - wsize + 2
   
   result = result[order(result$values),]
+  result = result[order(abs(result$values)),]
   
   # pokaz(len1, len2, max(result$row), max(result$col))
   p = invisible(
