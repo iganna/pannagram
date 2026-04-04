@@ -1404,12 +1404,13 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aligner mafft
 
         echo "Done" >> "$log_chromosome"
+
+        exit 0
+        
     done
 
     touch "${step_file}"
 fi
-
-exit 0
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
