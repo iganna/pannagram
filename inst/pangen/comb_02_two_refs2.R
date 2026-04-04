@@ -155,7 +155,7 @@ loop.function <- function(s.comb,
     
     # Log files
     file.log.loop = paste0(path.log, 'loop_file_', 
-                           s.comb, '_', acc, '_',
+                           s.comb, '_', acc,
                            '.log')
     if(!file.exists(file.log.loop)){
       invisible(file.create(file.log.loop))

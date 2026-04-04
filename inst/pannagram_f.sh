@@ -1377,7 +1377,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*large*
     fi
 
-    for ((i=5; i<=nchr; i++)); do
+    for ((i=1; i<=4; i++)); do
+    # for ((i=1; i<=nchr; i++)); do
         log_chromosome=${path_log_step}chr_${i}_large.log
         if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
             continue
