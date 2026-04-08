@@ -1377,8 +1377,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*large*
     fi
 
-    for ((i=3; i<=3; i++)); do
-    # for ((i=1; i<=nchr; i++)); do
+    for ((i=1; i<=nchr; i++)); do
     echo 'Hello Anna'
         log_chromosome=${path_log_step}chr_${i}_large.log
         if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
@@ -1405,8 +1404,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aligner mafft
 
         echo "Done" >> "$log_chromosome"
-
-        exit 0
 
     done
 
