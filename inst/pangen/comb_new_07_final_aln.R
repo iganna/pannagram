@@ -219,6 +219,8 @@ for(s.comb in pref.combinations){
   df.breaks$new.end = idx.map[df.breaks$idx.end] - 1
   df.breaks$len.new[df.breaks$fail] = df.breaks$new.end[df.breaks$fail] - df.breaks$new.beg[df.breaks$fail] + 1
   
+  save(list = ls(), file = "tmp_workspace.RData")
+  
   if(any(df.breaks$new.beg > df.breaks$new.end)) stop('Beging is highre than end')
   
   tmp = df.breaks$new.end - df.breaks$new.beg + 1
