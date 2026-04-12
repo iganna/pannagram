@@ -113,7 +113,6 @@ for(s.comb in pref.combinations){
     pokaz('Preliminary file exists')
   }
   
-  
   # Paths
   path.short.aln = paste0(path.inter.synteny, 'short_',s.comb,'/')
   path.large.aln = paste0(path.inter.synteny, 'large_',s.comb,'/')
@@ -183,8 +182,6 @@ for(s.comb in pref.combinations){
   
   rm(data.large)
   
-  save(list = ls(), file = "tmp_workspace.RData")
-  
   # # TODO
   # # Checkup
   # tmp = table(df.breaks$type, df.breaks$len.new != 0)
@@ -219,9 +216,9 @@ for(s.comb in pref.combinations){
   df.breaks$new.end = idx.map[df.breaks$idx.end] - 1
   df.breaks$len.new[df.breaks$fail] = df.breaks$new.end[df.breaks$fail] - df.breaks$new.beg[df.breaks$fail] + 1
   
-  save(list = ls(), file = "tmp_workspace.RData")
+  # save(list = ls(), file = "tmp_workspace.RData")
   
-  if(any(df.breaks$new.beg > df.breaks$new.end)) stop('Beging is highre than end')
+  if(any(df.breaks$new.beg[!df.breaks$fail] > df.breaks$new.end[!df.breaks$fail])) stop('Beging is highre than end')
   
   tmp = df.breaks$new.end - df.breaks$new.beg + 1
   if(any(df.breaks$len.new != tmp)) stop('Wrong mapping: length mismatch')
@@ -232,12 +229,14 @@ for(s.comb in pref.combinations){
   if(len.aln.new != sum(df.breaks$extra) + len.aln.synteny) stop('Wrong mapping: pangenome length')
   
   # Idx which should be zero after mapping
+  idx.fail2 = df.breaks$new.beg > df.breaks$new.end
+  
   idx.zero = rep(0, len.aln.new)
-  idx.zero[df.breaks$new.beg] = 1
-  idx.zero[df.breaks$new.end] = idx.zero[df.breaks$new.end] - 1
+  idx.zero[df.breaks$new.beg[!idx.fail2]] = 1
+  idx.zero[df.breaks$new.end[!idx.fail2]] = idx.zero[df.breaks$new.end[!idx.fail2]] - 1
   idx.zero = cumsum(idx.zero)
-  idx.zero[df.breaks$new.beg] = 1
-  idx.zero[df.breaks$new.end] = 1
+  idx.zero[df.breaks$new.beg[!idx.fail2]] = 1
+  idx.zero[df.breaks$new.end[!idx.fail2]] = 1
   
   if(sum(idx.zero) != sum(df.breaks$len.new)) stop('Idx.zero are wrongly defined')
   
