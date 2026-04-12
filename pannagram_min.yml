@@ -10,7 +10,6 @@ dependencies:
   # --- Aligners used by the script ---
   - abpoa
   - mafft
-  - famsa
 
   # --- Existing R stack ---
   - r-base
