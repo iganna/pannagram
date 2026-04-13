@@ -88,7 +88,7 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
-pref.combinations = '1_1'
+pref.combinations = setdiff(pref.combinations, '1_1')
 for(s.comb in pref.combinations){
   
   # Log files
