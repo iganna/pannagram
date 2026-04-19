@@ -740,11 +740,11 @@ revCompl <- function(s){
     A='T', T='A', C='G', G='C', 
     R='Y', Y='R', S='S', W='W', 
     K='M', M='K', B='V', D='H', 
-    H='D', V='B', N='N', 
+    H='D', V='B', N='N', X='N',
     a='T', t='A', c='G', g='C', 
     r='Y', y='R', s='S', w='W', 
     k='M', m='K', b='V', d='H', 
-    h='D', v='B', n='N'
+    h='D', v='B', n='N', x='N', U='A', u='A'
   )
   
   seqs.rc = rev(complementary_nts[s])

@@ -73,6 +73,8 @@ if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 # Common code for aln.pref, ref.suffix and s.combinations
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
+s.combinations = '1_1'
+
 # ***********************************************************************
 # ---- MAIN program body ----
 
@@ -93,72 +95,88 @@ loop.function <- function(s.comb, echo = T){
   
   # File with sequences
   file.seq = paste0(path.seq, 'seq_', s.comb, ref.suff,'.h5')
-  if (file.exists(file.seq)) file.remove(file.seq)
-  h5createFile(file.seq)
-  h5createGroup(file.seq, gr.accs.e)
+  if (!file.exists(file.seq)){
+    h5createFile(file.seq)
+    h5createGroup(file.seq, gr.accs.e)  
+    acc.exist = c()
+    
+    mx.consensus = NULL
+    
+  } else {
+    tmp = h5ls(file.seq)
+    acc.exist = setdiff(tmp$name, 'accs')
+    
+    if('matrix' %in% acc.exist){
+      mx.consensus = h5read(file.seq, 'matrix')  
+    } 
+  }
   
-  mx.consensus = NULL
+  
   # idx.negative = c()
   for(acc in accessions){
-    # pokaz('Sequence of accession', acc)
-    v = h5read(file.comb, paste0(gr.accs.e, acc))
-    v.na = is.na(v)
-    v[v.na] = 0
-    if(is.null(mx.consensus)){
-      mx.consensus = matrix(0, nrow = length(v), ncol = length(s.nts), dimnames = list(NULL, s.nts))
-    }
     
-    if(acc == ref.name){
-      q.chr = strsplit(s.comb, '_')[[1]][2]
+    if(acc %in% acc.exist){
+      s = h5read(file.seq, paste0(gr.accs.e, acc))
     } else {
-      q.chr = strsplit(s.comb, '_')[[1]][1]  
+      
+      v = h5read(file.comb, paste0(gr.accs.e, acc))
+      v.na = is.na(v)
+      v[v.na] = 0
+      
+      if(acc == ref.name){
+        q.chr = strsplit(s.comb, '_')[[1]][2]
+      } else {
+        q.chr = strsplit(s.comb, '_')[[1]][1]  
+      }
+      
+      pokaz('Accession', acc, 'Chromosome', q.chr)
+      
+      file.chr = paste0(path.chr, acc, '_chr', q.chr, '.fasta')
+      if(!file.exists(file.chr)){
+        stop(paste0('Chromosomal file was not found', file.chr))
+      }
+      genome = readFasta(file.chr)
+      genome = seq2nt(genome)
+      genome = toupper(genome)
+      
+      if(max(abs(v)) > length(genome)) stop('Length of the genome is shorter than the idex involded')
+      
+      s = rep('-', length(v))
+      idx.plus = (v > 0)
+      idx.mins = (v < 0)
+      if(sum(idx.plus) > 0){
+        s[idx.plus] = genome[v[idx.plus]]
+      }
+      if(sum(idx.mins) > 0){
+        s[idx.mins] = justCompl(genome[abs(v[idx.mins])])
+      }
+      
+      suppressMessages({
+        h5write(s, file.seq, paste0(gr.accs.e, acc))
+      })
     }
     
-    pokaz('Accession', acc, 'Chromosome', q.chr)
-    
-    file.chr = paste0(path.chr, acc, '_chr', q.chr, '.fasta')
-    if(!file.exists(file.chr)){
-      stop(paste0('Chromosomal file was not found', file.chr))
+    if(is.null(mx.consensus)){
+      mx.consensus = matrix(0, nrow = length(s), ncol = length(s.nts), dimnames = list(NULL, s.nts))
     }
-    genome = readFasta(file.chr)
-    genome = seq2nt(genome)
-    genome = toupper(genome)
-    
-    if(max(abs(v)) > length(genome)) stop('Length of the genome is shorter than the idex involded')
-  
-    s = rep('-', length(v))
-    idx.plus = (v > 0)
-    idx.mins = (v < 0)
-    if(sum(idx.plus) > 0){
-      s[idx.plus] = genome[v[idx.plus]]
-    }
-    if(sum(idx.mins) > 0){
-      s[idx.mins] = justCompl(genome[abs(v[idx.mins])])
-    }
-    
-    # idx.negative = c(idx.negative, which(idx.mins))
     
     for(s.nt in s.nts){
       mx.consensus[,s.nt] = mx.consensus[,s.nt] + (s == s.nt)
     }
     
-    suppressMessages({
-      h5write(s, file.seq, paste0(gr.accs.e, acc))
-    })
-    
-    rm(v)
-    rm(v.na)
-    rm(genome)
-    rm(s)
-    rm(idx.plus)
-    rm(idx.mins)
+    rm(list = intersect(c("v","v.na","genome","s","idx.plus","idx.mins"), ls()))
     gc()
     
   }
   
-  suppressMessages({
-    h5write(mx.consensus, file.seq, 'matrix')
-  })
+  
+  tmp = h5ls(file.seq)
+  if(!('matrix' %in% tmp$name)){
+    suppressMessages({
+      h5write(mx.consensus, file.seq, 'matrix')
+    })  
+  }
+  
   
   # ---- Consensus sequence ----
   pokaz('Prepare consensus fasta-sequence')
