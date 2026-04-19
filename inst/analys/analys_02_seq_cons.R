@@ -100,18 +100,13 @@ loop.function <- function(s.comb, echo = T){
     h5createGroup(file.seq, gr.accs.e)  
     acc.exist = c()
     
-    mx.consensus = NULL
-    
   } else {
     tmp = h5ls(file.seq)
     acc.exist = setdiff(tmp$name, 'accs')
     
-    if('matrix' %in% acc.exist){
-      mx.consensus = h5read(file.seq, 'matrix')  
-    } 
   }
   
-  
+  mx.consensus = NULL
   # idx.negative = c()
   for(acc in accessions){
     
