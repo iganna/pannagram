@@ -79,8 +79,6 @@ if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
 # s.combinations = '5_5'
-pokaz(s.combinations)
-stop('ok')
 
 # ***********************************************************************
 # ---- MAIN program body ----

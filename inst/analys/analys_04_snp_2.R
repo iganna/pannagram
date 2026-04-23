@@ -63,6 +63,7 @@ if(acc.vcf == ''){
   pokaz('Empty acc')
 }
 
+pokaz(s.combinations)
 
 # --------------------------------------------------
 # main loop by s.comb, parallel inside by acc
