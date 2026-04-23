@@ -63,8 +63,6 @@ if(acc.vcf == ''){
   pokaz('Empty acc')
 }
 
-pokaz(s.combinations)
-
 # --------------------------------------------------
 # main loop by s.comb, parallel inside by acc
 # --------------------------------------------------
@@ -213,6 +211,34 @@ for (s.comb in s.combinations) {
   
   gc()
   
+
+  
+  # -------------------------------------------------
+  # MAXIMUM cleanup before accession-specific VCF save
+  # -------------------------------------------------
+  
+  rm(
+    s.pangen,
+    s.pangen.name,
+    file.seq.cons,
+    file.seq,
+    n.acc,
+    acc.names,
+    snp.ref,
+    file.vcf
+  )
+  
+  
+  try(rhdf5::h5closeAll(), silent = TRUE)
+  
+  invisible(gc())
+  invisible(gc())
+  invisible(gc())
+  
+  # -------------------------------------------------
+  #     Save
+  # -------------------------------------------------
+  
   # Create the VCF-file for the reference accession
   file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, ".h5")
   
@@ -226,47 +252,24 @@ for (s.comb in s.combinations) {
   }
   
   if(acc == ''){
-    quit(save = "no")
+    next
   }
   
   pokaz('Generating VCF-file for accession', acc)
+  
+  if (!(acc %in% colnames(snp.val))) {
+    stop(sprintf("Accession '%s' is not present among SNP matrix columns", acc))
+  }
+  
+  if (!file.exists(file.comb)) {
+    stop(sprintf("Combination file does not exist: %s", file.comb))
+  }
   
   pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))
   pos.acc = pos.acc[pos]
   snp.val.acc = snp.val[pos.acc != 0, , drop = FALSE]
   snp.ref.acc = snp.val.acc[, acc]
   pos.acc = abs(pos.acc[pos.acc != 0])
-  
-  # -------------------------------------------------
-  # MAXIMUM cleanup before accession-specific VCF save
-  # -------------------------------------------------
-  
-  rm(
-    s.pangen,
-    s.pangen.name,
-    file.seq.cons,
-    file.seq,
-    file.comb,
-    n.acc,
-    n.pos,
-    pos,
-    acc.names,
-    snp.ref,
-    snp.val,
-    file.vcf,
-    idx,
-    ord
-  )
-  
-  try(rhdf5::h5closeAll(), silent = TRUE)
-  
-  invisible(gc())
-  invisible(gc())
-  invisible(gc())
-  
-  # -------------------------------------------------
-  #     Save
-  # -------------------------------------------------
   
   # Sort positions
   ord = order(pos.acc)
@@ -278,6 +281,20 @@ for (s.comb in s.combinations) {
   file.vcf.acc = paste0(path.snp, "snps_", s.comb, ref.suff, "_", acc, ".vcf")
   saveVCF2(snp.val.acc, pos.acc, chr.name = paste0(acc, "_Chr", i.chr), file.vcf = file.vcf.acc,
            snp.ref = snp.ref.acc)
+  
+  rm(
+    pos,
+    snp.val,
+    pos.acc,
+    snp.val.acc,
+    snp.ref.acc,
+    file.comb,
+    file.vcf.acc,
+    ord
+  )
+  
+  try(rhdf5::h5closeAll(), silent = TRUE)
+  invisible(gc())
 }
 
 warnings()
