@@ -225,7 +225,7 @@ dotself <- function(seq, wsize=15, nmatch=12, return.mx=F) {
 #' dotspiegel(seq, wsize = 3, nmatch = 2)
 #'
 #' @export
-dotspiegel <- function(seq, wsize, nmatch) {
+dotspiegel <- function(seq, wsize=15, nmatch=12) {
   
   seq <- prepareNtSeq(seq)
   
@@ -421,3 +421,40 @@ dotScore <- function(...) {
   dotscore(...)
 }
 
+#' @export
+dotvalue <- function(seq1, seq2, wsize=15, nmatch=12) {
+  
+  seq1 <- prepareNtSeq(seq1)
+  seq2 <- prepareNtSeq(seq2)
+  if(wsize < nmatch) stop('wsize must be larger than nmatch')
+  
+  # Remove gaps
+  seq1 = seq1[seq1 != '-']
+  seq2 = seq2[seq2 != '-']
+  
+  seq2.rc = revCompl(seq2)
+  
+  mx1 = toupper(seq2mx(seq1, wsize))
+  mx2 = toupper(seq2mx(seq2, wsize))
+  
+  result = mxComp(mx1, mx2, wsize, nmatch)
+  
+  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
+  
+  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  result.rc$values = -result.rc$values
+  result.rc$col = length(seq2) - result.rc$col - wsize + 2
+  result = rbind(result.rc, result)
+  result = rbind(result, data.frame(row = 1, col = length(seq2) - wsize + 1, values=0))
+  
+  len1 = length(seq1) - wsize + 2
+  len2 = length(seq2) - wsize + 2
+  
+  
+  result = result[order(-abs(result$values)),]
+  result = result[result$row > result$col,]
+  result = result[result$values != 0,]
+  result <- result[!duplicated(result[, c("row", "col")]), ]
+  colnames(result) = c('x', 'y', 'value')
+  return(result)
+}
