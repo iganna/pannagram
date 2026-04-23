@@ -66,7 +66,7 @@ if(acc.vcf == ''){
 # --------------------------------------------------
 # main loop by s.comb, parallel inside by acc
 # --------------------------------------------------
-for (s.comb in s.combinations) {
+for (s.comb in s.combinations[-1]) {
   
   # ---------------------------------
   # Cleanup from previous iteration
