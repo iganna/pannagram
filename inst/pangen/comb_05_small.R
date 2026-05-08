@@ -31,6 +31,8 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, args = args);
 
+pokaz(opt)
+
 # ***********************************************************************
 # ---- Logging ----
 
