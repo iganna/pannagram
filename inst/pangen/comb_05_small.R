@@ -132,12 +132,13 @@ for(s.comb in s.combinations){
         aln = seqs
       } else {
         seqs <- DNAStringSet(seqs)
+        pokaz("Number of strings", length(seqs))
         
         gc(); gc(reset = TRUE)
-        before <- sum(gc()[, "used"])
+        # before <- sum(gc()[, "used"])
         alignment <- muscle(seqs, quiet = TRUE)
-        after <- sum(gc()[, "used"])
-        cat("Delta muscle", after - before, "\n")
+        # after <- sum(gc()[, "used"])
+        # cat("Delta muscle", after - before, "\n")
         
         aln = as.character(alignment)
         rm(alignment)
@@ -157,7 +158,6 @@ for(s.comb in s.combinations){
       mx.list[[i.aln]] = mx.pos
       
       gc(); gc(reset = TRUE)
-      before <- sum(gc()[, "used"])
       
       rm(aln.info)
       rm(aln)
@@ -166,8 +166,6 @@ for(s.comb in s.combinations){
       rm(seqs)
       gc()
       
-      after <- sum(gc()[, "used"])
-      cat("Delta free up space", after - before, "\n")
     }
     
     gc()
