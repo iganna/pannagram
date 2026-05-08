@@ -31,7 +31,8 @@ heatplot <- function(tbl,
                      make.binary = F,
                      to.norm = 'none',
                      ynames=T,
-                     xnames=T
+                     xnames=T,
+                     x.angle = 0
                      ) {
   
   cols.list = list('lila'     = c('#F5EDED', '#CB80AB', '#8967B3', '#624E88'),
@@ -122,7 +123,7 @@ heatplot <- function(tbl,
   p <- p +
     theme(
       axis.text.y = if (ynames) element_text() else element_blank(),
-      axis.text.x = if (xnames) element_text() else element_blank()
+      axis.text.x = if (xnames) element_text(angle = x.angle, hjust = 1) else element_blank()
     )
   
   if(!show.legend){

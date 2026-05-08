@@ -74,12 +74,13 @@ msaplot <- function(aln, seq.type='nt', msa.cols = NULL, show.legend=F){
   # Row names
   if(is.null(row.names(aln))){
     pokazAttention('Names of sequences are not provided. They will be .')
-    row.names(aln) = paste0('s.', 1:nrow(aln))
+    row.names(aln) = paste0('s.', 1:nrow(aln), '.', rownames(aln))
   }
   
   if(length(unique(row.names(aln))) != nrow(aln)){
     pokazAttention('Names of sequences are not unique. They were modified.')
-    row.names(aln) = paste0('s.', 1:nrow(aln))
+    rownames(aln)[rownames(aln) == ''] = 's'
+    rownames(aln) = paste0(rownames(aln), '.', 1:nrow(aln))
   }
   
   if (is.vector(aln)){

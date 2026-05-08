@@ -452,7 +452,7 @@ dotvalue <- function(seq1, seq2, wsize=15, nmatch=12) {
   
   
   result = result[order(-abs(result$values)),]
-  result = result[result$row > result$col,]
+  # result = result[result$row > result$col,]
   result = result[result$values != 0,]
   result <- result[!duplicated(result[, c("row", "col")]), ]
   colnames(result) = c('x', 'y', 'value')
