@@ -4,7 +4,7 @@ INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
 #            ERROR HANDLING BLOCK
 # ----------------------------------------------------------------------------
 
-# source $INSTALLED_PATH/utils/chunk_error_control.sh
+source $INSTALLED_PATH/utils/chunk_error_control.sh
 
 # ----------------------------------------------------------------------------
 #             FUNCTIONS
