@@ -73,7 +73,7 @@ if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
 # Common code for aln.pref, ref.suffix and s.combinations
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
-s.combinations = '1_1'
+# s.combinations = '1_1'
 
 # ***********************************************************************
 # ---- MAIN program body ----
