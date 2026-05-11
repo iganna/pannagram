@@ -20,7 +20,11 @@
 #' at each position.
 #'
 #' @export
-msaplot <- function(aln, seq.type='nt', msa.cols = NULL, show.legend=F){
+msaplot <- function(aln, seq.type='nt', msa.cols = NULL,
+                    show.legend = FALSE,
+                    show.letters = F,
+                    letter.color = "black",
+                    letter.size = 3){
   
   # Input handling
   if(is.vector(aln) && is.character(aln)){
@@ -109,11 +113,19 @@ msaplot <- function(aln, seq.type='nt', msa.cols = NULL, show.legend=F){
     xlab(NULL) +
     theme(legend.position = "none")
   
+  if(show.letters){
+    g.msa = g.msa +
+      geom_text(aes(label = value),
+                color = letter.color,
+                size = letter.size)
+  }
+  
   if(show.legend){
-    g.msa = g.msa + theme(legend.position = "bottom") + 
+    g.msa = g.msa +
+      theme(legend.position = "bottom") + 
       guides(color = guide_legend(title = NULL),
-             fill = guide_legend(title = NULL, 
-                                 override.aes = list(colour = "black"))) 
+             fill = guide_legend(title = NULL,
+                                 override.aes = list(colour = "black")))
   }
   
   return(g.msa)
@@ -138,7 +150,8 @@ msaplot <- function(aln, seq.type='nt', msa.cols = NULL, show.legend=F){
 #' gaps are marked as "gap". These differences are then visualized using the `msaplot` function.
 #'
 #' @export
-msadiff <- function(aln, i.ref=1, show.legend=F){
+msadiff <- function(aln, i.ref=1, show.legend=F, show.letters = F, letter.color = 'black',
+                    letter.size = 3){
   
   # Input handling
   if(is.vector(aln) && is.character(aln)){
@@ -148,6 +161,19 @@ msadiff <- function(aln, i.ref=1, show.legend=F){
   # If input is matrix, ensure correct type
   if(!is.matrix(aln)){
     stop("Input must be either a character vector of aligned sequences or a matrix.")
+  }
+  
+  
+  # Row names
+  if(is.null(row.names(aln))){
+    pokazAttention('Names of sequences are not provided. They will be .')
+    row.names(aln) = paste0('s.', 1:nrow(aln), '.', rownames(aln))
+  }
+  
+  if(length(unique(row.names(aln))) != nrow(aln)){
+    pokazAttention('Names of sequences are not unique. They were modified.')
+    rownames(aln)[rownames(aln) == ''] = 's'
+    rownames(aln) = paste0(rownames(aln), '.', 1:nrow(aln))
   }
   
   aln = toupper(aln)
@@ -160,6 +186,21 @@ msadiff <- function(aln, i.ref=1, show.legend=F){
   b.msa = msaplot(bin.mx,
                   msa.cols = c("same" = "grey80", "diff" = "grey20", "gap" = "white"),
                   show.legend = show.legend)
+  
+  if(show.letters){
+    df.letters <- reshape2::melt(aln)
+    df.letters$Var1 = factor(df.letters$Var1, levels = rev(rownames(aln)))
+    df.letters$Var2 = as.numeric(df.letters$Var2)
+    
+    b.msa <- b.msa +
+      geom_text(
+        data = df.letters,
+        aes(x = Var2, y = Var1, label = value),
+        inherit.aes = FALSE,
+        color = letter.color,
+        size = letter.size
+      )
+  }
   
   return(b.msa)
   
