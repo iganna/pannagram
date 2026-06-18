@@ -30,12 +30,20 @@ Documentation can be found at [Pannagram-page](https://iganna.github.io/pannagra
 Clone the repository and create the conda environment:
 
 ```
-git clone https://github.com/<user>/pannagram.git
+git clone https://github.com/iganna/pannagram.git
 cd pannagram
 conda env create -f pannagram.yml
 conda activate pannagram
 ./user.sh
 ./verify_installation.sh  # Verify the successful installation
+```
+
+On some machines the conda installation may return an error message including `strict_repo_priority`.
+This indicates that conda is not able to resolve whether packages should be retrieved from bioconda or conda-forge.
+You can try the following command which relaxes conda's channel priority rule to install the pannagram environment, without changing the global setting on your machine.
+
+```
+CONDA_CHANNEL_PRIORITY=flexible conda env create -f pannagram.yml
 ```
 
 ## Quick Start
