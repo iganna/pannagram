@@ -1,214 +1,132 @@
 # All function to find similarities
 
-#' Find Hits in Reference
-#'
-#' This function identifies hits in a reference sequence based on similarity cutoffs and strand orientation. 
-#' It handles exact matches and fragmented matches.
-#'
-#' @param v A data frame blast result data. 
-#' The structure of 'v' must include the following NON-factor columns:
-#'   - V1: Identifier for genomic elements or fragments.
-#'   - V2 and V3: Genomic coordinates (start and end positions of a gene or fragment).
-#'   - V4 and V5: Coordinate-related columns, representing positions in a reference sequence.
-#'   - V6: Numerical value associated with each genomic element, used for averaging.
-#'   - V7: Similarity measure.
-#'   - V8: Another identifier of the reference sequence.
-#'   - len1: Column representing length of queries, crucial for certain calculations in the function.
+# ---- PATCHED: assemble-then-threshold similarity search ----
+# Union length (bp) covered by inclusive [a,b] intervals (merged).
+mergeLen <- function(b, e){
+  if(length(b) == 0) return(0)
+  iv <- cbind(pmin(b, e), pmax(b, e))
+  iv <- iv[order(iv[,1]), , drop = FALSE]
+  tot <- 0; cs <- iv[1,1]; ce <- iv[1,2]
+  if(nrow(iv) > 1){
+    for(i in 2:nrow(iv)){
+      if(iv[i,1] <= ce + 1){ ce <- max(ce, iv[i,2]) }
+      else { tot <- tot + (ce - cs + 1); cs <- iv[i,1]; ce <- iv[i,2] }
+    }
+  }
+  tot + (ce - cs + 1)
+}
 
-#' @param sim.cutoff The similarity cutoff for considering a hit. Defaults to 0.9.
-#' @param echo Logical flag to indicate if intermediate steps should be printed. Defaults to TRUE.
+# Merged inclusive [a,b] intervals encoded as "a-b;a-b;..." (genome sub-segments
+# of a copy; gaps = insertions/nesting, excluded from the painted bp).
+mergeIvStr <- function(b, e){
+  if(length(b) == 0) return("")
+  iv <- cbind(pmin(b, e), pmax(b, e))
+  iv <- iv[order(iv[,1]), , drop = FALSE]
+  segs <- character(0); cs <- iv[1,1]; ce <- iv[1,2]
+  if(nrow(iv) > 1){
+    for(i in 2:nrow(iv)){
+      if(iv[i,1] <= ce + 1){ ce <- max(ce, iv[i,2]) }
+      else { segs <- c(segs, paste0(cs, "-", ce)); cs <- iv[i,1]; ce <- iv[i,2] }
+    }
+  }
+  paste(c(segs, paste0(cs, "-", ce)), collapse = ";")
+}
+
+#' Find Hits in Reference (patched, assemble-then-threshold)
 #'
-#' @return A data frame with hits that meet the specified similarity criteria. The result includes additional information like strand orientation and coverage details.
+#' Groups same-(query, chromosome, strand) BLAST HSPs into colinear copies by
+#' gap-clustering along the genome, then applies the similarity / coverage
+#' thresholds ONCE to each assembled copy:
+#'   - consensus coverage = merged query-side bp / query length  >= coverage
+#'   - identity = alignment-length-weighted mean pident          >= sim.cutoff
+#'   - genome footprint    = ref span / query length             >= coverage
+#'   - symmetric (optional): query length / ref span             >= coverage
+#'     (when FALSE, copies whose genomic footprint is LONGER than the consensus
+#'      -- i.e. carry an insertion / nested element -- are still kept.)
 #'
-#' @examples
-#' 
-#' # First, generate the required data structure using the BLAST command:
-#' # blastn -db db.fasta -query query.fasta -out out.txt -outfmt "6 qseqid qstart qend sstart send pident length sseqid"
-#' # Then, read the output into a data frame:
-#' v <- read.table('out.txt', stringsAsFactors = FALSE)
-#' 
-#' # Next, add an additional column 'len1' to 'v', which represents the length of sequences or genomic features.
-#' # This can be done based on your specific data and requirements. For example:
-#' # v$len1 <- calculateLengths(v) # Replace 'calculateLengths' with actual calculation or data extraction
-#' 
-#' # Finally, use the function with the prepared data frame:
-#' result <- findHitsInRef(v, sim.cutoff = 0.9, echo = TRUE)
-#' 
-findHitsInRef <- function(v, sim.cutoff, coverage=NULL, echo = T){
-  
-  
-  if(is.null(coverage)) coverage = sim.cutoff
+#' This replaces the per-HSP "exact match" + fragile fragment-stitching logic so
+#' that single sub-coverage HSPs get partial credit and inserted/nested copies
+#' are not rejected. No pre-filtering of HSPs by pident before assembly.
+findHitsInRef <- function(v, sim.cutoff, coverage = NULL, symmetric = FALSE,
+                          gap.factor = 1.0, echo = FALSE){
+  if(is.null(coverage)) coverage <- sim.cutoff
   if(!('len1' %in% colnames(v))) stop('No column len1 in the data.frame')
-  
-  if (! ((sim.cutoff >= 0) & (sim.cutoff <= 1))) {
+  if(!((sim.cutoff >= 0) & (sim.cutoff <= 1)))
     stop(paste("Similarity cutoff should be between 0 and 1, now", sim.cutoff))
-  }
-  
-  if (! ((coverage >= 0) & (coverage <= 1))) {
+  if(!((coverage >= 0) & (coverage <= 1)))
     stop(paste("Coverage cutoff should be between 0 and 1, now", coverage))
+
+  empty <- data.frame(V1=character(), V2=numeric(), V3=numeric(),
+                      V4=numeric(), V5=numeric(), V6=numeric(), V7=numeric(),
+                      V8=character(), len1=numeric(), strand=character(),
+                      subiv=character(),
+                      stringsAsFactors = FALSE)
+  if(nrow(v) == 0) return(empty)
+
+  gmin  <- pmin(v$V4, v$V5)
+  gmax  <- pmax(v$V4, v$V5)
+  strnd <- ifelse(v$V4 > v$V5, '-', '+')
+  alen  <- v$V7   # alignment length (kept as col 7 from BLAST) -> identity weight
+  pid   <- v$V6
+  # PATCHED: RM-style substitution-only identity when the BLAST table carries
+  # the optional mismatch/gaps columns (mism = V11, gaps = V12). RepeatMasker's
+  # %div counts substitutions only and reports indels separately (del%/ins%),
+  # whereas blastn `pident` charges gap columns against identity -- so for
+  # insertion-rich diverged copies blastn pident sits ~5-7 pts below RM identity
+  # and trips the sim gate. We reconcile by excluding indel columns:
+  #   identity = identical_bases / aligned_non-gap_columns.
+  has.sub <- all(c('mism', 'gaps') %in% colnames(v))
+  if(has.sub){
+    matches <- v$V7 - v$mism - v$gaps   # identical aligned bases
+    nongap  <- v$V7 - v$gaps            # aligned columns excluding indels (= matches + mism)
   }
-  
-  s.tmp.comb = '___'
-  
-  # ---- Exact match ----
-  # Take to the analysis those positions, which are already enough under the coverage threshold
-  idx.include = (v$V7 / v$len1 > coverage)  # CHANGED FROM sim.cutoff
-  v.include = v[idx.include,]
-  v.include$V7 = v.include$V3 - v.include$V2 + 1
-  
-  # Result variable
-  v.sim = v.include
-  
-  # Add Strand
-  s.strand = c('+', '-')
-  v.sim$strand = s.strand[(v.sim$V4 > v.sim$V5) * 1 + 1]
-  
-  # ---- Fragmented match ----
-  # Decide what to do with those, which are covered by pieces
-  idx.non.include = !idx.include
-  
-  if(sum(idx.non.include) == 0){
-    return(v.sim)
+
+  key <- paste(v$V1, v$V8, strnd, sep = '\r')
+  # PATCHED (speed): group HSPs by key in a single O(N) pass via split() instead
+  # of `for(k in unique(key)) which(key==k)` which was O(n_keys * n_hsps) and
+  # dominated runtime (~23s -> ~1s). Output is identical (final res is sorted
+  # downstream; copy IDs are arbitrary labels).
+  groups <- split(seq_along(key), key)
+  res.list <- vector("list", length(groups))
+  ng <- 0L
+  for(idx in groups){
+    o   <- idx[order(gmin[idx])]
+    len1 <- v$len1[o[1]]
+    gthr <- max(1, gap.factor * len1)
+    if(length(o) == 1){
+      cl <- 1
+    } else {
+      gapd <- gmin[o][-1] - gmax[o][-length(o)]
+      cl <- cumsum(c(1, (gapd > gthr) * 1))
+    }
+    for(ci in unique(cl)){
+      g <- o[cl == ci]
+      qcov  <- mergeLen(v$V2[g], v$V3[g])
+      if(has.sub){
+        # RM-style: substitution-only identity (indel columns excluded).
+        ident <- 100 * sum(matches[g]) / sum(nongap[g])
+      } else {
+        # fallback: alignment-length-weighted mean of gap-inclusive blast pident.
+        ident <- sum(pid[g] * alen[g]) / sum(alen[g])
+      }
+      gspan <- max(gmax[g]) - min(gmin[g]) + 1
+      ok <- (qcov / len1 >= coverage) &
+            (ident >= sim.cutoff * 100) &
+            (gspan / len1 >= coverage)
+      if(symmetric) ok <- ok & (len1 / gspan >= coverage)
+      if(isTRUE(ok)){
+        ng <- ng + 1L
+        res.list[[ng]] <- data.frame(
+          V1 = v$V1[g[1]], V2 = min(v$V2[g]), V3 = max(v$V3[g]),
+          V4 = min(gmin[g]), V5 = max(gmax[g]), V6 = ident, V7 = qcov,
+          V8 = v$V8[g[1]], len1 = len1, strand = strnd[g[1]],
+          subiv = mergeIvStr(gmin[g], gmax[g]),
+          stringsAsFactors = FALSE)
+      }
+    }
   }
-  
-  if(echo) pokaz('Work with partial genes')
-  idx.strand = (v$V4 > v$V5) * 1
-  for(i.strand in 0:1){
-    if(echo) pokaz(paste('Strand', i.strand))
-    v.rest = v[(idx.non.include) & (idx.strand == i.strand),]
-    
-    if(nrow(v.rest) == 0) next
-    
-    if(i.strand == 1){
-      # tmp = v.rest$V4
-      # v.rest$V4 = v.rest$V5
-      # v.rest$V5 = tmp
-      
-      tmp.max = max(c(v.rest$V4, v.rest$V5)) + 1
-      v.rest[,c('V4', 'V5')] = tmp.max - v.rest[,c('V4', 'V5')]
-    }
-    
-    # if only one record - delete
-    v.rest = v.rest[order(v.rest$V8),]
-    v.rest = v.rest[order(v.rest$V1),]
-    n.rest = nrow(v.rest)
-    idx.one = which((v.rest$V8[-1] == v.rest$V8[-n.rest]) & (v.rest$V1[-1] == v.rest$V1[-n.rest]))
-    if(length(idx.one) == 0) next # If nothing is left
-    
-    idx.one = sort(unique(c(idx.one,idx.one+1)))
-    v.rest = v.rest[idx.one,,drop=F]
-    
-    if(nrow(v.rest) == 0) next
-    
-    v.rest = v.rest[order(-v.rest$V5),]
-    v.rest = v.rest[order(v.rest$V4),]
-    v.rest = v.rest[order(v.rest$V8),]
-    v.rest = v.rest[order(v.rest$V1),]
-    # remove nestedness
-    idx.nested = 1
-    while(length(idx.nested) > 0){
-      idx.nested = which((v.rest$V2[-1] >= v.rest$V2[-nrow(v.rest)]) & 
-                           (v.rest$V3[-1] <=v.rest$V3[-nrow(v.rest)]) & 
-                           (v.rest$V4[-1] >= v.rest$V4[-nrow(v.rest)]) & 
-                           (v.rest$V5[-1] <=v.rest$V5[-nrow(v.rest)]) & 
-                           (v.rest$V1[-1] == v.rest$V1[-nrow(v.rest)]) &
-                           (v.rest$V8[-1] == v.rest$V8[-nrow(v.rest)])) + 1
-      # print(length(idx.nested))
-      if(length(idx.nested) == 0) next
-      v.rest = v.rest[-idx.nested,]  
-    }
-    
-    v.rest$cover = v.rest$V3 - v.rest$V2 + 1
-    v.rest$ref.overlap1 = c(v.rest$V4[-1] - v.rest$V5[-nrow(v.rest)] - 1, 0)
-    v.rest$allowedoverlap1 = v.rest$len1 * (1-coverage)  # CHANGED FROM sim.cutoff
-    suffixname = (v.rest$ref.overlap1 > v.rest$allowedoverlap1) * 1
-    v.rest$suffixname = c(1, suffixname[-length(suffixname)])
-    v.rest$suffixname[1 + which(v.rest$V8[-1] != v.rest$V8[-nrow(v.rest)])] = 1
-    v.rest$suffixname[1 + which(v.rest$V3[-1] < v.rest$V2[-nrow(v.rest)])] = 1
-    
-    v.rest$suffixname[1 + which((v.rest$V2[-1] < v.rest$V2[-nrow(v.rest)]) &
-                                  (v.rest$V3[-1] < v.rest$V3[-nrow(v.rest)]))] = 1
-    
-    v.rest$suffixname = cumsum(v.rest$suffixname)
-    v.rest$V8 = paste(v.rest$V8, v.rest$suffixname, sep = '|id')
-    
-    # if only one record - delete
-    v.rest = v.rest[order(v.rest$V8),]
-    v.rest = v.rest[order(v.rest$V1),]
-    n.rest = nrow(v.rest)
-    idx.one = which((v.rest$V8[-1] == v.rest$V8[-n.rest]) & (v.rest$V1[-1] == v.rest$V1[-n.rest]))
-    idx.one = sort(unique(c(idx.one,idx.one+1)))
-    v.rest = v.rest[idx.one,]
-    
-    if(nrow(v.rest) == 0) next
-    
-    v.rest = v.rest[order(-v.rest$V3),]
-    v.rest = v.rest[order(v.rest$V2),]
-    v.rest = v.rest[order(v.rest$V8),]
-    v.rest = v.rest[order(v.rest$V1),]
-    # remove nestedness
-    idx.nested = 1
-    while(length(idx.nested) > 0){
-      idx.nested = which((v.rest$V2[-1] >= v.rest$V2[-nrow(v.rest)]) & 
-                           (v.rest$V3[-1] <=v.rest$V3[-nrow(v.rest)]) & 
-                           (v.rest$V1[-1] == v.rest$V1[-nrow(v.rest)]) &
-                           (v.rest$V8[-1] == v.rest$V8[-nrow(v.rest)])) + 1
-      # print(length(idx.nested))
-      if(length(idx.nested) == 0) next
-      v.rest = v.rest[-idx.nested,]  
-    }
-    
-    if(nrow(v.rest) == 0) next
-    
-    v.rest$cover = v.rest$V3 - v.rest$V2 + 1
-    v.rest$overlap1 = c(v.rest$V2[-1] - v.rest$V3[-nrow(v.rest)] - 1, 0)
-    v.rest$overlap1[v.rest$overlap1 > 0] = 0
-    idx.diff = which(v.rest$V8[-1] != v.rest$V8[-nrow(v.rest)])
-    v.rest$overlap1[idx.diff] = 0
-    idx.diff = which(v.rest$V1[-1] != v.rest$V1[-nrow(v.rest)])
-    v.rest$overlap1[idx.diff] = 0
-    v.rest$cover = v.rest$cover + v.rest$overlap1
-    
-    v.rest$comb = paste(v.rest$V1, v.rest$V8, sep = s.tmp.comb)
-    df.cover = data.frame(V1 = tapply(v.rest$V1, v.rest$comb, unique),
-                          V2 = tapply(v.rest$V2, v.rest$comb, min),
-                          V3 = tapply(v.rest$V3, v.rest$comb, max),
-                          V4 = tapply(v.rest$V4, v.rest$comb, min),
-                          V5 = tapply(v.rest$V5, v.rest$comb, max),
-                          V6.old = tapply(v.rest$V6, v.rest$comb, mean),
-                          V7 = tapply(v.rest$cover, v.rest$comb, sum), 
-                          V8 = tapply(v.rest$V8, v.rest$comb, unique),
-                          # comb = tapply(v.rest$comb, v.rest$comb, unique),
-                          len1 = tapply(v.rest$len1, v.rest$comb, unique))
-    
-    # Fix V6
-    cover.tot = aggregate((V6 / 100) * cover ~ comb, data = v.rest, sum) 
-    rownames(cover.tot) = cover.tot$comb
-    df.cover$V6 = cover.tot[rownames(df.cover), 2] / df.cover$V7 * 100
-    
-    # df.cover$dir = i.strand
-    df.cover$ref.cover = df.cover$V5 - df.cover$V4 + 1
-    rownames(df.cover) = NULL
-    if(i.strand == 1){
-      # tmp = df.cover$V4
-      # df.cover$V4 = df.cover$V5
-      # df.cover$V5 = tmp
-      
-      df.cover[,c('V4', 'V5')] = tmp.max - df.cover[,c('V4', 'V5')]
-    }
-    df.cover$V8 = sapply(df.cover$V8, function(s) strsplit(s, '\\|')[[1]][1])
-    
-    idx.include = (df.cover$V7 / df.cover$len1 > coverage) &  # CHANGED FROM sim.cutoff
-                  (df.cover$V6 > sim.cutoff * 100) & 
-                  (df.cover$ref.cover / df.cover$len1 > coverage) &   # CHANGED FROM sim.cutoff
-                  (df.cover$len1 / df.cover$ref.cover > coverage)     # CHANGED FROM sim.cutoff
-    
-    # Add Strand
-    df.cover$strand = s.strand[i.strand + 1]
-    
-    v.sim = rbind(v.sim, df.cover[idx.include, colnames(v.sim)])
-  }
-  return(v.sim)
+  if(ng == 0) return(empty)
+  do.call(rbind, res.list[seq_len(ng)])
 }
 
 

@@ -108,12 +108,24 @@ for db_file in "${db_files[@]}"; do
                 --file.init "$blast_res_pre" \
                 --file.mod "$blast_res"
         else
+            # Nucleotide search. For a genome search, report mismatch/gaps (so the
+            # similarity is measured on substitutions only), seed more densely, and
+            # skip the identity floor -- similarity and coverage are enforced per
+            # assembled copy in sim_in_genome.R. The sequence-set search keeps the
+            # identity floor and the default seeding.
+            if [ -n "$file_seq" ]; then
+                blast_outfmt="6 qseqid qstart qend sstart send pident length sseqid qlen slen"
+                blast_extra=( -perc_identity "$((similarity - 1))" )
+            else
+                blast_outfmt="6 qseqid qstart qend sstart send pident length sseqid qlen slen mismatch gaps"
+                blast_extra=( -task megablast -word_size 20 -evalue 1e-5 -dust no )
+            fi
             $blast_cmd \
                 -db "$db_path_intermediate" \
                 -query "$file_input" \
                 -out "$blast_res" \
-                -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" \
-                -perc_identity "$((similarity - 1))" \
+                -outfmt "$blast_outfmt" \
+                "${blast_extra[@]}" \
                 -num_threads "$cores"
         fi
     fi
