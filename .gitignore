@@ -1,5 +1,6 @@
 DATA/**
 old/
+*.old
 develop/
 .DS_Store
 .Rhistory
