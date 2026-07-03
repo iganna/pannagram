@@ -59,14 +59,11 @@ if (ref.name == "NULL" || is.null(ref.name)) ref.name <- ""
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
 
 acc.vcf <- opt$acc
-if(acc.vcf == ''){
-  pokaz('Empty acc')
-}
 
 # --------------------------------------------------
 # main loop by s.comb, parallel inside by acc
 # --------------------------------------------------
-for (s.comb in s.combinations[-1]) {
+for (s.comb in s.combinations) {
   
   # ---------------------------------
   # Cleanup from previous iteration
@@ -297,4 +294,3 @@ for (s.comb in s.combinations[-1]) {
   invisible(gc())
 }
 
-warnings()

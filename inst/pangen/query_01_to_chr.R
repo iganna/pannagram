@@ -78,35 +78,18 @@ pokazAttention('Only the following extensions will be considered:', query.types,
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(acc, echo.loop=T){
-  
-  
-  # Check log-files
-  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
-  if(file.exists(file.acc.len)){
-    chr.len = read.table(file.acc.len, stringsAsFactors = F, header = 1)
-    if(n.chr == 0){
-      n.log.files = nrow(chr.len)
-    } else {
-      n.log.files = n.chr
-    }
-    
-    flag.exist = 0
-    for(i.chr in 1:n.log.files){
-      file.log.loop = paste0(path.log, 'loop_acc_', acc,'_', i.chr, '.log')
-      if(file.exists(file.log.loop)){
-        if(checkDone(file.log.loop)){
-          flag.exist = flag.exist +1
-        }
-      }
-    }
-    
-    if(flag.exist == n.log.files){
-      return(NULL)
-    }
-    
+loop.function <- function(acc, done.set = character(0), echo.loop=T){
+
+  # ---- Checkpoint: skip already completed accessions ----
+  if(acc %in% done.set){
+    return(NULL)
   }
- 
+
+  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   # ***********************************
   
   # Get the genome file
@@ -157,34 +140,32 @@ loop.function <- function(acc, echo.loop=T){
   
   # Write every chromosome to a separate file
   for(i.chr in 1:n.chr){
-    
-    # ---- Log files ----
-    file.log.loop = paste0(path.log, 'loop_acc_', acc,'_', i.chr, '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
-    
-    # Check log Done
-    if(checkDone(file.log.loop)){
+
+    # ---- Checkpoint: skip chromosomes already written for this accession ----
+    chr.id <- paste0(acc, '_', i.chr)
+    if(chr.id %in% done.set){
       next
     }
-    
+
     # ---- Write chromosome ----
     file.out = paste0(path.chr, acc, '_chr', i.chr, '.fasta', collapse = '')
 
     pokaz('File out:', file.out,
                    file=file.log.loop, echo=echo.loop)
-    
-    writeFastaMy(toupper(q.fasta[i.chr]), 
-                 file=file.out, append=F, 
+
+    writeFastaMy(toupper(q.fasta[i.chr]),
+                 file=file.out, append=F,
                  seq.names = paste0(acc, '_Chr', i.chr ))
-    
-    pokaz('Done.',
-          file=file.log.loop, echo=echo.loop)
-    
+
+    # ---- Checkpoint marker: chromosome fully written ----
+    markDone(chr.id, file=file.log.loop, echo=echo.loop)
+
   }
   
   rm(q.fasta)
+
+  # ---- Checkpoint marker: accession fully processed ----
+  markDone(acc, file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
   
@@ -192,24 +173,34 @@ loop.function <- function(acc, echo.loop=T){
 # ---- Loop  ----
 
 
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(acc in accessions){
-    loop.function(acc, echo.loop=echo.loop)
+    loop.function(acc, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
   # Initialise clusters
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  tmp = foreach(acc = accessions, 
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp = foreach(acc = accessions,
                 .packages=c('crayon'),
                 .export = c('n.chr')) %dopar% {
-                                     loop.function(acc, echo.loop=echo.loop)
+                                     loop.function(acc, done.set = done.set, echo.loop=echo.loop)
                                    }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)

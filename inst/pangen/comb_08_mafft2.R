@@ -54,10 +54,8 @@ if (!is.null(opt$path.mafft.out)) path.mafft.out <- opt$path.mafft.out
 
 n.flank = 30
 
-files.in <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
-files.out <- list.files(path = path.mafft.out, pattern = "\\.fasta$", full.names = F)
-files.extra = setdiff(files.in, gsub('_aligned', '', files.out))
-
+files.extra <- list.files(path = path.mafft.in, pattern = "\\.fasta$", full.names = F)
+files.extra = files.extra[!grepl('_aligned', files.extra)]
 
 if(length(files.extra) == 0){
   pokaz('Number of files for extra alignment')
@@ -75,29 +73,27 @@ if (!file.exists(path.mafft.in.tmp)) {
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(f.in, 
+loop.function <- function(f.in,
+                          done.set = character(0),
                           echo.loop=T){
   pokaz(f.in)
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         sub("\\.[^.]*$", "", basename(f.in)),
-                         '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
+
+  # ---- Checkpoint: skip already completed items ----
+  item.id <- sub("\\.[^.]*$", "", basename(f.in))
+  if(item.id %in% done.set){
+    return(NULL)
   }
-  
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
-    return()
-  }
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
   
   seqs = readFasta(paste0(path.mafft.in, f.in))
-  seqs.clean = seq2clean(seqs,n.flank)
+  seqs.clean = seq2clean(seqs, n.flank)
   
   seqs.clean = seqs.clean[nchar(seqs.clean) > 7]
   if(length(seqs.clean) < 2) {
     pokazAttention('Not enough sequences to align', file=file.log.loop, echo=echo.loop)
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
     return()
   }
   
@@ -110,7 +106,7 @@ loop.function <- function(f.in,
   
   if(min(n.n) < 0.5){
     pokazAttention('Too many N to align', file=file.log.loop, echo=echo.loop)
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
     return()
   }
   
@@ -124,61 +120,50 @@ loop.function <- function(f.in,
   
   alignment.seq = mx2aln(alignment)
   
-  file.out = paste0(path.mafft.out, sub('\\.fasta', '', basename(f.in)), "_aligned2.fasta")
+  file.out = paste0(path.mafft.out, sub('\\.fasta', '', basename(f.in)), "_aligned.fasta")
   writeFasta(alignment.seq, file.out)
-  
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
-  
+
+  # ---- Checkpoint marker: item fully processed ----
+  markDone(item.id, file=file.log.loop, echo=echo.loop)
+
 }
 
 
 # ***********************************************************************
 # ---- Loop  ----
 
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(f.in in files.extra){
     loop.function(f.in,
+                  done.set = done.set,
                   echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  tmp = foreach(f.in = files.extra, 
-                .packages=c('crayon'), 
-                .verbose = F)  %dopar% { 
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp = foreach(f.in = files.extra,
+                .packages=c('crayon'),
+                .verbose = F)  %dopar% {
                   loop.function(f.in,
+                                done.set = done.set,
                                 echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 
-
-
-# 
-# for(f.in in files.in){
-#   pokaz(f.in)
-#   seqs = readFasta(paste0(path.mafft.in, f.in))
-#   seqs.clean = seq2clean(seqs,n.flank)
-#   
-#   
-#   path.work = paste0(path.mafft.in.tmp, sub('\\.fasta', '', basename(f.in)), '_')
-#   pokaz(path.work)
-#   res = refineAlignment(seqs.clean, path.work)
-#   
-#   alignments = res$aln
-#   
-#   alignment = alignments[[length(alignments)]]
-#   
-#   alignment.seq = mx2aln(alignment)
-#   
-#   pdf(paste(path.fig, f.in, '_v2.pdf', sep = ''), width = 6, height = 4)
-#   print(msaplot(alignment))     # Plot 1 --> in the first page of PDF
-#   dev.off()
-#   
-# }

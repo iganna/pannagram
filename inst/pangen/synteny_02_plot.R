@@ -63,21 +63,18 @@ pokaz('Names of genomes for the analysis:', accessions,
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(acc, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', acc, '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
-  }
-  
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
+loop.function <- function(acc,
+                          done.set = character(0),
+                          echo.loop=T){
+
+  # ---- Checkpoint: skip already completed accessions ----
+  if(acc %in% done.set){
     return(NULL)
   }
-  
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
   
   # Lengths of chromosomes for the accession and reference
@@ -116,12 +113,22 @@ loop.function <- function(acc,
   # savePDF(p, path = path.plot, name = pdf.name)
   savePNG(p, path = path.plot, name = pdf.name)
   # saveRDS(p, paste0(path.plot, pdf.name, '.rds'))
-  
+
+  # ---- Checkpoint marker: accession fully processed ----
+  markDone(acc, file=file.log.loop, echo=echo.loop)
+}
+
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
 }
 
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(acc in accessions){
     loop.function(acc,
+                  done.set = done.set,
                   echo.loop=echo.loop)
   }
 } else {
@@ -141,10 +148,14 @@ if(num.cores == 1){
     # Create and register a new cluster for the current batch
     myCluster <- makeCluster(num.cores, type = "PSOCK")
     registerDoParallel(myCluster)
-    
+
+    # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+    parallel::clusterApply(myCluster, seq_len(num.cores),
+                           function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
     # Run parallel loop for accessions in the current batch
     batch.results <- foreach(acc = batch.accessions, .packages = c('crayon', 'ggplot2'), .verbose = FALSE) %dopar% {
-      loop.function(acc, echo.loop = echo.loop)
+      loop.function(acc, done.set = done.set, echo.loop = echo.loop)
     }
     
     tmp <- c(tmp, batch.results)  # Store the batch results in the main list

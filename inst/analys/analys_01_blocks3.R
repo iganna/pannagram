@@ -165,5 +165,4 @@ for(s.comb in unique(df.all$comb)){
 }
 
 
-warnings()
 

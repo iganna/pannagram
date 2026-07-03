@@ -72,21 +72,38 @@ stat.comb <- data.frame(comb = character(),
                         stringsAsFactors = FALSE)
 
 
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+assign('.worker.id', 1, envir = .GlobalEnv)   # sequential outer loop -> single core_1.log
+
 for(s.comb in pref.combinations){
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set) next
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
-  
+
   # Get accessions
   file.cln = paste0(path.cons, aln.pref.clean, s.comb,'.h5')
   file.msa = paste0(path.cons, aln.pref.msa, s.comb,'.h5')
-  
+
   file.add = paste0(path.cons, aln.pref.add, s.comb,'.h5')
-  suppressMessages({
-    h5createFile(file.add)
-    h5createGroup(file.add, gr.blocks)
-    h5createGroup(file.add, gr.accs.e)
-  })
-  
+  # Keep an existing h5 to resume; create it only if missing.
+  if(!file.exists(file.add)){
+    suppressMessages({
+      h5createFile(file.add)
+      h5createGroup(file.add, gr.blocks)
+      h5createGroup(file.add, gr.accs.e)
+    })
+  }
+
   groups = h5ls(file.cln)
   accessions = groups$name[groups$group == gr.accs.b]
   n.acc = length(accessions)
@@ -97,12 +114,18 @@ for(s.comb in pref.combinations){
   v.ref0 = h5read(file.cln, s.ref)
   v.ref1 = h5read(file.msa, s.ref)
   
-  # Save the reference genome
+  # Save the reference genome (idempotent)
   suppressMessages({
+    try(h5delete(file.add, s.ref), silent = TRUE)
     h5write(v.ref1, file.add, s.ref)
   })
-  
+
   for(acc in setdiff(accessions, ref)){
+
+    # ---- Checkpoint: skip accessions already written for this combination ----
+    acc.id <- paste0(s.comb.id, '_', acc)
+    if(acc.id %in% done.set) next
+
     s.acc = paste0(gr.accs.e, acc)
     v0 =  h5read(file.cln, s.acc)
     v1 =  h5read(file.msa, s.acc)
@@ -120,8 +143,10 @@ for(s.comb in pref.combinations){
     
     if(nrow(v.add) == 0){
       suppressMessages({
+        try(h5delete(file.add, s.acc), silent = TRUE)
         h5write(v1, file.add, s.acc)
       })
+      markDone(acc.id, file=file.log.loop, echo=echo.loop)
       next
     }
     
@@ -137,14 +162,17 @@ for(s.comb in pref.combinations){
     v1[v.add$idx1] = v.add$acc.val
     
     if(length(unique(v1)) != (length(v1) - sum(v1 == 0) + 1)) stop('Non-unique positions are found')
-    
+
     suppressMessages({
+      try(h5delete(file.add, s.acc), silent = TRUE)
       h5write(v1, file.add, s.acc)
     })
-    
+    markDone(acc.id, file=file.log.loop, echo=echo.loop)
+
   }
-  
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
 }
 
-warnings()
 

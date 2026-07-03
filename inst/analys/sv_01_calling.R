@@ -127,24 +127,22 @@ sv.pos.list <- list()
 sv.beg.list <- list()
 sv.end.list <- list()
 
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+assign('.worker.id', 1, envir = .GlobalEnv)   # main-process markers -> core_1.log
+file.core.main <- initLoopLog(path.log)
+
 for(s.comb in s.combinations){
-  
-  file.sv.pos.log = paste0(path.log, 'sv.pos_', s.comb, ref.suff, '.log')
+
+  # Sidecar result files double as the checkpoint payload (read back on resume)
   file.sv.pos.rds = paste0(path.log, 'sv.pos_', s.comb, ref.suff, '.rds')
-  file.sv.beg.log = paste0(path.log, 'sv.beg_', s.comb, ref.suff, '.log')
   file.sv.beg.rds = paste0(path.log, 'sv.beg_', s.comb, ref.suff, '.rds')
-  file.sv.end.log = paste0(path.log, 'sv.end_', s.comb, ref.suff, '.log')
   file.sv.end.rds = paste0(path.log, 'sv.end_', s.comb, ref.suff, '.rds')
-  
-  
-  if(!file.exists(file.sv.pos.log)) invisible(file.create(file.sv.pos.log))
-  if(!file.exists(file.sv.beg.log)) invisible(file.create(file.sv.beg.log))
-  if(!file.exists(file.sv.end.log)) invisible(file.create(file.sv.end.log))
-  
-  if(checkDone(file.sv.pos.log) &&
-     checkDone(file.sv.beg.log) &&
-     checkDone(file.sv.end.log)){
-    
+
+  # ---- Checkpoint: skip combinations already fully computed ----
+  comb.id = paste0(s.comb, ref.suff)
+  if(comb.id %in% done.set){
+
     pokaz('Reading beg-end', s.comb)
     sv.pos = readRDS(file.sv.pos.rds)
     sv.beg = readRDS(file.sv.beg.rds)
@@ -194,32 +192,36 @@ for(s.comb in s.combinations){
   # for(acc in accessions){
   
   file.sv.cover = paste0(path.log, 'sv_cover_',s.comb, ref.suff, '.rds')
-  file.sv.cover.log = paste0(path.log, 'sv_cover_',s.comb, ref.suff, '.log')
-  if(!file.exists(file.sv.cover.log)) invisible(file.create(file.sv.cover.log))
-  
-  if(checkDone(file.sv.cover.log)){
+
+  cover.id = paste0(s.comb, ref.suff, '_cover')
+  if(cover.id %in% done.set){
     sv.cover = readRDS(file.sv.cover)
   } else {
-    
+
     myCluster <- parallel::makeCluster(num.cores, type = "PSOCK")
     doParallel::registerDoParallel(myCluster)
-    
+
+    # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+    parallel::clusterApply(myCluster, seq_len(num.cores),
+                           function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
     foreach::foreach(
       acc = accessions,
       .inorder = FALSE,
       .packages = c("rhdf5", "pannagram")
     ) %dopar% {
-      
-      file.log.loop = paste0(path.log, 'log_', acc, '_', s.comb, ref.suff, '.log')
-      if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
-      
+
+      # ---- Checkpoint: skip accessions already processed for this combination ----
+      item.id = paste0(acc, '_', s.comb, ref.suff)
       file.loop.save = paste0(path.log, acc, '_', s.comb, ref.suff, '.rds')
-      
-      # ---- Check log Done ----
-      if(checkDone(file.log.loop)){
+
+      if(item.id %in% done.set){
         return(NULL)
       }
-      
+
+      # One log file per worker (bounded number of files); also the checkpoint ledger
+      file.log.loop = initLoopLog(path.log)
+
       v <- h5read(file.comb, paste0(gr.accs.e, acc))
       v[is.na(v)] <- 0
       
@@ -231,7 +233,7 @@ for(s.comb in s.combinations){
         rhdf5::H5close()
         
         saveRDS(out, file.loop.save)
-        pokaz('Done.', file=file.log.loop, echo=F)
+        markDone(item.id, file=file.log.loop, echo=F)
         return(NULL)
       }
       
@@ -261,8 +263,8 @@ for(s.comb in s.combinations){
       rhdf5::H5close()
       
       saveRDS(out, file.loop.save)
-      pokaz('Done.', file=file.log.loop, echo=F)
-      
+      markDone(item.id, file=file.log.loop, echo=F)
+
       rm(v, v.r, out, sv.acc, idx.bad, b, e, d)
       gc()
       
@@ -286,7 +288,7 @@ for(s.comb in s.combinations){
     }
     
     saveRDS(sv.cover, file.sv.cover)
-    pokaz('Done.', file=file.sv.cover.log, echo=F)
+    markDone(cover.id, file=file.core.main)
   }
   
   
@@ -461,10 +463,9 @@ for(s.comb in s.combinations){
   saveRDS(sv.pos, file.sv.pos.rds)
   saveRDS(sv.beg, file.sv.beg.rds)
   saveRDS(sv.end, file.sv.end.rds)
-  
-  pokaz('Done.', file=file.sv.pos.log, echo=F)
-  pokaz('Done.', file=file.sv.beg.log, echo=F)
-  pokaz('Done.', file=file.sv.end.log, echo=F)
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(comb.id, file=file.core.main)
   
   k <- length(sv.pos.list) + 1
   sv.pos.list[[k]] <- sv.pos

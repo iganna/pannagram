@@ -82,21 +82,18 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 loop.function <- function(s.comb,
+                          done.set = character(0),
                           echo.loop=T){
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         s.comb,
-                         '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set){
+    return(NULL)
   }
-  
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
-    return()
-  }
-  
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   # --- --- --- --- --- --- --- --- --- --- ---
   pokaz('Combination', s.comb, file=file.log.loop, echo=echo.loop)
   file.comb.in = paste0(path.inter.msa, aln.type.in, s.comb,'.h5')
@@ -137,9 +134,9 @@ loop.function <- function(s.comb,
     v = v[idx.trust]
     
     v.init = v
-    
-    check.word = paste('Cleanup finished for', acc)
-    if(!checkDone(file.log.loop, check.word)){
+
+    clean.id = paste0(s.comb.id, '_clean_', acc)
+    if(!(clean.id %in% done.set)){
       # Define blocks
       for(i in 1:2){
         v = v.init
@@ -166,12 +163,13 @@ loop.function <- function(s.comb,
       }
       
       suppressMessages({
+        try(h5delete(file.comb.out, s.acc), silent = TRUE)
         h5write(v.init, file.comb.out, s.acc)
       })
-      
-      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+
+      markDone(clean.id, file=file.log.loop, echo=echo.loop)
     }
-    
+
     idx.nonzero = idx.nonzero + (abs(v.init) > 0) * 1
   }
   
@@ -184,19 +182,19 @@ loop.function <- function(s.comb,
   for(acc in accessions){
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     
-    check.word = paste('Remove zeros finished for', acc)
-    if(!checkDone(file.log.loop, check.word)) {
+    zero.id = paste0(s.comb.id, '_zero_', acc)
+    if(!(zero.id %in% done.set)) {
       s.acc = paste0(gr.accs.e, acc)
       v = h5read(file.comb.out, s.acc)
-      
+
       v = v[idx.nonzero]
-      
-      # Rewrite  
+
+      # Rewrite (idempotent)
       suppressMessages({
-        h5delete(file.comb.out, s.acc)
+        try(h5delete(file.comb.out, s.acc), silent = TRUE)
         h5write(v, file.comb.out, s.acc)
       })
-      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+      markDone(zero.id, file=file.log.loop, echo=echo.loop)
     }
   }
   
@@ -212,8 +210,8 @@ loop.function <- function(s.comb,
     v.idx = v.idx[v != 0]
     v = v[v != 0]
     
-    check.word = paste('Find breaks finished for', acc)
-    if(!checkDone(file.log.loop, check.word)){
+    break.id = paste0(s.comb.id, '_break_', acc)
+    if(!(break.id %in% done.set)){
       # Define blocks
       
       v.r = rank(abs(v))
@@ -237,7 +235,7 @@ loop.function <- function(s.comb,
         s.acc = paste0(gr.blocks, acc)
         h5write(blocks.acc, file.comb.out, s.acc)
       })
-      pokaz(check.word, file=file.log.loop, echo=echo.loop)
+      markDone(break.id, file=file.log.loop, echo=echo.loop)
     } else {
       s.acc = paste0(gr.blocks, acc)
       blocks.acc = h5read(file.comb.out, s.acc)
@@ -267,31 +265,42 @@ loop.function <- function(s.comb,
   
   H5close()
   gc()
-  
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
+# Rebuild the set of completed combinations from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(s.comb in pref.combinations){
-    loop.function(s.comb, echo.loop=echo.loop)
+    loop.function(s.comb, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  tmp = foreach(s.comb = pref.combinations, 
-                .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                  loop.function(s.comb, echo.loop=echo.loop)
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp = foreach(s.comb = pref.combinations,
+                .packages=c('rhdf5', 'crayon'))  %dopar% {
+                  loop.function(s.comb, done.set = done.set, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)

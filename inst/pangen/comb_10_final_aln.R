@@ -88,16 +88,22 @@ stat.comb <- data.frame(comb = character(),
                         coverage = numeric(),
                         stringsAsFactors = FALSE)
 
-pref.combinations = setdiff(pref.combinations, '1_1')
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+assign('.worker.id', 1, envir = .GlobalEnv)   # sequential outer loop -> single core_1.log
+
 for(s.comb in pref.combinations){
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
-  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
-  
-  # Check log Done
-  if(checkDone(file.log.loop)) next
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set) next
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
   # ---- PRE-Resultant File ----
@@ -244,12 +250,9 @@ for(s.comb in pref.combinations){
   idx.all.acc.zeros = rep(0, len.aln.new)
   for(acc in accessions){
     
-    # Log files
-    file.log.loop.acc = paste0(path.log, 'loop_', s.comb, '_', acc, '.log')
-    if(!file.exists(file.log.loop.acc)) invisible(file.create(file.log.loop.acc))
-    
-    # Check log Done
-    if(checkDone(file.log.loop.acc)){
+    # ---- Checkpoint: skip accessions already written for this combination ----
+    acc.id = paste0(s.comb.id, '_', acc)
+    if(acc.id %in% done.set){
       pokaz('Accession', acc ,'was analysed before')
       v.new = h5read(file.res.pre, paste0(gr.accs.e, acc))
       idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
@@ -337,7 +340,6 @@ for(s.comb in pref.combinations){
         if(length(idx.tmp.aln) != length(p.own)) {
   
           if((length(idx.tmp.aln) - 60) != length(p.own)){
-            pokaz(i, length(idx.tmp.aln), length(p.own))
             next  # Kostyl
           } 
           
@@ -355,21 +357,21 @@ for(s.comb in pref.combinations){
       
       # Check duplicates # Kostyl
       if(sum(duplicated(abs(v.new[v.new != 0]))) > 0){
-        pokaz('Duplicated in', s.type, sum(duplicated(abs(v.new[v.new != 0]))))
         dup.values = abs(v.new[duplicated(abs(v.new))])
         v.new[abs(v.new) %in% dup.values] = 0
-        pokaz('Duplicated after', sum(duplicated(abs(v.new[v.new != 0]))))
       } 
     }
     
     # Save positions which are zeros
     idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
     
-    # Save
+    # Save (idempotent: drop a possibly half-written dataset if present)
     suppressMessages({
+      try(h5delete(file.res.pre, paste0(gr.accs.e, acc)), silent = TRUE)
       h5write(v.new, file.res.pre, paste0(gr.accs.e, acc)) })
-      
-    pokaz('Done.', file=file.log.loop.acc, echo=echo.loop)
+
+    # ---- Checkpoint marker: accession fully written ----
+    markDone(acc.id, file=file.log.loop, echo=echo.loop)
   }
   
   idx.remain = (idx.all.acc.zeros != length(accessions))
@@ -394,20 +396,21 @@ for(s.comb in pref.combinations){
     v = h5read(file.res.pre, paste0(gr.accs.e, acc))
     v.remain = v[idx.remain]
     
-    # Save
+    # Save (idempotent)
     suppressMessages({
+      try(h5delete(file.res, paste0(gr.accs.e, acc)), silent = TRUE)
       h5write(v.remain, file.res, paste0(gr.accs.e, acc)) })
-    
+
   }
 
   H5close()
   gc()
-  
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
-  
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
+
 }
 
-warnings()
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 

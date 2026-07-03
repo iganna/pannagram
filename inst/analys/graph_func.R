@@ -351,7 +351,6 @@ refineDirectEdges <- function(edges.compact, echo = T){
   while(length(nodes.keep) != n.nodes.keep){
     n.nodes.keep = length(nodes.keep)
     # print(n.nodes.keep)
-    print(igraph::vcount(g))
     
     deg.in <- igraph::degree(g, mode = "in")
     deg.out <- igraph::degree(g, mode = "out")

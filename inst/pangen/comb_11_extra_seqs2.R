@@ -103,8 +103,23 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
+
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+assign('.worker.id', 1, envir = .GlobalEnv)   # sequential outer loop -> single core_1.log
+
 for(s.comb in pref.combinations){
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set) next
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
@@ -138,9 +153,10 @@ for(s.comb in pref.combinations){
   
   if(nrow(breaks.init) == 0){
     pokaz('Nothing to add')
+    markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
     next
-  } 
-  
+  }
+
   idx.extra = which(breaks.init$len.comb > len.cutoff)
   if(length(idx.extra) > 0){
     breaks.init.extra = breaks.init[idx.extra,]
@@ -149,9 +165,10 @@ for(s.comb in pref.combinations){
   
   if(nrow(breaks.init) == 0){
     pokaz('Nothing to add')
+    markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
     next
   }
-  
+
   # Sort and IDs
   breaks.init = breaks.init[order(-breaks.init$idx.end),]
   breaks.init = breaks.init[order(breaks.init$idx.beg),]
@@ -179,7 +196,15 @@ for(s.comb in pref.combinations){
   pokaz('Get consensus sequences')
   breaks$id.s = sapply(1:nrow(breaks), function(i.b) paste0('break_',s.comb, '_', sprintf(format.digits, i.b)))
   breaks.init$seq = ''
-  
+
+  # Idempotent: per-break fasta/idx files below are written in append mode, so drop any
+  # partial output left by a previously interrupted run of this combination.
+  for(f.rm in c(paste0(path.extra, breaks$id.s, '_group.fasta'),
+                paste0(path.extra, breaks$id.s, '_group.txt'),
+                paste0(path.extra, breaks$id.s, '_add.fasta'))){
+    if(file.exists(f.rm)) invisible(file.remove(f.rm))
+  }
+
   for(acc in accessions){
     pokaz("Accession", acc)
     # Read the chromosome
@@ -274,13 +299,15 @@ for(s.comb in pref.combinations){
   file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
   # pokaz(file.breaks.info)
   save(list = c("breaks.init", "breaks"), file =file.breaks.info)
-  
+
   gc()
-  
+
   H5close()
   gc()
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
 }
 
 
-warnings()
 

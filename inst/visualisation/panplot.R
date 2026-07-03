@@ -182,7 +182,6 @@ getBlocksBwNeiAccs_old <- function(idx.break, accessions, i.order){
 
   df.blocks <- c()
   for(k in 2:length(i.order)){
-    pokaz(k)
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
@@ -275,7 +274,6 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
   
   df.blocks.all <- c()
   for(k in 2:length(i.order)){
-    pokaz(k)
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |

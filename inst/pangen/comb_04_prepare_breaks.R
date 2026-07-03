@@ -90,15 +90,22 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
+# Rebuild the set of completed combinations from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+assign('.worker.id', 1, envir = .GlobalEnv)   # sequential outer loop -> single core_1.log
+
 for(s.comb in pref.combinations){
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_', s.comb, '.log')
-  if(!file.exists(file.log.loop)) invisible(file.create(file.log.loop))
-  
-  # Check log Done
-  if(checkDone(file.log.loop)) next
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set) next
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   pokaz('* Combination', s.comb, file=file.log.loop, echo=echo.loop)
   q.chr = strsplit(s.comb, '_')[[1]][1]
   
@@ -299,7 +306,8 @@ for(s.comb in pref.combinations){
   
   H5close()
   gc()
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
 }
 
-warnings()

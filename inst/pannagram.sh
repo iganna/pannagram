@@ -572,7 +572,7 @@ if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
     for ref0 in "${refs_all[@]}"; do
 
         # Logs
-        step_name="step${step_num}_query_01_refpart_${ref0}/"
+        step_name="step${step_num}_query_01_refpart_${ref0}"
         step_file="${path_log}${step_name}_done"
         path_log_step="${path_log}${step_name}/"
         mkdir -p ${path_log_step}
@@ -1222,7 +1222,7 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Prepare breaks
+# ---- Prepare breaks ---- 
 with_level 1 pokaz_stage "Step ${step_num}. Prepare breakes for an additional alignment"
 
 # Logs
@@ -1258,11 +1258,11 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Create sequences
+# ---- Prepare sequences ---- 
 with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for alignments."
 
 # Logs
-step_name="step${step_num}_comb_04_prepare_seqs"
+step_name="step${step_num}_comb_05_prepare_seqs"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1270,11 +1270,15 @@ mkdir -p ${path_log_step}
 # Paths for MAFFT, common for the next code too
 path_mafft_in="${path_mafft}in/"
 path_mafft_out="${path_mafft}out/"
-if [ ! -d "$path_mafft_in" ]; then
-    mkdir -p "$path_mafft_in"
-fi
-if [ ! -d "$path_mafft_out" ]; then
-    mkdir -p "$path_mafft_out"
+# if [ ! -d "$path_mafft_in" ]; then
+#     mkdir -p "$path_mafft_in"
+# fi
+# if [ ! -d "$path_mafft_out" ]; then
+#     mkdir -p "$path_mafft_out"
+# fi
+
+if [ ! -d "$path_inter_synteny" ]; then
+    mkdir -p "$path_inter_synteny"
 fi
 
 # Start
@@ -1282,141 +1286,137 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
-        touch ${path_mafft_in}fake.fasta
-        touch ${path_mafft_in}fake.tree
-        touch ${path_log_step}fake.log
-        touch ${path_inter_msa}small_ws_fake.RData
 
-        find ${path_mafft_in} -name "*.fasta" -type f -exec rm -f {} +
-        find ${path_mafft_in} -name "*.tree" -type f -exec rm -f {} +
-        # rm -f ${path_mafft_in}*fasta
+        touch ${path_inter_synteny}fake_file.txt
+
+        find "${path_inter_synteny}" -maxdepth 1 -type f -name "*.txt" -exec rm -f {} +
+        find "${path_inter_synteny}" -maxdepth 1 -type f -name "*.rds" -exec rm -f {} +
+
+        touch ${path_log_step}fake.log
         rm -f ${path_log_step}*
-        rm -f ${path_inter_msa}small_ws_*.RData
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_04_prepare_seqs.R \
+    mkdir -p "${path_inter_synteny}"
+    Rscript $INSTALLED_PATH/pangen/comb_05_prepare_seqs.R \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
             --cores "${cores}" \
             --path.chromosomes "${path_chrom}" \
-            --path.mafft.in "${path_mafft_in}" \
+            --path.inter.synteny "${path_inter_synteny}" \
             --path.log "${path_log_step}" \
             --log.level "${log_level}" \
             --max.len.gap "${max_len_gap}"
 
+    # Combine files with short and long into input files for the next steps
+    for ((i=1; i<=nchr; i++)); do
+
+        ls "${path_inter_synteny}"*"short_${i}_${i}.txt" | tee "${path_inter_msa}loci_short_${i}_${i}.txt"
+        ls "${path_inter_synteny}"*"large_${i}_${i}.txt" | tee "${path_inter_msa}loci_large_${i}_${i}.txt"
+    done
+
     # Done
     touch "${step_file}"
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Perform some small alignments
-with_level 1 pokaz_stage "Step ${step_num}. Align short sequences."
+# ==============================
+# Align SHORT sequences.
+# ==============================
+with_level 1 pokaz_stage "Step ${step_num}. Align SHORT sequences."
 
-# Logs
-step_name="step${step_num}_comb_05_small"
+step_name="step${step_num}_comb_06_short"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
 
-# Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # ---- Clean up the output folders ----
-    if [ "$clean" == "T" ]; then 
-        touch ${path_log_step}fake.log
-        rm -f ${path_log_step}*
-        rm -f ${path_inter_msa}aln_short*rds
-    fi  
-
-    Rscript $INSTALLED_PATH/pangen/comb_05_small.R \
-            --path.features.msa "${path_features_msa}" \
-            --path.inter.msa "${path_inter_msa}" \
-            --cores "${cores}" \
-            --path.log "${path_log_step}" \
-            --log.level "${log_level}" 
-
-    # Done
-    touch "${step_file}"
-fi
-
-source $INSTALLED_PATH/utils/chunk_step_done.sh
-
-# Run MAFFT
-
-with_level 1 pokaz_stage "Step ${step_num}. Run MAFFT."
-
-# Logs
-step_name="step${step_num}_comb_05_mafft"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
-mkdir -p "${path_log_step}"
-
-# Start
-if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
-
-    # ---- Clean up the output folders ----
-    if   [ "$clean" == "T" ]; then 
-        touch ${path_mafft_out}fake_aligned.fasta
-        touch ${path_log_step}fake.log
-
-        find ${path_mafft_out} -name "*aligned*.fasta" -type f -exec rm -f {} +
-        find ${path_log_step} -name "*" -type f -exec rm -f {} +
-        # rm -f ${path_mafft_out}*aligned.fasta
-        # rm -f ${path_log_step}*
-
+    # Clean up the log files
+    if [ "$clean" == "T" ]; then
+        touch ${path_log_step}fake_short.log
+        rm -f ${path_log_step}*short*
     fi
 
-    "$INSTALLED_PATH/pangen/comb_05_mafft.sh" \
-            -cores "${cores}" \
-            -path_mafft_in "${path_mafft_in}" \
-            -path_mafft_out "${path_mafft_out}" \
-            -log_path "${path_log_step}"
+    for ((i=1; i<=nchr; i++)); do
+        log_chromosome=${path_log_step}chr_${i}_short.log
+        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+            continue
+        fi
 
-    # Done
+        path_inter_synteny_short="${path_inter_synteny}short_${i}_${i}/"
+        mkdir -p "${path_inter_synteny_short}"
+
+        "${INSTALLED_PATH}/pangen/comb_06_align.py" \
+            --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
+            --outdir "${path_inter_synteny_short}"
+
+        echo "Done" >> "$log_chromosome"
+    done
+
     touch "${step_file}"
 fi
 
-
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Remove bad Mafft alignments
+# ==============================
+# Align LONG sequences.
+# ==============================
+with_level 1 pokaz_stage "Step ${step_num}. Align LONG sequences."
 
-with_level 1 pokaz_stage "Step ${step_num}. Remove bad mafft."
-
-# Logs
-step_name="step${step_num}_comb_06_bad_mafft"
+step_name="step${step_num}_comb_07_long"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
 
-# Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # ---- Clean up the output folders ----
-    if   [ "$clean" == "T" ]; then 
-        touch ${path_log_step}fake.log
-        find ${path_log_step} -name "*" -type f -exec rm -f {} +
+    # Clean up the log files
+    if [ "$clean" == "T" ]; then
+        touch ${path_log_step}fake_large.log
+        rm -f ${path_log_step}*large*
     fi
 
-    Rscript $INSTALLED_PATH/pangen/comb_06_bad_mafft.R \
-            --cores ${cores} \
-            --path.mafft.out ${path_mafft_out} \
-            --path.log ${path_log_step} \
-            --log.level ${log_level}
+    for ((i=1; i<=nchr; i++)); do
+        log_chromosome=${path_log_step}chr_${i}_large.log
+        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+            continue
+        fi
 
-    # Done
+        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
+        path_inter_synteny_large_second="${path_inter_synteny}large_${i}_${i}_second/"
+        mkdir -p "${path_inter_synteny_large}"
+
+        if [ "$clean" == "T" ]; then
+            touch ${path_inter_synteny_large}large.txt
+            rm -f ${path_inter_synteny_large}*large*.txt
+        fi
+
+        "${INSTALLED_PATH}/pangen/comb_07_mafft.py" \
+            --inputs-list "${path_inter_msa}loci_large_${i}_${i}.txt" \
+            --outdir "${path_inter_synteny_large}" \
+            --baddir ${path_inter_synteny_large_second} \
+            --threads ${cores} \
+            --timeout-sec 180 \
+            --uppercase \
+            --strip-spaces \
+            --aligner mafft
+
+        echo "Done" >> "$log_chromosome"
+
+    done
+
     touch "${step_file}"
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 
-# Additional MAFFT
+# ---- Additional MAFFT ----
 with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 
 # Logs
-step_name="step${step_num}_comb_06_mafft2"
+step_name="step${step_num}_comb_08_mafft2"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1426,18 +1426,42 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if   [ "$clean" == "T" ]; then 
-        touch ${path_mafft_out}fake_aligned2.fasta
-        touch ${path_log_step}fake.log
-        find ${path_mafft_out} -name "*aligned2.fasta" -type f -exec rm -f {} +
-        find ${path_log_step} -name "*" -type f -exec rm -f {} +
+        # touch ${path_mafft_out}fake_aligned2.fasta
+        # touch ${path_log_step}fake.log
+        # find ${path_mafft_out} -name "*aligned2.fasta" -type f -exec rm -f {} +
+        # find ${path_log_step} -name "*" -type f -exec rm -f {} +
+
+        rm -f ${path_log_step}*
     fi
 
-    Rscript $INSTALLED_PATH/pangen/comb_06_mafft2.R \
+    for ((i=1; i<=nchr; i++)); do
+        echo "Chromosome ${i}"
+        path_log_step_chr="${path_log_step}chromosome_${i}/"
+        mkdir -p ${path_log_step}
+
+        log_chromosome=${path_log_step}chr_${i}_large.log
+        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+            continue
+        fi
+
+        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
+        path_inter_synteny_large_second="${path_inter_synteny}large_${i}_${i}_second/"
+
+        # if [ "$clean" == "T" ]; then 
+        #     touch ${path_inter_synteny_large}large.txt
+        #     rm -f ${path_inter_synteny_large}*large*.txt
+        # fi 
+
+        Rscript $INSTALLED_PATH/pangen/comb_08_mafft2.R \
             --cores ${cores} \
-            --path.mafft.in ${path_mafft_in} \
-            --path.mafft.out ${path_mafft_out} \
-            --path.log ${path_log_step} \
+            --path.mafft.in ${path_inter_synteny_large_second} \
+            --path.mafft.out ${path_inter_synteny_large} \
+            --path.log ${path_log_step_chr} \
             --log.level ${log_level}
+
+        rm -rf "${path_inter_synteny_large_second}tmp/"
+        echo "Done" >> "$log_chromosome"
+    done
 
     # Done
     touch "${step_file}"
@@ -1445,12 +1469,66 @@ fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
 
-# Combine all together
+# ---- Long alignments into genome files ----
+
+with_level 1 pokaz_stage "Step ${step_num}. Combine long alignments by genome files."
+
+# Logs
+step_name="step${step_num}_comb_09_combine"
+step_file="${path_log}${step_name}_done"
+path_log_step="${path_log}${step_name}/"
+mkdir -p ${path_log_step}
+
+# Start
+if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
+
+    # ---- Clean up the output folders ----
+    # NOTE: this step writes per-genome combined alignments into path_inter_synteny,
+    # NOT the pan*.h5 (those belong to the next step), so only the logs are cleaned here.
+    if   [ "$clean" == "T" ]; then
+        touch ${path_log_step}fake.log
+
+        rm -f ${path_log_step}*
+    fi
+
+    for ((i=1; i<=nchr; i++)); do
+
+        log_chromosome=${path_log_step}chr_${i}_large.log
+        if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
+            continue
+        fi
+
+        # if [ "$clean" == "T" ]; then
+        #     touch ${path_inter_synteny_large}large.txt
+        #     rm -f ${path_inter_synteny_large}*large*.txt
+        # fi
+
+        path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
+        path_inter_synteny_large_aln="${path_inter_synteny}large_${i}_${i}/"
+
+        "${INSTALLED_PATH}/pangen/comb_09_mafft_combine.py"   \
+        -i "${path_inter_msa}loci_large_${i}_${i}.txt" \
+          -d ${path_inter_synteny_large} \
+           -o ${path_inter_synteny_large_aln} \
+           -b 1000
+
+        echo "Done" >> "$log_chromosome"
+   done
+
+    # Done
+    touch "${step_file}"
+fi
+
+source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+
+
+# ---- Combine all together ----
 
 with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 
 # Logs
-step_name="step${step_num}_comb_07"
+step_name="step${step_num}_comb_10_final"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1459,19 +1537,19 @@ mkdir -p ${path_log_step}
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
-    if   [ "$clean" == "T" ]; then 
-        touch ${path_features_msa}pan_fake_h5
+    if   [ "$clean" == "T" ]; then
+        touch ${path_features_msa}pan_fake.h5
         touch ${path_log_step}fake.log
 
         rm -f ${path_features_msa}pan*h5
         rm -f ${path_log_step}*
-    fi  
+    fi
 
-    Rscript $INSTALLED_PATH/pangen/comb_07_final_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_10_final_aln.R  \
             --cores ${cores} \
-            --path.mafft.out ${path_mafft_out} \
             --path.features.msa "${path_features_msa}" \
             --path.inter.msa "${path_inter_msa}" \
+            --path.inter.synteny "${path_inter_synteny}"\
             --accessions ${file_accessions} \
             --path.log ${path_log_step} \
             --log.level ${log_level}
@@ -1490,7 +1568,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # mkdir -p "$path_extra"
 
 # # Logs
-# step_name="step${step_num}_comb_08"
+# step_name="step${step_num}_comb_10_final"
 # step_file="${path_log}${step_name}_done"
 # path_log_step="${path_log}${step_name}/"
 # mkdir -p ${path_log_step}
@@ -1537,7 +1615,7 @@ path_extra_long="${path_extra}long/"
 mkdir -p "$path_extra_long"
 
 # Logs
-step_name="step${step_num}_comb_09"
+step_name="step${step_num}_comb_11"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1555,7 +1633,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_11_extra_seqs2.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
             --path.extra ${path_extra_long} \
@@ -1575,7 +1653,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments - 1."
 
 # Logs
-step_name="step${step_num}_comb_10"
+step_name="step${step_num}_comb_12"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1594,7 +1672,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_12_extra_seqs_aln.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
             --path.extra ${path_extra_long} \
@@ -1614,7 +1692,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments - 1."
 
 # Logs
-step_name="step${step_num}_comb_11"
+step_name="step${step_num}_comb_13"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1631,7 +1709,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_13_fill_aln.R  \
             --cores ${cores} \
             --path.extra ${path_extra_long} \
             --path.cons ${path_features_msa} \
@@ -1653,7 +1731,7 @@ path_extra_long2="${path_extra}long2/"
 mkdir -p "$path_extra_long2"
 
 # Logs
-step_name="step${step_num}_comb_09"
+step_name="step${step_num}_comb_11"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1671,7 +1749,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_09_extra_seqs2.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_11_extra_seqs2.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
             --path.extra ${path_extra_long2} \
@@ -1695,7 +1773,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments - 2."
 
 # Logs
-step_name="step${step_num}_comb_10"
+step_name="step${step_num}_comb_12"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1714,7 +1792,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_10_extra_seqs_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_12_extra_seqs_aln.R  \
             --cores ${cores} \
             --path.chromosomes "${path_chrom}" \
             --path.extra ${path_extra_long2} \
@@ -1736,7 +1814,7 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments - 2."
 
 # Logs
-step_name="step${step_num}_comb_11"
+step_name="step${step_num}_comb_13"
 step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
@@ -1753,7 +1831,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         rm -f ${path_log_step}*
     fi  
 
-    Rscript $INSTALLED_PATH/pangen/comb_11_fill_new_aln.R  \
+    Rscript $INSTALLED_PATH/pangen/comb_13_fill_aln.R  \
             --cores ${cores} \
             --path.extra ${path_extra_long2} \
             --path.cons ${path_features_msa} \

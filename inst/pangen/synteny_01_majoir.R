@@ -92,25 +92,22 @@ pokaz('Number of BLAST-result files:', length(files.blast), file=file.log.main, 
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(f.blast, 
+loop.function <- function(f.blast,
+                          done.set = character(0),
                           echo.loop=T){
-  
+
   # Output file
   pref.comb <- sub("\\.[^.]*$", "", basename(f.blast))
   file.aln.pre <- paste(path.aln, paste0(pref.comb, '_maj.rds', collapse = ''), sep = '')
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         pref.comb, # remove the extensions
-                         '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
-  }
-  
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
+
+  # ---- Checkpoint: skip already completed items ----
+  item.id <- pref.comb
+  if(item.id %in% done.set){
     return(NULL)
   }
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
 
   # --- --- --- --- --- --- --- --- --- --- ---
   
@@ -126,7 +123,7 @@ loop.function <- function(f.blast,
   # pokaz(paste0(path.blast, f.blast))
   x = readBlast(paste0(path.blast, f.blast))
   if(is.null(x)){
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   
@@ -155,7 +152,7 @@ loop.function <- function(f.blast,
   
   pokaz('Number of rows in the synteny', nrow(x.major), file=file.log.loop, echo=echo.loop)
   if(nrow(x.major) == 0) {
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   
@@ -181,7 +178,7 @@ loop.function <- function(f.blast,
   if(length(idx) > 0){
     x.major = x.major[-idx,,drop=F]
     if(nrow(x.major) == 0){
-      pokaz('Done.', file=file.log.loop, echo=echo.loop)
+      markDone(item.id, file=file.log.loop, echo=echo.loop)
       return(NULL)
     }
   }
@@ -223,7 +220,7 @@ loop.function <- function(f.blast,
   if(length(remain.block) > 0){
     x.major = x.major[x.major$block.id %in% remain.block, , drop=F]
     if(nrow(x.major) == 0) {
-      pokaz('Done.', file=file.log.loop, echo=echo.loop)
+      markDone(item.id, file=file.log.loop, echo=echo.loop)
       return(NULL)
     }
   }
@@ -272,7 +269,7 @@ loop.function <- function(f.blast,
   rmSafe(query.fas.chr)
   gc()
   
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+  markDone(item.id, file=file.log.loop, echo=echo.loop)
   return(NULL)
 }
 
@@ -280,25 +277,35 @@ loop.function <- function(f.blast,
 # ---- Loop  ----
 
 
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
 
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(f.blast in files.blast){
-    loop.function(f.blast, echo.loop=echo.loop)
+    loop.function(f.blast, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  tmp = foreach(f.blast = files.blast, 
-                .packages=c('crayon'), 
-                .verbose = F)  %dopar% { 
-                  loop.function(f.blast, echo.loop=echo.loop)
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp = foreach(f.blast = files.blast,
+                .packages=c('crayon'),
+                .verbose = F)  %dopar% {
+                  loop.function(f.blast, done.set = done.set, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 

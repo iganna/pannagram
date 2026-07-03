@@ -102,6 +102,14 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
+
+# Rebuild the set of completed breaks from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log (sequential path)
+
 for(s.comb in pref.combinations){
   
   if(echo) pokaz('* Combination', s.comb)
@@ -120,24 +128,19 @@ for(s.comb in pref.combinations){
   # ---- Additional alignments ----
   
   
-  loop.function <- function(i.b, breaks, echo.loop=T){
+  loop.function <- function(i.b, breaks, done.set = character(0), echo.loop=T){
   # for (i.b in 1:nrow(breaks)) {
   # for (i.b in 1:nrow(breaks)) {
-    
-    # ---- Logs ----
-    
-    # Log files
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           breaks$id.s[i.b],
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
+
+    # ---- Checkpoint: skip already completed breaks ----
+    item.id <- breaks$id.s[i.b]
+    if(item.id %in% done.set){
+      return(NULL)
     }
-    
-    if(checkDone(file.log.loop)){
-      return()
-    }
-    
+
+    # One log file per worker (bounded number of files); also the checkpoint ledger
+    file.log.loop = initLoopLog(path.log)
+
     # ---- Main code ----
     
     file.br.group = paste0(path.extra, breaks$id.s[i.b], '_group.fasta')
@@ -717,8 +720,9 @@ for(s.comb in pref.combinations){
     # Save
     save(list = c("len.aln"), file = file.br.len)
     save(list = c("idx.new", "msa.new"), file = file.br.out)
-    
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+
+    # ---- Checkpoint marker: break fully processed ----
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   
@@ -729,7 +733,7 @@ for(s.comb in pref.combinations){
       tryCatch({
         # Set a timeout of 600 seconds (10 minutes) for the function execution
         withTimeout({
-          loop.function(i.b, breaks, echo.loop = echo.loop)
+          loop.function(i.b, breaks, done.set = done.set, echo.loop = echo.loop)
         }, timeout = max.tile.loop)
       }, 
       TimeoutException = function(ex) {
@@ -745,14 +749,18 @@ for(s.comb in pref.combinations){
   } else {
     # Set the number of cores for parallel processing
     myCluster <- makeCluster(num.cores, type = "PSOCK") 
-    registerDoParallel(myCluster) 
-    
-    tmp = foreach(i.b = 1:nrow(breaks), 
-                  .packages=c('rhdf5', 'crayon', 'igraph', 'pannagram', 'R.utils'))  %dopar% { 
+    registerDoParallel(myCluster)
+
+    # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+    parallel::clusterApply(myCluster, seq_len(num.cores),
+                           function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+    tmp = foreach(i.b = 1:nrow(breaks),
+                  .packages=c('rhdf5', 'crayon', 'igraph', 'pannagram', 'R.utils'))  %dopar% {
                     tryCatch({
                       # Set a timeout of 600 seconds (10 minutes) for each parallel task
                       withTimeout({
-                        loop.function(i.b, breaks, echo.loop = echo.loop)
+                        loop.function(i.b, breaks, done.set = done.set, echo.loop = echo.loop)
                       }, timeout = max.tile.loop)
                     }, 
                     TimeoutException = function(ex) {
@@ -775,7 +783,6 @@ for(s.comb in pref.combinations){
 }
 
 
-warnings()
 
 
 # ***********************************************************************
