@@ -99,25 +99,22 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(f.maj, 
+loop.function <- function(f.maj,
+                          done.set = character(0),
                           echo.loop=T){
   initial.vars <- ls()
-  
+
   pref.comb <- sub("\\_maj.rds$", "", f.maj)
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         pref.comb,
-                         '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
+
+  # ---- Checkpoint: skip already completed items ----
+  item.id <- pref.comb
+  if(item.id %in% done.set){
+    return(NULL)
   }
-  
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
-    return()
-  }
-  
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   pokaz("File", f.maj, file=file.log.loop, echo=echo.loop)
   # Remove extensions
   
@@ -158,8 +155,8 @@ loop.function <- function(f.maj,
   if((nrow(x) <= 1) || (is.null(x))) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
     
-    # Done
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
+    # ---- Checkpoint marker: item fully processed ----
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
     
     # Cleanup variables
     final.vars <- ls()
@@ -223,6 +220,15 @@ loop.function <- function(f.maj,
   # Within non-occupied positions find those, which can be
   
   pref.comparisson = paste0('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_')
+
+  # Idempotent: gap fasta files below are written with append=T, so drop any partial
+  # output left by a previously interrupted run of this item before re-creating it.
+  for(f.rm in paste0(path.gaps, pref.comparisson,
+                     c('query.fasta', 'base.fasta',
+                       'residual_query.fasta', 'residual_base.fasta'))){
+    if(file.exists(f.rm)) invisible(file.remove(f.rm))
+  }
+
   # Query-file
   file.gap.query = paste0(path.gaps, pref.comparisson, 'query.fasta', collapse = '')
   # Base file
@@ -459,9 +465,9 @@ loop.function <- function(f.maj,
     }
   }
   
-  # Done
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
-  
+  # ---- Checkpoint marker: item fully processed ----
+  markDone(item.id, file=file.log.loop, echo=echo.loop)
+
   # Cleanup variables
   final.vars <- ls()
   new.vars <- setdiff(final.vars, initial.vars)
@@ -472,42 +478,29 @@ loop.function <- function(f.maj,
 
 # ***********************************************************************
 
-# ---- Check which files are already done ----
-files.maj.todo = c()
-for(f.maj in files.maj){
-  
-  # Remove extensions
-  pref.comb <- sub("\\_maj.rds$", "", f.maj)
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         pref.comb,
-                         '.log')
-  if(file.exists(file.log.loop)){
-    ## ---- Check log Done ----
-    if(checkDone(file.log.loop)){
-      next
-    }  
-  }
-  
-  files.maj.todo = c(files.maj.todo, f.maj)
+# ---- Build the set of completed items from all worker logs (any core count) ----
+done.set <- getDoneSet(path.log)
+files.maj = files.maj[!(sub("\\_maj.rds$", "", files.maj) %in% done.set)]
+
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
 }
-files.maj = files.maj.todo
 
 if(length(files.maj) == 0){
   pokaz('All files are done', file=file.log.main, echo=echo.main)
   quit(save = "no")
-} 
+}
 
 
 # ---- Loop  ----
 
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(f.maj in files.maj){
-    loop.function(f.maj, echo.loop=echo.loop)
+    loop.function(f.maj, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
-  
+
   batch.size <- 2 * num.cores  # Define the batch size
   
   # Initialize a temporary list to store results
@@ -522,12 +515,16 @@ if(num.cores == 1){
     # Create and register a new cluster for the current batch
     myCluster <- makeCluster(num.cores, type = "PSOCK")
     registerDoParallel(myCluster)
-    
-    pokaz(batch.files, file=file.log.loop, echo=echo.loop)
-    
+
+    # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+    parallel::clusterApply(myCluster, seq_len(num.cores),
+                           function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+    pokaz(batch.files, file=file.log.main, echo=echo.main)
+
     # Run parallel loop for files in the current batch
     batch.results <- foreach(f.maj = batch.files, .packages = c('crayon', 'pannagram'), .verbose = FALSE) %dopar% {
-      loop.function(f.maj, echo.loop = echo.loop)
+      loop.function(f.maj, done.set = done.set, echo.loop = echo.loop)
     }
     
     tmp <- c(tmp, batch.results)  # Store the batch results in the main list
@@ -537,7 +534,6 @@ if(num.cores == 1){
   }
 }
 
-warnings()
 
 pokaz('Done.', file=file.log.main, echo=echo.main)
 

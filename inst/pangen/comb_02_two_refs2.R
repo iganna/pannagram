@@ -105,12 +105,22 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 loop.function <- function(s.comb,
+                          done.set = character(0),
                           echo.loop=T){
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set){
+    return(NULL)
+  }
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   # --- --- --- --- --- --- --- --- --- --- ---
   file.comb0 <- file.path(path.features.msa, paste0(aln.type.in, s.comb, "_", ref0, ".h5"))
   file.comb1 <- file.path(path.features.msa, paste0(aln.type.in, s.comb, "_", ref1, ".h5"))
-  
+
   # Combined file. If it exists, then use it for the growing correspondence
   file.res   <- file.path(path.inter.msa, paste0(aln.type.out, s.comb, ".h5"))
   if(file.exists(file.res)){
@@ -120,126 +130,140 @@ loop.function <- function(s.comb,
       # delete file
       file.remove(file.res)
     }
-  } 
-  
-  pokaz("Files", file.comb0, file.comb1)
-  
+  }
+
+  pokaz("Files", file.comb0, file.comb1, file=file.log.loop, echo=echo.loop)
+
   if(!file.exists(file.res)){
     h5createFile(file.res)
     h5createGroup(file.res, gr.accs.e)
   }
-  
-  pokaz(file.comb0)
-  pokaz(file.comb1)
-  
+
+  pokaz(file.comb0, file=file.log.loop, echo=echo.loop)
+  pokaz(file.comb1, file=file.log.loop, echo=echo.loop)
+
   # Get the corresponsing function between two references
-  
+
   s.ref0 = paste0(gr.accs.e, ref0)
   s.ref1 = paste0(gr.accs.e, ref1)
   f01 <- cbind(h5read(file.comb0, s.ref0), h5read(file.comb0, s.ref1))
-  
+
   len.aln = nrow(f01)
   f01 = f01[f01[,1] != 0,,drop=F]
   f01 = f01[f01[,2] != 0,,drop=F]
-  
+
   # Get accessions to combine
   groups0 = h5ls(file.comb0)
   groups1 = h5ls(file.comb1)
-  
-  accessions = intersect(groups0$name[groups0$group == gr.accs.b], 
+
+  accessions = intersect(groups0$name[groups0$group == gr.accs.b],
                          groups1$name[groups1$group == gr.accs.b])  # full name of accessions
   accessions = intersect(accessions, accessions.specified)
-  
-  pokaz('Number of accessions', length(accessions))
+
+  pokaz('Number of accessions', length(accessions), file=file.log.loop, echo=echo.loop)
   for(acc in accessions){
-    
-    # Log files
-    file.log.loop = paste0(path.log, 'loop_file_', 
-                           s.comb, '_', acc,
-                           '.log')
-    if(!file.exists(file.log.loop)){
-      invisible(file.create(file.log.loop))
-    }
-    
-    # ---- Check log Done ----
-    if(checkDone(file.log.loop)){
+
+    # ---- Checkpoint: skip accessions already written for this combination ----
+    acc.id <- paste0(s.comb.id, '_', acc)
+    if(acc.id %in% done.set){
+      pokaz('Accession already done, skip:', acc, file=file.log.loop, echo=echo.loop)
       next
     }
-    
+
     # --- --- --- --- --- --- --- --- --- --- ---
-    pokaz('Accession', acc)
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
     s = paste0('/',gr.accs.e, acc)
-    
+
     # Data from the main reference
     v0 = h5read(file.comb0, s)
     v1 = h5read(file.comb1, s)
     v.final = v0
     v.final[f01[,1]] = 0
-    
+
     v0 = v0[f01[,1]]
     v1 =  v1[abs(f01[,2])] * sign(f01[,2])
     v0[v1 != v0] = 0
     v.final[f01[,1]] = v0
-    
+
     dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
     if(length(dup.value) > 0){
       v.final[v.final %in% dup.value] <- 0
       pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
     }
-    
+
     pokaz('Length of saved vector', length(v.final), file=file.log.loop, echo=echo.loop)
-    
+
+    # Write into file (idempotent: drop a possibly half-written dataset if present)
     suppressMessages({
+      try(h5delete(file.res, paste0(gr.accs.e, acc)), silent = TRUE)
       h5write(v.final, file.res, s)
     })
-    
-    pokaz('Done.', file=file.log.loop, echo=echo.loop)
-    
+
+    # ---- Checkpoint marker: accession fully written ----
+    markDone(acc.id, file=file.log.loop, echo=echo.loop)
+
   }
 
-  # Update Idx trust
-  suppressMessages({
-    
-    if(v.idx.trust %in% h5ls(file.res)$name) {
-      idx.trust = h5read(file.res, v.idx.trust)
-    } else {
-      idx.trust = rep(0, len.aln)
-    }
-    
-    idx.trust[f01[,1]] = idx.trust[f01[,1]] + 1
-    h5write(idx.trust, file.res, v.idx.trust)
-    
-  })
-  
+  # ---- Update Idx trust (accumulator: run exactly once, guarded by its own marker) ----
+  # Unlike per-accession writes, this increments a counter and is NOT idempotent, so a
+  # dedicated checkpoint marker prevents double-counting if a resume re-enters here.
+  trust.id <- paste0(s.comb.id, '_trust')
+  if(!(trust.id %in% done.set)){
+    suppressMessages({
+
+      if(v.idx.trust %in% h5ls(file.res)$name) {
+        idx.trust = h5read(file.res, v.idx.trust)
+      } else {
+        idx.trust = rep(0, len.aln)
+      }
+
+      idx.trust[f01[,1]] = idx.trust[f01[,1]] + 1
+      h5write(idx.trust, file.res, v.idx.trust)
+
+    })
+    markDone(trust.id, file=file.log.loop, echo=echo.loop)
+  }
+
   H5close()
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
+
   gc()
-  
+
   return(NULL)
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
+# Rebuild the set of completed combinations from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(s.comb in pref.combinations){
-    loop.function(s.comb,
-                  echo.loop=echo.loop)
+    loop.function(s.comb, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  tmp = foreach(s.comb = pref.combinations, 
-                .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                  loop.function(s.comb,
-                                echo.loop=echo.loop)
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp = foreach(s.comb = pref.combinations,
+                .packages=c('rhdf5', 'crayon'))  %dopar% {
+                  loop.function(s.comb, done.set = done.set, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)

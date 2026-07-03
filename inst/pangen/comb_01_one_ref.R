@@ -123,120 +123,136 @@ pokaz('Chromosomal lengths:', chr.len, file=file.log.main, echo=echo.main)
 # ***********************************************************************
 # ---- MAIN program body ----
 
-loop.function <- function(s.comb, 
+loop.function <- function(s.comb,
+                          done.set = character(0),
                           echo.loop=T){
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set){
+    return(NULL)
+  }
+
   initial.vars <- ls()
-  
+
   s.comb = strsplit(s.comb, '_')[[1]]
   query.chr = as.numeric(s.comb[1])
   base.chr = as.numeric(s.comb[2])
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_file_', 
-                         query.chr, '_', base.chr, '_', base.acc.ref,
-                         '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
-  }
-  
-  # ---- Check log Done ----
-  if(checkDone(file.log.loop)){
-    return()
-  }
-  
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   pokaz('Combination:', query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   pokaz('Chromosomal length', chr.len, file=file.log.loop, echo=echo.loop)
   base.len = chr.len[base.chr]
   
   file.comb = paste0(path.cons, aln.pref, query.chr, '_', base.chr, '_', base.acc.ref,'.h5')
-  if (file.exists(file.comb)) file.remove(file.comb)
-  h5createFile(file.comb)
-  
-  # Path to accessions chunks
-  # TODO: Check the availability of the group before creating it
-  h5createGroup(file.comb, gr.accs.e)
+
+  # Keep an existing h5 to resume; create it only if missing.
+  if(!file.exists(file.comb)){
+    h5createFile(file.comb)
+    # TODO: Check the availability of the group before creating it
+    h5createGroup(file.comb, gr.accs.e)
+  }
   
   for(acc in accessions){
-    
-    pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr, 
+
+    # ---- Checkpoint: skip accessions already written for this combination ----
+    acc.id <- paste0(s.comb.id, '_', acc)
+    if(acc.id %in% done.set){
+      pokaz('Accession already done, skip:', acc, file=file.log.loop, echo=echo.loop)
+      next
+    }
+
+    pokaz('Accession', acc, 'qchr', query.chr, 'bchr', base.chr,
                    file=file.log.loop, echo=echo.loop)
-    
+
     pref.comb = paste0(acc, '_', query.chr, '_', base.chr, collapse = '')
     file.aln.full <- paste(path.aln, paste0(pref.comb,  '_full.rds', collapse = ''), sep = '')
     if(!file.exists(file.aln.full)) next
-    
+
     pokaz('Alignment file:', file.aln.full, file=file.log.loop, echo=echo.loop)
-    
+
     # Reading the alignment
     x = readRDS(file.aln.full)
-    
+
     pokaz('Base len', base.len, file=file.log.loop, echo=echo.loop)
     # saveRDS(x, 'tmp.rds')
-    
+
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
-    
+
     if(sum(duplicated(x.corr[x.corr != 0])) > 0) stop('DUPLICSTIONS', sum(duplicated(x.corr[x.corr != 0])))
-    
-    # Write into file
+
+    # Write into file (idempotent: drop a possibly half-written dataset if present)
     suppressMessages({
+      try(h5delete(file.comb, paste0(gr.accs.e, '', acc)), silent = TRUE)
       h5write(x.corr, file.comb, paste0(gr.accs.e, '', acc))
     })
-    
-    
+
+    # ---- Checkpoint marker: accession fully written ----
+    markDone(acc.id, file=file.log.loop, echo=echo.loop)
+
     rmSafe(x.corr)
     rmSafe(x)
     rmSafe(v)
     rmSafe(idx.tmp.acc)
-    
+
   }
   
   suppressMessages({
-    
+    try(h5delete(file.comb, v.ref.name), silent = TRUE)
+    try(h5delete(file.comb, v.len), silent = TRUE)
+    try(h5delete(file.comb, paste0(gr.accs.e, '', base.acc.ref)), silent = TRUE)
     h5write(base.acc.ref, file.comb, v.ref.name)
     h5write(base.len, file.comb, v.len)
-    
+
     h5write(1:base.len, file.comb, paste0(gr.accs.e, '', base.acc.ref))
   })
-  
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
-  
+
   H5close()
-  
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
+
   final.vars <- ls()
   new.vars <- setdiff(final.vars, initial.vars)
   rm(list = new.vars)
   gc()
-  
+
   return(NULL)
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
+# Rebuild the set of completed combinations from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
-  # file.log.loop = paste0(path.log, 'loop_all.log')
-  # invisible(file.create(file.log.loop))
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(s.comb in chromosome.pairs){
-    loop.function(s.comb,
-                  # file.log.loop = file.log.loop, 
-                  echo.loop=echo.loop)
+    loop.function(s.comb, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
-  myCluster <- makeCluster(num.cores, type = "PSOCK") 
-  registerDoParallel(myCluster) 
-  
-  tmp = foreach(s.comb = chromosome.pairs, 
-                .packages=c('rhdf5', 'crayon'))  %dopar% { 
-                  loop.function(s.comb,
-                                echo.loop=echo.loop)
+  myCluster <- makeCluster(num.cores, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp = foreach(s.comb = chromosome.pairs,
+                .packages=c('rhdf5', 'crayon'))  %dopar% {
+                  loop.function(s.comb, done.set = done.set, echo.loop=echo.loop)
                 }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)

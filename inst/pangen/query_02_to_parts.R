@@ -100,24 +100,22 @@ if(n.chr == 0){
 
 # ***********************************************************************
 # ---- MAIN program body ----
-loop.function <- function(i.comb, 
-                          echo.loop=T, 
-                          file.log.loop=NULL){
-  
+loop.function <- function(i.comb,
+                          done.set = character(0),
+                          echo.loop=T){
+
   acc <- combinations$acc[i.comb]
   i.chr <- combinations$i.chr[i.comb]
-  
-  # Log files
-  file.log.loop = paste0(path.log, 'loop_acc_', acc, '_chr', i.chr, '.log')
-  if(!file.exists(file.log.loop)){
-    invisible(file.create(file.log.loop))
-  }
-  
-  # Check log Done
-  if(checkDone(file.log.loop)){
+
+  # ---- Checkpoint: skip already completed items ----
+  item.id <- paste0(acc, '_', i.chr)
+  if(item.id %in% done.set){
     return(NULL)
   }
-  
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   # ***********************************
   pokaz('New attempt:', file=file.log.loop, echo=echo.loop)
   
@@ -201,31 +199,43 @@ loop.function <- function(i.comb,
   rmSafe(s)
   rmSafe(pos.beg)
   rmSafe(seqs.score)
-  pokaz('Done.', file=file.log.loop, echo=echo.loop)
+
+  # ---- Checkpoint marker: item fully processed ----
+  markDone(item.id, file=file.log.loop, echo=echo.loop)
 }
 
 # ***********************************************************************
 # ---- Loop  ----
 
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+
 if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
   for(i.comb in 1:nrow(combinations)){
-    loop.function(i.comb, echo.loop=echo.loop)
+    loop.function(i.comb, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
   # Set the number of cores for parallel processing
   myCluster <- makeCluster(num.cores, type = "PSOCK")
   registerDoParallel(myCluster)
-  
-  tmp.output = foreach(i.comb = 1:nrow(combinations), 
+
+  # Assign a stable worker id (1..N) to each worker -> bounded, reused file names
+  parallel::clusterApply(myCluster, seq_len(num.cores),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  tmp.output = foreach(i.comb = 1:nrow(combinations),
                        .packages=c('crayon',
                                    'stringi'),  # for purging repeats
                        .export = c('n.chr')) %dopar% {
-    loop.function(i.comb, echo.loop=echo.loop)
+    loop.function(i.comb, done.set = done.set, echo.loop=echo.loop)
   }
   stopCluster(myCluster)
 }
 
-warnings()
 
 pokaz('Done.',
       file=file.log.main, echo=echo.main)

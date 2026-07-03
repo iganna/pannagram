@@ -108,20 +108,37 @@ pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 # ---- MAIN program body ----
 
 echo = T
+
+# Rebuild the set of completed items from all worker logs (any core count)
+done.set <- getDoneSet(path.log)
+if(length(done.set) > 0){
+  pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
+}
+assign('.worker.id', 1, envir = .GlobalEnv)   # sequential outer loop -> single core_1.log
+
 for(s.comb in pref.combinations){
-  
+
+  # ---- Checkpoint: skip already completed combinations ----
+  s.comb.id <- s.comb
+  if(s.comb.id %in% done.set) next
+
+  # One log file per worker (bounded number of files); also the checkpoint ledger
+  file.log.loop = initLoopLog(path.log)
+
   if(echo) pokaz('* Combination', s.comb)
   q.chr = strsplit(s.comb, '_')[[1]][1]
-  
+
   file.comb = paste0(path.cons, aln.type.in, s.comb,'.h5')
   file.out = paste0(path.cons, aln.type.out, s.comb,'.h5')
-  
-  # Create the output file
-  suppressMessages({
-    h5createFile(file.out)
-    h5createGroup(file.out, gr.blocks)
-    h5createGroup(file.out, gr.accs.e)
-  })
+
+  # Create the output file (keep an existing one to resume; create only if missing)
+  if(!file.exists(file.out)){
+    suppressMessages({
+      h5createFile(file.out)
+      h5createGroup(file.out, gr.blocks)
+      h5createGroup(file.out, gr.accs.e)
+    })
+  }
   
   # Accessions
   groups = h5ls(file.comb)
@@ -188,8 +205,13 @@ for(s.comb in pref.combinations){
   pos.transfer = pos.transfer[pos.transfer[,2] != 0,, drop = F]
   
   for(acc in accessions){
+
+    # ---- Checkpoint: skip accessions already written for this combination ----
+    acc.id <- paste0(s.comb.id, '_', acc)
+    if(acc.id %in% done.set) next
+
     pokaz('Accessions', acc)
-    
+
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
     v[is.na(v)] = 0
@@ -238,9 +260,13 @@ for(s.comb in pref.combinations){
 
     pokaz('Save new...')
     suppressMessages({
+      try(h5delete(file.out, s.acc), silent = TRUE)
       h5write(v.new, file.out, s.acc)
     })
-    
+    markDone(acc.id, file=file.log.loop, echo=echo.loop)
+
   }
-  
+
+  # ---- Checkpoint marker: combination fully processed ----
+  markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
 }

@@ -167,7 +167,6 @@ for(s.comb in pref.combinations){
 
 stopCluster(myCluster)
 
-warnings()
 
 
 
