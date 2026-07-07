@@ -21,5 +21,7 @@ Authors@R:
 Description: What the package does (one paragraph).
 License: use_mit_license()
 Encoding: UTF-8
+Imports: Rcpp
+LinkingTo: Rcpp
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 8.0.0

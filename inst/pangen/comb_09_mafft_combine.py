@@ -7,6 +7,10 @@ import re
 import sys
 from pathlib import Path
 
+# Uniform logging shared with the other pangen steps (see inst/utils/comb_logging.py)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+from comb_logging import Logger, add_log_args
+
 LOCUS_RE = re.compile(
     r"^locus_(\d+)(?:_aligned)?\.fasta$",
     re.IGNORECASE
@@ -89,28 +93,40 @@ def main():
     ap.add_argument("-d", "--dir", default=".", help="Directory containing locus_*.fasta files.")
     ap.add_argument("-o", "--out", default="out", help="Output directory for genome files.")
     ap.add_argument("-b", "--batch", type=int, default=1000, help="Locus batch size (default 1000).")
+    add_log_args(ap)  # logging (uniform with the R steps)
     args = ap.parse_args()
+
+    log = Logger(args.path_log, args.log_level, script=os.path.basename(__file__))
 
     folder = Path(args.dir).resolve()
     input_txt = Path(args.input).resolve()
     out_dir = Path(args.out).resolve()
 
     if not input_txt.exists():
+        log.log(f"ERROR: input.txt not found: {input_txt}", echo=True)
         print(f"ERROR: input.txt not found: {input_txt}", file=sys.stderr)
         sys.exit(1)
 
     genomes = parse_input_genomes(input_txt)
     if not genomes:
+        log.log("ERROR: input.txt does not contain valid paths/genome names.", echo=True)
         print("ERROR: input.txt does not contain valid paths/genome names.", file=sys.stderr)
         sys.exit(1)
 
     locus_idx = index_locus_files(folder)
     if not locus_idx:
+        log.log(f"ERROR: no files matching locus_*.fasta found in folder {folder}", echo=True)
         print(f"ERROR: no files matching locus_*.fasta found in folder {folder}", file=sys.stderr)
         sys.exit(1)
 
     max_locus = max(locus_idx.keys())
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    log.log("input:   %s" % input_txt)
+    log.log("dir:     %s" % folder)
+    log.log("out:     %s" % out_dir)
+    log.log("genomes: %d  locus files: %d  locus range: 1..%d"
+            % (len(genomes), len(locus_idx), max_locus))
 
     # Prepare output files: create/clear them so we only append later.
     out_paths: dict[str, Path] = {}
@@ -159,12 +175,16 @@ def main():
 
         # optional progress
         print(f"OK: processed locus batch {start}..{end}")
+        log.log("progress: locus batch %d..%d" % (start, end), echo=False)
 
     print(f"OK: files created: {len(genomes)}")
     print(f"Locus range: 1..{max_locus}")
     if missing_files_total:
         print(f"Missing locus_*.fasta files in range: {missing_files_total} (empty lines inserted)")
     print(f"Output directory: {out_dir}")
+
+    log.log("DONE: genome files=%d  locus range=1..%d  missing locus files=%d  elapsed=%.1fs"
+            % (len(genomes), max_locus, missing_files_total, log.elapsed()), echo=True)
 
 if __name__ == "__main__":
     main()

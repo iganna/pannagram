@@ -1347,9 +1347,14 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_inter_synteny_short="${path_inter_synteny}short_${i}_${i}/"
         mkdir -p "${path_inter_synteny_short}"
 
+        path_log_step_chr="${path_log_step}chromosome_${i}/"
+        mkdir -p "${path_log_step_chr}"
+
         "${INSTALLED_PATH}/pangen/comb_06_align.py" \
             --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
-            --outdir "${path_inter_synteny_short}"
+            --outdir "${path_inter_synteny_short}" \
+            --path.log "${path_log_step_chr}" \
+            --log.level ${log_level}
 
         echo "Done" >> "$log_chromosome"
     done
@@ -1387,6 +1392,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_inter_synteny_large_second="${path_inter_synteny}large_${i}_${i}_second/"
         mkdir -p "${path_inter_synteny_large}"
 
+        path_log_step_chr="${path_log_step}chromosome_${i}/"
+        mkdir -p "${path_log_step_chr}"
+
         if [ "$clean" == "T" ]; then
             touch ${path_inter_synteny_large}large.txt
             rm -f ${path_inter_synteny_large}*large*.txt
@@ -1400,7 +1408,9 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --timeout-sec 180 \
             --uppercase \
             --strip-spaces \
-            --aligner mafft
+            --aligner mafft \
+            --path.log "${path_log_step_chr}" \
+            --log.level ${log_level}
 
         echo "Done" >> "$log_chromosome"
 
@@ -1506,11 +1516,16 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
         path_inter_synteny_large_aln="${path_inter_synteny}large_${i}_${i}/"
 
+        path_log_step_chr="${path_log_step}chromosome_${i}/"
+        mkdir -p "${path_log_step_chr}"
+
         "${INSTALLED_PATH}/pangen/comb_09_mafft_combine.py"   \
         -i "${path_inter_msa}loci_large_${i}_${i}.txt" \
           -d ${path_inter_synteny_large} \
            -o ${path_inter_synteny_large_aln} \
-           -b 1000
+           -b 1000 \
+           --path.log "${path_log_step_chr}" \
+           --log.level ${log_level}
 
         echo "Done" >> "$log_chromosome"
    done
