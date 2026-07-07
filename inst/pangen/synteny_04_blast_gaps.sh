@@ -29,6 +29,8 @@ while [ $# -gt 0 ]; do
         -penalty) penalty=$2; shift 2;;
         -gapopen) gapopen=$2; shift 2;;
         -gapextend) gapextend=$2; shift 2;;
+        -xdrop_gap) xdrop_gap=$2; shift 2;;
+        -xdrop_gap_final) xdrop_gap_final=$2; shift 2;;
         -max_hsps) max_hsps=$2; shift 2;;
         -cores) cores=$2; shift 2;;
         -p_ident) p_ident=$2; shift 2;;
@@ -45,6 +47,10 @@ done
 penalty="${penalty:--2}"
 gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
+# X-dropoff for gapped extension (same recipe as step 3): low values stop extension
+# at divergent patches -> cleaner gap alignments + faster (early termination on repeats).
+xdrop_gap="${xdrop_gap:-15}"
+xdrop_gap_final="${xdrop_gap_final:-30}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"
@@ -64,6 +70,8 @@ export path_gaps
 export path_db
 export log_path
 export p_ident
+export xdrop_gap
+export xdrop_gap_final
 
 function process_db {
     query_file_path="$1"
@@ -136,6 +144,7 @@ function process_blast_normal {
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
+               -xdrop_gap "${xdrop_gap}" -xdrop_gap_final "${xdrop_gap_final}" \
                -max_hsps 10  >> "$file_log" 2>&1
 
         if [ -d "$log_path" ]; then
@@ -216,7 +225,9 @@ export -f process_db
 
 find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_db
 find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_blast_normal
-find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_blast_cross
+# process_blast_cross DISABLED: its outputs (out_on_residual / out_on_core) are never read
+# by synteny_05 (nor anywhere else in the codebase) -> dead compute (~1/3 of step 7).
+# find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_blast_cross
 
 
 

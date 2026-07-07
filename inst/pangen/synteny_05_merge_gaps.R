@@ -211,18 +211,19 @@ loop.function <- function(f.maj,
   
   complexity.threshold = 200  # Max number of blast hits between two synteny blocks
   
-  file.gaps.out = paste0(path.gaps,
-                         'acc_', acc, 
-                         '_qchr_', query.chr, '_bchr_', base.chr, '_out.txt', collapse = '')
-  
-  pokaz('gap file', file.gaps.out, file=file.log.loop, echo=echo.loop)
+  # Normal gaps are now blasted in BATCHES (synteny_03/04): read & rbind all
+  # <pref>b<N>_out.txt for this comparison (excludes *_residual_out.txt).
+  gap.pref = paste0('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_')
+  all.out.files = list.files(path.gaps, full.names = TRUE)
+  batch.out.files = all.out.files[startsWith(basename(all.out.files), gap.pref) &
+                                  grepl('_b[0-9]+_out\\.txt$', basename(all.out.files))]
 
-  if(file.exists(file.gaps.out)){
-    pokaz('Read blast of good gaps..', file=file.log.loop, echo=echo.loop)
-    x.gap = readBlast(file.gaps.out)
-    
-    # save(list = ls(), file = "tmp_workspace_good.RData")
-    
+  pokaz('gap batch files', length(batch.out.files), file=file.log.loop, echo=echo.loop)
+
+  if(length(batch.out.files) > 0){
+    pokaz('Read blast of good gaps (batched)..', file=file.log.loop, echo=echo.loop)
+    x.gap = do.call(rbind, lapply(batch.out.files, readBlast))
+    if(!is.null(x.gap) && nrow(x.gap) == 0) x.gap = NULL
   } else {
     x.gap = NULL
   }
