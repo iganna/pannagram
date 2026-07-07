@@ -238,18 +238,18 @@ loop.function <- function(f.maj,
 
   # Idempotent: gap fasta files below are written with append=T, so drop any partial
   # output left by a previously interrupted run of this item before re-creating it.
-  for(f.rm in paste0(path.gaps, pref.comparisson,
-                     c('query.fasta', 'base.fasta',
-                       'residual_query.fasta', 'residual_base.fasta'))){
-    if(file.exists(f.rm)) invisible(file.remove(f.rm))
-  }
+  # Covers the batched normal files (<pref>b<N>_query.fasta / _base.fasta) and residuals.
+  all.gap.files = list.files(path.gaps, full.names = TRUE)
+  rm.gap.files = all.gap.files[startsWith(basename(all.gap.files), pref.comparisson) &
+                               (endsWith(all.gap.files, 'query.fasta') | endsWith(all.gap.files, 'base.fasta'))]
+  if(length(rm.gap.files) > 0) invisible(file.remove(rm.gap.files))
 
-  # Query-file
-  file.gap.query = paste0(path.gaps, pref.comparisson, 'query.fasta', collapse = '')
-  # Base file
-  file.gap.base = paste0(path.gaps, pref.comparisson, 'base.fasta', collapse = '')
-  pokaz('Create gaps for', file.gap.query, file=file.log.loop, echo=echo.loop)
-  pokaz('Create gaps for', file.gap.base, file=file.log.loop, echo=echo.loop)
+  # Normal gaps are written in BATCHES of `batch.size.gaps` gaps: each batch becomes its
+  # own <pref>b<N>_query.fasta / _base.fasta so step-7 blasts a query gap only against its
+  # ~batch.size.gaps neighbours (a small DB) instead of the whole all-vs-all base. The
+  # batch target file names are set per gap in the loop below.
+  batch.size.gaps = 100
+  n.gap.written = 0
   
   for(irow in 1:(nrow(x)-1)){
     
@@ -308,7 +308,12 @@ loop.function <- function(f.maj,
     
     if(abs(pos.gap.q[1] - pos.gap.q[length(pos.gap.q)]) > max.len) next
     if(abs(pos.gap.b[1] - pos.gap.b[length(pos.gap.b)]) > max.len) next
-    
+
+    # ---- Batch target: roll to a new file every batch.size.gaps written gaps ----
+    i.batch = n.gap.written %/% batch.size.gaps
+    file.gap.query = paste0(path.gaps, pref.comparisson, 'b', i.batch, '_query.fasta')
+    file.gap.base  = paste0(path.gaps, pref.comparisson, 'b', i.batch, '_base.fasta')
+
     # ---- Write query ----
     # Define Chunks (pos.gap.q is a contiguous ascending range -> substr slice)
     s.q = substr(query.str, pos.gap.q[1], pos.gap.q[length(pos.gap.q)])
@@ -342,9 +347,11 @@ loop.function <- function(f.maj,
                          'base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
     
     names(s.b) = s.base.names
-    
+
     writeFastaMy(s.b, file.gap.base, append = T)
-    
+
+    n.gap.written = n.gap.written + 1  # advances the batch index (every batch.size.gaps gaps)
+
   }  # irow search for gaps
   
   # ---- Write remained blocks ----
