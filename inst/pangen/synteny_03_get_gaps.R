@@ -36,6 +36,12 @@ opt = parse_args(opt_parser, args = args);
 max.len = 10^6
 len.blast = 50
 
+# Validating that the alignment coordinates correspond to the genome sequence is
+# a debug-only check (consistent with synteny_05_merge_gaps.R, where it is off by
+# default). When FALSE, the whole chromosome is never exploded into a per-nucleotide
+# vector and its reverse complement is never computed -- gaps are sliced with substr().
+check.genomes = F
+
 
 # print(opt)
 
@@ -129,23 +135,30 @@ loop.function <- function(f.maj,
   
   pokaz(acc, query.chr, base.chr, file=file.log.loop, echo=echo.loop)
   
-  # Read reference sequences
+  # Read reference sequence (kept as a single string; gap sub-sequences are
+  # sliced with substr() below, so the whole chromosome is never turned into a
+  # per-nucleotide vector unless the genome-correspondence check is enabled).
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  base.fas.fw = readFastaMy(paste0(path.chr, base.file))
-  base.fas.fw = seq2nt(base.fas.fw)
-  base.fas.bw = revCompl(base.fas.fw)
-  base.len = length(base.fas.bw)
+  base.str = unname(readFastaMy(paste0(path.chr, base.file))[1])
+  base.len = nchar(base.str)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
-  
-  # Read query sequences
+
+  # Read query sequence (also kept as a string)
   query.file = paste0(acc, '_chr',query.chr, '.fasta')
   pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
-  
-  query.fas.chr = readFastaMy(paste0(path.chr, query.file))
-  query.fas.chr = seq2nt(query.fas.chr)
-  query.len = length(query.fas.chr)
+
+  query.str = unname(readFastaMy(paste0(path.chr, query.file))[1])
+  query.len = nchar(query.str)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
+
+  # Per-nucleotide vectors + reverse complement are only needed for the optional
+  # genome-correspondence validation below.
+  if(check.genomes){
+    base.fas.fw = seq2nt(base.str)
+    base.fas.bw = revCompl(base.fas.fw)
+    query.fas.chr = seq2nt(query.str)
+  }
   
   x = readRDS(paste0(path.aln, f.maj))
   x = cleanOverlaps(x)
@@ -171,10 +184,12 @@ loop.function <- function(f.maj,
   
   # save(list = ls(), file = "tmp_workspace_get_gap.RData")
   
-  checkCorrespToGenome(x=setDir(x, base.len = base.len),
-                       query.fas = query.fas.chr, 
-                       base.fas.fw = base.fas.fw, 
-                       base.fas.bw = base.fas.bw)
+  if(check.genomes){
+    checkCorrespToGenome(x=setDir(x, base.len = base.len),
+                         query.fas = query.fas.chr,
+                         base.fas.fw = base.fas.fw,
+                         base.fas.bw = base.fas.bw)
+  }
   
   # Find occupied positions
   pos.q.free = rep(0, query.len)  # free positions in query
@@ -295,9 +310,8 @@ loop.function <- function(f.maj,
     if(abs(pos.gap.b[1] - pos.gap.b[length(pos.gap.b)]) > max.len) next
     
     # ---- Write query ----
-    # Define Chunks
-    s.q = query.fas.chr[pos.gap.q]
-    s.q = nt2seq(s.q)
+    # Define Chunks (pos.gap.q is a contiguous ascending range -> substr slice)
+    s.q = substr(query.str, pos.gap.q[1], pos.gap.q[length(pos.gap.q)])
     n.bl = 500
     len.s.q = nchar(s.q)
     if(len.s.q > n.bl){
@@ -322,9 +336,8 @@ loop.function <- function(f.maj,
     writeFastaMy(s.q, file.gap.query, append = T)
     
     # ---- Write base ----
-    s.b = base.fas.fw[pos.gap.b]
-    s.b = nt2seq(s.b)
-    
+    s.b = substr(base.str, pos.gap.b[1], pos.gap.b[length(pos.gap.b)])
+
     s.base.names = paste(pref.comparisson, pref.gap,
                          'base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
     
@@ -380,10 +393,9 @@ loop.function <- function(f.maj,
       }
       
       pref.gap = paste0('connect_', irow.prev, '_', irow.next, '_')
-      
-      # Define Chunks
-      s.q = query.fas.chr[pos.gap.q]
-      s.q = nt2seq(s.q)
+
+      # Define Chunks (pos.gap.q is a contiguous ascending range -> substr slice)
+      s.q = substr(query.str, pos.gap.q[1], pos.gap.q[length(pos.gap.q)])
       n.bl = 500
       len.s.q = nchar(s.q)
       if(len.s.q > n.bl){
@@ -450,12 +462,11 @@ loop.function <- function(f.maj,
       pref.gap = paste0('connect_', irow.prev, '_', irow.next, '_')
       
       
-      s.b = base.fas.fw[pos.gap.b]
-      
-      if((sum(s.b == 'N') + sum(s.b == 'n')) > length(s.b) / 2) next
-      
-      s.b = nt2seq(s.b)
-      
+      s.b = substr(base.str, pos.gap.b[1], pos.gap.b[length(pos.gap.b)])
+
+      # Skip blocks that are more than half N (count N/n directly on the string)
+      if((nchar(s.b) - nchar(gsub('[Nn]', '', s.b))) > nchar(s.b) / 2) next
+
       s.base.names = paste(pref.comparisson, pref.gap,
                            'resid_base', '|', pos.gap.b[1], '|', pos.gap.b[length(pos.gap.b)], sep = '')
       

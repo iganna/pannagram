@@ -8,6 +8,10 @@ import subprocess
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import List, Tuple, Optional, Dict
 
+# Uniform logging shared with the other pangen steps (see inst/utils/comb_logging.py)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+from comb_logging import Logger, add_log_args
+
 GAP = "-"
 SIM_CUTOFF = 0.2
 MIN_LEN_CHECK = 1000  # if alignment length < 1000 => do NOT mark bad
@@ -288,6 +292,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--strip-spaces", action="store_true")
     p.add_argument("--expected-lines", type=int, default=0)
     p.add_argument("--progress-every", type=int, default=2000)
+    add_log_args(p)  # logging (uniform with the R steps)
     return p.parse_args()
 
 def main() -> int:
@@ -297,6 +302,16 @@ def main() -> int:
 
     ensure_dir(args.outdir)
     ensure_dir(args.baddir)
+
+    # ---- Logging (uniform with the R steps) ----
+    log = Logger(args.path_log, args.log_level, script=os.path.basename(__file__))
+    log.log("inputs-list: %s" % args.inputs_list)
+    log.log("outdir:      %s" % args.outdir)
+    log.log("baddir:      %s" % args.baddir)
+    log.log("genomes:     %d" % len(in_files))
+    log.log("aligner: %s  timeout-sec: %d  threads: %d"
+            % (args.aligner, args.timeout_sec, args.threads))
+    bad_locus_nos: List[int] = []
 
     infhs = [open(p, "r", encoding="utf-8", newline="") for p in in_files]
 
@@ -347,14 +362,24 @@ def main() -> int:
 
             ok = bad = 0
             for fut in as_completed(futures):
-                _, status = fut.result()
+                fut_locus_no, status = fut.result()
                 if status == "ok":
                     ok += 1
                 else:
                     bad += 1
+                    bad_locus_nos.append(fut_locus_no)
+                    log.loop("locus %d: %s -> baddir" % (fut_locus_no, status))
 
             if args.expected_lines and locus_no != args.expected_lines:
                 raise RuntimeError(f"Expected {args.expected_lines} loci, got {locus_no}")
+
+            log.log("DONE: aligner=%s genomes=%d loci=%d ok=%d bad=%d elapsed=%.1fs"
+                    % (args.aligner, len(in_files), locus_no, ok, bad, log.elapsed()), echo=True)
+            if bad_locus_nos:
+                bad_sorted = sorted(bad_locus_nos)
+                preview = ", ".join(str(x) for x in bad_sorted[:50])
+                more = "" if len(bad_sorted) <= 50 else " ... (+%d more)" % (len(bad_sorted) - 50)
+                log.log("bad loci (-> baddir): %s%s" % (preview, more))
 
             print(f"[done] aligner={args.aligner} genomes={len(in_files)} loci={locus_no} ok={ok} bad={bad}", file=sys.stderr)
             return 0

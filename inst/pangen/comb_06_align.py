@@ -33,6 +33,10 @@ import shlex
 from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, List, Tuple, Optional
 
+# Uniform logging shared with the other pangen steps (see inst/utils/comb_logging.py)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+from comb_logging import Logger, add_log_args
+
 
 GAP = "-"  # fixed, no CLI
 
@@ -97,6 +101,9 @@ def parse_args() -> argparse.Namespace:
     # dump problematic loci
     p.add_argument("--dump-fasta-dir", default="",
                    help="If set (non-empty), write locus_X.fasta for loci that output timeout_mark ('*').")
+
+    # logging (uniform with the R steps)
+    add_log_args(p)
 
     return p.parse_args()
 
@@ -614,6 +621,15 @@ def main() -> int:
     n_genomes = len(in_files)
     genome_names = [os.path.basename(p) for p in in_files]
 
+    # ---- Logging (uniform with the R steps) ----
+    log = Logger(args.path_log, args.log_level, script=os.path.basename(__file__))
+    log.log("inputs-list: %s" % args.inputs_list)
+    log.log("outdir:      %s" % args.outdir)
+    log.log("genomes:     %d" % n_genomes)
+    log.log("aligner: %s  timeout-sec: %d  threads: %d  block-size: %d"
+            % (args.aligner, args.timeout_sec, args.threads, args.block_size))
+    bad_locus_nos: List[int] = []
+
     # Open inputs
     infhs = [open(p, "r", encoding="utf-8", newline="") for p in in_files]
     out_paths = [out_path(args.outdir, p, args.out_suffix) for p in in_files]
@@ -650,10 +666,12 @@ def main() -> int:
         # restore original order within this block
         aligned_block = [aligned_by_no[no] for (no, _, _) in cur_block]
 
-        # dump problematic loci (all outputs are timeout_mark)
-        if args.dump_fasta_dir:
-            for (loc_no, orig_lines, _), locus_out in zip(cur_block, aligned_block):
-                if locus_out and all(x == args.timeout_mark for x in locus_out):
+        # record + log problematic loci (all outputs are timeout_mark), and dump if requested
+        for (loc_no, orig_lines, _), locus_out in zip(cur_block, aligned_block):
+            if locus_out and all(x == args.timeout_mark for x in locus_out):
+                bad_locus_nos.append(loc_no)
+                log.loop("locus %d: bad/timeout -> '%s'" % (loc_no, args.timeout_mark))
+                if args.dump_fasta_dir:
                     dump_locus_fasta(
                         dump_dir=args.dump_fasta_dir,
                         locus_number_1based=loc_no,
@@ -706,6 +724,7 @@ def main() -> int:
 
                 if args.progress_every and locus_idx % args.progress_every == 0:
                     print(f"[progress] loci processed: {locus_idx}", file=sys.stderr)
+                    log.log("progress: %d loci processed" % locus_idx, echo=False)
 
         # flush tail
         if block:
@@ -714,6 +733,13 @@ def main() -> int:
 
         if args.expected_lines > 0 and locus_idx != args.expected_lines:
             raise RuntimeError(f"Expected exactly {args.expected_lines} loci, but read {locus_idx}.")
+
+        log.log("DONE: genomes=%d loci=%d bad/timeout=%d elapsed=%.1fs"
+                % (n_genomes, locus_idx, len(bad_locus_nos), log.elapsed()), echo=True)
+        if bad_locus_nos:
+            preview = ", ".join(str(x) for x in bad_locus_nos[:50])
+            more = "" if len(bad_locus_nos) <= 50 else " ... (+%d more)" % (len(bad_locus_nos) - 50)
+            log.log("bad/timeout loci: %s%s" % (preview, more))
 
         print(f"[done] genomes={n_genomes}, loci={locus_idx}, outdir={args.outdir}", file=sys.stderr)
         return 0

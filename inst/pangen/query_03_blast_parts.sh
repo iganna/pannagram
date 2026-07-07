@@ -45,6 +45,8 @@ do
     -penalty) penalty=$2; shift 2;;
     -gapopen) gapopen=$2; shift 2;;
     -gapextend) gapextend=$2; shift 2;;
+    -xdrop_gap) xdrop_gap=$2; shift 2;;
+    -xdrop_gap_final) xdrop_gap_final=$2; shift 2;;
     -max_hsps) max_hsps=$2; shift 2;;
     -path_log) path_log=$2; shift 2;;
     -combinations) file_combinations=$2; shift 2;;
@@ -59,6 +61,10 @@ done
 penalty="${penalty:--2}"
 gapopen="${gapopen:-10}"
 gapextend="${gapextend:-2}"
+# X-dropoff for gapped extension: low values stop extension at divergent patches,
+# preventing ragged "staircase" gap runs and speeding up (default blastn: 30 / 100).
+xdrop_gap="${xdrop_gap:-15}"
+xdrop_gap_final="${xdrop_gap_final:-30}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"
@@ -72,6 +78,8 @@ mkdir -p $path_blast
 export penalty
 export gapopen
 export gapextend
+export xdrop_gap
+export xdrop_gap_final
 export max_hsps
 export cores
 export p_ident
@@ -118,8 +126,9 @@ run_blast() {
     blastn -db "${file_ref}" -query "${file_acc}" -out "${file_out}" \
            -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
            -perc_identity "${p_ident}" -penalty "$penalty" -gapopen "$gapopen" -gapextend "$gapextend" \
+           -xdrop_gap "$xdrop_gap" -xdrop_gap_final "$xdrop_gap_final" \
            -max_hsps "$max_hsps" \
-           >> "$file_log" 2>&1 # -word_size 50 
+           >> "$file_log" 2>&1 # classic blastn + tuned gap penalties + low X-dropoff (15/30): clean alignments (no ragged gap staircases) and faster via early termination at divergent patches. Pair with -part_len 1000 for coverage. -word_size 50
 
     echo "Done." >> "$file_log"
 }

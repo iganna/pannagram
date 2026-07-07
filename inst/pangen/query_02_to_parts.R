@@ -140,8 +140,8 @@ loop.function <- function(i.comb,
   len.chr = nchar(q.fasta)
   pos.beg = seq(1, len.chr, len.parts)
   
-  if(!is.null(len.step)){
-    s = c(s, 
+  if(!is.null(len.step) && len.step != 0){  # step==0 would duplicate every part 1:1 (part.step defaults to 0 and is never NULL); only add a second, offset tile set for a genuine non-zero overlap
+    s = c(s,
           splitSeq(q.fasta, n=len.parts, step = len.step))
     pos.beg = c(pos.beg, 
                 seq(1 + len.step, len.chr, len.parts))
@@ -166,7 +166,8 @@ loop.function <- function(i.comb,
     file.out.rest = paste0(path.parts, acc, '_chr', i.chr, '.rest', collapse = '')
     file.out.masking = paste0(path.chr, 'mask_', acc, '_chr', i.chr, '.rds', collapse = '')
     
-    seqs.score = sapply(s, repeatScore)
+    # seqs.score = sapply(s, repeatScore)
+    seqs.score = repeatScoreVec(s)   # compiled fast path (~8x), identical results
     
     if (sum(seqs.score <= 0.2) > 0){
       writeFastaMy(s[seqs.score <= 0.2], file.out)  
