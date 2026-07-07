@@ -1,1 +1,3 @@
-^((?!^(DESCRIPTION|NAMESPACE|inst|R|man)(/|$)).)*$
+^((?!^(DESCRIPTION|NAMESPACE|inst|R|man|src)(/|$)).)*$
+^src/.*\.o$
+^src/.*\.so$
