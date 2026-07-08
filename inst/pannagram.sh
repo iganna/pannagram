@@ -308,8 +308,9 @@ fi
 # Default parameters
 p_ident="${p_ident:-85}"  
 p_ident_gap="${p_ident_gap:-85}"  
-part_len="${part_len:-5000}"  
-max_len_gap="${max_len_gap:-25000}"  
+part_len="${part_len:-1000}"
+max_len_gap="${max_len_gap:-25000}"
+w_size="${w_size:-11}"  # blastn word_size (default 11, as in classic blastn)
 
 # Filter repeats
 
@@ -764,6 +765,7 @@ for ref0 in "${refs_all[@]}"; do
                 -accessions ${file_accessions} \
                 -ref ${ref0} \
                 -p_ident ${p_ident} \
+                -word_size ${w_size} \
                 -cores ${cores} \
                 -path_log ${path_log_step}
 

@@ -18,7 +18,7 @@ option_list <- list(
   make_option(c("--accessions"), type = "character", default = NULL, help = "File containing accessions to analyze"),
   
   make_option(c("--n.chr"),      type = "integer", default = 0,    help = "Number of chromosomes"),
-  make_option(c("--part.len"),   type = "integer", default = 5000, help = "Length of each part file in bp"),
+  make_option(c("--part.len"),   type = "integer", default = 1000, help = "Length of each part file in bp"),
   make_option(c("--part.step"),  type = "integer", default = 0,    help = "Step size in bp between parts"),
   
   make_option(c("--purge.reps"), type = "logical", default = FALSE, help = "Flag to specify whether to remove repeats"),

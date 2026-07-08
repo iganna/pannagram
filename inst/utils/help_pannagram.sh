@@ -37,7 +37,7 @@ OTHER PARAMETERS:
     [-h] [-s STAGE] [-cores CORES] [-log LOG_LEVEL]
     [-sort_len] [-purge_repeats]
     [-path_ref PATH_CHR_REF]
-    [-p_ident P_IDENT] [-part_len PART_LEN]
+    [-p_ident P_IDENT] [-part_len PART_LEN] [-word_size WORD_SIZE]
     [-accessions ACC_FILE] [-combinations COMB_FILE]
 --------------------------------------------------------------------
 
@@ -91,8 +91,9 @@ PARAMETERS EXPLAINED:
     * Tuning parameters: 
         -purge_repeats              Flag for filtering of repeats (default is no filtering);
         -p_ident P_IDENT            Percentage identity threshold (default: 85);
-        -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 5000).
-        
+        -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 1000).
+        -word_size WORD_SIZE        blastn word_size for the part-vs-reference search (default: 11).
+
 EOF
 }
 

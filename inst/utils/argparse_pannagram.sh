@@ -55,7 +55,8 @@ while [ $# -gt 0 ]; do
         -nchr)           nchr="$2";     shift 2 ;;    # in every genome
         -nchr_ref)       nchr_ref="$2"; shift 2 ;;    # in reference genome
 
-        -part_len)       part_len="$2";    shift 2 ;; # fragments to which each chromosome should be cut, has a default value 5000
+        -part_len)       part_len="$2";    shift 2 ;; # fragments to which each chromosome should be cut, has a default value 1000
+        -word_size)      w_size="$2";      shift 2 ;; # blastn word_size for part-vs-reference search, default 11
         -p_ident)        p_ident="$2";     shift 2 ;; # percent of identity
         -p_ident_gap)    p_ident_gap="$2"; shift 2 ;; # percent of identity of gaps
         -max_len_gap)    max_len_gap="$2"; shift 2 ;; # Max length that can be aligned with MAFFT
