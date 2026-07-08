@@ -60,32 +60,31 @@ glueZero <- function(x.all){
     x.nrow = nrow(x)
     
     if(x.nrow > 1){
-      idx.remove = c()
+      # Operate on plain vectors: per-element data.frame $/[ access dominated the runtime.
+      # Same algorithm/semantics as before, just without repeated data.frame indexing.
+      V2 <- x$V2; V3 <- x$V3; V4 <- x$V4; V5 <- x$V5; V7 <- x$V7; V8 <- x$V8; V9 <- x$V9
+      idx.remove <- logical(x.nrow)
       for(irow in 1:(x.nrow - 1)){
         jrow = irow + 1
-        while(x$V2[jrow] < x$V3[irow]){
+        while(V2[jrow] < V3[irow]){
           jrow = jrow + 1
           if(jrow > x.nrow) break
         }
         if(jrow > x.nrow) break
-        d1 = x$V2[jrow] - x$V3[irow]
-        d2 = x$V4[jrow] - x$V5[irow]
+        d1 = V2[jrow] - V3[irow]
+        d2 = V4[jrow] - V5[irow]
         if((d1 == d2) && ((d1 == 1 & dir.val == 0) | (d1 == -1 & dir.val == 1))) {
-          x$V2[jrow] = x$V2[irow]
-          x$V4[jrow] = x$V4[irow]
-          
-          x$V7[jrow] <- x$V7[jrow] + x$V7[irow]
-          x$V8[jrow] <- paste0(x$V8[irow], x$V8[jrow])
-          x$V9[jrow] <- paste0(x$V9[irow], x$V9[jrow])
-          
-          # remember the index to delete
-          idx.remove = c(idx.remove, irow)
+          V2[jrow] = V2[irow]
+          V4[jrow] = V4[irow]
+          V7[jrow] = V7[jrow] + V7[irow]
+          V8[jrow] = paste0(V8[irow], V8[jrow])
+          V9[jrow] = paste0(V9[irow], V9[jrow])
+          idx.remove[irow] = TRUE
         }
       }  #for(irow in 1:(x.nrow - 1))
-      
-      if(length(idx.remove) > 0){
-        x = x[-idx.remove,]
-      } 
+
+      x$V2 <- V2; x$V4 <- V4; x$V7 <- V7; x$V8 <- V8; x$V9 <- V9
+      if(any(idx.remove)) x = x[!idx.remove,]
     }  # if(x.nrow > 1)
     
     x.new = rbind(x.new, x)
@@ -344,28 +343,21 @@ defineOverlapps <- function(x.df){
   
   x.df$rm.len = 0
   idx.overlap = which(x.df$p.beg[-1] <= x.df$p.end[-nrow(x.df)])
-  
-  # x.df[c(irow, irow+1),]
-  
-  for(irow in idx.overlap){
-    # We cut either irow or [irow+1]
-    
-    # Which row to cut
-    icut = ifelse(x.df$V7[irow] > x.df$V7[irow + 1], irow + 1, irow)
-    ibig = ifelse(x.df$V7[irow] > x.df$V7[irow + 1], irow, irow + 1)
-    
-    # Find left(value = 1) or right(value = -1) tails 
-    # of irow(i.e., tail.irow) or [irow+1](i.e., tail.next), 
-    # which are involved in the overlap
-    tail.icut = ifelse((x.df$V4[icut] >= x.df$p.beg[ibig]) & 
-                         (x.df$V4[icut] <= x.df$p.end[ibig]), 
-                       1, -1)
-    
-    # how much to cut
-    ncut = length(intersect(x.df$V4[irow]:x.df$V5[irow],
-                            x.df$V4[irow+1]:x.df$V5[irow+1]))
-    # Remember the cut
-    x.df$rm.len[icut] = ncut * tail.icut
+
+  if(length(idx.overlap) > 0){
+    # Plain vectors + arithmetic overlap length (was length(intersect(V4:V5, ...)),
+    # which allocated two integer ranges per overlapping pair). Same result.
+    V4 = x.df$V4; V5 = x.df$V5; V7 = x.df$V7; pb = x.df$p.beg; pe = x.df$p.end
+    b = pmin(V4, V5); e = pmax(V4, V5)
+    rm.len = x.df$rm.len
+    for(irow in idx.overlap){
+      j = irow + 1L
+      if(V7[irow] > V7[j]){ icut = j; ibig = irow } else { icut = irow; ibig = j }
+      tail.icut = if((V4[icut] >= pb[ibig]) && (V4[icut] <= pe[ibig])) 1 else -1
+      ncut = max(0L, min(e[irow], e[j]) - max(b[irow], b[j]) + 1L)
+      rm.len[icut] = ncut * tail.icut
+    }
+    x.df$rm.len = rm.len
   }
   
   # if(!sort.flaf){

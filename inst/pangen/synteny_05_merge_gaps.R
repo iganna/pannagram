@@ -243,8 +243,8 @@ loop.function <- function(f.maj,
   if(!is.null(x.gap)){
     pokaz('Number of gaps', nrow(x.gap), file=file.log.loop, echo=echo.loop)
     
-    x.gap$pref1 = sapply(x.gap$V1, function(s) strsplit(s, '_query')[[1]][1])
-    x.gap$pref2 = sapply(x.gap$V10, function(s) strsplit(s, '_base')[[1]][1])
+    x.gap$pref1 = sub('_query.*', '', x.gap$V1)   # vectorised (was sapply+strsplit per row)
+    x.gap$pref2 = sub('_base.*', '', x.gap$V10)
     x.gap = x.gap[x.gap$pref1 == x.gap$pref2,]
     x.gap = unique(x.gap)  # UNIQUE
     pokaz('nrow', nrow(x.gap), file=file.log.loop, echo=echo.loop)
@@ -253,8 +253,8 @@ loop.function <- function(f.maj,
   
   if(!is.null(x.gap)){  # KOSTYL
     
-    x.gap$q.beg = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
-    x.gap$b.beg = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    x.gap$q.beg = as.numeric(data.table::tstrsplit(x.gap$V1, '|', fixed = TRUE)[[pos.beg.info]]) - 1   # vectorised split
+    x.gap$b.beg = as.numeric(data.table::tstrsplit(x.gap$V10, '|', fixed = TRUE)[[pos.beg.info]]) - 1
     
     # x.gap$q.end = as.numeric(sapply(x.gap$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
     # x.gap$b.end = as.numeric(sapply(x.gap$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
@@ -291,15 +291,16 @@ loop.function <- function(f.maj,
       pokaz('after11')
     }
     
-    cnt = table(x.gap$pref1)
-    
+    # Split gaps by their connecting-block id ONCE (was x.gap[x.gap$pref1 == s,] per
+    # group -> O(n_groups * n_hits)). split() groups by sorted factor levels == names(table),
+    # preserving within-group row order, so the result is identical.
+    gap.groups = split(x.gap, x.gap$pref1)
+
     idx.good = c()
-    for(i in 1:length(cnt)){
+    for(i in seq_along(gap.groups)){
       if(i %% 100 == 0) pokaz('Pgress: Number of analysed gaps', i, file=file.log.loop, echo=echo.loop)
-      
-      # name of the node
-      s = names(cnt)[i]
-      x.tmp = x.gap[x.gap$pref1 == s,]
+
+      x.tmp = gap.groups[[i]]
       
       # If only one BLAST-hit - get it as it is.
       if(nrow(x.tmp) == 1){
@@ -400,13 +401,11 @@ loop.function <- function(f.maj,
     # plotSynDot(x.tmp)
     
     # ---- Remain only those, that have the intersection in numbers ----
-    getConnectingBlocks <- function(s){
-      s = strsplit(s, '_connect_')[[1]][2] 
-      s = strsplit(s, '_')[[1]][1:2]
-      return(s)
-    }
-    num.q = sapply(x.tmp$V1, getConnectingBlocks)
-    num.r = sapply(x.tmp$V10, getConnectingBlocks)
+    # Vectorised extraction of the two connecting-block numbers from '..._connect_<a>_<b>_...'
+    # (was sapply + two strsplit per row). Rows: [1,]=<a>, [2,]=<b> (character, as before).
+    cre = '.*_connect_([0-9]+)_([0-9]+)_.*'
+    num.q = rbind(sub(cre, '\\1', x.tmp$V1),  sub(cre, '\\2', x.tmp$V1))
+    num.r = rbind(sub(cre, '\\1', x.tmp$V10), sub(cre, '\\2', x.tmp$V10))
     
     idx.remain = ((num.q[1,] == num.r[1,]) | 
               (num.q[1,] == num.r[2,]) | 
@@ -427,20 +426,26 @@ loop.function <- function(f.maj,
     
     x.tmp = cleanOverlaps(x.tmp)
    
-    id.corresp = c()
-    for(irow in 1:nrow(x.tmp)){
-      if(x.tmp$dir[irow] == 0){
-        tmp = which((x.tmp$V2[irow] <= x.gap$V3) & (x.gap$V2 <= x.tmp$V3[irow]) & 
-                      (x.tmp$V4[irow] <= x.gap$V5) & (x.gap$V4 <= x.tmp$V5[irow]) & (x.gap$dir == 0))  
-      } else {
-        tmp = which((x.tmp$V2[irow] <= x.gap$V3) & (x.gap$V2 <= x.tmp$V3[irow]) & 
-                      (x.tmp$V5[irow] <= x.gap$V4) & (x.gap$V5 <= x.tmp$V4[irow]) & (x.gap$dir != 0))  
-      }
-      if(length(tmp) == 0) stop('Wrong, no correspondence')
-      id.corresp = rbind(id.corresp, cbind(tmp, irow))
-    }
-    id.corresp <- as.data.frame(id.corresp)
-    colnames(id.corresp) <- c("init", "new")
+    # Vectorised interval-containment join (replaces an O(n^2) per-block `which` loop):
+    # a gap corresponds to a block when QUERY ranges overlap AND BASE ranges overlap AND
+    # direction matches. Base ranges use min/max so the overlap test is direction-agnostic.
+    dt.b = data.table::data.table(new = seq_len(nrow(x.tmp)),
+                                  q1 = x.tmp$V2, q2 = x.tmp$V3,
+                                  b1 = pmin(x.tmp$V4, x.tmp$V5), b2 = pmax(x.tmp$V4, x.tmp$V5),
+                                  bd = x.tmp$dir)
+    dt.g = data.table::data.table(init = seq_len(nrow(x.gap)),
+                                  q1 = x.gap$V2, q2 = x.gap$V3,
+                                  b1 = pmin(x.gap$V4, x.gap$V5), b2 = pmax(x.gap$V4, x.gap$V5),
+                                  bd = x.gap$dir)
+    data.table::setkey(dt.b, q1, q2)
+    ov = data.table::foverlaps(dt.g, dt.b, by.x = c('q1','q2'), by.y = c('q1','q2'),
+                               type = 'any', nomatch = NULL)
+    keep = (ov$b1 <= ov$i.b2) & (ov$i.b1 <= ov$b2) & (ov$bd == ov$i.bd)  # base overlap + same dir
+    id.corresp = data.frame(init = ov$init[keep], new = ov$new[keep])
+    # Restore the original loop's ordering (by block, then by gap index) so downstream
+    # order-sensitive overlap trimming is bit-identical to the pre-optimisation code.
+    id.corresp = id.corresp[order(id.corresp$new, id.corresp$init), ]
+    if(length(unique(id.corresp$new)) != nrow(x.tmp)) stop('Wrong, no correspondence')
     
     # IDX
     if(nrow(x.tmp) == 1){
@@ -470,8 +475,8 @@ loop.function <- function(f.maj,
     x.bw[,4:5] = x.bw[,4:5] - pos.shift$r[x.bw$V10,]$shift
     
     # Shift positions to the initial
-    x.bw$q.beg = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
-    x.bw$b.beg = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info])) - 1
+    x.bw$q.beg = as.numeric(data.table::tstrsplit(x.bw$V1, '|', fixed = TRUE)[[pos.beg.info]]) - 1   # vectorised split
+    x.bw$b.beg = as.numeric(data.table::tstrsplit(x.bw$V10, '|', fixed = TRUE)[[pos.beg.info]]) - 1
     
     # x.bw$q.end = as.numeric(sapply(x.bw$V1, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
     # x.bw$b.end = as.numeric(sapply(x.bw$V10, function(s) strsplit(s, '\\|')[[1]][pos.beg.info+1]))
@@ -565,7 +570,7 @@ loop.function <- function(f.maj,
                          base.fas.bw = base.fas.bw)
   }
   
-  saveRDS(object = x.comb, file = file.aln.full)
+  saveRDS(object = x.comb, file = file.aln.full, compress = FALSE)  # gzip default dominated I/O; readRDS reads either
   
 
   # ---- Checkpoint marker: item fully processed ----

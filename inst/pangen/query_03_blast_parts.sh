@@ -23,6 +23,7 @@ print_usage() {
   echo "-gapopen"
   echo "-gapextend"
   echo "-max_hsps"
+  echo "-word_size"
   echo "-log_path"
 }
 
@@ -48,6 +49,7 @@ do
     -xdrop_gap) xdrop_gap=$2; shift 2;;
     -xdrop_gap_final) xdrop_gap_final=$2; shift 2;;
     -max_hsps) max_hsps=$2; shift 2;;
+    -word_size) w_size=$2; shift 2;;
     -path_log) path_log=$2; shift 2;;
     -combinations) file_combinations=$2; shift 2;;
     -accessions) file_accessions=$2; shift 2;;
@@ -68,6 +70,7 @@ xdrop_gap_final="${xdrop_gap_final:-30}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"
+w_size="${w_size:-11}"  # blastn word_size (default 11, as in classic blastn)
 
 mkdir -p $path_blast
 
@@ -83,6 +86,7 @@ export xdrop_gap_final
 export max_hsps
 export cores
 export p_ident
+export w_size
 export blastres
 export all_vs_all
 export log_path
@@ -127,7 +131,7 @@ run_blast() {
            -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
            -perc_identity "${p_ident}" -penalty "$penalty" -gapopen "$gapopen" -gapextend "$gapextend" \
            -xdrop_gap "$xdrop_gap" -xdrop_gap_final "$xdrop_gap_final" \
-           -max_hsps "$max_hsps" \
+           -max_hsps "$max_hsps" -word_size "$w_size" \
            >> "$file_log" 2>&1 # classic blastn + tuned gap penalties + low X-dropoff (15/30): clean alignments (no ragged gap staircases) and faster via early termination at divergent patches. Pair with -part_len 1000 for coverage. -word_size 50
 
     echo "Done." >> "$file_log"
