@@ -86,7 +86,7 @@ The results are shown below:
 
 ## Alignment Used in Examples
 
-**[View](examples/seqs_te_aln.txt)** · **[Download](examples/seqs_te_aln.fasta)**  
+**[View](../examples/seqs_te_aln.txt)** · **[Download](../examples/seqs_te_aln.fasta)**  
 This example contains an alignment of *Arabidopsis thaliana* transposable elements from the *DNA/HAT* superfamily, *ATHATN2* family.
 To load these sequences in R, run:
 ```r

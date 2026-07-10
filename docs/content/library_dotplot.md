@@ -126,7 +126,7 @@ The output:
 ## Examples used above
 
 ### Nucleotide sequences
-**[View](examples/seqs_dotplot.txt)** · **[Download](examples/seqs_dotplot.fasta)**  
+**[View](../examples/seqs_dotplot.txt)** · **[Download](../examples/seqs_dotplot.fasta)**  
 This example contains a *Arabidopsis thaliana* transposable element and a sequence with artificial modifications.  
 To load these sequences in R, run:
 
@@ -139,7 +139,7 @@ seq2 <- seqs[2]
 ```
 
 ### Protein sequences
-**[View](examples/seqs_dotprot.txt)** · **[Download](examples/seqs_dotprot.fasta)**  
+**[View](../examples/seqs_dotprot.txt)** · **[Download](../examples/seqs_dotprot.fasta)**  
 This example compares a coding region from an *Arabidopsis thaliana* transposable element and a hypothetical protein from *Cucumis melo*.  
 To load these sequences in R, run:
 
