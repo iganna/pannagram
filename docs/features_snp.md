@@ -30,7 +30,7 @@ features -path_project '${PATH_PROJECT}' -snp_pi
 
 Files in `${PATH_PROJECT}/features/snp/`:  
 `snps_*_pangen_output.sites.pi` – Per-site π-diversity calculated using [VCFtools](https://vcftools.sourceforge.net).   
-`snps_*_pangen_dist.txt` – Pairwise π-diversity between accessions calculated using [Plink](https://www.cog-genomics.org/plink/).
+`snps_*_pangen_dist.txt` – Pairwise π-diversity between genomes calculated using [Plink](https://www.cog-genomics.org/plink/).
 
 #### Visual Output
 Files in `${PATH_PROJECT}/plots/snp/`:  

@@ -5,7 +5,7 @@ The Pannagram R library provides two functions for visualising Multiple Sequence
 1. `msaplot` – the alignment, colored by nucleotides or amino acids.
 2. `msadiff` – the alignment, highlighting differences between sequence.
 
-### Input anignment
+### Input alignment
 Both functions expect as input either an array with aligned sequences or a matrix of aligned sequences.  
 Examples:
 ```
@@ -86,13 +86,13 @@ The results are shown below:
 
 ## Alignment Used in Examples
 
-**[View](../examples/seqs_msaplot.txt)** · **[Download](../examples/seqs_msaplot.fasta)**  
+**[View](examples/seqs_te_aln.txt)** · **[Download](examples/seqs_te_aln.fasta)**  
 This example contains an alignment of *Arabidopsis thaliana* transposable elements from the *DNA/HAT* superfamily, *ATHATN2* family.
 To load these sequences in R, run:
 ```r
 library(pannagram)
 
-aln <- readFasta("seqs_msaplot.fasta")
+aln <- readFasta("seqs_te_aln.fasta")
 ```
 
 ### Bonus Analysis for Inspiration

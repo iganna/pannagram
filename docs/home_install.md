@@ -17,7 +17,7 @@ R && library(pannagram)  # Start R and load the library
 Follow these steps to quickly set up the Pannagram working environment using Conda.
 
 ```bash
-git clone https://github.com/<user>/pannagram.git
+git clone https://github.com/iganna/pannagram.git
 cd pannagram
 conda env create -f pannagram.yml
 conda activate pannagram
@@ -33,7 +33,7 @@ This guide explains how to set up the **Pannagram** working environment on diffe
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<user>/pannagram.git
+git clone https://github.com/iganna/pannagram.git
 cd pannagram
 ```
 

@@ -3,7 +3,7 @@
 To generate SV-related features, run the following command:
 
 ```bash
-features -path_project '${PATH_PROJECT}' -sv -sv_family -sv_orf
+features -path_project '${PATH_PROJECT}' -sv -sv_graph -sv_orf
 ```
 
 Below is a detailed description of flags.
@@ -96,27 +96,32 @@ These figures are shown together below:
 </p>
 </div>
 
-## Families of Mobile Elements in SVs
+## Mobile Element Families (MEF) in SVs
 
-After extracting SVs, Families of Mobile Elements can be identified by running:
+After extracting SVs, MEF can be identified by running:
 ```bash
-features -path_project '${PATH_PROJECT}' -sv_family
+features -path_project '${PATH_PROJECT}' -sv_graph
 ```
 
 ### Families
 are located at `${PATH_PROJECT}/features/sv/`.
 
-- `edges_families.txt`: adjacency (edge) matrix describing the Graph of SV Families.  
+- `edges_families_*.txt`: adjacency (edge) matrix describing the Graph of MEF.  
 Each connected component in the graph represents a family.  
 Each edge indicates that the SV in the first column has a nested similarity to the SV in the second column.
-- `sv_families.txt`: table assigning SVs to their corresponding families.
+- `sv_families_*.txt`: table assigning SVs to their corresponding families.
 
 
 ### Graphs of Families
-are located at `${PATH_PROJECT}/plots/sv/`
+are located at `${PATH_PROJECT}/plots/sv/`.  
+The graph images are produced only when the `-plot_families` flag is added:
+```bash
+features -path_project '${PATH_PROJECT}' -sv_graph -plot_families
+```
+Besides the final `graph_*_families_colored.png` and `graph_*_labeled.png`, the intermediate graph-cleaning steps (`graph_01_init.png` … `graph_08_families.png`) are also saved.
 
-**a-b.** `graph_*_families_colored.png`:  Graph of SV Families colored by length of SVs. Every node is an SV sequence - one place in the Pangenome.  
-**c-d.** `graph_*_labeled.png`: Graph of SV Families showing the labels of Families. Labeled families make it easier to identify and locate families with interesting graph structures.
+**a-b.** `graph_*_families_colored.png`:  Graph of MEF colored by length of SVs. Every node is an SV sequence - one place in the Pangenome.  
+**c-d.** `graph_*_labeled.png`: Graph of MEF showing the labels of Families. Labeled families make it easier to identify and locate families with interesting graph structures.
 
 In the figure below, **a** and **c** correspond to *E. coli*, while **b** and **d** correspond to a butterfly.
 <div style="width: 70%;">
@@ -129,12 +134,12 @@ In the figure below, **a** and **c** correspond to *E. coli*, while **b** and **
 
 ## ORFs in SVs
 
-After extracting SVs, one can gen ORFs in long SVs with the following:
+After extracting SVs, one can generate ORFs in long SVs with the following:
 ```bash
 features -path_project '${PATH_PROJECT}' -sv_orf
 ```
 
-The ourput file `seq_sv_large_orfs.fasta` is located at `${PATH_PROJECT}/features/sv/`.
+The output file `sv_large_orfs.fasta` is located at `${PATH_PROJECT}/features/sv/`.
 
 ### ORF name format
 

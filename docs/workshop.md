@@ -23,7 +23,7 @@ cd pannagram
 ## 1. Download genomes 
 ### Setup paths
 
-Specity the absolute path to working directory:
+Specify the absolute path to working directory:
 ```shell
 PATH_BASE="<enter absolute path>/"
 ```
@@ -67,7 +67,7 @@ REF_NAME=""
 
 Run the Pannagram:
 ```shell
-pannagram -path_genomes ${PATH_GENOMES} -path_project ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
+pannagram -path_in ${PATH_GENOMES} -path_out ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
 ```
 
 Check the visualisation:
@@ -87,7 +87,7 @@ mv ${PATH_PROJECT} $(basename "$PATH_PROJECT")_pre
 
 Run the Pannagram:
 ```
-pannagram -path_genomes ${PATH_GENOMES} -path_project ${PATH_PROJECT} -cores 8 -nchr 1
+pannagram -path_in ${PATH_GENOMES} -path_out ${PATH_PROJECT} -cores 8 -nchr 1
 ```
 
 Check the visualisation:
@@ -99,7 +99,7 @@ cd ${PATH_PROJECT}plots/synteny_pairwise/${REF_NAME}
 
 Run the features script:
 ```
-features -path_genomes ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
+features -path_project ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
 ```
 
 Locations of some important result files:
@@ -126,8 +126,8 @@ workshop/alignment
 │       └── sv_families.txt
 └── plots/
     ├── sv/
-    │   ├── graph_06_colored.png
-    │   ├── graph_07_label.png
+    │   ├── graph_09_families_colored.png
+    │   ├── graph_10_families_labeled.png
     │   ├── sv_chr_minlen15_pangen.pdf
     │   ├── sv_freq_hist_length_minlen15_abs.pdf
     │   ├── sv_freq_hist_length_minlen15_norm.pdf
@@ -157,8 +157,8 @@ echo $PATH_PROJECT
 library(pannagram)
 
 path.project <- "<paste the path here>"
-path.analisys <- file.path(path.project, 'analisys/')
-if (!file.exists(path.analisys)) dir.create(path.analisys)
+path.analysis <- file.path(path.project, 'analysis/')
+if (!file.exists(path.analysis)) dir.create(path.analysis)
 ```
 
 ### Cut out a part of the alignment
@@ -187,12 +187,12 @@ p.nucl <- msaplot(aln.seq)
 p.diff <- msadiff(aln.seq)
 
 savePDF(p.nucl,
-        path=path.analisys,
+        path=path.analysis,
         name="msa_nucl",
         width=7,
         height=5)
 savePDF(p.diff,
-        path=path.analisys,
+        path=path.analysis,
         name="msa_diff",
         width=7,
         height=5)
@@ -201,7 +201,7 @@ savePDF(p.diff,
 Save your window into FASTA format:
 ```R
 sequences <- mx2aln(aln.seq)
-writeFasta(sequences, file.path(path.analisys, "msa_window.fasta"))
+writeFasta(sequences, file.path(path.analysis, "msa_window.fasta"))
 ```
 
 ### gff2gff
@@ -229,7 +229,7 @@ gff2 <- gff2gff(path.project,
                 exact.match = F,
                 s.chr = 'Chr')
 
-writeGFF(gff2, file.path(path.analisys, "gff2.gff"))
+writeGFF(gff2, file.path(path.analysis, "gff2.gff"))
 ```
 
 ## 5. Simsearch
@@ -238,8 +238,8 @@ writeGFF(gff2, file.path(path.analisys, "gff2.gff"))
 
 ```shell
 simsearch \
-    -query_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
-    -target_path ${PATH_GENOMES} \
+    -in_seq "${PATH_PROJECT}/features/sv/seq_sv_large.fasta" \
+    -on_path ${PATH_GENOMES} \
     -out "${PATH_BASE}/simsearch"
 cd "${PATH_BASE}/simsearch"
 ls -lrt
@@ -250,8 +250,8 @@ less -S simsearch.total_cnt_85_0.85.txt
 
 ```shell
 simsearch \
-    -query_seq "${PATH_PROJECT}/features/sv/seq_sv_big.fasta" \
-    -target_seq '<file_with_sequences>' \
+    -in_seq "${PATH_PROJECT}/features/sv/seq_sv_large.fasta" \
+    -on_seq '<file_with_sequences>' \
     -out "${PATH_BASE}/simsearch"
 ```
 

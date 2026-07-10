@@ -11,8 +11,8 @@ Before running the example, specify the key working directories (preferably usin
 Run the following command to perform a reference-free pangenome alignment:
 
 ```bash
-pannagram  -path_genomes ${PATH_GENOMES} \
-           -path_project ${PATH_PROJECT} \
+pannagram  -path_in ${PATH_GENOMES} \
+           -path_out ${PATH_PROJECT} \
            -cores 8
 ```
 
@@ -22,12 +22,12 @@ After the alignment step is complete, run the feature-calling module to identify
 
 ```bash
 features  -path_project ${PATH_PROJECT} \
-          -synteny \
-          -consensus \
+          -blocks \
+          -seq \
           -snp \
           -snp_pi \
           -sv \
-          -sv_families \
+          -sv_graph \
           -cores 8
 ```
 

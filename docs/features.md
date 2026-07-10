@@ -16,13 +16,13 @@ Extractable features are organized into four main groups, each depending on the 
 
 **`II`. SNPs and Diversity.** Focus on single-nucleotide polymorphisms (SNPs) and related metrics such as nucleotide diversity (π).
 
-**`III`. SVs and Mobilome Families.** Focus on structural variants, their properties, and mobile element families.  
+**`III`. SVs and Mobile Element Families (MEF).** Focus on structural variants, their properties, and MEF.  
 This step also enables comparison of SVs with other sequence features (e.g., transposon annotations).
 
-**`IV`. Gene annotation.** Use gene annotations from different accessions and arrange them into common annotation groups through the pangenome coordinate system.
+**`IV`. Gene annotation.** Use gene annotations from different genomes and arrange them into common annotation groups through the pangenome coordinate system.
 
 ### Run All Steps in One Command
 to execute the complete feature extraction workflow:
 ```
-features -path_project ${PATH_PROJECT} -synteny -consensus -snp -snp_pi -sv -sv_family -sv_orf
+features -path_project ${PATH_PROJECT} -blocks -seq -snp -snp_pi -sv -sv_graph -sv_orf
 ```

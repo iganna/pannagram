@@ -46,7 +46,7 @@ Meaning: `SV group` • `chromosome 1` • `ID 0022` | `length = 18 bp`
 Standard 9-column **GFF3** format.  
 The **3rd column** (`type`) uses one of:
 
-- `multi` — complex structural variant (SV)  
+- `complex` — complex structural variant (SV)  
 - `deletion` — simple SV, likely a deletion (absent in ≤10% of accessions)  
 - `insertion` — simple SV, likely an insertion (present in ≤10% of accessions)  
 - `indel` — simple SV with intermediate presence frequency among accessions

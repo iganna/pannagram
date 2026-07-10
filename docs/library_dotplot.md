@@ -1,6 +1,6 @@
 # Dotplot functions
 
-The Panngram R library includes a set of [dot-plot](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)) functions.  
+The Pannagram R library includes a set of [dot-plot](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)) functions.  
 Dot-plots help identify similarity, repeats, inversions, and other structural patterns between two sequences.  
 All dot-plot functions use two core parameters:
 
@@ -13,7 +13,7 @@ Both sequences start in the bottom-left of the plot:
 (**↑**) moves along sequence 2.
 
 
-The Panngram R library provides 4 handy functions to visualise dotplots:
+The Pannagram R library provides 4 handy functions to visualise dotplots:
 1. **`dotplot`** – pairwise dot-plot of two nucleotide sequences.
 2. **`dotself`** – self-comparison of a nucleotide sequence.
 3. **`dotprot`** – pairwise dot-plot for two protein sequences.
@@ -126,7 +126,7 @@ The output:
 ## Examples used above
 
 ### Nucleotide sequences
-**[View](../examples/seqs_dotplot.txt)** · **[Download](../examples/seqs_dotplot.fasta)**  
+**[View](examples/seqs_dotplot.txt)** · **[Download](examples/seqs_dotplot.fasta)**  
 This example contains a *Arabidopsis thaliana* transposable element and a sequence with artificial modifications.  
 To load these sequences in R, run:
 
@@ -139,7 +139,7 @@ seq2 <- seqs[2]
 ```
 
 ### Protein sequences
-**[View](../examples/seqs_dotprot.txt)** · **[Download](../examples/seqs_dotprot.fasta)**  
+**[View](examples/seqs_dotprot.txt)** · **[Download](examples/seqs_dotprot.fasta)**  
 This example compares a coding region from an *Arabidopsis thaliana* transposable element and a hypothetical protein from *Cucumis melo*.  
 To load these sequences in R, run:
 

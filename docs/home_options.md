@@ -29,4 +29,4 @@ There are four levels of logging for the command line output:
 - `-log 1`: only step progress is logged (default).
 - `-log 2`: detailed information about all steps is logged.
 
-If Pannagram encounters any issues, to help us understand the problem, please provide the `${PATH_OUT}logs/` folder.
+If Pannagram encounters any issues, to help us understand the problem, please provide the `${PATH_PROJECT}.logs/` folder.

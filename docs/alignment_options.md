@@ -2,7 +2,7 @@
 
 ### Number of chromosomes
 
-If the maximum number of chromosomes is not specified, the program scans genomes in `PATH_DATA` to determine it automatically.  
+If the maximum number of chromosomes is not specified, the program scans genomes in `PATH_GENOMES` to determine it automatically.  
 If all query genomes have the same number of chromosomes, this value is used as `N`.  
 Otherwise, an error will be raised.
 If genomes contain different numbers of chromosomes, specify it manually using `-nchr N`.
@@ -13,7 +13,7 @@ All reference genomes must have the same number of chromosomes (`M`), and all qu
 
 ## Reference Genome Location
 
-All query accessions to be aligned must be located in the `PATH_GENOMES` folder.  
+All query genomes to be aligned must be located in the `PATH_GENOMES` folder.  
 However, reference genomes might be stored in a different folder, `PATH_REF`.  
 In that case, the argument `-path_ref ${PATH_REF}` should be provided.
 
@@ -43,7 +43,7 @@ If you want to consider only specific combinations of chromosomes, you can provi
 
 The file should contain **two columns**:
 
-- First column: Chromosome number of the query accession  
+- First column: Chromosome number of the query genome  
 - Second column: Chromosome number of the reference genome
 
 

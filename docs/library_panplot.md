@@ -51,7 +51,7 @@ pangrowth(path.project, acc='6909', i.chr=1)
 
 Parameters:
 - `path.project` — path to the Pannagram project directory.
-- `acc` — the accessions to compate with the Pangenome.
+- `acc` — the accessions to compare with the Pangenome.
 - `i.chr` — chromosome/contig index to plot.
 
 Example output:
@@ -74,7 +74,7 @@ syntenyplot(path.project = path.project, acc = 'GCA_000008865.2', ref='GCA_00000
 
 Parameters:
 - `path.project` — path to the Pannagram project directory.
-- `acc` — the accessions to compate with the Pangenome.
+- `acc` — the accessions to compare with the Pangenome.
 - `ref` — The name of the reference genome.
 
 Example output:

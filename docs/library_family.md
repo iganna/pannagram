@@ -1,9 +1,9 @@
-# Work with Mobile Element Families (Mobilome Families)
+# Work with Mobile Element Families (MEF)
 
-This section describes how to extract families of Mobile Elements from the graph of nestednedd built on Structural Variants (SVs).
+This section describes how to extract MEF from the graph of nestedness built on Structural Variants (SVs).
 
 ## 0. Initial data
-To start extracting Mobile Element Families, you need either:
+To start extracting MEF, you need either:
 – a FASTA file containing the sequences of structural variants, or
 – a file with nested similarity information produced by comparing SVs to each other (for example, 85% similarity and coverage).
 
@@ -16,7 +16,7 @@ Both files are expected to be located in:
         └── nestedness_sv_large_85_85.txt
 ```
 
-If the file `nestedness_sv_large_85_85.txt` does not exist—because you haven’t run `features -sv_families`,  
+If the file `nestedness_sv_large_85_85.txt` does not exist—because you haven’t run `features -sv_graph`,  
 or if you want finer control over similarity and coverage thresholds —  
 you can generate a the similar file using the `simsearch` module from the Pannagram package.
 
@@ -25,7 +25,7 @@ Run the following commands:
 ```bash
 cd ${PATH_PROJECT}/features/sv
 PATH_SIMSEARCH="simsearch_sv_80_80"
-simsearch -query_seqs seq_sv_large.fasta -target_seqs seq_sv_large.fasta -sim 80 -cov 80 -out ${PATH_SIMSEARCH}
+simsearch -in_seq seq_sv_large.fasta -on_seq seq_sv_large.fasta -sim 80 -cov 80 -out ${PATH_SIMSEARCH}
 ```
 
 After completion, the file you will use for downstream processing will be located at:
@@ -41,7 +41,7 @@ After completion, the file you will use for downstream processing will be locate
 > **Notes**  
 > You do **not** need to use all large SVs to build families.  
 > You can instead use a subset of SVs or any other sequences of interest.  
-> If so, we sould:  
+> If so, we should:  
 > 1. Preparing a FASTA file containing the sequences you want to cluster.  
 > 2. Running `simsearch` with your chosen similarity and coverage thresholds.  
 > 3. Using the resulting similarity file as the starting point for the downstream pipeline.
@@ -69,7 +69,7 @@ The table has the following columns:
 
 ```
 
-It guranteed that for the coverage in the table the similarity is not lower than was set up.
+It guaranteed that for the coverage in the table the similarity is not lower than was set up.
 coverage.query  means which fraction name.query is covered by name.target 
 coverage.target  means which fraction name.target is covered by name.query
 
@@ -101,7 +101,7 @@ p
 
 ## 3. Clean up the graph to extract the Families
 
-The resultant graph may not have separate Families of Mobile Elements. Therefore, some edges or nodes should be removed.
+The resultant graph may not have separate MEF. Therefore, some edges or nodes should be removed.
 
 
 

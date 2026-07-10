@@ -4,8 +4,10 @@ After running the pangenome alignment and feature calling steps, all results are
 
 ```
 ./  
-├── features/     ← main output data
-└── plots/        ← visualizations and figures  
+├── features/       ← main output data
+├── plots/          ← visualizations and figures
+├── .intermediate/  ← internal working files (hidden)
+└── .logs/          ← per-step logs (hidden)
 ```
 
 > 💡 **Note:**  
@@ -20,7 +22,7 @@ This directory contains all processed data generated during the analysis.
 
 ```
 features/
-├── alignments/    ← Pangenome alignmetns
+├── alignments/    ← Pangenome alignments
 ├── consensus/     ← Consensus pangenome sequences                        
 ├── snp/           ← SNP-calls
 └── sv/            ← Structural Variants (SVs) and Families of Mobile Elements
@@ -28,7 +30,7 @@ features/
 ```
 
 #### 1. Alignments — `alignments/`
-  `ref_*.h5`: Reerence-based alignments per chromosomes.
+  `ref_*.h5`: Reference-based alignments per chromosomes.
   `pan_*.h5`: Pangenome alignments per chromosomes.
 
 #### 2. Consensus Sequences — `consensus/`
@@ -37,7 +39,7 @@ features/
 #### 3. SNPs — `snp/`
   `snps_*_pangen.vcf`: SNP variant calls per chromosome.  
   `snps_*_pangen_output.sites.pi`: Per-site nucleotide diversity (π) calculated using [VCFtools](https://vcftools.sourceforge.net).  
-  `snps_*_pangen_dist.txt`: π-diversity between accessions calculated using [Plink](https://www.cog-genomics.org/plink/).
+  `snps_*_pangen_dist.txt`: π-diversity between genomes calculated using [Plink](https://www.cog-genomics.org/plink/).
 
 #### 4. Structural Variants — `sv/`
 Contains detected Structural Variants, their sequences, and Families of Mobile Elements.
@@ -49,11 +51,11 @@ Contains detected Structural Variants, their sequences, and Families of Mobile E
 - **Sequences:**  
   `seq_sv_large.fasta`: Large SVs (≥50 bp)  
   `seq_sv_short.fasta`: Short SVs (15–50 bp)
-  `seq_sv_large_orfs.fasta`: ORFs (≥100 aa) found in Large SVs
+  `sv_large_orfs.fasta`: ORFs (≥100 aa) found in Large SVs
 
 - **Families:**  
-  `edges_families.txt`: adjacency (edge) matrix describing the Graph of SV Families. Each connected component in the graph represents a family.  
-  `sv_families.txt`: table assigning SVs to their corresponding families.
+  `edges_families_*.txt`: adjacency (edge) matrix describing the Graph of Mobile Element Families (MEF). Each connected component in the graph represents a family.  
+  `sv_families_*.txt`: table assigning SVs to their corresponding families.
 
 - **Annotations:**  
   `gff/`: path with GFF files annotating SVs in individual genomes and in the pangenome coordinates.
@@ -67,9 +69,9 @@ This directory contains all plots data generated during the analysis.
 plots/
 ├── snp/                   ← SNP-based π-diversity plots per chromosome
 ├── sv/                    ← Visualizations of SV-related statistics
-├── synteny_ref/           ← Dot-plots of pairwise synteny between reference accessions and the rest
+├── synteny_ref/           ← Dot-plots of pairwise synteny between reference genomes and the rest
 │                            (generated after reference-based alignment steps)
-└── synteny_pan/           ← Pangenome synteny plots between accessions per chromosome
+└── synteny_pan/           ← Pangenome synteny plots between genomes per chromosome
 ```
 
 #### 1. SNP-based π-diversity — `snp/`
@@ -91,8 +93,8 @@ plots/
 
 #### 3. Reference-based synteny — `synteny_ref/`
 
-  `NameRef-NameQuery.png`: Dot plots showing the synteny between the reference genomes (Y-axis) and the query genome (X-axis).
+  `<NameRef>/<NameRef>-<NameQuery>.png`: Dot plots (one subfolder per reference genome) showing the synteny between the reference genome (Y-axis) and the query genome (X-axis).
 
 #### 4. Pangenome representation — `synteny_pan/`
-  `pan_synteny_*.pdf`: Referene-free Pangenome Synteny between all genomes per chromosome.
+  `synteny_pan_*.pdf`: Reference-free Pangenome Synteny between all genomes per chromosome.
 

@@ -20,4 +20,4 @@ chromotools \
   -rearrange
 ```
 
-With the use of Chromotools the *Arabidopsis lyrata* chromosomal organization were converted to the *Arabidopsis thaliana* organization as demonstrated below:
+For example, Chromotools was used to convert the *Arabidopsis lyrata* chromosomal organization to match that of *Arabidopsis thaliana*.
