@@ -19,7 +19,7 @@ Before running the alignment, define the key working paths in the command line:
 ## **`I`** Preliminary Mode
 
 The **preliminary mode does not** perform a full pangenome reconstruction.  
-It creates reference-based skeletion alignments for a quick visual check of your input data.  
+It creates reference-based skeleton alignments for a quick visual check of your input data.  
 This helps you verify chromosome correspondence before running a full analysis.
 
 This mode **requires** the name of the genome that will be used as the **reference**.
@@ -31,7 +31,7 @@ REF_NAME="RefGenomeName"
 
 # Run Pannagram in preliminary mode
 pannagram -pre \
-          -path_in ${PATH_DATA} \
+          -path_in ${PATH_GENOMES} \
           -path_out ${PATH_PROJECT} \
           -ref ${REF_NAME} \
           -cores 8
@@ -49,7 +49,7 @@ ${PATH_PROJECT}/
         └── ${REF_NAME}/   ← The resulting dot plots are here.
 ```
 
-On the resulting plots, the chromosomes of the reference genome are shown on the Vertical axis, while those of the aligned accession are shown on the Horizontal axis.  
+On the resulting plots, the chromosomes of the reference genome are shown on the Vertical axis, while those of the aligned genome are shown on the Horizontal axis.  
 Chromosomes are separated by vertical and horizontal lines.  
 Below are examples of such dot plots: one for the *Arabidopsis lyrata* genome aligned to *Arabidopsis thaliana*, and another showing a comparison of two *Euwallacea fornicatus* genomes.
 
@@ -80,10 +80,10 @@ If they differ — for instance, if the genome files contain not only chromosome
 
 ## **`II`** Reference-Based mode
 
-This mode produces the alignmnet of all genomes to the reference genome:
+This mode produces the alignment of all genomes to the reference genome:
 ```shell
 pannagram \
-    -path_in '${PATH_DATA}' \
+    -path_in '${PATH_GENOMES}' \
     -path_out '${PATH_PROJECT}' \
     -ref '<reference genome filename with no FASTA suffix>' \
     -cores 8
@@ -108,7 +108,7 @@ This mode does **not require a reference genome**, you can simply run it as foll
 
 ```shell
 pannagram \
-    -path_in ${PATH_DATA}\
+    -path_in ${PATH_GENOMES}\
     -path_out ${PATH_PROJECT} \
     -cores 8
 ```

@@ -14,7 +14,7 @@ The Pangenome R library provides three functions for performing coordinate conve
 
 The pangenome alignment does not contain all genomic positions from every accession:
 
-1. Homology in centromeric regions (and other highly repetative regions) is often impossible to find,   
+1. Homology in centromeric regions (and other highly repetitive regions) is often impossible to find,   
 and as a result, these regions are missing from the alignment.
 2. Another type of missing region occurs near the flanking boundaries of inversions  
 the so-called scars.

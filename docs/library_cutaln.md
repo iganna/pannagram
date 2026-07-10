@@ -54,7 +54,7 @@ writeFasta(region.seq, 'region_alignment.fasta')
 ```
 
 ## Get positions of all accessions in the region 
-If instead of sequences you need a matrix of corresponsing genomic positions, use `pos` mode:
+If instead of sequences you need a matrix of corresponding genomic positions, use `pos` mode:
 ```
 region.pos <- getRegion(
   i.chr     = i.chr,

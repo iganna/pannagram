@@ -101,7 +101,7 @@ For example, when the goal is to work with Structural Variants (SVs) to analyse 
 ### How to Merge Scaffolds Using Pannagram
 
 1. Keep only the longest scaffolds from your assemblies.  
-2. Run Pannagram in **preliminary mode**, using an accession with a chromosomal-level assembly as the reference.  
-3. Execute the **Chromotools** module of Pannagram to generate chimeric chromosomes for all accessions.  
+2. Run Pannagram in **preliminary mode**, using a genome with a chromosomal-level assembly as the reference.  
+3. Execute the **Chromotools** module of Pannagram to generate chimeric chromosomes for all genomes.  
 
 By following these steps, you can prepare chimeric genomes at the chromosomal level for comprehensive analysis with Pannagram.

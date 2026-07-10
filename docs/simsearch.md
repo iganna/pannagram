@@ -10,13 +10,13 @@ The module uses BLAST to identify initial matches and then merges neighboring hi
 
 ### Common Parameters for all modes:
 
-- `-query_seq <query_sequences.fasta>`  
+- `-in_seq <query_sequences.fasta>`  
   **Required.** Input FASTA file containing the query sequences.
 - `-out <output_path>`  
   **Required.**
-- `-similarity <similarity_value>`  
+- `-sim <similarity_value>`  
   Optional. Similarity cutoff (default: `85`).
-- `-coverage <coverage_value>`  
+- `-cov <coverage_value>`  
   Optional. Coverage cutoff (default: same as `<similarity_value>`).
 
 ## `I.` Search for query sequences in another (target) set of sequences
@@ -24,13 +24,13 @@ The module uses BLAST to identify initial matches and then merges neighboring hi
 To run this mode, use the following command:
 ```bash
 simsearch \
-    -query_seqs <query_sequences.fasta> \
-    -target_seqs <target_sequences.fasta> \
+    -in_seq <query_sequences.fasta> \
+    -on_seq <target_sequences.fasta> \
     -out "<output_path>"
 ```
 
 The output file is named `target_sequences_X_Y.txt`, where `X` represents the similarity cutoff and `Y` represents the coverage cutoff.  
-This file contains the table with the following colmns:
+This file contains the table with the following columns:
 
 - **name.query** — Name of a query sequence.
 - **name.target** — Name of a target sequence.
@@ -46,8 +46,8 @@ This file contains the table with the following colmns:
 To run this mode, use the following command:
 ```sh
 simsearch \
-    -query_seqs <query_sequences.fasta> \
-    -target_genome <target_genome.fasta> \
+    -in_seq <query_sequences.fasta> \
+    -on_genome <target_genome.fasta> \
     -out "<output_path>"
 ```
 
@@ -64,8 +64,8 @@ simsearch \
 To run this mode, use the following command:
 ```sh
 simsearch \
-    -query_seqs <query_sequences.fasta> \
-    -target_path <path_with_genomes> \
+    -in_seq <query_sequences.fasta> \
+    -on_path <path_with_genomes> \
     -out "<output_path>"
 ```
 
