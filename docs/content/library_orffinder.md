@@ -10,7 +10,7 @@ seq <- "ACGTACGTACGT"
 ```
 
 ### Example nucleotide sequences
-**[View](examples/seqs_orf_finder.txt)** · **[Download](examples/seqs_orf_finder.fasta)**  
+**[View](../examples/seqs_orf_finder.txt)** · **[Download](../examples/seqs_orf_finder.fasta)**  
 This example contains a *Arabidopsis thaliana* LTR/Copia transposable element.  
 To load these sequences in R, run:
 
