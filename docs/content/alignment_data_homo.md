@@ -144,8 +144,8 @@ echo -e "GCA_000005845.2\nGCA_000008865.2\nGCA_042692195.1\nGCA_042259155.1\nGCA
 ## Preliminary mode
 ```shell
 pannagram -pre \
-    -path_in ${PATH_DATA} \
-    -path_out ${PATH_PROJECT} \
+    -path_genomes ${PATH_DATA} \
+    -path_project ${PATH_PROJECT} \
     -ref ${REF_NAME} \
     -cores 8
 ```
@@ -156,8 +156,8 @@ The refults are in the folder: `"${PATH_PROJECT}/plots/synteny_pairwise/${REF_NA
 In the case of the *E. coli* test example, the first sequence is the chromosome, while the others are plasmids. To analyze only the chromosome, specify `-nchr 1`. To analyze the chromosome and the first plasmid, use `-nchr 2`, and so on (but please ensure that the homologous plasmids are located in the same order).
 ```shell
 pannagram \
-    -path_in ${PATH_DATA}\
-    -path_out ${PATH_PROJECT} \
+    -path_genomes ${PATH_DATA}\
+    -path_project ${PATH_PROJECT} \
     -cores 8 \
     -accessions ${FILE_ACC}
 ```

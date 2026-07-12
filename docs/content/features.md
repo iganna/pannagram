@@ -24,5 +24,5 @@ This step also enables comparison of SVs with other sequence features (e.g., tra
 ### Run All Steps in One Command
 to execute the complete feature extraction workflow:
 ```
-features -path_project ${PATH_PROJECT} -blocks -seq -snp -snp_pi -sv -sv_graph -sv_orf
+features -path_project ${PATH_PROJECT} -synteny -consensus -snp -snp_pi -sv -sv_families -sv_orf
 ```

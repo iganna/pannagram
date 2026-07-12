@@ -16,7 +16,7 @@ Both files are expected to be located in:
         └── nestedness_sv_large_85_85.txt
 ```
 
-If the file `nestedness_sv_large_85_85.txt` does not exist—because you haven’t run `features -sv_graph`,  
+If the file `nestedness_sv_large_85_85.txt` does not exist—because you haven’t run `features -sv_families`,  
 or if you want finer control over similarity and coverage thresholds —  
 you can generate a the similar file using the `simsearch` module from the Pannagram package.
 
