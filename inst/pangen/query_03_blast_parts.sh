@@ -70,7 +70,7 @@ xdrop_gap_final="${xdrop_gap_final:-30}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"
-w_size="${w_size:-11}"  # blastn word_size (default 11, as in classic blastn)
+w_size="${w_size:-28}"  # parts-blast word_size fallback (tuned 2026-07-10 to 28; coverage-insensitive here). Normally supplied by pannagram.sh as -word_size ${w_size}; see the sweep table in pannagram.sh.
 
 mkdir -p $path_blast
 
@@ -257,11 +257,54 @@ else
     done < "${file_accessions}"
 fi
 
-# Run BLAST in parallel
-parallel --will-cite -j $cores --link run_blast :::: "$temp_acc" :::: "$temp_ref" :::: "$temp_out" :::: "$temp_log"
+# ----------------------------------------------------------------------------
+# Chunked parallel BLAST.
+# Previously one BLAST task per (query_chr, ref_chr) pair -> at most nchr tasks,
+# so only nchr cores were ever busy (e.g. 5 of 16). We split each query parts
+# file into sub-chunks of `parts_per_chunk` sequences, make one task per chunk,
+# and let GNU parallel fill all cores. Chunk outputs are concatenated back into
+# the original per-combination file, so the result is identical to before.
+# ----------------------------------------------------------------------------
+parts_per_chunk="${parts_per_chunk:-5000}"
+chunk_dir="${path_blast}chunks/"
+mkdir -p "$chunk_dir"
+
+ctask_acc="${path_blast}ctask_acc.txt"
+ctask_ref="${path_blast}ctask_ref.txt"
+ctask_out="${path_blast}ctask_out.txt"
+ctask_log="${path_blast}ctask_log.txt"
+> "$ctask_acc"; > "$ctask_ref"; > "$ctask_out"; > "$ctask_log"
+
+# Build chunk-level task lists from the per-combination lists
+paste -d$'\t' "$temp_acc" "$temp_ref" "$temp_out" "$temp_log" | while IFS=$'\t' read -r qf rf of lf; do
+    base=$(basename "$of" .txt)
+    # split query parts fasta into <chunk_dir>/<base>.NNNN.fasta (parts_per_chunk seqs each)
+    awk -v pre="${chunk_dir}${base}." -v cs="$parts_per_chunk" '
+        /^>/ { if(n % cs == 0){ if(fh) close(fh); fh = sprintf("%s%04d.fasta", pre, int(n/cs)) } n++ }
+        { print > fh }' "$qf"
+    for cf in "${chunk_dir}${base}."*.fasta; do
+        [ -f "$cf" ] || continue
+        cb=$(basename "$cf" .fasta)
+        echo "$cf"                   >> "$ctask_acc"
+        echo "$rf"                   >> "$ctask_ref"
+        echo "${chunk_dir}${cb}.txt" >> "$ctask_out"
+        echo "${chunk_dir}${cb}.log" >> "$ctask_log"
+    done
+done
+
+# Run all chunks in parallel across all cores
+parallel --will-cite -j $cores --link run_blast :::: "$ctask_acc" :::: "$ctask_ref" :::: "$ctask_out" :::: "$ctask_log"
+
+# Concatenate chunk outputs back into the per-combination result file
+while IFS= read -r of; do
+    base=$(basename "$of" .txt)
+    cat "${chunk_dir}${base}."*.txt > "$of" 2>/dev/null
+done < "$temp_out"
 
 # Clean up temporary files
-rm -f "$temp_acc" "$temp_ref" "$temp_out" "$temp_log"
+rm -rf "$chunk_dir"
+rm -f "$temp_acc" "$temp_ref" "$temp_out" "$temp_log" \
+      "$ctask_acc" "$ctask_ref" "$ctask_out" "$ctask_log"
 
 
 
