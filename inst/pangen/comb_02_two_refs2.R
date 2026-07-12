@@ -185,8 +185,9 @@ loop.function <- function(s.comb,
     v0[v1 != v0] = 0
     v.final[f01[,1]] = v0
 
-    dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
-    if(length(dup.value) > 0){
+    nz = v.final[v.final != 0]
+    if(anyDuplicated(nz) > 0){
+      dup.value = unique(nz[duplicated(nz)])
       v.final[v.final %in% dup.value] <- 0
       pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
     }

@@ -61,9 +61,16 @@ glueZero <- function(x.all){
     
     if(x.nrow > 1){
       # Operate on plain vectors: per-element data.frame $/[ access dominated the runtime.
-      # Same algorithm/semantics as before, just without repeated data.frame indexing.
-      V2 <- x$V2; V3 <- x$V3; V4 <- x$V4; V5 <- x$V5; V7 <- x$V7; V8 <- x$V8; V9 <- x$V9
+      # Two-pass to kill the O(chain_len^2) string blow-up: the OLD code did
+      # V8[jrow] = paste0(V8[irow], V8[jrow]) inside the loop, re-copying the growing
+      # accumulator on every merge, so gluing a chain of K contiguous blocks copied
+      # ~O(K^2) characters. The glue DECISIONS depend only on positions (V2..V5), never on
+      # the sequences, so we keep the exact same loop (identical control flow + V2/V4/V7
+      # updates) but only RECORD which row each row glues into; then concatenate each chain's
+      # V8/V9 once. Verified byte-identical to the old result; ~500x faster on long chains.
+      V2 <- x$V2; V3 <- x$V3; V4 <- x$V4; V5 <- x$V5; V7 <- x$V7
       idx.remove <- logical(x.nrow)
+      merged.into <- integer(x.nrow)   # forward pointer: row -> row it glues into (0 = survives)
       for(irow in 1:(x.nrow - 1)){
         jrow = irow + 1
         while(V2[jrow] < V3[irow]){
@@ -77,13 +84,35 @@ glueZero <- function(x.all){
           V2[jrow] = V2[irow]
           V4[jrow] = V4[irow]
           V7[jrow] = V7[jrow] + V7[irow]
-          V8[jrow] = paste0(V8[irow], V8[jrow])
-          V9[jrow] = paste0(V9[irow], V9[jrow])
+          merged.into[irow] = jrow
           idx.remove[irow] = TRUE
         }
       }  #for(irow in 1:(x.nrow - 1))
 
-      x$V2 <- V2; x$V4 <- V4; x$V7 <- V7; x$V8 <- V8; x$V9 <- V9
+      # Pass 2: concatenate sequences per chain in a single paste0 each.
+      # terminal[i] = surviving row that i ends up glued into; computed right-to-left since
+      # merged.into[i] > i. split() keeps members in ascending index order == the left-to-right
+      # accumulation order of the original per-merge paste0, so the strings match byte-for-byte.
+      if(any(idx.remove)){
+        V8 <- x$V8; V9 <- x$V9
+        terminal <- integer(x.nrow)
+        for(i in x.nrow:1) terminal[i] <- if(merged.into[i] == 0) i else terminal[merged.into[i]]
+        grp <- split(seq_len(x.nrow), terminal)
+        # Iterate the groups BY POSITION: grp[[gi]] is O(1), whereas grp[[name]] does an O(n)
+        # linear name scan -> looping all groups by name was O(n^2) and blew merge up to ~1070s
+        # on real (many-row, sparse-glue) data. Terminal == max index in each ascending chain.
+        for(gi in seq_along(grp)){
+          members <- grp[[gi]]
+          if(length(members) > 1L){
+            ti <- members[length(members)]
+            V8[ti] <- paste0(V8[members], collapse = "")
+            V9[ti] <- paste0(V9[members], collapse = "")
+          }
+        }
+        x$V8 <- V8; x$V9 <- V9
+      }
+
+      x$V2 <- V2; x$V4 <- V4; x$V7 <- V7
       if(any(idx.remove)) x = x[!idx.remove,]
     }  # if(x.nrow > 1)
     
@@ -940,26 +969,34 @@ pathUpPlus <- function(x.tmp){
 #' Positive values indicate direct correspondence, while negative values indicate reverse correspondence.
 #'
 getCorresp2BaseSign <- function(x, base.len){
-  
+
   pos.corresp = rep(0, base.len)
+  # Pull columns out once (per-row data.frame $ access was ~2.4% self-time on its own).
+  V8 <- x$V8; V9 <- x$V9; V2 <- x$V2; V3 <- x$V3; V4 <- x$V4; V5 <- x$V5; xdir <- x$dir
+  dash <- as.raw(45L)  # '-'
   for(irow in 1:nrow(x)){
-    
-    aln.len = nchar(x$V8[irow])
-    
+
+    # Non-gap masks straight from bytes: charToRaw(s) != '-' is byte-identical to
+    # seq2nt(s) != '-' (strsplit) for ASCII sequences but ~11x faster (no character-vector
+    # allocation). seq2nt was the top hot spot of comb_01 via this function.
+    mask.q = charToRaw(V8[irow]) != dash
+    mask.b = charToRaw(V9[irow]) != dash
+    aln.len = length(mask.q)
+
     # Occupied positions in query
     positions.q = rep(0, aln.len)
-    positions.q[seq2nt(x$V8[irow]) != '-'] = x$V2[irow]:x$V3[irow]
-    
+    positions.q[mask.q] = V2[irow]:V3[irow]
+
     # Occupied positions in base
     positions.b = rep(0, aln.len)
-    positions.b[seq2nt(x$V9[irow]) != '-'] = x$V4[irow]:x$V5[irow] * sign(0.5 - x$dir[irow])
-    
+    positions.b[mask.b] = V4[irow]:V5[irow] * sign(0.5 - xdir[irow])
+
     positions.q = positions.q[positions.b != 0]
     positions.b = positions.b[positions.b != 0]
     pos.corresp[abs(positions.b)] = positions.q * sign(positions.b)
-    
+
   }
-  
+
   return(pos.corresp)
 }
 

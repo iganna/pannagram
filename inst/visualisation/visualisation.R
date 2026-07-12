@@ -43,7 +43,8 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
                         point.alpha = 1.0,
                         query.label = NULL,
                         ref.label = NULL,
-                        expand.axis = waiver()
+                        expand.axis = waiver(),
+                        npx = 3000
 ){
   if(!is.null(base.len)) x = getBase(x, base.len)
   if (is.null(query.label)) query.label = 'query'
@@ -94,8 +95,24 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
 
   if(!is.null(hlines)) p <- p + geom_hline(yintercept=hlines, color= col.line)
   if(!is.null(vlines)) p <- p + geom_vline(xintercept=vlines, color= col.line)
-  if(show.point)       p <- p + geom_point(show.legend = FALSE, size = 0.8, alpha = point.alpha)
-  
+  if(show.point){
+    # Deduplicate the point layer to the raster pixel grid. At genome-wide scale
+    # hundreds of thousands of points collapse onto a few thousand distinct pixels,
+    # so drawing only the unique set is visually identical but far cheaper to render.
+    range.x.pt = max(x.limits) - min(x.limits)
+    range.y.pt = max(y.limits) - min(y.limits)
+    if(range.x.pt > 0 && range.y.pt > 0){
+      px = round((x$V2 - min(x.limits)) / range.x.pt * npx)
+      py = round((x$V4 - min(y.limits)) / range.y.pt * npx)
+      # Encode (px, py, direction) as one integer key so !duplicated() stays fast.
+      key = (px * (npx + 1) + py) * 2 + (x$V4 < x$V5)
+      x.pt = x[!duplicated(key), , drop = FALSE]
+    } else {
+      x.pt = x
+    }
+    p <- p + geom_point(data = x.pt, show.legend = FALSE, size = 0.8, alpha = point.alpha)
+  }
+
   return(p)
 }
 
@@ -177,20 +194,23 @@ plotSynAllChr <- function(path.aln,
   
   # pokaz('Number of chromosomes ref and acc:', n.chr.ref, n.chr.acc)
   
-  # Read the alignments
-  df <- data.frame()
+  # Read the alignments. Keep only the coordinate columns (V2:V5) and drop the
+  # heavy alignment-sequence columns, then bind once instead of growing the
+  # data.frame with rbind() inside the loop.
+  df.list <- list()
   for (i.acc in order.acc) {
     for (i.ref in order.ref) {
       file.aln = paste0(path.aln, acc, "_", i.acc, "_", i.ref, "_maj.rds")
       if (file.exists(file.aln)) {
         # Synteny
-        data.ij <- readRDS(file.aln)
-        data.ij[, c(2, 3)] = data.ij[, c(2, 3)] + cum.acc[i.acc]
-        data.ij[, c(4, 5)] = data.ij[, c(4, 5)] + cum.ref[i.ref]
-        df <- rbind(df, data.ij)
+        data.ij <- readRDS(file.aln)[, c("V2", "V3", "V4", "V5")]
+        data.ij[, c("V2", "V3")] = data.ij[, c("V2", "V3")] + cum.acc[i.acc]
+        data.ij[, c("V4", "V5")] = data.ij[, c("V4", "V5")] + cum.ref[i.ref]
+        df.list[[length(df.list) + 1]] <- data.ij
       }
     }
   }
+  df <- if (length(df.list) > 0) do.call(rbind, df.list) else data.frame()
   
   if(nrow(df) == 0){
     pokazAttention('Alignment of', acc, 'on', ref, 'was not performed')

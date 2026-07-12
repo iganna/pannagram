@@ -25,7 +25,14 @@ savePDF <- function(geom, path, name, width=10, height=10){
 #' @export
 savePNG <- function(geom, path, name, width=10, height=10, res=300){
   invisible(suppressMessages({
-    png(file.path(path, paste0(name, ".png")), width=width, height=height, units='in', res=res)
+    file.png <- file.path(path, paste0(name, ".png"))
+    # ragg's raster device renders large point/segment layers much faster than
+    # the default png() device; fall back to png() when ragg is unavailable.
+    if(requireNamespace("ragg", quietly = TRUE)){
+      ragg::agg_png(file.png, width=width, height=height, units='in', res=res)
+    } else {
+      png(file.png, width=width, height=height, units='in', res=res)
+    }
     print(geom)
     dev.off()
   }))
