@@ -3,7 +3,7 @@
 To generate an alignment summary, run the following command:
 
 ```bash
-features -path_project '${PATH_PROJECT}' -blocks -seq
+features -path_project '${PATH_PROJECT}' -synteny -consensus
 ```
 
 Below is a detailed description of flags.
@@ -12,7 +12,7 @@ Below is a detailed description of flags.
 
 When the `pannagram` alignment is completed, you can generate synteny blocks and visualize the alignment by the following command:
 ```bash
-features -path_project '${PATH_PROJECT}' -blocks
+features -path_project '${PATH_PROJECT}' -synteny
 ```
 
 Results you will find in `${PATH_PROJECT}/plots/synteny_pan/`:
@@ -31,7 +31,7 @@ Gray shading serves as a grid to help visually trace correspondence across genom
 
 To generate the consensus sequence for the pangenome, run the following command:
 ```bash
-features -path_project '${PATH_PROJECT}' -seq
+features -path_project '${PATH_PROJECT}' -consensus
 ```
 
 Results you will find in `${PATH_PROJECT}/features/consensus/`.

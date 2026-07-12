@@ -3,7 +3,7 @@
 To generate SV-related features, run the following command:
 
 ```bash
-features -path_project '${PATH_PROJECT}' -sv -sv_graph -sv_orf
+features -path_project '${PATH_PROJECT}' -sv -sv_families -sv_orf
 ```
 
 Below is a detailed description of flags.
@@ -100,7 +100,7 @@ These figures are shown together below:
 
 After extracting SVs, MEF can be identified by running:
 ```bash
-features -path_project '${PATH_PROJECT}' -sv_graph
+features -path_project '${PATH_PROJECT}' -sv_families
 ```
 
 ### Families
@@ -116,7 +116,7 @@ Each edge indicates that the SV in the first column has a nested similarity to t
 are located at `${PATH_PROJECT}/plots/sv/`.  
 The graph images are produced only when the `-plot_families` flag is added:
 ```bash
-features -path_project '${PATH_PROJECT}' -sv_graph -plot_families
+features -path_project '${PATH_PROJECT}' -sv_families -plot_families
 ```
 Besides the final `graph_*_families_colored.png` and `graph_*_labeled.png`, the intermediate graph-cleaning steps (`graph_01_init.png` … `graph_08_families.png`) are also saved.
 

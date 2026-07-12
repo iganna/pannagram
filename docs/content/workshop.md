@@ -9,9 +9,9 @@ cd pannagram
 ```
 
 ### Install the environment
-1. Platform-independent dependencies are given in `pannagram_min.yml`. To create the working environment, run one of the following commands depending on which tool you have installed:
+1. Platform-independent dependencies are given in `pannagram.yml`. To create the working environment, run one of the following commands depending on which tool you have installed:
     ```shell
-    conda env create -f pannagram_min.yml
+    conda env create -f pannagram.yml
     conda activate pannagram
     ```
 
@@ -67,7 +67,7 @@ REF_NAME=""
 
 Run the Pannagram:
 ```shell
-pannagram -path_in ${PATH_GENOMES} -path_out ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
+pannagram -path_genomes ${PATH_GENOMES} -path_project ${PATH_PROJECT} -ref ${REF_NAME} -pre -cores 8
 ```
 
 Check the visualisation:
@@ -87,7 +87,7 @@ mv ${PATH_PROJECT} $(basename "$PATH_PROJECT")_pre
 
 Run the Pannagram:
 ```
-pannagram -path_in ${PATH_GENOMES} -path_out ${PATH_PROJECT} -cores 8 -nchr 1
+pannagram -path_genomes ${PATH_GENOMES} -path_project ${PATH_PROJECT} -cores 8 -nchr 1
 ```
 
 Check the visualisation:
@@ -99,7 +99,7 @@ cd ${PATH_PROJECT}plots/synteny_pairwise/${REF_NAME}
 
 Run the features script:
 ```
-features -path_project ${PATH_PROJECT} -blocks -seq -snp -sv -sv_graph
+features -path_project ${PATH_PROJECT} -synteny -consensus -snp -sv -sv_families
 ```
 
 Locations of some important result files:

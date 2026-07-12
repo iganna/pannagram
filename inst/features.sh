@@ -34,7 +34,7 @@ if [ "$run_blocks" = true ]; then # -blocks
         --ref  ${ref_pref} \
         --aln.type ${aln_type} 
         
-    pokaz_message "Step -blocks is done!"
+    pokaz_message "Step -synteny is done!"
 fi
 
 
@@ -53,7 +53,7 @@ if [ "$run_seq" = true ]; then # -seq
         --aln.type ${aln_type} \
         --cores ${cores}
     
-    pokaz_message "Step -seq is done!"
+    pokaz_message "Step -consensus is done!"
 fi
 
 
@@ -253,7 +253,7 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     #     --path.features.msa ${path_features_msa} \
     #     --path.sv ${path_sv} 
 
-    pokaz_message "Step -sv_graph is done!"
+    pokaz_message "Step -sv_families is done!"
 fi
 
 # BLAST ORFs against the database

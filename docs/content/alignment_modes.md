@@ -31,8 +31,8 @@ REF_NAME="RefGenomeName"
 
 # Run Pannagram in preliminary mode
 pannagram -pre \
-          -path_in ${PATH_GENOMES} \
-          -path_out ${PATH_PROJECT} \
+          -path_genomes ${PATH_GENOMES} \
+          -path_project ${PATH_PROJECT} \
           -ref ${REF_NAME} \
           -cores 8
 
@@ -83,8 +83,8 @@ If they differ — for instance, if the genome files contain not only chromosome
 This mode produces the alignment of all genomes to the reference genome:
 ```shell
 pannagram \
-    -path_in '${PATH_GENOMES}' \
-    -path_out '${PATH_PROJECT}' \
+    -path_genomes '${PATH_GENOMES}' \
+    -path_project '${PATH_PROJECT}' \
     -ref '<reference genome filename with no FASTA suffix>' \
     -cores 8
 ```
@@ -108,8 +108,8 @@ This mode does **not require a reference genome**, you can simply run it as foll
 
 ```shell
 pannagram \
-    -path_in ${PATH_GENOMES}\
-    -path_out ${PATH_PROJECT} \
+    -path_genomes ${PATH_GENOMES}\
+    -path_project ${PATH_PROJECT} \
     -cores 8
 ```
 
