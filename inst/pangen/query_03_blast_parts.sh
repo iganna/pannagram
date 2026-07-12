@@ -70,7 +70,7 @@ xdrop_gap_final="${xdrop_gap_final:-30}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"
-w_size="${w_size:-11}"  # blastn word_size (default 11, as in classic blastn)
+w_size="${w_size:-28}"  # parts-blast word_size fallback (tuned 2026-07-10 to 28; coverage-insensitive here). Normally supplied by pannagram.sh as -word_size ${w_size}; see the sweep table in pannagram.sh.
 
 mkdir -p $path_blast
 
@@ -100,7 +100,7 @@ run_blast() {
 
     # If log file exists and has the word "Done" - then don't run the blast again
     if [ -f "$file_log" ]; then
-        if grep -q "Done" "$file_log"; then
+        if grep -qx "Done\." "$file_log"; then
             echo "Over." >> "$file_log"
             return 0
         fi
@@ -132,7 +132,7 @@ run_blast() {
            -perc_identity "${p_ident}" -penalty "$penalty" -gapopen "$gapopen" -gapextend "$gapextend" \
            -xdrop_gap "$xdrop_gap" -xdrop_gap_final "$xdrop_gap_final" \
            -max_hsps "$max_hsps" -word_size "$w_size" \
-           >> "$file_log" 2>&1 # classic blastn + tuned gap penalties + low X-dropoff (15/30): clean alignments (no ragged gap staircases) and faster via early termination at divergent patches. Pair with -part_len 1000 for coverage. -word_size 50
+           >> "$file_log" 2>&1 || return 1 # classic blastn + tuned gap penalties + low X-dropoff (15/30): clean alignments (no ragged gap staircases) and faster via early termination at divergent patches. Pair with -part_len 1000 for coverage. -word_size 50
 
     echo "Done." >> "$file_log"
 }
@@ -157,14 +157,14 @@ while IFS= read -r accession; do
     # Skip the reference accession
     if [[ "$accession" != "$ref_name" ]]; then
         # Count files in ${path_parts} that start with the accession name
-        count=$(ls "${path_parts}" | grep "^${accession}.*_chr.*\.fasta$" | wc -l)
+        count=$(ls "${path_parts}" | grep "^${accession}_chr[0-9][0-9]*\.fasta$" | wc -l)
         accessions+=("$accession")
         acc_counts+=("$count")
     fi
 done < "${file_accessions}"
 
 # Count files in ${path_chrom} that start with ${ref_name}
-ref_count=$(ls "${path_chrom}" | grep "^${ref_name}.*_chr.*\.fasta$" | wc -l)
+ref_count=$(ls "${path_chrom}" | grep "^${ref_name}_chr[0-9][0-9]*\.fasta$" | wc -l)
 
 # # Initialize arrays to store file paths
 # files_ref=()
@@ -247,7 +247,7 @@ else
     while IFS= read -r acc_name; do
         if [[ "$acc_name" != "$ref_name" ]]; then
             # Read combinations from the file
-            while IFS=$'\t' read -r i_acc i_ref; do
+            while IFS=$'\t' read -r i_acc i_ref || [ -n "$i_acc" ]; do
                 echo "${path_chrom}${ref_name}_chr${i_ref}.fasta" >> "$temp_ref"
                 echo "${path_parts}${acc_name}_chr${i_acc}.fasta" >> "$temp_acc"
                 echo "${path_blast}${acc_name}_${i_acc}_${i_ref}.txt" >> "$temp_out"
@@ -257,11 +257,59 @@ else
     done < "${file_accessions}"
 fi
 
-# Run BLAST in parallel
-parallel --will-cite -j $cores --link run_blast :::: "$temp_acc" :::: "$temp_ref" :::: "$temp_out" :::: "$temp_log"
+# ----------------------------------------------------------------------------
+# Chunked parallel BLAST.
+# Previously one BLAST task per (query_chr, ref_chr) pair -> at most nchr tasks,
+# so only nchr cores were ever busy (e.g. 5 of 16). We split each query parts
+# file into sub-chunks of `parts_per_chunk` sequences, make one task per chunk,
+# and let GNU parallel fill all cores. Chunk outputs are concatenated back into
+# the original per-combination file, so the result is identical to before.
+# ----------------------------------------------------------------------------
+parts_per_chunk="${parts_per_chunk:-5000}"
+chunk_dir="${path_blast}chunks/"
+mkdir -p "$chunk_dir"
+
+ctask_acc="${path_blast}ctask_acc.txt"
+ctask_ref="${path_blast}ctask_ref.txt"
+ctask_out="${path_blast}ctask_out.txt"
+ctask_log="${path_blast}ctask_log.txt"
+> "$ctask_acc"; > "$ctask_ref"; > "$ctask_out"; > "$ctask_log"
+
+# Build chunk-level task lists from the per-combination lists
+paste -d$'\t' "$temp_acc" "$temp_ref" "$temp_out" "$temp_log" | while IFS=$'\t' read -r qf rf of lf; do
+    base=$(basename "$of" .txt)
+    # split query parts fasta into <chunk_dir>/<base>.NNNN.fasta (parts_per_chunk seqs each)
+    awk -v pre="${chunk_dir}${base}." -v cs="$parts_per_chunk" '
+        /^>/ { if(n % cs == 0){ if(fh) close(fh); fh = sprintf("%s%04d.fasta", pre, int(n/cs)) } n++ }
+        { print > fh }' "$qf"
+    for cf in "${chunk_dir}${base}."*.fasta; do
+        [ -f "$cf" ] || continue
+        cb=$(basename "$cf" .fasta)
+        echo "$cf"                   >> "$ctask_acc"
+        echo "$rf"                   >> "$ctask_ref"
+        echo "${chunk_dir}${cb}.txt" >> "$ctask_out"
+        echo "${chunk_dir}${cb}.log" >> "$ctask_log"
+    done
+done
+
+# Run all chunks in parallel across all cores
+parallel --will-cite -j $cores --link run_blast :::: "$ctask_acc" :::: "$ctask_ref" :::: "$ctask_out" :::: "$ctask_log"
+
+# Concatenate chunk outputs back into the per-combination result file
+while IFS= read -r of; do
+    base=$(basename "$of" .txt)
+    chunk_outs=("${chunk_dir}${base}."*.txt)
+    if [ -e "${chunk_outs[0]}" ]; then
+        cat "${chunk_outs[@]}" > "$of" 2>/dev/null
+    else
+        > "$of"  # no parts for this combination (empty chromosome): empty result
+    fi
+done < "$temp_out"
 
 # Clean up temporary files
-rm -f "$temp_acc" "$temp_ref" "$temp_out" "$temp_log"
+rm -rf "$chunk_dir"
+rm -f "$temp_acc" "$temp_ref" "$temp_out" "$temp_log" \
+      "$ctask_acc" "$ctask_ref" "$ctask_out" "$ctask_log"
 
 
 

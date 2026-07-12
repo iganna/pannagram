@@ -34,6 +34,7 @@ while [ $# -gt 0 ]; do
         -max_hsps) max_hsps=$2; shift 2;;
         -cores) cores=$2; shift 2;;
         -p_ident) p_ident=$2; shift 2;;
+        -word_size) w_size=$2; shift 2;;
         *) 
             print_usage
             echo "$0: error - unrecognized option $1" 1>&2
@@ -54,6 +55,7 @@ xdrop_gap_final="${xdrop_gap_final:-30}"
 max_hsps="${max_hsps:-1}"
 cores="${cores:-30}"
 p_ident="${p_ident:-85}"
+w_size="${w_size:-15}"  # gaps-blast word_size fallback (tuned 2026-07-10 to 15 = speed/coverage knee). Normally supplied by pannagram.sh as -word_size ${w_size_gap}; see the sweep table in pannagram.sh.
 
 
 # Path to databases
@@ -72,6 +74,7 @@ export log_path
 export p_ident
 export xdrop_gap
 export xdrop_gap_final
+export w_size   # used by process_blast_normal via GNU parallel -> must be exported
 
 function process_db {
     query_file_path="$1"
@@ -129,22 +132,25 @@ function process_blast_normal {
     
     echo "New attempt:" > "$file_log"  # Create or empty the log file
 
-    # Execute BLAST search
-    if [[ -e ${path_db}${base_file}.nhr ]] && \
-       [[ -e ${path_db}${base_file}.nin ]] && \
-       [[ -e ${path_db}${base_file}.nsq ]] && \
+    # Execute BLAST search.
+    # -subject (in-memory) instead of a pre-built -db: each gap batch is tiny (~batch.size.gaps
+    # seqs) and used by exactly ONE blastn, so makeblastdb was pure per-invocation overhead
+    # (~0.1s x ~1000 batches ~= 100s single-threaded). -subject yields BYTE-IDENTICAL hits.
+    # process_db is no longer called (see MAIN); we only need the base+query fastas to exist.
+    if [[ -e ${path_gaps}${base_file} ]] && \
        [[ -e ${path_gaps}${query_file} ]]; then
 
         if [[ -e "${path_gaps}${out_file}" ]]; then
             rm "${path_gaps}${out_file}"
         fi
 
-        blastn -db ${path_db}${base_file} \
+        blastn -subject ${path_gaps}${base_file} \
                -query ${path_gaps}${query_file}  \
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
                -xdrop_gap "${xdrop_gap}" -xdrop_gap_final "${xdrop_gap_final}" \
+               -word_size "${w_size}" \
                -max_hsps 10  >> "$file_log" 2>&1
 
         if [ -d "$log_path" ]; then
@@ -201,6 +207,7 @@ function process_blast_cross {
                -out ${path_gaps}${out_file} \
                -outfmt "6 qseqid qstart qend sstart send pident length qseq sseq sseqid" \
                -perc_identity "${p_ident}" \
+               -word_size "${w_size}" \
                -max_hsps 5 >> "$file_log" 2>&1
         if [ -d "$log_path" ]; then
             echo "Done." >> "$file_log"
@@ -223,7 +230,10 @@ export -f process_db
 # parallel --will-cite -j ${cores}  process_blast_normal ::: "${files_acc[@]}" 
 # parallel --will-cite -j ${cores}  process_blast_cross ::: "${files_acc[@]}" 
 
-find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_db
+# process_db (makeblastdb) DISABLED: process_blast_normal now uses blastn -subject on the
+# base fasta directly, so no pre-built DB is needed. On 1 core this drops ~1000 makeblastdb
+# processes (~0.1s each ~= 100s). Result is byte-identical (verified: same hits).
+# find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_db
 find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_blast_normal
 # process_blast_cross DISABLED: its outputs (out_on_residual / out_on_core) are never read
 # by synteny_05 (nor anywhere else in the codebase) -> dead compute (~1/3 of step 7).
