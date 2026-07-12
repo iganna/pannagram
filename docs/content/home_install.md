@@ -51,7 +51,7 @@ In the commands below, replace `<manager>` with the package manager you’re usi
 
 ### 3. Environment Setup
 
-#### **Linux**
+#### **Linux and macOS (Intel)**
 ```bash
 <manager> env create -f pannagram.yml
 <manager> activate pannagram
@@ -59,24 +59,22 @@ In the commands below, replace `<manager>` with the package manager you’re usi
 
 #### **macOS (Apple Silicon / M-series)**
 ```bash
-<manager> env create --platform osx-64 -f pannagram_m4.yml
+<manager> env create --platform osx-64 -f pannagram.yml
 <manager> activate pannagram
 ```
 
 
-### 4. Alternative: Setup Without Explicit Versions
+### 4. Alternative: Fully Pinned Environment (Linux)
 
-If you prefer to resolve package dependencies manually, use `pannagram_min.yml`, which includes only direct dependencies (no pinned versions).
+`pannagram.yml` lets the package manager resolve dependencies for your platform.
+If you need an exact, reproducible build on **Linux (x86_64)**, use `pannagram_pinned.yml`,
+which lists every package with a fixed version and build.
 
-#### **Linux and macOS (Intel)**
+Install it with flexible channel priority — a fully-pinned spec otherwise trips the
+solver's strict channel-priority check with spurious conflicts:
+
 ```bash
-<manager> env create -f pannagram_min.yml
-<manager> activate pannagram
-```
-
-#### **macOS (Apple Silicon / M-series)**
-```bash
-<manager> env create --platform osx-64 -f pannagram_min.yml
+<manager> env create --channel-priority flexible -f pannagram_pinned.yml
 <manager> activate pannagram
 ```
 
