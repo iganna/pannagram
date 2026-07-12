@@ -39,6 +39,7 @@ dependencies:
   # --- Bioconductor ---
   - bioconductor-rhdf5
   - bioconductor-ggtree
+  - bioconductor-biostrings
 
   # --- Bio tools ---
   - blast
