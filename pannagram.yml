@@ -1,5 +1,5 @@
 # Cross-platform environment (no pinned versions) - resolved by conda per OS.
-# Works on Linux and macOS. On Apple Silicon (M-series) add `--platform osx-64`.
+# Works natively on Linux (x86-64) and macOS (Intel and Apple Silicon).
 # For an exact, reproducible Linux build use `pannagram_pinned.yml` instead.
 name: pannagram
 channels:
