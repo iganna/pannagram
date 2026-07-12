@@ -84,8 +84,14 @@ min.overlap.fragment = 0.01
 
 
 # ***********************************************************************
-# ---- Main loop ----
-for(acc in accessions){
+# ---- Parallel backend (comb-style; FORK inherits all vars/functions) ----
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "FORK")
+  registerDoParallel(myCluster)
+}
+
+# ---- Per-accession processing (each accession is an independent task) ----
+process.acc <- function(acc){
   pokaz('Accession', acc)
   
   file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
@@ -146,29 +152,23 @@ for(acc in accessions){
       corresp.pure = rbind(corresp.pure, 
                            c(i.chr.ref, i.chr.acc))
     } else {
-      pos = matrix(0, 
-                   nrow = length(i.chr.corresp),
-                   ncol = i.chr.ref.len)
+      intervals = vector('list', length(i.chr.corresp))
       for(i in 1:length(i.chr.corresp)){
         i.chr.acc = i.chr.corresp[i]
         file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
-        # pokaz(file.aln)
         x = readRDS(file.aln)
         x = x[order(x$V7),]
-        for(irow in 1:nrow(x)){
-          pos[i,x$V4[irow]:x$V5[irow]] = x$V6[irow]
-        }
+        intervals[[i]] = data.frame(beg = pmin(x$V4, x$V5),
+                                    end = pmax(x$V4, x$V5),
+                                    score = x$V6)
       }
-      # pokaz(i.chr.acc)
-      # if(i.chr.acc == 12){
-      #   save(list = ls(), file = "tmp_workspace_1.RData")
-      # }
-      
-      df.all = findBestChromosome (pos, 
-                                   i.chr.ref.len, 
-                                   i.chr.ref, 
-                                   i.chr.corresp, 
-                                   min.len) 
+      seg = buildSegScore(intervals, i.chr.ref.len)
+
+      df.all = findBestChromosome(seg$pos, seg$seg.pos, seg$seg.len,
+                                  i.chr.ref.len,
+                                  i.chr.ref,
+                                  i.chr.corresp,
+                                  min.len)
       if(is.null(df.all)) next
       
       # Save
@@ -211,24 +211,23 @@ for(acc in accessions){
       i.chr.acc.len = acc.len$len[i.chr.acc]
       i.chr.corresp = corresp.combined$i.ref[corresp.combined$i.acc == i.chr.acc]
       
-      pos = matrix(0, 
-                   nrow = length(i.chr.corresp),
-                   ncol = i.chr.acc.len)
+      intervals = vector('list', length(i.chr.corresp))
       for(i in 1:length(i.chr.corresp)){
         i.chr.ref = i.chr.corresp[i]
         file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
         x = readRDS(file.aln)
         x = x[order(x$V7),]
-        for(irow in 1:nrow(x)){
-          pos[i,x$V2[irow]:x$V3[irow]] = x$V6[irow]
-        }
+        intervals[[i]] = data.frame(beg = pmin(x$V2, x$V3),
+                                    end = pmax(x$V2, x$V3),
+                                    score = x$V6)
       }
-      # save(list = ls(), file = "tmp_workspace_2.RData")
-      df.all = findBestChromosome (pos, 
-                                   i.chr.acc.len, 
-                                   i.chr.acc, 
-                                   i.chr.corresp, 
-                                   min.len) 
+      seg = buildSegScore(intervals, i.chr.acc.len)
+
+      df.all = findBestChromosome(seg$pos, seg$seg.pos, seg$seg.len,
+                                  i.chr.acc.len,
+                                  i.chr.acc,
+                                  i.chr.corresp,
+                                  min.len)
       idx <- match(c('i.ref', 'i.acc'), colnames(df.all))
       colnames(df.all)[idx] <- c('i.acc', 'i.ref')
       
@@ -281,9 +280,17 @@ for(acc in accessions){
   print(corresp.acc2ref)
   saveRDS(corresp.acc2ref, 
           paste0(path.processed, 'corresp_',acc,'_to_',ref, '.rds'))
-  write.table(corresp.acc2ref, 
+  write.table(corresp.acc2ref,
               paste0(path.processed, 'corresp_',acc,'_to_',ref, '.txt'), col.names = T, row.names = F, quote = F, sep = '\t')
-  
+  return(invisible(NULL))
+}
+
+# ---- Dispatch: one independent task per accession ----
+if(num.cores > 1){
+  foreach(acc = accessions, .packages = c('pannagram', 'crayon')) %dopar% process.acc(acc)
+  stopCluster(myCluster)
+} else {
+  for(acc in accessions) process.acc(acc)
 }
 
 
