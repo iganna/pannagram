@@ -38,8 +38,6 @@ dependencies:
 
   # --- Bioconductor ---
   - bioconductor-rhdf5
-  - bioconductor-muscle
-  - bioconductor-msa
   - bioconductor-ggtree
 
   # --- Bio tools ---

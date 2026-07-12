@@ -4,7 +4,6 @@ suppressMessages({
   library(optparse)
   library(crayon)
   library(rhdf5)
-  library(muscle)
 })
 
 source(system.file("utils/utils.R", package = "pannagram"))
