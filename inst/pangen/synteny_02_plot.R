@@ -109,7 +109,7 @@ loop.function <- function(acc,
                      chr.len=chr.len)
   
   # Save
-  pdf.name <- paste0(ref, "-", id)
+  pdf.name <- paste0(ref, "-", acc)
   # savePDF(p, path = path.plot, name = pdf.name)
   savePNG(p, path = path.plot, name = pdf.name)
   # saveRDS(p, paste0(path.plot, pdf.name, '.rds'))
