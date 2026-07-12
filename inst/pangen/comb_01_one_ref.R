@@ -182,7 +182,11 @@ loop.function <- function(s.comb,
     # Get query coordinates in base order
     x.corr = getCorresp2BaseSign(x, base.len)
 
-    if(sum(duplicated(x.corr[x.corr != 0])) > 0) stop('DUPLICSTIONS', sum(duplicated(x.corr[x.corr != 0])))
+    # anyDuplicated short-circuits and avoids allocating the full duplicated() logical over
+    # x.corr (length base.len, up to ~62M); only recompute the count on the (rare) error path.
+    x.corr.nz = x.corr[x.corr != 0]
+    if(anyDuplicated(x.corr.nz) > 0) stop('DUPLICSTIONS', sum(duplicated(x.corr.nz)))
+    rmSafe(x.corr.nz)
 
     # Write into file (idempotent: drop a possibly half-written dataset if present)
     suppressMessages({

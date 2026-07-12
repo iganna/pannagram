@@ -53,7 +53,7 @@ aln.type.out = paste0(aln.type.comb, '_')
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE, colClasses = 'character', quote = "", comment.char = "")[, 1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -185,8 +185,9 @@ loop.function <- function(s.comb,
     v0[v1 != v0] = 0
     v.final[f01[,1]] = v0
 
-    dup.value = setdiff(unique(v.final[duplicated(v.final)]), 0)
-    if(length(dup.value) > 0){
+    nz = v.final[v.final != 0]
+    if(anyDuplicated(nz) > 0){
+      dup.value = unique(nz[duplicated(nz)])
       v.final[v.final %in% dup.value] <- 0
       pokaz('Number of duplicated', length(dup.value), file=file.log.loop, echo=echo.loop)
     }

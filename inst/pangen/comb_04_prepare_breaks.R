@@ -237,12 +237,17 @@ for(s.comb in pref.combinations){
   # Filter "extra" breaks
   for(acc in accessions){
     breaks.acc = breaks.extra[breaks.extra$acc == acc,]
+    if(nrow(breaks.acc) == 0) next
+    # Union of overlaps computed on the original column values (equivalent to the
+    # progressive zeroing: a not-yet-removed position always keeps its original
+    # value, so the first matching interval removes it -> same final set).
+    vb = v.beg[,acc]; ve = v.end[,acc]
+    idx.remove = logical(length(vb))
     for(irow in 1:nrow(breaks.acc)){
-      idx.remove = (v.beg[,acc] <= breaks.acc$val.end[irow]) & (v.end[,acc] >= breaks.acc$val.beg[irow])
-      
-      v.beg[idx.remove,acc] = 0
-      v.end[idx.remove,acc] = 0
+      idx.remove = idx.remove | ((vb <= breaks.acc$val.end[irow]) & (ve >= breaks.acc$val.beg[irow]))
     }
+    v.beg[idx.remove,acc] = 0
+    v.end[idx.remove,acc] = 0
   }
   
   # Check inversions
@@ -273,12 +278,16 @@ for(s.comb in pref.combinations){
   # ---- Checkups for duplicates ----
   pokaz("Checkups for duplicates...")
   for(icol in 1:ncol(v.len)){
-    idx.dup = unique(v.beg[duplicated(v.beg[,icol]),icol])
-    if(length(setdiff(idx.dup, 0)) != 0) {
+    # Guard with anyDuplicated over non-zero entries (short-circuits); the full
+    # dup value set is only recomputed to build the error message on failure.
+    col.b = v.beg[,icol]; col.b = col.b[col.b != 0]
+    if(anyDuplicated(col.b) > 0) {
+      idx.dup = unique(v.beg[duplicated(v.beg[,icol]),icol])
       stop(paste('Duplicated in column', icol, 'in v.beg, amount:', length(idx.dup) - 1))  # WHY -1 ?!
     }
-    idx.dup = unique(v.end[duplicated(v.end[,icol]),icol])
-    if(length(setdiff(idx.dup, 0)) != 0) {
+    col.e = v.end[,icol]; col.e = col.e[col.e != 0]
+    if(anyDuplicated(col.e) > 0) {
+      idx.dup = unique(v.end[duplicated(v.end[,icol]),icol])
       stop(paste('Duplicated in column', icol, 'in v.end, amount:', length(idx.dup) - 1))  # WHY -1 ?!
     }
   }

@@ -247,6 +247,10 @@ for(s.comb in pref.combinations){
   if(sum(idx.zero) != sum(df.breaks$len.new)) stop('Idx.zero are wrongly defined')
   
   # ---- Get results by accessions ----
+  # Subsets of df.breaks are accession-invariant -> compute once outside the loop.
+  df.single.sub <- df.breaks[df.breaks$type == 'single',]
+  df.short.sub  <- df.breaks[df.breaks$type == 'short',]
+  df.long.sub   <- df.breaks[df.breaks$type == 'long',]
   idx.all.acc.zeros = rep(0, len.aln.new)
   for(acc in accessions){
     
@@ -270,7 +274,7 @@ for(s.comb in pref.combinations){
     v.new[idx.zero == 1] = 0
     
     # Fill up singletons
-    df.br.tmp = df.breaks[df.breaks$type == 'single',]
+    df.br.tmp = df.single.sub
     for(irow in which(df.single$acc == acc)){
       # stop()
       v.new[df.br.tmp$new.beg[irow]:df.br.tmp$new.end[irow]] = (df.single$acc.beg[irow]+1):(df.single$acc.end[irow]-1)
@@ -283,16 +287,16 @@ for(s.comb in pref.combinations){
     }
     
     # Check duplicates
-    if(sum(duplicated(abs(v.new[v.new != 0]))) > 0) stop('Duplicated after singletons')
+    if(anyDuplicated(abs(v.new[v.new != 0])) > 0) stop('Duplicated after singletons')
     
     # Fill up short alignments
     for(s.type in c('short', 'large')){
       pokaz('Insert type', s.type)
       
       if(s.type == 'large'){
-        df.br.tmp = df.breaks[df.breaks$type == 'long',]  
+        df.br.tmp = df.long.sub
       } else {
-        df.br.tmp = df.breaks[df.breaks$type == s.type,]
+        df.br.tmp = df.short.sub
       }
       
       file.df.acc = paste0(path.inter.synteny, acc, "_",s.type,"_", s.comb, "_df.rds")
@@ -323,19 +327,23 @@ for(s.comb in pref.combinations){
       #   save(list = ls(), file = "tmp_workspace_large.RData")
       # }
       
+      # Vectorise the non-gap position search over all alignment lines at once
+      # (one gregexpr call over the whole vector instead of one per break).
+      aln.matches = gregexpr("[^-]", aln.acc)
+
       for(i in 1:length(aln.acc)){
         # pokaz(i)
-        
+
         if(df.br.tmp$fail[i]) next  # Kostyl
         if(df.br.tmp$extra[i] < 0) next
-        
+
         # if(s.type == 'large') stop()
         if(df.acc$p1[i] == 0) next
-        
+
         p.own = df.acc$p1.own[i]:df.acc$p2.own[i]
-        
+
         p.insert = rep(0, df.br.tmp$len.new[i])
-        idx.tmp.aln = c(gregexpr("[^-]", aln.acc[i])[[1]])
+        idx.tmp.aln = c(aln.matches[[i]])
         
         if(length(idx.tmp.aln) != length(p.own)) {
   
@@ -356,10 +364,10 @@ for(s.comb in pref.combinations){
       }
       
       # Check duplicates # Kostyl
-      if(sum(duplicated(abs(v.new[v.new != 0]))) > 0){
+      if(anyDuplicated(abs(v.new[v.new != 0])) > 0){
         dup.values = abs(v.new[duplicated(abs(v.new))])
         v.new[abs(v.new) %in% dup.values] = 0
-      } 
+      }
     }
     
     # Save positions which are zeros

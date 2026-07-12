@@ -157,9 +157,9 @@ loop.function <- function(s.comb,
         
         v.b.remove = v.b[v.b$len <= min.block.len,]
         if(nrow(v.b.remove) == 0) break
-        for(irow in 1:nrow(v.b.remove)){
-          v.init[v.b.remove$i.beg[irow]:v.b.remove$i.end[irow]] = 0
-        }
+        idx.rm = sequence(v.b.remove$i.end - v.b.remove$i.beg + 1L,
+                          from = v.b.remove$i.beg)
+        v.init[idx.rm] = 0
       }
       
       suppressMessages({
@@ -200,6 +200,9 @@ loop.function <- function(s.comb,
   
   # ---- Breaks ----
   pokaz('Find breaks..', file=file.log.loop, echo=echo.loop)
+  # NOTE: kept as an iterative rbind on purpose. do.call(rbind,list) is faster but
+  # R disambiguates duplicate data.frame rownames differently there, so the saved
+  # breaks_*.rds would not be byte-identical to the original (values are the same).
   idx.breaks = c()
   for(acc in accessions){
     pokaz('Accession', acc, file=file.log.loop, echo=echo.loop)
@@ -227,9 +230,13 @@ loop.function <- function(s.comb,
       v.b = v.b[order(abs(v.b$v.beg)),]
       
       blocks.acc = rep(0, max(abs(v)))
-      for(irow in 1:nrow(v.b)){
-        blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] = irow
-      }
+      # abs(v.beg) may exceed abs(v.end) on minus-strand runs; the original loop
+      # used beg:end (descending) which covers the same index set -> use lo/hi.
+      b.lo = pmin(abs(v.b$v.beg), abs(v.b$v.end))
+      b.hi = pmax(abs(v.b$v.beg), abs(v.b$v.end))
+      b.lens = b.hi - b.lo + 1L
+      idx.fill = sequence(b.lens, from = b.lo)
+      blocks.acc[idx.fill] = rep(seq_len(nrow(v.b)), b.lens)
       
       suppressMessages({
         s.acc = paste0(gr.blocks, acc)
@@ -254,10 +261,10 @@ loop.function <- function(s.comb,
     df$acc = acc
     df$len.acc = abs(df$val.end - df$val.beg) - 1
     df$len.comb = abs(df$idx.end - df$idx.beg) - 1
-    
+
     idx.breaks = rbind(idx.breaks, df)
   }
-  
+
   file.breaks = paste0(path.inter.msa, 'breaks_', s.comb,'.rds')
   saveRDS(idx.breaks, file.breaks)
   

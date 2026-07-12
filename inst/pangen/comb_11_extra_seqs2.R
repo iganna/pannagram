@@ -139,9 +139,7 @@ for(s.comb in pref.combinations){
     s.acc = paste0(gr.accs.e, acc)
     v = h5read(file.comb, s.acc)
     v[is.na(v)] = 0
-    
-    save(list = ls(), file = "tmp_workspace_good.RData")
-    
+
     breaks.acc = findBreaks(v)
     idx.bad.orientation = which(breaks.acc$val.beg > breaks.acc$val.end)
     if(length(idx.bad.orientation) > 0){

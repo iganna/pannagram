@@ -143,29 +143,35 @@ getSeqsByIdx <- function(idx, v.beg, v.end, acc, genome) {
   df$len <- df$p2 - df$p1 + 1
   df$len[df$strand == ""] <- 0
   
-  check.table <- table(df$strand, df$len != 0)
+  # Force both FALSE/TRUE columns so groups where every len != 0 (no gaps)
+  # don't collapse the table to a single column -> check.table[, 2] out of bounds.
+  check.table <- table(df$strand, factor(df$len != 0, levels = c(FALSE, TRUE)))
   if (sum(check.table[, 1] * check.table[, 2]) != 0) {
     stop("Check table did not pass")
   }
   
-  seqs <- mapply(
-    function(a, b) substr(genome, a, b),
-    df$p1,
-    df$p2,
-    SIMPLIFY = TRUE
-  )
-  
-  seqs = unlist(seqs, use.names = FALSE)
+  # Vectorised substring over the single genome string (byte-identical to the
+  # per-row mapply(substr, ...) but avoids one R call per break).
+  seqs <- substring(genome, df$p1, df$p2)
   names(seqs) <- NULL
-  
+
   if (sum(seqs[df$strand == ""] != "") > 0) {
     stop("Check empty strings did not pass")
   }
-  
+
   # save(list = c("seqs", "idx.neg"), file = "tmp_workspace1.RData")
-  
-  ## Reverse complement
-  seqs[idx.neg] <- unlist(sapply(seqs[idx.neg], revCompl))
+
+  ## Reverse complement (vectorised): complement + IUPAC/case normalisation via a
+  ## single chartr() over the whole vector, then reverse each string. Byte-identical
+  ## to the per-sequence revCompl() (which upper-cases, maps X->N and U->A).
+  if (any(idx.neg)) {
+    rc <- chartr(
+      "ACGTRYSWKMBDHVNXUacgtryswkmbdhvnxu",
+      "TGCAYRSWMKVHDBNNATGCAYRSWMKVHDBNNA",
+      seqs[idx.neg]
+    )
+    seqs[idx.neg] <- stringi::stri_reverse(rc)
+  }
   
   return(list(df = df, 
               seqs = seqs))
