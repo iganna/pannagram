@@ -310,7 +310,21 @@ p_ident="${p_ident:-85}"
 p_ident_gap="${p_ident_gap:-85}"  
 part_len="${part_len:-1000}"
 max_len_gap="${max_len_gap:-25000}"
-w_size="${w_size:-11}"  # blastn word_size (default 11, as in classic blastn)
+# ---- word_size defaults (tuned 2026-07-10; override with -word_size / -word_size_gap) ----
+# STEP 3 (parts vs reference): 28  -> coarse seeding; coverage is INSENSITIVE to this (gap-fill
+#                                     recovers what coarse seeding misses), so pick it for speed.
+# STEP 7 (gaps blast):         15  -> gentle sensitivity; each step down (15->11) buys only ~0.1-0.3pp
+#                                     coverage for a big step7+step8 cost (wsg=11 floods merge).
+# 1-core sweep, Anopheles (qry 246.8 Mb) x Drosophila (qry 134.5 Mb), full pipeline:
+#   ws  wsg   Anoph total/cov     Dros total/cov
+#   28  28    729s / 80.06%       278s / 92.79%
+#   28  20    750s / 80.28%       289s / 92.85%
+#   28  15    799s / 80.40%       291s / 92.87%   <- DEFAULT (speed/coverage knee)
+#   28  11   1011s / 80.62%       354s / 92.90%   (strict max coverage; +212s Anoph for +0.22pp)
+#   20  11   1135s / 80.64%       369s / 92.90%   (previous default)
+#   15  11   1560s / 80.65%       493s / 92.91%   (ws=15 is a trap: 2.5x slower, ~0 coverage gain)
+w_size="${w_size:-28}"          # STEP 3 parts-vs-reference word_size (coverage-insensitive -> max for speed)
+w_size_gap="${w_size_gap:-15}"  # STEP 7 gaps-blast word_size (knee of the speed/coverage curve)
 
 # Filter repeats
 
@@ -552,7 +566,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     fi
 
     # Run the step
-    Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R --path.in ${path_in} --path.out ${path_chrom} \
+    bash $INSTALLED_PATH/pangen/query_01_to_chr.sh --path.in ${path_in} --path.out ${path_chrom} \
             --cores ${cores}  \
             --n.chr ${nchr}  \
             --accessions ${file_accessions} \
@@ -590,7 +604,7 @@ if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
             echo "${ref0}" > ${file_acc_ref}
 
             # Run the step
-            Rscript $INSTALLED_PATH/pangen/query_01_to_chr.R \
+            bash $INSTALLED_PATH/pangen/query_01_to_chr.sh \
                     --path.in ${path_ref} \
                     --path.out ${path_chrom}   \
                     --cores ${cores} \
@@ -848,6 +862,10 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # Plotting
 
+if [ "${no_plot}" == "T" ]; then
+with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
+with_level 1 pokaz_attention "Step ${step_num} is NOT performed (-no_plot flag is set)."
+else
 with_level 1 pokaz_stage "Step ${step_num}. Plotting the results."
 for ref0 in "${refs_all[@]}"; do
 
@@ -901,8 +919,9 @@ for ref0 in "${refs_all[@]}"; do
     unset path_plots_ref
 
 done
+fi
 
-source $INSTALLED_PATH/utils/chunk_step_done.sh 
+source $INSTALLED_PATH/utils/chunk_step_done.sh
 
 # ========== PRE mode stops here ==========
 if [ "${mode_pangen}" == "${name_mode_pre}" ]; then 
@@ -1004,6 +1023,7 @@ for ref0 in "${refs_all[@]}"; do
                 -path_gaps ${path_gaps} \
                 -cores ${cores} \
                 -log_path ${path_log_step} \
+                -word_size ${w_size_gap} \
                 -p_ident ${p_ident_gap}
 
         # Done

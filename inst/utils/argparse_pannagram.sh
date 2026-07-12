@@ -12,6 +12,7 @@ mode_ref="F"
 mode_msa="F"
 clean="F"
 one_step="F"
+no_plot="F"
 purge_reps="T"
 rm_inter="F"
 extra_steps="F"
@@ -39,6 +40,7 @@ while [ $# -gt 0 ]; do
         -cores)          cores="$2";        shift 2 ;;
         -clean|-cleanup) clean="T";         shift 1 ;;
         -one_step | -1s) one_step="T";      shift 1 ;;
+        -no_plot|-noplot) no_plot="T";      shift 1 ;; # skip the synteny plotting step (numbering is preserved)
         -rm_inter)       rm_inter="T";      shift 1 ;;
         
         
@@ -56,7 +58,8 @@ while [ $# -gt 0 ]; do
         -nchr_ref)       nchr_ref="$2"; shift 2 ;;    # in reference genome
 
         -part_len)       part_len="$2";    shift 2 ;; # fragments to which each chromosome should be cut, has a default value 1000
-        -word_size)      w_size="$2";      shift 2 ;; # blastn word_size for part-vs-reference search, default 11
+        -word_size)      w_size="$2";      shift 2 ;; # blastn word_size for STEP 3 part-vs-reference search, default 20
+        -word_size_gap)  w_size_gap="$2";  shift 2 ;; # blastn word_size for STEP 7 gaps blast, default 11 (sensitive)
         -p_ident)        p_ident="$2";     shift 2 ;; # percent of identity
         -p_ident_gap)    p_ident_gap="$2"; shift 2 ;; # percent of identity of gaps
         -max_len_gap)    max_len_gap="$2"; shift 2 ;; # Max length that can be aligned with MAFFT

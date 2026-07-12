@@ -10,7 +10,7 @@ print_usage_detailed() {
 pannagram performs alignment of query genomes to the reference genome.
 
 PRE: parameters for the PREliminary alignment:
-${0##*/} -path_in INPUT_DIR -path_out PROJECT_DIR -pre 
+${0##*/} -path_genomes INPUT_DIR -path_project PROJECT_DIR -pre 
          -ref REF_NAME 
          [-nchr NUM_OF_CHR] 
          [-nchr_ref NUM_OF_CHR_IN_REF] 
@@ -18,7 +18,7 @@ ${0##*/} -path_in INPUT_DIR -path_out PROJECT_DIR -pre
          [OTHER PARAMETERS]
 
 REF: parameters for the REF-base alignment:
-${0##*/} -path_in INPUT_DIR -path_out PROJECT_DIR 
+${0##*/} -path_genomes INPUT_DIR -path_project PROJECT_DIR 
          -ref REF_NAME 
          -nchr N_CHR_QUERY 
          [-nchr_ref N_CHR_REF]
@@ -26,7 +26,7 @@ ${0##*/} -path_in INPUT_DIR -path_out PROJECT_DIR
          [OTHER PARAMETERS]
 
 MGA: parameters for the Multiple Genome Alignment:
-${0##*/} -path_in INPUT_DIR -path_out PROJECT_DIR
+${0##*/} -path_genomes INPUT_DIR -path_project PROJECT_DIR
         [-refs REFS_NAMES]
         [-nref NUM_OF_REFS]
         [-nchr NUM_OF_CHRS]
@@ -54,9 +54,9 @@ PARAMETERS EXPLAINED:
                                         3 - full logging (visible only with '-cores 1')
         
     * Required parameters:
-        -path_in INPUT_DIR          Directory with query genomes. 
+        -path_genomes INPUT_DIR     Directory with query genomes.
                                     Processed file suffixes: .fasta, .fna, .fa, .fas;
-        -path_out | -path_project PROJECT_DIR
+        -path_project PROJECT_DIR
                                     Path to pannagram (project) output directory;
 
 
@@ -88,7 +88,8 @@ PARAMETERS EXPLAINED:
         -accessions ACC_FILE        File with accessions to analyze. Accessions should be in rows;
         -combinations COMB_FILE     File with combinations to analyze;
 
-    * Tuning parameters: 
+    * Tuning parameters:
+        -no_plot                    Flag to skip the synteny plotting step (step numbering is preserved);
         -purge_repeats              Flag for filtering of repeats (default is no filtering);
         -p_ident P_IDENT            Percentage identity threshold (default: 85);
         -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 1000).
@@ -102,11 +103,11 @@ print_examples() {
     cat << EOF
 The simplest examples:
 * REF-base preliminary run:
-    ${0##*/} -cores 4 -path_in '<genomes_dir>' -path_out '<project_dir>' -ref '<reference_name>' -pre
+    ${0##*/} -cores 4 -path_genomes '<genomes_dir>' -path_project '<project_dir>' -ref '<reference_name>' -pre
 * REF-base:
-    ${0##*/} -cores 4 -path_in '<genomes_dir>' -path_out '<project_dir>' -ref '<reference_name>'
+    ${0##*/} -cores 4 -path_genomes '<genomes_dir>' -path_project '<project_dir>' -ref '<reference_name>'
 * MSA:
-    ${0##*/} -cores 4 -path_in '<genomes_dir>' -path_out '<project_dir>'
+    ${0##*/} -cores 4 -path_genomes '<genomes_dir>' -path_project '<project_dir>'
 
 EOF
 }
