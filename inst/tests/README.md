@@ -12,5 +12,5 @@ test_files=$(ls "$TESTS_DIR" | grep -oP '^\s*([a-zA-Z0-9_]+)\.R' | sed 's/\.R$//
 comm -23 <(grep -oP '^\s*([a-zA-Z0-9_]+)\s*<-\s*function' "$UTILS_FILE" | awk '{print $1}' | sort) <(ls "$TESTS_DIR" | grep -oP '^\s*([a-zA-Z0-9_]+)\.R' | sed 's/\.R$//' | sort)
 ```
 
-1. Activate the pannagram environment from `pannagram_dev.yaml`
+1. Activate the pannagram environment from `pannagram.yml`
 2. Run tests (from the root of the repo): `Rscript inst/tests/testthat/test.R`

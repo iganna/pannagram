@@ -1,25 +1,28 @@
 Package: pannagram
-Title: What the Package Does (One Line, Title Case)
+Title: Reference-Free Pangenome Alignment and Mobilome Calling
 Version: 0.1.0
 Authors@R:
     c(
         person(
-            "Name1",
-            "Lastname1",
-            email = "email_1@example.com",
+            "Anna A.", "Igolkina",
+            email = "igolkinaanna11@gmail.com",
             role = c("aut", "cre"),
-            comment = c(ORCID = "YOUR-ORCID-ID")
+            comment = c(ORCID = "0000-0001-8851-9621")
         ),
         person(
-            "Name2",
-            "Lastname2",
-            email = "email_2@example.com",
-            role = "ctb",
-            comment = c(ORCID = "YOUR-ORCID-ID")
+            "Alexander", "Bezlepsky",
+            role = "ctb"
         )
     )
-Description: What the package does (one paragraph).
-License: use_mit_license()
+Description: Pannagram builds reference-free linear pangenome alignments and
+    analyzes genomic polymorphisms. It provides a command-line interface for
+    whole-genome alignment, feature extraction (SNPs, structural variants, and
+    mobile element families), and similarity search, together with an R library
+    for downstream analysis and visualization.
+License: MIT + file LICENSE
+URL: https://github.com/iganna/pannagram, https://iganna.github.io/pannagram/
+BugReports: https://github.com/iganna/pannagram/issues
+Depends: R (>= 4.0)
 Encoding: UTF-8
 Imports: Rcpp
 LinkingTo: Rcpp

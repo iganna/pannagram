@@ -1,14 +1,13 @@
 # Pannagram
 
-<!-- ![License](https://img.shields.io/github/license/iganna/pannagram)
-![R](https://img.shields.io/badge/R-%3E%3D4.0-blue)
-![Conda](https://img.shields.io/badge/conda-supported-green)
-![Platform](https://img.shields.io/badge/platform-linux--64-lightgrey) -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+![R](https://img.shields.io/badge/R-%E2%89%A5%204.0-blue)
+![install: conda](https://img.shields.io/badge/install-conda-green)
+![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20osx--64-lightgrey)
 
-<img
-    src="docs/images/pannagram_scheme.png"
-    style="width: 90%; object-fit: cover;"
-/>
+📖 [Documentation](https://iganna.github.io/pannagram/) · 📄 [Paper](https://doi.org/10.1101/2025.02.07.637071) · 🐛 [Issues](https://github.com/iganna/pannagram/issues)
+
+<img src="docs/images/pannagram_scheme.png" width="90%" alt="Pannagram framework overview">
 
 ## Overview
 
@@ -23,14 +22,28 @@ Key capabilities:
 - Annotation liftover between genomes
 - Visualization and sequence analysis
 
+The CLI provides four commands:
+- `pannagram` – reference-free (or reference-based) whole-genome alignment
+- `features` – extract SNPs, structural variants, and mobile element families from an alignment
+- `simsearch` – similarity search of sequences against sequence sets or whole genomes
+- `chromotools` – reorder and rearrange chromosomes to match a common reference structure
+
 Documentation can be found at [Pannagram-page](https://iganna.github.io/pannagram/).
+
+## Requirements
+
+- A Conda-compatible package manager: [conda](https://docs.conda.io/), [mamba](https://github.com/mamba-org/mamba), or [micromamba](https://github.com/mamba-org/mamba#micromamba)
+- Linux (x86-64) or macOS (Intel; Apple Silicon via `--platform osx-64`)
+- R ≥ 4.0 (installed automatically into the Conda environment)
+
+Platform-specific details are in the [installation guide](https://iganna.github.io/pannagram/).
 
 ## Quick Installation
 
 Clone the repository and create the conda environment:
 
-```
-git clone https://github.com/<user>/pannagram.git
+```bash
+git clone https://github.com/iganna/pannagram.git
 cd pannagram
 conda env create -f pannagram.yml
 conda activate pannagram
@@ -76,10 +89,10 @@ features  -path_project ${PATH_PROJECT} \
 
 All results will be saved under ${PATH_PROJECT} after both steps are complete:
 
-```
-PATH_PROJECT/  
-├── features/     ← main analysis outputs  
-└── plots/        ← visualizations and figures  
+```text
+PATH_PROJECT/
+├── features/     ← main analysis outputs
+└── plots/        ← visualizations and figures
 ```
 
 A detailed description of all output files and their formats is available in the documentation under **Getting Started → Output Data**.
@@ -103,6 +116,11 @@ Pannagram R library provides functions for:
 
 For detailed documentation, visit the [Pannagram-page](https://iganna.github.io/pannagram/).
 
+## Contributing
+
+Questions, bug reports, and feature requests are welcome via [GitHub Issues](https://github.com/iganna/pannagram/issues).
+For building Pannagram from source, see the [developer guide](DEV_BUILD.md).
+
 ## Citation
 
 If you use Pannagram, please cite:
@@ -115,21 +133,14 @@ To explore Pannagram applications, we recommend:
 - **A comparison of 27 *Arabidopsis thaliana* genomes and the path toward an unbiased characterization of genetic polymorphism**  
   *Anna A. Igolkina et al.*, *Nature Genetics*, 2025. [**Link**](https://doi.org/10.1038/s41588-025-02293-0)
 
+## License
 
+Pannagram is released under the [MIT License](LICENSE.md).
 
 ## Acknowledgements
 
-**Development:**
-- Anna Igolkina - Lead Developer and Project Initiator
-- Alexander Bezlepsky - Assistant
+**Development:** Anna A. Igolkina (lead) and Alexander Bezlepsky.
 
-**Testing:**
-- Anna Igolkina: Lead Tester
-- Anna Glushkevich: Testing the alignment on _A. lyrata_ genomes
-- Elizaveta Grigoreva: Testing the alignment on _A. thaliana_ and _A. lyrata_ genomes
-- Jilong Ma: Testing the SV-graph on spider genomes
-- Alexander Bezlepsky: Testing the Pannagram's functionality on Rhizobial genomes
-- Gregoire Bohl-Viallefond: Testing the annotation converter on _A. thaliana_ alignment
+**Testing (first release):** Anna Glushkevich, Elizaveta Grigoreva, Jilong Ma, and Grégoire Bohl-Viallefond.
 
-**Resources:**
-- Parallel Processing Tool: O. Tange (2018): GNU Parallel 2018, ISBN 9781387509881, DOI [https://doi.org/10.5281/zenodo.1146014](https://doi.org/10.5281/zenodo.1146014).
+**Tools:** GNU Parallel — O. Tange (2018), *GNU Parallel 2018*, [10.5281/zenodo.1146014](https://doi.org/10.5281/zenodo.1146014).
