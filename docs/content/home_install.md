@@ -51,15 +51,10 @@ In the commands below, replace `<manager>` with the package manager you’re usi
 
 ### 3. Environment Setup
 
-#### **Linux and macOS (Intel)**
+The same command works on all supported platforms — Linux (x86-64) and macOS (Intel and Apple Silicon):
+
 ```bash
 <manager> env create -f pannagram.yml
-<manager> activate pannagram
-```
-
-#### **macOS (Apple Silicon / M-series)**
-```bash
-<manager> env create --platform osx-64 -f pannagram.yml
 <manager> activate pannagram
 ```
 

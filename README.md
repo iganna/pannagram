@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 ![R](https://img.shields.io/badge/R-%E2%89%A5%204.0-blue)
 ![install: conda](https://img.shields.io/badge/install-conda-green)
-![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20osx--64-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20osx--64%20%7C%20osx--arm64-lightgrey)
 
 📖 [Documentation](https://iganna.github.io/pannagram/) · 📄 [Paper](https://doi.org/10.1101/2025.02.07.637071) · 🐛 [Issues](https://github.com/iganna/pannagram/issues)
 
@@ -33,7 +33,7 @@ Documentation can be found at [Pannagram-page](https://iganna.github.io/pannagra
 ## Requirements
 
 - A Conda-compatible package manager: [conda](https://docs.conda.io/), [mamba](https://github.com/mamba-org/mamba), or [micromamba](https://github.com/mamba-org/mamba#micromamba)
-- Linux (x86-64) or macOS (Intel; Apple Silicon via `--platform osx-64`)
+- Linux (x86-64) or macOS (Intel and Apple Silicon)
 - R ≥ 4.0 (installed automatically into the Conda environment)
 
 Platform-specific details are in the [installation guide](https://iganna.github.io/pannagram/).
