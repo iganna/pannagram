@@ -212,11 +212,13 @@ if [ "$mode_rearrange" = true ]; then
 
     pokaz_stage "Find the best rearrangements based on alignment..."
     Rscript $INSTALLED_PATH/chromotools/rearrange_01_positions.R --path.aln ${path_aln} --ref ${ref_name} \
-                                                                 --path.processed ${genomes_out} --path.chr ${path_chr}
+                                                                 --path.processed ${genomes_out} --path.chr ${path_chr} \
+                                                                 --cores ${cores}
 
     pokaz_stage "Rearranging (splitting/merging) chromosomes..."
     Rscript $INSTALLED_PATH/chromotools/rearrange_02_genomes.R --path.aln ${path_aln} --ref ${ref_name} \
-                                                               --path.processed ${genomes_out} --path.chr ${path_chr}
+                                                               --path.processed ${genomes_out} --path.chr ${path_chr} \
+                                                               --cores ${cores}
 fi
 
 pokaz_message "Script completed successfully!"

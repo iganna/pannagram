@@ -118,45 +118,82 @@ ref.chromosomes = sort(ref.chromosomes)
 pokaz('Reference chromosomes:', ref.chromosomes)
 
 
-# ---- Main loop ----
-for(acc in accessions){
-  pokaz('Accession', acc)
-  
-  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
-  acc.len = read.table(file.acc.len, header = 1)
-  
-  corresp.acc2ref = readRDS(paste0(path.processed, 'corresp_',acc,'_to_',ref, '.rds'))
-  print(corresp.acc2ref)
-  
-  n.acc = max(corresp.acc2ref$i.acc)
-  # n.ref = max(corresp.acc2ref$i.ref)
+# ---- Parallel backend (comb-style; FORK inherits all vars/functions) ----
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "FORK")
+  registerDoParallel(myCluster)
+}
 
-  genome = list()
-  for(i.chr.acc in 1:n.acc){
-    file.chr = paste0(path.chr, acc, '_chr', i.chr.acc, '.fasta')
+# Build one reference-ordered chromosome for accession `acc`.
+# Fast path: a single source chromosome taken whole and forward is copied as a
+# string (no per-nucleotide seq2nt/nt2seq) -> avoids building multi-gigabase
+# character vectors. Only reversed/spliced pieces are expanded nucleotide-wise.
+build.ref.chr <- function(i.chr.ref, corresp.acc2ref, acc, acc.len, path.chr){
+  corresp.tmp = corresp.acc2ref[corresp.acc2ref$i.ref == i.chr.ref,]
+  if(nrow(corresp.tmp) == 0) return(NULL)
+  corresp.tmp = corresp.tmp[order(abs(corresp.tmp$pos)),]
+
+  read.chr <- function(i.acc){
+    file.chr = paste0(path.chr, acc, '_chr', i.acc, '.fasta')
     checkFile(file.chr)
-    genome[[i.chr.acc]] = seq2nt(readFasta(file.chr))
+    readFasta(file.chr)[[1]]
   }
-  
-  genome.ref = c()
-  for(i.chr.ref in ref.chromosomes){
-    corresp.tmp = corresp.acc2ref[corresp.acc2ref$i.ref == i.chr.ref,]
-    if(nrow(corresp.tmp) == 0) next
-    corresp.tmp = corresp.tmp[order(abs(corresp.tmp$pos)),]
+
+  if(nrow(corresp.tmp) == 1 &&
+     corresp.tmp$beg[1] == 1 &&
+     corresp.tmp$end[1] == acc.len$len[corresp.tmp$i.acc[1]] &&
+     corresp.tmp$pos[1] >= 0){
+    out = read.chr(corresp.tmp$i.acc[1])                 # whole chromosome, forward
+  } else {
     s = c()
     for(irow in 1:nrow(corresp.tmp)){
-      s.tmp = genome[[corresp.tmp$i.acc[irow]]][corresp.tmp$beg[irow]:corresp.tmp$end[irow]]
-      if(corresp.tmp$pos[irow] < 0){
-        s.tmp = revCompl(s.tmp)
-      }
+      s.tmp = seq2nt(read.chr(corresp.tmp$i.acc[irow]))[corresp.tmp$beg[irow]:corresp.tmp$end[irow]]
+      if(corresp.tmp$pos[irow] < 0) s.tmp = revCompl(s.tmp)
       s = c(s, s.tmp)
     }
-    genome.ref[paste0(acc, '_Chr',i.chr.ref)] = nt2seq(s)
+    out = nt2seq(s)
   }
-  
-  writeFasta(genome.ref, paste0(path.processed, acc, '.fasta'))
-  
+  names(out) = paste0(acc, '_Chr', i.chr.ref)
+  return(out)
 }
+
+# ---- Per-accession worker: build every chromosome of one genome and write it ----
+process.acc.02 <- function(acc){
+  pokaz('Accession', acc)
+  file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+  acc.len = read.table(file.acc.len, header = 1)
+  corresp.acc2ref = readRDS(paste0(path.processed, 'corresp_',acc,'_to_',ref, '.rds'))
+  seqs = lapply(ref.chromosomes, function(i.chr.ref)
+                build.ref.chr(i.chr.ref, corresp.acc2ref, acc, acc.len, path.chr))
+  genome.ref = unlist(seqs)                              # named vector; NULLs dropped
+  writeFasta(genome.ref, paste0(path.processed, acc, '.fasta'))
+  return(invisible(NULL))
+}
+
+# ---- Main loop ----
+# Spend the cores along whichever dimension is larger, without nesting:
+#   * many accessions   -> one genome per worker (memory bounded to one genome);
+#   * a single accession -> parallel over that genome's chromosomes.
+if(num.cores > 1 && length(accessions) > 1){
+  foreach(acc = accessions, .packages = c('pannagram', 'crayon')) %dopar% process.acc.02(acc)
+} else if(num.cores > 1){
+  for(acc in accessions){
+    pokaz('Accession', acc)
+    file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
+    acc.len = read.table(file.acc.len, header = 1)
+    corresp.acc2ref = readRDS(paste0(path.processed, 'corresp_',acc,'_to_',ref, '.rds'))
+    seqs = foreach(i.chr.ref = ref.chromosomes,
+                   .packages = c('pannagram', 'crayon')) %dopar% {
+             build.ref.chr(i.chr.ref, corresp.acc2ref, acc, acc.len, path.chr)
+           }
+    genome.ref = unlist(seqs)
+    writeFasta(genome.ref, paste0(path.processed, acc, '.fasta'))
+  }
+} else {
+  for(acc in accessions) process.acc.02(acc)
+}
+
+if(num.cores > 1) stopCluster(myCluster)
 
 # Also copy the reference genome
 genome = c()
