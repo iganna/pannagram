@@ -20,8 +20,6 @@ dependencies:
   - bioconductor-biostrings=2.78.0=r45h01b2380_0
   - bioconductor-ggtree=4.0.4=r45hdfd78af_1
   - bioconductor-iranges=2.44.0=r45h01b2380_1
-  - bioconductor-msa=1.42.0=r45he8cd136_0
-  - bioconductor-muscle=3.52.0=r45ha27e39d_0
   - bioconductor-rhdf5=2.54.1=r45h882589e_0
   - bioconductor-rhdf5filters=1.22.0=r45ha27e39d_0
   - bioconductor-rhdf5lib=1.32.0=r45h01b2380_0
@@ -47,7 +45,7 @@ dependencies:
   - fonts-conda-forge=1=hc364b38_1
   - freetype=2.14.3=ha770c72_0
   - fribidi=1.0.16=hb03c661_0
-  - gawk=5.4.0=h0a3468a_0
+  - gawk=5.4.1=h0a3468a_0
   - gcc_impl_linux-64=15.2.0=he0086c7_19
   - gcc_linux-64=15.2.0=h7be306e_27
   - gfortran_impl_linux-64=15.2.0=h281d09f_19
@@ -88,7 +86,7 @@ dependencies:
   - libharfbuzz-devel=14.2.1=h17a8019_1
   - libiconv=1.18=h3b78370_2
   - libidn2=2.3.8=hfac485b_1
-  - libjpeg-turbo=3.1.4.1=hb03c661_0
+  - libjpeg-turbo=3.2.0=hb03c661_0
   - liblapack=3.11.0=8_h47877c9_openblas
   - liblzma=5.8.3=hb03c661_0
   - libmpdec=4.0.0=hb03c661_1
