@@ -116,6 +116,10 @@ for(s.comb in pref.combinations){
   
   # Load breaks
   file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
+  if(!file.exists(file.breaks.info)){
+    if(echo) pokaz('No breaks for combination', s.comb, '- nothing to align')
+    next
+  }
   load(file.breaks.info)  # "breaks.init", "breaks"
   
   breaks$len.true = breaks$idx.end - breaks$idx.beg - 1

@@ -370,7 +370,16 @@ findBreaks <- function(v) {
   i.rm = v != 0
   v.idx <- v.idx[i.rm]
   v <- v[i.rm]
-  
+
+  # A fully-absent accession (all zeros) has no breaks.
+  if(length(v) == 0){
+    return(data.frame(
+      val.beg = numeric(0), val.end = numeric(0),
+      idx.beg = numeric(0), idx.end = numeric(0),
+      acc     = character(0), len.acc = numeric(0), len.comb = numeric(0)
+    ))
+  }
+
   # Rank the values and adjust for negative ranks
   v.r <- rank(abs(v))
   v.r[v < 0] <- v.r[v < 0] * (-1)
@@ -384,8 +393,9 @@ findBreaks <- function(v) {
   v.b$i.beg <- v.idx[v.b$beg]
   v.b$i.end <- v.idx[v.b$end]
   
-  # Initialize an array for block accumulation
-  blocks.acc <- rep(0, max(v))
+  # Initialize an array for block accumulation (indexed by abs() below, so it
+  # must be sized by the max ABSOLUTE value, not the signed max).
+  blocks.acc <- rep(0, max(abs(v)))
   for(irow in 1:nrow(v.b)) {
     blocks.acc[abs(v.b$v.beg[irow]):abs(v.b$v.end[irow])] <- irow
   }

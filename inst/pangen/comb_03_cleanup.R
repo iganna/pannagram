@@ -168,6 +168,11 @@ loop.function <- function(s.comb,
       })
 
       markDone(clean.id, file=file.log.loop, echo=echo.loop)
+    } else {
+      # Cleaning was done in a prior run: read the CLEANED vector back from the
+      # output (already trust-subset + cleaned) so idx.nonzero -- the survive-mask
+      # for the whole combination -- is built from cleaned, not raw, data on resume.
+      v.init = h5read(file.comb.out, s.acc)
     }
 
     idx.nonzero = idx.nonzero + (abs(v.init) > 0) * 1
@@ -229,14 +234,20 @@ loop.function <- function(s.comb,
       
       v.b = v.b[order(abs(v.b$v.beg)),]
       
-      blocks.acc = rep(0, max(abs(v)))
-      # abs(v.beg) may exceed abs(v.end) on minus-strand runs; the original loop
-      # used beg:end (descending) which covers the same index set -> use lo/hi.
-      b.lo = pmin(abs(v.b$v.beg), abs(v.b$v.end))
-      b.hi = pmax(abs(v.b$v.beg), abs(v.b$v.end))
-      b.lens = b.hi - b.lo + 1L
-      idx.fill = sequence(b.lens, from = b.lo)
-      blocks.acc[idx.fill] = rep(seq_len(nrow(v.b)), b.lens)
+      if(length(v) == 0){
+        # Fully-absent accession: no blocks. Placeholder so gr.blocks exists for
+        # comb_04 (it is never indexed for an absent accession).
+        blocks.acc = 0L
+      } else {
+        blocks.acc = rep(0, max(abs(v)))
+        # abs(v.beg) may exceed abs(v.end) on minus-strand runs; the original loop
+        # used beg:end (descending) which covers the same index set -> use lo/hi.
+        b.lo = pmin(abs(v.b$v.beg), abs(v.b$v.end))
+        b.hi = pmax(abs(v.b$v.beg), abs(v.b$v.end))
+        b.lens = b.hi - b.lo + 1L
+        idx.fill = sequence(b.lens, from = b.lo)
+        blocks.acc[idx.fill] = rep(seq_len(nrow(v.b)), b.lens)
+      }
       
       suppressMessages({
         s.acc = paste0(gr.blocks, acc)
