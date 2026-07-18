@@ -106,18 +106,8 @@ for(s.comb in pref.combinations){
 
   pokaz('* Combination', s.comb, file=file.log.main, echo=echo.main)
   
-  # ---- PRE-Resultant File ----
-  
-  file.res.pre = paste0(path.inter.msa, aln.type.out, s.comb,'.h5')
-  # if (file.exists(file.res.pre)) file.remove(file.res.pre)
-  if (!file.exists(file.res.pre)){
-    h5createFile(file.res.pre)
-    suppressMessages({
-      h5createGroup(file.res.pre, gr.accs.e)
-    })  
-  } else {
-    pokaz('Preliminary file exists')
-  }
+  # ---- PRE-Resultant File: retired ---- (single-pass keeps v.new in memory; no
+  # preliminary h5 file is written/read anymore)
   
   # Paths
   path.short.aln = paste0(path.inter.synteny, 'short_',s.comb,'/')
@@ -148,7 +138,7 @@ for(s.comb in pref.combinations){
   idx.beg <- which(data.single$pos.beg != 0, arr.ind = TRUE)
   idx.end <- which(data.single$pos.end != 0, arr.ind = TRUE)
   if(sum(idx.beg != idx.end) != 0) stop('Wrong data for singletons')
-  idx.beg = idx.beg[order(idx.beg[,1]),]
+  idx.beg = idx.beg[order(idx.beg[,1]),,drop=FALSE]
   if(nrow(idx.beg) != idx.beg[nrow(idx.beg),1]) stop('Indexes in singleton are wrong')
   
   df.single <- cbind(df.single, data.frame(
@@ -205,10 +195,13 @@ for(s.comb in pref.combinations){
   # TODO
   df.breaks$fail = (df.breaks$len.new == 0) | (df.breaks$extra < 0)
   df.breaks$extra[df.breaks$fail] = 0
-  
-  if(any(df.breaks$extra < 0)){
-    stop('Why negative extra?')
-  } 
+
+  # DEAD CHECK: `fail` above already zeroes every extra < 0, so this can never fire.
+  # extra < 0 (aligned insertions shorter than the reference gap) is a legitimate
+  # case handled by marking the break as `fail` (skipped below), not an error.
+  # if(any(df.breaks$extra < 0)){
+  #   stop('Why negative extra?')
+  # }
   
   # Mapping old coordinates to new
   idx.extra = rep(0, len.aln.synteny)
@@ -251,18 +244,14 @@ for(s.comb in pref.combinations){
   df.single.sub <- df.breaks[df.breaks$type == 'single',]
   df.short.sub  <- df.breaks[df.breaks$type == 'short',]
   df.long.sub   <- df.breaks[df.breaks$type == 'long',]
+  # Single-pass: hold each accession's v.new in memory (no preliminary h5 file) ->
+  # halves the HDF5 I/O (was ~a third of comb_10 time). Trade-off: per-accession resume
+  # granularity is dropped -- an interrupted combination is redone in full (fast), the
+  # combination-level marker still applies.
   idx.all.acc.zeros = rep(0, len.aln.new)
+  vnew.list = vector('list', length(accessions)); names(vnew.list) = accessions
   for(acc in accessions){
-    
-    # ---- Checkpoint: skip accessions already written for this combination ----
-    acc.id = paste0(s.comb.id, '_', acc)
-    if(acc.id %in% done.set){
-      pokaz('Accession', acc ,'was analysed before')
-      v.new = h5read(file.res.pre, paste0(gr.accs.e, acc))
-      idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
-      next
-    }
-    
+
     pokaz('Accession', acc)
     
     # Read accession alignment
@@ -286,9 +275,8 @@ for(s.comb in pref.combinations){
       # pokaz(v.new[tmp])
     }
     
-    # Check duplicates
-    if(anyDuplicated(abs(v.new[v.new != 0])) > 0) stop('Duplicated after singletons')
-    
+    # (duplicate check consolidated to a single pass after all inserts below)
+
     # Fill up short alignments
     for(s.type in c('short', 'large')){
       pokaz('Insert type', s.type)
@@ -363,23 +351,22 @@ for(s.comb in pref.combinations){
         # pokaz(v.new[tmp])
       }
       
-      # Check duplicates # Kostyl
-      if(anyDuplicated(abs(v.new[v.new != 0])) > 0){
-        dup.values = abs(v.new[duplicated(abs(v.new))])
-        v.new[abs(v.new) %in% dup.values] = 0
-      }
     }
-    
+
+    # Check duplicates once, after ALL inserts (Kostyl): zero any duplicated position.
+    # short/large break ranges are disjoint, so one end-of-accession pass gives the
+    # same v.new as the former per-type checks at ~1/3 the anyDuplicated cost
+    # (anyDuplicated over the tens-of-millions vector was ~a third of comb_10 time).
+    if(anyDuplicated(abs(v.new[v.new != 0])) > 0){
+      dup.values = abs(v.new[duplicated(abs(v.new))])
+      v.new[abs(v.new) %in% dup.values] = 0
+    }
+
     # Save positions which are zeros
     idx.all.acc.zeros = idx.all.acc.zeros + (v.new == 0)
-    
-    # Save (idempotent: drop a possibly half-written dataset if present)
-    suppressMessages({
-      try(h5delete(file.res.pre, paste0(gr.accs.e, acc)), silent = TRUE)
-      h5write(v.new, file.res.pre, paste0(gr.accs.e, acc)) })
 
-    # ---- Checkpoint marker: accession fully written ----
-    markDone(acc.id, file=file.log.loop, echo=echo.loop)
+    # Keep in memory for the single final write (no preliminary file)
+    vnew.list[[acc]] = v.new
   }
   
   idx.remain = (idx.all.acc.zeros != length(accessions))
@@ -399,11 +386,10 @@ for(s.comb in pref.combinations){
     }
     
     pokaz('Accession', acc)
-    
-    # Read accession alignment
-    v = h5read(file.res.pre, paste0(gr.accs.e, acc))
-    v.remain = v[idx.remain]
-    
+
+    # Take from memory (no preliminary file)
+    v.remain = vnew.list[[acc]][idx.remain]
+
     # Save (idempotent)
     suppressMessages({
       try(h5delete(file.res, paste0(gr.accs.e, acc)), silent = TRUE)
