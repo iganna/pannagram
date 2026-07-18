@@ -147,8 +147,27 @@ for(s.comb in pref.combinations){
   len.comb = as.numeric(unique(groups$dim[groups$group == gr.accs.b]))
   
   file.breaks.info = paste0(path.extra, "breaks_info_",s.comb,".RData")
+  if(!file.exists(file.breaks.info)){
+    # No extra breaks for this combination -> output alignment is an identity
+    # copy of the input (downstream still expects <aln.type.out>_<comb>.h5 to exist).
+    pokazAttention('No breaks for combination', s.comb, '- copying input alignment',
+                   file=file.log.loop, echo=echo.loop)
+    for(acc in accessions){
+      acc.id <- paste0(s.comb.id, '_', acc)
+      if(acc.id %in% done.set) next
+      s.acc = paste0(gr.accs.e, acc)
+      v = h5read(file.comb, s.acc); v[is.na(v)] = 0
+      suppressMessages({
+        try(h5delete(file.out, s.acc), silent = TRUE)
+        h5write(v, file.out, s.acc)
+      })
+      markDone(acc.id, file=file.log.loop, echo=echo.loop)
+    }
+    markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
+    next
+  }
   load(file.breaks.info)
-  
+
   if(sum(breaks$idx.beg == breaks$idx.end) > 0) stop('Breaks are wrong')
   
   # Define Lengths
