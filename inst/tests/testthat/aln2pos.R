@@ -2,7 +2,7 @@ library(testthat)
 
 test_that("aln2pos: Converts aligned sequences to position matrix correctly", {
   seqs <- c(seq1 = "AT-GC", seq2 = "A--GC")
-  expected_matrix <- matrix(c(1, 2, 0, 3, 4, 1, 0, 0, 3, 4), nrow = 2, byrow = TRUE)
+  expected_matrix <- matrix(c(1, 2, 0, 3, 4, 1, 0, 0, 2, 3), nrow = 2, byrow = TRUE)
   rownames(expected_matrix) <- c("seq1", "seq2")
   result <- aln2pos(seqs)
   expect_equal(result, expected_matrix)
@@ -32,7 +32,7 @@ test_that("aln2pos: Throws error for unequal sequence lengths", {
 
 test_that("aln2pos: Works with unnamed sequences", {
   seqs <- c("AT-GC", "A--GC")
-  expected_matrix <- matrix(c(1, 2, 0, 4, 3, 1, 0, 0, 4, 3), nrow = 2, byrow = TRUE)
+  expected_matrix <- matrix(c(1, 2, 0, 3, 4, 1, 0, 0, 2, 3), nrow = 2, byrow = TRUE)
   result <- aln2pos(seqs)
   expect_equal(result, expected_matrix)
   expect_null(rownames(result)) # Expect no row names when input is unnamed
@@ -40,7 +40,7 @@ test_that("aln2pos: Works with unnamed sequences", {
 
 test_that("aln2pos: Works with a single sequence", {
     seqs <- c(seq1 = "AT-GC")
-    expected_matrix <- matrix(c(1, 2, 0, 4, 3), nrow = 1, byrow = TRUE)
+    expected_matrix <- matrix(c(1, 2, 0, 3, 4), nrow = 1, byrow = TRUE)
     rownames(expected_matrix) <- c("seq1")
     result <- aln2pos(seqs)
     expect_equal(result, expected_matrix)
