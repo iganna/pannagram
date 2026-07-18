@@ -48,7 +48,8 @@ mergeIvStr <- function(b, e){
 #' that single sub-coverage HSPs get partial credit and inserted/nested copies
 #' are not rejected. No pre-filtering of HSPs by pident before assembly.
 findHitsInRef <- function(v, sim.cutoff, coverage = NULL, symmetric = FALSE,
-                          gap.factor = 1.0, echo = FALSE){
+                          gap.factor = 1.0, gap.abs = 20000,
+                          min.new.frac = 0.5, echo = FALSE){
   if(is.null(coverage)) coverage <- sim.cutoff
   if(!('len1' %in% colnames(v))) stop('No column len1 in the data.frame')
   if(!((sim.cutoff >= 0) & (sim.cutoff <= 1)))
@@ -92,12 +93,29 @@ findHitsInRef <- function(v, sim.cutoff, coverage = NULL, symmetric = FALSE,
   for(idx in groups){
     o   <- idx[order(gmin[idx])]
     len1 <- v$len1[o[1]]
-    gthr <- max(1, gap.factor * len1)
-    if(length(o) == 1){
-      cl <- 1
+    # Genomic gap threshold for chaining: relative to the consensus length but
+    # capped at an absolute size (a nested insertion is at most a few kb-tens of
+    # kb; without the cap, gap.factor * len1 becomes hundreds of kb for long
+    # consensi and merges unrelated copies).
+    gthr <- min(max(1, gap.factor * len1), gap.abs)
+    n.o <- length(o)
+    if(n.o == 1){
+      cl <- 1L
     } else {
-      gapd <- gmin[o][-1] - gmax[o][-length(o)]
-      cl <- cumsum(c(1, (gapd > gthr) * 1))
+      # Collinear chaining (vectorised, O(n)). A new copy starts when the
+      # genomic gap exceeds gthr. Additionally, for LONG-RANGE joins (gap beyond
+      # one consensus length -- the part that extends stock behaviour) the next
+      # HSP must add NEW consensus: an HSP that mostly re-covers the previous
+      # one's consensus span is a SEPARATE copy of the same family, and merging
+      # it would create a chimera. The gate is not applied to small gaps, so
+      # stock chaining (and its handling of overlapping HSPs of one copy) is
+      # preserved -- the fix only ADDS safe long-range joins.
+      gapd <- gmin[o][-1] - gmax[o][-n.o]
+      qs <- v$V2[o]; qe <- v$V3[o]
+      ov <- pmax(0, pmin(qe[-1], qe[-n.o]) - pmax(qs[-1], qs[-n.o]) + 1)
+      new.frac <- 1 - ov / (qe[-1] - qs[-1] + 1)
+      brk <- (gapd > gthr) | ((gapd > len1) & (new.frac < min.new.frac))
+      cl <- cumsum(c(1, brk * 1))
     }
     for(ci in unique(cl)){
       g <- o[cl == ci]

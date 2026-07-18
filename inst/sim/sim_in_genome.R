@@ -16,7 +16,11 @@ option_list = list(
   make_option(c("--coverage"), type = "numeric", default = NULL,
               help = "Coverage threshold", metavar = "NUMBER"),
   make_option(c("--symmetric"), type = "character", default = "FALSE",
-              help = "Require the genome footprint to also be <= 1/cov of the query length (TRUE/FALSE). FALSE keeps copies carrying insertions / nested elements. Default FALSE.", metavar = "BOOL")
+              help = "Require the genome footprint to also be <= 1/cov of the query length (TRUE/FALSE). FALSE keeps copies carrying insertions / nested elements. Default FALSE.", metavar = "BOOL"),
+  make_option(c("--gap"), type = "numeric", default = 1.0,
+              help = "Max genomic gap between chained HSPs, as a multiple of the query/consensus length. Larger values reconnect copies split by long nested insertions / internal deletions. Default 1.0.", metavar = "NUMBER"),
+  make_option(c("--gapabs"), type = "numeric", default = 20000,
+              help = "Absolute cap (bp) on the chaining gap, regardless of --gap. Bounds how far apart HSPs may be joined into one copy (a nested insertion is at most a few kb-tens of kb). Default 20000.", metavar = "NUMBER")
 )
 
 # Create the option parser
@@ -39,6 +43,9 @@ sim.cutoff = as.numeric(sim.cutoff) / 100
 coverage <- ifelse(is.null(opt$coverage), sim.cutoff, opt$coverage/100)
 
 symmetric <- toupper(as.character(opt$symmetric)) %in% c("TRUE", "T", "1", "YES", "Y")
+
+gap.factor <- ifelse(!is.null(opt$gap), as.numeric(opt$gap), 1.0)
+gap.abs <- ifelse(!is.null(opt$gapabs), as.numeric(opt$gapabs), 20000)
 
 # ---- Main ----
 
@@ -73,7 +80,8 @@ if(!is.null(mism) && !is.null(gaps)){
 
 # ---- Similarity analysis ----
 res = findHitsInRef(v, sim.cutoff = sim.cutoff, coverage = coverage,
-                    symmetric = symmetric, echo = F)
+                    symmetric = symmetric, gap.factor = gap.factor,
+                    gap.abs = gap.abs, echo = F)
 
 # Sort V4 and V5 positions
 idx.tmp = res$V4 > res$V5

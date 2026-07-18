@@ -118,7 +118,15 @@ for db_file in "${db_files[@]}"; do
                 blast_extra=( -perc_identity "$((similarity - 1))" )
             else
                 blast_outfmt="6 qseqid qstart qend sstart send pident length sseqid qlen slen mismatch gaps"
-                blast_extra=( -task megablast -word_size 20 -evalue 1e-5 -dust no )
+                # -word_size drives sensitivity: the default 20 (megablast) is fast
+                # and fine for near-identical copies, but under-aligns divergent /
+                # cross-species copies. A smaller word (<=15) needs the blastn task.
+                if [ "${word_size:-20}" -le 15 ]; then
+                    blast_task="blastn"
+                else
+                    blast_task="megablast"
+                fi
+                blast_extra=( -task "$blast_task" -word_size "${word_size:-20}" -evalue 1e-5 -dust no )
             fi
             $blast_cmd \
                 -db "$db_path_intermediate" \
@@ -163,7 +171,9 @@ for db_file in "${db_files[@]}"; do
             --res "$blast_res" \
             --out "${output_pref}${db_name}" \
             --sim "$similarity" \
-            --coverage "$coverage"
+            --coverage "$coverage" \
+            --gap "${gap_factor:-1}" \
+            --gapabs "${gap_abs:-20000}"
 
         # pokaz_message "File with counts was generated: ${file_out_cnt}"
     fi
