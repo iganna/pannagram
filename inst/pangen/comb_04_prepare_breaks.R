@@ -233,7 +233,12 @@ for(s.comb in pref.combinations){
   
   # -------
   pokaz('Filter...')
-  # Filter "extra" breaks
+  # Filter "extra" breaks. NOTE: this zeroing is load-bearing -- besides deferring
+  # large insertions, it removes duplicate v.beg/v.end that arise when one
+  # accession's big insertion spans several merged breaks (fillPrev/fillNext return
+  # the same flanking positions), which would otherwise trip the duplicate check
+  # below. A side effect is that at mixed-size overlapping loci it can leave a single
+  # accession -> a phantom `single==1 & gap!=0` break (see comb_05 logging).
   for(acc in accessions){
     breaks.acc = breaks.extra[breaks.extra$acc == acc,]
     if(nrow(breaks.acc) == 0) next
@@ -248,7 +253,7 @@ for(s.comb in pref.combinations){
     v.beg[idx.remove,acc] = 0
     v.end[idx.remove,acc] = 0
   }
-  
+
   # Check inversions
   if (any(sign(v.beg * v.end) < 0)) stop('Checkpoint4')
   
@@ -294,10 +299,10 @@ for(s.comb in pref.combinations){
   idx.zero = which(rowSums(v.beg != 0) == 0)
   if(length(idx.zero) != 0){
     pokaz('Number of zero-breaks is', length(idx.zero), file=file.log.loop, echo=echo.loop)
-    v.beg = v.beg[-idx.zero,]
-    v.end = v.end[-idx.zero,]
+    v.beg = v.beg[-idx.zero,,drop=FALSE]
+    v.end = v.end[-idx.zero,,drop=FALSE]
     breaks = breaks[-idx.zero,]
-    v.len = v.len[-idx.zero,]
+    v.len = v.len[-idx.zero,,drop=FALSE]
   }
   
   # ---- Subdivide into categories ----
@@ -306,7 +311,25 @@ for(s.comb in pref.combinations){
   breaks$len.acc = rowMax(v.len)
   v.len[v.len == 0] <- NA
   breaks$len.mean = rowMeans(v.len, na.rm = TRUE)
-  
+
+  # ---- Defer residual single-with-gap breaks to extra ----
+  # A break left with exactly one accession (single==1) but a non-zero reference gap
+  # is a phantom singleton: overlapping long insertions were deferred to extra,
+  # leaving one accession whose interior is occupied by the deferred ones. It is not a
+  # true singleton (which has gap==0), so defer it to extra too -- recorded for the
+  # later extra pass -- instead of leaving it unclassifiable in comb_05.
+  gap.res = breaks$idx.end - breaks$idx.beg - 1
+  idx.single.extra = which((breaks$single == 1) & (gap.res != 0))
+  if(length(idx.single.extra) > 0){
+    pokaz('Defer residual single-with-gap breaks to extra:', length(idx.single.extra),
+          file=file.log.loop, echo=echo.loop)
+    file.single.extra <- file.path(path.inter.msa, paste0("breaks_single_extra_", s.comb, ".rds"))
+    saveRDS(breaks[idx.single.extra, , drop=FALSE], file.single.extra)
+    breaks = breaks[-idx.single.extra, , drop=FALSE]
+    v.beg  = v.beg[-idx.single.extra, , drop=FALSE]
+    v.end  = v.end[-idx.single.extra, , drop=FALSE]
+  }
+
   pokaz("Save...")
   all.local.objects <- c("breaks", "v.end", "v.beg", "accessions")
   file.ws <- file.path(path.inter.msa, paste0("breaks_ws_", s.comb, ".RData"))
