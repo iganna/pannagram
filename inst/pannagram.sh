@@ -1375,6 +1375,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         "${INSTALLED_PATH}/pangen/comb_06_align.py" \
             --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
             --outdir "${path_inter_synteny_short}" \
+            --threads ${cores} \
             --path.log "${path_log_step_chr}" \
             --log.level ${log_level}
 
