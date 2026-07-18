@@ -8,6 +8,11 @@ path_sv="$path_features/sv/"
 path_sv_simsearch="$path_sv/simsearch_sv_large/"
 path_gff="$path_sv/gff/"
 
+# Canonical ORF output-file names (single source of truth). Passed downstream as
+# --file.orfs to the R scripts and used as the blastp query; do not re-literal.
+file_sv_large_orfs="${path_sv}seq_sv_large_orfs.fasta"        # -sv_orf output / -sv_sim_prot query
+file_sv_families_orfs="${path_sv}seq_sv_families_orfs.fasta"  # ORF-in-graph (sv_04) output
+
 path_inter="${path_project}.intermediate/"
 path_alignment="${path_inter}alignments/"
 path_inter_msa="${path_inter}msa/"

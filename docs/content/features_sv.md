@@ -139,7 +139,7 @@ After extracting SVs, one can generate ORFs in long SVs with the following:
 features -path_project '${PATH_PROJECT}' -sv_orf
 ```
 
-The output file `sv_large_orfs.fasta` is located at `${PATH_PROJECT}/features/sv/`.
+The output file `seq_sv_large_orfs.fasta` is located at `${PATH_PROJECT}/features/sv/`.
 
 ### ORF name format
 
