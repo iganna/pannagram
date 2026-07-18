@@ -49,8 +49,8 @@ test_that("readFastaMy: Couldn't handles multiline sequences", {
 test_that("readFastaMy: Couldn't handle empty file", {
   empty_file <- tempfile(fileext = ".fasta")
   writeLines(character(0), empty_file)
-  
-  result <- readFastaMy(empty_file)
+
+  result <- readFastaMy(empty_file, stop.on.error=FALSE)
   expect_type(result, "character")
   expect_length(result, 0)
   
@@ -61,8 +61,8 @@ test_that("readFastaMy: Couldn't handle empty file", {
 test_that("readFastaMy: Couldn't handle file without headers", {
   no_headers_file <- tempfile(fileext = ".fasta")
   writeLines(c("ATGC", "GCTA"), no_headers_file)
-  
-  result <- readFastaMy(no_headers_file)
+
+  result <- readFastaMy(no_headers_file, stop.on.error=FALSE)
   expect_type(result, "character")
   expect_length(result, 0)
 
@@ -74,7 +74,7 @@ test_that("readFastaMy: Couldn't handle file without headers", {
 test_that("readFastaMy: Couldn't handle file with only headers", {
   headers_file <- tempfile(fileext = ".fasta")
   writeLines(c(">seq1", ">seq2", ">seq3"), headers_file)
-  result <- readFastaMy(headers_file)
+  result <- readFastaMy(headers_file, stop.on.error=FALSE)
   
   expect_type(result, "character")
   expect_length(result, 3)
