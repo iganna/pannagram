@@ -35,7 +35,8 @@ opt = parse_args(opt_parser, args = args)
 # len.large = 40000
 len.short = 50
 n.flank = 30
-len.large.mafft = 15000
+# len.large.mafft retired: a single size threshold (len.large / max.len.gap = 25000)
+# is applied upstream in comb_04; everything reaching here that is not 'short' is 'long'.
 
 s.flank.beg = nt2seq(rep('A', n.flank))
 s.flank.end = nt2seq(rep('T', n.flank))
@@ -204,11 +205,13 @@ for(s.comb in pref.combinations){
   load(file.ws)
   
   # Define breaks type
+  # Single size threshold: oversized insertions (> len.large) were already deferred
+  # to extra in comb_04 (in.anal filter + residual single->extra), so here everything
+  # non-short is 'long'. No separate len.large.mafft cap and no 'extra' type anymore.
   breaks$type = ''
   breaks$type[(breaks$single == 1) & ((breaks$idx.end - breaks$idx.beg - 1) == 0)] = 'single'
   breaks$type[(breaks$single != 1) & (breaks$len.acc <= len.short)] = 'short'
-  breaks$type[(breaks$single != 1) & (breaks$len.acc > len.short) & (breaks$len.mean <= len.large.mafft)] = 'long'
-  breaks$type[(breaks$single != 1) & (breaks$len.mean > len.large.mafft)] = 'extra'
+  breaks$type[(breaks$single != 1) & (breaks$len.acc > len.short)] = 'long'
   
   # TODO: weak place, there sould not be any breaks$type == ''
   breaks$type[breaks$type == ''] = '-'
@@ -218,21 +221,18 @@ for(s.comb in pref.combinations){
   idx.singl = which(breaks$type == 'single')
   idx.short = which(breaks$type == 'short')
   
-  # Define indexes for long sequences
+  # Define indexes for long sequences ('extra' type retired -> deferred in comb_04)
   idx.large = which(breaks$type == 'long')
-  idx.extra = which(breaks$type == 'extra')
-  
-  pokaz('Number of singl/short/large/extra',
-        length(idx.singl), 
-        length(idx.short), 
-        length(idx.large), 
-        length(idx.extra), file=file.log.loop, echo=echo.loop)
-  
+
+  pokaz('Number of singl/short/long',
+        length(idx.singl),
+        length(idx.short),
+        length(idx.large), file=file.log.loop, echo=echo.loop)
+
   breaks$id.annot = 0
-  breaks$id.annot[idx.singl] = 1:length(idx.singl)
-  breaks$id.annot[idx.short] = 1:length(idx.short)
-  breaks$id.annot[idx.large] = 1:length(idx.large)
-  breaks$id.annot[idx.extra] = 1:length(idx.extra)
+  breaks$id.annot[idx.singl] = seq_along(idx.singl)
+  breaks$id.annot[idx.short] = seq_along(idx.short)
+  breaks$id.annot[idx.large] = seq_along(idx.large)
   
   # ----
   
@@ -250,8 +250,8 @@ for(s.comb in pref.combinations){
   saveRDS(breaks, file.breaks.merged)
   
   ## ---- Save singletons ----
-  saveRDS(list(pos.beg = v.beg[idx.singl,],
-               pos.end = v.end[idx.singl,],
+  saveRDS(list(pos.beg = v.beg[idx.singl,,drop=FALSE],
+               pos.end = v.end[idx.singl,,drop=FALSE],
                ref.pos = data.frame(beg = breaks$idx.beg[idx.singl],
                                     end = breaks$idx.end[idx.singl]) ), 
           paste0(path.inter.msa, 'singletons_',s.comb,'.rds'), compress = F)
@@ -259,8 +259,7 @@ for(s.comb in pref.combinations){
   ## ---- Save SHORT LONG EXTRA ----
   idx.list <- list(
     short = idx.short,
-    large = idx.large,
-    extra = idx.extra
+    large = idx.large
   )
   
   for(acc in accessions){
