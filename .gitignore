@@ -20,3 +20,6 @@ docs/examples/seq_sv_large_85_85.txt
 src/*.o
 src/*.so
 __pycache__/
+
+# Local pre-refactor snapshots
+inst/pangen/_prev_backup/
