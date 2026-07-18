@@ -448,7 +448,7 @@ def align_one_locus(locus_lines: List[str]) -> List[str]:
 
     Trivial loci (skip aligner):
       - no present sequences, OR
-      - all present sequences are unique
+      - only one distinct sequence among present genomes (identical copies)
     Non-trivial -> chosen aligner, with timeout. On timeout/failure -> timeout_mark for all genomes.
 
       - For MAFFT and FAMSA results, apply bad-alignment criterion; if bad => timeout_mark for all genomes.
@@ -476,9 +476,12 @@ def align_one_locus(locus_lines: List[str]) -> List[str]:
 
     unique_seqs = list(seq_to_idxs.keys())
 
-    # Trivial B: all present are unique (no duplicates among present)
-    all_unique_present = (present_count == len(unique_seqs))
-    if all_unique_present:
+    # Trivial B: only ONE distinct sequence among present genomes -> no alignment
+    # needed (identical copies). The previous condition
+    # `present_count == len(unique_seqs)` (all present DISTINCT) skipped the aligner
+    # exactly when it was needed and merely right-padded distinct sequences with
+    # gaps, which is not an alignment.
+    if len(unique_seqs) == 1:
         padded_unique = pad_to_maxlen(unique_seqs)
         aln_len = len(padded_unique[0]) if padded_unique else 0
         gaps = GAP * aln_len
