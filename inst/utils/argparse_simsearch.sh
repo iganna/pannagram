@@ -35,6 +35,17 @@ keep_blast_flag=0
 use_strand=T
 use_aa=0
 cores=1
+# Max genomic gap (as a multiple of the query/consensus length) across which
+# collinear HSPs are still chained into ONE copy. Larger values reconnect copies
+# split by long nested insertions / internal deletions. Default 1.0 (unchanged).
+gap_factor=1
+# Absolute cap (bp) on the chaining gap, regardless of gap_factor. Bounds how far
+# apart HSPs may be joined into one copy. Default 20000.
+gap_abs=20000
+# BLAST word size for the genome search (-on_genome). Default 20 (megablast);
+# lower it (e.g. 11, which switches to the blastn task) to align divergent /
+# cross-species copies that word_size 20 under-seeds.
+word_size=20
 
 # Read arguments
 cmdline="$(basename "$0") $@"
@@ -45,6 +56,9 @@ while [ "$1" != "" ]; do
         -out )                             output_pref=$2;   shift 2 ;;
         -sim | -similarity )               similarity=$2;    shift 2 ;;
         -cov | -coverage )                 coverage=$2;      shift 2 ;;
+        -gap | -gapfactor )                gap_factor=$2;    shift 2 ;;
+        -gapabs | -gapmax )                gap_abs=$2;       shift 2 ;;
+        -word_size | -wordsize | -word )   word_size=$2;     shift 2 ;;
 
         -on_seq    | -on-seq    | -target_seqs )    file_seq=$2;    shift 2 ;;
         -on_genome | -on-genome | -target_genome ) file_genome=$2; shift 2 ;;
