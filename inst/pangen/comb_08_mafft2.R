@@ -97,14 +97,15 @@ loop.function <- function(f.in,
     return()
   }
   
-  # Proportion of non-N nucleotides
-  n.n = c()
-  for(s in seqs.clean){
+  # Proportion of non-N nucleotides: drop N-heavy sequences INDIVIDUALLY
+  # (a single N-rich sequence must not discard the whole locus).
+  n.n = sapply(seqs.clean, function(s){
     s.tmp = seq2nt(s)
-    n.n = c(n.n, sum((s.tmp != 'N') & (s.tmp != 'n')) / length(s.tmp))
-  }
-  
-  if(min(n.n) < 0.5){
+    sum((s.tmp != 'N') & (s.tmp != 'n')) / length(s.tmp)
+  })
+  seqs.clean = seqs.clean[n.n >= 0.5]
+
+  if(length(seqs.clean) < 2){
     pokazAttention('Too many N to align', file=file.log.loop, echo=echo.loop)
     markDone(item.id, file=file.log.loop, echo=echo.loop)
     return()
@@ -112,7 +113,7 @@ loop.function <- function(f.in,
   
   path.work = paste0(path.mafft.in.tmp, sub('\\.fasta', '', basename(f.in)), '_')
   pokaz(path.work)
-  res = refineAlignment(seqs.clean, path.work)
+  res = refineAlignmentRouted(seqs.clean, path.work)
   
   alignments = res$aln
   

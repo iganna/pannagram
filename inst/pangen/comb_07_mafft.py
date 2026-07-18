@@ -205,7 +205,8 @@ def process_one_locus(locus_no: int,
                       famsa_bin: str,
                       timeout_sec: int,
                       uppercase: bool,
-                      strip_spaces: bool) -> Tuple[int, str]:
+                      strip_spaces: bool,
+                      long_to_bad: int = 0) -> Tuple[int, str]:
 
     # Collect only non-empty ones.
     headers: List[str] = []
@@ -227,6 +228,18 @@ def process_one_locus(locus_no: int,
     if not seqs:
         write_locus_fasta(out_path, [], [])
         return locus_no, "ok"
+
+    # Route very long loci straight to baddir (skip the O(L^2) MAFFT here); the fast
+    # BLAST-anchor aligner in comb_08 (refineAlignment) handles them cheaply.
+    # Require the SECOND-longest sequence to exceed the threshold, i.e. at least two
+    # long sequences: only then is the pairwise DP genuinely O(L^2)-expensive. A locus
+    # with a single long sequence plus tiny ones is cheap for MAFFT here, and must NOT
+    # be routed -- comb_08 strips n.flank and would drop the tiny seq, leaving <2
+    # sequences, which it silently skips (no output), breaking comb_10's per-locus
+    # count on datasets with few genomes (e.g. n=2).
+    if long_to_bad and len(seqs) >= 2 and sorted(len(s) for s in seqs)[-2] > long_to_bad:
+        write_locus_fasta(bad_path, headers, seqs)
+        return locus_no, "bad"
 
     # SAFE IDS (that aligner don't change headers)
     safe_headers = [f"s{i+1:06d}" for i in range(len(headers))]
@@ -286,6 +299,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--famsa-bin", default="famsa")
 
     p.add_argument("--timeout-sec", type=int, default=180)
+    p.add_argument("--long-to-bad", type=int, default=5000,
+                   help="loci whose longest sequence exceeds this are sent straight to "
+                        "baddir (skip MAFFT here) for the fast BLAST-anchor aligner in comb_08; 0 disables")
     p.add_argument("--threads", type=int, default=8,
                    help="Parallel loci (aligner itself is forced single-thread).")
     p.add_argument("--uppercase", action="store_true")
@@ -354,7 +370,8 @@ def main() -> int:
                     args.famsa_bin,
                     args.timeout_sec,
                     args.uppercase,
-                    args.strip_spaces
+                    args.strip_spaces,
+                    args.long_to_bad
                 ))
 
                 if args.progress_every and locus_no % args.progress_every == 0:
