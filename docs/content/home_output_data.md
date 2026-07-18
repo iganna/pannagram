@@ -51,7 +51,7 @@ Contains detected Structural Variants, their sequences, and Families of Mobile E
 - **Sequences:**  
   `seq_sv_large.fasta`: Large SVs (≥50 bp)  
   `seq_sv_short.fasta`: Short SVs (15–50 bp)
-  `sv_large_orfs.fasta`: ORFs (≥100 aa) found in Large SVs
+  `seq_sv_large_orfs.fasta`: ORFs (≥100 aa) found in Large SVs
 
 - **Families:**  
   `edges_families_*.txt`: adjacency (edge) matrix describing the Graph of Mobile Element Families (MEF). Each connected component in the graph represents a family.  

@@ -24,6 +24,7 @@ option_list = list(
   make_option("--path.sv", type = "character", default = NULL, help = "Path to sv dir"),
   make_option(c("--path.cons"), type = "character", default = NULL, help = "path to directory with the consensus"),
   make_option(c("--len.aa.min"), type = "integer", default = 100, help = "Minimal length of ORFs"),
+  make_option("--file.orfs", type = "character", default = NULL, help = "Output FASTA for family ORFs (canonical name comes from chunk_paths.sh)"),
   make_option(c("--cores"),     type = "integer",   default = 1, help = "number of cores to use for parallel processing")
 );
 
@@ -35,6 +36,9 @@ if(!dir.exists(path.features.msa)) stop(paste0('Consensus folder does nto exist'
 
 path.sv = opt$path.sv
 if(!dir.exists(path.sv)) stop(paste0('No SV dir!', path.sv))
+
+# Output file: passed in by features.sh (from chunk_paths.sh); fallback for standalone use.
+file.orfs = if(is.null(opt$file.orfs)) paste0(path.sv, 'seq_sv_families_orfs.fasta') else opt$file.orfs
 
 # ***********************************************************************
 # ---- Values ----
@@ -83,4 +87,4 @@ for(i.s in 1:length(sv.seqs)){
 }
 
 pokaz('Numer of ORFs is', length(orfs))
-writeFasta(orfs, paste0(path.sv, 'seq_sv_large_orfs.fasta'))
+writeFasta(orfs, file.orfs)

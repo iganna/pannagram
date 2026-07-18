@@ -182,7 +182,8 @@ if [ "$run_sv_orf" = true ]; then # -sv_orf
     pokaz_stage "Get ORFs from SVs"
 
     Rscript $INSTALLED_PATH/analys/sv_05_orfs.R \
-        --path.sv ${path_sv}
+        --path.sv ${path_sv} \
+        --file.orfs ${file_sv_large_orfs}
 fi
 
 # Compare SVs with TEs
@@ -251,7 +252,8 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     # pokaz_stage "Get ORFs from Families..."
     # Rscript $INSTALLED_PATH/analys/sv_04_orfs_in_graph.R \
     #     --path.features.msa ${path_features_msa} \
-    #     --path.sv ${path_sv} 
+    #     --path.sv ${path_sv} \
+    #     --file.orfs ${file_sv_families_orfs}
 
     pokaz_message "Step -sv_families is done!"
 fi
@@ -261,7 +263,7 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
 
     if [ ! -f "${set_file_prot}" ]; then
         pokaz_error "File with proteins does not exist, provide an existing file."
-    elif [ -f "${path_sv}/sv_large_orfs.fasta" ]; then
+    elif [ -f "${file_sv_large_orfs}" ]; then
 
         # Define the output file
         file_sv_large_on_set="${path_sv}sv_large_orfs_on_set.txt"
@@ -275,7 +277,7 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
         fi
 
         path_simsearch_out="${path_sv}.simsearch/"
-        # simsearch -in_seq "${path_sv}seq_sv_large_orfs.fasta" \
+        # simsearch -in_seq "${file_sv_large_orfs}" \
         #           -on_seq ${set_file_prot} \
         #           -out ${path_simsearch_out} \
         #           -cores "${cores}" \
@@ -290,7 +292,7 @@ if [ "$run_sv_sim_prot" = true ]; then # -sv_sim_prot
         pokaz_stage "BLAST on proteins..."
 
         blastp -db "${path_simsearch_out}${set_file_base_prot}" \
-               -query "${path_sv}seq_sv_large_orfs.fasta" \
+               -query "${file_sv_large_orfs}" \
                -out ${file_sv_large_on_set} \
                -outfmt "6 qseqid qstart qend sstart send pident length sseqid  qlen slen" \
                -num_threads "${cores}"
