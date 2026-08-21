@@ -55,7 +55,7 @@ output.file = paste(output.file, round(sim.cutoff * 100), round(coverage * 100),
 # PATCHED (speed): data.table::fread reads the (often >100k-row) BLAST table
 # ~10x faster than read.table; fall back to readBlast if data.table is absent.
 if(requireNamespace("data.table", quietly = TRUE)){
-  v = data.table::fread(blast.file, header = FALSE, data.table = FALSE,
+  v = data.table::fread(blast.file, header = FALSE, sep = "\t", data.table = FALSE,
                         showProgress = FALSE)
 } else {
   v = readBlast(blast.file)

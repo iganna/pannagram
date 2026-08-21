@@ -67,7 +67,8 @@ mergeOverlaps <- function(breaks){
 
 mergeOverlapsTolerance <- function(breaks, 
                                    len.tol = 0.95,
-                                   dist.tol = 0.5){
+                                   dist.tol = 0.5,
+                                   member.tol = 0.5){
   
   # Input validation: check if the input is a data frame
   if (!is.data.frame(breaks)) {
@@ -93,6 +94,16 @@ mergeOverlapsTolerance <- function(breaks,
   
   # ---- Merge coverage ----
   n.init = nrow(breaks)
+  # Keep the untouched per-accession rows BEFORE the columns are dropped: after the
+  # overlap merge below, len.acc holds only the MAX over the accessions of a merged
+  # interval. That max is the right size to RESERVE, but a poor statistic to COMPARE
+  # two breaks by -- one accession whose insertion is a few bp longer than its
+  # neighbours' shifts the ratio and can push a genuine pair below len.tol. We
+  # recompute a robust representative length from these rows once intervals are final,
+  # and use the accession column to tell a real second event from alignment noise.
+  has.acc = 'acc' %in% colnames(breaks)
+  breaks.rows = breaks[, c('idx.beg', 'idx.end', 'len.acc',
+                           if (has.acc) 'acc'), drop = FALSE]
   breaks = breaks[,c('idx.beg', 'idx.end', 'len.acc')]
 
   breaks <- breaks[order(breaks$idx.beg,
@@ -131,6 +142,40 @@ mergeOverlapsTolerance <- function(breaks,
     breaks = breaks[-(idx_full_cover + 1), ]
   }
   
+  # ---- Representative length per (merged) interval ----
+  # Assign every original row to the interval that swallowed it, drop the small
+  # indels that share the window with a big insertion (< half of the max), and
+  # take the median of what is left. On a clean interval this equals the max; on
+  # a ragged one it ignores the single longest outlier.
+  k = findInterval(breaks.rows$idx.beg, breaks$idx.beg)
+  k[k < 1] = 1
+  grp = split(breaks.rows$len.acc, k)
+  rep.len = vapply(grp, function(v){
+    v = v[v >= 0.5 * max(v)]
+    stats::median(v)
+  }, numeric(1))
+  breaks$len.rep = breaks$len.acc
+  pos = as.integer(names(rep.len))
+  ok = pos >= 1 & pos <= nrow(breaks)
+  breaks$len.rep[pos[ok]] = rep.len[ok]
+  
+  # ---- Accessions that substantially belong to each interval ----
+  # A break may list an accession that contributes only a couple of nucleotides
+  # there while all of its actual sequence sits in the neighbouring break. That is
+  # alignment noise, not evidence of two independent events, so membership is
+  # counted only above member.tol of the interval's representative length.
+  acc.sets = vector('list', nrow(breaks))
+  if (has.acc) {
+    rows.by = split(seq_len(nrow(breaks.rows)), k)
+    for (nm in names(rows.by)) {
+      pp = as.integer(nm)
+      if (pp < 1 || pp > nrow(breaks)) next
+      rr = rows.by[[nm]]
+      keep = breaks.rows$len.acc[rr] >= member.tol * breaks$len.rep[pp]
+      acc.sets[[pp]] = unique(breaks.rows$acc[rr][keep])
+    }
+  }
+  
   len.max.sv = 15000
   gap.max = 5000
   
@@ -140,8 +185,8 @@ mergeOverlapsTolerance <- function(breaks,
       if(breaks$len.acc[i] > len.max.sv)  next
       
       for(j in (i+1):nrow(breaks)){
-        len.sim = min(breaks$len.acc[i], breaks$len.acc[j]) / 
-          max(breaks$len.acc[i], breaks$len.acc[j])
+        len.sim = min(breaks$len.rep[i], breaks$len.rep[j]) / 
+          max(breaks$len.rep[i], breaks$len.rep[j])
         
         gap =  (breaks$idx.beg[j] - breaks$idx.end[i] + 1)
         if(gap > gap.max) break
@@ -150,7 +195,11 @@ mergeOverlapsTolerance <- function(breaks,
         if(dist.sim > dist.tol) break
         
         if(len.sim >= len.tol){
-          breaks$merge[i:j] = 1
+          # Refuse to merge when one accession substantially occupies more than one
+          # of the intervals being joined: that is two real events, not one split.
+          if (!has.acc || !any(duplicated(unlist(acc.sets[i:j])))) {
+            breaks$merge[i:j] = 1
+          }
         }
       }
     }  
@@ -166,6 +215,8 @@ mergeOverlapsTolerance <- function(breaks,
       breaks.add$idx.beg[irow] = breaks$idx.beg[df.merges$beg[irow]]
       breaks.add$idx.end[irow] = breaks$idx.end[df.merges$end[irow]]
       breaks.add$len.acc[irow] = max(breaks$len.acc[df.merges$beg[irow]:
+                                                      df.merges$end[irow]])
+      breaks.add$len.rep[irow] = max(breaks$len.rep[df.merges$beg[irow]:
                                                       df.merges$end[irow]])
       breaks.add$cnt[irow] = sum(breaks$cnt[df.merges$beg[irow]:
                                                   df.merges$end[irow]])

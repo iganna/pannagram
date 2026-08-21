@@ -1466,7 +1466,7 @@ readBlast <- function(file, stringsAsFactors=F, header=F) {
   # (same columns/classes/values). Falls back to read.table if data.table is absent.
   if(requireNamespace("data.table", quietly = TRUE)){
     x <- tryCatch(
-      suppressWarnings(data.table::fread(file, header = header, data.table = FALSE,
+      suppressWarnings(data.table::fread(file, header = header, sep = "\t", data.table = FALSE,
                                          showProgress = FALSE,
                                          stringsAsFactors = stringsAsFactors)),
       error = function(e) NULL)
