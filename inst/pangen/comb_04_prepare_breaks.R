@@ -78,7 +78,7 @@ if (!dir.exists(path.inter.msa)) stop('Internal MSA directory does not exist')
 s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+pref.combinations <- sub("\\.h5$", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
@@ -332,7 +332,9 @@ for(s.comb in pref.combinations){
 
   pokaz("Save...")
   all.local.objects <- c("breaks", "v.end", "v.beg", "accessions")
-  file.ws <- file.path(path.inter.msa, paste0("breaks_ws_", s.comb, ".RData"))
+  # The next script of this step (comb_04b) reads this one and writes the final
+  # breaks_ws_<comb>.RData, so nothing here is overwritten later.
+  file.ws <- file.path(path.inter.msa, paste0("breaks_ws_pre_", s.comb, ".RData"))
   save(list = all.local.objects, file = file.ws)
   
   H5close()
