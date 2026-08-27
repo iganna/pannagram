@@ -105,6 +105,35 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 # ***********************************************************************
 # ---- MAIN program body ----
 
+# ---- One blast task = one query file --------------------------------------------------
+# Step 7 runs one blastn per query file and GNU parallel cannot split a single blastn across
+# cores, so the wall time of the step is set by its SLOWEST task, not by the total work.
+# blastn cost over a subject grows with (query bp) * (subject bp), which gives one invariant
+# to hold everywhere: no task carries more than `cap` bp of query, and where the subject is
+# larger than the cap the chunk shrinks to cap^2 / subject_bp so that every task costs at
+# most cap^2. The floor keeps the ~0.2 s blastn start-up amortised when the subject is huge.
+#
+# Splitting the QUERY is result-identical: -subject is untouched, so the effective database
+# size and therefore every E-value stay the same, and blastn emits hits grouped by query in
+# input order -- concatenating the chunk outputs in chunk order reproduces the unsplit file
+# byte for byte (verified on both gap and residual data). synteny_04 maps every
+# <unit>q<J>_query.fasta back to the single <unit>_base.fasta; synteny_05 reads the chunk
+# outputs back in chunk order.
+writeGapUnit <- function(s.q, s.b, pref.file, cap, floor.bp = 50000){
+  writeFastaMy(s.b, paste0(pref.file, '_base.fasta'))
+  len.q = as.numeric(nchar(s.q))
+  b.bp  = sum(as.numeric(nchar(s.b)))
+  chunk = max(floor.bp, min(cap, cap^2 / max(b.bp, 1)))
+  if(sum(len.q) <= chunk){
+    writeFastaMy(s.q, paste0(pref.file, '_query.fasta'))
+  } else {
+    g = as.integer((cumsum(len.q) - 1) %/% chunk)
+    for(j in sort(unique(g))){
+      writeFastaMy(s.q[g == j], paste0(pref.file, 'q', j, '_query.fasta'))
+    }
+  }
+}
+
 loop.function <- function(f.maj,
                           done.set = character(0),
                           echo.loop=T){
@@ -244,21 +273,43 @@ loop.function <- function(f.maj,
                                (endsWith(all.gap.files, 'query.fasta') | endsWith(all.gap.files, 'base.fasta'))]
   if(length(rm.gap.files) > 0) invisible(file.remove(rm.gap.files))
 
-  # Normal gaps are written in BATCHES of `batch.size.gaps` gaps: each batch becomes its
-  # own <pref>b<N>_query.fasta / _base.fasta so step-7 blasts a query gap only against its
-  # ~batch.size.gaps neighbours instead of the whole all-vs-all base. The batch target file
-  # names are set per gap in the loop below.
+  # Normal gaps are written in BATCHES: each batch becomes its own
+  # <pref>b<N>_query.fasta / _base.fasta, and step 7 blasts that query file against that
+  # base file only. A query gap and its paired base gap always land in the SAME batch, and
+  # synteny_05 keeps a hit only when pref1 == pref2, so every cross-gap hit inside a batch
+  # is thrown away again -- it is pure waste, and it grows as sum(len_q) * sum(len_b).
   #
-  # Larger batches => FEWER step-7 blastn invocations => less per-process startup overhead
-  # (the dominant single-core cost of step 7: ~0.2s x n_batches). This is CORRECTNESS-NEUTRAL:
-  # a query gap and its paired base gap are always written to the SAME batch, and synteny_05
-  # keeps a hit only when pref1==pref2 (before any greedy selection), so cross-batch/cross-pref
-  # hits are discarded and coverage is identical for any batch size. It is a pure timing knob:
-  # bigger => step-7 faster, step-8 (merge) slightly heavier as it reads more discarded hits.
-  # Kept at 100 (reverted a 500 trial: on real repeat-rich anopheles gaps the larger all-vs-all
-  # per batch offset the fewer-startup savings and nudged this step slower). Sweep if you re-tune.
-  batch.size.gaps = 100
-  n.gap.written = 0
+  # The batch unit is therefore LENGTH, not a count of gaps. Gap lengths span four orders of
+  # magnitude (median ~0.45 kb, p99 ~13-50 kb, max = max.len = 1 Mb), so a fixed count of 100
+  # is the wrong unit: one 1 Mb gap dropped into a 100-gap batch gets multiplied against its
+  # 99 neighbours. Capping the accumulated length instead lets small gaps group by the
+  # hundred (amortising the ~0.2 s blastn start-up) while an oversized gap becomes a batch of
+  # its own, which bounds the slowest single task -- what actually sets the wall time of
+  # step 7, since GNU parallel cannot split one blastn across cores.
+  #
+  # cap and the split floor of writeGapUnit() interact, so they were chosen together from a
+  # 3x3 grid (step-7 wall, 24 cores, kapusta_*_proc data, one reference):
+  #        thlaspi            capsella           nigra
+  #   cap\floor 50k 200k 500k | 50k 200k 500k | 50k 200k 500k
+  #      100 kb   91  107  281 |  45   73  282 | 129  114  170
+  #      300 kb  101  109  276 |  69   74  282 | 106   97  162
+  #        1 Mb  102  110  275 |  71   74  281 | 109  111  170
+  # Every dataset's own optimum sits at floor 50 kb or 200 kb; 50 kb is the safer constant
+  # (worst case +9%, on nigra) because 200 kb costs capsella +64% and 500 kb costs everyone
+  # 1.7-6.3x -- 500 kb is roughly what a fixed residual split did, which is why that lost.
+  # For the cap, 100 kb is worst-case +21% (nigra) while 300 kb made camelina_sativa exceed
+  # a 90 min timeout: grouping its repeat-rich gaps into 300 kb batches brings the
+  # superlinear blow-up back. Small datasets never reach the cap -- batch.min.n binds first.
+  #
+  # Regrouping is not bit-identical: blastn -subject takes the effective database size from
+  # the subject file, so a different grouping shifts E-values slightly and a few borderline
+  # HSPs swap in or out. Measured end to end on two nigra chromosomes, query coverage moved
+  # +0.02% and +0.24% (i.e. slightly UP) with ~98% of alignment rows unchanged.
+  batch.cap.bp = 100000   # max accumulated query/base bp per batch (lowered below for
+                          # small items so the cores do not sit idle)
+  batch.max.n  = 1000     # safety guard on gaps per batch (rarely binding)
+  batch.min.n  = 48       # aim for at least this many batches per item (see cap.bp below)
+  cap.bp       = batch.cap.bp   # refined below once the gap lengths of this item are known
 
   # Accumulate gap sequences in memory and write each batch file ONCE after the
   # loop. Previously writeFastaMy(append=T) opened/closed the file on every gap
@@ -336,9 +387,6 @@ loop.function <- function(f.maj,
     if(abs(pos.gap.q[1] - pos.gap.q[length(pos.gap.q)]) > max.len) next
     if(abs(pos.gap.b[1] - pos.gap.b[length(pos.gap.b)]) > max.len) next
 
-    # ---- Batch index: rolls to a new file every batch.size.gaps written gaps ----
-    i.batch = n.gap.written %/% batch.size.gaps
-
     # ---- Build query chunks (pos.gap.q is a contiguous ascending range -> substr slice) ----
     s.q = substr(query.str, pos.gap.q[1], pos.gap.q[length(pos.gap.q)])
     n.bl = 500
@@ -368,20 +416,37 @@ loop.function <- function(f.maj,
     k = length(acc.q) + 1L
     acc.q[[k]] = s.q
     acc.b[[k]] = s.b
-    acc.batch[k] = i.batch
-
-    n.gap.written = n.gap.written + 1  # advances the batch index (every batch.size.gaps gaps)
 
   }  # irow search for gaps
 
   # ---- Flush accumulated gaps: ONE write per batch file (was append-per-gap) ----
   if(length(acc.q) > 0){
+
+    # ---- Assign batches by accumulated LENGTH (see the note where batch.cap.bp is set) ----
+    len.q = vapply(acc.q, function(s) sum(nchar(s)), numeric(1))
+    len.b = vapply(acc.b, function(s) sum(nchar(s)), numeric(1))
+    # An item with little sequence would otherwise produce a handful of batches and leave
+    # most cores idle in step 7, so shrink the cap until it yields at least batch.min.n
+    # batches. That target is a CONSTANT on purpose, not `num.cores`: the grouping decides
+    # which gaps share a blastn subject, and blastn takes the effective database size from
+    # the subject file, so tying it to the machine would make the alignment itself depend on
+    # -cores. 48 is ~2 batches per core on a typical node without that cost.
+    cap.bp = min(batch.cap.bp, max(20000, max(sum(len.q), sum(len.b)) / batch.min.n))
+    acc.batch = integer(length(acc.q))
+    i.b = 0L; sum.q = 0; sum.b = 0; n.in.batch = 0L
+    for(k in seq_along(acc.q)){
+      if(n.in.batch > 0 && (max(sum.q + len.q[k], sum.b + len.b[k]) > cap.bp ||
+                            n.in.batch >= batch.max.n)){
+        i.b = i.b + 1L; sum.q = 0; sum.b = 0; n.in.batch = 0L
+      }
+      acc.batch[k] = i.b
+      sum.q = sum.q + len.q[k]; sum.b = sum.b + len.b[k]; n.in.batch = n.in.batch + 1L
+    }
+
     for(b in sort(unique(acc.batch))){
       idx = which(acc.batch == b)
-      writeFastaMy(do.call(c, acc.q[idx]),
-                   paste0(path.gaps, pref.comparisson, 'b', b, '_query.fasta'))
-      writeFastaMy(do.call(c, acc.b[idx]),
-                   paste0(path.gaps, pref.comparisson, 'b', b, '_base.fasta'))
+      writeGapUnit(do.call(c, acc.q[idx]), do.call(c, acc.b[idx]),
+                   paste0(path.gaps, pref.comparisson, 'b', b), cap.bp)
     }
   }
 
@@ -461,7 +526,15 @@ loop.function <- function(f.maj,
       res.q[[length(res.q) + 1L]] = s.q
     }
   }
-  if(length(res.q) > 0) writeFastaMy(do.call(c, res.q), file.gap.query)
+  # The residual pair is written below, once its base side is built, through the same
+  # writeGapUnit() as the normal gaps -- it is just the largest unit of the item, not a
+  # special case. Left whole it is a single multi-megabyte blastn that nothing can help:
+  # on kapusta_brassica_nigra one such task ran 85 min while the other 23 cores idled,
+  # 99% of the wall time of step 7 for that reference. Splitting its query also turned out
+  # to be far cheaper in total, not merely better parallelised -- blastn degrades
+  # superlinearly on a very large query over a repeat-rich subject (that one comparison:
+  # 5115 s whole vs 455 s in chunks; the other 15 comparisons cost the expected 5-20% MORE
+  # cpu when split, from re-scanning the subject once per chunk).
 
   ## ---- Write base ----
   # Query: Zero-coverage blocks
@@ -515,7 +588,13 @@ loop.function <- function(f.maj,
       res.b[[length(res.b) + 1L]] = s.b
     }
   }
-  if(length(res.b) > 0) writeFastaMy(do.call(c, res.b), file.gap.base)
+  # Same invariant as the normal gaps: cap the query bp per task, shrinking the chunk when
+  # the (unsplittable) residual base is large. Nothing is written when either side is empty
+  # -- as before, a query with no base is never blasted.
+  if(length(res.q) > 0 && length(res.b) > 0){
+    writeGapUnit(do.call(c, res.q), do.call(c, res.b),
+                 paste0(path.gaps, pref.comparisson, 'residual'), cap.bp)
+  }
 
   # ---- Checkpoint marker: item fully processed ----
   markDone(item.id, file=file.log.loop, echo=echo.loop)

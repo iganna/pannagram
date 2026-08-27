@@ -41,6 +41,22 @@ pos.beg.info = 2  # Position in sequence's name, where the genome's begin is sta
 
 # print(opt)
 
+# ---- Read and concatenate many blast outputs ------------------------------------------
+# Gap batches, and now also the query chunks of a split unit, arrive as many small tables.
+# do.call(rbind, ...) is quadratic in the number of frames (it re-allocates on every bind),
+# which showed up as ~8% on step 8 once splitting raised the file count into the hundreds.
+# rbindlist binds by position in one pass; NULLs (empty blast outputs) are skipped.
+readBlastMany <- function(files){
+  parts = lapply(files, readBlast)
+  parts = parts[!vapply(parts, is.null, logical(1))]
+  if(length(parts) == 0) return(NULL)
+  if(length(parts) == 1) return(parts[[1]])
+  if(requireNamespace("data.table", quietly = TRUE)){
+    return(as.data.frame(data.table::rbindlist(parts, use.names = FALSE)))
+  }
+  do.call(rbind, parts)
+}
+
 # ***********************************************************************
 # ---- Logging ----
 
@@ -215,14 +231,25 @@ loop.function <- function(f.maj,
   # <pref>b<N>_out.txt for this comparison (excludes *_residual_out.txt).
   gap.pref = paste0('acc_', acc, '_qchr_', query.chr, '_bchr_', base.chr, '_')
   all.out.files = list.files(path.gaps, full.names = TRUE)
+  # <pref>b<N>_out.txt, plus <pref>b<N>q<J>_out.txt when synteny_03 had to split that
+  # batch's query into chunks. Order the chunks numerically (b2q10 after b2q2, not before),
+  # so the rows of a given gap reach the greedy overlap selection below in exactly the
+  # order a single unsplit blastn would have produced.
   batch.out.files = all.out.files[startsWith(basename(all.out.files), gap.pref) &
-                                  grepl('_b[0-9]+_out\\.txt$', basename(all.out.files))]
+                                  grepl('_b[0-9]+(q[0-9]+)?_out\\.txt$', basename(all.out.files))]
+  if(length(batch.out.files) > 0){
+    bn = basename(batch.out.files)
+    i.b = as.numeric(sub('.*_b([0-9]+)(q[0-9]+)?_out\\.txt$', '\\1', bn))
+    i.q = as.numeric(ifelse(grepl('q[0-9]+_out\\.txt$', bn),
+                            sub('.*q([0-9]+)_out\\.txt$', '\\1', bn), '0'))
+    batch.out.files = batch.out.files[order(i.b, i.q)]
+  }
 
   pokaz('gap batch files', length(batch.out.files), file=file.log.loop, echo=echo.loop)
 
   if(length(batch.out.files) > 0){
     pokaz('Read blast of good gaps (batched)..', file=file.log.loop, echo=echo.loop)
-    x.gap = do.call(rbind, lapply(batch.out.files, readBlast))
+    x.gap = readBlastMany(batch.out.files)
     if(!is.null(x.gap) && nrow(x.gap) == 0) x.gap = NULL
   } else {
     x.gap = NULL
@@ -374,8 +401,25 @@ loop.function <- function(f.maj,
   file.gaps.out = paste0(path.gaps,
                          'acc_', acc, 
                          '_qchr_', query.chr, '_bchr_', base.chr, '_residual_out.txt', collapse = '')
+  # The residual query is written in <pref>residualq<N>_query.fasta chunks (synteny_03), so
+  # its blast output arrives as <pref>residualq<N>_out.txt. Reading them back in chunk order
+  # rebuilds exactly the table the single unsplit blastn produced (blastn groups hits by
+  # query in input order). The single-file branch keeps old gap folders readable.
+  resid.pref  = paste0(gap.pref, 'residualq')
+  resid.files = list.files(path.gaps, full.names = TRUE)
+  resid.files = resid.files[startsWith(basename(resid.files), resid.pref) &
+                            grepl('_residualq[0-9]+_out\\.txt$', basename(resid.files))]
   x.gap = NULL
-  if(file.exists(file.gaps.out)){
+  if(length(resid.files) > 0){
+    resid.files = resid.files[order(as.numeric(sub('.*_residualq([0-9]+)_out\\.txt$', '\\1',
+                                                   basename(resid.files))))]
+    pokaz('Read blast of "bad" gaps, chunks:', length(resid.files), file=file.log.loop, echo=echo.loop)
+    x.gap = readBlastMany(resid.files)
+    if(!is.null(x.gap)){
+      x.gap = unique(x.gap)
+      if(nrow(x.gap) == 0) x.gap = NULL
+    }
+  } else if(file.exists(file.gaps.out)){
     pokaz('Read blast of "bad" gaps..', file.gaps.out, file=file.log.loop, echo=echo.loop)
     x.gap = readBlast(file.gaps.out)
     x.gap = unique(x.gap)
