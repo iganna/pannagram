@@ -116,6 +116,12 @@ function process_blast_normal {
 
     query_file=$(basename "$query_file_path")
     base_file="${query_file/query/base}"
+    # synteny_03 may split one unit's query into <unit>q<N>_query.fasta chunks (both normal
+    # gap batches and the residual). Every chunk of a unit shares the ONE subject file
+    # <unit>_base.fasta -- the chunk index belongs to the query side only.
+    if [[ "$query_file" =~ q[0-9]+_query\.fasta$ ]]; then
+        base_file=$(echo "$query_file" | sed -E 's/q[0-9]+_query\.fasta$/_base.fasta/')
+    fi
 
     out_file="${query_file/query/out}"
     out_file="${out_file%.fasta}.txt"
@@ -234,7 +240,17 @@ export -f process_db
 # base fasta directly, so no pre-built DB is needed. On 1 core this drops ~1000 makeblastdb
 # processes (~0.1s each ~= 100s). Result is byte-identical (verified: same hits).
 # find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_db
-find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_blast_normal
+#
+# LARGEST FIRST. The tasks are wildly uneven (the biggest is routinely 100x the median), and
+# a long task started last holds one core while every other core has already drained. Feeding
+# parallel in descending input size is the classic LPT rule: it costs one stat() per file and
+# bounds the makespan at (4/3 - 1/(3*cores)) of the optimum instead of leaving it hostage to
+# whatever order find happened to return. perl (a GNU parallel dependency anyway) does the
+# sort in one process, so it is portable and safe for any number of files, unlike `ls -S`
+# behind xargs, which would silently sort each xargs chunk on its own.
+find "${path_gaps}" -name '*query*.fasta' -print0 \
+  | perl -0ne 'chomp; push @f, $_; END { print map { "$_\n" } sort { -s $b <=> -s $a } @f }' \
+  | parallel --will-cite -j "${cores}" process_blast_normal
 # process_blast_cross DISABLED: its outputs (out_on_residual / out_on_core) are never read
 # by synteny_05 (nor anywhere else in the codebase) -> dead compute (~1/3 of step 7).
 # find "${path_gaps}" -name '*query*.fasta' | parallel --will-cite -j "${cores}" process_blast_cross
