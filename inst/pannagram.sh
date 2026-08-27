@@ -1253,16 +1253,27 @@ step_file="${path_log}${step_name}_done"
 path_log_step="${path_log}${step_name}/"
 mkdir -p ${path_log_step}
 
+# The second call of this step keeps its own logs: both scripts use the
+# checkpoint ledger inside their log directory, and a shared one would make each
+# of them think the other's combinations are already done.
+path_log_step_merge="${path_log}${step_name}_merge/"
+mkdir -p ${path_log_step_merge}
+
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
         touch ${path_inter_msa}breaks_ws_fake.RData
+        touch ${path_inter_msa}breaks_ws_pre_fake.RData
         touch ${path_log_step}fake.log
+        touch ${path_log_step_merge}fake.log
 
-        rm -f  ${path_inter_msa}breaks_ws_*.RData
+        # Both the intermediate of the first call and the final file of the second
+        rm -f ${path_inter_msa}breaks_ws_pre_*.RData
+        rm -f ${path_inter_msa}breaks_ws_*.RData
         rm -f ${path_log_step}*
+        rm -f ${path_log_step_merge}*
     fi  
 
     Rscript $INSTALLED_PATH/pangen/comb_04_prepare_breaks.R \
@@ -1273,6 +1284,20 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.log "${path_log_step}" \
             --log.level "${log_level}" \
             --max.len.gap "${max_len_gap}"
+
+    # Breaks that were split apart although they hold the same sequence are put
+    # back together here, before the sequences are cut out in the next step.
+    # comb_04 can only compare lengths; this one compares the sequences, so it
+    # catches the pairs whose two halves ended up with different lengths.
+    # It reads breaks_ws_pre_*.RData from the call above and writes the final
+    # breaks_ws_*.RData, which is what the next step reads.
+    Rscript $INSTALLED_PATH/pangen/comb_04b_merge_by_seqs.R \
+            --path.features.msa "${path_features_msa}" \
+            --path.inter.msa "${path_inter_msa}" \
+            --path.chromosomes "${path_chrom}" \
+            --cores "${cores}" \
+            --path.log "${path_log_step_merge}" \
+            --log.level "${log_level}"
 
     # Done
     touch "${step_file}"
