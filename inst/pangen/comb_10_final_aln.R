@@ -76,7 +76,7 @@ if (!dir.exists(path.inter.msa)) stop('Internal MSA directory does not exist')
 s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+pref.combinations <- sub("\\.h5$", "", pref.combinations)
 
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 

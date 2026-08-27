@@ -90,7 +90,7 @@ aln.type.in = paste0(aln.type.in, '_')
 s.pattern <- paste0("^", aln.type.in, "\\d+_\\d+\\.h5$")
 files <- list.files(path = path.cons, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+pref.combinations <- sub("\\.h5$", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
   stop('No files alignments are found')
@@ -556,7 +556,7 @@ for(s.comb in pref.combinations){
             
             # --- Add fake ----
             
-            result.sup = rbind(result.sup,
+            if(n.sup > 0) result.sup = rbind(result.sup,
                                data.frame(beg = -1, end = -1, id = 1:n.sup, type = 0, len = nchar(df.sup$V8)))
             
             # ---- Order ----
@@ -742,11 +742,7 @@ for(s.comb in pref.combinations){
       }, 
       TimeoutException = function(ex) {
         # Handle timeout exception
-        pokazAttention("Timeout reached for i.b = %d. Skipping to the next iteration.", i.b)
-      }, 
-      error = function(err) {
-        # Handle other types of errors
-        pokazAttention("An error occurred for i.b = %d: %s. Skipping to the next iteration.", i.b, err$message)
+        pokazAttention("Timeout reached for i.b =", i.b, "- skipping to the next iteration.")
       })
       
     }
@@ -769,13 +765,8 @@ for(s.comb in pref.combinations){
                     }, 
                     TimeoutException = function(ex) {
                       # Handle timeout exception
-                      pokazAttention("Timeout reached for i.b = %d. Skipping to the next iteration.", i.b)
+                      pokazAttention("Timeout reached for i.b =", i.b, "- skipping to the next iteration.")
                       return(NULL)
-                    }, 
-                    error = function(err) {
-                      # Handle other types of errors
-                      pokazAttention("An error occurred for i.b = %d: %s. Skipping to the next iteration.", i.b, err$message)
-                      return(NULL) 
                     })
                     
                   }

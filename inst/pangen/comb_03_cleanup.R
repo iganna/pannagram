@@ -70,7 +70,7 @@ if(!dir.exists(path.inter.msa)) stop('path_inter_msa folder does not exist')
 s.pattern <- paste0("^", aln.type.in, ".*\\.*h5$")
 files <- list.files(path = path.inter.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+pref.combinations <- sub("\\.h5$", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')

@@ -94,7 +94,7 @@ if (!is.null(opt$path.inter.synteny)) path.inter.synteny <- opt$path.inter.synte
 s.pattern <- paste0("^", aln.type.in, ".*")
 files <- list.files(path = path.features.msa, pattern = s.pattern, full.names = FALSE)
 pref.combinations = gsub(aln.type.in, "", files)
-pref.combinations <- sub(".h5", "", pref.combinations)
+pref.combinations <- sub("\\.h5$", "", pref.combinations)
 
 if(length(pref.combinations) == 0) {
   stop('No files with the ref-based alignments are found')
