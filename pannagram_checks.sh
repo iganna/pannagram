@@ -58,7 +58,9 @@ fi
 # Scripts force linking to Conda env
 echo -e "[3] \033[34mUpdating symlinks for Bash scripts\033[0m"
 ln -sf "$(realpath ./inst/features.sh)" "$CONDA_PREFIX/bin/features"
+ln -sf "$(realpath ./inst/features_n.sh)" "$CONDA_PREFIX/bin/features_n"
 ln -sf "$(realpath ./inst/pannagram.sh)" "$CONDA_PREFIX/bin/pannagram"
+ln -sf "$(realpath ./inst/pannagram_n.sh)" "$CONDA_PREFIX/bin/pannagram_n"
 ln -sf "$(realpath ./inst/simsearch.sh)" "$CONDA_PREFIX/bin/simsearch"
 ln -sf "$(realpath ./inst/chromotools.sh)" "$CONDA_PREFIX/bin/chromotools"
 ln -sf "$(realpath ./inst/panconvert.sh)" "$CONDA_PREFIX/bin/panconvert"

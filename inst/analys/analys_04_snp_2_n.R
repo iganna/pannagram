@@ -1,0 +1,297 @@
+suppressMessages({
+  library(Biostrings)
+  library(rhdf5)
+  library(foreach)
+  library(doParallel)
+  library(optparse)
+  library(crayon)
+})
+
+source(system.file("utils/utils.R", package = "pannagram"))
+source(system.file("analys/analys_func.R", package = "pannagram"))
+source(system.file("utils/chunk_hdf5.R", package = "pannagram")) 
+source(system.file("utils/interval_func.R", package = "pannagram")) # interval codec + hdf5 layer
+
+args = commandArgs(trailingOnly=TRUE)
+
+option_list = list(
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
+  make_option("--path.snp",          type = "character", default = NULL, help = "Path to snp dir"),
+  make_option("--path.seq",          type = "character", default = NULL, help = "Path to seq dir"),
+  make_option("--cores",             type = "integer", default = 1,       help = "number of cores to use for parallel processing"),
+  make_option("--aln.type",          type="character", default="default", help="type of alignment ('msa_', 'comb_', 'v_', etc)"),
+  make_option("--ref",               type="character", default=NULL,      help="prefix of the reference file"),
+  make_option("--acc",               type="character", default='',      help="For which accession to generate the VCF file")
+)
+
+opt_parser = OptionParser(option_list=option_list)
+opt = parse_args(opt_parser, args = args)
+
+source(system.file("utils/chunk_logging.R", package = "pannagram"))
+
+num.cores <- opt$cores
+
+path.features.msa <- if (!is.null(opt$path.features.msa)) opt$path.features.msa else stop("Error: 'path.features.msa' is NULL. Please provide a valid path.")
+
+path.seq <- opt$path.seq
+if (!dir.exists(path.seq)) stop("Folder `path.seq` does not exist")
+
+path.snp <- opt$path.snp
+if (!dir.exists(path.snp)) {
+  dir.create(path.snp)
+}
+if (!dir.exists(path.snp)) {
+  stop("The output folder was not created")
+}
+
+if (!dir.exists(path.features.msa)) {
+  stop(paste("The consensus folder does not exist:", path.features.msa))
+}
+
+if (!is.null(opt$aln.type)) {
+  aln.type = opt$aln.type
+} else {
+  aln.type = aln.type.msa
+}
+
+ref.name <- opt$ref
+if (ref.name == "NULL" || is.null(ref.name)) ref.name <- ""
+
+source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
+
+acc.vcf <- opt$acc
+
+# --------------------------------------------------
+# main loop by s.comb, parallel inside by acc
+# --------------------------------------------------
+for (s.comb in s.combinations) {
+  
+  # ---------------------------------
+  # Cleanup from previous iteration
+  # ---------------------------------
+  rm(list = intersect(
+    c("i.chr", "file.seq.cons", "s.pangen", "s.pangen.name",
+      "file.seq", "groups", "accessions", "n.acc",
+      "pos.diff.list", "pos",
+      "acc.names", "n.pos", "snp.ref", "snp.val",
+      "file.vcf", "file.comb", "acc",
+      "pos.acc", "idx", "ord", "snp.val.acc", "snp.ref.acc",
+      "file.vcf.acc"),
+    ls()
+  ))
+  gc()
+  
+  pokaz("Combination", s.comb)
+  
+  # Get Consensus
+  i.chr = comb2ref(s.comb)
+  file.seq.cons = paste0(path.seq, "seq_cons_", s.comb, ref.suff, ".fasta")
+  if(!file.exists(file.seq.cons)){
+    stop("Consensus fasta does not exist")
+  }
+  s.pangen = readFastaMy(file.seq.cons)
+  s.pangen.name = names(s.pangen)[1]
+  s.pangen = seq2nt(s.pangen)
+  
+  # Get accessions
+  file.seq = paste0(path.seq, "seq_", s.comb, ref.suff, ".h5")
+  
+  groups = h5ls(file.seq)
+  accessions = groups$name[groups$group == gr.accs.b]
+  n.acc = length(accessions)
+  
+  rm(groups)
+  gc()
+  
+  # -----------------------------
+  # ROUND 1: parallel by acc
+  # -----------------------------
+  pokaz("Round 1: get positions of differences..")
+  
+  if (num.cores == 1) {
+    pos.diff.list <- lapply(accessions, function(acc) {
+      pokaz("Difference in accession", acc)
+      v = h5read(file.seq, paste0(gr.accs.e, acc))
+      pos = which((v != s.pangen) & (v != "-"))
+      rm(v)
+      gc(verbose = FALSE)
+      pos
+    })
+  } else {
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
+    pos.diff.list <- foreach(
+      acc = accessions,
+      .packages = c("rhdf5", "crayon", "pannagram"),
+      .errorhandling = "stop"
+    ) %dopar% {
+      pokaz("Difference in accession", acc)
+      v = h5read(file.seq, paste0(gr.accs.e, acc))
+      pos = which((v != s.pangen) & (v != "-"))
+      rm(v)
+      gc()
+      pos
+    }
+    
+    stopCluster(myCluster)
+    rm(myCluster)
+    gc()
+  }
+  
+  pos = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
+  rm(pos.diff.list)
+  gc()
+  
+  if (length(pos) == 0) {
+    pokaz("No SNPs were found..")
+    next
+  }
+  
+  pokaz("Round 2: get diffs in common positions..")
+  
+  # -----------------------------
+  # ROUND 2: parallel by acc
+  # -----------------------------
+  if (num.cores == 1) {
+    res.list <- lapply(accessions, function(acc) {
+      pokaz("Sequence of accession", acc)
+      
+      v = h5read(file.seq, paste0(gr.accs.e, acc))
+      
+      val = v[pos]
+      
+      rm(v)
+      gc()
+      
+      list(acc = acc, val = val)
+    })
+  } else {
+    myCluster <- makeCluster(num.cores, type = "PSOCK")
+    registerDoParallel(myCluster)
+    
+    res.list <- foreach(
+      acc = accessions,
+      .packages = c("rhdf5", "crayon", "pannagram"),
+      .errorhandling = "stop"
+    ) %dopar% {
+      pokaz("Sequence of accession", acc)
+      
+      v = h5read(file.seq, paste0(gr.accs.e, acc))
+      
+      val = v[pos]
+      
+      rm(v)
+      gc()
+      
+      list(acc = acc, val = val)
+    }
+    
+    stopCluster(myCluster)
+    rm(myCluster)
+    gc()
+  }
+  
+  # Build matrices
+  pokaz("Build matrices...")
+  acc.names = vapply(res.list, `[[`, character(1), "acc")
+  snp.ref = s.pangen[pos]
+  snp.val = do.call(cbind, lapply(res.list, `[[`, "val"))
+  colnames(snp.val) = acc.names
+  
+  # Clean up the memory
+  rm(res.list)
+  
+  pokaz("Save VCF-file...")
+  file.vcf = paste0(path.snp, "snps_", s.comb, ref.suff, "_pangen.vcf")
+  saveVCF2(snp.val, pos, chr.name = paste0("PanGen_Chr", i.chr), file.vcf = file.vcf,
+           snp.ref = snp.ref)
+  
+  gc()
+  
+
+  
+  # -------------------------------------------------
+  # MAXIMUM cleanup before accession-specific VCF save
+  # -------------------------------------------------
+  
+  rm(
+    s.pangen,
+    s.pangen.name,
+    file.seq.cons,
+    file.seq,
+    n.acc,
+    acc.names,
+    snp.ref,
+    file.vcf
+  )
+  
+  
+  try(rhdf5::h5closeAll(), silent = TRUE)
+  
+  invisible(gc())
+  invisible(gc())
+  invisible(gc())
+  
+  # -------------------------------------------------
+  #     Save
+  # -------------------------------------------------
+  
+  # Create the VCF-file for the reference accession
+  file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, ".h5")
+  
+  acc = ''
+  if (ref.name != "") {
+    acc = ref.name
+  } 
+  
+  if(acc.vcf != ""){
+    acc = acc.vcf
+  }
+  
+  if(acc == ''){
+    next
+  }
+  
+  pokaz('Generating VCF-file for accession', acc)
+  
+  if (!(acc %in% colnames(snp.val))) {
+    stop(sprintf("Accession '%s' is not present among SNP matrix columns", acc))
+  }
+  
+  if (!file.exists(file.comb)) {
+    stop(sprintf("Combination file does not exist: %s", file.comb))
+  }
+  
+  pos.acc = h5VecRead(file.comb, acc)
+  pos.acc = pos.acc[pos]
+  snp.val.acc = snp.val[pos.acc != 0, , drop = FALSE]
+  snp.ref.acc = snp.val.acc[, acc]
+  pos.acc = abs(pos.acc[pos.acc != 0])
+  
+  # Sort positions
+  ord = order(pos.acc)
+  pos.acc = pos.acc[ord]
+  snp.val.acc = snp.val.acc[ord, , drop = FALSE]
+  snp.ref.acc = snp.ref.acc[ord]
+  
+  pokaz("Save VCF-file for the accession", acc, "...")
+  file.vcf.acc = paste0(path.snp, "snps_", s.comb, ref.suff, "_", acc, ".vcf")
+  saveVCF2(snp.val.acc, pos.acc, chr.name = paste0(acc, "_Chr", i.chr), file.vcf = file.vcf.acc,
+           snp.ref = snp.ref.acc)
+  
+  rm(
+    pos,
+    snp.val,
+    pos.acc,
+    snp.val.acc,
+    snp.ref.acc,
+    file.comb,
+    file.vcf.acc,
+    ord
+  )
+  
+  try(rhdf5::h5closeAll(), silent = TRUE)
+  invisible(gc())
+}
+
