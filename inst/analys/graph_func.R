@@ -1264,14 +1264,47 @@ normalizeCovCutoff <- function(cov.cutoff) {
   return(cov.cutoff)
 }
 
+#' Bring the sequences of a component to one strand
+#'
+#' @param seqs.names.comp Names of the members of the component.
+#' @param seqs Named vector of sequences.
+#' @param nestedness Table of the similarity search; may be `NULL` when
+#' `path.graphs` and `family` are given.
+#' @param path.graphs Directory with the per-family pieces of the nestedness
+#' table, `graphs_<sim>_<cov>/`, written by `sv_03b_family_graphs.R`. Reading the
+#' piece instead of the whole table is what makes the difference: the table of a
+#' single project holds millions of rows, and it used to be read once per family.
+#' @param family Identifier of the family, for the name of the file.
+#' @param use.graph Keep only the pairs that survived the cleaning of the graph;
+#' the orientation is then propagated along the edges of the final graph.
+#'
 #' @export
 getComponentSequences <- function(seqs.names.comp, 
                                   seqs, 
-                                  nestedness){
+                                  nestedness = NULL,
+                                  path.graphs = NULL,
+                                  family = NULL,
+                                  use.graph = TRUE){
   
   seqs.names.comp = seqs.names.comp[seqs.names.comp %in% names(seqs)]
   if(length(seqs.names.comp) == 0){
     stop('Names of sequences (seqs.names.comp) were not found among the provided sequences (seqs).') 
+  }
+
+  if(is.null(nestedness)){
+    if(is.null(path.graphs) || is.null(family)){
+      stop('Either nestedness, or path.graphs together with family, should be provided')
+    }
+    file.nest = file.path(path.graphs, paste0('fam_', family, '.txt'))
+    if(!file.exists(file.nest)) stop(paste0('No piece of the nestedness table: ', file.nest))
+    # the names of the SVs contain "|", so the separator is given explicitly
+    nestedness = utils::read.table(file.nest, sep = '\t', header = TRUE,
+                                   stringsAsFactors = FALSE, quote = '', comment.char = '')
+  }
+
+  if(use.graph && all(c('in.graph', 'in.graph.rev') %in% colnames(nestedness))){
+    keep = nestedness$in.graph | nestedness$in.graph.rev
+    if(sum(keep) > 0) nestedness = nestedness[keep, , drop = FALSE]
   }
   
   # Nestedness for the component
@@ -1295,10 +1328,12 @@ getComponentSequences <- function(seqs.names.comp,
   orientation.target = rep('.', length(seqs.target))
   names(orientation.target) = seqs.names.comp
   
-  # Define the first orientation by the longest ORF in the first sequence
+  # Define the first orientation by the longest ORF in the first sequence.
+  # Elements without ORFs (MITEs, SINEs) have no coding direction at all,
+  # so the seed sequence is taken as it is.
   s = seqs[seqs.names.comp[1]]
   orf.res = orfFinder(s)
-  orientation.target[1] = orf.res$pos$strand[1]
+  orientation.target[1] = if(is.null(orf.res$pos)) '+' else orf.res$pos$strand[1]
   
   dir.seq = c('-', '+')
   

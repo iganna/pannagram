@@ -255,6 +255,12 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
     #     --path.sv ${path_sv} \
     #     --file.orfs ${file_sv_families_orfs}
 
+    pokaz_stage "Cut the nestedness table into per-family pieces..."
+    Rscript $INSTALLED_PATH/analys/sv_03b_family_graphs.R \
+        --path.sv ${path_sv} \
+        --similarity ${similarity_value} \
+        --coverage ${coverage_value}
+
     pokaz_message "Step -sv_families is done!"
 fi
 
