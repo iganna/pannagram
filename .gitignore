@@ -1,5 +1,6 @@
 DATA/**
 old/
+tmp/
 *.old
 develop/
 .DS_Store
@@ -23,3 +24,7 @@ __pycache__/
 
 # Local pre-refactor snapshots
 inst/pangen/_prev_backup/
+
+# Local pre-refactor snapshot
+_prev_backup.disabled/
+PROGRESS.md
