@@ -95,7 +95,7 @@ colnames(res) <- c('name.query', 'name.target', 'strand', 'length.query', 'lengt
 # Incorporate coverage
 res = res[(res$coverage.q > coverage / 100) | (res$coverage.t > coverage / 100),]
 
-output.file.txt = sub('.rds', paste0( '_',sim.cutoff, '_', coverage, '.txt'), output.file)
+output.file.txt = sub('\\.rds$', paste0( '_',sim.cutoff, '_', coverage, '.txt'), output.file)
 write.table(res,
             output.file.txt,
             sep       = "\t",

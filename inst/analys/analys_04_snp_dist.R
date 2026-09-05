@@ -44,7 +44,7 @@ if(!dir.exists(path.figures)) stop('Consensus folder does not exist')
 
 
 file.dist = paste0(path.snp, file.pi, '.dist.dist' )
-file.id = paste0(path.snp, sub('.vcf', '_output.ID.FORMAT', file.pi))
+file.id = paste0(path.snp, sub('\\.vcf$', '_output.ID.FORMAT', file.pi))
 
 lines <- readLines(file.dist)
 

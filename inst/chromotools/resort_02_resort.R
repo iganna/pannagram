@@ -58,7 +58,7 @@ if(!dir.exists(path.new)) dir.create(path.new)
 
 # Accessions
 files.aln <- list.files(path.resort, pattern = ".*\\.rds$", full.names = F)
-accessions = sub(".rds", "", files.aln)
+accessions = sub("\\.rds$", "", files.aln)
 
 if(length(unique(accessions)) != length(accessions)) stop('Something is wring with accession names')
 accessions = setdiff(accessions, base.acc)
