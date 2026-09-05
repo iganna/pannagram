@@ -16,11 +16,27 @@ if [ -z "$INSTALLED_PATH" ]; then
     exit 1
 fi
 
+# Hand over to a private copy of this file, so that editing or reinstalling it
+# cannot corrupt a run that is already in flight. Guarded, because bin/* is a
+# symlink into the working tree while the helpers come from the installed
+# package: right after a `git pull` this script can be newer than they are.
+if [ -f "$INSTALLED_PATH/utils/chunk_pin_self.sh" ]; then
+    source "$INSTALLED_PATH/utils/chunk_pin_self.sh"
+fi
+
 source $INSTALLED_PATH/utils/chunk_error_control.sh
 source $INSTALLED_PATH/utils/utils_bash.sh
 source $INSTALLED_PATH/utils/help_pannagram.sh
 source $INSTALLED_PATH/utils/argparse_pannagram.sh
 source $INSTALLED_PATH/utils/chunk_paths.sh
+
+# The launchers are symlinks into the working tree while the helpers above come
+# from the installed package, so the two can get out of step.
+if ! declare -F set_step_paths > /dev/null; then
+    echo "Error: the installed pannagram package is older than this script." >&2
+    echo "       Re-run ./developer.sh (or ./user.sh) from the repository root." >&2
+    exit 1
+fi
 
 # Make folders
 mkdir -p "${path_project}"
@@ -435,7 +451,7 @@ if [[ -f "$file_params" ]]; then
         fi
     fi
 
-    if [[ "$prev_path_in" != "$path_in" || \
+    if [[ "$(canonical_path "$prev_path_in")" != "$(canonical_path "$path_in")" || \
           "$prev_part_len" != "$part_len" || \
           "$prev_p_ident_gap" != "$p_ident_gap" || \
           "$prev_purge_reps" != "$purge_reps" || \
@@ -463,18 +479,23 @@ echo "prev_p_ident_gap=${p_ident_gap}" >> "$file_params"
 # Check Steps
 pokaz_stage "Check Steps"
 
+# Checkpoints used to be named after the step NUMBER; a project made by an older
+# version is brought over to the number-free layout before anything is inspected.
+migrate_legacy_step_markers "${path_log}"
+
 # Define the log directory
-step_files=$(find "${path_log}" -maxdepth 1 -type f -name "step*_done")
+step_files=$(find "${path_log}" -maxdepth 1 -type f -name "*_done")
 
 if [[ $step_start -eq 0 ]]; then
 
     # If there is at least one matching file
     if [[ -n "$step_files" ]]; then
-        
-        max_step=0  # Initialize to 0 
+
+        max_step=0  # Initialize to 0
         for file in $step_files; do
-            # Extract the number immediately following "step"
-            step_num=$(echo "$file" | sed -n 's/.*step\([0-9]\{1,\}\)_.*/\1/p')
+            # The number the step had when the marker was written
+            step_num=$(step_marker_number "$file")
+            [[ -n "$step_num" ]] || continue
 
             # Check if the extracted number is the highest found so far
             if [[ $step_num -gt $max_step ]]; then
@@ -488,19 +509,33 @@ if [[ $step_start -eq 0 ]]; then
         step_start=1
     fi
 
+    # Only a hint for the display and for `-one_step`: which steps actually run
+    # is decided per step by its own marker, so a renumbering after this project
+    # was started cannot make a finished step look unfinished any more.
+
 else
     # Remove all done files between start and end
     if [[ -n "$step_files" ]]; then
         # If the previous tep does not exist - error
         step_prev=$((step_start - 1))
-        if [[ $step_prev -ne 0 ]] && ! ls "${path_log}step${step_prev}"*done 1> /dev/null 2>&1; then
-            pokaz_error "Error: Step ${step_prev} was not done."
-            exit 1
+        if [[ $step_prev -ne 0 ]]; then
+            step_prev_done="F"
+            for file in $step_files; do
+                if [[ "$(step_marker_number "$file")" == "$step_prev" ]]; then
+                    step_prev_done="T"
+                    break
+                fi
+            done
+            if [[ "$step_prev_done" != "T" ]]; then
+                pokaz_error "Error: Step ${step_prev} was not done."
+                exit 1
+            fi
         fi
 
         for file in $step_files; do
-            
-            step_num=$(echo "$file" | sed -n 's/.*step\([0-9]\{1,\}\)_.*/\1/p')
+
+            step_num=$(step_marker_number "$file")
+            [[ -n "$step_num" ]] || continue
 
             if [[ $step_num -ge $step_start && $step_num -le $step_end ]]; then
                 # echo ${file}
@@ -555,9 +590,8 @@ with_level 1 pokaz_stage "Step ${step_num}. Genomes into chromosomes."
 mkdir -p "${path_chrom}"
 
 # Logs
-step_name="step${step_num}_query_01"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_query_01"   # display only
+set_step_paths "query_01"
 mkdir -p ${path_log_step}
 
 # Start
@@ -585,7 +619,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --purge.contigs ${purge_contigs}
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 
@@ -596,9 +630,8 @@ if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
     for ref0 in "${refs_all[@]}"; do
 
         # Logs
-        step_name="step${step_num}_query_01_refpart_${ref0}"
-        step_file="${path_log}${step_name}_done"
-        path_log_step="${path_log}${step_name}/"
+        step_name="step${step_num}_query_01_refpart_${ref0}"   # display only
+        set_step_paths "query_01_refpart_${ref0}"
         mkdir -p ${path_log_step}
 
         # Start
@@ -625,7 +658,7 @@ if [[ "${path_in}" != "${path_ref}" || "$nchr_ref" != "$nchr" ]]; then
             rm ${file_acc_ref}
 
             # Done
-            touch "${step_file}"
+            mark_step_done
         fi
     done
 fi
@@ -636,9 +669,8 @@ if [ ! -z "${flag_orf}" ]; then
     with_level 1 pokaz_stage "Additional step. Get all ORFs."
 
     # Logs
-    step_name="step${step_num}_query_01_orf"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_query_01_orf"   # display only
+    set_step_paths "query_01_orf"
     mkdir -p ${path_log_step}
 
     # Start
@@ -665,7 +697,7 @@ if [ ! -z "${flag_orf}" ]; then
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done
-        touch "${step_file}"
+        mark_step_done
     fi
 fi
 
@@ -677,9 +709,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Chromosomes into parts."
 
 # Logs
-step_name="step${step_num}_query_02"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_query_02"   # display only
+set_step_paths "query_02"
 mkdir -p ${path_log_step}
 
 # Start
@@ -708,7 +739,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.log ${path_log_step} --log.level ${log_level}
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 
 fi
 
@@ -727,9 +758,8 @@ for ref0 in "${refs_all[@]}"; do
     mkdir -p $path_blast_parts
     
     # Logs
-    step_name="step${step_num}_query_03_blast_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_query_03_blast_${ref0}"   # display only
+    set_step_paths "query_03_blast_${ref0}"
     mkdir -p $path_log_step
 
     # Start
@@ -793,7 +823,7 @@ for ref0 in "${refs_all[@]}"; do
                 -path_log ${path_log_step}
 
         # Done
-        touch "${step_file}"
+        mark_step_done
         # rm -rf ${path_parts} 
         
     fi
@@ -821,9 +851,8 @@ for ref0 in "${refs_all[@]}"; do
     mkdir -p ${path_alignment_ref}
 
     # Logs
-    step_name="step${step_num}_synteny_01_maj_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_synteny_01_maj_${ref0}"   # display only
+    set_step_paths "synteny_01_maj_${ref0}"
     mkdir -p ${path_log_step}
 
     # Start
@@ -854,11 +883,7 @@ for ref0 in "${refs_all[@]}"; do
                 --log.level ${log_level}
 
         # Done
-        touch "${step_file}"
-
-        # Clean up the output folders of previous stages
-        # If the first round of alignment didn't have any errors - remove the blast which was needed for it
-        # rm ${path_blast_parts}
+        mark_step_done
     fi
 
     # Remove reference-dependent variables
@@ -868,6 +893,16 @@ for ref0 in "${refs_all[@]}"; do
 done
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# Blast of parts is not needed anymore
+if [ "$keep_inter" != "T" ]; then
+    with_level 1 pokaz_message "Removing intermediate files."
+    for ref0 in "${refs_all[@]}"; do
+        remove_dir_if_exists "${path_blast}/parts/${ref0}/"
+    done
+    remove_dir_if_empty "${path_blast}/parts"
+    remove_dir_if_empty "${path_blast}"
+fi
 
 # Plotting
 
@@ -886,9 +921,8 @@ for ref0 in "${refs_all[@]}"; do
     mkdir -p $path_plots_ref
     
     # Logs
-    step_name="step${step_num}_synteny_02_plot_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_synteny_02_plot_${ref0}"   # display only
+    set_step_paths "synteny_02_plot_${ref0}"
     mkdir -p ${path_log_step}
 
     # Step start
@@ -919,7 +953,7 @@ for ref0 in "${refs_all[@]}"; do
                 --cores ${cores}
 
         # Done
-        touch "${step_file}"
+        mark_step_done
         
     fi
 
@@ -950,9 +984,8 @@ for ref0 in "${refs_all[@]}"; do
     mkdir -p ${path_gaps}
 
     # Logs
-    step_name="step${step_num}_synteny_03_get_gaps_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_synteny_03_get_gaps_${ref0}"   # display only
+    set_step_paths "synteny_03_get_gaps_${ref0}"
     mkdir -p ${path_log_step}
 
     # Step start
@@ -983,7 +1016,7 @@ for ref0 in "${refs_all[@]}"; do
                 --path.log ${path_log_step} --log.level ${log_level}
 
         # Done
-        touch "${step_file}"
+        mark_step_done
     fi
     
     unset path_alignment_ref
@@ -1003,9 +1036,8 @@ for ref0 in "${refs_all[@]}"; do
     mkdir -p "${path_gaps}db/"
 
     # Logs
-    step_name="step${step_num}_synteny_04_blast_gaps_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_synteny_04_blast_gaps_${ref0}"   # display only
+    set_step_paths "synteny_04_blast_gaps_${ref0}"
     mkdir -p ${path_log_step}
 
     # Step start
@@ -1036,7 +1068,7 @@ for ref0 in "${refs_all[@]}"; do
                 -p_ident ${p_ident_gap}
 
         # Done
-        touch "${step_file}"
+        mark_step_done
     fi
 
     unset path_alignment_ref
@@ -1055,9 +1087,8 @@ for ref0 in "${refs_all[@]}"; do
     path_gaps=${path_blast}/gaps/${ref0}/
 
     # Logs
-    step_name="step${step_num}_synteny_05_full_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_synteny_05_full_${ref0}"   # display only
+    set_step_paths "synteny_05_full_${ref0}"
     mkdir -p ${path_log_step}
 
     # Step start
@@ -1088,13 +1119,8 @@ for ref0 in "${refs_all[@]}"; do
                 --path.log ${path_log_step} \
                 --log.level ${log_level}
 
-        # # If the second round of alignment didn't have any errors - remove the blast which was needed for it
-        # rm -rf ${path_gaps}
-        # ls ${path_alignment_ref}*maj*
-        # rm -rf ${path_alignment_ref}*maj*
-
         # Done
-        touch "${step_file}"
+        mark_step_done
     fi
 
     unset path_alignment_ref
@@ -1102,6 +1128,17 @@ for ref0 in "${refs_all[@]}"; do
 done
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# Blast of gaps and major alignments are not needed anymore
+if [ "$keep_inter" != "T" ]; then
+    with_level 1 pokaz_message "Removing intermediate files."
+    for ref0 in "${refs_all[@]}"; do
+        remove_dir_if_exists "${path_blast}/gaps/${ref0}/"
+        clean_dir_files "${path_alignment}${ref0}/" "*_maj.rds"
+    done
+    remove_dir_if_empty "${path_blast}/gaps"
+    remove_dir_if_empty "${path_blast}"
+fi
 
 # Create a consensus
 mkdir -p "${path_features_msa}"
@@ -1113,9 +1150,8 @@ for ref0 in "${refs_all[@]}"; do
     path_alignment_ref="$path_alignment${ref0}/"
 
     # Logs
-    step_name="step${step_num}_comb_01_${ref0}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_comb_01_${ref0}"   # display only
+    set_step_paths "comb_01_${ref0}"
     mkdir -p ${path_log_step}
 
     # Step start
@@ -1147,7 +1183,7 @@ for ref0 in "${refs_all[@]}"; do
                 --log.level ${log_level}
 
         # Done
-        touch "${step_file}"
+        mark_step_done
     fi
     unset path_alignment_ref
 done
@@ -1180,9 +1216,8 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
     ref1=${refs_all[i]}
 
     # Logs
-    step_name="step${step_num}_comb_02_${ref0}_${ref1}"
-    step_file="${path_log}${step_name}_done"
-    path_log_step="${path_log}${step_name}/"
+    step_name="step${step_num}_comb_02_${ref0}_${ref1}"   # display only
+    set_step_paths "comb_02_${ref0}_${ref1}"
     mkdir -p ${path_log_step}
         
     # Start
@@ -1211,7 +1246,7 @@ for ((i = 1; i < ${#refs_all[@]}; i++)); do
                 --path.log ${path_log_step} \
                 --log.level ${log_level}
 
-        touch "${step_file}"
+        mark_step_done
     fi
 
 done
@@ -1222,9 +1257,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Remain only the trustable syntenic positions.."
 
 # Logs
-step_name="step${step_num}_comb_03_cleanup"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_03_cleanup"   # display only
+set_step_paths "comb_03_cleanup"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1248,7 +1282,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --log.level ${log_level} 
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1257,15 +1291,14 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Prepare breakes for an additional alignment"
 
 # Logs
-step_name="step${step_num}_comb_04_prepare_breaks"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_04_prepare_breaks"   # display only
+set_step_paths "comb_04_prepare_breaks"
 mkdir -p ${path_log_step}
 
 # The second call of this step keeps its own logs: both scripts use the
 # checkpoint ledger inside their log directory, and a shared one would make each
 # of them think the other's combinations are already done.
-path_log_step_merge="${path_log}${step_name}_merge/"
+path_log_step_merge="${path_log}comb_04_prepare_breaks_merge/"
 mkdir -p ${path_log_step_merge}
 
 # Start
@@ -1309,7 +1342,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --log.level "${log_level}"
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1318,9 +1351,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Prepare sequences for alignments."
 
 # Logs
-step_name="step${step_num}_comb_05_prepare_seqs"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_05_prepare_seqs"   # display only
+set_step_paths "comb_05_prepare_seqs"
 mkdir -p ${path_log_step}
 
 # Paths for MAFFT, common for the next code too
@@ -1343,13 +1375,11 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     # ---- Clean up the output folders ----
     if [ "$clean" == "T" ]; then 
 
-        touch ${path_inter_synteny}fake_file.txt
-
-        find "${path_inter_synteny}" -maxdepth 1 -type f -name "*.txt" -exec rm -f {} +
-        find "${path_inter_synteny}" -maxdepth 1 -type f -name "*.rds" -exec rm -f {} +
-
-        touch ${path_log_step}fake.log
-        rm -f ${path_log_step}*
+        # Outputs and logs go together: the logs are the checkpoint ledger, so
+        # keeping them would make the next run skip loci whose sequences are gone.
+        clean_dir_files "${path_inter_synteny}" "*.txt"
+        clean_dir_files "${path_inter_synteny}" "*.rds"
+        clean_dir_content "${path_log_step}"
     fi  
 
     mkdir -p "${path_inter_synteny}"
@@ -1371,7 +1401,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     done
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1381,17 +1411,23 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # ==============================
 with_level 1 pokaz_stage "Step ${step_num}. Align SHORT sequences."
 
-step_name="step${step_num}_comb_06_short"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_06_short"   # display only
+set_step_paths "comb_06_short"
 mkdir -p ${path_log_step}
 
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # Clean up the log files
+    # Clean up the logs AND the output folders. The outputs have to go as well:
+    # locus numbering is derived from the breaks, which comb_04 recomputes on
+    # every run, so a rerun writes a different set of locus_*.fasta names and
+    # the leftovers of the previous run would silently join the combining step.
+    # The logs are the checkpoint ledger, so they must go together with the data:
+    # keeping them would make the next run skip work whose output no longer exists.
     if [ "$clean" == "T" ]; then
-        touch ${path_log_step}fake_short.log
-        rm -f ${path_log_step}*short*
+        clean_dir_content "${path_log_step}"
+        for ((i=1; i<=nchr; i++)); do
+            remove_dir_if_exists "${path_inter_synteny}short_${i}_${i}/"
+        done
     fi
 
     for ((i=1; i<=nchr; i++)); do
@@ -1406,6 +1442,8 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_log_step_chr="${path_log_step}chromosome_${i}/"
         mkdir -p "${path_log_step_chr}"
 
+        check_listed_files "${path_inter_msa}loci_short_${i}_${i}.txt" "sequence"
+
         "${INSTALLED_PATH}/pangen/comb_06_align.py" \
             --inputs-list "${path_inter_msa}loci_short_${i}_${i}.txt" \
             --outdir "${path_inter_synteny_short}" \
@@ -1416,7 +1454,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         echo "Done" >> "$log_chromosome"
     done
 
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1426,17 +1464,21 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 # ==============================
 with_level 1 pokaz_stage "Step ${step_num}. Align LONG sequences."
 
-step_name="step${step_num}_comb_07_long"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_07_long"   # display only
+set_step_paths "comb_07_long"
 mkdir -p ${path_log_step}
 
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
-    # Clean up the log files
+    # Clean up the logs AND the output folders, for the same reason as in the
+    # SHORT step above: stale locus_*.fasta files from a previous run are not
+    # overwritten and would be picked up by comb_09 as legitimate loci.
     if [ "$clean" == "T" ]; then
-        touch ${path_log_step}fake_large.log
-        rm -f ${path_log_step}*large*
+        clean_dir_content "${path_log_step}"
+        for ((i=1; i<=nchr; i++)); do
+            remove_dir_if_exists "${path_inter_synteny}large_${i}_${i}_aln/"
+            remove_dir_if_exists "${path_inter_synteny}large_${i}_${i}_second/"
+        done
     fi
 
     for ((i=1; i<=nchr; i++)); do
@@ -1452,10 +1494,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_log_step_chr="${path_log_step}chromosome_${i}/"
         mkdir -p "${path_log_step_chr}"
 
-        if [ "$clean" == "T" ]; then
-            touch ${path_inter_synteny_large}large.txt
-            rm -f ${path_inter_synteny_large}*large*.txt
-        fi
+        check_listed_files "${path_inter_msa}loci_large_${i}_${i}.txt" "sequence"
 
         "${INSTALLED_PATH}/pangen/comb_07_mafft.py" \
             --inputs-list "${path_inter_msa}loci_large_${i}_${i}.txt" \
@@ -1473,7 +1512,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     done
 
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1483,28 +1522,29 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Run ADDITIONAL MAFFT."
 
 # Logs
-step_name="step${step_num}_comb_08_mafft2"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_08_mafft2"   # display only
+set_step_paths "comb_08_mafft2"
 mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
-    if   [ "$clean" == "T" ]; then 
-        # touch ${path_mafft_out}fake_aligned2.fasta
-        # touch ${path_log_step}fake.log
-        # find ${path_mafft_out} -name "*aligned2.fasta" -type f -exec rm -f {} +
-        # find ${path_log_step} -name "*" -type f -exec rm -f {} +
-
-        rm -f ${path_log_step}*
+    # This step does not own large_*_aln/ - comb_07 fills it and this step only
+    # adds the *_aligned.fasta files for the loci that were sent to _second/.
+    # So only those files are removed here, not the whole folder.
+    if   [ "$clean" == "T" ]; then
+        clean_dir_content "${path_log_step}"
+        for ((i=1; i<=nchr; i++)); do
+            clean_dir_files "${path_inter_synteny}large_${i}_${i}_aln/" "*_aligned.fasta"
+            remove_dir_if_exists "${path_inter_synteny}large_${i}_${i}_second/tmp/"
+        done
     fi
 
     for ((i=1; i<=nchr; i++)); do
         echo "Chromosome ${i}"
         path_log_step_chr="${path_log_step}chromosome_${i}/"
-        mkdir -p ${path_log_step}
+        mkdir -p ${path_log_step_chr}
 
         log_chromosome=${path_log_step}chr_${i}_large.log
         if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
@@ -1513,11 +1553,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
         path_inter_synteny_large_second="${path_inter_synteny}large_${i}_${i}_second/"
-
-        # if [ "$clean" == "T" ]; then 
-        #     touch ${path_inter_synteny_large}large.txt
-        #     rm -f ${path_inter_synteny_large}*large*.txt
-        # fi 
 
         Rscript $INSTALLED_PATH/pangen/comb_08_mafft2.R \
             --cores ${cores} \
@@ -1531,7 +1566,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
     done
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1541,21 +1576,24 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Combine long alignments by genome files."
 
 # Logs
-step_name="step${step_num}_comb_09_combine"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_09_combine"   # display only
+set_step_paths "comb_09_combine"
 mkdir -p ${path_log_step}
 
 # Start
 if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
     # ---- Clean up the output folders ----
-    # NOTE: this step writes per-genome combined alignments into path_inter_synteny,
-    # NOT the pan*.h5 (those belong to the next step), so only the logs are cleaned here.
+    # NOTE: this step writes per-genome combined alignments into large_<i>_<i>/,
+    # NOT the pan*.h5 (those belong to the next step).
+    # The log folder holds per-chromosome subdirectories, so it needs a recursive
+    # removal: plain `rm -f "${path_log_step}"*` exits with 1 on them and the
+    # error trap then kills the whole run right before the step starts.
     if   [ "$clean" == "T" ]; then
-        touch ${path_log_step}fake.log
-
-        rm -f ${path_log_step}*
+        clean_dir_content "${path_log_step}"
+        for ((i=1; i<=nchr; i++)); do
+            remove_dir_if_exists "${path_inter_synteny}large_${i}_${i}/"
+        done
     fi
 
     for ((i=1; i<=nchr; i++)); do
@@ -1564,11 +1602,6 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         if [ -f "$log_chromosome" ] && grep -q "^Done$" "$log_chromosome"; then
             continue
         fi
-
-        # if [ "$clean" == "T" ]; then
-        #     touch ${path_inter_synteny_large}large.txt
-        #     rm -f ${path_inter_synteny_large}*large*.txt
-        # fi
 
         path_inter_synteny_large="${path_inter_synteny}large_${i}_${i}_aln/"
         path_inter_synteny_large_aln="${path_inter_synteny}large_${i}_${i}/"
@@ -1588,7 +1621,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
    done
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1600,9 +1633,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Combine all alignments together into the final one."
 
 # Logs
-step_name="step${step_num}_comb_10_final"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_10_final"   # display only
+set_step_paths "comb_10_final"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1627,10 +1659,16 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --log.level ${log_level}
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
+
+# Sequences and alignments between the synteny blocks are not needed anymore
+if [ "$keep_inter" != "T" ]; then
+    with_level 1 pokaz_message "Removing intermediate files."
+    remove_dir_if_exists "${path_inter_synteny}"
+fi
 
 # # Add synteny positions which were lost
 
@@ -1687,9 +1725,8 @@ path_extra_long="${path_extra}long/"
 mkdir -p "$path_extra_long"
 
 # Logs
-step_name="step${step_num}_comb_11"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_11_extra1"   # display only
+set_step_paths "comb_11_extra1"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1716,7 +1753,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aln.type.in 'pan'
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1725,9 +1762,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments - 1."
 
 # Logs
-step_name="step${step_num}_comb_12"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_12_extra1"   # display only
+set_step_paths "comb_12_extra1"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1754,7 +1790,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aln.type.in 'pan'
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1764,9 +1800,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments - 1."
 
 # Logs
-step_name="step${step_num}_comb_13"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_13_extra1"   # display only
+set_step_paths "comb_13_extra1"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1790,7 +1825,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aln.type.in 'pan'
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1803,9 +1838,8 @@ path_extra_long2="${path_extra}long2/"
 mkdir -p "$path_extra_long2"
 
 # Logs
-step_name="step${step_num}_comb_11"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_11_extra2"   # display only
+set_step_paths "comb_11_extra2"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1832,7 +1866,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aln.type.in 'extra1'
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1845,9 +1879,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Align extra long fragments - 2."
 
 # Logs
-step_name="step${step_num}_comb_12"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_12_extra2"   # display only
+set_step_paths "comb_12_extra2"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1874,7 +1907,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aln.type.in 'extra1'
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh
@@ -1886,9 +1919,8 @@ source $INSTALLED_PATH/utils/chunk_step_done.sh
 with_level 1 pokaz_stage "Step ${step_num}. Insert extra long fragments - 2."
 
 # Logs
-step_name="step${step_num}_comb_13"
-step_file="${path_log}${step_name}_done"
-path_log_step="${path_log}${step_name}/"
+step_name="step${step_num}_comb_13_extra2"   # display only
+set_step_paths "comb_13_extra2"
 mkdir -p ${path_log_step}
 
 # Start
@@ -1913,7 +1945,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --aln.type.out 'extra2'
 
     # Done
-    touch "${step_file}"
+    mark_step_done
 fi
 
 source $INSTALLED_PATH/utils/chunk_step_done.sh

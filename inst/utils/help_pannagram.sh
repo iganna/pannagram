@@ -90,6 +90,7 @@ PARAMETERS EXPLAINED:
 
     * Tuning parameters:
         -no_plot                    Flag to skip the synteny plotting step (step numbering is preserved);
+        -keep_inter                 Flag to keep intermediate files, which are removed by default;
         -purge_repeats              Flag for filtering of repeats (default is no filtering);
         -p_ident P_IDENT            Percentage identity threshold (default: 85);
         -part_len PART_LEN          Fragments to which each chromosome should be cut (default value: 1000).

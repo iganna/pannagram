@@ -14,7 +14,7 @@ clean="F"
 one_step="F"
 no_plot="F"
 purge_reps="T"
-rm_inter="F"
+keep_inter="F"
 extra_steps="F"
 purge_contigs="F"
 unrecognized_options=()
@@ -41,7 +41,7 @@ while [ $# -gt 0 ]; do
         -clean|-cleanup) clean="T";         shift 1 ;;
         -one_step | -1s) one_step="T";      shift 1 ;;
         -no_plot|-noplot) no_plot="T";      shift 1 ;; # skip the synteny plotting step (numbering is preserved)
-        -rm_inter)       rm_inter="T";      shift 1 ;;
+        -keep_inter|-keep_intermediate) keep_inter="T"; shift 1 ;;
         
         
         # REF-based
