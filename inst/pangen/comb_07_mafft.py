@@ -5,6 +5,7 @@ import argparse
 import os
 import sys
 import subprocess
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import List, Tuple, Optional, Dict
 
@@ -184,11 +185,32 @@ def read_inputs_list(path: str) -> List[str]:
 def ensure_dir(p: str) -> None:
     os.makedirs(p, exist_ok=True)
 
+# Parallel filesystems (GPFS/NFS) occasionally return a transient error when many
+# workers create small files in the same directory -- EACCES/EIO on a path that is
+# writable a moment later. Without a retry a single such hiccup propagates out of the
+# executor and kills the whole step after hours of work, so retry with a short backoff.
+WRITE_RETRY_SLEEPS = (1.0, 2.0, 4.0)
+
 def write_locus_fasta(out_path: str, headers: List[str], seqs: List[str]) -> None:
     tmp = out_path + ".tmp"
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        f.write(build_fasta(headers, seqs))
-    os.replace(tmp, out_path)
+    payload = build_fasta(headers, seqs)
+    for attempt, delay in enumerate(WRITE_RETRY_SLEEPS + (None,)):
+        try:
+            with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+                f.write(payload)
+            os.replace(tmp, out_path)
+            return
+        except OSError as e:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            if delay is None:
+                raise
+            print("[write retry %d/%d] %s: %s: %s"
+                  % (attempt + 1, len(WRITE_RETRY_SLEEPS), out_path, type(e).__name__, e),
+                  file=sys.stderr)
+            time.sleep(delay)
 
 
 # -------------------------
