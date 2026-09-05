@@ -16,6 +16,7 @@ run_sv_call=false
 run_sv_sim=false
 run_sv_sim_prot=false
 run_sv_graph=false
+run_sv_te_order=false
 run_annogroup=false
 run_sv_orf=false
 plot_families="F"
@@ -41,6 +42,7 @@ while [ $# -gt 0 ]; do
         -sv_orf)          run_sv_orf=true;                                  shift 1 ;;
         -sv_graph | \
         -sv_families | -sv_family)      run_sv_graph=true;                  shift 1 ;;
+        -sv_te_order | -sv_te)          run_sv_te_order=true;               shift 1 ;;
         -plot_families)                 plot_families="T";                  shift 1 ;;
         -sim | -similarity)             similarity_value="$2";              shift 2 ;;
         -cov | -coverage)               coverage_value="$2";                shift 2 ;;
@@ -70,6 +72,7 @@ if ! $run_blocks && \
    ! $run_sv_sim && \
    ! $run_sv_sim_prot && \
    ! $run_sv_graph && \
+   ! $run_sv_te_order && \
    ! $run_annogroup && \
    ! $run_sv_orf; then
     pokaz_error "Warning: no features were provided for analysis." >&2

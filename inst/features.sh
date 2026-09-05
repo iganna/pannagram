@@ -1,10 +1,18 @@
 #!/bin/bash
 
-INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
+INSTALLED_PATH=${PANNAGRAM_PATH:-$(Rscript -e "cat(system.file(package = 'pannagram'))")}
 
 if [ -z "$INSTALLED_PATH" ]; then
     echo "Error: package 'pannagram' is not installed." >&2
     exit 1
+fi
+
+# Hand over to a private copy of this file, so that editing or reinstalling it
+# cannot corrupt a run that is already in flight. Guarded, because bin/* is a
+# symlink into the working tree while the helpers come from the installed
+# package: right after a `git pull` this script can be newer than they are.
+if [ -f "$INSTALLED_PATH/utils/chunk_pin_self.sh" ]; then
+    source "$INSTALLED_PATH/utils/chunk_pin_self.sh"
 fi
 
 source "$INSTALLED_PATH/utils/chunk_error_control.sh"
@@ -262,6 +270,32 @@ if [ "$run_sv_graph" = true ]; then # -sv_graph
         --coverage ${coverage_value}
 
     pokaz_message "Step -sv_families is done!"
+fi
+
+# Structural order of the families: LTR / TIR / poly-A
+if [ "$run_sv_te_order" = true ]; then # -sv_te_order
+
+    pokaz_stage "Structural order of SV families (LTR / TIR / poly-A)"
+
+    check_dir "$path_sv" || exit 1
+
+    file_sv_families="${path_sv}sv_families_${similarity_value}_${coverage_value}.txt"
+    file_sv_te_order="${path_sv}sv_te_order_${similarity_value}_${coverage_value}.txt"
+    file_sv_te_order_repr="${path_sv}sv_te_order_${similarity_value}_${coverage_value}_repr.txt"
+
+    if [ ! -f "${file_sv_families}" ]; then
+        pokaz_error "File with families does not exist: ${file_sv_families}"
+        pokaz_attention "Please run the step -sv_families with the same -sim and -cov values."
+        exit 1
+    fi
+
+    Rscript $INSTALLED_PATH/analys/sv_07_te_order.R \
+        --path.sv ${path_sv} \
+        --file.families ${file_sv_families} \
+        --file.out ${file_sv_te_order} \
+        --file.out.repr ${file_sv_te_order_repr}
+
+    pokaz_message "Step -sv_te_order is done!"
 fi
 
 # BLAST ORFs against the database

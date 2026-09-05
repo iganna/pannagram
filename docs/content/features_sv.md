@@ -3,7 +3,7 @@
 To generate SV-related features, run the following command:
 
 ```bash
-features -path_project '${PATH_PROJECT}' -sv -sv_families -sv_orf
+features -path_project '${PATH_PROJECT}' -sv -sv_families -sv_te_order -sv_orf
 ```
 
 Below is a detailed description of flags.
@@ -131,6 +131,75 @@ In the figure below, **a** and **c** correspond to *E. coli*, while **b** and **
 </div>
 
 
+
+## Structural order of MEF: LTR / TIR / Helitron / poly-A
+
+Families obtained with `-sv_families` can be attributed to a structural order of mobile elements:
+```bash
+features -path_project '${PATH_PROJECT}' -sv_te_order
+```
+The analysis uses the SV sequences only (no external annotation and no external aligners),
+and looks at the termini of the (nearly) full-length members of every family:
+
+- **LTR** — terminal *direct* repeats: the first and the last window of the sequence are similar
+on the same strand, and both copies are anchored at the termini (length ≥ 100 nt, identity ≥ 80% by default);
+- **TIR** — terminal *inverted* repeats: the beginning of the sequence is similar to the reverse
+complement of its end (length ≥ 10 nt, identity ≥ 80% by default). The two termini of an SV can be
+shifted differently from the termini of the element, so all the pairs of small shifts are tried
+(`--tir.offset`), and only the diagonals of the anchored hits are looked at, which keeps a strong
+internal inverted repeat from hiding the terminal one.
+Superfamilies with very short but strictly conserved termini are found by the motif itself:
+by default the element that starts with `CACTA` (or `CACTG`) and ends with `TAGTG` (`CAGTG`)
+is reported as `TIR` with `tir.method = motif`. Such a pair of fixed termini is specific
+(a random sequence gives it with probability ~10^-6), the boundaries of the SV may be shifted
+by up to 2 nt. The list of motifs is set by `--term.motifs`, an empty value switches the check off;
+- **Helitron** — no terminal repeats at all: these elements roll out by the rolling-circle
+mechanism. The conserved end is the 3' one — a hairpin (stem ≥ 8 nt, loop 3–10 nt) not further
+than 40 nt from the terminus, followed by `CTRR` (`CTAA`, `CTAG`, `CTGA`, `CTGG`).
+The `TC` at the 5'-terminus is only reported (the `helitron_tc` flag in `note`) and is not
+required, because 5'-truncated copies are common. Both strands are checked;
+- **LINE_like** — no terminal repeats, but there is a **one-sided** poly-A tail
+(poly-A at the 3'-terminus, or poly-T at the 5'-one, since the orientation of an SV in the pangenome is arbitrary);
+- **unknown** — nothing of the above.
+
+Low-complexity termini (for example, `TTTT...AAAA`) are not reported as terminal repeats.
+
+Every family is described by its longest members (**representatives**, by default up to 10 members
+that are at least 90% of the length of the longest one), because truncated copies simply have no
+termini to look at. The order of the family is the most frequent order among its representatives,
+and the `support` column shows the fraction of representatives that agree.
+
+### Output
+Two tables are located at `${PATH_PROJECT}/features/sv/`:
+
+- `sv_te_order_<sim>_<cov>.txt` — one row per family:
+`family`, `n.members`, `n.repr`, `len.max`, `te.class`, `support`, `sv.repr`,
+`ltr.len`, `ltr.ident`, `tir.len`, `tir.ident`, `tir.motif`, `tir.method`,
+`hel.stem`, `hel.dist`, `hel.ctrr`, `polyA.len`, `polyA.side`, `note`;
+- `sv_te_order_<sim>_<cov>_repr.txt` — the same values for every representative separately.
+
+The `tir.method` column shows how the inverted repeat was found: `extension` (short TIR, anchored
+at the termini), `chain` (long or gapped TIR) or `motif` (a known short signature).
+
+The `note` column collects additional flags: `tg_ca` (the element starts with `TG` and ends with `CA`,
+as a canonical LTR retrotransposon), `motif_CACTA` (a known terminal signature was matched),
+`helitron_tc` (the Helitron starts with `TC`), `helitron` (a Helitron signature together with terminal repeats),
+`polyA` (a poly-A tail together with terminal repeats),
+`polyA_both_ends` (A/T-rich termini on both sides, an ambiguous case) and `ltr_and_tir`.
+
+Example:
+```
+family  n.members  n.repr  len.max  te.class   support  sv.repr              ltr.len  tir.len  tir.motif  tir.method  polyA.len  polyA.side
+fam_1   4          2       3200     LTR        1        SVgr_1_id_0001|3200  343      0                              0          none
+fam_2   3          3       1248     TIR        1        SVgr_1_id_0005|1248  0        24       CCAAGT     extension   0          none
+fam_3   3          3       2228     LINE_like  1        SVgr_1_id_0009|2228  0        0                              28         right
+fam_5   2          2       2610     TIR        1        SVgr_1_id_0013|2610  0        5        CACTA      motif       0          none
+```
+
+The orders are checked in the order LTR → TIR → Helitron → LINE_like, so an element with both
+a terminal repeat and a hairpin is reported by the repeat, and the hairpin goes to `note`.
+Thresholds are set by `--min.ltr.len`, `--min.tir.len`, `--min.polya.len`, `--min.ident`,
+`--hel.stem`, `--hel.dist` and, for inaccurate SV boundaries, `--ltr.offset` and `--tir.offset`.
 
 ## ORFs in SVs
 
