@@ -1,10 +1,18 @@
 #!/bin/bash
 
-INSTALLED_PATH=$(Rscript -e "cat(system.file(package = 'pannagram'))")
+INSTALLED_PATH=${PANNAGRAM_PATH:-$(Rscript -e "cat(system.file(package = 'pannagram'))")}
 
 if [ -z "$INSTALLED_PATH" ]; then
     echo "Error: package 'pannagram' is not installed."
     exit 1
+fi
+
+# Hand over to a private copy of this file, so that editing or reinstalling it
+# cannot corrupt a run that is already in flight. Guarded, because bin/* is a
+# symlink into the working tree while the helpers come from the installed
+# package: right after a `git pull` this script can be newer than they are.
+if [ -f "$INSTALLED_PATH/utils/chunk_pin_self.sh" ]; then
+    source "$INSTALLED_PATH/utils/chunk_pin_self.sh"
 fi
 
 FASTA_SUFFIX=("fa" "fasta" "fas" "fna" "fn" "ffn" "faa")
