@@ -14,7 +14,7 @@
 #' }
 #'
 #' @export
-refineAlignment_prev <- function(seqs.clean, path.work){
+refineAlignment_prev <- function(seqs.clean, path.work, keep.pos = FALSE){
 
   n.seqs = length(seqs.clean)
   seqs.clean = toupper(seqs.clean)
@@ -62,8 +62,8 @@ refineAlignment_prev <- function(seqs.clean, path.work){
     
     if(length(seqs.tmp) == 1) {
       seqs.cl = c(seqs.cl, seqs.tmp)
-      positions[[i.cl]] = matrix(1:nchar(seqs.tmp), nrow = 1, 
-                                 dimnames = list(names(seqs.tmp), NULL))
+      if(keep.pos) positions[[i.cl]] = matrix(1:nchar(seqs.tmp), nrow = 1, 
+                                              dimnames = list(names(seqs.tmp), NULL))
       alignments[[i.cl]] = matrix(seq2nt(seqs.tmp), nrow = 1, 
                                   dimnames = list(names(seqs.tmp), NULL))
       next
@@ -80,12 +80,14 @@ refineAlignment_prev <- function(seqs.clean, path.work){
     seqs.cl.aln = readFasta(aln.fasta)
     seqs.cl.mx = aln2mx(seqs.cl.aln)
     
-    pos.cl.mx = matrix(0,nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
-    for(irow in 1:nrow(seqs.cl.mx)){
-      pos.cl.mx[irow,seqs.cl.mx[irow,] != '-'] = 1:nchar(seqs.tmp[irow])
+    if(keep.pos){
+      pos.cl.mx = matrix(0L,nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
+      for(irow in 1:nrow(seqs.cl.mx)){
+        pos.cl.mx[irow,seqs.cl.mx[irow,] != '-'] = 1:nchar(seqs.tmp[irow])
+      }
+      rownames(pos.cl.mx) = names(seqs.tmp)
+      positions[[i.cl]] = pos.cl.mx
     }
-    rownames(pos.cl.mx) = names(seqs.tmp)
-    positions[[i.cl]] = pos.cl.mx
     alignments[[i.cl]] = seqs.cl.mx
     
     
@@ -118,7 +120,8 @@ refineAlignment_prev <- function(seqs.clean, path.work){
   
   # ---- Merge clusters ----
   
-  for(i.merge in which(df.merge$cl > max(clusters))){
+  merge.rows = which(df.merge$cl > max(clusters))
+  for(i.merge in merge.rows){
     
     # if(df.merge$cl[i.merge] == 17) stop()
     pokaz(i.merge, df.merge$cl[i.merge])
@@ -359,13 +362,15 @@ refineAlignment_prev <- function(seqs.clean, path.work){
     non.zero.indices.1 <- mx.comb[1,] != 0
     non.zero.indices.2 <- mx.comb[2,] != 0
     
-    n1 = nrow(positions[[i.cl1]])
-    n2 = nrow(positions[[i.cl2]])
-    mx.comb.pos = matrix(0, 
-                         nrow = n1 + n2,
-                         ncol = ncol(mx.comb))
-    mx.comb.pos[1:n1, non.zero.indices.1]        = positions[[i.cl1]][,mx.comb[1, non.zero.indices.1]]
-    mx.comb.pos[n1 + (1:n2), non.zero.indices.2] = positions[[i.cl2]][,mx.comb[2, non.zero.indices.2]]
+    n1 = nrow(alignments[[i.cl1]])
+    n2 = nrow(alignments[[i.cl2]])
+    if(keep.pos){
+      mx.comb.pos = matrix(0L, 
+                           nrow = n1 + n2,
+                           ncol = ncol(mx.comb))
+      mx.comb.pos[1:n1, non.zero.indices.1]        = positions[[i.cl1]][,mx.comb[1, non.zero.indices.1]]
+      mx.comb.pos[n1 + (1:n2), non.zero.indices.2] = positions[[i.cl2]][,mx.comb[2, non.zero.indices.2]]
+    }
     
     mx.comb.seq = matrix('-', 
                          nrow = n1 + n2,
@@ -376,11 +381,21 @@ refineAlignment_prev <- function(seqs.clean, path.work){
     
     
     tmp.names = c(rownames(alignments[[i.cl1]]), rownames(alignments[[i.cl2]]))
-    rownames(mx.comb.pos) = tmp.names
     rownames(mx.comb.seq) = tmp.names
-    
-    positions[[df.merge$cl[i.merge]]] = mx.comb.pos
+    if(keep.pos){
+      rownames(mx.comb.pos) = tmp.names
+      positions[[df.merge$cl[i.merge]]] = mx.comb.pos
+    }
     alignments[[df.merge$cl[i.merge] ]] = mx.comb.seq
+    
+    # ---- Release the two parents (see the same note in refineAlignment) ----
+    ids.left = merge.rows[merge.rows > i.merge]
+    ids.left = c(df.merge$id1[ids.left], df.merge$id2[ids.left])
+    ids.drop = setdiff(c(i.cl1, i.cl2), ids.left)
+    if(length(ids.drop) > 0){
+      alignments[ids.drop] <- list(NULL)
+      if(keep.pos) positions[ids.drop] <- list(NULL)
+    }
     
     # if(i.merge == 21) stop()
     # 
@@ -408,7 +423,7 @@ refineAlignment_prev <- function(seqs.clean, path.work){
   #   }
   # }
   
-  return(list(pos = positions,
+  return(list(pos = if(keep.pos) positions else NULL,
               aln = alignments))
 }
 
@@ -428,16 +443,16 @@ refineAlignment_prev <- function(seqs.clean, path.work){
 #'
 #' Threshold: argument spread.max, else env PANNAGRAM_SPREAD_MAX, else 1.15.
 #' Returns the same list(pos, aln) structure as refineAlignment[_prev].
-refineAlignmentRouted <- function(seqs.clean, path.work, spread.max = NA){
+refineAlignmentRouted <- function(seqs.clean, path.work, spread.max = NA, keep.pos = FALSE){
   if(is.na(spread.max)){
     e = Sys.getenv("PANNAGRAM_SPREAD_MAX")
     spread.max = if(nzchar(e)) as.numeric(e) else 1.15
   }
-  R = refineAlignment(seqs.clean, path.work, gap.mafft.max = 3000)   # fast, always
+  R = refineAlignment(seqs.clean, path.work, gap.mafft.max = 3000, keep.pos = keep.pos)   # fast, always
   B = R$aln[[length(R$aln)]]
   spread = ncol(B) / max(nchar(seqs.clean))
   if(spread <= spread.max) return(R)                                 # fast co-aligned well
-  refineAlignment_prev(seqs.clean, path.work)                        # escalate: original MAFFT merge
+  refineAlignment_prev(seqs.clean, path.work, keep.pos = keep.pos)   # escalate: original MAFFT merge
 }
 
 
@@ -545,7 +560,7 @@ alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 3000){
 #' expensive pairwise merge (old: full MAFFT --merge + BLAST synteny + heavy R per
 #' node) is replaced by alignTwoLong() (BLAST anchors + short-gap MAFFT). Output
 #' structure is identical: list(pos, aln) with aln[[last]] the final MSA matrix.
-refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000){
+refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000, keep.pos = FALSE){
 
   n.seqs = length(seqs.clean)
   seqs.clean = toupper(seqs.clean)
@@ -561,7 +576,7 @@ refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000){
     seqs.tmp = seqs.clean[names(clusters)[clusters == i.cl]]
     if(length(seqs.tmp) == 1){
       seqs.cl = c(seqs.cl, seqs.tmp)
-      positions[[i.cl]]  = matrix(1:nchar(seqs.tmp), nrow = 1, dimnames = list(names(seqs.tmp), NULL))
+      if(keep.pos) positions[[i.cl]] = matrix(1:nchar(seqs.tmp), nrow = 1, dimnames = list(names(seqs.tmp), NULL))
       alignments[[i.cl]] = matrix(seq2nt(seqs.tmp),  nrow = 1, dimnames = list(names(seqs.tmp), NULL))
       next
     }
@@ -570,10 +585,13 @@ refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000){
     writeFasta(seqs.tmp, seqs.cl.fasta)
     system(paste('mafft  --quiet --maxiterate 100 ', seqs.cl.fasta, '>', aln.fasta, sep = ' '))
     seqs.cl.mx = aln2mx(readFasta(aln.fasta))
-    pos.cl.mx = matrix(0, nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
-    for(irow in 1:nrow(seqs.cl.mx)) pos.cl.mx[irow, seqs.cl.mx[irow, ] != '-'] = 1:nchar(seqs.tmp[irow])
-    rownames(pos.cl.mx) = names(seqs.tmp)
-    positions[[i.cl]] = pos.cl.mx; alignments[[i.cl]] = seqs.cl.mx
+    if(keep.pos){
+      pos.cl.mx = matrix(0L, nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
+      for(irow in 1:nrow(seqs.cl.mx)) pos.cl.mx[irow, seqs.cl.mx[irow, ] != '-'] = 1:nchar(seqs.tmp[irow])
+      rownames(pos.cl.mx) = names(seqs.tmp)
+      positions[[i.cl]] = pos.cl.mx
+    }
+    alignments[[i.cl]] = seqs.cl.mx
     seqs.cl = c(seqs.cl, nt2seq(mx2cons(seqs.cl.mx)))
   }
   names(seqs.cl) = paste0('clust_', 1:length(seqs.cl))
@@ -591,7 +609,8 @@ refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000){
   }
 
   # ---- Merge clusters via alignTwoLong (fast) ----
-  for(i.merge in which(df.merge$cl > max(clusters))){
+  merge.rows = which(df.merge$cl > max(clusters))
+  for(i.merge in merge.rows){
     i.cl1 = df.merge$id1[i.merge]; i.cl2 = df.merge$id2[i.merge]
     s1 = seqs.cl[i.cl1]; s2 = seqs.cl[i.cl2]
 
@@ -599,25 +618,45 @@ refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000){
 
     non.zero.indices.1 = mx.comb[1,] != 0
     non.zero.indices.2 = mx.comb[2,] != 0
-    n1 = nrow(positions[[i.cl1]]); n2 = nrow(positions[[i.cl2]])
+    n1 = nrow(alignments[[i.cl1]]); n2 = nrow(alignments[[i.cl2]])
 
-    mx.comb.pos = matrix(0, nrow = n1 + n2, ncol = ncol(mx.comb))
-    mx.comb.pos[1:n1,        non.zero.indices.1] = positions[[i.cl1]][, mx.comb[1, non.zero.indices.1]]
-    mx.comb.pos[n1 + (1:n2), non.zero.indices.2] = positions[[i.cl2]][, mx.comb[2, non.zero.indices.2]]
+    if(keep.pos){
+      mx.comb.pos = matrix(0L, nrow = n1 + n2, ncol = ncol(mx.comb))
+      mx.comb.pos[1:n1,        non.zero.indices.1] = positions[[i.cl1]][, mx.comb[1, non.zero.indices.1]]
+      mx.comb.pos[n1 + (1:n2), non.zero.indices.2] = positions[[i.cl2]][, mx.comb[2, non.zero.indices.2]]
+    }
 
     mx.comb.seq = matrix('-', nrow = n1 + n2, ncol = ncol(mx.comb))
     mx.comb.seq[1:n1,        non.zero.indices.1] = alignments[[i.cl1]][, mx.comb[1, non.zero.indices.1]]
     mx.comb.seq[n1 + (1:n2), non.zero.indices.2] = alignments[[i.cl2]][, mx.comb[2, non.zero.indices.2]]
 
     tmp.names = c(rownames(alignments[[i.cl1]]), rownames(alignments[[i.cl2]]))
-    rownames(mx.comb.pos) = tmp.names; rownames(mx.comb.seq) = tmp.names
-
-    positions[[df.merge$cl[i.merge]]]  = mx.comb.pos
+    rownames(mx.comb.seq) = tmp.names
+    if(keep.pos){
+      rownames(mx.comb.pos) = tmp.names
+      positions[[df.merge$cl[i.merge]]] = mx.comb.pos
+    }
     alignments[[df.merge$cl[i.merge]]] = mx.comb.seq
+
+    # ---- Release the two parents ----
+    # Each node of the merge tree is consumed by exactly one merge, so once the child
+    # matrix exists its parents are dead. Without this the list retained EVERY
+    # intermediate matrix until the function returned: peak = sum over all tree nodes
+    # (~n.seqs x aln.len x 8 bytes per level x tree depth) instead of the live frontier.
+    # `x[i] <- list(NULL)` empties the slot but keeps the indexing, so aln[[last]] is
+    # still the root alignment.
+    ids.left = merge.rows[merge.rows > i.merge]
+    ids.left = c(df.merge$id1[ids.left], df.merge$id2[ids.left])
+    ids.drop = setdiff(c(i.cl1, i.cl2), ids.left)
+    if(length(ids.drop) > 0){
+      alignments[ids.drop] <- list(NULL)
+      if(keep.pos) positions[ids.drop] <- list(NULL)
+    }
+
     seqs.cl[paste0('clust_', df.merge$cl[i.merge])] = nt2seq(mx2cons(mx.comb.seq))
   }
 
-  return(list(pos = positions, aln = alignments))
+  return(list(pos = if(keep.pos) positions else NULL, aln = alignments))
 }
 
 #' Align two Alignments with MAFFT

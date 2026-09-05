@@ -41,9 +41,11 @@ source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common c
 # ***********************************************************************
 # ---- Values of parameters ----
 
-# Number of cores for parallel processing
-# num.cores.max = 10
-# num.cores <- min(num.cores.max, ifelse(!is.null(opt$cores), opt$cores, num.cores.max))
+# Number of cores for parallel processing.
+# No per-step cap: the memory of this step is bounded per LOCUS (see the notes in
+# refineAlignment() about releasing merged parents and about keep.pos), not by
+# starving the cores. A capped core count only lowers the probability of an OOM,
+# it never bounds it - the peak depends on which loci happen to be in flight.
 num.cores = opt$cores
 
 if (!is.null(opt$path.mafft.in)) path.mafft.in <- opt$path.mafft.in
@@ -99,10 +101,9 @@ loop.function <- function(f.in,
   
   # Proportion of non-N nucleotides: drop N-heavy sequences INDIVIDUALLY
   # (a single N-rich sequence must not discard the whole locus).
-  n.n = sapply(seqs.clean, function(s){
-    s.tmp = seq2nt(s)
-    sum((s.tmp != 'N') & (s.tmp != 'n')) / length(s.tmp)
-  })
+  # Counted on the string: seq2nt() would expand every sequence of the locus into a
+  # character vector (8 bytes per base against 1 in the string) just to be discarded.
+  n.n = 1 - (nchar(seqs.clean) - nchar(gsub('[Nn]', '', seqs.clean))) / nchar(seqs.clean)
   seqs.clean = seqs.clean[n.n >= 0.5]
 
   if(length(seqs.clean) < 2){
@@ -113,16 +114,43 @@ loop.function <- function(f.in,
   
   path.work = paste0(path.mafft.in.tmp, sub('\\.fasta', '', basename(f.in)), '_')
   pokaz(path.work)
-  res = refineAlignmentRouted(seqs.clean, path.work)
+
+  # Drop the scratch of this locus as soon as it is finished, and also when it fails.
+  # refineAlignmentRouted() leaves ~17 files per locus (seqs_*, aln_*, seg*, tbl, blast)
+  # in the single per-chromosome tmp/ directory; kept until the end of the chromosome
+  # they pile up to tens of thousands (53908 on a 3144-locus chromosome), and the
+  # metadata load of `cores` workers creating and removing files in one flat directory
+  # produces transient I/O failures. With per-locus cleanup the peak is ~17 * cores.
+  prefix.work = basename(path.work)
+  on.exit({
+    files.tmp = list.files(path.mafft.in.tmp)
+    files.tmp = files.tmp[startsWith(files.tmp, prefix.work)]   # the trailing '_' of the
+    if(length(files.tmp) > 0){                                  # prefix excludes locus_1 vs locus_10
+      unlink(file.path(path.mafft.in.tmp, files.tmp))
+    }
+  }, add = TRUE)
+  # keep.pos = FALSE: only the final alignment is written out, so the parallel list of
+  # position matrices (the same size as the alignment matrices) is never built.
+  res = refineAlignmentRouted(seqs.clean, path.work, keep.pos = FALSE)
   
-  alignments = res$aln
-  
-  alignment = alignments[[length(alignments)]]
+  alignment = res$aln[[length(res$aln)]]
+  rm(res)
   
   alignment.seq = mx2aln(alignment)
+  rm(alignment)
   
   file.out = paste0(path.mafft.out, sub('\\.fasta', '', basename(f.in)), "_aligned.fasta")
   writeFasta(alignment.seq, file.out)
+  rm(seqs, seqs.clean, alignment.seq)
+
+  # Release the locus back to the OS before taking the next one: a PSOCK worker lives
+  # for the whole step, so without this its heap only ever grows to the largest locus
+  # it happened to see. gc(reset) also reports the peak, logged next to the input size
+  # so that the real cost of a locus can be read off the worker logs.
+  mem = gc(reset = TRUE)
+  pokaz('mem.peak.mb', round(sum(mem[, 6])), 'input.mb',
+        round(file.size(paste0(path.mafft.in, f.in)) / 2^20, 1),
+        file=file.log.loop, echo=echo.loop)
 
   # ---- Checkpoint marker: item fully processed ----
   markDone(item.id, file=file.log.loop, echo=echo.loop)
