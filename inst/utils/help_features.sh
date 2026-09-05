@@ -22,6 +22,7 @@ Options:
 
     -sv                             SV calling;
     -sv_families                    Create the Graph of SVs;
+    -sv_te_order                    Structural order (LTR / TIR / poly-A) of SV families;
 
 
     -aln_type ALN_TYPE              Set the type of alignment (default: 'pan');
