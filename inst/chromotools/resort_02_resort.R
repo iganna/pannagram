@@ -58,7 +58,7 @@ if(!dir.exists(path.new)) dir.create(path.new)
 
 # Accessions
 files.aln <- list.files(path.resort, pattern = ".*\\.rds$", full.names = F)
-accessions = sub(".rds", "", files.aln)
+accessions = sub("\\.rds$", "", files.aln)
 
 if(length(unique(accessions)) != length(accessions)) stop('Something is wring with accession names')
 accessions = setdiff(accessions, base.acc)
@@ -73,7 +73,7 @@ for(acc in accessions){
 
   file.resort = paste0(path.resort, acc, '.rds')
   corresp = readRDS(file.resort)
-  corresp = corresp[order(corresp[,1]),]
+  corresp = corresp[order(corresp[,1]),,drop=F]
   print(corresp)
 
   pokaz('Reading...')
