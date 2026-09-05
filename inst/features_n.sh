@@ -10,6 +10,14 @@ if [ -z "$INSTALLED_PATH" ]; then
     exit 1
 fi
 
+# Hand over to a private copy of this file, so that editing or reinstalling it
+# cannot corrupt a run that is already in flight. Guarded, because bin/* is a
+# symlink into the working tree while the helpers come from the installed
+# package: right after a `git pull` this script can be newer than they are.
+if [ -f "$INSTALLED_PATH/utils/chunk_pin_self.sh" ]; then
+    source "$INSTALLED_PATH/utils/chunk_pin_self.sh"
+fi
+
 source "$INSTALLED_PATH/utils/chunk_error_control.sh"
 source "$INSTALLED_PATH/utils/utils_bash.sh"
 source "$INSTALLED_PATH/utils/help_features.sh"
