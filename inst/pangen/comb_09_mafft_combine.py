@@ -16,12 +16,12 @@ LOCUS_RE = re.compile(
     re.IGNORECASE
 )
 
-def parse_input_genomes(input_txt: Path) -> list[str]:
+def parse_input_paths(input_txt: Path) -> list[Path]:
     """
-    input.txt contains paths. Genome name = basename of the path.
-    Order is preserved. Duplicates are removed (first occurrence kept).
+    input.txt contains paths, one per line. Genome name = basename of the path.
+    Order is preserved. Duplicates (by basename) are removed, first one kept.
     """
-    genomes = []
+    paths: list[Path] = []
     seen = set()
     with input_txt.open("r", encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -30,21 +30,66 @@ def parse_input_genomes(input_txt: Path) -> list[str]:
                 continue
             base = os.path.basename(line.rstrip("/\\"))
             if base and base not in seen:
-                genomes.append(base)
+                paths.append(Path(line))
                 seen.add(base)
-    return genomes
+    return paths
+
+def count_lines(path: Path) -> int:
+    """
+    Number of lines in a file, counted over raw bytes (these files hold one
+    long sequence per line, so decoding them just to count would be wasteful).
+    A missing trailing newline still counts as a line.
+    """
+    n = 0
+    last = b""
+    with path.open("rb") as f:
+        while True:
+            chunk = f.read(1 << 20)
+            if not chunk:
+                break
+            n += chunk.count(b"\n")
+            last = chunk[-1:]
+    if last and last != b"\n":
+        n += 1
+    return n
+
+def expected_locus_count(paths: list[Path]) -> int:
+    """
+    The per-genome files fed to comb_07 have exactly one line per locus, so
+    their line count is the authoritative number of loci for this chromosome.
+    Returns 0 if none of them can be read.
+    """
+    readable = [p for p in paths if p.is_file()]
+    if not readable:
+        return 0
+    # All of them have the same length (comb_07 refuses to run otherwise),
+    # so the smallest one on disk is the cheapest to scan.
+    return count_lines(min(readable, key=lambda p: p.stat().st_size))
 
 def index_locus_files(folder: Path) -> dict[int, Path]:
     """
-    Returns mapping: locus_number -> filepath
+    Returns mapping: locus_number -> filepath.
+
+    Both locus_<n>.fasta (comb_07) and locus_<n>_aligned.fasta (comb_08) map to
+    the same locus. In a clean run only one of the two exists for a given <n>;
+    if both are there, the comb_08 output wins, so that the choice never
+    depends on the order the directory happens to be listed in.
     """
     idx: dict[int, Path] = {}
-    for p in folder.iterdir():
+    aligned: set[int] = set()
+    for p in sorted(folder.iterdir()):
         if not p.is_file():
             continue
         m = LOCUS_RE.match(p.name)
-        if m:
-            idx[int(m.group(1))] = p
+        if not m:
+            continue
+        n = int(m.group(1))
+        is_aligned = m.group(0).lower().endswith("_aligned.fasta")
+        if n in idx and not is_aligned and n in aligned:
+            continue
+        idx[n] = p
+        if is_aligned:
+            aligned.add(n)
     return idx
 
 def read_one_line_fasta(path: Path) -> dict[str, str]:
@@ -107,7 +152,8 @@ def main():
         print(f"ERROR: input.txt not found: {input_txt}", file=sys.stderr)
         sys.exit(1)
 
-    genomes = parse_input_genomes(input_txt)
+    input_paths = parse_input_paths(input_txt)
+    genomes = [p.name for p in input_paths]
     if not genomes:
         log.log("ERROR: input.txt does not contain valid paths/genome names.", echo=True)
         print("ERROR: input.txt does not contain valid paths/genome names.", file=sys.stderr)
@@ -119,7 +165,26 @@ def main():
         print(f"ERROR: no files matching locus_*.fasta found in folder {folder}", file=sys.stderr)
         sys.exit(1)
 
-    max_locus = max(locus_idx.keys())
+    # The number of loci comes from the input files, not from whatever happens
+    # to lie in the folder. Locus numbering is derived from the breaks and is
+    # recomputed on every run, so files left by an earlier run are not
+    # overwritten and would otherwise be pulled into the alignment as real loci.
+    max_locus = expected_locus_count(input_paths)
+    if max_locus <= 0:
+        max_locus = max(locus_idx.keys())
+        log.log("WARNING: could not read the input files, falling back to the "
+                "folder content to get the locus range", echo=True)
+    else:
+        stale = [n for n in locus_idx if n > max_locus]
+        if stale:
+            for n in stale:
+                del locus_idx[n]
+            msg = ("WARNING: %d locus file(s) beyond locus %d ignored in %s "
+                   "(leftovers of a previous run; rerun with -cleanup)"
+                   % (len(stale), max_locus, folder))
+            log.log(msg, echo=True)
+            print(msg, file=sys.stderr)
+
     out_dir.mkdir(parents=True, exist_ok=True)
 
     log.log("input:   %s" % input_txt)
