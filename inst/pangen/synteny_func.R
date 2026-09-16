@@ -48,6 +48,12 @@ glueZero <- function(x.all){
     stop(paste("Error: Missing required columns:", paste(missing_columns, collapse = ", ")))
   }
   
+  # Nothing to glue: return the empty table (not NULL), with the idx column a non-empty result has
+  if(nrow(x.all) == 0){
+    x.all$idx = integer(0)
+    return(x.all)
+  }
+  
   x.all.idx = 1:nrow(x.all)
   x.new = c()
   for(dir.val in 0:1){
@@ -71,17 +77,37 @@ glueZero <- function(x.all){
       V2 <- x$V2; V3 <- x$V3; V4 <- x$V4; V5 <- x$V5; V7 <- x$V7
       idx.remove <- logical(x.nrow)
       merged.into <- integer(x.nrow)   # forward pointer: row -> row it glues into (0 = survives)
+      # jrow = first row after irow with V2[jrow] >= V3[irow] (the old linear while-scan).
+      # The linear scan was O(n^2) when V2 is not increasing in stored order, e.g. a long
+      # reverse run (V2 decreasing): every row scanned to the next "wall", i.e. ~the whole table.
+      # Instead: V2 is cut into blocks of size B with the exact block maximum in V2.bmax;
+      # search the rest of irow's block, then jump to the first block whose max >= V3[irow].
+      # V2.bmax is refreshed whenever V2 changes, so jrow is exactly the old one.
+      B <- 256L
+      n.blk <- (x.nrow - 1L) %/% B + 1L
+      V2.bmax <- apply(matrix(c(V2, rep(-Inf, n.blk * B - x.nrow)), nrow = B), 2, max)
       for(irow in 1:(x.nrow - 1)){
         jrow = irow + 1
-        while(V2[jrow] < V3[irow]){
-          jrow = jrow + 1
-          if(jrow > x.nrow) break
+        if(!(V2[jrow] >= V3[irow])){
+          blk = (jrow - 1L) %/% B + 1L
+          k = which(V2[jrow:min(blk * B, x.nrow)] >= V3[irow])
+          if(length(k) > 0){
+            jrow = jrow - 1L + k[1]
+          } else {
+            k = if(blk < n.blk) which(V2.bmax[(blk + 1L):n.blk] >= V3[irow]) else integer(0)
+            if(length(k) == 0) break   # no such row: the old scan ran off the end -> stop
+            blk = blk + k[1]
+            jrow = (blk - 1L) * B + which(V2[((blk - 1L) * B + 1L):min(blk * B, x.nrow)] >= V3[irow])[1]
+          }
         }
-        if(jrow > x.nrow) break
         d1 = V2[jrow] - V3[irow]
         d2 = V4[jrow] - V5[irow]
-        if((d1 == d2) && ((d1 == 1 & dir.val == 0) | (d1 == -1 & dir.val == 1))) {
+        # Contiguous blocks: the query continues (+1), the base continues along the direction
+        # (+1 forward, -1 reverse). Was d1 == d2 == -1 for reverse, unreachable (d1 >= 0 here).
+        if((d1 == 1) && (d2 == (if(dir.val == 0) 1 else -1))) {
           V2[jrow] = V2[irow]
+          blk = (jrow - 1L) %/% B + 1L
+          V2.bmax[blk] = max(V2[((blk - 1L) * B + 1L):min(blk * B, x.nrow)])
           V4[jrow] = V4[irow]
           V7[jrow] = V7[jrow] + V7[irow]
           merged.into[irow] = jrow
@@ -187,6 +213,12 @@ defineOverlappsQuery <- function(x.df){
     # Sort by the position in the reference
     x.df = x.df[order(-x.df$V7),]
     x.df = x.df[order(x.df$V2),]
+  }
+  
+  # Empty alignment: nothing overlaps, but callers rely on the rm.len column
+  if(nrow(x.df) == 0){
+    x.df$rm.len = numeric(0)
+    return(x.df)
   }
   
   x.df$rm.len = 0
@@ -369,6 +401,11 @@ defineOverlapps <- function(x.df){
     x.df = x.df[order(x.df$p.beg),]
   }
   
+  # Empty alignment: nothing overlaps, but callers rely on the rm.len column
+  if(nrow(x.df) == 0){
+    x.df$rm.len = numeric(0)
+    return(x.df)
+  }
   
   x.df$rm.len = 0
   idx.overlap = which(x.df$p.beg[-1] <= x.df$p.end[-nrow(x.df)])
@@ -519,7 +556,7 @@ cutSmallOverlaps <- function(x.sk){
 #'         if any discrepancies are found in the end positions of the alignment.
 #'
 checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10){
-  for(irow in 1:nrow(x)) {
+  for(irow in seq_len(nrow(x))) {
     s1 = toupper(remainLastN(x[irow, 'V8'], k))
     s1 = gsub("\\-","",s1)
     
@@ -563,7 +600,7 @@ checkCorrespToGenome <- function(x, base.fas.fw, base.fas.bw, query.fas, k = 10)
 
 #' Check the length consistency of sequences in a data frame
 checkLengths <- function(x.gap) {
-  for(igap in 1:nrow(x.gap)) {
+  for(igap in seq_len(nrow(x.gap))) {
     s1 = x.gap[igap, 9]
     s1 = seq2nt(s1)
     s1 = s1[s1 != '-']
@@ -572,7 +609,7 @@ checkLengths <- function(x.gap) {
     if(n.s1 != n.s2) stop(paste("Mismatch in BASE at row", igap, ": n.s1 =", n.s1, "n.s2 =", n.s2))
   }
   
-  for(igap in 1:nrow(x.gap)) {
+  for(igap in seq_len(nrow(x.gap))) {
     s1 = x.gap[igap, 8]
     s1 = seq2nt(s1)
     s1 = s1[s1 != '-']
@@ -974,7 +1011,7 @@ getCorresp2BaseSign <- function(x, base.len){
   # Pull columns out once (per-row data.frame $ access was ~2.4% self-time on its own).
   V8 <- x$V8; V9 <- x$V9; V2 <- x$V2; V3 <- x$V3; V4 <- x$V4; V5 <- x$V5; xdir <- x$dir
   dash <- as.raw(45L)  # '-'
-  for(irow in 1:nrow(x)){
+  for(irow in seq_len(nrow(x))){
 
     # Non-gap masks straight from bytes: charToRaw(s) != '-' is byte-identical to
     # seq2nt(s) != '-' (strsplit) for ASCII sequences but ~11x faster (no character-vector
