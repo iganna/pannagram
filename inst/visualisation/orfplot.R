@@ -109,6 +109,10 @@ orfplot <- function(df, optimal = F,
                     show.legend = F,
                     arrow.size = 0.05){
   
+  if(is.null(df) || nrow(df) == 0){
+    stop('No ORFs to plot: the input data frame is empty')
+  }
+  
   if(optimal){
     # Initialize row.number for vertical positioning and a position array to track filled positions
     df$row.number = 0
@@ -116,7 +120,7 @@ orfplot <- function(df, optimal = F,
     seq.dist = 50  # Buffer distance between ORFs
     
     # Loop through each ORF to assign a row without overlap
-    for(ipos in 1:nrow(df)){
+    for(ipos in seq_len(nrow(df))){
       flag.row = F  # Flag to track if a row has been found
       
       # Determine start and end positions with buffer
@@ -143,7 +147,7 @@ orfplot <- function(df, optimal = F,
       }
     }
   } else {
-    df$row.number = 1:nrow(df)
+    df$row.number = seq_len(nrow(df))
   }
   
   if(!is.null(y)){
@@ -162,7 +166,7 @@ orfplot <- function(df, optimal = F,
                     axis.ticks.y = element_blank()) 
     }
     
-    if(sum(unique(df[,s.color]) %in% c('+', '-')) == 2){
+    if(all(unique(df[,s.color]) %in% c('+', '-'))){
       p.orf = p.orf + scale_colour_manual(values = c('-' = '#40679E', '+' = '#FF407D')) 
     }
     

@@ -30,6 +30,10 @@ ntplot <- function(sequence, wnd=100, nt.separate = F) {
   
   sequence = toupper(sequence)
   
+  if(length(sequence) < wnd){
+    stop(paste0('Sequence length without gaps (', length(sequence), ') is shorter than the window size wnd (', wnd, ')'))
+  }
+  
   positions <- seq(1, length(sequence) - wnd + 1)
   result <- data.frame(Position = positions)
   
@@ -88,14 +92,14 @@ gcContent <- function(sequences, wnd = NULL){
       s = seq2nt(s)
       gc.tmp = sum((s == 'G') | (s == 'C')) / length(s)
       gc.list[i.s] = gc.tmp
-    } else if(nchar(s[i.seq]) <= wnd){
+    } else if(nchar(s) <= wnd){
       s = seq2nt(s)
       gc.tmp = sum((s == 'G') | (s == 'C')) / length(s)
       gc.list[[i.s]] = gc.tmp
     } else {
-      m = splitSeq(s[i.seq], n = wnd, merge = F)
+      m = splitSeq(s, n = wnd, merge = F)
       gc.tmp = rowSums(m == 'G') + rowSums(m == 'C')
-      gc.tmp = gc.tmp / wnd  
+      gc.tmp = gc.tmp / rowSums(m != '')
       gc.list[[i.s]] = gc.tmp
     }
   }

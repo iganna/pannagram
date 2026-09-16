@@ -42,8 +42,8 @@ tanglplot <- function(t1, t2, color_dict=NULL, group_dict=NULL, title1=NULL, tit
   # library(ggplot2)
   # library(cowplot)
 
-  t1$edge.length[t1$edge.length < 0] <- 0
-  t2$edge.length[t2$edge.length < 0] <- 0
+  if(!is.null(t1$edge.length)) t1$edge.length[t1$edge.length < 0] <- 0
+  if(!is.null(t2$edge.length)) t2$edge.length[t2$edge.length < 0] <- 0
   
   # Root and reorder trees
   if (!is.rooted(t1)) t1 <- rootOpt(t1)
@@ -159,9 +159,9 @@ tanglplot <- function(t1, t2, color_dict=NULL, group_dict=NULL, title1=NULL, tit
 rootOpt <- function(tree) {
   n <- length(tree$tip.label)
   mx <- dist.nodes(tree)
-  mx <- mx[1:n, (n+1):ncol(mx)]
+  mx <- mx[1:n, (n+1):ncol(mx), drop = FALSE]
   d.max <- apply(mx, 2, max)
-  node.root <- n + which(d.max == min(d.max))
+  node.root <- n + which(d.max == min(d.max))[1]
 
   get_descendants <- function(tree, node) {
     if (node > Ntip(tree)) {
@@ -186,6 +186,8 @@ rootOpt <- function(tree) {
   if (length(children) > n/2) {
     children <- setdiff(1:n, children)
   }
+  # No outgroup: the tree cannot be rerooted
+  if (length(children) == 0) return(tree)
 
   tree_root <- ape::root(tree, outgroup = children, resolve.root = TRUE)
   return(tree_root)

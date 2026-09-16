@@ -13,11 +13,11 @@ heatdendro <- function(mx,
   nx <- ncol(mx) * 2
   ny <- nrow(mx) * 2
   
-  # Perform clustering
-  row_dend <- as.dendrogram(hclust(dist(mx)))
-  col_dend <- as.dendrogram(hclust(dist(t(mx))))
+  # Perform clustering (not possible for less than two rows/columns)
+  row_dend <- if (nrow(mx) > 1) as.dendrogram(hclust(dist(mx))) else NULL
+  col_dend <- if (ncol(mx) > 1) as.dendrogram(hclust(dist(t(mx)))) else NULL
   
-  if(n_clust > 1){
+  if((n_clust > 1) && !is.null(row_dend)){
     # Color branches of the row dendrogram and customize appearance
     row_dend <- color_branches(row_dend, k = 2, col = col_clust)
     row_dend <- set(row_dend, "labels", rep("", length(labels(row_dend))))
@@ -25,10 +25,10 @@ heatdendro <- function(mx,
   }
   
   # Get order of rows and columns from dendrograms
-  row_order <- order.dendrogram(row_dend)
-  col_order <- order.dendrogram(col_dend)
+  row_order <- if (is.null(row_dend)) seq_len(nrow(mx)) else order.dendrogram(row_dend)
+  col_order <- if (is.null(col_dend)) seq_len(ncol(mx)) else order.dendrogram(col_dend)
   
-  mx.ordered <- mx[row_order, col_order]
+  mx.ordered <- mx[row_order, col_order, drop = FALSE]
   
   # Prepare data for ggplot
   df <- as.data.frame(mx.ordered)
@@ -58,13 +58,19 @@ heatdendro <- function(mx,
     scale_x_discrete(expand = c(1/nx, 1/nx))
   
   # Column dendrogram (on top)
-  dend_col_gg <- ggdendrogram(col_dend, rotate = FALSE, theme_dendro = FALSE) +
-    theme_void() +
-    scale_x_continuous(expand = c(1/nx, 1/nx))  # Remove padding
+  if(is.null(col_dend)){
+    dend_col_gg <- plot_spacer()
+  } else {
+    dend_col_gg <- ggdendrogram(col_dend, rotate = FALSE, theme_dendro = FALSE) +
+      theme_void() +
+      scale_x_continuous(expand = c(1/nx, 1/nx))  # Remove padding
+  }
   
   # Row dendrogram (on left)
   
-  if(n_clust > 1){
+  if(is.null(row_dend)){
+    dend_row_gg <- plot_spacer()
+  } else if(n_clust > 1){
     ggdend <- as.ggdend(row_dend)
     dend_row_gg <- ggplot(ggdend, theme = theme_void()) +
       coord_flip() +

@@ -38,9 +38,15 @@ pangrowth_n <- function(path.project, acc, i.chr, aln.type='pan', ref.acc='', si
   # table -- the alignment is never expanded.
   ivl.acc = h5IvlRead(file.msa, acc)
   pan.len = h5AccLen(file.msa, acc)
+  if(pan.len == 0){
+    stop(paste('Pangenome alignment for accession', acc, 'is empty in', file.msa))
+  }
   idx = seq(1, pan.len, idx.step)
   v.acc = data.frame(pan = idx, acc = ivlAccAt(ivl.acc, idx))
   v.acc = v.acc[v.acc$acc != 0,]
+  if(nrow(v.acc) == 0){
+    stop(paste('Accession', acc, 'has no positions aligned to the pangenome in', file.msa))
+  }
   
   pokaz(sum(v.acc < 0))
   

@@ -84,7 +84,11 @@ heatplot <- function(tbl,
   if(to.norm == 'row'){
     for(tmp in unique(df$Var1)){
       tmp.val = df$value[df$Var1 == tmp]
-      tmp.val = (tmp.val - min(tmp.val)) / (max(tmp.val) - min(tmp.val))
+      if(isTRUE(max(tmp.val) == min(tmp.val))){
+        tmp.val[] = 0
+      } else {
+        tmp.val = (tmp.val - min(tmp.val)) / (max(tmp.val) - min(tmp.val))
+      }
       df$value[df$Var1 == tmp] = tmp.val
     }
   }
@@ -92,7 +96,11 @@ heatplot <- function(tbl,
   if(to.norm == 'col'){
     for(tmp in unique(df$Var2)){
       tmp.val = df$value[df$Var2 == tmp]
-      tmp.val = (tmp.val - min(tmp.val)) / (max(tmp.val) - min(tmp.val))
+      if(isTRUE(max(tmp.val) == min(tmp.val))){
+        tmp.val[] = 0
+      } else {
+        tmp.val = (tmp.val - min(tmp.val)) / (max(tmp.val) - min(tmp.val))
+      }
       df$value[df$Var2 == tmp] = tmp.val
     }
   }

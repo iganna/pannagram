@@ -35,7 +35,9 @@ library(ggplot2)
 #'
 #' @import ggplot2
 #' @export
-plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
+plotSynteny <- function(x, 
+                        # base.len = NULL,  
+                        hlines=NULL, vlines=NULL,
                         col.fw = '#27374D',
                         col.rc = '#CE1F6A',
                         col.line = '#362FD9',
@@ -46,12 +48,15 @@ plotSynteny <- function(x, base.len = NULL, hlines=NULL, vlines=NULL,
                         expand.axis = waiver(),
                         npx = 3000
 ){
-  if(!is.null(base.len)) x = getBase(x, base.len)
+  # if(!is.null(base.len)) x = getBase(x, base.len)
   if (is.null(query.label)) query.label = 'query'
   if (is.null(ref.label)) ref.label = 'base'
 
   x.limits = c(x$V2,x$V3)
   y.limits = c(x$V4,x$V5)
+  # Empty alignment: an empty plot
+  if(length(x.limits) == 0) x.limits = c(0, vlines)
+  if(length(y.limits) == 0) y.limits = c(0, hlines)
   
   range.x = max(x.limits) - min(x.limits)
   range.y = max(y.limits) - min(y.limits)
@@ -189,8 +194,8 @@ plotSynAllChr <- function(path.aln,
   # === === === === Main === === === ===
   
   # Cumulative lengths
-  cum.acc <- c(0, cumsum(chr.len.acc$len[order.acc]))
-  cum.ref <- c(0, cumsum(chr.len.ref$len[order.ref]))
+  cum.acc <- c(0, cumsum(as.numeric(chr.len.acc$len[order.acc])))
+  cum.ref <- c(0, cumsum(as.numeric(chr.len.ref$len[order.ref])))
   
   # pokaz('Number of chromosomes ref and acc:', n.chr.ref, n.chr.acc)
   
@@ -210,10 +215,11 @@ plotSynAllChr <- function(path.aln,
       }
     }
   }
-  df <- if (length(df.list) > 0) do.call(rbind, df.list) else data.frame()
+  df <- if (length(df.list) > 0) do.call(rbind, df.list) else data.frame(V2 = numeric(0), V3 = numeric(0), 
+                                                                          V4 = numeric(0), V5 = numeric(0))
   
   if(nrow(df) == 0){
-    pokazAttention('Alignment of', acc, 'on', ref, 'was not performed')
+    pokazAttention('Alignment of', acc, 'on', ref, 'was not performed, the synteny plot is empty')
   }
   
   v.sep.acc = cum.acc[-length(cum.acc)]
@@ -291,7 +297,7 @@ syntenyplot <- function(path.project,
   path.chr = paste0(path.project, '/.intermediate/chromosomes/')
   
   chr.len = c()
-  for(id in c(ref, acc)){
+  for(id in unique(c(ref, acc))){
     file.chr.len = paste0(path.chr, id, '_chr_len.txt')  
     # pokaz(file.chr.len)
     if(file.exists(file.chr.len)){
@@ -309,7 +315,7 @@ syntenyplot <- function(path.project,
                                  len = nchar(seq.chr))
         chr.len = rbind(chr.len, chr.len.tmp)
       }
-      write.table(chr.len, file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
+      write.table(chr.len[chr.len$acc == id,], file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
     }
   }
   chr.len = chr.len[!is.na(chr.len$acc),]
@@ -354,9 +360,15 @@ pangrowth <- function(path.project, acc, i.chr, aln.type='pan', ref.acc='', size
   # Read the correspondence for one accession
   v.acc = rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
   pan.len = length(v.acc)
+  if(pan.len == 0){
+    stop(paste('Pangenome alignment for accession', acc, 'is empty in', file.msa))
+  }
   idx = seq(1, pan.len, idx.step)
   v.acc = data.frame(pan = idx, acc = v.acc[idx])
   v.acc = v.acc[v.acc$acc != 0,]
+  if(nrow(v.acc) == 0){
+    stop(paste('Accession', acc, 'has no positions aligned to the pangenome in', file.msa))
+  }
   
   pokaz(sum(v.acc < 0))
   

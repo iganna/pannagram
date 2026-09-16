@@ -119,10 +119,12 @@ svplotTwoNodes <- function(s.nodes.target, sv.graph, g.comp=NULL,
   df.nodes.target = df.nodes.target[order(-df.nodes.target$cnt),]
   
   if(is.null(n1)){
+    if(nrow(df.nodes.target) < 1) stop('No target nodes found in the graph')
     n1 = df.nodes.target$node[1]
   }
   
   if(is.null(n2)){
+    if(nrow(df.nodes.target) < 2) stop('At least two target nodes are required to compare two nodes')
     n2 = df.nodes.target$node[2]
   }
   
@@ -131,15 +133,25 @@ svplotTwoNodes <- function(s.nodes.target, sv.graph, g.comp=NULL,
   # n2 = 'N203'
   
   
-  for(i.tmp in 1:10000){
-    sv1 = sv.graph$nodes$name[sv.graph$nodes$node == n1][i.tmp]
-    if(sum(sv.on.te$V1 == sv1 ) != 0) break
+  sv1.all = sv.graph$nodes$name[sv.graph$nodes$node == n1]
+  sv1 = NULL
+  for(i.tmp in seq_along(sv1.all)){
+    if(sum(sv.on.te$V1 == sv1.all[i.tmp] ) != 0){
+      sv1 = sv1.all[i.tmp]
+      break
+    }
   }
+  if(is.null(sv1)) stop(paste('No SV of node', n1, 'overlaps with TEs'))
   
-  for(i.tmp in 1:10000){
-    sv2 = sv.graph$nodes$name[sv.graph$nodes$node == n2][i.tmp]
-    if(sum(sv.on.te$V1 == sv2 ) != 0) break
+  sv2.all = sv.graph$nodes$name[sv.graph$nodes$node == n2]
+  sv2 = NULL
+  for(i.tmp in seq_along(sv2.all)){
+    if(sum(sv.on.te$V1 == sv2.all[i.tmp] ) != 0){
+      sv2 = sv2.all[i.tmp]
+      break
+    }
   }
+  if(is.null(sv2)) stop(paste('No SV of node', n2, 'overlaps with TEs'))
   
   len1 = as.numeric(strsplit(sv1, '\\|')[[1]][2])
   len2 = as.numeric(strsplit(sv2, '\\|')[[1]][2])

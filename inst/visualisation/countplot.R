@@ -11,21 +11,25 @@ countplot <- function(data, sv.class, show.legend = F, colormap = NULL) {
   
   # Reconstruct the unique rows from the keys
   data.uni <- do.call(rbind, strsplit(names(counts), "_"))
-  data.uni <- apply(data.uni, 2, as.numeric)
+  data.uni <- matrix(as.numeric(data.uni), nrow = nrow(data.uni), ncol = ncol(data.uni))
   colnames(data.uni) <- colnames(data)
   names(counts) <- NULL
   
   # Order columns by sv.class
   sv.class <- sv.class[colnames(data.uni)]
   species.order <- names(sv.class)[order(sv.class)]
-  data.uni <- data.uni[, species.order]
+  data.uni <- data.uni[, species.order, drop = FALSE]
   sv.class <- sv.class[species.order]
   
   # Cluster and order rows by similarity
-  dist_rows <- dist(data.uni)
-  hc <- hclust(dist_rows)
-  row.order <- hc$order
-  data.uni <- data.uni[row.order, ]
+  if(nrow(data.uni) > 1){
+    dist_rows <- dist(data.uni)
+    hc <- hclust(dist_rows)
+    row.order <- hc$order
+  } else {
+    row.order <- seq_len(nrow(data.uni))
+  }
+  data.uni <- data.uni[row.order, , drop = FALSE]
   counts <- counts[row.order]
   
   # Convert to long format for ggplot
@@ -70,7 +74,7 @@ countplot <- function(data, sv.class, show.legend = F, colormap = NULL) {
   )
   all_positions$y_numeric <- as.numeric(factor(all_positions$row.label, levels = levels(df.dot$row.label)))
   
-  x_vals <- sort(unique(df.dot$column))
+  x_vals <- seq_along(counts)
   x_min <- min(x_vals) - 0.5
   x_max <- max(x_vals) + 0.5
   
