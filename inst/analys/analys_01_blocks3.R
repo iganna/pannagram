@@ -158,7 +158,13 @@ for(s.comb in unique(df.all$comb)){
   
   i.chr = parseStrings(s.comb, n = 1, split = '_', numeric = T)
   # save(list = ls(), file = "tmp_workspace.RData")
-  
+
+  # panplot needs at least two accessions with blocks
+  if(length(unique(df.all$acc[df.all$comb == s.comb])) < 2){
+    pokazAttention('Fewer than two accessions have blocks, plot is skipped')
+    next
+  }
+
   p = panplot(path.project = path.project, i.chr = i.chr, aln.type = aln.type, ref.acc = ref.name)
   
   savePDF(p, path = path.figures, name = paste0('synteny_', aln.pref, s.comb, ref.suff), width = 6, height = length(accessions) / 6 + 1)

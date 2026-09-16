@@ -99,7 +99,7 @@ gff2gff_n <- function(acc1, acc2, # if one of the accessions is called 'pangen',
   }
   
   # Indexing
-  gff1$idx = 1:nrow(gff1)
+  gff1$idx = seq_len(nrow(gff1))
   
   # Get chromosomes by format
   gff1 =  extractChrByFormat(gff1, s.chr)
@@ -107,6 +107,15 @@ gff2gff_n <- function(acc1, acc2, # if one of the accessions is called 'pangen',
 
   # Fitler out blocks
   gff1 = filterBlocks_n(acc1, gff1, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
+
+  if(nrow(gff1) == 0){
+    pokazAttention('No annotations to convert')
+    if(remain){
+      return(gff1[,colnames.full1])
+    }else {
+      return(gff1[,1:9])
+    }
+  }
   
   # Construct 2
   colnames.1.to.9 = colnames(gff1)[1:9]
@@ -146,9 +155,9 @@ gff2gff_n <- function(acc1, acc2, # if one of the accessions is called 'pangen',
     max.chr.len = max(nrow(v), max(abs(v[!is.na(v)])))
     idx.chr = idx.chr[gff1$V5[idx.chr] <= max.chr.len]
     
-    v = v[v[,1]!=0,]
-    v = v[!is.na(v[,1]),]
-    v = v[!is.na(v[,2]),]
+    v = v[v[,1]!=0,,drop=F]
+    v = v[!is.na(v[,1]),,drop=F]
+    v = v[!is.na(v[,2]),,drop=F]
     idx.v.neg = which(v[,1] < 0)
     if(length(idx.v.neg) > 0){
       v[idx.v.neg,] = v[idx.v.neg,] * (-1)
@@ -229,9 +238,13 @@ gff2gff_n <- function(acc1, acc2, # if one of the accessions is called 'pangen',
   
   # Prepare results
   gff2.remain$len.new = gff2.remain$V5 - gff2.remain$V4 + 1
-  gff2.remain$V9 = paste0(gff2.remain$V9, ';len_new=', gff2.remain$len.new)  # add new length
-  gff2.remain$V9 = paste(gff2.remain$V9, ';len_ratio=', 
-                         round(gff2.remain$len.new / gff2.remain$len.init, 2), sep='')  # add new length
+  if(nrow(gff2.remain) > 0){
+    gff2.remain$V9 = paste0(gff2.remain$V9, ';len_new=', gff2.remain$len.new)  # add new length
+    gff2.remain$V9 = paste(gff2.remain$V9, ';len_ratio=', 
+                           round(gff2.remain$len.new / gff2.remain$len.init, 2), sep='')  # add new length
+  } else {
+    pokazAttention('No annotations were converted')
+  }
   
   colnames(gff2.loosing)[1:9] = colnames.1.to.9
   colnames(gff2.remain)[1:9] = colnames.1.to.9

@@ -45,7 +45,6 @@ path.figures <- opt$path.figures
 if(!dir.exists(path.figures)) stop(paste0('No SV figures dir', path.figures))
 
 file.nestedness <- opt$file.nestedness
-if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exist', file.nestedness))
 
 # ***********************************************************************
 # ---- Variables ----
@@ -97,7 +96,12 @@ nestedness = filterNestedness(nestedness,
 
 edges.init = getGraphFromNestedness(nestedness, cov.cutoff = cov.cutoff)
 
-edges.solved = readRDS(paste0(path.sv, 'edges_families_', suff.cutoffs, '.rds'))
+file.edges.solved = paste0(path.sv, 'edges_families_', suff.cutoffs, '.rds')
+if(!file.exists(file.edges.solved)){
+  pokazAttention('No families were built, candidates will not be generated.')
+  quit(save = "no")
+}
+edges.solved = readRDS(file.edges.solved)
 
 components.lost = attributeNodes(edges.solved, edges.init)
 

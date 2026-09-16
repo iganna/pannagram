@@ -46,7 +46,6 @@ if(!dir.exists(path.figures)) stop(paste0('No SV figures dir', path.figures))
 
 file.nestedness <- opt$file.nestedness
 pokaz(file.nestedness)
-if(!file.exists(file.nestedness)) stop(paste0('File with nestedness does not exist', file.nestedness))
 
 # ***********************************************************************
 # ---- Variables ----
@@ -100,7 +99,7 @@ nestedness = filterNestedness(nestedness,
 
 edges.init = getGraphFromNestedness(nestedness, cov.cutoff = cov.cutoff)
 
-if(flag.plot){
+if(flag.plot && (nrow(edges.init) > 0)){
 # if(F){
   g <- network(edges.init, matrix.type = "edgelist", ignore.eval = FALSE, directed = TRUE)
   g.names = network.vertex.names(g)

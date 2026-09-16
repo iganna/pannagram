@@ -57,7 +57,11 @@ if(!file.exists(file.partition)){
 }
 
 sv.partition = readRDS(file.partition)
-sv.seqs = readFasta(file.seqs)
+sv.seqs = readFasta(file.seqs, stop.on.error = F)
+if(length(sv.seqs) == 0){
+  pokaz('No SVs to analyse')
+  quit(save = "no")
+}
 
 sv.seqs = sv.seqs[names(sv.partition)]
 

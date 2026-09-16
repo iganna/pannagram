@@ -82,7 +82,7 @@ if (!is.null(opt$aln.type)) {
 
 # Reference genome
 ref.name <- opt$ref
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+if(is.null(ref.name) || ref.name == "NULL") ref.name <- ''
 
 # Common code for aln.pref, ref.suffix and s.combinations
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
@@ -100,12 +100,13 @@ if(ref.suff != ''){
 
 file.sv.pos = paste0(path.sv, 'sv_pangen_pos',ref.suff,'.rds')
 if(!file.exists(file.sv.pos)){
-  stop('SVs were not generated.')
+  pokazAttention('SVs were not generated.')
+  quit(save = "no")
 }
 sv.all = readRDS(file.sv.pos)
 sv.all$chr = as.numeric(sv.all$chr)
 
-sv.se = sv.all[sv.all$single == 1,]
+sv.se = sv.all[sv.all$single == 1,, drop=F]
 sv.se$len.gr =  cut(sv.se$len, breaks = len.bins, right = FALSE, labels = len.labels)
 
 f.max = max(sv.se$freq.max)
@@ -118,10 +119,7 @@ res.len = c()
 
 thresholds = c(0,15,50,100, 1000)
 for(thresh in thresholds){
-  cnt = c(table(sv.all$single[sv.all$len > thresh]))
-  if(length(cnt) == 1){
-    cnt = c(0, cnt)
-  } 
+  cnt = c(table(factor(sv.all$single[sv.all$len > thresh], levels = c(0, 1))))
   
   tmp = c(sum(sv.all$len >thresh), cnt, as.numeric(sprintf("%.2f",cnt[2]/cnt[1])))  
   
@@ -170,6 +168,7 @@ saveRDS(res.len, paste0(path.figures, 'sv_pie_chart_num.rds'))
 # ***********************************************************************
 # ---- Chromosomal distribution ----
 
+if(sum(sv.all$len > len.min) > 0){
 g <- ggplot(sv.all[sv.all$len > len.min,], aes(x=beg, fill = as.factor(single))) + 
   geom_histogram(bins = 50, color='grey20') + 
   theme_minimal() + 
@@ -181,6 +180,7 @@ g <- ggplot(sv.all[sv.all$len > len.min,], aes(x=beg, fill = as.factor(single)))
 
 savePDF(g, path=path.figures, name=paste0('sv_chr_minlen',len.min, '_pangen'), 
         width = 6, height = 3/5 * max(sv.all$chr) + 1)
+}
 
 
 
@@ -189,9 +189,9 @@ savePDF(g, path=path.figures, name=paste0('sv_chr_minlen',len.min, '_pangen'),
 
 cnt = as.matrix(table(sv.se$freq.max[sv.se$len>=len.min], sv.se$len.gr[sv.se$len>=len.min]))
 
-if(f.max != 1){
+if((nrow(sv.se) > 0) && (f.max != 1)){
   cnt = rowSums(cnt)
-  df = data.frame(Var1 = 1:length(cnt), value = cnt)
+  df = data.frame(Var1 = seq_along(cnt), value = cnt)
   g <- ggplot(df, aes(Var1, value)) +
     # annotate(geom = "rect",xmin = -Inf, xmax = 3, ymin = -Inf, ymax = Inf,
     #          fill = 'grey60', alpha = 0.5) +
@@ -226,9 +226,14 @@ if(f.max != 1){
 
 # save(list = ls(), file = "tmp_workspace_good.RData")
 
+if(sum(sv.se$len > len.min) == 0){
+  pokazAttention('No simple SVs longer than', len.min, 'bp, length distributions are not plotted.')
+  quit(save = "no")
+}
+
 tbl = table(sv.se[(sv.se$len > len.min), c('len.gr', 'freq.max')])
 tbl = tbl[rowSums(tbl) != 0,,drop=F]
-tbl = apply(tbl, 2, function(x) x / sum(x))
+tbl = unclass(prop.table(tbl, 2))
 df = reshape2::melt(tbl)
 p <- ggplot(data=df, aes(x=freq.max, y = value, fill=len.gr)) +
   geom_bar(stat="identity") + theme_minimal()  + xlab('Frequency of presence') + ylab('Absolute number') + 

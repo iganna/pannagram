@@ -208,7 +208,10 @@ fi
 
 
 # SV on SVs
-if [ "$run_sv_graph" = true ]; then # -sv_graph
+if [ "$run_sv_graph" = true ] && [ ! -s "${path_sv}seq_sv_large.fasta" ]; then # -sv_graph, no large SVs
+    pokaz_stage "Graph on SVs"
+    pokaz_attention "No large SVs, step -sv_graph is skipped."
+elif [ "$run_sv_graph" = true ]; then # -sv_graph
 
     pokaz_stage "Graph on SVs"
 
@@ -283,19 +286,24 @@ if [ "$run_sv_te_order" = true ]; then # -sv_te_order
     file_sv_te_order="${path_sv}sv_te_order_${similarity_value}_${coverage_value}.txt"
     file_sv_te_order_repr="${path_sv}sv_te_order_${similarity_value}_${coverage_value}_repr.txt"
 
-    if [ ! -f "${file_sv_families}" ]; then
-        pokaz_error "File with families does not exist: ${file_sv_families}"
-        pokaz_attention "Please run the step -sv_families with the same -sim and -cov values."
-        exit 1
+    if [ ! -f "${file_sv_families}" ] && [ "$run_sv_graph" = true ]; then
+        # -sv_families ran in this call and built no families
+        pokaz_attention "No SV families were built, step -sv_te_order is skipped."
+    else
+        if [ ! -f "${file_sv_families}" ]; then
+            pokaz_error "File with families does not exist: ${file_sv_families}"
+            pokaz_attention "Please run the step -sv_families with the same -sim and -cov values."
+            exit 1
+        fi
+
+        Rscript $INSTALLED_PATH/analys/sv_07_te_order.R \
+            --path.sv ${path_sv} \
+            --file.families ${file_sv_families} \
+            --file.out ${file_sv_te_order} \
+            --file.out.repr ${file_sv_te_order_repr}
+
+        pokaz_message "Step -sv_te_order is done!"
     fi
-
-    Rscript $INSTALLED_PATH/analys/sv_07_te_order.R \
-        --path.sv ${path_sv} \
-        --file.families ${file_sv_families} \
-        --file.out ${file_sv_te_order} \
-        --file.out.repr ${file_sv_te_order_repr}
-
-    pokaz_message "Step -sv_te_order is done!"
 fi
 
 # BLAST ORFs against the database
@@ -377,7 +385,7 @@ if [[ "${run_sv_sim}" == "true" ]]; then  # -sv_sim
         -cov     "${coverage_value}"
 
     # Expected simsearch summary file (adjust if your tool uses a different name)
-    expected_out="${path_simsearch_out}${set_file_base}_${similarity_value}_${coverage_value}.txt"
+    expected_out="${path_simsearch_out}${set_file_base%%.*}_${similarity_value}_${coverage_value}.txt"
 
     if [[ -f "${expected_out}" ]]; then
         mv -f "${expected_out}" "${file_sv_large_on_set}"

@@ -52,7 +52,7 @@ if(!file.exists(file.seqs)){
   quit(save = "no")
 }
 
-sv.seqs = readFasta(file.seqs)
+sv.seqs = readFasta(file.seqs, stop.on.error = F)
 
 sv.seqs = sv.seqs[nchar(sv.seqs) > len.sv.min]
 

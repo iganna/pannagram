@@ -37,7 +37,12 @@ dir.create(path.out, showWarnings = FALSE, recursive = TRUE)
 file.fam  = file.path(path.sv, paste0('sv_families_', suff, '.txt'))
 file.edge = file.path(path.sv, paste0('edges_families_', suff, '.txt'))
 file.nest = file.path(path.sv, paste0('nestedness_sv_large_', suff, '.txt'))
-for(f in c(file.fam, file.edge, file.nest)) if(!file.exists(f)) stop(paste0('No file: ', f))
+for(f in c(file.fam, file.edge, file.nest)) {
+  if(!file.exists(f)) {
+    pokazAttention(paste0('No file: ', f), '- per-family pieces will not be generated.')
+    quit(save = "no")
+  }
+}
 
 # ***********************************************************************
 # ---- Reading ----
@@ -77,8 +82,13 @@ pokaz('Rows inside the families:', nrow(nest))
 by.fam = split(seq_len(nrow(nest)), nest$family)
 pokaz('Writing', length(by.fam), 'files to', path.out)
 
-info = data.frame(family = names(by.fam), n.members = 0L, n.pairs = 0L,
-                  n.edge = 0L, n.both = 0L, n.sv.both = 0L, stringsAsFactors = FALSE)
+if(length(by.fam) > 0){
+  info = data.frame(family = names(by.fam), n.members = 0L, n.pairs = 0L,
+                    n.edge = 0L, n.both = 0L, n.sv.both = 0L, stringsAsFactors = FALSE)
+} else {
+  info = data.frame(family = character(0), n.members = integer(0), n.pairs = integer(0),
+                    n.edge = integer(0), n.both = integer(0), n.sv.both = integer(0), stringsAsFactors = FALSE)
+}
 n.mem = table(fam$family)
 
 e.key = paste(edges$v1, edges$v2)
@@ -104,5 +114,7 @@ write.table(info, file.info.out, sep = '\t', quote = FALSE, row.names = FALSE)
 
 pokaz('Index:', file.info.out)
 pokaz('Families where no pair has both directions in the graph:', sum(info$n.both == 0))
-pokaz('Share of members having a pair with both directions:',
-      round(sum(info$n.sv.both) / sum(info$n.members), 3))
+if(nrow(info) > 0){
+  pokaz('Share of members having a pair with both directions:',
+        round(sum(info$n.sv.both) / sum(info$n.members), 3))
+}
