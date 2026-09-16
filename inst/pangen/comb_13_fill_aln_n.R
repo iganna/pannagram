@@ -172,9 +172,9 @@ for(s.comb in pref.combinations){
   idx.gain = rep(1, len.comb)
   
   breaks$len = breaks$idx.end - breaks$idx.beg - 1  # MINUS! because these are not posisiotns, but positions around
-  breaks$len.new = 0
+  breaks$len.new = rep(0, nrow(breaks))
   idx.skip = c()
-  for (i.b in 1:nrow(breaks)) {
+  for (i.b in seq_len(nrow(breaks))) {
     file.br.len = paste0(path.extra, breaks$id.s[i.b], '_len.RData')
     file.br.out = paste0(path.extra, breaks$id.s[i.b], '_out.RData')
     if(file.exists(file.br.len) & file.exists(file.br.out)){
@@ -189,6 +189,22 @@ for(s.comb in pref.combinations){
     pokazAttention('Number of breaks to skip is', length(idx.skip))
     breaks = breaks[-idx.skip,,drop=F]
     pokazAttention('Number of breaks remained', nrow(breaks))
+  }
+  
+  if(nrow(breaks) == 0){
+    # All breaks were skipped (or none were saved) -> identity copy, as above
+    pokazAttention('No breaks remained for combination', s.comb, '- copying input alignment',
+                   file=file.log.loop, echo=echo.loop)
+    for(acc in accessions){
+      acc.id <- paste0(s.comb.id, '_', acc)
+      if(acc.id %in% done.set) next
+      v = h5VecRead(file.comb, acc, len.comb); v[is.na(v)] = 0
+      h5VecWrite(file.out, acc, v)
+      markDone(acc.id, file=file.log.loop, echo=echo.loop)
+    }
+    h5PanLenSet(file.out, len.comb)
+    markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
+    next
   }
   
   breaks$len.plus = breaks$len.new - breaks$len
@@ -208,7 +224,7 @@ for(s.comb in pref.combinations){
   len.to.check = breaks$new.end - breaks$new.beg + 1
   
   if(sum(len.to.check != breaks$len.new) > 0) stop('Calculation of positions is wrong')
-  for(i.b in 1:nrow(breaks)){
+  for(i.b in seq_len(nrow(breaks))){
     pos = breaks$idx.beg[i.b]:breaks$idx.end[i.b]
     pos = pos[-c(1, length(pos))]
     if(length(pos) > 0){
@@ -236,7 +252,7 @@ for(s.comb in pref.combinations){
     v.new[pos.transfer[,2]] = v[pos.transfer[,1]]
     
     if (num.cores == 1) {
-      for (i.b in 1:nrow(breaks)) {
+      for (i.b in seq_len(nrow(breaks))) {
         pokaz(i.b)
         file.br.out <- paste0(path.extra, breaks$id.s[i.b], '_out.RData')
         load(file.br.out) # idx.new and msa.new
@@ -251,7 +267,7 @@ for(s.comb in pref.combinations){
       registerDoParallel(myCluster)
       
       # Loop
-      tmp <- foreach(i.b = 1:nrow(breaks), 
+      tmp <- foreach(i.b = seq_len(nrow(breaks)), 
                      .packages = c('utils')) %dopar% {
                        file.br.out <- paste0(path.extra, breaks$id.s[i.b], '_out.RData')
                        load(file.br.out) # idx.new and msa.new
@@ -270,7 +286,7 @@ for(s.comb in pref.combinations){
     
     gc()
     
-    if((sum(v.new != 0) + 1) != length(unique(v.new))){
+    if(anyDuplicated(v.new[v.new != 0]) > 0){
       stop("Duplicates are found")
     } 
 

@@ -44,7 +44,7 @@ aln.type.in = paste0(aln.type.in, '_')
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE, colClasses = 'character', quote = "", comment.char = "")[, 1])
 
 
 # ***********************************************************************
@@ -114,6 +114,7 @@ for(s.comb in pref.combinations){
   accessions = groups$name[groups$group == gr.accs.b]
   accessions = intersect(accessions, accessions.specified)
   n.acc = length(accessions)
+  if (n.acc == 0) stop(paste("No accessions for combination", s.comb))
   
   # ---- Read Breaks ----
   file.breaks <- file.path(path.inter.msa,    paste0("breaks_", s.comb, ".rds"))
@@ -122,6 +123,13 @@ for(s.comb in pref.combinations){
     stop()
   }
   breaks = readRDS(file.breaks)
+  if(is.null(breaks)){
+    # comb_03 saves NULL when no accession has a break: continue with an empty table
+    pokazAttention('No breaks in', file.breaks, file=file.log.loop, echo=echo.loop)
+    breaks = data.frame(val.beg = numeric(0), val.end = numeric(0),
+                        idx.beg = numeric(0), idx.end = numeric(0),
+                        acc     = character(0), len.acc = numeric(0), len.comb = numeric(0))
+  }
   n.init = nrow(breaks)
   
   breaks$in.anal = (breaks$len.acc <= len.large) & (breaks$len.comb <= len.large)

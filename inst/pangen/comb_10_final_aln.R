@@ -47,7 +47,7 @@ aln.type.out = paste0(aln.type.msa, '_')
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE)[, 1])
+accessions.specified <- as.character(read.table(file.acc, stringsAsFactors = FALSE, colClasses = 'character', quote = "", comment.char = "")[, 1])
 
 # ***********************************************************************
 # ---- Values of parameters ----
@@ -129,7 +129,7 @@ for(s.comb in pref.combinations){
   # Then read everything by accession and insert corresponding positions
   df.breaks = readRDS(paste0(path.inter.msa, "breaks_annotated_", s.comb,".rds"))
   df.breaks = df.breaks[,c("idx.beg", "idx.end", "type")]
-  df.breaks$len.new = 0
+  df.breaks$len.new = rep(0, nrow(df.breaks))
   
   # ---- Read singletons results ----
   data.single = readRDS(paste0(path.inter.msa, "singletons_", s.comb, ".rds"))
@@ -139,7 +139,7 @@ for(s.comb in pref.combinations){
   idx.end <- which(data.single$pos.end != 0, arr.ind = TRUE)
   if(sum(idx.beg != idx.end) != 0) stop('Wrong data for singletons')
   idx.beg = idx.beg[order(idx.beg[,1]),,drop=FALSE]
-  if(nrow(idx.beg) != idx.beg[nrow(idx.beg),1]) stop('Indexes in singleton are wrong')
+  if(nrow(idx.beg) > 0 && nrow(idx.beg) != idx.beg[nrow(idx.beg),1]) stop('Indexes in singleton are wrong')
   
   df.single <- cbind(df.single, data.frame(
     acc.beg   = data.single$pos.beg[idx.beg],
@@ -152,7 +152,12 @@ for(s.comb in pref.combinations){
   
   # ---- Read len.new from short results ----
   
-  data.short = readLines(paste0(path.short.aln, accessions[1], "_short_", s.comb, ".txt.aln.txt"))
+  # comb_05 writes no short files when there are no short breaks
+  if(sum(df.breaks$type == 'short') > 0){
+    data.short = readLines(paste0(path.short.aln, accessions[1], "_short_", s.comb, ".txt.aln.txt"))
+  } else {
+    data.short = character(0)
+  }
   
   # REMOVE LATER:
   if((length(data.short) - 1) == sum(df.breaks$type == 'short')){
@@ -166,7 +171,12 @@ for(s.comb in pref.combinations){
     
   # ---- Read len.new the Mafft results ----
   
-  data.large = readLines(paste0(path.large.aln, accessions[1], "_large_", s.comb, ".txt.txt"))
+  # comb_05 writes no large files when there are no long breaks
+  if(sum(df.breaks$type == 'long') > 0){
+    data.large = readLines(paste0(path.large.aln, accessions[1], "_large_", s.comb, ".txt.txt"))
+  } else {
+    data.large = character(0)
+  }
   
   # REMOVE LATER:
   if((length(data.large) - 1) == sum(df.breaks$type == 'long')){
@@ -287,6 +297,9 @@ for(s.comb in pref.combinations){
         df.br.tmp = df.short.sub
       }
       
+      # No breaks of this type -> comb_05 wrote no files, nothing to insert
+      if(nrow(df.br.tmp) == 0) next
+      
       file.df.acc = paste0(path.inter.synteny, acc, "_",s.type,"_", s.comb, "_df.rds")
       
       if(s.type == 'short'){
@@ -319,7 +332,7 @@ for(s.comb in pref.combinations){
       # (one gregexpr call over the whole vector instead of one per break).
       aln.matches = gregexpr("[^-]", aln.acc)
 
-      for(i in 1:length(aln.acc)){
+      for(i in seq_along(aln.acc)){
         # pokaz(i)
 
         if(df.br.tmp$fail[i]) next  # Kostyl
@@ -332,6 +345,7 @@ for(s.comb in pref.combinations){
 
         p.insert = rep(0, df.br.tmp$len.new[i])
         idx.tmp.aln = c(aln.matches[[i]])
+        idx.tmp.aln = idx.tmp.aln[idx.tmp.aln > 0]  # gregexpr gives -1 for a line without residues
         
         if(length(idx.tmp.aln) != length(p.own)) {
   

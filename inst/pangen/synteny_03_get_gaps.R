@@ -66,7 +66,7 @@ if(!dir.exists(path.gaps)) dir.create(path.gaps)
 
 # Accessions
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
+tmp <- read.table(file.acc, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
 accessions <- as.character(tmp[,1])
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)
@@ -79,7 +79,7 @@ if (length(readLines(file.combinations)) == 0) {
   files.maj <- list.files(path.aln, pattern = "\\maj.rds$")
   
   # Filter files that start with one of the values in accessions
-  files.maj <- files.maj[sapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+  files.maj <- files.maj[vapply(files.maj, function(x) any(sapply(accessions, function(a) startsWith(x, a))), logical(1))]
   
   pokaz('All blast files', length(files.maj), file=file.log.main, echo=echo.main)
 } else {
@@ -194,7 +194,7 @@ loop.function <- function(f.maj,
   
   # save(list = ls(), file = "tmp_workspace.RData")
   
-  if((nrow(x) <= 1) || (is.null(x))) {
+  if(is.null(x) || (nrow(x) == 0)) {
     pokaz('No gaps', file=file.log.loop, echo=echo.loop)
     
     # ---- Checkpoint marker: item fully processed ----
@@ -321,7 +321,7 @@ loop.function <- function(f.maj,
   # statistics (pos[2]/pos[3] of 4 numbers) computed once over the whole vector.
   # For two within-block-sorted pairs, s2 = min(max(o1,o3), min(o2,o4)),
   # s3 = max(max(o1,o3), min(o2,o4)); identical to sort(c(a,b,c,d))[2:3].
-  nx = nrow(x); ip = 1:(nx - 1)
+  nx = nrow(x); ip = seq_len(nx - 1)   # empty for a single block: no between-block gaps
   pref.gaps.v = paste0('gap_', ip, '_', ip + 1, '_')
   qo1 = pmin(x$V2[ip], x$V3[ip]);     qo2 = pmax(x$V2[ip], x$V3[ip])
   qo3 = pmin(x$V2[ip+1], x$V3[ip+1]); qo4 = pmax(x$V2[ip+1], x$V3[ip+1])
@@ -334,7 +334,7 @@ loop.function <- function(f.maj,
   b.s3.v = pmax(pmax(bo1, bo3), pmin(bo2, bo4))
   d2.v = b.s3.v - b.s2.v
 
-  for(irow in 1:(nrow(x)-1)){
+  for(irow in seq_len(nrow(x)-1)){
 
     # Common file name (precomputed)
     pref.gap = pref.gaps.v[irow]

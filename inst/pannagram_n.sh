@@ -81,7 +81,7 @@ fi
 if [ -n "${acc_file}" ] && [ -f "${acc_file}" ]; then
     pokaz_message "File with accessions is provided"
     # Read names from the file into an array
-    while IFS= read -r name; do
+    while IFS= read -r name || [ -n "$name" ]; do
         [ -z "$name" ] && continue  # skip empty lines
         acc_target+=("$name")
     done < "$acc_file"
@@ -142,7 +142,12 @@ else
     fi
 
     if ! [[ "$ref_num" =~ ^[0-9]+$ ]]; then
-        with_level 0 pokaz_error "Error: Number of reference genomes is not a number."
+        pokaz_error "Error: Number of reference genomes is not a number."
+        exit 1
+    fi
+
+    if (( 10#$ref_num < 2 )); then
+        pokaz_error "Error: Number of reference genomes (-nref) should be at least 2."
         exit 1
     fi
 
@@ -165,11 +170,11 @@ else
         # Check if the number of reference genomes is sufficient
         if (( ${#refs_all[@]} < $ref_num )); then
             genomes_needed=$((ref_num - ${#refs_all[@]}))
-            with_level 1 pokaz_attention "Not enough reference genomes. Adding $genomes_needed genome(s)."
+            pokaz_attention "Not enough reference genomes. Adding $genomes_needed genome(s)."
 
             # Add genomes from acc_set to refs_all to satisfy the number of ref_num, ensuring no repeats
             for genome in "${acc_set[@]}"; do
-                if (( ${#refs_all[@]} -ge ref_num )); then
+                if (( ${#refs_all[@]} >= ref_num )); then
                     break
                 fi
                 if [[ ! " ${refs_all[@]} " =~ " ${genome} " ]]; then
@@ -781,6 +786,7 @@ for ref0 in "${refs_all[@]}"; do
             touch ${path_log_step}fake.log
 
             rm -f ${path_blast_parts}*txt
+            remove_dir_if_exists "${path_blast_parts}chunks/"
             rm -f ${path_log_step}*
         fi    
 
@@ -1442,6 +1448,13 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
         path_log_step_chr="${path_log_step}chromosome_${i}/"
         mkdir -p "${path_log_step_chr}"
 
+        # No short breaks on this chromosome: comb_05 wrote no files, nothing to align
+        if [ ! -s "${path_inter_msa}loci_short_${i}_${i}.txt" ]; then
+            with_level 2 pokaz_message "Chromosome ${i}: no short loci"
+            echo "Done" >> "$log_chromosome"
+            continue
+        fi
+
         check_listed_files "${path_inter_msa}loci_short_${i}_${i}.txt" "sequence"
 
         "${INSTALLED_PATH}/pangen/comb_06_align.py" \
@@ -1493,6 +1506,13 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         path_log_step_chr="${path_log_step}chromosome_${i}/"
         mkdir -p "${path_log_step_chr}"
+
+        # No long breaks on this chromosome: comb_05 wrote no files, nothing to align
+        if [ ! -s "${path_inter_msa}loci_large_${i}_${i}.txt" ]; then
+            with_level 2 pokaz_message "Chromosome ${i}: no long loci"
+            echo "Done" >> "$log_chromosome"
+            continue
+        fi
 
         check_listed_files "${path_inter_msa}loci_large_${i}_${i}.txt" "sequence"
 
@@ -1608,6 +1628,12 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
 
         path_log_step_chr="${path_log_step}chromosome_${i}/"
         mkdir -p "${path_log_step_chr}"
+
+        # No long breaks on this chromosome: nothing to combine
+        if [ ! -s "${path_inter_msa}loci_large_${i}_${i}.txt" ]; then
+            echo "Done" >> "$log_chromosome"
+            continue
+        fi
 
         "${INSTALLED_PATH}/pangen/comb_09_mafft_combine.py"   \
         -i "${path_inter_msa}loci_large_${i}_${i}.txt" \

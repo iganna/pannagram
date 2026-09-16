@@ -54,11 +54,16 @@ pokaz('Reference genome:', ref,
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
+tmp <- read.table(file.acc, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
 accessions <- as.character(tmp[,1])
 accessions = setdiff(accessions, ref)
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)
+
+if(length(accessions) == 0){
+  pokaz('No accessions other than the reference, nothing to plot', file=file.log.main, echo=echo.main)
+  quit(save = "no")
+}
 
 # ***********************************************************************
 # ---- MAIN program body ----
@@ -96,7 +101,7 @@ loop.function <- function(acc,
                                  len = nchar(seq.chr))
         chr.len = rbind(chr.len, chr.len.tmp)
       }
-      write.table(chr.len, file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
+      write.table(chr.len[chr.len$acc == id,], file.chr.len, sep = '\t', col.names = T, row.names = F, quote = F)
     }
   }
   chr.len = chr.len[!is.na(chr.len$acc),]

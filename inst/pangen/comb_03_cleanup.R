@@ -47,7 +47,7 @@ aln.type.out = paste0(aln.type.clean, '_')
 # ---- Accessions ----
 
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
+tmp <- read.table(file.acc, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
 accessions.specified <- as.character(tmp[,1])
 
 # ***********************************************************************
@@ -251,6 +251,7 @@ loop.function <- function(s.comb,
       
       suppressMessages({
         s.acc = paste0(gr.blocks, acc)
+        try(h5delete(file.comb.out, s.acc), silent = TRUE)
         h5write(blocks.acc, file.comb.out, s.acc)
       })
       markDone(break.id, file=file.log.loop, echo=echo.loop)
@@ -268,6 +269,8 @@ loop.function <- function(s.comb,
                     idx.end = v.idx[i.br.acc+1])
     
     df = df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
+    # All jumps are between blocks: this accession contributes no breaks
+    if(nrow(df) == 0) next
     
     df$acc = acc
     df$len.acc = abs(df$val.end - df$val.beg) - 1

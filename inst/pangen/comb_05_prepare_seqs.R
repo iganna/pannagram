@@ -208,7 +208,7 @@ for(s.comb in pref.combinations){
   # Single size threshold: oversized insertions (> len.large) were already deferred
   # to extra in comb_04 (in.anal filter + residual single->extra), so here everything
   # non-short is 'long'. No separate len.large.mafft cap and no 'extra' type anymore.
-  breaks$type = ''
+  breaks$type = rep('', nrow(breaks))
   breaks$type[(breaks$single == 1) & ((breaks$idx.end - breaks$idx.beg - 1) == 0)] = 'single'
   breaks$type[(breaks$single != 1) & (breaks$len.acc <= len.short)] = 'short'
   breaks$type[(breaks$single != 1) & (breaks$len.acc > len.short)] = 'long'
@@ -229,7 +229,7 @@ for(s.comb in pref.combinations){
         length(idx.short),
         length(idx.large), file=file.log.loop, echo=echo.loop)
 
-  breaks$id.annot = 0
+  breaks$id.annot = rep(0, nrow(breaks))
   breaks$id.annot[idx.singl] = seq_along(idx.singl)
   breaks$id.annot[idx.short] = seq_along(idx.short)
   breaks$id.annot[idx.large] = seq_along(idx.large)

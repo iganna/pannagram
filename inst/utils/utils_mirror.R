@@ -112,7 +112,7 @@ genMask <- function(bases = c("A", "C", "G", "T"), echo=T){
   }
   
   # Remove the identical mask
-  mx = mx[-1,]
+  mx = mx[-1,,drop=F]
   
   return(mx)
 }
@@ -127,7 +127,7 @@ genMask <- function(bases = c("A", "C", "G", "T"), echo=T){
 #'
 #' @examples
 #' getMask()
-#' getMask(id = 2, bases = c("A", "T"))
+#' getMask(id = 1, bases = c("A", "T"))
 #'
 # @export
 getMask <- function(id = 9, bases = c("A", "C", "G", "T")){

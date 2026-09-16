@@ -74,7 +74,7 @@ if(!dir.exists(path.cons)) system(paste0('mkdir ', path.cons))
 
 # Accessions
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
+tmp <- read.table(file.acc, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
 accessions <- as.character(tmp[,1])
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)
@@ -86,7 +86,8 @@ pokaz('Names of genomes for the analysis:', accessions,
 
 files.aln <- list.files(path = path.aln, pattern = "_full.rds$")
 pokaz('Full files:', files.aln, file=file.log.main, echo=echo.main)
-files.aln <- files.aln[sapply(files.aln, function(x) any(sapply(accessions, function(a) startsWith(x, a))))]
+files.aln <- files.aln[vapply(files.aln, function(x) any(sapply(accessions, function(a) startsWith(x, a))), logical(1))]
+if(length(files.aln) == 0) stop(paste('No alignment files (*_full.rds) for the accessions are found in', path.aln))
 files.aln = gsub("_full.rds", "", files.aln)
 
 chromosome.pairs = unique(sapply(files.aln, function(s){

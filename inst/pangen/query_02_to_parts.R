@@ -60,7 +60,7 @@ if(n.chr == 0){
 
 # Accessions to analyse
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
+tmp <- read.table(file.acc, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
 accessions <- as.character(tmp[,1])
 pokaz('Names of genomes for the analysis:', accessions, 
       file=file.log.main, echo=echo.main)
@@ -92,7 +92,7 @@ if(n.chr == 0){
     acc.len = read.table(file.acc.len, header = 1)
     
     combinations = rbind(combinations,
-                         data.frame(acc = acc, i.chr = 1:nrow(acc.len)))
+                         data.frame(acc = rep(acc, nrow(acc.len)), i.chr = seq_len(nrow(acc.len))))
   }
 } else {
   combinations <- expand.grid(acc = accessions, i.chr = 1:n.chr)  
@@ -138,9 +138,17 @@ loop.function <- function(i.comb,
   
   s = splitSeq(q.fasta, n=len.parts)
   len.chr = nchar(q.fasta)
+  if(len.chr == 0){
+    # Empty chromosome: no parts. Write an empty parts file, so query_03 still counts
+    # this chromosome among the accession's part files (blastn on an empty query gives an empty result)
+    pokaz('Empty chromosome, no parts', file=file.log.loop, echo=echo.loop)
+    writeFastaMy(character(0), file.out)
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
+    return(NULL)
+  }
   pos.beg = seq(1, len.chr, len.parts)
   
-  if(!is.null(len.step) && len.step != 0){  # step==0 would duplicate every part 1:1 (part.step defaults to 0 and is never NULL); only add a second, offset tile set for a genuine non-zero overlap
+  if(!is.null(len.step) && len.step != 0 && len.chr > len.step){  # step==0 would duplicate every part 1:1 (part.step defaults to 0 and is never NULL); only add a second, offset tile set for a genuine non-zero overlap
     s = c(s,
           splitSeq(q.fasta, n=len.parts, step = len.step))
     pos.beg = c(pos.beg, 
@@ -173,6 +181,7 @@ loop.function <- function(i.comb,
       writeFastaMy(s[seqs.score <= 0.2], file.out)  
     } else {
       pokaz('No good sequences sequences.', file=file.log.loop, echo=echo.loop)
+      writeFastaMy(character(0), file.out)
     }
     
     if (sum(seqs.score > 0.2) > 0){
@@ -216,7 +225,7 @@ if(length(done.set) > 0){
 
 if(num.cores == 1){
   assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
-  for(i.comb in 1:nrow(combinations)){
+  for(i.comb in seq_len(nrow(combinations))){
     loop.function(i.comb, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
@@ -228,7 +237,7 @@ if(num.cores == 1){
   parallel::clusterApply(myCluster, seq_len(num.cores),
                          function(i) assign('.worker.id', i, envir = .GlobalEnv))
 
-  tmp.output = foreach(i.comb = 1:nrow(combinations),
+  tmp.output = foreach(i.comb = seq_len(nrow(combinations)),
                        .packages=c('crayon',
                                    'stringi'),  # for purging repeats
                        .export = c('n.chr')) %dopar% {

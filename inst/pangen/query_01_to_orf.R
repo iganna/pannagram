@@ -51,7 +51,7 @@ if(n.chr == 0){
 
 # Accessions to analyse
 file.acc <- ifelse(!is.null(opt$accessions), opt$accessions, stop("File with accessions are not specified"))
-tmp <- read.table(file.acc, stringsAsFactors = F)
+tmp <- read.table(file.acc, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
 accessions <- as.character(tmp[,1])
 
 # Set input and output paths
@@ -72,7 +72,7 @@ if(n.chr == 0){
     acc.len = read.table(file.acc.len, header = 1)
     
     combinations = rbind(combinations,
-                         data.frame(acc = acc, i.chr = 1:nrow(acc.len)))
+                         data.frame(acc = rep(acc, nrow(acc.len)), i.chr = seq_len(nrow(acc.len))))
   }
 } else {
   combinations <- expand.grid(acc = accessions, i.chr = 1:n.chr)  
@@ -111,9 +111,22 @@ loop.function <- function(i.comb, done.set = character(0), echo.loop=T){
   s = s[s != 'N']
   s = nt2seq(s) 
   
-  orf.res = orfFinder(s)
+  if(nchar(s) > 0){
+    orf.res = orfFinder(s)
+  } else {
+    orf.res = list(pos = NULL, orf = NULL)  # all-N chromosome: orfFinder fails on an empty sequence
+  }
   
   s.orf = orf.res$orf
+  if(length(s.orf) == 0){
+    # No ORF passes the minimum length (tiny or all-N chromosome):
+    # write an empty ORF file, so every chromosome has its output
+    pokaz('No ORFs found', file=file.log.loop, echo=echo.loop)
+    writeFastaMy(character(0), file=file.out, append=F)
+    rm(q.fasta)
+    markDone(item.id, file=file.log.loop, echo=echo.loop)
+    return(NULL)
+  }
   names(s.orf) = paste(acc, '_Chr', i.chr, names(s.orf), sep='')
   
   writeFastaMy(s.orf, file=file.out, append=F)
@@ -136,7 +149,7 @@ if(length(done.set) > 0){
 
 if(num.cores == 1){
   assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
-  for(i.comb in 1:nrow(combinations)){
+  for(i.comb in seq_len(nrow(combinations))){
     loop.function(i.comb, done.set = done.set, echo.loop=echo.loop)
   }
 } else {
@@ -148,7 +161,7 @@ if(num.cores == 1){
   parallel::clusterApply(myCluster, seq_len(num.cores),
                          function(i) assign('.worker.id', i, envir = .GlobalEnv))
 
-  tmp.output = foreach(i.comb = 1:nrow(combinations),
+  tmp.output = foreach(i.comb = seq_len(nrow(combinations)),
                        .packages=c('crayon',
                                    'stringi'),  # for purging repeats
                        .export = c('n.chr')) %dopar% {

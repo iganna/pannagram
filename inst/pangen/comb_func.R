@@ -245,7 +245,7 @@ solveLong <- function(breaks, breaks.init, len.max) {
   # Identify breaks where the length exceeds the len.max
   idx.to.solve = which(breaks$len > len.max)
   
-  breaks.init$id <- 1:nrow(breaks.init)
+  breaks.init$id <- seq_len(nrow(breaks.init))
   
   idx.rem.init <- c()
   for (irow in idx.to.solve) {
@@ -320,7 +320,7 @@ solveLong2 <- function(breaks, breaks.init, len.max) {
   # Identify breaks where the length exceeds the len.max
   idx.to.solve = which(breaks$len > len.max)
   
-  breaks.init$id <- 1:nrow(breaks.init)
+  breaks.init$id <- seq_len(nrow(breaks.init))
   
   idx.rem.init <- c()
   for (irow in idx.to.solve) {
@@ -474,6 +474,15 @@ findBreaks <- function(v) {
     
     # Filter based on blocks
     df <- df[blocks.acc[abs(df$val.beg)] == blocks.acc[abs(df$val.end)],]
+    
+    # All jumps are between blocks: no breaks, same empty template as above
+    if(nrow(df) == 0){
+      return(data.frame(
+        val.beg = numeric(0), val.end = numeric(0),
+        idx.beg = numeric(0), idx.end = numeric(0),
+        acc     = character(0), len.acc = numeric(0), len.comb = numeric(0)
+      ))
+    }
     
     # Add attributes: accuracy and lengths
     df$acc <- acc
