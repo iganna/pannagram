@@ -157,23 +157,37 @@ getSeqOfBreak <- function(i.break, acc, v.beg, v.end, genome) {
 # Do two sequences look like the same thing? One blastn per pair is what makes
 # this step expensive, so the pairs are handed out in chunks and a worker keeps
 # reusing the same two temporary files instead of creating a pair per call.
-# Every HSP is tested, not only the longest one: the longest hit is not
-# necessarily the one that passes both thresholds.
+# The shorter sequence counts as covered by the union of all HSPs, not by a single
+# one: when one break holds a longer variant of the other -- a full element next to
+# its solo LTR, a copy with an internal insertion -- the shorter sequence is matched
+# in pieces or twice (once per terminal repeat), and no single HSP reaches the
+# threshold although the whole of it lies inside the longer one.
 isSameSeq <- function(s1, s2, f1, f2, p.ident.merge, cover.merge) {
   writeLines(c('>s1', s1), f1)
   writeLines(c('>s2', s2), f2)
 
   res <- system2('blastn',
                  args = c('-query', f1, '-subject', f2,
-                          '-outfmt', shQuote('6 pident length'),
+                          '-outfmt', shQuote('6 qstart qend sstart send'),
                           '-perc_identity', p.ident.merge),
                  stdout = TRUE, stderr = FALSE)
 
   if (length(res) == 0) return(FALSE)
   hits <- do.call(rbind, strsplit(res, '\t'))
-  hits <- matrix(as.numeric(hits), ncol = 2)
-  len.min <- min(nchar(s1), nchar(s2))
-  return(any(hits[, 2] >= cover.merge * len.min))
+  hits <- matrix(as.numeric(hits), ncol = 4)
+
+  # Coordinates on the shorter sequence: query columns for s1, subject columns for s2
+  # (the subject ones come reversed for hits on the minus strand)
+  if (nchar(s1) <= nchar(s2)) {
+    len.min <- nchar(s1); h.beg <- hits[, 1]; h.end <- hits[, 2]
+  } else {
+    len.min <- nchar(s2); h.beg <- hits[, 3]; h.end <- hits[, 4]
+  }
+  covered <- rep(FALSE, len.min)
+  for (k in seq_along(h.beg)) {
+    covered[min(h.beg[k], h.end[k]):max(h.beg[k], h.end[k])] <- TRUE
+  }
+  return(sum(covered) >= cover.merge * len.min)
 }
 
 # ***********************************************************************
@@ -219,13 +233,17 @@ for(s.comb in pref.combinations){
 for(i.iter in 1:n.iter.max){
 
   # Only 'long' breaks are worth the sequence check: the short ones are indels
-  # that abpoa aligns anyway, the singletons have nothing to compare.
-  is.long <- (breaks$single != 1) & (breaks$len.acc > len.short)
+  # that abpoa aligns anyway. Singletons take part: a singleton is often one
+  # genome's own copy of the insertion the other genomes carry in the next break
+  # (a solo LTR next to the full element, one genome's copy of a tandem
+  # duplication), and leaving them out kept exactly such pairs apart.
+  is.long <- breaks$len.acc > len.short
 
   idx.ord <- order(breaks$idx.beg)
   idx.long <- idx.ord[is.long[idx.ord]]
 
-  pokaz('Long breaks', length(idx.long), 'of', nrow(breaks), file=file.log.loop, echo=echo.loop)
+  pokaz('Long breaks (singletons included)', length(idx.long), 'of', nrow(breaks),
+        file=file.log.loop, echo=echo.loop)
 
   # Lengths only for the rows that can take part: the full breaks x accessions
   # matrix is never needed.
@@ -233,41 +251,53 @@ for(i.iter in 1:n.iter.max){
                             v.end[idx.long, , drop=FALSE])
   len.max.long <- apply(len.acc.long, 1, max)
 
+  # ---- Neighbouring pairs ----
+  # Neighbours are taken in two chains: with singletons and without them. With the
+  # singletons only, a singleton lying between two regular breaks would hide that
+  # pair from the check; the chain without singletons keeps such pairs, and the
+  # singleton is swallowed by the merged interval if the pair is merged.
+  idx.nosgl <- idx.long[breaks$single[idx.long] != 1]
+  pairs <- rbind(cbind(head(idx.long, -1),  tail(idx.long, -1)),
+                 cbind(head(idx.nosgl, -1), tail(idx.nosgl, -1)))
+  pairs <- unique(pairs)
+  pairs <- pairs[order(breaks$idx.beg[pairs[, 1]], breaks$idx.beg[pairs[, 2]]), , drop=FALSE]
+  t.i <- match(pairs[, 1], idx.long)
+  t.j <- match(pairs[, 2], idx.long)
+
   # ---- Candidate pairs: neighbouring, close, and with disjoint members ----
   # Disjoint membership on its own means nothing (most neighbouring breaks are
   # disjoint); it only marks the pairs whose sequences are worth comparing.
-  n.long <- length(idx.long)
-  is.cand <- rep(FALSE, max(n.long - 1, 0))
-  if(n.long > 1){
-    for(t in 1:(n.long-1)){
-      i.br <- idx.long[t]
-      j.br <- idx.long[t+1]
+  is.cand <- rep(FALSE, nrow(pairs))
+  for(t in seq_len(nrow(pairs))){
+    i.br <- pairs[t, 1]
+    j.br <- pairs[t, 2]
+    l.i  <- len.max.long[t.i[t]]
+    l.j  <- len.max.long[t.j[t]]
 
-      # The distance rule is the one mergeOverlapsTolerance() applies in comb_04:
-      # an absolute cap on the gap, a relative cap on the gap against the size of
-      # what is being joined, and no merging of breaks that are already large.
-      s.gap <- breaks$idx.beg[j.br] - breaks$idx.end[i.br] + 1
-      if((s.gap < 0) || (s.gap > gap.max.merge)) next
-      if(min(len.max.long[t], len.max.long[t+1]) < len.min.merge) next
-      if(max(len.max.long[t], len.max.long[t+1]) > len.max.sv) next
-      if((s.gap / max(len.max.long[t], len.max.long[t+1])) > dist.tol) next
+    # The distance rule is the one mergeOverlapsTolerance() applies in comb_04:
+    # an absolute cap on the gap, a relative cap on the gap against the size of
+    # what is being joined, and no merging of breaks that are already large.
+    s.gap <- breaks$idx.beg[j.br] - breaks$idx.end[i.br] + 1
+    if((s.gap < 0) || (s.gap > gap.max.merge)) next
+    if(min(l.i, l.j) < len.min.merge) next
+    if(max(l.i, l.j) > len.max.sv) next
+    if((s.gap / max(l.i, l.j)) > dist.tol) next
 
-      # comb_04 gets its span bound from solveLong2; this step runs after it and
-      # iterates, so without this the chain could undo that bound.
-      if((breaks$idx.end[j.br] - breaks$idx.beg[i.br] + 1) > len.max.merge) next
+    # comb_04 gets its span bound from solveLong2; this step runs after it and
+    # iterates, so without this the chain could undo that bound.
+    if((breaks$idx.end[j.br] - breaks$idx.beg[i.br] + 1) > len.max.merge) next
 
-      acc.i <- getMembers(len.acc.long[t,],   accessions, member.tol)
-      acc.j <- getMembers(len.acc.long[t+1,], accessions, member.tol)
-      if(length(acc.i) == 0 || length(acc.j) == 0) next
-      if(length(intersect(acc.i, acc.j)) > 0) next
+    acc.i <- getMembers(len.acc.long[t.i[t], ], accessions, member.tol)
+    acc.j <- getMembers(len.acc.long[t.j[t], ], accessions, member.tol)
+    if(length(acc.i) == 0 || length(acc.j) == 0) next
+    if(length(intersect(acc.i, acc.j)) > 0) next
 
-      is.cand[t] <- TRUE
-    }
+    is.cand[t] <- TRUE
   }
 
   t.cand <- which(is.cand)
-  cand.i <- idx.long[t.cand]
-  cand.j <- idx.long[t.cand + 1]
+  cand.i <- pairs[t.cand, 1]
+  cand.j <- pairs[t.cand, 2]
 
   pokaz('Iteration', i.iter, ': candidate pairs', length(cand.i),
         file=file.log.loop, echo=echo.loop)
@@ -279,8 +309,8 @@ for(i.iter in 1:n.iter.max){
 
     # The representative of a break is the accession with the longest piece;
     # reading one chromosome per accession keeps this to one pass over the disk.
-    acc.i <- accessions[apply(len.acc.long[t.cand, , drop=FALSE],   1, which.max)]
-    acc.j <- accessions[apply(len.acc.long[t.cand+1, , drop=FALSE], 1, which.max)]
+    acc.i <- accessions[apply(len.acc.long[t.i[t.cand], , drop=FALSE], 1, which.max)]
+    acc.j <- accessions[apply(len.acc.long[t.j[t.cand], , drop=FALSE], 1, which.max)]
 
     seq.i <- rep('', length(cand.i))
     seq.j <- rep('', length(cand.j))
@@ -304,7 +334,12 @@ for(i.iter in 1:n.iter.max){
     idx.test <- which((nchar(seq.i) > 0) & (nchar(seq.j) > 0))
     if(length(idx.test) > 0){
       n.chunk <- min(num.cores, length(idx.test))
-      chunks <- split(idx.test, cut(seq_along(idx.test), n.chunk, labels = FALSE))
+      # cut() needs at least 2 intervals, so a single chunk is built directly
+      chunks <- if(n.chunk > 1){
+        split(idx.test, cut(seq_along(idx.test), n.chunk, labels = FALSE))
+      } else {
+        list(idx.test)
+      }
 
       if(num.cores > 1){
         # No .export for isSameSeq: foreach already picks up the globals the
@@ -344,8 +379,8 @@ for(i.iter in 1:n.iter.max){
     i.keep <- cand.i[idx.merge]
     i.drop <- cand.j[idx.merge]
 
-    # Candidates are neighbours among the LONG breaks, so short breaks and
-    # singletons may sit between them. They are swallowed by the merged interval
+    # Candidates are neighbours among the LONG breaks, so short breaks -- and, for
+    # pairs from the chain without singletons, singletons -- may sit between them. They are swallowed by the merged interval
     # and must be merged in as well -- leaving them as separate rows would nest a
     # break inside another one, which the coordinate map of comb_10 cannot
     # represent (it adds every break's `extra` at a single point and takes a
