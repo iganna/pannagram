@@ -598,13 +598,13 @@ filterEdges <- function(edges,
     g.comp <- getGraphComponents(edges)
     comp.remove <- which(g.comp$csize < min.comp.size)
     sv.remove <- names(g.comp$membership)[g.comp$membership %in% comp.remove]
-    edges <- edges[!(edges[,1] %in% sv.remove) & !(edges[,2] %in% sv.remove), ]
+    edges <- edges[!(edges[,1] %in% sv.remove) & !(edges[,2] %in% sv.remove), , drop = FALSE]
   }
   
   # ---- Filter edges between communities ----
   if (remove.intercommunity) {
     communities <- getGraphCommunities(edges)
-    edges <- edges[communities[edges[,1]] == communities[edges[,2]], ]
+    edges <- edges[communities[edges[,1]] == communities[edges[,2]], , drop = FALSE]
   }
   
   # ---- Filter bridges ----
@@ -795,7 +795,7 @@ putEdgesBack <- function(edges,
   top.svs = graph.compact$nodes$name[graph.compact$nodes$node %in% top.nodes]
   
   # Filter edges.back not to cover to top nodes
-  edges.back = edges.back[!(edges.back[,1] %in% top.svs),]
+  edges.back = edges.back[!(edges.back[,1] %in% top.svs),, drop=F]
   
   n.edges.back = -1
   while (n.edges.back != nrow(edges.back)) {
@@ -803,8 +803,8 @@ putEdgesBack <- function(edges,
     n.edges.back = nrow(edges.back)
     if(n.edges.back == 0) break
     
-    edges.data = data.frame(comp1 = components[edges.back[,1]],
-                            comp2 = components[edges.back[,2]])
+    edges.data = data.frame(comp1 = unname(components[edges.back[,1]]),
+                            comp2 = unname(components[edges.back[,2]]))
     edges.data[is.na(edges.data)] = 0
     edges.data$comp = rowSums(edges.data)
     
@@ -813,8 +813,9 @@ putEdgesBack <- function(edges,
       (edges.data$comp2 != 0)
     if(any(idx.remove)){
       edges.data = edges.data[!idx.remove,]
-      edges.back = edges.back[!idx.remove,]
+      edges.back = edges.back[!idx.remove,, drop=F]
     }
+    if(nrow(edges.data) == 0) break
     
     idx.back.sure = which((edges.data$comp1 == edges.data$comp2) & 
                             (edges.data$comp1 != 0))
@@ -874,8 +875,8 @@ putEdgesBack <- function(edges,
   }
   
   if(nrow(edges.back) != 0){
-    edges.data = data.frame(comp1 = components[edges.back[,1]],
-                            comp2 = components[edges.back[,2]])
+    edges.data = data.frame(comp1 = unname(components[edges.back[,1]]),
+                            comp2 = unname(components[edges.back[,2]]))
     
     edges = rbind(edges, edges.back)  
   }
@@ -897,7 +898,7 @@ attributeNodes <- function(edges,
   
   if(length(sv.back) == 0){
     if(show.echo) pokaz('No SVs to put back', length(sv.back))
-    return(edges)
+    return(setNames(numeric(0), character(0)))
   } else {
     if(show.echo) pokaz('Number of SVs to put back', length(sv.back))  
   }
@@ -918,8 +919,8 @@ attributeNodes <- function(edges,
     n.edges.back = nrow(edges.back)
     if(n.edges.back == 0) break
     
-    edges.data = data.frame(comp1 = components[edges.back[,1]],
-                            comp2 = components[edges.back[,2]])
+    edges.data = data.frame(comp1 = unname(components[edges.back[,1]]),
+                            comp2 = unname(components[edges.back[,2]]))
     edges.data[is.na(edges.data)] = 0
     edges.data$comp = rowSums(edges.data)
     
@@ -928,8 +929,9 @@ attributeNodes <- function(edges,
       (edges.data$comp2 != 0)
     if(any(idx.remove)){
       edges.data = edges.data[!idx.remove,]
-      edges.back = edges.back[!idx.remove,]
+      edges.back = edges.back[!idx.remove,, drop=F]
     }
+    if(nrow(edges.data) == 0) break
     
     idx.back.sure = which((edges.data$comp1 == edges.data$comp2) & 
                             (edges.data$comp1 != 0))
@@ -999,7 +1001,8 @@ solveForkNodes <- function(edges,
                            cutoff.remain.edges = 0.7,
                            flank.cover.cutoff = 0.8,
                            show.echo = FALSE,
-                           check.all.double = F)
+                           check.all.double = F,
+                           flank.scores = NULL)
 {
   
   graph.compact <- getGraphCompact(edges)
@@ -1078,14 +1081,20 @@ solveForkNodes <- function(edges,
       idx.tmp <- which(edges.nei.mod[, 2] == node.to)[1]
       edge.tmp <- edges.nei[idx.tmp, ]
       
-      s1 <- seq2nt(seqs[edge.tmp[1]])
-      s2 <- seq2nt(seqs[edge.tmp[2]])
-      
-      # n.cut <- min(round(length(s1) / flank.cover.cutoff), length(s2))
-      # n.cut = min(n.cut, flank.length)
-      n.cut = min(c(flank.length, length(s1), length(s2)))
-      
-      score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
+      # Flank scores from the simsearch positions
+      if(!is.null(flank.scores)){
+        score.tot <- flank.scores[paste(edge.tmp[1], edge.tmp[2], sep = '\t')]
+        if(is.na(score.tot)) score.tot <- 0
+      } else {
+        s1 <- seq2nt(seqs[edge.tmp[1]])
+        s2 <- seq2nt(seqs[edge.tmp[2]])
+        
+        # n.cut <- min(round(length(s1) / flank.cover.cutoff), length(s2))
+        # n.cut = min(n.cut, flank.length)
+        n.cut = min(c(flank.length, length(s1), length(s2)))
+        
+        score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
+      }
       
       if (score.tot < flank.cover.cutoff) {
         stat.neighbours$remain[irow] <- FALSE
@@ -1128,7 +1137,8 @@ solveUmbrellaNodes <- function(edges,
                                flank.length = 200,
                                cutoff.remain.edges = 0.7,
                                flank.cover.cutoff = 0.8,
-                               show.echo = FALSE){
+                               show.echo = FALSE,
+                               flank.scores = NULL){
   
   graph.compact = getGraphCompact(edges)
   edges.compact = graph.compact$edges
@@ -1207,16 +1217,22 @@ solveUmbrellaNodes <- function(edges,
       idx.tmp = which(edges.nei.mod[,1] == node.from)[1]
       edge.tmp = edges.nei[idx.tmp,,drop=F]
       
-      s1 = seq2nt(seqs[edge.tmp[1]])
-      s2 = seq2nt(seqs[edge.tmp[2]])
-      
-      stat.neighbours$len.from[irow] = length(s1)
-      stat.neighbours$len.to[irow] = length(s2)
-      
-      # n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
-      n.cut = min(c(flank.length, length(s1), length(s2)))
-      
-      score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
+      # Flank scores from the simsearch positions
+      if(!is.null(flank.scores)){
+        score.tot <- flank.scores[paste(edge.tmp[1], edge.tmp[2], sep = '\t')]
+        if(is.na(score.tot)) score.tot <- 0
+      } else {
+        s1 = seq2nt(seqs[edge.tmp[1]])
+        s2 = seq2nt(seqs[edge.tmp[2]])
+        
+        stat.neighbours$len.from[irow] = length(s1)
+        stat.neighbours$len.to[irow] = length(s2)
+        
+        # n.cut = min(round(length(s1) / flank.cover.cutoff), length(s2))
+        n.cut = min(c(flank.length, length(s1), length(s2)))
+        
+        score.tot <- scoreFlankCoverage(s1, s2, n.cut, 15, 12)
+      }
       
       if(score.tot < flank.cover.cutoff){
         stat.neighbours$remain[irow] = F
@@ -1513,3 +1529,47 @@ scoreFlankCoverage <- function(s1, s2, n.cut, wsize = 15, nmatch = 12) {
   return(score.tot)
 }
 
+
+#' Flank scores from the covered spans of simsearch
+#'
+#' Replacement for \code{scoreFlankCoverage}, based on the output of
+#' \code{simsearch -positions}. For every pair (child, parent) the covered span
+#' of the parent is intersected with its first and last \code{n.cut} positions,
+#' where \code{n.cut = min(flank.length, length.child, length.parent)}.
+#' The score is the largest covered fraction of these two flanks.
+#' Both orientations of every row are used, over several rows of the same pair
+#' (strands, query-target and target-query hits) the maximum is taken.
+#'
+#' @param nestedness Output of \code{simsearch -positions}.
+#' @param flank.length Maximal length of a flank.
+#'
+#' @return Named vector of scores, names are "child<TAB>parent".
+#' @export
+getFlankScores <- function(nestedness, flank.length = 200){
+  
+  cols.pos = c('beg.query', 'end.query', 'beg.target', 'end.target')
+  if(!all(cols.pos %in% colnames(nestedness))){
+    stop('No positions in the nestedness table, please run simsearch with -positions')
+  }
+  
+  # Child - parent in both orientations
+  pos = data.frame(child      = c(nestedness$name.query,    nestedness$name.target),
+                   parent     = c(nestedness$name.target,   nestedness$name.query),
+                   len.child  = c(nestedness$length.query,  nestedness$length.target),
+                   len.parent = c(nestedness$length.target, nestedness$length.query),
+                   beg        = c(nestedness$beg.target,    nestedness$beg.query),
+                   end        = c(nestedness$end.target,    nestedness$end.query))
+  
+  n.cut = pmin(flank.length, pos$len.child, pos$len.parent)
+  
+  # Intersection of the covered span with the flanks of the parent
+  ov.beg = pmax(0, pmin(pos$end, n.cut) - pmax(pos$beg, 1) + 1)
+  ov.end = pmax(0, pmin(pos$end, pos$len.parent) - pmax(pos$beg, pos$len.parent - n.cut + 1) + 1)
+  
+  score = pmax(ov.beg, ov.end) / n.cut
+  key = paste(pos$child, pos$parent, sep = '\t')
+  
+  flank.scores = tapply(score, key, max)
+  
+  return(flank.scores)
+}
