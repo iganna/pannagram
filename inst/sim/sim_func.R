@@ -166,6 +166,11 @@ findHitsInRef <- function(v, sim.cutoff, coverage = NULL, symmetric = FALSE,
 #' 
 #' @author Anna A. Igolkina 
 blastres2gff <- function(v.blast, gff.file, to.sort = T){
+  # No hits: only the header
+  if(nrow(v.blast) == 0){
+    writeGFF(as.data.frame(matrix(nrow = 0, ncol = 9)), gff.file)
+    return(invisible(NULL))
+  }
   v.gff = data.frame(col1 = v.blast$V8,
                      col2 = 'blast2gff',
                      col3 = 'query',
@@ -174,7 +179,7 @@ blastres2gff <- function(v.blast, gff.file, to.sort = T){
                      col6 = '.',
                      col7 = v.blast$strand,
                      col8 = '.',
-                     col9 = paste0('ID=Q', 1:nrow(v.blast),
+                     col9 = paste0('ID=Q', seq_len(nrow(v.blast)),
                                    ';query=',v.blast$V1,
                                    ';length=', v.blast$len1,
                                    ';similarity=', round(v.blast$V6, 1),
@@ -242,6 +247,12 @@ findNestedness <- function(v.res, use.strand = T){
   
   v.cover = data.frame(C1 = cover1)
   v.cover$C8 = cover8[rownames(v.cover)]
+  
+  # Covered span in both sequences; target positions are on its forward strand
+  v.cover$B1 = cover1.info$beg[rownames(v.cover)]
+  v.cover$E1 = cover1.info$end[rownames(v.cover)]
+  v.cover$B8 = cover8.info$beg[rownames(v.cover)]
+  v.cover$E8 = cover8.info$end[rownames(v.cover)]
   v.cover[,c('V1', 'V8')] = stringr::str_split_fixed(rownames(v.cover), "\\|\\|", 2)
   rownames(v.cover) = NULL
   
@@ -324,8 +335,9 @@ getOneSideCoverage <- function(v.rest, side = 0){
   
   coverage = tapply(v.rest$cover, v.rest$V1, sum)
   
-  beg = tapply(v.rest$cover, v.rest$V2, min)
-  end = tapply(v.rest$cover, v.rest$V3, max)
+  # Span of the covered region: from the first covered position to the last one
+  beg = tapply(v.rest$V2, v.rest$V1, min)
+  end = tapply(v.rest$V3, v.rest$V1, max)
   return(list(coverage = coverage,
               beg = beg,
               end = end))

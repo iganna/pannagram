@@ -92,7 +92,7 @@ for db_file in "${db_files[@]}"; do
     # Check if BLAST results should be used from an existing file
     if [ "$after_blast_flag" -eq 1 ]; then
         if [ ! -f "${blast_res}" ]; then
-            pokaz_error "Blast results file not found: ${file_input}"
+            pokaz_error "Blast results file not found: ${blast_res}"
             exit 1
         fi
     else
@@ -171,7 +171,8 @@ for db_file in "${db_files[@]}"; do
             --sim "$similarity" \
             --use_strand "$use_strand" \
             --db_file "$db_file_full" \
-            --coverage "${coverage}"
+            --coverage "${coverage}" \
+            --positions "$use_positions"
     else
         # On a genome
         Rscript "$INSTALLED_PATH/sim/sim_in_genome.R" \

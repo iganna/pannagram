@@ -10,7 +10,7 @@ This script performs a BLAST search on a given FASTA file against a specified ge
 and processes the results based on similarity thresholds.
 
 Usage: ${0##*/}  -in_seq FASTA_FILE -out OUTPUT_DIR [-aa]
-                 [-on_seq [-strandfree] |-on_genome|-on_path]
+                 [-on_seq [-strandfree] [-positions] |-on_genome|-on_path]
                  [-sim SIMILARITY_CUTOFF] [-cov COVERAGE_CUTOFF]
                  [-afterblast] [-keepblast]
                  [-cores CPU_THREADS]
@@ -31,6 +31,8 @@ Options:
     -afterblast            Flag to process existing BLAST results;
     -keepblast             Flag to keep intermediate BLAST results;
     -strandfree            Use both strands for coverage. This option is used together with -on_seq;
+    -positions             Also output the covered span (first..last covered position) in the query
+                           and in the target (on its forward strand). Used together with -on_seq;
     -cores CPU_THREADS     Specify BLAST cores usege (default: 1);
     -h                     Show this help message and exit.
 

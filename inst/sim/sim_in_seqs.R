@@ -14,7 +14,8 @@ option_list = list(
   make_option(c("--out"),        type = "character", default = NULL, help = "Path to the output coverage file"),
   make_option(c("--use_strand"), type = "character", default = NULL, help = "Use strand or not"),
   make_option(c("--sim"),        type = "numeric",   default = NULL, help = "Similarity threshold"),
-  make_option(c("--coverage"),   type = "numeric",   default = NULL, help = "Coverage threshold")
+  make_option(c("--coverage"),   type = "numeric",   default = NULL, help = "Coverage threshold"),
+  make_option(c("--positions"),  type = "logical",   default = FALSE, help = "Output the covered span in both sequences")
 );
 
 # Create the option parser
@@ -39,6 +40,7 @@ use.strand <- ifelse(!is.null(opt$use_strand), as.logical(opt$use_strand),
                      stop("Strand should be provided", call. = FALSE))
 coverage <- ifelse(!is.null(opt$coverage), opt$coverage, 
                    stop("Coverage threshold not specified", call. = FALSE))
+use.positions <- isTRUE(opt$positions)
 
 # ---- Main ----
 
@@ -48,7 +50,7 @@ v = v[v$V1 != v$V8,]
 
 # print(v)
 
-if(nrow(v) == 0){
+if(is.null(v) || nrow(v) == 0){
   pokazAttention('No similarity in SVs, NO SVs were genegated')
   quit(save = "no", status = 0)
 }
@@ -75,13 +77,16 @@ res$p8 = res$C8 / res$len8
 # pokaz('Number of pairs after the sumilarity cutoff', sum(res$cover == 0))
 
 # Change the order of columns
-res <- res[,c('V1', 'V8', 'dir', 'len1', 'len8', 'C1', 'C8', 'p1', 'p8')]
+cols.pos <- c('B1', 'E1', 'B8', 'E8')
+if(!use.positions) cols.pos <- NULL
+res <- res[,c('V1', 'V8', 'dir', 'len1', 'len8', 'C1', 'C8', 'p1', 'p8', cols.pos)]
 
 saveRDS(res, output.file)
 
 # Save the txt-file with proper column names
-res <- res[,c('V1', 'V8', 'dir', 'len1', 'len8', 'p1', 'p8')]
-colnames(res) <- c('name.query', 'name.target', 'strand', 'length.query', 'length.target', 'coverage.query', 'coverage.target')
+res <- res[,c('V1', 'V8', 'dir', 'len1', 'len8', 'p1', 'p8', cols.pos)]
+colnames(res) <- c('name.query', 'name.target', 'strand', 'length.query', 'length.target', 'coverage.query', 'coverage.target',
+                   c('beg.query', 'end.query', 'beg.target', 'end.target')[seq_along(cols.pos)])
 
 # output.file.txt = sub('.rds', '.txt', output.file)
 # pokaz(output.file.txt)

@@ -33,6 +33,7 @@ after_blast_flag=0
 stop_after_blast_flag=0
 keep_blast_flag=0
 use_strand=T
+use_positions=F
 use_aa=0
 cores=1
 # Max genomic gap (as a multiple of the query/consensus length) across which
@@ -70,6 +71,7 @@ while [ "$1" != "" ]; do
         -aa|-prot )   use_aa=1;                   shift ;;
 
         -strandfree ) use_strand=F;               shift ;;
+        -positions | -pos ) use_positions=T;      shift ;;
 
         -cores)
         if [[ -n "${2-}" ]] && [[ "$2" =~ ^[0-9]+$ ]]; then
