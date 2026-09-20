@@ -52,8 +52,8 @@ The result is shown below:
 
 ## 2. msadiff
 
-This function is useful for visualizing differences in a multiple sequence alignment relative to a selected reference sequence.  
-By default, the first sequence is used as the reference.
+This function is useful for visualizing differences in a multiple sequence alignment relative to a reference sequence.  
+By default (`i.ref = 0`), the consensus sequence is used as the reference, and gaps do not participate in the consensus.
 
 ```
 msadiff(aln)
@@ -80,7 +80,7 @@ The results are shown below:
 
 ### Arguments
 - `aln`: A multiple sequence alignment object.
-- `i.ref`: Index of the reference sequence used for comparison.
+- `i.ref`: Index of the reference sequence used for comparison; `0` (default) means the consensus sequence.
 - `show.legend`: Logical (default FALSE); whether to display a legend for the color scheme.
 
 

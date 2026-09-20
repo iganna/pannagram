@@ -140,7 +140,9 @@ msaplot <- function(aln, seq.type='nt', msa.cols = NULL,
 #'
 #' @param aln A matrix representing the sequences to be analyzed. Each row corresponds to a sequence, 
 #' and each column corresponds to a position in the alignment.
-#' @param i.ref An integer indicating the index of the reference sequence within `aln`. The default is 1.
+#' @param i.ref An integer indicating the index of the reference sequence within `aln`. 
+#' The default is 0, which means that the consensus sequence is used as the reference; 
+#' gaps do not participate in the consensus.
 #'
 #' @return A ggplot object representing the MSA plot, with differences, similarities, and gaps highlighted 
 #' in different colors.
@@ -150,7 +152,7 @@ msaplot <- function(aln, seq.type='nt', msa.cols = NULL,
 #' gaps are marked as "gap". These differences are then visualized using the `msaplot` function.
 #'
 #' @export
-msadiff <- function(aln, i.ref=1, show.legend=F, show.letters = F, letter.color = 'black',
+msadiff <- function(aln, i.ref=0, show.legend=F, show.letters = F, letter.color = 'black',
                     letter.size = 3){
   
   # Input handling
@@ -177,11 +179,28 @@ msadiff <- function(aln, i.ref=1, show.legend=F, show.letters = F, letter.color 
   }
   
   aln = toupper(aln)
-  bin.mx <- t(apply(aln, 1, function(row) as.integer(row != aln[i.ref, ]))) + 2
-  bin.mx[,aln[i.ref,] == '-'] = 2
+  
+  # Reference sequence: the consensus (i.ref = 0) or a row of the alignment
+  if(i.ref == 0){
+    s.val = setdiff(unique(as.vector(aln)), '-')
+    if(length(s.val) <= 1){
+      s.ref = rep(ifelse(length(s.val) == 1, s.val, '-'), ncol(aln))
+    } else {
+      # Gaps do not participate in the consensus
+      s.ref = mx2cons(aln, s.val = s.val)
+    }
+  } else {
+    if((i.ref < 0) || (i.ref > nrow(aln))) stop('Wrong index of the reference sequence')
+    s.ref = aln[i.ref,]
+  }
+  
+  # Compare with the reference sequence (keeps the matrix shape for any number of rows/columns)
+  bin.mx <- (aln != matrix(s.ref, nrow(aln), ncol(aln), byrow = TRUE)) + 2
+  dimnames(bin.mx) <- list(rownames(aln), NULL)
+  bin.mx[,s.ref == '-'] = 2
   bin.mx[aln == '-'] = 1
   values = c('gap', 'same', 'diff')
-  bin.mx <- t(apply(bin.mx, 1, function(row) values[row]))
+  bin.mx[] <- values[bin.mx]
   
   b.msa = msaplot(bin.mx,
                   msa.cols = c("same" = "grey80", "diff" = "grey20", "gap" = "white"),
