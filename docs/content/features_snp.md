@@ -18,6 +18,8 @@ features -path_project '${PATH_PROJECT}' -snp
 Output `VCF` files are at `${PATH_PROJECT}/features/snp/`.  
 Each file `snps_*_pangen.vcf` corresponds to a chromosome.
 
+The same can be done in R with `getSNPs()`, see *R library: Pangenome → SNP Calling*.
+
 ## π-diversity
 
 This option uses VCFtools and PLINK to estimate nucleotide diversity (π) per site and between genomes.
