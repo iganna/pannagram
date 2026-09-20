@@ -148,7 +148,7 @@ refineAlignment_prev <- function(seqs.clean, path.work, keep.pos = FALSE){
     df = mafft.res$df
     pos.mx = mafft.res$pos.mx
     result = mafft.res$result
-    result$support = 0
+    result$support = rep(0, nrow(result))  # 0-row result -> no support branch below
     
     len.chunk.merge = 8
     irow = 1
@@ -181,7 +181,7 @@ refineAlignment_prev <- function(seqs.clean, path.work, keep.pos = FALSE){
     irow_support = c()
     cnunk.min.len = 25
     sim.score = 0.8
-    for(irow in 1:nrow(result)){
+    for(irow in seq_len(nrow(result))){
       if((irow != 1) & (irow != nrow(result))){
         if(result$len[irow] < min(c(nchar(s1)/3, nchar(s2)/3, cnunk.min.len))) next  
       }
@@ -428,31 +428,21 @@ refineAlignment_prev <- function(seqs.clean, path.work, keep.pos = FALSE){
 }
 
 
-#' Routed refinement: fast BLAST-anchor aligner, escalate to the original MAFFT
-#' merge only when the fast run visibly SEPARATED homology.
-#'
-#' Signal = spread = (#columns of the fast alignment) / (longest input length).
-#' A well co-aligned locus keeps every sequence in shared columns -> spread ~ 1;
-#' a locus the fast path scattered into per-sequence columns balloons in width
-#' -> spread grows toward the number of sequences. On all 2748 large anopheles
-#' loci, spread > 1.15 flags "fast separated" at 0.97 accuracy with recall 1.0
-#' (k-mer distance managed only ~0.80, barely above the 0.74 trivial baseline,
-#' because separation is driven by structure -- duplications/rearrangements --
-#' not overall divergence). The wasted fast pre-run (~seconds) is negligible next
-#' to the original merge (tens of seconds) it saves everywhere it is NOT needed.
-#'
-#' Threshold: argument spread.max, else env PANNAGRAM_SPREAD_MAX, else 1.15.
-#' Returns the same list(pos, aln) structure as refineAlignment[_prev].
+#' Routed refinement. The old MAFFT --merge escalation used the width of the fast
+#' alignment ("spread") as the signal, but a wide alignment is usually correct: two
+#' different alleles at the same breakpoint belong in their own columns. It is off by
+#' default; spread.max (or env PANNAGRAM_SPREAD_MAX) brings it back.
 refineAlignmentRouted <- function(seqs.clean, path.work, spread.max = NA, keep.pos = FALSE){
   if(is.na(spread.max)){
     e = Sys.getenv("PANNAGRAM_SPREAD_MAX")
-    spread.max = if(nzchar(e)) as.numeric(e) else 1.15
+    spread.max = if(nzchar(e)) as.numeric(e) else Inf
   }
-  R = refineAlignment(seqs.clean, path.work, gap.mafft.max = 3000, keep.pos = keep.pos)   # fast, always
+  R = refineAlignment(seqs.clean, path.work, keep.pos = keep.pos)
+  if(!is.finite(spread.max)) return(R)
   B = R$aln[[length(R$aln)]]
   spread = ncol(B) / max(nchar(seqs.clean))
-  if(spread <= spread.max) return(R)                                 # fast co-aligned well
-  refineAlignment_prev(seqs.clean, path.work, keep.pos = keep.pos)   # escalate: original MAFFT merge
+  if(spread <= spread.max) return(R)
+  refineAlignment_prev(seqs.clean, path.work, keep.pos = keep.pos)   # opt-in: old MAFFT merge
 }
 
 
@@ -465,14 +455,23 @@ refineAlignmentRouted <- function(seqs.clean, path.work, spread.max = NA, keep.p
 #' Returns a 2-row position matrix pos.mx: pos.mx[1,col] = position in s1 (or 0),
 #' pos.mx[2,col] = position in s2 (or 0). Guarantees every position of s1 and s2 is
 #' present exactly once and in ascending order (all positions kept, none dropped).
-#' BLAST provides the alignment of the homologous blocks for free (its qseq/sseq),
-#' and a collinear NON-OVERLAPPING chain of HSPs is used as the backbone so that
-#' repeats (which produce ambiguous/overlapping HSPs) do not mis-anchor. Only the
-#' short inter-block gaps are aligned with MAFFT; non-homologous stretches (long gaps
-#' or no BLAST hit) are kept SEPARATED (each in its own columns).
-alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 3000){
+#'
+#' A single MAFFT is tried first and accepted only if the identity over the co-aligned
+#' bases is high enough; MAFFT is global and otherwise smears a non-homologous allele
+#' along its partner. The threshold is stricter for longer stretches.
+#'
+#' Otherwise the backbone is a collinear chain of BLAST HSPs (chainHsps), the stretches
+#' between anchors go to MAFFT under the same test, and a stretch too long for MAFFT is
+#' re-anchored inside, up to max.depth levels. Only a stretch with no anchors at all is
+#' kept SEPARATED, each side in its own columns.
+alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 8000,
+                         ident.min = 0.7, ident.long = 0.85, len.strict = 3000,
+                         short.skip = 20, max.depth = 3){
   s1 = toupper(s1); s2 = toupper(s2); n1 = nchar(s1); n2 = nchar(s2)
   nt1 = seq2nt(s1); nt2 = seq2nt(s2)
+
+  # identity a MAFFT-aligned stretch must reach to be accepted
+  need.ident <- function(len) if(len > len.strict) ident.long else ident.min
 
   mafftPairMx <- function(a, b){
     writeFasta(setNames(c(a, b), c('a', 'b')), paste0(path.work, 'seg.fasta'))
@@ -490,64 +489,131 @@ alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 3000){
     length(a) == n1 && !anyDuplicated(a) && !is.unsorted(a) &&
     length(b) == n2 && !anyDuplicated(b) && !is.unsorted(b)
   }
-
-  # short pair -> a single MAFFT is fast and best
-  if(max(n1, n2) <= gap.mafft.max){
-    pm = tryCatch(mxToPos(mafftPairMx(s1, s2)), error = function(e) NULL)
-    if(valid(pm)) return(pm)
+  # identity over the columns where BOTH rows have a base
+  identity2 <- function(mx){
+    both = (mx[1, ] != '-') & (mx[2, ] != '-')
+    if(sum(both) == 0) return(0)
+    mean(mx[1, both] == mx[2, both])
   }
 
-  # ---- fast path: BLAST anchors + short-gap MAFFT (repeat-safe) ----
-  viaAnchors <- function(){
-    cols1 = integer(0); cols2 = integer(0)
-    em <- function(a, b){ cols1 <<- c(cols1, a); cols2 <<- c(cols2, b) }
-    emitBlock <- function(q, s, off1, off2){        # BLAST-aligned strings of an HSP
-      qc = seq2nt(q); sc = seq2nt(s); p1 = off1; p2 = off2
-      c1 = integer(length(qc)); c2 = integer(length(qc))
-      for(j in seq_along(qc)){
-        if(qc[j] != '-'){ c1[j] = p1; p1 = p1 + 1 }
-        if(sc[j] != '-'){ c2[j] = p2; p2 = p2 + 1 }
+  # ---- Collinear chain of HSPs: maximum-weight chaining, O(n log n) ----
+  # Greedy picking (longest first) drops most of the homology on long repeat-rich loci.
+  # DP over the HSPs sorted by start, with a Fenwick tree (prefix maximum) over the
+  # coordinate of the second sequence.
+  chainHsps <- function(x){
+    x = x[nrow(x) > 0 & (x$V2 < x$V3) & (x$V4 < x$V5), , drop = F]   # forward on BOTH
+    if(nrow(x) == 0) return(x)
+    x = x[order(x$V2, x$V4), , drop = F]
+    n = nrow(x)
+    w = x$V7                                  # weight = aligned length of the HSP
+    keys = sort(unique(c(x$V4, x$V5)))        # compressed coordinates of sequence 2
+    idx.end = match(x$V5, keys)
+    idx.qry = match(x$V4, keys) - 1L          # prefix strictly before the HSP start
+    m = length(keys)
+    tree.val = rep(-Inf, m); tree.arg = rep(0L, m)
+    fen.update <- function(i, val, arg){
+      while(i <= m){
+        if(val > tree.val[i]){ tree.val[i] <<- val; tree.arg[i] <<- arg }
+        i = i + bitwAnd(i, -i)
       }
-      em(c1, c2)
     }
-    fillGap <- function(g1a, g1b, g2a, g2b){
-      l1 = g1b - g1a + 1; l2 = g2b - g2a + 1
-      if(l1 <= 0 && l2 <= 0) return(invisible())
-      if(l1 <= 0){ em(rep(0, l2), g2a:g2b); return(invisible()) }
-      if(l2 <= 0){ em(g1a:g1b, rep(0, l1)); return(invisible()) }
-      if(max(l1, l2) > gap.mafft.max){              # too long to co-align -> separate
-        em(g1a:g1b, rep(0, l1)); em(rep(0, l2), g2a:g2b); return(invisible())
+    fen.query <- function(i){
+      best = -Inf; arg = 0L
+      while(i > 0){
+        if(tree.val[i] > best){ best = tree.val[i]; arg = tree.arg[i] }
+        i = i - bitwAnd(i, -i)
       }
+      c(best, arg)
+    }
+    score = numeric(n); parent = integer(n)
+    ord.end = order(x$V3); ptr = 1L
+    for(i in seq_len(n)){
+      # everything ending before this HSP starts may precede it
+      while(ptr <= n && x$V3[ord.end[ptr]] < x$V2[i]){
+        j = ord.end[ptr]; fen.update(idx.end[j], score[j], j); ptr = ptr + 1L
+      }
+      q = if(idx.qry[i] >= 1) fen.query(idx.qry[i]) else c(-Inf, 0)
+      if(is.finite(q[1])){ score[i] = q[1] + w[i]; parent[i] = as.integer(q[2]) }
+      else { score[i] = w[i]; parent[i] = 0L }
+    }
+    i = which.max(score); keep = c()
+    while(i > 0){ keep = c(i, keep); i = parent[i] }
+    x[keep, , drop = F]
+  }
+
+  cols1 = integer(0); cols2 = integer(0)
+  em <- function(a, b){ cols1 <<- c(cols1, a); cols2 <<- c(cols2, b) }
+  emitBlock <- function(q, s, off1, off2){        # BLAST-aligned strings of an HSP
+    qc = seq2nt(q); sc = seq2nt(s); p1 = off1; p2 = off2
+    c1 = integer(length(qc)); c2 = integer(length(qc))
+    for(j in seq_along(qc)){
+      if(qc[j] != '-'){ c1[j] = p1; p1 = p1 + 1 }
+      if(sc[j] != '-'){ c2[j] = p2; p2 = p2 + 1 }
+    }
+    em(c1, c2)
+  }
+  separate <- function(g1a, g1b, g2a, g2b){       # no homology: own columns for each
+    em(g1a:g1b, rep(0, g1b - g1a + 1)); em(rep(0, g2b - g2a + 1), g2a:g2b)
+  }
+
+  # Align the stretch s1[g1a..g1b] against s2[g2a..g2b].
+  fillGap <- function(g1a, g1b, g2a, g2b, depth){
+    l1 = g1b - g1a + 1; l2 = g2b - g2a + 1
+    if(l1 <= 0 && l2 <= 0) return(invisible())
+    if(l1 <= 0){ em(rep(0, l2), g2a:g2b); return(invisible()) }
+    if(l2 <= 0){ em(g1a:g1b, rep(0, l1)); return(invisible()) }
+
+    if(max(l1, l2) <= gap.mafft.max){
       mx = mafftPairMx(nt2seq(nt1[g1a:g1b]), nt2seq(nt2[g2a:g2b]))
+      # forcing non-homologous stretches together is worse than leaving them apart
+      if(max(l1, l2) >= short.skip && identity2(mx) < need.ident(max(l1, l2))){
+        separate(g1a, g1b, g2a, g2b); return(invisible())
+      }
       c1 = rep(0, ncol(mx)); c2 = rep(0, ncol(mx))
       c1[mx[1, ] != '-'] = g1a:g1b; c2[mx[2, ] != '-'] = g2a:g2b; em(c1, c2)
+      return(invisible())
     }
-    x = blastTwoSeqs(s1, s2, path.work)
-    x = x[nrow(x) > 0 & (x$V2 < x$V3) & (x$V4 < x$V5), , drop = F]   # forward on BOTH
-    a = x[0, , drop = F]
-    if(nrow(x) > 0){
-      x = x[order(-x$V7), , drop = F]                     # longest first
-      used1 = logical(n1); used2 = logical(n2); pick = c()
-      for(i in 1:nrow(x)){
-        if(any(used1[x$V2[i]:x$V3[i]]) || any(used2[x$V4[i]:x$V5[i]])) next
-        used1[x$V2[i]:x$V3[i]] = TRUE; used2[x$V4[i]:x$V5[i]] = TRUE; pick = c(pick, i)
+
+    # too long for MAFFT: re-anchor inside instead of giving up
+    if(depth < max.depth){
+      a = tryCatch(chainHsps(blastTwoSeqs(nt2seq(nt1[g1a:g1b]), nt2seq(nt2[g2a:g2b]), path.work)),
+                   error = function(e) NULL)
+      if(!is.null(a) && nrow(a) > 0){
+        cur1 = 1; cur2 = 1
+        for(i in 1:nrow(a)){
+          fillGap(g1a + cur1 - 1, g1a + a$V2[i] - 2, g2a + cur2 - 1, g2a + a$V4[i] - 2, depth + 1)
+          emitBlock(a$V8[i], a$V9[i], g1a + a$V2[i] - 1, g2a + a$V4[i] - 1)
+          cur1 = a$V3[i] + 1; cur2 = a$V5[i] + 1
+        }
+        fillGap(g1a + cur1 - 1, g1b, g2a + cur2 - 1, g2b, depth + 1)
+        return(invisible())
       }
-      a = x[pick, , drop = F]; a = a[order(a$V2), , drop = F]
-      keep = c(TRUE); last = a$V5[1]
-      if(nrow(a) > 1) for(i in 2:nrow(a)){
-        if(a$V4[i] > last){ keep = c(keep, TRUE); last = a$V5[i] } else keep = c(keep, FALSE)
-      }
-      a = a[keep, , drop = F]
     }
+    separate(g1a, g1b, g2a, g2b)
+  }
+
+  viaAnchors <- function(){
+    cols1 <<- integer(0); cols2 <<- integer(0)
+    a = chainHsps(blastTwoSeqs(s1, s2, path.work))
     cur1 = 1; cur2 = 1
     if(nrow(a) > 0) for(i in 1:nrow(a)){
-      fillGap(cur1, a$V2[i] - 1, cur2, a$V4[i] - 1)
+      fillGap(cur1, a$V2[i] - 1, cur2, a$V4[i] - 1, 1)
       emitBlock(a$V8[i], a$V9[i], a$V2[i], a$V4[i])
       cur1 = a$V3[i] + 1; cur2 = a$V5[i] + 1
     }
-    fillGap(cur1, n1, cur2, n2)
+    fillGap(cur1, n1, cur2, n2, 1)
     rbind(cols1, cols2)
   }
+
+  # ---- a single MAFFT, if it is not forced ----
+  if(max(n1, n2) <= gap.mafft.max){
+    mx = tryCatch(mafftPairMx(s1, s2), error = function(e) NULL)
+    if(!is.null(mx) && identity2(mx) >= need.ident(max(n1, n2))){
+      pm = tryCatch(mxToPos(mx), error = function(e) NULL)
+      if(valid(pm)) return(pm)
+    }
+  }
+
   pm = tryCatch(viaAnchors(), error = function(e) NULL)
   if(valid(pm)) return(pm)
 
@@ -560,7 +626,7 @@ alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 3000){
 #' expensive pairwise merge (old: full MAFFT --merge + BLAST synteny + heavy R per
 #' node) is replaced by alignTwoLong() (BLAST anchors + short-gap MAFFT). Output
 #' structure is identical: list(pos, aln) with aln[[last]] the final MSA matrix.
-refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 3000, keep.pos = FALSE){
+refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 8000, keep.pos = FALSE){
 
   n.seqs = length(seqs.clean)
   seqs.clean = toupper(seqs.clean)
