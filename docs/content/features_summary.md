@@ -37,6 +37,7 @@ features -path_project '${PATH_PROJECT}' -consensus
 Results you will find in `${PATH_PROJECT}/features/consensus/`.
 This folder contains `FASTA` files named `seq_cons_*.fasta`, each representing a consensus sequence for a corresponding chromosome.  
 These sequences include the complete aligned content of the pangenome, excluding only highly unaligned regions (e.g., centromeres or assembly gaps).  
+With `-aln_type`, the alignment type is added to the file names: `-aln_type synteny` gives `seq_cons_*_synteny.fasta` and `seq_*_synteny.h5`, so they do not overwrite the files of the default alignment.  
 The consensus sequences can be used as input for various downstream analyses, including visualization in the `IGV` browser or use in genome annotation pipelines ([EDTA](https://github.com/oushujun/EDTA), [Helixer](https://github.com/usadellab/Helixer), etc.).
 
 

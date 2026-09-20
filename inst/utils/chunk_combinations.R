@@ -8,6 +8,12 @@ if (!length(s.combinations)) stop(paste("No .h5 files matching", aln.type, "pref
 s.combinations = sub(aln.pref, "", s.combinations)
 s.combinations = sub("\\.h5$", "", s.combinations)
 
+# ---- Suffix of the alignment type in the names of seq_*-files ----
+# The default alignment ('pan') keeps the old names: seq_1_1.h5.
+# Any other type gets its own files: seq_1_1_synteny.h5.
+
+seq.suff = if(aln.type == aln.type.msa) '' else paste0('_', aln.type)
+
 # ---- Suffix of the reference ----
 
 if(ref.name != ""){

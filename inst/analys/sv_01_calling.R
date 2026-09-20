@@ -63,13 +63,13 @@ if (!is.null(opt$stat.only)) {
 
 # Accessions to analyse
 acc.anal <- opt$acc.anal
-if(acc.anal == 'NULL') acc.anal = NULL
+if(is.null(acc.anal) || acc.anal == 'NULL') acc.anal = NULL
 if(!is.null(acc.anal)){
   if (!file.exists(acc.anal)) {
     acc.anal = NULL
     pokazAttention('File', acc.anal, 'does NOT exists, so no accession filtration is applied.')
   } else {
-    tmp = read.table(acc.anal, stringsAsFactors = F)
+    tmp = read.table(acc.anal, stringsAsFactors = F, colClasses = 'character', quote = "", comment.char = "")
     acc.anal = tmp[,1]
   }
 }
@@ -115,7 +115,7 @@ if (!is.null(opt$aln.type)) {
 
 # Reference genome
 ref.name <- opt$ref
-if(ref.name == "NULL" || is.null(ref.name)) ref.name <- ''
+if(is.null(ref.name) || ref.name == "NULL") ref.name <- ''
 
 # Common code for aln.pref, ref.suffix and s.combinations
 source(system.file("utils/chunk_combinations.R", package = "pannagram")) 
@@ -228,7 +228,8 @@ for(s.comb in s.combinations){
       pokaz('Find gaps...')
       
       sv.acc <- findOnes(v == 0)
-      if (nrow(sv.acc) == 0) {
+      # No gaps, or the accession is not aligned on the chromosome at all
+      if ((nrow(sv.acc) == 0) || all(v == 0)) {
         out <- 0
         rhdf5::H5close()
         
@@ -238,7 +239,7 @@ for(s.comb in s.combinations){
       }
       
       if (sv.acc$beg[1] == 1) sv.acc <- sv.acc[-1, , drop = FALSE]
-      if (sv.acc$end[nrow(sv.acc)] == length(v)) sv.acc <- sv.acc[-nrow(sv.acc), , drop = FALSE]
+      if ((nrow(sv.acc) > 0) && (sv.acc$end[nrow(sv.acc)] == length(v))) sv.acc <- sv.acc[-nrow(sv.acc), , drop = FALSE]
       
       v.r <- rank(abs(v)) * sign(v)
       
@@ -265,7 +266,7 @@ for(s.comb in s.combinations){
       saveRDS(out, file.loop.save)
       markDone(item.id, file=file.log.loop, echo=F)
 
-      rm(v, v.r, out, sv.acc, idx.bad, b, e, d)
+      suppressWarnings(rm(v, v.r, out, sv.acc, idx.bad, b, e, d))
       gc()
       
       return(NULL)
@@ -303,8 +304,8 @@ for(s.comb in s.combinations){
   sv.pos$len = abs(sv.pos$beg - sv.pos$end) + 1 # do not change
   sv.pos$beg = sv.pos$beg - 1
   sv.pos$end = sv.pos$end + 1
-  sv.pos$beg[sv.pos$beg == 0] = 1
-  sv.pos$end[sv.pos$end > length(sv.cover)] = length(sv.cover)
+  # An SV at the alignment edge has no flank there: beg = 0 or end = len.pan + 1
+  len.pan = length(sv.cover)
   
   n.sv = nrow(sv.pos)
   n.acc = length(accessions)
@@ -331,8 +332,8 @@ for(s.comb in s.combinations){
     
     list(
       acc = acc,
-      beg = v[sv.pos$beg],
-      end = v[sv.pos$end]
+      beg = v[pmax(sv.pos$beg, 1)],
+      end = v[pmin(sv.pos$end, len.pan)]
     )
   }
   parallel::stopCluster(myCluster)
@@ -391,9 +392,15 @@ for(s.comb in s.combinations){
   # pokaz('Clean up empty...')
   
   sv.na = (rowSums(sv.beg) == 0) | (rowSums(sv.end) == 0)
-  sv.pos = sv.pos[!sv.na,]
-  sv.beg = sv.beg[!sv.na,]
-  sv.end = sv.end[!sv.na,]
+  sv.pos = sv.pos[!sv.na,, drop = F]
+  sv.beg = sv.beg[!sv.na,, drop = F]
+  sv.end = sv.end[!sv.na,, drop = F]
+  
+  # No flank at the alignment edge: shift from the own position to the virtual flank
+  idx = which(sv.pos$beg == 0)
+  if(length(idx) > 0) sv.beg[idx,] = sv.beg[idx,] - (sv.beg[idx,] != 0)
+  idx = which(sv.pos$end > len.pan)
+  if(length(idx) > 0) sv.end[idx,] = sv.end[idx,] + (sv.end[idx,] != 0)
   
   # Calculate lengths
   sv.len.acc = abs(sv.beg - sv.end) - 1  # do not change
@@ -402,10 +409,10 @@ for(s.comb in s.combinations){
   
   # Remove those, which length in more that the length of SV
   idx = rowMax(sv.len.acc) <= sv.pos$len
-  sv.pos = sv.pos[idx,]
-  sv.beg = sv.beg[idx,]
-  sv.end = sv.end[idx,]
-  sv.len.acc = sv.len.acc[idx,]
+  sv.pos = sv.pos[idx,, drop = F]
+  sv.beg = sv.beg[idx,, drop = F]
+  sv.end = sv.end[idx,, drop = F]
+  sv.len.acc = sv.len.acc[idx,, drop = F]
   
   if(nrow(sv.pos) == 0){
     pokazAttention('SVs were not generaed, and IT IS OK!')
@@ -423,30 +430,32 @@ for(s.comb in s.combinations){
   
   sv.pos$freq.sum = sv.pos$freq.min + sv.pos$freq.max 
   sv.pos$single = (sv.pos$freq.sum == n.acc) * 1
-  sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc])
+  sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc, drop = F])
   
   # save(list = ls(), file = "tmp_workspace_sv.RData")
   
   # Clean up
   pokaz('Additional Clean up..')
   idx = !((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc))
-  sv.pos = sv.pos[idx,]
-  sv.beg = sv.beg[idx,]
-  sv.end = sv.end[idx,]
-  sv.len.acc = sv.len.acc[idx,]
+  sv.pos = sv.pos[idx,, drop = F]
+  sv.beg = sv.beg[idx,, drop = F]
+  sv.end = sv.end[idx,, drop = F]
+  sv.len.acc = sv.len.acc[idx,, drop = F]
   
   idx = !((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc))
-  sv.pos = sv.pos[idx,]
-  sv.beg = sv.beg[idx,]
-  sv.end = sv.end[idx,]
-  sv.len.acc = sv.len.acc[idx,]
+  sv.pos = sv.pos[idx,, drop = F]
+  sv.beg = sv.beg[idx,, drop = F]
+  sv.end = sv.end[idx,, drop = F]
+  sv.len.acc = sv.len.acc[idx,, drop = F]
   
   if(sum((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG1')
   if(sum((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG2')
   
+  if (nrow(sv.pos) == 0) next
+
   s.gr.len <- nchar(as.character(nrow(sv.pos)))
   i.chr = strsplit(s.comb, '_')[[1]][1]
-  gr = paste('SVgr', i.chr, 'id', sprintf("%0*d", s.gr.len, 1:nrow(sv.pos)), sep = '_')
+  gr = paste('SVgr', i.chr, 'id', sprintf("%0*d", s.gr.len, seq_len(nrow(sv.pos))), sep = '_')
   sv.pos = cbind(gr, sv.pos)
   sv.beg = cbind(gr, as.data.frame(sv.beg))
   sv.end = cbind(gr, as.data.frame(sv.end))
@@ -458,7 +467,6 @@ for(s.comb in s.combinations){
   # sv.beg.all = rbind(sv.beg.all, sv.beg)
   # sv.end.all = rbind(sv.end.all, sv.end)
   
-  if (nrow(sv.pos) == 0) next
   # Save posisiotns
   saveRDS(sv.pos, file.sv.pos.rds)
   saveRDS(sv.beg, file.sv.beg.rds)
@@ -477,9 +485,17 @@ for(s.comb in s.combinations){
   
 }
 
+if(length(sv.pos.list) == 0){
+  pokazAttention('No SVs were found in any combination, SV files will not be generated.')
+  quit(save = "no")
+}
+
 sv.pos.all <- do.call(rbind, sv.pos.list)
 sv.beg.all <- do.call(rbind, sv.beg.list)
 sv.end.all <- do.call(rbind, sv.end.list)
+
+# Accessions from the data (on resume, the loop may not set them)
+accessions = setdiff(colnames(sv.beg.all), c('gr', 'chr'))
 
 sv.pos.all$name = paste0(sv.pos.all$gr, '|', sv.pos.all$len)
 rownames(sv.pos.all) = sv.pos.all$name
@@ -509,14 +525,16 @@ file.sv.big =  paste0(path.sv, 'seq_sv_large', ref.suff,'.fasta')
 
 seqs.small = c()
 seqs.big = c()
+len.pan.all = c()
 for(s.comb in s.combinations){
   i.chr = comb2ref(s.comb)
   pokaz('Chromosome', i.chr)
   
-  file.chr = paste0(path.seq, 'seq_cons_', s.comb, ref.suff ,'.fasta')
+  file.chr = paste0(path.seq, 'seq_cons_', s.comb, ref.suff, seq.suff ,'.fasta')
   if(!file.exists(file.chr)) stop(paste0('File with the consensus sequence does not exist:', file.chr))
   s.chr = readFasta(file.chr)
   s.chr = seq2nt(s.chr)
+  len.pan.all[as.character(i.chr)] = length(s.chr)
   
   # Small sequences  
   idx.small = which((sv.pos.all$single == 1) & 
@@ -566,7 +584,7 @@ rownames(sv.pos.all) = sv.pos.all$gr
 ## ---- Single-event ----
 pokaz('Single-event...')
 
-sv.se = sv.pos.all[sv.pos.all$single == 1,]
+sv.se = sv.pos.all[sv.pos.all$single == 1,, drop=F]
 sv.se.type = rep('indel', nrow(sv.se))
 
 # percent.phasing = 0.11 # Was used for 27-genome paper
@@ -578,21 +596,25 @@ val.delet = c(1:n.acc)[(1:n.acc) >= (n.acc - percent.phasing * n.acc)]
 sv.se.type[sv.se$freq.max %in% val.insert] = 'insertion'
 sv.se.type[sv.se$freq.max %in% val.delet] = 'deletion'
 
-sv.annot = paste('ID=', sv.se$gr,  
-                 # ';te=', sv.se$te, 
-                 ';presence=',sv.se$freq.max,sep = '',
-                 ';len_init=', sv.se$len)
+if(nrow(sv.se) > 0){
+  sv.annot = paste('ID=', sv.se$gr,  
+                   # ';te=', sv.se$te, 
+                   ';presence=',sv.se$freq.max,sep = '',
+                   ';len_init=', sv.se$len)
 
-# save(list = ls(), file = "tmp_workspace_sv.RData")
+  # save(list = ls(), file = "tmp_workspace_sv.RData")
 
-sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
-                       V2 = 'pannagram',
-                       V3 = sv.se.type, 
-                       V4 = sv.se$beg + 1, 
-                       V5 = sv.se$end - 1,
-                       V6 = '.', V7 = '+', V8 = '.', 
-                       V9 = sv.annot, 
-                       V10 = sv.pos.all[sv.se$gr, 'V10'])
+  sv.se.gff = data.frame(V1 = paste0('PanGen_Chr', sv.se$chr),
+                         V2 = 'pannagram',
+                         V3 = sv.se.type, 
+                         V4 = sv.se$beg + 1, 
+                         V5 = sv.se$end - 1,
+                         V6 = '.', V7 = '+', V8 = '.', 
+                         V9 = sv.annot, 
+                         V10 = sv.pos.all[sv.se$gr, 'V10'])
+} else {
+  sv.se.gff = NULL
+}
 
 ## ---- Multiple-event ----
 pokaz('Multiple-event...')
@@ -603,7 +625,8 @@ if(nrow(sv.me) > 0){
   s.multi = 'complex'
   sv.me.gff = data.frame(V1 = paste0('PanGen_Chr', sv.me$chr),
                          V2 = 'pannagram',
-                         V3 = s.multi, V4 = sv.me$beg, V5 = sv.me$end,
+                         V3 = s.multi, V4 = pmax(sv.me$beg, 1), 
+                         V5 = pmin(sv.me$end, len.pan.all[as.character(sv.me$chr)], na.rm = T),
                          V6 = '.', V7 = '+', V8 = '.', 
                          V9 = paste0('ID=', sv.me$gr, ';len_init=', sv.me$len), 
                          V10 = sv.pos.all[sv.me$gr, 'V10'])
@@ -623,7 +646,7 @@ options(scipen = 0)
 # ---- GFF In accessions ----
 pokaz('Gff files for accessions...')
 
-for(i.acc in 1:length(accessions)){
+for(i.acc in seq_along(accessions)){
   acc = accessions[i.acc]
   pokaz('Generate GFF for accession', acc)
   

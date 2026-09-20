@@ -85,7 +85,7 @@ for (s.comb in s.combinations) {
   
   # Get Consensus
   i.chr = comb2ref(s.comb)
-  file.seq.cons = paste0(path.seq, "seq_cons_", s.comb, ref.suff, ".fasta")
+  file.seq.cons = paste0(path.seq, "seq_cons_", s.comb, ref.suff, seq.suff, ".fasta")
   if(!file.exists(file.seq.cons)){
     stop("Consensus fasta does not exist")
   }
@@ -94,7 +94,7 @@ for (s.comb in s.combinations) {
   s.pangen = seq2nt(s.pangen)
   
   # Get accessions
-  file.seq = paste0(path.seq, "seq_", s.comb, ref.suff, ".h5")
+  file.seq = paste0(path.seq, "seq_", s.comb, ref.suff, seq.suff, ".h5")
   
   groups = h5ls(file.seq)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -203,7 +203,7 @@ for (s.comb in s.combinations) {
   rm(res.list)
   
   pokaz("Save VCF-file...")
-  file.vcf = paste0(path.snp, "snps_", s.comb, ref.suff, "_pangen.vcf")
+  file.vcf = paste0(path.snp, "snps_", s.comb, ref.suff, seq.suff, "_pangen.vcf")
   saveVCF2(snp.val, pos, chr.name = paste0("PanGen_Chr", i.chr), file.vcf = file.vcf,
            snp.ref = snp.ref)
   
@@ -276,7 +276,7 @@ for (s.comb in s.combinations) {
   snp.ref.acc = snp.ref.acc[ord]
   
   pokaz("Save VCF-file for the accession", acc, "...")
-  file.vcf.acc = paste0(path.snp, "snps_", s.comb, ref.suff, "_", acc, ".vcf")
+  file.vcf.acc = paste0(path.snp, "snps_", s.comb, ref.suff, seq.suff, "_", acc, ".vcf")
   saveVCF2(snp.val.acc, pos.acc, chr.name = paste0(acc, "_Chr", i.chr), file.vcf = file.vcf.acc,
            snp.ref = snp.ref.acc)
   

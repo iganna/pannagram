@@ -102,7 +102,7 @@ loop.function <- function(s.comb, echo = T){
   n.acc = length(accessions)
   
   # File with sequences
-  file.seq = paste0(path.seq, 'seq_', s.comb, ref.suff,'.h5')
+  file.seq = paste0(path.seq, 'seq_', s.comb, ref.suff, seq.suff,'.h5')
   if (!file.exists(file.seq)){
     h5createFile(file.seq)
     h5createGroup(file.seq, gr.accs.e)  
@@ -192,7 +192,7 @@ loop.function <- function(s.comb, echo = T){
   # ---- Consensus sequence ----
   pokaz('Prepare consensus fasta-sequence')
   i.chr = comb2ref(s.comb)
-  file.seq.cons = paste0(path.seq, 'seq_cons_', s.comb, ref.suff, '.fasta')
+  file.seq.cons = paste0(path.seq, 'seq_cons_', s.comb, ref.suff, seq.suff, '.fasta')
   
   n = nrow(mx.consensus)
   s.cons = rep('N', n)

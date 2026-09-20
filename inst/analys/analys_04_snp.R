@@ -88,13 +88,13 @@ loop.function <- function(s.comb, echo = T){
   
   # Get Consensus
   i.chr = comb2ref(s.comb)
-  file.seq.cons = paste0(path.seq, 'seq_cons_', s.comb, ref.suff, '.fasta')
+  file.seq.cons = paste0(path.seq, 'seq_cons_', s.comb, ref.suff, seq.suff, '.fasta')
   s.pangen = readFastaMy(file.seq.cons)
   s.pangen.name = names(s.pangen)[1]
   s.pangen = seq2nt(s.pangen)
   
   # Get accessions
-  file.seq = paste0(path.seq, 'seq_', s.comb, ref.suff, '.h5')
+  file.seq = paste0(path.seq, 'seq_', s.comb, ref.suff, seq.suff, '.h5')
   
   groups = h5ls(file.seq)
   accessions = groups$name[groups$group == gr.accs.b]
@@ -145,12 +145,12 @@ loop.function <- function(s.comb, echo = T){
   snp.matrix = cbind(pos, snp.matrix)
 
   pokaz('Save table...')
-  file.snps = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.txt')
+  file.snps = paste0(path.snp, 'snps_', s.comb, ref.suff, seq.suff, '_pangen.txt')
   write.table(snp.matrix, file.snps, row.names = F, col.names = T, quote = F, sep = '\t')
   
   #Save VCF-file
   pokaz('Save VCF-file...')
-  file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, '_pangen.vcf')
+  file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, seq.suff, '_pangen.vcf')
   saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   # Create the VCF-file for the first accession, the main reference.
@@ -164,11 +164,12 @@ loop.function <- function(s.comb, echo = T){
   
   pos.acc = h5read(file.comb, paste0(gr.accs.e, acc))
   pos.acc = pos.acc[pos]
+  pos.acc[is.na(pos.acc)] = 0
   snp.val.acc = snp.val[pos.acc != 0,,drop=F]
   pos.acc = abs(pos.acc[pos.acc != 0])
 
   pokaz('Save VCF-file for the accession', acc, '...')
-  file.vcf.acc = paste0(path.snp, 'snps_', s.comb, ref.suff, '_', acc,'.vcf')
+  file.vcf.acc = paste0(path.snp, 'snps_', s.comb, ref.suff, seq.suff, '_', acc,'.vcf')
   saveVCF(snp.val.acc, pos.acc, chr.name=paste0(acc,'_Chr', i.chr), file.vcf = file.vcf.acc)
   
 }

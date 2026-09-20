@@ -78,6 +78,8 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   # --- Construct file suffix and MSA file path ---
   ref.suff <- if (ref.acc == '') '' else paste0('_', ref.acc)
   if(ref.suff != '') aln.type='ref'
+  # The default alignment ('pan') keeps the old names of seq_*-files
+  seq.suff <- if (aln.type == 'pan') '' else paste0('_', aln.type)
   file.msa <- file.path(path.msa, paste0(aln.type, '_', i.chr, '_', i.chr, ref.suff, '.h5'))  
   
   
@@ -91,7 +93,7 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   if(!is.null(acc.aln)){
     accessions = intersect(accessions, acc.aln)
     if(length(accessions) == 0) stop('Please provide relevant accession names')
-    if(length(accessions) == length(acc.aln)) pokazAttention('Some accession names are not relevant:', 
+    if(length(accessions) != length(acc.aln)) pokazAttention('Some accession names are not relevant:', 
                                                              setdiff(acc.aln, accessions))
     pokaz('Generating alignment for', length(accessions), 'accessions')
   }
@@ -100,9 +102,9 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
   if(echo) pokaz("Determine file path depending on mode")
   if (mode == "seq") {
     if (!dir.exists(path.seq)) stop("Please run script 'features' with flag -seq.")
-    file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, "_chunked.h5"))
+    file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, seq.suff, "_chunked.h5"))
     if(!file.exists(file.mode)){
-      file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, ".h5"))
+      file.mode <- file.path(path.seq, paste0("seq_", i.chr, "_", i.chr, ref.suff, seq.suff, ".h5"))
     }
   } else if (mode == "pos") {
     
@@ -125,16 +127,18 @@ getRegion <- function(i.chr, acc, p.beg, p.end,
     if (!(acc %in% accessions)) stop("Provided acc is not in the alignment")
     v <- rhdf5::h5read(file.msa, paste0(gr.accs.e, acc))
     
+    p.beg.acc = p.beg
+    p.end.acc = p.end
     p.beg <- which(v == p.beg)
     p.end <- which(v == p.end)
-    
+
     if (length(p.beg) == 0){
-      pokazAttention("Position", p.beg, "is not found in the alignment of the accession", acc,
+      pokazAttention("Position", p.beg.acc, "is not found in the alignment of the accession", acc,
                      '\nReturn empty matrix')
       return(NULL)
-    } 
+    }
     if (length(p.end) == 0){
-      pokazAttention("Position", p.end, "is not found in the alignment of the accession", acc,
+      pokazAttention("Position", p.end.acc, "is not found in the alignment of the accession", acc,
                      '\nReturn empty matrix')
       return(NULL)
     }
