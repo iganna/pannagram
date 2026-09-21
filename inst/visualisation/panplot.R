@@ -8,10 +8,15 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   
   v.init = v
   v = v.init
-  v.idx = 1:length(v)
+  v.idx = seq_along(v)
   
   v.idx = v.idx[v != 0]
   v = v[v != 0]
+  
+  if(length(v) == 0){
+    return(data.frame(own.b = numeric(), own.e = numeric(),
+                      pan.b = numeric(), pan.e = numeric(), dir = numeric()))
+  }
   
   # v.idx - values are pangenome coordinate
   # v.r - values are pangenome coordinate, but signed
@@ -20,7 +25,18 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   
   # beg and end - abstract indexes reflecting reduced v vectior
   # v.beg - v.end - pangenome coordinate but signed!
-  v.b = findRuns(v.r)
+  # A run must be continuous in BOTH coordinate systems: in the pangenome
+  # (diff(v.idx) == 1) and in the own genome (diff(v) == 1; this holds for
+  # both directions, because reverse positions are stored with a minus sign).
+  # Testing the pangenome only (findRuns(v.r)) glues distant own-genome
+  # regions into one block and creates false huge inversions.
+  pos.beg = which(c(TRUE, (diff(v.idx) != 1) | (diff(v) != 1)))
+  pos.end = c(pos.beg[-1] - 1, length(v))
+  v.b = data.frame(beg   = pos.beg,
+                   end   = pos.end,
+                   len   = pos.end - pos.beg + 1,
+                   v.beg = v.r[pos.beg],
+                   v.end = v.r[pos.end])
   
   # Now beg and end - values in own accession, also signed
   v.b[,'beg'] = v[v.b[,'beg']]
@@ -44,12 +60,12 @@ getBlocks <- function(v, f.split = T, len.min = 10000){
   
   # Merge blocks
   n <- nrow(v.b)
-  if(n != 1){
+  if(n > 1){
     cond <-
       (v.b$r.beg[2:n] - 1 == v.b$r.end[1:(n-1)]) &
       (v.b$dir[2:n]     == v.b$dir[1:(n-1)])     &
       ((v.b$v.beg[2:n] - 1 - v.b$v.end[1:(n-1)]) < len.min) &
-      ((v.b$beg[2:n] - 1 - v.b$end[1:(n-1)]) < len.min)
+      (abs(v.b$beg[2:n] - 1 - v.b$end[1:(n-1)]) < len.min)
     
     starts <- c(1, which(!cond) + 1)
     ends <- c(starts[-1] - 1, n)
@@ -181,7 +197,7 @@ prepareBlocks <- function(idx.break, file.cen.pos=NULL, file.acc.len=NULL){
 getBlocksBwNeiAccs_old <- function(idx.break, accessions, i.order){
 
   df.blocks <- c()
-  for(k in 2:length(i.order)){
+  for(k in seq_along(i.order)[-1]){
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
@@ -273,7 +289,7 @@ getBlocksBwNeiAccs_old <- function(idx.break, accessions, i.order){
 getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
   
   df.blocks.all <- c()
-  for(k in 2:length(i.order)){
+  for(k in seq_along(i.order)[-1]){
     acc1 = accessions[i.order[k-1]]
     acc2 = accessions[i.order[k]]
     idx.break.k = idx.break[(idx.break$acc == acc1) |
@@ -287,7 +303,7 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     pan.breaks = data.frame(pos = c(idx.break.k$pan.b, idx.break.k$pan.e),
                     type = c(rep('beg',n.breaks), rep('end',n.breaks)),
                     acc = c(idx.break.k$acc, idx.break.k$acc),
-                    idx = c(1:n.breaks, 1:n.breaks))
+                    idx = c(seq_len(n.breaks), seq_len(n.breaks)))
     
     pan.breaks = pan.breaks[order(pan.breaks$pos),]
     idx.complete = which((pan.breaks$type[-nrow(pan.breaks)] == 'beg') & 
@@ -316,6 +332,9 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
     
     pan.breaks = pan.breaks[(pan.breaks$idx1 != 0) & 
                               (pan.breaks$idx2 != 0),]
+    # No blocks shared between these accessions
+    if(nrow(pan.breaks) == 0) next
+    
     # Check
     if (any(pan.breaks$type[seq(1, nrow(pan.breaks), 2)] != "beg")) stop('Beg are wrong')
     if (any(pan.breaks$type[seq(2, nrow(pan.breaks), 2)] != "end")) stop('End are wrong')
@@ -333,12 +352,13 @@ getBlocksBwNeiAccs <- function(idx.break, accessions, i.order){
                            idx1 = pan.breaks$idx1[idx.complete],
                            idx2 = pan.breaks$idx2[idx.complete])
     
-    for (k in 1:2) {
+    # i.acc is used instead of k: k is the index of the accession pair
+    for (i.acc in 1:2) {
       # Names of columns
-      idx.col  <- paste0("idx", k)
-      own.b.col <- paste0("own", k, ".b")
-      own.e.col <- paste0("own", k, ".e")
-      dir.col <- paste0("dir", k)
+      idx.col  <- paste0("idx", i.acc)
+      own.b.col <- paste0("own", i.acc, ".b")
+      own.e.col <- paste0("own", i.acc, ".e")
+      dir.col <- paste0("dir", i.acc)
       
       idx <- df.blocks[[idx.col]]
       
@@ -377,7 +397,7 @@ splitBlocksByGrid <- function(df.blocks, wnd.size = 1000000){
   
   # message(paste('window size', wnd.size))
   n.bl = nrow(df.blocks)
-  for(irow in 1:n.bl){
+  for(irow in seq_len(n.bl)){
     d = df.blocks$pan.e[irow] - df.blocks$pan.b[irow] 
     d.own1 = df.blocks$own1.e[irow] - df.blocks$own1.b[irow]
     d.own2 = df.blocks$own2.e[irow] - df.blocks$own2.b[irow]
@@ -587,7 +607,14 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
     accessions = unique(idx.break$acc)
   }
   if(is.null(i.order)){
-    i.order = 1:length(accessions)
+    i.order = seq_along(accessions)
+  }
+  accs.absent = setdiff(accessions, idx.break$acc)
+  if(length(accs.absent) > 0){
+    stop(paste('Accessions are not found in the synteny blocks:', paste(accs.absent, collapse = ', ')))
+  }
+  if(length(i.order) < 2){
+    stop('At least two accessions are required to plot synteny blocks between accessions')
   }
   # Change position with respect to centromeric position
   res = prepareBlocks(idx.break, file.cen.pos, file.acc.len)
@@ -600,6 +627,9 @@ panplotInner <- function(idx.break, accessions=NULL, i.order=NULL, file.cen.pos=
   # Blocks into sub-blocks between neighbouring accessions
   if(echo) pokaz('getBlocksBwNeiAccs')
   df.blocks = getBlocksBwNeiAccs(idx.break, accessions, i.order)
+  if(is.null(df.blocks)){
+    stop('No synteny blocks shared between neighbouring accessions were found')
+  }
   
   # Blocks by grid
   if(echo) pokaz('splitBlocksByGrid')
