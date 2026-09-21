@@ -83,21 +83,18 @@ min.overlap = 0.001
 min.overlap.fragment = 0.01
 
 
-# ***********************************************************************
-# ---- Parallel backend (comb-style; FORK inherits all vars/functions) ----
-if(num.cores > 1){
-  myCluster <- makeCluster(num.cores, type = "FORK")
-  registerDoParallel(myCluster)
-}
-
 # ---- Per-accession processing (each accession is an independent task) ----
 process.acc <- function(acc){
   pokaz('Accession', acc)
   
+  # Correspondence from a previous run should not be used if the accession is skipped
+  file.corresp = paste0(path.processed, 'corresp_',acc,'_to_',ref, c('.rds', '.txt'))
+  file.remove(file.corresp[file.exists(file.corresp)])
+  
   file.acc.len = paste0(path.chr, acc, '_chr_len.txt', collapse = '')
   acc.len = read.table(file.acc.len, header = 1)
   
-  files.aln <- list.files(path.aln, pattern = paste0(acc,".*_maj\\.rds$"), full.names = F)
+  files.aln <- list.files(path.aln, pattern = paste0("^", acc, "_[0-9]+_[0-9]+_maj\\.rds$"), full.names = F)
   # pokaz(files.aln)
   files.sizes <- file.size(paste0(path.aln, files.aln))
   combinations = sub(paste0(acc, "_"), "", files.aln)
@@ -195,6 +192,11 @@ process.acc <- function(acc){
   
   
   
+  if(is.null(corresp.combined)){
+    pokazAttention('No correspondence between', acc, 'and', ref, '- accession is skipped')
+    return(invisible(NULL))
+  }
+  
   # print(corresp.combined)
   corresp.combined = corresp.combined[order(corresp.combined$i.acc),]
   # print(corresp.combined)
@@ -209,6 +211,7 @@ process.acc <- function(acc){
     for(i.chr.acc in i.chr.split){
       
       i.chr.acc.len = acc.len$len[i.chr.acc]
+      min.len = min(round(i.chr.acc.len * min.overlap.fragment), 10000)
       i.chr.corresp = corresp.combined$i.ref[corresp.combined$i.acc == i.chr.acc]
       
       intervals = vector('list', length(i.chr.corresp))
@@ -228,6 +231,10 @@ process.acc <- function(acc){
                                   i.chr.acc,
                                   i.chr.corresp,
                                   min.len)
+      if(is.null(df.all)){
+        pokazAttention('No correspondence for chromosome', i.chr.acc, 'of', acc)
+        next
+      }
       idx <- match(c('i.ref', 'i.acc'), colnames(df.all))
       colnames(df.all)[idx] <- c('i.acc', 'i.ref')
       
@@ -253,6 +260,10 @@ process.acc <- function(acc){
   
   
   pokaz("Get final correspondence...")
+  if(is.null(corresp.acc2ref)){
+    pokazAttention('No correspondence between', acc, 'and', ref, '- accession is skipped')
+    return(invisible(NULL))
+  }
   corresp.acc2ref = corresp.acc2ref[order(corresp.acc2ref$i.ref),]
   corresp.acc2ref$pos = 0
   
@@ -263,7 +274,18 @@ process.acc <- function(acc){
     
     file.aln = paste0(path.aln, acc, '_', i.chr.acc, '_', i.chr.ref, '_maj.rds')
     x = readRDS(file.aln)
+    x.init = x
     x = x[(x$V2 >= corresp.acc2ref$beg[irow]) & (x$V3 <= corresp.acc2ref$end[irow]),]
+    # No alignments fully inside the region: take the overlapping ones
+    if(nrow(x) == 0){
+      x = x.init[(x.init$V3 >= corresp.acc2ref$beg[irow]) & (x.init$V2 <= corresp.acc2ref$end[irow]),]
+    }
+    if(nrow(x) == 0){
+      pokazAttention('No alignments for region', corresp.acc2ref$beg[irow], '-', corresp.acc2ref$end[irow],
+                     'of chromosome', i.chr.acc, 'of', acc, '- region is skipped')
+      corresp.acc2ref$pos[irow] = NA
+      next
+    }
     
     pos.mean = round((mean(x$V4) + mean(x$V5)) / 2)
     x$dir = (x$V4 > x$V5) * 1
@@ -275,6 +297,13 @@ process.acc <- function(acc){
     corresp.acc2ref$pos[irow] = pos.mean
 
   }
+  if(any(is.na(corresp.acc2ref$pos))){
+    corresp.acc2ref = corresp.acc2ref[!is.na(corresp.acc2ref$pos),,drop=F]
+    if(nrow(corresp.acc2ref) == 0){
+      pokazAttention('No correspondence between', acc, 'and', ref, '- accession is skipped')
+      return(invisible(NULL))
+    }
+  }
   
   # Save
   print(corresp.acc2ref)
@@ -283,6 +312,15 @@ process.acc <- function(acc){
   write.table(corresp.acc2ref,
               paste0(path.processed, 'corresp_',acc,'_to_',ref, '.txt'), col.names = T, row.names = F, quote = F, sep = '\t')
   return(invisible(NULL))
+}
+
+# ***********************************************************************
+# ---- Parallel backend ----
+# FORK workers are a copy of this process as it is now, so the cluster is
+# created after all the functions above exist.
+if(num.cores > 1){
+  myCluster <- makeCluster(num.cores, type = "FORK")
+  registerDoParallel(myCluster)
 }
 
 # ---- Dispatch: one independent task per accession ----
