@@ -62,9 +62,14 @@ files.extra = files.extra[!grepl('_aligned', files.extra)]
 if(length(files.extra) == 0){
   pokaz('Number of files for extra alignment')
   quit(status = 0)
-} else {
-  pokaz('Number of files to align', length(files.extra))
 }
+
+# Largest loci first: the pool hands out loci in list order (clusterApplyLB), and in
+# name order a large locus can start last and keep the chromosome waiting on one core.
+# Sort only after the empty check: paste0(dir, character(0)) returns dir itself,
+# so an empty vector would become NA.
+files.extra = files.extra[order(-file.size(paste0(path.mafft.in, files.extra)))]
+pokaz('Number of files to align', length(files.extra))
 
 path.mafft.in.tmp = paste0(path.mafft.in, 'tmp/')
 
