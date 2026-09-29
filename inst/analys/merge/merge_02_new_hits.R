@@ -73,7 +73,7 @@ res$chr = as.numeric(gsub("Chr", '', sapply(res$name, function(s) strsplit(s, '\
 # Remove singletons
 res = res[res$total >= copy.number,]
 n.col.total = which(colnames(res) == 'total')
-res = res[,-(1:(n.col.total - 1))]
+if(n.col.total > 1) res = res[,-(1:(n.col.total - 1))]
 
 # Sort according to the initial gff
 res = res[order(res$id),]

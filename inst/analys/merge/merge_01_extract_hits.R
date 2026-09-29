@@ -92,7 +92,7 @@ if(sum(idx.remain) > 0){
 # ---- Remain types by the patterns ----
 idx.remain = rep(F, nrow(gff))
 
-if(nchar(patterns) != ''){  # If pattern is setup
+if(length(patterns) > 0){  # If pattern is setup
   for(p in patterns){
     idx.remain = idx.remain | grepl(p, gff$V3)
   }

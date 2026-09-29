@@ -102,7 +102,7 @@ for(s.comb in pref.combinations){
   idx.beg = which((pos.non.sv[-length(pos.non.sv)] == 1) & (pos.non.sv[-1] == 0))+ 1
   idx.end = which((pos.non.sv[-length(pos.non.sv)] == 0) & (pos.non.sv[-1] == 1)) 
   if(pos.non.sv[1] == 0) idx.end = idx.end[-1]
-  idx.beg = idx.beg[1:length(idx.end)]
+  idx.beg = idx.beg[seq_along(idx.end)]
   len.sv = idx.end - idx.beg + 1
   
   sv.pos = data.frame(beg = idx.beg-1, end = idx.end+1)
@@ -123,7 +123,7 @@ for(s.comb in pref.combinations){
   colnames(sv.len.acc) = accessions
   sv.pos$freq.min = 0
   sv.pos$freq.max = 0
-  for(i.col in 1:n.acc){
+  for(i.col in seq_len(n.acc)){
     sv.pos$freq.min = sv.pos$freq.min + 1*((sv.len.acc[,i.col] <= (1-cutoff) * sv.pos$len) & (!is.na(sv.len.acc[,i.col])))
     sv.pos$freq.max = sv.pos$freq.max + 1*((sv.len.acc[,i.col] >= cutoff * sv.pos$len) & (!is.na(sv.len.acc[,i.col])))
   }
@@ -132,13 +132,13 @@ for(s.comb in pref.combinations){
   
   sv.pos$freq.sum = sv.pos$freq.min + sv.pos$freq.max + sv.pos$freq.na
   sv.pos$single = (sv.pos$freq.sum == n.acc) * 1
-  sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc])
+  sv.pos = cbind(sv.pos, sv.len.acc[,1:n.acc, drop = F])
   
   # Clean up NA
   sv.na = (sv.pos$freq.na == n.acc) | (sv.pos$freq.min == 0) | (sv.pos$freq.max == 0)
   sv.pos = sv.pos[!sv.na,]
-  sv.beg = sv.beg[!sv.na,]
-  sv.end = sv.end[!sv.na,]
+  sv.beg = sv.beg[!sv.na,, drop = F]
+  sv.end = sv.end[!sv.na,, drop = F]
   if(sum((sv.pos$freq.min == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG1')
   if(sum((sv.pos$freq.max == 0) & (sv.pos$freq.sum == n.acc)) > 0) stop('WRONG2')
   
@@ -223,7 +223,7 @@ options(scipen = 0)
 # ---- GFF In accessions ----
 
 
-for(i.acc in 1:length(accessions)){
+for(i.acc in seq_along(accessions)){
   acc = accessions[i.acc]
   pokaz('Generate GFF for accession', acc)
   

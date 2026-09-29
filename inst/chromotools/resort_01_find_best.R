@@ -71,7 +71,7 @@ for(f in files.aln){
 
 for(acc in accessions){
   pokaz('Accession', acc)
-  files.aln <- list.files(path.aln, pattern = paste0(acc,".*\\.rds$"), full.names = F)
+  files.aln <- list.files(path.aln, pattern = paste0("^", acc, "_[0-9]+_[0-9]+_maj\\.rds$"), full.names = F)
   # pokaz(files.aln)
   files.sizes <- file.size(paste0(path.aln, files.aln))
   combinations = sub(paste0(acc, "_"), "", files.aln)

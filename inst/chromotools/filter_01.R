@@ -72,7 +72,7 @@ if(!is.null(words.keep)){
 }
 
 # Create folders for the alignment results
-if(!dir.exists(path.genomes)) dir.create(path.genomes)
+if(!dir.exists(path.filtered)) dir.create(path.filtered)
 
 query.types <- c('fasta', 'fna', 'fa', 'fas')
 

@@ -129,7 +129,7 @@ if(!file.exists(file.gff.main)){
     gff = gff[order(gff$beg),]
     gff = gff[order(gff$V1),]
     
-    gff$idx = 1:nrow(gff)
+    gff$idx = seq_len(nrow(gff))
     
     # ---- Check chromosome names format ----
     # If less than 70% - stop, maybe format is wrong.
@@ -237,8 +237,9 @@ for(i.chr in 1:5){
       v = h5read(file.msa, paste0(gr.accs.e, acc))
       
       v = cbind(v, 1:len.pan)
-      v = v[!is.na(v[,1]),]
-      v = v[v[,1] != 0 ,]
+      v = v[!is.na(v[,1]),,drop=F]
+      v = v[v[,1] != 0 ,,drop=F]
+      if(nrow(v) == 0) next
       
       v[v[,1] < 0,] = v[v[,1] < 0,] * (-1)  # Fix inversion
       
@@ -293,6 +294,7 @@ for(i.chr in 1:5){
       g.plus.blocks$strand = '+'
       g.mins.blocks$strand = '-'
       blocks.df = rbind(g.plus.blocks, g.mins.blocks)
+      if(nrow(blocks.df) == 0) next
       blocks.df$acc = acc
       gene.blocks = rbind(gene.blocks, blocks.df)
     }  
@@ -388,8 +390,8 @@ for(i.chr in 1:5){
       # ***********************************************************************
       
       # Forth
-      mx.increase = which(colSums((mx.cover[,-1] > mx.cover[,-ncol(mx.cover)]) * 1) != 0)
-      mx.decrease = which(colSums((mx.cover[,-1] < mx.cover[,-ncol(mx.cover)]) * 1) != 0)
+      mx.increase = which(colSums((mx.cover[,-1, drop=F] > mx.cover[,-ncol(mx.cover), drop=F]) * 1) != 0)
+      mx.decrease = which(colSums((mx.cover[,-1, drop=F] < mx.cover[,-ncol(mx.cover), drop=F]) * 1) != 0)
       
       if(length(mx.increase) == 0) next
       if(length(mx.decrease) == 0) next
@@ -431,15 +433,15 @@ for(i.chr in 1:5){
       # Get number of accessions by each block
       n.acc.block = c()
       for(i.bl in 1:nrow(an.blocks.split)){
-        n.acc.block[i.bl] = sum(rowSums(mx.cover[,an.blocks.split$beg[i.bl]:an.blocks.split$end[i.bl]]) > 0)
+        n.acc.block[i.bl] = sum(rowSums(mx.cover[,an.blocks.split$beg[i.bl]:an.blocks.split$end[i.bl], drop=F]) > 0)
       }
       
       # Get number of accessions by each gap between blocks
       # Split or merge
       idx.merge = c()
-      for(i.bl in 1:(nrow(an.blocks.split)-1)){
+      for(i.bl in seq_len(nrow(an.blocks.split)-1)){
         n.gap = sum(rowSums(mx.cover[,(an.blocks.split$end[i.bl]+1):
-                                                 (an.blocks.split$beg[i.bl+1]-1)]) > 0)
+                                                 (an.blocks.split$beg[i.bl+1]-1),drop=F]) > 0)
         # print(n.gap)
         if (2 * n.gap >= max(n.acc.block[i.bl], n.acc.block[i.bl + 1])){
           idx.merge = c(idx.merge, i.bl)
@@ -517,6 +519,7 @@ for(i.chr in 1:5){
       gff.exons.s = gff.exons.s[gff.exons.s$an.beg == gff.exons.s$an.end,]
       
       gff.exons.s = gff.exons.s[order(gff.exons.s$V4),]
+      if(nrow(gff.exons.s) == 0) next
       checkTranslocations(gff.exons.s$an.beg)
       
       # Create a new GFF annotation

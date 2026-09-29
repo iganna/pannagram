@@ -59,7 +59,7 @@ rownames(x) = NULL
 
 to.remove <- c()
 
-for (i in 2:nrow(x)) {
+for (i in seq_len(nrow(x))[-1]) {
   for (j in 1:(i-1)) {
     if ((x$chr[i] == x$chr[j]) &&
         (x$beg[j] <= x$beg[i]) && (x$end[i] <= x$end[j])) {

@@ -106,7 +106,8 @@ gff2gff_n <- function(acc1, acc2, # if one of the accessions is called 'pangen',
   gff1 = gff1[order(gff1$chr),]
 
   # Fitler out blocks
-  gff1 = filterBlocks_n(acc1, gff1, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e)
+  gff1 = filterBlocks_n(acc1, gff1, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e,
+                        exact.match = exact.match)
 
   if(nrow(gff1) == 0){
     pokazAttention('No annotations to convert')
@@ -219,7 +220,7 @@ gff2gff_n <- function(acc1, acc2, # if one of the accessions is called 'pangen',
   gff2.remain = gff2[!idx.wrong.blocks,]
   
   # Fix direction
-  s.strand = c('+'='-', '-'='+')
+  s.strand = c('+'='-', '-'='+', '.'='.')
   idx.neg = gff2.remain$V4 < 0
   tmp = abs(gff2.remain$V4[idx.neg])
   # print(head(gff2.remain[idx.neg,]))
@@ -457,7 +458,7 @@ getMxFragment_n <- function(path.cons,
   s.verbose = c('|', rep('-', length(accessions)), '|\n')
   if(echo) cat(paste0(s.verbose, collapse = ''))
   if(echo) cat('|')
-  for(i.acc in 1:length(accessions)){
+  for(i.acc in seq_along(accessions)){
     # pokaz(accessions[i.acc])
     if(echo) cat('.')
     # Hyperslab instead of "read the whole accession, then subset in R". With
@@ -473,7 +474,7 @@ getMxFragment_n <- function(path.cons,
 }
 
 
-filterBlocks_n <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e) {
+filterBlocks_n <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type, ref.suff, gr.accs.e, exact.match = T) {
   # Convert pangenome.names to lowercase once for efficiency
   pangenome.names <- tolower(pangenome.names)
   
@@ -496,25 +497,23 @@ filterBlocks_n <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type
         # legacy code read out of a vector as long as the accession chromosome.
         ivl.acc <- h5IvlRead(file.msa, acc)
         
-        bl.beg <- ivlBlockAt(ivl.acc, gff.chr$beg)
-        bl.end <- ivlBlockAt(ivl.acc, gff.chr$end)
-        
-        # defineBlocks() returned a vector of length max(abs(v)). Inside that range
-        # but outside every block span the value was 0; only PAST the end did the
-        # indexing yield NA. ivlBlockAt() returns 0 for both cases, so the
-        # distinction has to be restored: the filter below drops a row on NA but
-        # keeps it when both ends are 0, i.e. a feature lying entirely between two
-        # blocks survives in the legacy code.
-        len.acc.max <- if (nrow(ivl.acc) == 0) 0 else
-          max(pmax(ivl.acc$acc.beg,
-                   ivl.acc$acc.beg + ivl.acc$delta * (ivl.acc$len - 1L)))
-        bl.beg[gff.chr$beg > len.acc.max] <- NA
-        bl.end[gff.chr$end > len.acc.max] <- NA
-        
+        bl.beg <- ivlBlockAt(ivl.acc, gff.chr$V4)
+        bl.end <- ivlBlockAt(ivl.acc, gff.chr$V5)
+
+        # Not exact match: an end out of blocks is moved inwards, to the nearest block
+        if(!exact.match){
+          bl.spans <- ivlBlockSpans(ivl.acc)
+          bl.beg <- c(bl.spans$block, NA)[findInterval(gff.chr$V4 - 1, bl.spans$hi) + 1]
+          bl.end <- c(NA, bl.spans$block)[findInterval(gff.chr$V5, bl.spans$lo) + 1]
+        }
+
         # Append indices where block starts and ends do not match
         idx.remove <- c(idx.remove, idx.chr[which(bl.beg != bl.end)])
         # Append indices where block start or end is NA
         idx.remove <- c(idx.remove, idx.chr[which(is.na(bl.beg) | is.na(bl.end))])
+        # Append indices where block start or end is outside of all blocks:
+        # ivlBlockAt() returns 0 both between the blocks and past the end
+        idx.remove <- c(idx.remove, idx.chr[which((bl.beg == 0) | (bl.end == 0))])
       } else {
         message(paste("File not found:", file.msa))
       }
@@ -529,4 +528,226 @@ filterBlocks_n <- function(acc, gff, pangenome.names, n.chr, path.cons, aln.type
   
   # Return the filtered gff
   return(gff)
+}
+
+
+#' Get SNPs from the Pangenome Alignment
+#'
+#' Library version of the features step `-snp`: finds SNPs on all chromosomes
+#' of the alignment and saves them into VCF files, one per chromosome.
+#' A position is a SNP if at least one accession differs from
+#' the consensus there (gaps are ignored).
+#' Uses the files produced by features: `seq_<comb>.h5` and
+#' `seq_cons_<comb>.fasta` (consensus folder) and the alignment files `<aln.type>_<comb>.h5`.
+#'
+#' @param path.proj Path to the project folder.
+#' @param acc Accession in whose coordinates SNPs are returned,
+#'   or 'pangenome' (also 'pangen', 'pannagram') for pangenome coordinates.
+#' @param aln.type Prefix of the alignment files (default 'pan').
+#' @param ref.acc Reference accession, only if the alignment is reference-based.
+#' @param positions Which positions to return: 'snp' (default) - only variable positions,
+#'   'invariant' - only non-variable positions, 'all' - all positions of the alignment.
+#'   'invariant' and 'all' are large for whole genomes!
+#' @param cores Number of cores to read accessions in parallel (default 1).
+#' @param singer If TRUE, the VCF is prepared as input for SINGER (only with positions = 'snp'):
+#'   only biallelic positions where all accessions have a nucleotide (no gaps/N),
+#'   haploid genotypes `0`/`1`. Run SINGER with `-ploidy 1`.
+#'   Files get the prefix `singer_`.
+#'
+#' @note INTERVAL FORMAT (_n). Reads alignments written by `pannagram_n`, where
+#'   /accs/<acc> is an interval table (see utils/interval_func.R). The seq_*.h5 and
+#'   consensus files are the same as for `getSNPs()`.
+#'
+#' @return Invisibly, paths to the saved VCF files. Files are saved into
+#'   `<path.proj>/features/snp/` with names
+#'   `snps_`/`invariant_`/`all_` + `<comb><ref.suff><aln.suff>_<pangen|acc>.vcf`,
+#'   where `<aln.suff>` is empty for the default alignment ('pan') and `_<aln.type>` for the others.
+#'   For `acc` = pangenome, REF is the consensus nucleotide; otherwise it is the nucleotide of `acc`.
+#'   Positions are processed by chunks to limit memory.
+#'
+#' @examples
+#' \dontrun{
+#' getSNPs_n(path.proj = 'path_to_alignment_project/')
+#' getSNPs_n(path.proj = 'path_to_alignment_project/', acc = 'name_genome1')
+#' getSNPs_n(path.proj = 'path_to_alignment_project/', aln.type = 'synteny', singer = TRUE)
+#' }
+#'
+#' @export
+getSNPs_n <- function(path.proj = NULL,
+                      acc = 'pangenome',
+                      aln.type = 'pan',
+                      ref.acc = '',
+                      positions = c('snp', 'invariant', 'all'),
+                      cores = 1,
+                      singer = F){
+
+  positions <- match.arg(positions)
+  singer <- isTRUE(as.logical(singer))
+  if(singer && positions != 'snp') stop("singer = TRUE works only with positions = 'snp'")
+
+  # --- Paths ---
+  if(is.null(path.proj)) stop("Path to the project folder must be provided!")
+  path.proj = paste0(sub('/+$', '', path.proj), '/')
+  path.msa = paste0(path.proj, 'features/alignments/')
+  path.seq = paste0(path.proj, 'features/consensus/')
+  path.out = paste0(path.proj, 'features/snp/')
+
+  # --- Variables ---
+  gr.accs.e = "accs/"
+  gr.accs.b = "/accs"
+  pangenome.names = c('pangen', 'pangenome', 'pannagram')
+  acc.pangen = tolower(acc) %in% pangenome.names
+
+  ref.suff = if (ref.acc == '') '' else paste0('_', ref.acc)
+  aln.pref = paste0(aln.type, '_')
+  # The default alignment ('pan') keeps the old names: seq_1_1.h5; the rest get seq_1_1_<aln.type>.h5
+  seq.suff = if (aln.type == 'pan') '' else paste0('_', aln.type)
+
+  # --- Combinations (chromosomes) from the alignment files ---
+  s.combinations <- list.files(path = path.msa, pattern = paste0("^", aln.pref, ".*\\.h5$"))
+  s.combinations = sub(aln.pref, "", s.combinations)
+  s.combinations = sub("\\.h5$", "", s.combinations)
+  if(ref.suff != ''){
+    s.combinations = s.combinations[endsWith(s.combinations, ref.suff)]
+    s.combinations = substr(s.combinations, 1, nchar(s.combinations) - nchar(ref.suff))
+  }
+  s.combinations = s.combinations[grepl("^[0-9]+_[0-9]+$", s.combinations)]
+  if(length(s.combinations) == 0){
+    pokazAttention('Required format:', paste0(path.msa, aln.pref, 'X_X', ref.suff, '.h5'))
+    stop('Files in the required format do not exist.')
+  }
+  s.combinations = s.combinations[order(sapply(s.combinations, comb2ref))]
+
+  # --- Check that sequence files from features (-seq) exist ---
+  files.seq.cons = paste0(path.seq, "seq_cons_", s.combinations, ref.suff, seq.suff, ".fasta")
+  files.seq      = paste0(path.seq, "seq_",      s.combinations, ref.suff, seq.suff, ".h5")
+  files.missing  = c(files.seq.cons, files.seq)[!file.exists(c(files.seq.cons, files.seq))]
+  if(length(files.missing) > 0){
+    pokazAttention('Missing files:', files.missing)
+    stop('Sequence files do not exist. Run the features step -seq first.')
+  }
+
+  # --- Parallel ---
+  # The cluster is created anew for each round to free the memory of workers
+  if(cores > 1) `%dopar%` <- foreach::`%dopar%`
+
+  # --- Output files ---
+  if(!dir.exists(path.out)) dir.create(path.out, recursive = TRUE)
+  if(!dir.exists(path.out)) stop(paste("The output folder was not created:", path.out))
+  file.pref = c(snp = 'snps_', invariant = 'invariant_', all = 'all_')[positions]
+  if(singer) file.pref = 'singer_'
+  file.suff = if(acc.pangen) '_pangen' else paste0('_', acc)
+  min.alleles = if(positions == 'snp') 2 else 1
+  n.chunk = 10^6  # max number of positions in memory at once
+
+  files.vcf = c()
+  for (s.comb in s.combinations) {
+    pokaz("Combination", s.comb)
+    i.chr = comb2ref(s.comb)
+
+    # Get Consensus
+    file.seq.cons = paste0(path.seq, "seq_cons_", s.comb, ref.suff, seq.suff, ".fasta")
+    s.pangen = seq2nt(readFastaMy(file.seq.cons))
+
+    # Get accessions
+    file.seq = paste0(path.seq, "seq_", s.comb, ref.suff, seq.suff, ".h5")
+    groups = rhdf5::h5ls(file.seq)
+    accessions = groups$name[groups$group == gr.accs.b]
+    if(!acc.pangen && !(acc %in% accessions)) stop(sprintf("Accession '%s' is not in the alignment", acc))
+
+    # Round 1: positions of differences
+    if(positions == 'all'){
+      pos = seq_along(s.pangen)
+    } else {
+      if(cores == 1){
+        pos.diff.list = lapply(accessions, function(acc.tmp) {
+          v = rhdf5::h5read(file.seq, paste0(gr.accs.e, acc.tmp))
+          which((v != s.pangen) & (v != "-"))
+        })
+      } else {
+        myCluster <- parallel::makeCluster(cores, type = "PSOCK")
+        doParallel::registerDoParallel(myCluster)
+        pos.diff.list = tryCatch(
+          foreach::foreach(acc.tmp = accessions, .errorhandling = "stop") %dopar% {
+            v = rhdf5::h5read(file.seq, paste0(gr.accs.e, acc.tmp))
+            which((v != s.pangen) & (v != "-"))
+          },
+          finally = parallel::stopCluster(myCluster))
+        rm(myCluster)
+      }
+      pos = sort(unique(unlist(pos.diff.list, use.names = FALSE)))
+      rm(pos.diff.list)
+      if(positions == 'invariant') pos = setdiff(seq_along(s.pangen), pos)
+    }
+
+    # Positions in the output coordinates
+    if(acc.pangen){
+      chr.name = paste0("PanGen_Chr", i.chr)
+      pos.out = pos
+    } else {
+      # Convert to the coordinates of the accession
+      chr.name = paste0(acc, "_Chr", i.chr)
+      file.comb = paste0(path.msa, aln.pref, s.comb, ref.suff, ".h5")
+      pos.acc = h5VecRead(file.comb, acc)[pos]
+      pos = pos[pos.acc != 0]
+      pos.out = abs(pos.acc[pos.acc != 0])
+      rm(pos.acc)
+
+      ord = order(pos.out)
+      pos = pos[ord]
+      pos.out = pos.out[ord]
+      rm(ord)
+    }
+
+    if (length(pos) == 0) {
+      pokaz("No positions were found..")
+      next
+    }
+
+    # Round 2: nucleotides in positions, by chunks
+    file.vcf = paste0(path.out, file.pref, s.comb, ref.suff, seq.suff, file.suff, ".vcf")
+    idx.chunks = split(seq_along(pos), ceiling(seq_along(pos) / n.chunk))
+    for(i.chunk in seq_along(idx.chunks)){
+      pos.chunk = pos[idx.chunks[[i.chunk]]]
+      # Only the range of the chunk is read from h5 (start/count: much faster than index = for strings)
+      p.beg = min(pos.chunk)
+      p.end = max(pos.chunk)
+      pos.chunk = pos.chunk - p.beg + 1
+
+      if(cores == 1){
+        val.list = lapply(accessions, function(acc.tmp) {
+          rhdf5::h5read(file.seq, paste0(gr.accs.e, acc.tmp), start = p.beg, count = p.end - p.beg + 1)[pos.chunk]
+        })
+      } else {
+        myCluster <- parallel::makeCluster(cores, type = "PSOCK")
+        doParallel::registerDoParallel(myCluster)
+        val.list = tryCatch(
+          foreach::foreach(acc.tmp = accessions, .errorhandling = "stop") %dopar% {
+            rhdf5::h5read(file.seq, paste0(gr.accs.e, acc.tmp), start = p.beg, count = p.end - p.beg + 1)[pos.chunk]
+          },
+          finally = parallel::stopCluster(myCluster))
+        rm(myCluster)
+      }
+      snp.val = do.call(cbind, val.list)
+      colnames(snp.val) = accessions
+      rm(val.list)
+
+      snp.ref = if(acc.pangen) s.pangen[pos.chunk + p.beg - 1] else snp.val[, acc]
+      snp.pos = pos.out[idx.chunks[[i.chunk]]]
+
+      saveVCF2(snp.val, snp.pos, chr.name = chr.name, file.vcf = file.vcf,
+               append = (i.chunk > 1), snp.ref = snp.ref, min.alleles = min.alleles,
+               singer = singer)
+      rm(snp.val, snp.ref, snp.pos, pos.chunk)
+      gc()
+    }
+    pokaz('Saved', file.vcf)
+    files.vcf = c(files.vcf, file.vcf)
+
+    rm(s.pangen, pos, pos.out, idx.chunks)
+    rhdf5::h5closeAll()
+    gc()
+  }
+
+  return(invisible(files.vcf))
 }

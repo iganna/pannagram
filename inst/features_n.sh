@@ -269,6 +269,12 @@ elif [ "$run_sv_graph" = true ]; then # -sv_graph
     #     --path.sv ${path_sv} \
     #     --file.orfs ${file_sv_families_orfs}
 
+    pokaz_stage "Cut the nestedness table into per-family pieces..."
+    Rscript $INSTALLED_PATH/analys/sv_03b_family_graphs.R \
+        --path.sv ${path_sv} \
+        --similarity ${similarity_value} \
+        --coverage ${coverage_value}
+
     pokaz_message "Step -sv_families is done!"
 fi
 
@@ -382,7 +388,7 @@ if [[ "${run_sv_sim}" == "true" ]]; then  # -sv_sim
         -cov     "${coverage_value}"
 
     # Expected simsearch summary file (adjust if your tool uses a different name)
-    expected_out="${path_simsearch_out}${set_file_base}_${similarity_value}_${coverage_value}.txt"
+    expected_out="${path_simsearch_out}${set_file_base%%.*}_${similarity_value}_${coverage_value}.txt"
 
     if [[ -f "${expected_out}" ]]; then
         mv -f "${expected_out}" "${file_sv_large_on_set}"

@@ -206,7 +206,7 @@ for(i.chr in 1:5){
 pokaz('Groups')
 gff.gene.pan = gff.main.pan[gff.main.pan$V3 == 'gene',]
 gff.gene.pan$group = 0
-gff.gene.pan$idx = 1:nrow(gff.gene.pan)
+gff.gene.pan$idx = seq_len(nrow(gff.gene.pan))
 
 
 gr.shift = 0
@@ -220,13 +220,14 @@ for(i.chr in 1:5){
     pokaz('Chr', i.chr, s.s)
     idx.tmp = (gff.gene.pan$V7 == s.s) & (gff.gene.pan$chr == i.chr)
     gff.tmp = gff.gene.pan[idx.tmp,]
+    if(nrow(gff.tmp) == 0) next
     
     gff.tmp = gff.tmp[order(gff.tmp$V4),]
     
     gff.tmp$group = 0
     gff.tmp$group[1] = 1
     gr.end = gff.tmp$V5[1]
-    for(irow in 2:nrow(gff.tmp)){
+    for(irow in seq_len(nrow(gff.tmp))[-1]){
       if((gff.tmp$V4[irow]-1) <= gr.end){
         gff.tmp$group[irow] = gff.tmp$group[irow-1]
         gr.end = max(gr.end, gff.tmp$V5[irow])
@@ -372,13 +373,13 @@ for(s.gr in gr.confusing){
   # Get number of accessions by each block
   n.acc.block = c()
   for(i.bl in 1:nrow(an.blocks.split)){
-    n.acc.block[i.bl] = sum(rowSums(mx.cover[,an.blocks.split$beg[i.bl]:an.blocks.split$end[i.bl]]) > 0)
+    n.acc.block[i.bl] = sum(rowSums(mx.cover[,an.blocks.split$beg[i.bl]:an.blocks.split$end[i.bl], drop=F]) > 0)
   }
   
   # Get number of accessions by each gap between blocks
   # Split or merge
   idx.merge = c()
-  for(i.bl in 1:(nrow(an.blocks.split)-1)){
+  for(i.bl in seq_len(nrow(an.blocks.split)-1)){
     n.gap = sum(rowSums(mx.cover[,(an.blocks.split$end[i.bl]+1):
                                    (an.blocks.split$beg[i.bl+1]-1),drop=F]) > 0)
     # print(n.gap)
@@ -501,6 +502,7 @@ for(i.chr in 1:5){
       gff.exons = gff.exons[gff.exons$an.beg == gff.exons$an.end,]
       
       gff.exons = gff.exons[order(gff.exons$V4),]
+      if(nrow(gff.exons) == 0) next
       # checkTranslocations(gff.exons$an.beg)
       
       # Create a new GFF annotation
