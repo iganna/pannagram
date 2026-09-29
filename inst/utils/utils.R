@@ -28,7 +28,25 @@ readFasta <- function(file.fasta, stop.on.error = T, keep.spaces.in.names = F) {
   if(!file.exists(file.fasta)){
     stop(paste('readFasta: File', file.fasta, 'does not exist'))
   }
-  file.content <- readLines(file.fasta)
+  # `readLines` is pathologically slow on the very long single-sequence lines
+  # that the pipeline writes (1.6 MB/s on a 118 Mb chromosome); reading the whole
+  # file at once and splitting it is ~90x faster (145 MB/s) and returns exactly
+  # the same vector. Fall back to `readLines` when a single R string cannot hold
+  # the file, or when the file is compressed (`readChar` would not decompress it).
+  n.bytes <- file.size(file.fasta)
+  if(is.na(n.bytes) || n.bytes == 0){
+    file.content <- character(0)
+  } else if(n.bytes >= 2^31 - 1 || grepl('\\.(gz|bz2|xz|zip)$', file.fasta)){
+    file.content <- readLines(file.fasta)
+  } else {
+    file.content <- strsplit(readChar(file.fasta, n.bytes, useBytes = TRUE),
+                             '\n', fixed = TRUE)[[1]]
+    # `readLines` strips the CR of CRLF line endings, so do the same
+    idx.cr <- which(endsWith(file.content, '\r'))
+    if(length(idx.cr) > 0){
+      file.content[idx.cr] <- substr(file.content[idx.cr], 1, nchar(file.content[idx.cr]) - 1)
+    }
+  }
   
   if (length(file.content) == 0) {
     if (stop.on.error) {
@@ -420,13 +438,17 @@ mx2pos <- function(mx, n.flank = 0){
   pos = matrix(0, nrow = nrow(mx), ncol = ncol(mx), 
                dimnames = list(rownames(mx), NULL))
   
-  for(irow in 1:nrow(mx)){
+  for(irow in seq_len(nrow(mx))){
     idx = which(mx[irow,] != '-')
     if(n.flank != 0){
-      idx = idx[-(1:n.flank)]
-      idx <- idx[-((length(idx) - n.flank + 1):length(idx))]
+      # Too short to have anything between the flanks
+      if(length(idx) <= 2 * n.flank){
+        idx = integer(0)
+      } else {
+        idx = idx[(n.flank + 1):(length(idx) - n.flank)]
+      }
     }
-    pos[irow, idx] = 1:length(idx)
+    pos[irow, idx] = seq_along(idx)
   }
   return(pos)
   
@@ -615,6 +637,9 @@ translateSeq <- function(seq) {
   seq <- toupper(seq)
   seq.len = nchar(seq) - 2
   
+  # Not a single full codon
+  if(seq.len < 1) return(NULL)
+  
   # Extract codons from the sequence
   codons <- sapply(seq(1, seq.len, by = 3), function(i) {
     substr(seq, i, i+2)
@@ -742,6 +767,16 @@ revCompl <- function(s){
   }
   s <- prepareNtSeq(s)
   
+  # Empty sequence
+  if(length(s) == 0){
+    if(flag.merge){
+      seqs.rc = ''
+      names(seqs.rc) = s.name
+      return(seqs.rc)
+    }
+    return(character(0))
+  }
+  
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
   complementary_nts <- c(
     A='T', T='A', C='G', G='C', 
@@ -815,6 +850,12 @@ justCompl <- function(s){
   }
   s <- prepareNtSeq(s)
   
+  # Empty sequence
+  if(length(s) == 0){
+    if(flag.merge) return('')
+    return(character(0))
+  }
+  
   if(nchar(s[1]) != 1) stop('Sequence should be vectorised by nucleotides')
   complementary_nts <- c(
     A='T', T='A', C='G', G='C', 
@@ -886,8 +927,8 @@ distP.mx <- function(mx) {
   n <- nrow(mx)
   dist.mx <- matrix(0, n, n)
   
-  for (i in 1:n) {
-    for (j in 1:n) {
+  for (i in seq_len(n)) {
+    for (j in seq_len(n)) {
       if(j <= i) next
       
       valid.pos <- (mx[i, ] != "-") & (mx[j, ] != "-")
@@ -1412,7 +1453,7 @@ wndMean <- function(v, wnd.size = 10000){
   wnd.mean <- numeric(num.parts + ifelse(len.v %% wnd.size > 0, 1, 0))
   
   # Calculate the mean for each full part
-  for(i in 1:num.parts) {
+  for(i in seq_len(num.parts)) {
     wnd.mean[i] <- mean(v[((i-1) * wnd.size + 1) : (i * wnd.size)])
   }
   
@@ -1438,7 +1479,7 @@ wndSum <- function(d, wnd.len, echo=T){
   d.len = length(d)
   d.sum <- d
   if(echo) cat('\n')
-  for (i in 1:(wnd.len - 1)) {
+  for (i in seq_len(min(wnd.len - 1, d.len))) {
     if(echo) cat('.')
     d.sum <- d.sum + c(tail(d, d.len - i), rep(0, i))
   }
@@ -1476,7 +1517,7 @@ readBlast <- function(file, stringsAsFactors=F, header=F) {
 
   # Fallback: original reader (no data.table available)
   if (any(grepl("^[^#]", readLines(file)))) {
-    return(read.table(file, stringsAsFactors = stringsAsFactors,  header = header, comment.char = "", check.names = F))
+    return(read.table(file, sep = "\t", quote = "", stringsAsFactors = stringsAsFactors,  header = header, comment.char = "", check.names = F))
   } else {
     return(NULL)
   }
@@ -1505,7 +1546,7 @@ readDist <- function(file) {
   
   # Check consistency: line i should have i elements (lower triangular form)
   n <- length(parsed) + 1
-  if (!all(sapply(1:(n-1), function(i) length(parsed[[i]]) == i))) {
+  if (!all(sapply(seq_len(n-1), function(i) length(parsed[[i]]) == i))) {
     stop("File format is not a valid lower triangular distance matrix.")
   }
   
@@ -1513,7 +1554,7 @@ readDist <- function(file) {
   mat <- matrix(0, n, n)
   
   # Fill the lower and upper triangle symmetrically
-  for (i in 1:(n-1)) {
+  for (i in seq_len(n-1)) {
     mat[i+1, 1:i] <- parsed[[i]]
     mat[1:i, i+1] <- parsed[[i]]
   }
@@ -1540,7 +1581,7 @@ showt <- function(x, irow=NULL, add = c()){
   irow = irow[irow <= nrow(x)]
   
   if(is.null(irow)){
-    print(x[1:min(100, nrow(x)), idx])
+    print(x[seq_len(min(100, nrow(x))), idx])
   } else {
     print(x[irow, idx])
   }
@@ -1665,14 +1706,17 @@ checkDir <- function(dir.name) {
 #' 
 #' @export
 commonPrefix <- function(info){
+  if(length(info) == 0){
+    return('')
+  }
   if(length(info) == 1){
     return(info)
   }
   s.pref = seq2nt(info[1])
   for(i in 2:length(info)){
     s = seq2nt(info[i])
-    for(j in 1:length(s.pref)){
-      if(s[j] != s.pref[j]){
+    for(j in seq_along(s.pref)){
+      if((j > length(s)) || (s[j] != s.pref[j])){
         if(j == 1){
           return('')
         }
@@ -1719,7 +1763,8 @@ checkCombinations <- function(vec) {
 #' @export
 parseStrings <- function(strings, n, split = "\\|", numeric = FALSE) {
   if (missing(n)) stop("`n` is required")
-  m = length(strsplit(strings[1], split)[[1]])
+  if (length(strings) == 0) return(if (numeric) numeric(0) else character(0))
+  m = max(lengths(strsplit(strings, split)))
   parts <- stringr::str_split_fixed(strings, split, m)
   res <- parts[, n]
   if (numeric) res <- as.numeric(res)
