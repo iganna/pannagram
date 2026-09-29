@@ -38,16 +38,16 @@ dotplot <- function(seq1, seq2, wsize=15, nmatch=12) {
   seq1 = seq1[seq1 != '-']
   seq2 = seq2[seq2 != '-']
   
+  if((length(seq1) < wsize) || (length(seq2) < wsize)){
+    stop(paste0('Sequences must be at least wsize (', wsize, ') nucleotides long, lengths: ', 
+                length(seq1), ', ', length(seq2)))
+  }
+  
   seq2.rc = revCompl(seq2)
   
-  mx1 = toupper(seq2mx(seq1, wsize))
-  mx2 = toupper(seq2mx(seq2, wsize))
+  result = dotHits(seq1, seq2, wsize, nmatch)
   
-  result = mxComp(mx1, mx2, wsize, nmatch)
-  
-  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
-  
-  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  result.rc = dotHits(seq1, seq2.rc, wsize, nmatch)
   result.rc$values = -result.rc$values
   result.rc$col = length(seq2) - result.rc$col - wsize + 2
   result = rbind(result.rc, result)
@@ -98,6 +98,11 @@ dotprot <- function(seq1, seq2, wsize=10, nmatch=5) {
   # Remove gaps
   seq1 = seq1[seq1 != '-']
   seq2 = seq2[seq2 != '-']
+  
+  if((length(seq1) < wsize) || (length(seq2) < wsize)){
+    stop(paste0('Sequences must be at least wsize (', wsize, ') residues long, lengths: ', 
+                length(seq1), ', ', length(seq2)))
+  }
   
   mx1 = toupper(seq2mx(seq1, wsize))
   mx2 = toupper(seq2mx(seq2, wsize))
@@ -160,14 +165,14 @@ dotself <- function(seq, wsize=15, nmatch=12, return.mx=F) {
   
   # Remove gaps
   seq = seq[seq != '-']
+  if(length(seq) < wsize){
+    stop(paste0('Sequence must be at least wsize (', wsize, ') nucleotides long, length: ', length(seq)))
+  }
   seq.rc = revCompl(seq)
   seq.len = length(seq)
   
-  mx = toupper(seq2mx(seq, wsize))
-  mx.rc = toupper(seq2mx(seq.rc, wsize))
-  
-  result = mxComp(mx, mx, wsize, nmatch)
-  result.rc = mxComp(mx, mx.rc, wsize, nmatch)
+  result = dotHits(seq, seq, wsize, nmatch)
+  result.rc = dotHits(seq, seq.rc, wsize, nmatch)
   
   result.rc$values = -result.rc$values
   result.rc$col = seq.len - result.rc$col - wsize + 2
@@ -271,6 +276,35 @@ dotgrid <- function(seq1, seq2, wsize, nmatch.range = NULL, nrow = 1) {
 
 
 
+#' Dotplot Hits for Two Nucleotide Sequences
+#'
+#' @description
+#' `dotHits` finds all pairs of windows of length `wsize` in `seq1` and `seq2`
+#' with at least `nmatch` matching nucleotides (A/C/G/T, case-insensitive).
+#' Results are identical to `mxComp(toupper(seq2mx(seq1, wsize)), toupper(seq2mx(seq2, wsize)), wsize, nmatch)`,
+#' but computed by the compiled `dotHitsCpp` with a sliding window along diagonals:
+#' O(length(seq1) * length(seq2)) time and no dense matrix in memory.
+#' Falls back to `mxComp` if the compiled symbol is unavailable (e.g. an R-only install).
+#'
+#' @param seq1 A character vector of nucleotides.
+#' @param seq2 A character vector of nucleotides.
+#' @param wsize Window size.
+#' @param nmatch Minimum number of matches within the window.
+#'
+#' @return A data frame with columns row, col (window starts in seq1 and seq2) and values (number of matches).
+#' @export
+dotHits <- function(seq1, seq2, wsize, nmatch){
+  # Scripts source() this file without library(pannagram), so reach the compiled
+  # function through the installed namespace; fall back to pure R if missing.
+  res <- tryCatch(pannagram:::dotHitsCpp(seq1, seq2, wsize, nmatch),
+                  error = function(e) NULL)
+  if(is.null(res)){
+    return(mxComp(toupper(seq2mx(seq1, wsize)), toupper(seq2mx(seq2, wsize)), wsize, nmatch))
+  }
+  as.data.frame(res)
+}
+
+
 #' Compare Two Matrices for Dotplot Generation
 #'
 #' @description
@@ -336,12 +370,14 @@ mxComp.a <- function(mx1, mx2, wsize, nmatch){
 #' @export 
 seqComplexity <- function(seq1, method='dotplot', wsize=10, nmatch=9) {
   
-  mx1 = toupper(seq2mx(seq1, wsize))
-  result = mxComp(mx1, mx1, wsize, nmatch)
+  if(length(seq1) < wsize){
+    stop(paste0('Sequence must be at least wsize (', wsize, ') nucleotides long, length: ', length(seq1)))
+  }
+  
+  result = dotHits(seq1, seq1, wsize, nmatch)
   
   seq1.rc = revCompl(seq1)
-  mx1.rc = toupper(seq2mx(seq1.rc, wsize))
-  result.rc = mxComp(mx1, mx1.rc, wsize, nmatch)
+  result.rc = dotHits(seq1, seq1.rc, wsize, nmatch)
   
   n.match = (nrow(result) + nrow(result.rc)) / length(seq1) 
   
@@ -365,15 +401,17 @@ dotscore <- function(seq1, seq2, wsize=10, nmatch=9, method='dotplot') {
   seq1 <- prepareNtSeq(seq1)
   seq2 <- prepareNtSeq(seq2)
   
-  mx1 = toupper(seq2mx(seq1, wsize))
-  mx2 = toupper(seq2mx(seq2, wsize))
-  result = mxComp(mx1, mx2, wsize, nmatch)
+  if((length(seq1) < wsize) || (length(seq2) < wsize)){
+    stop(paste0('Sequences must be at least wsize (', wsize, ') nucleotides long, lengths: ', 
+                length(seq1), ', ', length(seq2)))
+  }
+  
+  result = dotHits(seq1, seq2, wsize, nmatch)
   n.forward = nrow(result)
   
   seq2.rc = revCompl(seq2)
-  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
   
-  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  result.rc = dotHits(seq1, seq2.rc, wsize, nmatch)
   n.backward = nrow(result.rc)
   
   n = (length(seq1) + length(seq2)) / 2
@@ -395,13 +433,15 @@ dotscore <- function(seq1, seq2, wsize=10, nmatch=9, method='dotplot') {
 dotcover <- function(seq1, seq2, wsize=10, nmatch=9,
                      strand=0) {
   
-  mx1 = toupper(seq2mx(seq1, wsize))
-  mx2 = toupper(seq2mx(seq2, wsize))
-  result = mxComp(mx1, mx2, wsize, nmatch)
+  if((length(seq1) < wsize) || (length(seq2) < wsize)){
+    stop(paste0('Sequences must be at least wsize (', wsize, ') nucleotides long, lengths: ', 
+                length(seq1), ', ', length(seq2)))
+  }
+  
+  result = dotHits(seq1, seq2, wsize, nmatch)
   
   seq2.rc = revCompl(seq2)
-  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
-  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  result.rc = dotHits(seq1, seq2.rc, wsize, nmatch)
   
   if(strand == 0){
     n.cover = length(unique(c(result.rc$row, result$row)))  
@@ -432,16 +472,16 @@ dotvalue <- function(seq1, seq2, wsize=15, nmatch=12) {
   seq1 = seq1[seq1 != '-']
   seq2 = seq2[seq2 != '-']
   
+  if((length(seq1) < wsize) || (length(seq2) < wsize)){
+    stop(paste0('Sequences must be at least wsize (', wsize, ') nucleotides long, lengths: ', 
+                length(seq1), ', ', length(seq2)))
+  }
+  
   seq2.rc = revCompl(seq2)
   
-  mx1 = toupper(seq2mx(seq1, wsize))
-  mx2 = toupper(seq2mx(seq2, wsize))
+  result = dotHits(seq1, seq2, wsize, nmatch)
   
-  result = mxComp(mx1, mx2, wsize, nmatch)
-  
-  mx2.rc = toupper(seq2mx(seq2.rc, wsize))
-  
-  result.rc = mxComp(mx1, mx2.rc, wsize, nmatch)
+  result.rc = dotHits(seq1, seq2.rc, wsize, nmatch)
   result.rc$values = -result.rc$values
   result.rc$col = length(seq2) - result.rc$col - wsize + 2
   result = rbind(result.rc, result)

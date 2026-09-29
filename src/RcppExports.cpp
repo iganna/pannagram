@@ -10,6 +10,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// dotHitsCpp
+List dotHitsCpp(CharacterVector s1, CharacterVector s2, int wsize, int nmatch);
+RcppExport SEXP _pannagram_dotHitsCpp(SEXP s1SEXP, SEXP s2SEXP, SEXP wsizeSEXP, SEXP nmatchSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< CharacterVector >::type s1(s1SEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type s2(s2SEXP);
+    Rcpp::traits::input_parameter< int >::type wsize(wsizeSEXP);
+    Rcpp::traits::input_parameter< int >::type nmatch(nmatchSEXP);
+    rcpp_result_gen = Rcpp::wrap(dotHitsCpp(s1, s2, wsize, nmatch));
+    return rcpp_result_gen;
+END_RCPP
+}
 // repeatScoreVecCpp
 NumericVector repeatScoreVecCpp(CharacterVector s, int wsize, int dup_cutoff);
 RcppExport SEXP _pannagram_repeatScoreVecCpp(SEXP sSEXP, SEXP wsizeSEXP, SEXP dup_cutoffSEXP) {
@@ -25,6 +39,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_pannagram_dotHitsCpp", (DL_FUNC) &_pannagram_dotHitsCpp, 4},
     {"_pannagram_repeatScoreVecCpp", (DL_FUNC) &_pannagram_repeatScoreVecCpp, 3},
     {NULL, NULL, 0}
 };
