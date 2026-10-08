@@ -14,7 +14,6 @@ suppressMessages({
 
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("pangen/comb_func_extra2.R", package = "pannagram"))
 source(system.file("pangen/synteny_func.R", package = "pannagram"))
 # source("synteny_funcs.R")
 
@@ -140,7 +139,7 @@ for(s.comb in pref.combinations){
     v = h5VecRead(file.comb, acc)
     v[is.na(v)] = 0
 
-    breaks.acc = findBreaks(v)
+    breaks.acc = findBreaks(v, acc)
     idx.bad.orientation = which(breaks.acc$val.beg > breaks.acc$val.end)
     if(length(idx.bad.orientation) > 0){
       pokazAttention("Wrong orientation. Number:", length(idx.bad.orientation))

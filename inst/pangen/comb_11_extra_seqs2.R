@@ -14,7 +14,6 @@ suppressMessages({
 
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("pangen/comb_func_extra2.R", package = "pannagram"))
 source(system.file("pangen/synteny_func.R", package = "pannagram"))
 # source("synteny_funcs.R")
 
@@ -97,6 +96,12 @@ if(length(pref.combinations) == 0) {
   stop('No files alignments are found')
 }
 
+# Largest chromosomes first. The pool hands out combinations in list order, so in name
+# order a heavy chromosome (chr3 here) can start last and keep one core busy long after
+# the rest are done. The matrix file size is the cost proxy and costs one stat() call.
+idx.size = order(-file.size(paste0(path.cons, files)))
+pref.combinations = pref.combinations[idx.size]
+
 pokaz('Combinations', pref.combinations, file=file.log.main, echo=echo.main)
 
 # ***********************************************************************
@@ -109,13 +114,14 @@ done.set <- getDoneSet(path.log)
 if(length(done.set) > 0){
   pokaz('Skip already done:', length(done.set), file=file.log.main, echo=echo.main)
 }
-assign('.worker.id', 1, envir = .GlobalEnv)   # sequential outer loop -> single core_1.log
-
-for(s.comb in pref.combinations){
+# One combination per worker: chromosomes are independent here (own breaks_info, own
+# per-break files, own h5 datasets), and the loop used to run on a single core however
+# many were given - `--cores` was parsed and never used.
+loop.function <- function(s.comb, done.set = character(0), echo.loop = T){
 
   # ---- Checkpoint: skip already completed combinations ----
   s.comb.id <- s.comb
-  if(s.comb.id %in% done.set) next
+  if(s.comb.id %in% done.set) return(NULL)
 
   # One log file per worker (bounded number of files); also the checkpoint ledger
   file.log.loop = initLoopLog(path.log)
@@ -140,7 +146,7 @@ for(s.comb in pref.combinations){
     v = h5read(file.comb, s.acc)
     v[is.na(v)] = 0
 
-    breaks.acc = findBreaks(v)
+    breaks.acc = findBreaks(v, acc)
     idx.bad.orientation = which(breaks.acc$val.beg > breaks.acc$val.end)
     if(length(idx.bad.orientation) > 0){
       pokazAttention("Wrong orientation. Number:", length(idx.bad.orientation))
@@ -152,7 +158,7 @@ for(s.comb in pref.combinations){
   if(nrow(breaks.init) == 0){
     pokaz('Nothing to add')
     markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
-    next
+    return(NULL)
   }
 
   idx.extra = which(breaks.init$len.comb > len.cutoff)
@@ -164,7 +170,7 @@ for(s.comb in pref.combinations){
   if(nrow(breaks.init) == 0){
     pokaz('Nothing to add')
     markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
-    next
+    return(NULL)
   }
 
   # Sort and IDs
@@ -305,7 +311,49 @@ for(s.comb in pref.combinations){
 
   # ---- Checkpoint marker: combination fully processed ----
   markDone(s.comb.id, file=file.log.loop, echo=echo.loop)
+  return(NULL)
 }
+
+# ***********************************************************************
+# ---- Loop ----
+
+if(num.cores == 1){
+  assign('.worker.id', 1, envir = .GlobalEnv)   # stable single file core_1.log
+  for(s.comb in pref.combinations){
+    loop.function(s.comb, done.set = done.set, echo.loop = echo.loop)
+  }
+} else {
+  n.use = min(num.cores, length(pref.combinations))
+  pokaz('Combinations in parallel:', n.use, file=file.log.main, echo=echo.main)
+  myCluster <- makeCluster(n.use, type = "PSOCK")
+  registerDoParallel(myCluster)
+
+  # Stable worker id (1..N) -> bounded, reused log file names
+  parallel::clusterApply(myCluster, seq_len(n.use),
+                         function(i) assign('.worker.id', i, envir = .GlobalEnv))
+
+  # The status of every combination comes BACK to the master. A worker's stdout goes
+  # nowhere under PSOCK, so an error reported only with pokaz*() is invisible: that is
+  # how a broken run reported "Done." having produced nothing, and the steps after it
+  # cheerfully copied the input to the output.
+  res = foreach(s.comb = pref.combinations,
+                .packages = c('rhdf5', 'crayon', 'pannagram')) %dopar% {
+                  tryCatch({
+                    loop.function(s.comb, done.set = done.set, echo.loop = echo.loop)
+                    NULL
+                  },
+                  error = function(err) paste0(s.comb, ': ', conditionMessage(err)))
+                }
+  stopCluster(myCluster)
+
+  bad = unlist(res)
+  if(length(bad) > 0){
+    for(b in bad) pokazAttention('FAILED', b, file=file.log.main, echo=TRUE)
+    stop(paste0('Combinations failed: ', length(bad), ' of ', length(pref.combinations)))
+  }
+}
+
+pokaz('Done.', file=file.log.main, echo=echo.main)
 
 
 

@@ -241,81 +241,6 @@ mergeOverlapsTolerance <- function(breaks,
 }
 
 
-solveLong <- function(breaks, breaks.init, len.max) {
-  # Identify breaks where the length exceeds the len.max
-  idx.to.solve = which(breaks$len > len.max)
-  
-  breaks.init$id <- seq_len(nrow(breaks.init))
-  
-  idx.rem.init <- c()
-  for (irow in idx.to.solve) {
-    pos.b <- breaks$idx.beg[irow]
-    pos.e <- breaks$idx.end[irow]
-    n <- pos.e - pos.b + 1
-    
-    # Select initial breaks that fit within the current merged break
-    breaks.tmp <- breaks.init[(breaks.init$idx.beg >= pos.b) & (breaks.init$idx.end <= pos.e),]
-    
-    # Sort by length (starting from the largest)
-    breaks.tmp <- breaks.tmp[order(-breaks.tmp$len.comb),]
-    
-    # Determine the number of breaks which should be removed
-    for (n.rem in 1:nrow(breaks.tmp)) {
-      breaks.tmp.m <- mergeOverlaps(breaks.tmp[-(1:n.rem),])  # Merge overlaps for remaining breaks
-      if (max(breaks.tmp.m$len) < len.max) break
-    }
-    
-    # pokaz('Potential removes:', n.rem)
-    
-    # Maybe put some breaks back
-    idx.rem <- c()
-    for (i in 1:n.rem) {
-      # Check for overlaps between the remaining breaks
-      tmp <- (breaks.tmp.m$idx.beg <= breaks.tmp$idx.end[i]) & 
-        (breaks.tmp.m$idx.end >= breaks.tmp$idx.beg[i])
-      
-      if (sum(tmp) == 0) {  # If no overlap
-        tmp <- breaks.tmp[i,]
-        
-        # Assign a dummy variables
-        tmp$len <- tmp$len.comb
-        tmp$id <- -1  
-        tmp$cnt <- 1
-        
-        # Add the break into merged breaks
-        breaks.tmp.m <- rbind(breaks.tmp.m, tmp[, colnames(breaks.tmp.m)]) 
-        next
-      }
-      
-      if (sum(tmp) != 1) {  # If more than one overlap
-        idx.rem <- c(idx.rem, i)  # Remove it
-        next
-      }
-      
-      k <- which(tmp)  # Get the overlap index
-      
-      # Adjust boundaries 
-      p.b <- min(breaks.tmp.m$idx.beg[k], breaks.tmp$idx.beg[i])
-      p.e <- max(breaks.tmp.m$idx.end[k], breaks.tmp$idx.end[i])
-      if ((p.e - p.b + 1) < len.max) {
-        breaks.tmp.m$idx.beg[k] <- p.b
-        breaks.tmp.m$idx.end[k] <- p.e
-      } else {
-        idx.rem <- c(idx.rem, i)  # Remove it if too large
-      }
-    }
-    
-    # pokaz('Actually removed:', length(idx.rem))
-    
-    # Save
-    idx.rem.init <- c(idx.rem.init, breaks.tmp[idx.rem,]$id)
-  }
-  
-  return(idx.rem.init)
-}
-
-
-
 solveLong2 <- function(breaks, breaks.init, len.max) {
   # Identify breaks where the length exceeds the len.max
   idx.to.solve = which(breaks$len > len.max)
@@ -414,7 +339,11 @@ removePositionsOverlap  <- function(pos.cov, len.max) {
 #'
 #' @param v A numeric vector to analyze.
 #' 
-findBreaks <- function(v) {
+findBreaks <- function(v, acc) {
+  # `acc` used to be read from the caller's global environment (df$acc <- acc below).
+  # That silently works only while the caller is a top-level loop; the moment the loop
+  # body moves into a function - as it did when comb_11 was parallelised - the lookup
+  # fails with "object 'acc' not found" inside each worker.
   v[is.na(v)] = 0
   # Remove zeros and retain indices
   v.idx <- 1:length(v)
