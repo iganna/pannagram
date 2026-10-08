@@ -24,6 +24,13 @@ Options:
     -sv_families                    Create the Graph of SVs;
     -sv_te_order                    Structural order (LTR / TIR / poly-A) of SV families;
 
+    -annogroup PATH_ANNOT           Annotation groups: genes of the accessions arranged by the pangenome,
+                                    correspondence table and annotation projected to every accession.
+                                    PATH_ANNOT contains <accession>.gff files, for all or some accessions;
+    -annot_chr FORMAT               Chromosome names in GFF are '<anything>FORMAT<number>' (default: '_Chr');
+    -annot_feature TYPES            Types of the top-level features to group, comma-separated (default: all);
+    -annot_snap                     Keep a gene with an unaligned end, moving the end inwards;
+
 
     -aln_type ALN_TYPE              Set the type of alignment (default: 'pan');
 

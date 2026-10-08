@@ -48,6 +48,9 @@ while [ $# -gt 0 ]; do
         -cov | -coverage)               coverage_value="$2";                shift 2 ;;
         -sv_acc)          acc_anal="$2";                                    shift 2 ;;
         -annogroup)       run_annogroup=true;   path_annot="$2";            shift 2 ;;
+        -annot_chr)       annot_s_chr="$2";                                 shift 2 ;;
+        -annot_feature)   annot_feature="$2";                               shift 2 ;;
+        -annot_snap)      annot_snap="--snap";                              shift 1 ;;
         -aln_type)        aln_type="$2";                                    shift 2 ;;
         * ) pokaz_error "Unknown parameter: $1"; 
             pokaz_attention "!!! Please check your command: ${cmdline}";
@@ -86,6 +89,9 @@ fi
 
 cores="${cores:-1}"
 acc_anal="${acc_anal:-NULL}"
+annot_s_chr="${annot_s_chr:-_Chr}"
+annot_feature="${annot_feature:-all}"
+annot_snap="${annot_snap:-}"
 
 path_project=$(add_symbol_if_missing "$path_project" "/")
 

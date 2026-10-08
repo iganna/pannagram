@@ -7,6 +7,7 @@ path_seq="$path_features/consensus/"
 path_sv="$path_features/sv/"
 path_sv_simsearch="$path_sv/simsearch_sv_large/"
 path_gff="$path_sv/gff/"
+path_annot_res="${path_features}annotation/"
 
 # Canonical ORF output-file names (single source of truth). Passed downstream as
 # --file.orfs to the R scripts and used as the blastp query; do not re-literal.

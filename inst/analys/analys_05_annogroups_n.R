@@ -1,656 +1,570 @@
-# Create annotation groups
+# Annotation groups
+#
+# INTERVAL FORMAT (_n).
+# Input:  GFF files of the accessions (<acc>.gff; not every accession needs one)
+#         and the pangenome alignment.
+# Output: annogroups.txt     - groups of genes that occupy the same place of the pangenome
+#         correspondence.txt - group x accession -> IDs of the genes
+#         lost_genes.txt     - genes that were not placed, with the reason
+#         projection.txt     - models projected to the accessions that lack a gene of a group
+#         gff/<acc>.gff      - annotation of every accession: own genes + projected ones, common IDs
+#         pangen.gff         - all the annotations in the pangenome coordinates
 
+suppressMessages({
+  library(rhdf5)
+  library(optparse)
+  library(pannagram)
+  library(crayon)
+})
+
+source(system.file("utils/chunk_hdf5.R", package = "pannagram"))
+source(system.file("utils/interval_func.R", package = "pannagram")) # interval codec + hdf5 layer
+source(system.file("analys/annogroup_func_n.R", package = "pannagram"))
 
 # ***********************************************************************
-# ---- Libraries and dependencies ----
-library(crayon)
-library(rhdf5)
-source(system.file("utils/utils.R", package = "pannagram"))
-source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("analys/analys_func.R", package = "pannagram"))
+args = commandArgs(trailingOnly=TRUE)
 
-# ***********************************************************************
-# ---- Setup ----
-
-# 
-# # Set the working path for annotations
-# path.msa = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/pushkin/genomes_GR3013/data/msa/'
-# path.annot = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/pushkin/genomes_GR3013/data/gff/'
-# path.res = '/Users/annaigolkina/Library/CloudStorage/OneDrive-Personal/pushkin/genomes_GR3013/data/gff_common/'
-# if (!dir.exists(path.res)) {
-#   dir.create(path.res, recursive = TRUE)
-# } 
-
-library(optparse)
-
-# Define command-line options
 option_list <- list(
-  make_option(c("--ref"),   type = "character", default = "",   help = "Reference prefix"),
-  make_option(c("--aln.type"),   type = "character", default = NULL, help = "Alignment type"),
-  make_option(c("--path.msa"),   type = "character", default = NULL, help = "Path to MSA files"),
-  make_option(c("--path.annot"), type = "character", default = NULL, help = "Path to annotation files"),
-  make_option(c("--path.res"),   type = "character", default = NULL, help = "Path to result files"),
-  make_option(c("--s.chr"),      type = "character", default = '_Chr', help = "Chromosome name format")
+  make_option("--path.features.msa", type = "character", default = NULL, help = "Path to msa dir (features)"),
+  make_option("--path.annot",   type = "character", default = NULL,   help = "Path to the GFF files, <acc>.gff"),
+  make_option("--path.res",     type = "character", default = NULL,   help = "Path to the results"),
+  make_option("--path.chr",     type = "character", default = NULL,   help = "Path to the chromosomes (to check the projected models)"),
+  make_option("--ref",          type = "character", default = NULL,   help = "prefix of the reference file"),
+  make_option("--aln.type",     type = "character", default = aln.type.msa, help = "type of alignment ('pan', 'ref', etc.)"),
+  make_option("--s.chr",        type = "character", default = '_Chr', help = "Chromosome name format in GFF: '<anything><s.chr><number>'"),
+  make_option("--feature",      type = "character", default = 'all',  help = "Types of the top-level features to group, comma-separated ('all' by default)"),
+  make_option("--id.prefix",    type = "character", default = 'AG',   help = "Prefix of the group IDs"),
+  make_option("--overlap",      type = "numeric",   default = 0.5,    help = "Genes are in one group if they overlap by at least this share of the longer one"),
+  make_option("--snap",         action = "store_true", default = FALSE, help = "Move an unaligned end of a gene inwards instead of losing the gene"),
+  make_option("--path.log",     type = "character", default = NULL,   help = "Path for log files"),
+  make_option("--log.level",    type = "character", default = NULL,   help = "Level of log to be shown on the screen")
 )
 
-# Parse options
-opt <- parse_args(OptionParser(option_list = option_list))
-
+opt = parse_args(OptionParser(option_list = option_list), args = args)
 
 # ***********************************************************************
+# ---- Logging ----
 
-# ---- HDF5 ----
-source(system.file("utils/chunk_hdf5.R", package = "pannagram")) # a common code for variables in hdf5-files
-source(system.file("utils/interval_func.R", package = "pannagram")) # interval codec + hdf5 layer
+source(system.file("utils/chunk_logging.R", package = "pannagram")) # a common code for all R logging
 
 # ***********************************************************************
+# ---- Paths and parameters ----
 
+isNull <- function(x) is.null(x) || (x == 'NULL') || (x == '')
+addSlash <- function(x) paste0(sub('/+$', '', x), '/')
 
-path.msa <- opt$path.msa
-path.annot <- opt$path.annot
-path.res <- opt$path.res
+if(isNull(opt$path.features.msa)) stop("'path.features.msa' must be specified.")
+if(isNull(opt$path.annot)) stop("'path.annot' must be specified.")
+if(isNull(opt$path.res)) stop("'path.res' must be specified.")
+
+path.features.msa <- addSlash(opt$path.features.msa)
+path.annot <- addSlash(opt$path.annot)
+path.res <- addSlash(opt$path.res)
+if(!dir.exists(path.features.msa)) stop(paste('No alignment directory found:', path.features.msa))
+if(!dir.exists(path.annot)) stop(paste('No annotation directory found:', path.annot))
+
+path.gff <- paste0(path.res, 'gff/')
+if(!dir.exists(path.gff)) dir.create(path.gff, recursive = TRUE)
+
+path.chr <- if(isNull(opt$path.chr)) NULL else addSlash(opt$path.chr)
+if(!is.null(path.chr) && !dir.exists(path.chr)){
+  pokazAttention('No directory with chromosomes:', path.chr)
+  path.chr <- NULL
+}
+if(is.null(path.chr)) pokazAttention('Chromosomes are not provided, coding sequences of the projected models are not checked.')
+
 s.chr <- opt$s.chr
-ref <- opt$ref
+id.prefix <- opt$id.prefix
+min.overlap <- opt$overlap
+snap <- isTRUE(opt$snap)
+features <- strsplit(opt$feature, ',', fixed = TRUE)[[1]]
+
+# ***********************************************************************
+# ---- Combinations of chromosomes query-base to create the alignments ----
+
 aln.type <- opt$aln.type
 
+ref.name <- opt[['ref']]  # not `$`: it partially matches longer option names
+if(is.null(ref.name) || ref.name == "NULL") ref.name <- ''
 
-# Check that required parameters are provided
-if (is.null(path.msa) || path.msa == "") stop("Error: 'path.msa' parameter must be specified.")
-if (is.null(path.annot) || path.annot == "") stop("Error: 'path.annot' parameter must be specified.")
-if (is.null(path.res) || path.res == "") stop("Error: 'path.res' parameter must be specified.")
+# Common code for aln.pref, ref.suffix and s.combinations
+source(system.file("utils/chunk_combinations.R", package = "pannagram"))
 
-# Set the defaul values of other parameters
-if (ref == ''){
-  ref.suff = ref
-} else {
-  ref.suff = paste0('_ref_',ref)
-}
-
-if(is.null(aln.type)){
-  aln.type = aln.type.msa
-}
-
-
-# Create results directory if it does not exist
-if (!dir.exists(opt$path.res)) {
-  dir.create(opt$path.res, recursive = TRUE)
-}
-
-
-# ---- Variables ----
-
-s.pannagram = 'Pannagram'
-
-# ---- Accessions ----
-
-files.gff <- list.files(path = path.annot, pattern = "\\.gff$", full.names = FALSE)
-
-accessions <- sub("\\.gff$", "", files.gff)
-
-accessions = setdiff(accessions, '0')
-accessions = setdiff(accessions, '22001')
-accessions = accessions[1:27]
-
-pokaz('Amount of accessions:', length(accessions))
-pokaz('  ', accessions)
-
+s.combinations <- s.combinations[order(sapply(s.combinations, comb2ref))]
 
 # ***********************************************************************
-# Accessions 220011
-# acc.new = "22001_mod"
-# acc.prev = "220011"
-# for(i.chr in 1:5){
-#   file.msa = paste0(path.msa, aln.type, i.chr, '_', i.chr, '.h5')
-#   # print(h5ls(file.msa))
-#   # v = h5read(file.msa, paste0(gr.accs.e, acc.new))
-#   # h5write(v, file.msa, paste0(gr.accs.e, acc.prev))
-# }
+# ---- Accessions and annotations ----
 
-# ***********************************************************************
-# ---- Merge all GFF files into a common structure ----
-# Split gene and the rest (CDSs, exons....) -> save separately
+accessions <- c()
+for(s.comb in s.combinations){
+  accessions <- union(accessions, h5AccNames(paste0(path.features.msa, aln.pref, s.comb, ref.suff, '.h5')))
+}
 
-# Initialize an empty list to store all GFF data
+files.gff <- list.files(path = path.annot, pattern = "\\.(gff|gff3)$", full.names = FALSE)
+acc.files <- sub("\\.(gff|gff3)$", "", files.gff)
+if(any(!(acc.files %in% accessions))){
+  pokazAttention('Annotations of accessions that are not in the alignment are skipped:',
+                 acc.files[!(acc.files %in% accessions)])
+}
+files.gff <- files.gff[acc.files %in% accessions]
+acc.files <- acc.files[acc.files %in% accessions]
+if(length(files.gff) == 0){
+  pokazAttention('No GFF files for the aligned accessions in', path.annot, '(expected <accession>.gff). Nothing to do.')
+  quit(save = "no", status = 0)
+}
 
-file.gff.main = paste0(path.res, 'gff_main.rds')
-if(!file.exists(file.gff.main)){
-  gff.main = c()
-  
-  # Loop through each accession in the list of accessions to work with
-  for(acc in accessions){
-    
-    pokaz('Accession', acc)
-    
-    # Read the GFF file 
-    gff = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
-    colnames(gff) = c('V1', 'V2', 'type', 'beg', 'end', 'V6', 'strand', 'V8', 'info')
-    n.gff = nrow(gff)
-    gff = gff[gff$type != 'chromosome',]
-    
-    gff = gff[order(gff$beg),]
-    gff = gff[order(gff$V1),]
-    
-    gff$idx = seq_len(nrow(gff))
-    
-    # ---- Check chromosome names format ----
-    # If less than 70% - stop, maybe format is wrong.
-    # And show examples which do not match with the pattern
-    
-    gff = extractChrByFormat(gff, s.chr)
-    
-    # Accession ID  
-    gff$acc = acc
-    
-    # Separate annotations into non-overlapping categories
-    
-    gff.p = gff[gff$strand == '+',]
-    gff.m = gff[gff$strand == '-',]
-    
-    res.p = findIncludeAndOverlap(gff.p)
-    res.m = findIncludeAndOverlap(gff.m)
-    
-    idx.parental = rbind(res.p$idx.include,
-                         res.m$idx.include)
-    
-    # Save
-    gff.main = rbind(gff.main, res.p$gff.cut)
-    gff.main = rbind(gff.main, res.m$gff.cut)
-    
+pokaz('Accessions in the alignment:', length(accessions), '; with annotation:', length(acc.files))
+
+gff.list <- list()
+for(i.file in seq_along(files.gff)){
+  acc <- acc.files[i.file]
+  gff <- annoReadGFF(paste0(path.annot, files.gff[i.file]))
+  if(nrow(gff) == 0){
+    pokazAttention('No features in the annotation of', acc)
+    next
   }
-  # Save the combined annotations to an RDS file for future use
-  saveRDS(gff.main, file.gff.main)
-} else {
-  pokaz('Reading pre-calculations...')
-  gff.main = readRDS(file.gff.main)
+  gff <- annoHierarchy(gff)
+  gff$chr <- annoChr(gff$V1, s.chr)
+  if(all(is.na(gff$chr))){
+    pokazAttention('Sequence names of', acc, 'do not match the format', paste0('"*', s.chr, 'N"'),
+                   ', for example:', gff$V1[1], '- the annotation is skipped. Check the chromosome format.')
+    next
+  }
+
+  gff$is.root <- gff$root == seq_len(nrow(gff))
+  is.used <- gff$is.root & (('all' %in% features) | (gff$V3 %in% features))
+  gff$use <- is.used[gff$root]
+
+  # Place in the pangenome, filled in chromosome by chromosome
+  gff$pan.chr <- 0L
+  gff$pan.beg <- 0L
+  gff$pan.end <- 0L
+  gff$delta <- 0L
+  gff$snapped <- FALSE
+  gff$reason <- ifelse(is.na(gff$chr), 'chr_format', 'chr_not_aligned')
+
+  # Groups of the root: new ID, the primary group and its order, all the groups
+  gff$root.id <- NA_character_
+  gff$group <- NA_character_
+  gff$group.ord <- NA_integer_
+  gff$groups <- NA_character_
+
+  gff.list[[acc]] <- gff
+  pokaz('Accession', acc, ': features', nrow(gff), ', top-level', sum(is.used))
+}
+acc.gff <- names(gff.list)
+if(length(acc.gff) == 0){
+  pokazAttention('No annotations to work with. Nothing to do.')
+  quit(save = "no", status = 0)
+}
+
+# Names of the chromosomes of an accession, as they are in its annotation
+chrName <- function(acc, i.chr){
+  gff <- gff.list[[acc]]
+  if(!is.null(gff)){
+    s <- gff$V1[which(gff$chr == i.chr)]
+    if(length(s) > 0) return(names(which.max(table(s))))
+  }
+  paste0(acc, '_Chr', i.chr)
 }
 
 # ***********************************************************************
-# ---- Convert of initial of GFF files ----
-idx.remain = c()
+# ---- Main loop: chromosomes ----
+
+groups.all <- list()
+corresp.all <- list()
+proj.tbl.all <- list()
+proj.gff.all <- list()
+n.groups <- 0
+
+for(s.comb in s.combinations){
+
+  q.chr <- as.integer(strsplit(s.comb, '_')[[1]][1])
+  p.chr <- comb2ref(s.comb)
+  pokaz('Chromosome', s.comb)
+
+  file.comb <- paste0(path.features.msa, aln.pref, s.comb, ref.suff, '.h5')
+  accs.comb <- h5AccNames(file.comb)
+  ivl.list <- list()
+  for(acc in accs.comb) ivl.list[[acc]] <- annoIvlPrep(h5IvlRead(file.comb, acc))
+
+  # ---- Genes -> pangenome ----
+  roots <- list()
+  rows.chr <- list()
+  for(acc in acc.gff){
+    gff <- gff.list[[acc]]
+    idx <- which((gff$chr == q.chr) & gff$use)
+    if(length(idx) == 0) next
+    if(!(acc %in% accs.comb)) next
+
+    # Top-level features define the groups: exact ends, unless --snap.
+    # The rest is for drawing and projection: ends are moved inwards.
+    x <- annoLift(ivl.list[[acc]], gff$V4[idx], gff$V5[idx], snap = TRUE)
+    if(!snap){
+      is.r <- gff$is.root[idx]
+      x[is.r, ] <- annoLift(ivl.list[[acc]], gff$V4[idx[is.r]], gff$V5[idx[is.r]], snap = FALSE)
+    }
+    gff$pan.chr[idx] <- p.chr
+    gff$pan.beg[idx] <- x$pan.beg
+    gff$pan.end[idx] <- x$pan.end
+    gff$delta[idx] <- x$delta
+    gff$snapped[idx] <- x$snapped
+    gff$reason[idx] <- x$reason
+    gff.list[[acc]] <- gff
+
+    idx <- idx[gff$reason[gff$root[idx]] == '']  # children of the lost genes are out
+    rows.chr[[acc]] <- idx
+    idx.r <- idx[gff$is.root[idx]]
+    if(length(idx.r) == 0) next
+    roots[[acc]] <- data.frame(acc = acc, row = idx.r,
+                               beg = gff$pan.beg[idx.r], end = gff$pan.end[idx.r],
+                               strand = annoStrand(gff$V7[idx.r], gff$delta[idx.r]),
+                               type = gff$V3[idx.r],
+                               id = ifelse(is.na(gff$id[idx.r]),
+                                           paste0(gff$V3[idx.r], ':', gff$V1[idx.r], ':', gff$V4[idx.r], '-', gff$V5[idx.r]),
+                                           gff$id[idx.r]),
+                               stringsAsFactors = FALSE)
+  }
+  if(length(roots) == 0){
+    pokazAttention('No genes were placed on the chromosome', s.comb)
+    next
+  }
+  roots <- do.call(rbind, roots)
+  rownames(roots) <- NULL
+
+  # ---- Groups ----
+  groups <- list()
+  map <- list()
+  n.prev <- 0
+  for(s.s in unique(roots$strand)){
+    idx.s <- which(roots$strand == s.s)
+    x <- annoGroups(roots$beg[idx.s], roots$end[idx.s], cutoff = min.overlap)
+    a <- annoAssign(roots$beg[idx.s], roots$end[idx.s], x$group, x$groups)
+    a$gene <- idx.s[a$gene]
+    a$group <- a$group + n.prev
+    n.prev <- n.prev + nrow(x$groups)
+    x$groups$strand <- s.s
+    groups[[s.s]] <- x$groups
+    map[[s.s]] <- a
+  }
+  groups <- do.call(rbind, groups)
+  map <- do.call(rbind, map)
+
+  # Groups are numbered along the chromosome
+  ord <- order(groups$beg, groups$end)
+  map$group <- match(map$group, ord)
+  groups <- groups[ord, , drop = FALSE]
+  rownames(groups) <- NULL
+  n.gr <- nrow(groups)
+  groups$group <- sprintf('%s%dG%06d', id.prefix, p.chr, seq_len(n.gr))
+  groups$chr <- p.chr
+  groups$ord <- n.groups + seq_len(n.gr)
+  n.groups <- n.groups + n.gr
+
+  # A gene is a primary member of its own group and a secondary one of the
+  # groups it covers; the primary members go first
+  map <- map[order(map$group, !map$primary, roots$beg[map$gene]), , drop = FALSE]
+  map$acc <- roots$acc[map$gene]
+  map.pr <- map[map$primary, , drop = FALSE]
+  s.key <- paste(map.pr$group, map.pr$acc)
+  map.pr$multi <- s.key %in% s.key[duplicated(s.key)]
+
+  n.cl <- table(groups$cluster, groups$strand)
+  groups$n.split <- as.integer(n.cl[cbind(as.character(groups$cluster), groups$strand)])
+  f.gr <- factor(map.pr$group, levels = seq_len(n.gr))
+  groups$n.acc <- as.integer(tapply(map.pr$acc, f.gr, function(x) length(unique(x))))
+  groups$n.genes <- as.integer(table(f.gr))
+  groups$n.acc.multi <- as.integer(tapply(map.pr$acc[map.pr$multi], f.gr[map.pr$multi], function(x) length(unique(x))))
+  groups$n.acc.multi[is.na(groups$n.acc.multi)] <- 0L
+  groups$n.shared <- as.integer(table(factor(map$group[!map$primary], levels = seq_len(n.gr))))
+  groups$types <- as.character(tapply(roots$type[map.pr$gene], f.gr, function(x) paste(sort(unique(x)), collapse = ',')))
+
+  # Secondary members are in brackets
+  corresp <- tapply(ifelse(map$primary, roots$id[map$gene], paste0('(', roots$id[map$gene], ')')),
+                    list(factor(map$group, levels = seq_len(n.gr)), factor(map$acc, levels = acc.gff)),
+                    paste, collapse = ',')
+  corresp[is.na(corresp)] <- '-'
+  corresp.all[[s.comb]] <- data.frame(group = groups$group, corresp, check.names = FALSE, stringsAsFactors = FALSE)
+
+  # ---- Common IDs of the genes ----
+  o <- order(map$gene, !map$primary)
+  gene.groups <- tapply(groups$group[map$group[o]], map$gene[o], paste, collapse = ',')
+  map.pr$id.new <- paste0(groups$group[map.pr$group], '.', map.pr$acc)
+  map.pr$id.new[map.pr$multi] <- paste0(map.pr$id.new[map.pr$multi], '.', annoRunNum(s.key)[map.pr$multi])
+  for(acc in unique(map.pr$acc)){
+    k <- which(map.pr$acc == acc)
+    r <- roots$row[map.pr$gene[k]]
+    gff.list[[acc]]$root.id[r] <- map.pr$id.new[k]
+    gff.list[[acc]]$group[r] <- groups$group[map.pr$group[k]]
+    gff.list[[acc]]$group.ord[r] <- groups$ord[map.pr$group[k]]
+    gff.list[[acc]]$groups[r] <- gene.groups[as.character(map.pr$gene[k])]
+  }
+
+  # ---- Models to project ----
+  # A model of a group: the one with the most frequent ends, taken from an
+  # accession that has exactly one gene in the group.
+  cand <- map.pr
+  cand$len <- roots$end[cand$gene] - roots$beg[cand$gene]
+  s.key <- paste(cand$group, roots$beg[cand$gene], roots$end[cand$gene])
+  cand$freq <- as.integer(table(s.key)[s.key])
+  cand <- cand[order(cand$group,
+                     -(!cand$multi),
+                     -cand$freq, -cand$len,
+                     match(cand$acc, accessions)), , drop = FALSE]
+  models <- cand[!duplicated(cand$group), , drop = FALSE]
+  models$row <- roots$row[models$gene]
+
+  # ---- Projection: coordinates ----
+  proj.list <- list()
+  for(acc.t in accs.comb){
+    need <- models[!(models$group %in% map$group[map$acc == acc.t]), , drop = FALSE]
+    if(nrow(need) == 0) next
+
+    proj <- list()
+    for(acc.s in unique(need$acc)){
+      gff <- gff.list[[acc.s]]
+      r <- need$row[need$acc == acc.s]
+      idx <- rows.chr[[acc.s]]
+      idx <- idx[gff$root[idx] %in% r]
+      proj[[acc.s]] <- data.frame(src.acc = acc.s, src.row = idx, src.root = gff$root[idx],
+                                  src.parent = gff$parent.idx[idx],
+                                  group = need$group[need$acc == acc.s][match(gff$root[idx], r)],
+                                  gff[idx, c('V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'id',
+                                             'pan.beg', 'pan.end', 'delta', 'snapped', 'reason')],
+                                  stringsAsFactors = FALSE)
+    }
+    proj <- do.call(rbind, proj)
+    rownames(proj) <- NULL
+
+    is.lifted <- proj$reason == ''
+    x <- annoProject(ivl.list[[acc.t]], proj$pan.beg[is.lifted], proj$pan.end[is.lifted])
+    proj$beg <- 0L; proj$end <- 0L; proj$n.cov <- 0; proj$state <- 'absent'; proj$strand <- proj$V7
+    proj$beg[is.lifted] <- x$beg
+    proj$end[is.lifted] <- x$end
+    proj$n.cov[is.lifted] <- x$n.cov
+    proj$state[is.lifted] <- x$state
+    proj$strand[is.lifted] <- annoStrand(annoStrand(proj$V7[is.lifted], proj$delta[is.lifted]), x$delta)
+
+    # Transcript of a CDS piece
+    proj$is.root <- proj$src.row == proj$src.root
+    proj$tr <- paste(proj$src.acc, ifelse(is.na(proj$src.parent), proj$src.row, proj$src.parent), sep = '|')
+    proj$complete <- (proj$state == 'ok') & !proj$snapped
+    proj.list[[acc.t]] <- proj
+  }
+
+  # ---- Projection: coding sequences ----
+  cds.src <- list()
+  cds.trg <- list()
+  if(!is.null(path.chr)){
+    for(acc in accs.comb){
+      # Source models of this accession and models projected to it
+      src <- do.call(rbind, lapply(proj.list, function(p) p[(p$src.acc == acc) & (p$V3 == 'CDS'),
+                                                           c('tr', 'V4', 'V5', 'V7', 'V8'), drop = FALSE]))
+      if(!is.null(src)) src <- src[!duplicated(paste(src$tr, src$V4)), , drop = FALSE]
+      trg <- proj.list[[acc]]
+      if(!is.null(trg)){
+        tr.ok <- tapply(trg$complete[trg$V3 == 'CDS'], trg$tr[trg$V3 == 'CDS'], all)
+        trg <- trg[(trg$V3 == 'CDS') & (trg$tr %in% names(tr.ok)[tr.ok]), , drop = FALSE]
+      }
+      if((is.null(src) || (nrow(src) == 0)) && (is.null(trg) || (nrow(trg) == 0))) next
+
+      file.chr <- paste0(path.chr, acc, '_chr', q.chr, '.fasta')
+      if(!file.exists(file.chr)){
+        pokazAttention('No chromosome file', file.chr)
+        next
+      }
+      s.seq <- readFasta(file.chr)[1]
+
+      if(!is.null(src) && (nrow(src) > 0)){
+        cds.src[[acc]] <- annoCdsProps(s.seq, src$V4, src$V5, src$V7, src$V8, src$tr)
+      }
+      if(!is.null(trg) && (nrow(trg) > 0)){
+        cds.trg[[acc]] <- annoCdsProps(s.seq, trg$beg, trg$end, trg$strand, trg$V8, trg$tr)
+      }
+      rm(s.seq)
+    }
+  }
+  cds.src <- do.call(rbind, cds.src)
+
+  # ---- Projection: status and GFF ----
+  for(acc.t in names(proj.list)){
+    proj <- proj.list[[acc.t]]
+    is.cds <- proj$V3 == 'CDS'
+
+    # Transcripts
+    tr <- data.frame(tr = unique(proj$tr[is.cds]), stringsAsFactors = FALSE)
+    tr$group <- proj$group[is.cds][match(tr$tr, proj$tr[is.cds])]
+    tr$status <- rep('truncated', nrow(tr))
+    tr.ok <- tapply(proj$complete[is.cds], proj$tr[is.cds], all)
+    is.ok <- tr$tr %in% names(tr.ok)[tr.ok]
+    tr$status[is.ok] <- 'unchecked'
+    p.trg <- cds.trg[[acc.t]]
+    if(!is.null(p.trg) && !is.null(cds.src)){
+      k <- which(is.ok & (tr$tr %in% p.trg$tr) & (tr$tr %in% cds.src$tr))
+      tr$status[k] <- annoCdsStatus(cds.src[match(tr$tr[k], cds.src$tr), , drop = FALSE],
+                                    p.trg[match(tr$tr[k], p.trg$tr), , drop = FALSE])
+    }
+
+    # Models: the best transcript; without CDS - whether everything is in place
+    md <- proj[proj$is.root, c('group', 'src.acc', 'id', 'V3', 'V4', 'V5', 'V7',
+                               'beg', 'end', 'strand', 'n.cov', 'state'), drop = FALSE]
+    md$status <- ifelse(as.logical(tapply(proj$complete, proj$group, all)[as.character(md$group)]),
+                        'intact', 'truncated')
+    if(nrow(tr) > 0){
+      st <- tapply(match(tr$status, anno.status.rank), tr$group, min)
+      k <- as.character(md$group) %in% names(st)
+      md$status[k] <- anno.status.rank[st[as.character(md$group[k])]]
+    }
+    md$status[md$state %in% c('absent', 'rearranged')] <- md$state[md$state %in% c('absent', 'rearranged')]
+    md$cov <- round(pmin(md$n.cov / (md$V5 - md$V4 + 1), 1), 3)
+
+    s.name <- chrName(acc.t, q.chr)
+    proj.tbl.all[[paste(s.comb, acc.t)]] <-
+      data.frame(group = groups$group[md$group], acc = acc.t,
+                 src.acc = md$src.acc,
+                 src.id = ifelse(is.na(md$id), '-', md$id),
+                 chr = s.name, beg = md$beg, end = md$end,
+                 strand = ifelse(md$beg > 0, md$strand, '.'),
+                 status = md$status, cov = md$cov, stringsAsFactors = FALSE)
+
+    # Features to write: the gene is in place, the feature and its parent too
+    keep <- (proj$state %in% c('ok', 'partial')) &
+            (proj$group %in% md$group[!(md$status %in% c('absent', 'rearranged'))])
+    idx.parent <- match(paste(proj$src.acc, proj$src.parent), paste(proj$src.acc, proj$src.row))
+    for(i in 1:5){
+      drop <- keep & !is.na(idx.parent) & !keep[idx.parent]
+      if(!any(drop)) break
+      keep[drop] <- FALSE
+    }
+    if(!any(keep)) next
+
+    idx.new <- cumsum(keep)
+    idx.new[!keep] <- NA
+    gff.p <- data.frame(V1 = s.name, V2 = 'pannagram', V3 = proj$V3,
+                        V4 = proj$beg, V5 = proj$end, V6 = proj$V6,
+                        V7 = proj$strand, V8 = proj$V8, V9 = proj$V9,
+                        id = proj$id, parent.idx = idx.new[idx.parent],
+                        stringsAsFactors = FALSE)[keep, , drop = FALSE]
+    gff.p$root <- idx.new[match(paste(proj$src.acc, proj$src.root), paste(proj$src.acc, proj$src.row))][keep]
+    is.root <- proj$is.root[keep]
+    i.md <- match(proj$group[keep], md$group)
+    root.id <- ifelse(is.root, paste0(groups$group[proj$group[keep]], '.', acc.t), NA)
+    root.attr <- annoAttrJoin(paste0('annogroup=', groups$group[proj$group[keep]]),
+                              paste0('projected_from=', proj$src.acc[keep]),
+                              ifelse(is.na(gff.p$id), NA, paste0('orig_id=', gff.p$id)),
+                              paste0('status=', md$status[i.md]),
+                              paste0('cov=', md$cov[i.md]))
+    gff.p <- annoRename(gff.p, root.id, root.attr)
+    gff.p$ord.chr <- q.chr
+    gff.p$ord.beg <- gff.p$V4[gff.p$root]
+    gff.p$ord.root <- paste('p', s.comb, gff.p$root)
+    proj.gff.all[[acc.t]][[s.comb]] <- gff.p[, c(paste0('V', 1:9), 'ord.chr', 'ord.beg', 'ord.root')]
+  }
+
+  n.proj <- table(factor(unlist(lapply(proj.tbl.all[paste(s.comb, names(proj.list))],
+                                       function(x) x$group[!(x$status %in% c('absent', 'rearranged'))])),
+                         levels = groups$group))
+  groups$n.projected <- as.integer(n.proj)
+  groups.all[[s.comb]] <- groups
+
+  pokaz('  groups:', n.gr, '; in clusters of several groups:', sum(groups$n.split > 1),
+        '; with several genes per accession:', sum(groups$n.acc.multi > 0),
+        '; covered by genes of other groups:', sum(groups$n.shared > 0))
+  rm(ivl.list, proj.list, cds.src, cds.trg)
+  rhdf5::h5closeAll()
+  gc()
+}
+
+if(length(groups.all) == 0){
+  pokazAttention('No annotation groups were found.')
+  quit(save = "no", status = 0)
+}
+
+# ***********************************************************************
+# ---- Tables ----
+
+writeTable <- function(x, file){
+  write.table(x, file, quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
+}
+
+groups <- do.call(rbind, groups.all)
+groups$len <- groups$end - groups$beg + 1
+writeTable(groups[, c('group', 'chr', 'strand', 'beg', 'end', 'len', 'n.acc', 'n.genes',
+                      'n.acc.multi', 'n.shared', 'n.split', 'n.projected', 'types')],
+           paste0(path.res, 'annogroups.txt'))
+
+writeTable(do.call(rbind, corresp.all), paste0(path.res, 'correspondence.txt'))
+
+lost <- do.call(rbind, lapply(acc.gff, function(acc){
+  gff <- gff.list[[acc]]
+  idx <- which(gff$is.root & gff$use & (gff$reason != ''))
+  data.frame(acc = rep(acc, length(idx)), id = ifelse(is.na(gff$id[idx]), '-', gff$id[idx]),
+             type = gff$V3[idx], chr = gff$V1[idx], beg = gff$V4[idx], end = gff$V5[idx],
+             strand = gff$V7[idx], reason = gff$reason[idx], stringsAsFactors = FALSE)
+}))
+writeTable(lost, paste0(path.res, 'lost_genes.txt'))
+
+proj.tbl <- do.call(rbind, proj.tbl.all)
+if(is.null(proj.tbl)){
+  proj.tbl <- data.frame(group = character(0), acc = character(0), src.acc = character(0),
+                         src.id = character(0), chr = character(0), beg = integer(0), end = integer(0),
+                         strand = character(0), status = character(0), cov = numeric(0))
+}
+writeTable(proj.tbl, paste0(path.res, 'projection.txt'))
+
+pokaz('Groups:', nrow(groups), '; lost genes:', nrow(lost))
+if(nrow(lost) > 0) pokaz('  lost by reason:', paste(names(table(lost$reason)), table(lost$reason), collapse = ', '))
+if(nrow(proj.tbl) > 0) pokaz('  projected models by status:', paste(names(table(proj.tbl$status)), table(proj.tbl$status), collapse = ', '))
+
+# ***********************************************************************
+# ---- GFF of the accessions and of the pangenome ----
+
+pangen.all <- list()
 for(acc in accessions){
-  file.raw.gff = paste0(path.res, acc,'_pangen_raw.gff')
-  file.raw.txt = paste0(path.res, acc,'_pangen_raw.txt')
-  if(file.exists(file.raw.gff) & file.exists(file.raw.txt)) next
-  pokaz('Conversion of accession', acc)
-  gff.acc = read.table(paste0(path.annot, acc,'.gff'), stringsAsFactors = F)
-  gff.acc = gff.main[gff.main$acc == acc,]
-  gff.acc$idx.main = gff.acc$idx
-  
-  gff.acc.pan = gff2gff_n(path.cons = path.msa,
-                        gff.acc,
-                        acc1 = acc,
-                        acc2 = s.pannagram,
-                        n.chr = 5,
-                        aln.type = aln.type,
-                        s.chr = s.chr,
-                        remain = T)
-  
-  idx.remain = c(idx.remain, gff.acc.pan$idx.main)
-  
-  write.table(gff.acc.pan, file.raw.txt,
-              row.names = F, col.names = T, quote = F, sep = '\t')
-  
-  # write.table(gff.acc.pan[,1:9], file.raw.gff,
-  #             row.names = F, col.names = F, quote = F, sep = '\t')
-  writeGFF(gff.acc.pan[,1:9], file.raw.gff)
-}
 
-file.gff.main.idx.remain = paste0(path.res, 'gff_main_idx_remain.rds')
-if(length(idx.remain) != 0){
-  saveRDS(idx.remain, file.gff.main.idx.remain)  
-} else {
-  idx.remain = readRDS(file.gff.main.idx.remain)
-}
+  gff.own <- NULL
+  if(acc %in% acc.gff){
+    gff <- gff.list[[acc]]
+    root.attr <- annoAttrJoin(ifelse(is.na(gff$groups), NA, paste0('annogroup=', gff$groups)),
+                              ifelse(is.na(gff$id), NA, paste0('orig_id=', gff$id)))
+    gff <- annoRename(gff, gff$root.id, root.attr)
 
-gff.main = gff.main[gff.main$idx %in% idx.remain,]
+    # Pangenome coordinates of the grouped genes
+    idx <- which(!is.na(gff$root.id[gff$root]) & (gff$reason == ''))
+    if(length(idx) > 0){
+      gff.pan <- gff[idx, paste0('V', 1:9)]
+      gff.pan$V1 <- paste0('PanGen_Chr', gff$pan.chr[idx])
+      gff.pan$V4 <- gff$pan.beg[idx]
+      gff.pan$V5 <- gff$pan.end[idx]
+      gff.pan$V7 <- annoStrand(gff$V7[idx], gff$delta[idx])
+      is.r <- gff$is.root[idx]
+      gff.pan$V9[is.r] <- annoAttrJoin(paste0('ID=', gff$id.new[idx[is.r]]),
+                                       paste0('Parent=', gff$group[idx[is.r]]),
+                                       annoAttrDrop(gff.pan$V9[is.r], 'ID'))
+      gff.pan$ord.group <- gff$group.ord[gff$root[idx]]
+      gff.pan$ord.acc <- match(acc, accessions)
+      pangen.all[[acc]] <- gff.pan
+    }
 
-# ***********************************************************************
-
-for(i.chr in 1:5){
-  
-  pokaz(paste('Chromosome', i.chr))
-  file.chr.gff = paste0(path.res, 'chr_', i.chr,'.gff')
-  if(file.exists(file.chr.gff)) next
-
-  # Read basic info from the alignment
-  s.comb = paste(i.chr, i.chr, sep = '_')
-  file.msa = paste0(path.msa, aln.type, s.comb, ref.suff,'.h5')
-  
-  groups = h5ls(file.msa)
-  # accessions = groups$name[groups$group == gr.accs.b]
-  msa.lens = as.numeric(groups$dim[groups$group == gr.accs.b])
-  len.pan = unique(msa.lens)
-  if(length(len.pan) != 1) stop('something is wrong with the alignment LENGTHs')
-  
-  # ---- Gene Minus and gene Plus ----
-
-  file.gene.blocks = paste0(path.res, 'gene_blocks_chr_', i.chr, '.RData')
-    
-  if(!file.exists(file.gene.blocks)){
-    
-    gene.mins = rep(0, len.pan)
-    gene.plus = rep(0, len.pan)
-    gene.blocks = c()
-    
-    for(acc in accessions){
-      pokaz('Accession', acc)
-      # Idx in the pangenome coordinate
-      v = h5VecRead(file.msa, acc)
-      
-      v = cbind(v, 1:len.pan)
-      v = v[!is.na(v[,1]),,drop=F]
-      v = v[v[,1] != 0 ,,drop=F]
-      if(nrow(v) == 0) next
-      
-      v[v[,1] < 0,] = v[v[,1] < 0,] * (-1)  # Fix inversion
-      
-      # Idx in the accession coordinate
-      v.acc = rep(0, max(v[,1]))
-      v.acc[v[,1]] = v[,2]
-      len.acc = max(v[,1])
-      
-      # Gff acc
-      gff.acc = gff.main[(gff.main$acc == acc) & (gff.main$chr == i.chr),]
-      if(nrow(gff.acc) == 0) next
-      gff.plus = gff.acc[gff.acc$strand == '+',]
-      gff.mins = gff.acc[gff.acc$strand == '-',]
-      
-      # Genes, hoping that they are not overlapped
-      g.plus = fillBegEnd(len.acc, gff.plus)
-      g.mins = fillBegEnd(len.acc, gff.mins)
-      g.plus[v.acc == 0] = 0
-      g.mins[v.acc == 0] = 0
-      
-      # Change plus and minus depending on the strand
-      idx.change = v.acc < 0
-      pokaz('Changing the strand (bp):', sum(idx.change))
-      if(sum(idx.change) > 0){
-        g.tmp = g.plus[idx.change]
-        g.plus[idx.change] = g.mins[idx.change]
-        g.mins[idx.change] = g.tmp  
-      }
-      
-      # Check that no split of genes
-      g.id.split = setdiff(intersect(g.plus, g.mins), 0)
-      if(length(g.id.split) > 0){
-        pokazAttention('Number of split genes', length(g.id.split))
-        g.plus[g.plus %in% g.id.split] = 0
-        g.mins[g.mins %in% g.id.split] = 0
-      }
-      pokazAttention('Total number of lost genes', length(setdiff(gff.acc$idx, c(g.plus, g.mins))))
-      
-      # Blocks of genes
-      g.plus.blocks = getGeneBlocks(g.plus, len.pan, v.acc)
-      g.mins.blocks = getGeneBlocks(g.mins, len.pan, v.acc)
-      
-      # Fill pangenome coordinates with IDX of genes
-      gene.plus.add = fillBegEnd(len.pan, g.plus.blocks)
-      gene.mins.add = fillBegEnd(len.pan, g.mins.blocks)
-      
-      # Save it for Annogroups
-      gene.plus = gene.plus + (gene.plus.add != 0) * 1
-      gene.mins = gene.mins + (gene.mins.add != 0) * 1
-      
-      # Save begin-end for split annogroups
-      g.plus.blocks$strand = '+'
-      g.mins.blocks$strand = '-'
-      blocks.df = rbind(g.plus.blocks, g.mins.blocks)
-      if(nrow(blocks.df) == 0) next
-      blocks.df$acc = acc
-      gene.blocks = rbind(gene.blocks, blocks.df)
-    }  
-    
-    gene.list = list('+' = gene.plus, '-' = gene.mins)
-    
-    save(gene.list, gene.blocks, file = file.gene.blocks)
-    rm(gene.plus)
-    rm(gene.mins)
-  } else {
-    load(file.gene.blocks)
+    gff.own <- gff[, paste0('V', 1:9)]
+    gff.own$ord.chr <- gff$chr
+    gff.own$ord.beg <- gff$V4[gff$root]
+    gff.own$ord.root <- paste('n', gff$root)
   }
-  
-  
-  # save(list = ls(), file = "tmp_workspace_here.RData")
-  # stop()
 
-  # ----   Groups  ----
-  
-  pokaz('Groups')
-  
-  an.blocks.all = list()
-  n.an = 0
-  s.strand = names(gene.list)
-  for(s.s in s.strand){
-    # Find blocks
-    an.blocks = findOnes((gene.list[[s.s]] > 0) * 1)
-    an.blocks$strand = s.s
-    an.blocks$idx = 1:nrow(an.blocks)
-    
-    # First big annogroups
-    annogr = fillBegEnd(len.pan, an.blocks)
-    gene.blocks.s = gene.blocks[gene.blocks$strand == s.s,]
-    
-    if(sum(annogr[gene.blocks.s$beg] !=  annogr[gene.blocks.s$end]) > 0) stop('Wrong annogroups assignment (#2)')
-    
-    # Assignment of big annogroups
-    gene.blocks.s$annogr = annogr[gene.blocks.s$beg]
-    if(min(gene.blocks.s$annogr) == 0) stop('Wrong annogroups assignment (#1)')
-    
-    # Find those which should be split
-    cnt.acc = tapply(gene.blocks.s$acc, 
-                     gene.blocks.s$annogr, 
-                     function(x) max(table(x)))
-    pokaz('Counts of genes in annogroups', table(cnt.acc))
-    
-    # Problemaric groups
-    an.problem = as.numeric(names(cnt.acc)[cnt.acc != 1])
-    for(i.gr in an.problem){
-      
-      # Define vector to determine splits
-      gr.len = an.blocks$end[i.gr] - an.blocks$beg[i.gr] + 1
-     
-      # Get genes within this block
-      genes.gr = gene.blocks.s[gene.blocks.s$annogr == i.gr,]
-      genes.gr$beg = genes.gr$beg - an.blocks$beg[i.gr] + 1
-      genes.gr$end = genes.gr$end - an.blocks$beg[i.gr] + 1
-      
-      genes.gr$len = genes.gr$end - genes.gr$beg
-      # orfplot(genes.gr)
-      
-      # Define accessions having at least two genes
-      acc.probl = unique(genes.gr$acc[duplicated(genes.gr$acc)])
-      pos.split = rep(0, gr.len)
-      for(acc.tmp in acc.probl){
-        genes.gr.acc = genes.gr[genes.gr$acc == acc.tmp,]
-        for(irow in 1:(nrow(genes.gr.acc) - 1)){
-          # pokaz(acc.tmp, genes.gr.acc$end[irow],genes.gr.acc$beg[irow+1])
-          if((genes.gr.acc$end[irow]+1) != genes.gr.acc$beg[irow+1]) {
-            pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] = 
-              pos.split[(genes.gr.acc$end[irow]+1):(genes.gr.acc$beg[irow+1]-1)] + 1
-          }
-        }
-      }
-
-      # Naive coverage. Was replaced.
-      acc.all = unique(genes.gr$acc)
-      mx.cover = matrix(0, nrow = length(acc.all), ncol = gr.len, dimnames = list(acc.all, NULL))
-      for(acc.tmp in acc.all){
-        genes.gr.acc = genes.gr[genes.gr$acc == acc.tmp,]
-        for(irow in 1:nrow(genes.gr.acc)){
-          mx.cover[acc.tmp, genes.gr.acc$beg[irow]:genes.gr.acc$end[irow]] = 1
-        }
-      }
-      
-    
-      pos.cover = gene.list[[s.s]][an.blocks$beg[i.gr]:an.blocks$end[i.gr]]
-      if(max((pos.cover + pos.split)) > length(accessions)) {
-        pokazAttention('Problem with the split')
-      }
-      
-      
-      # ***********************************************************************
-      
-      # Forth
-      mx.increase = which(colSums((mx.cover[,-1, drop=F] > mx.cover[,-ncol(mx.cover), drop=F]) * 1) != 0)
-      mx.decrease = which(colSums((mx.cover[,-1, drop=F] < mx.cover[,-ncol(mx.cover), drop=F]) * 1) != 0)
-      
-      if(length(mx.increase) == 0) next
-      if(length(mx.decrease) == 0) next
-      
-      mx = rbind(cbind(mx.increase, 1),
-                 cbind(mx.decrease, -1))
-      mx = mx[order(mx[,1]),]
-      diff.beg = mx[which((mx[-1,2] == 1) & (mx[-nrow(mx),2] == -1)) + 1, 1]
-      
-      if(length(diff.beg) == 0) next
-      
-      
-      an.blocks.split = data.frame(beg = c(1, diff.beg), 
-                                   end = c(diff.beg - 1, length(pos.cover)))
-      
-      # Fit the "end" for every block
-      for(i.bl in 1:(nrow(an.blocks.split) - 1)){
-        bl.range = an.blocks.split$end[i.bl]:(an.blocks.split$beg[i.bl]+1)
-        for(i.end in bl.range){
-          if(i.end %in% mx.decrease) break
-          # stop()
-          if(sum(mx.cover[,i.end] != mx.cover[,i.end-1]) == 0) {
-            an.blocks.split$end[i.bl] = i.end - 1
-          } else {
-            break
-          }
-        }
-      }
-      
-      while(T){
-        idx = which(an.blocks.split$beg == an.blocks.split$end)
-        if(length(idx) == 0) break
-        idx = idx[1]
-        an.blocks.split$beg[idx + 1] = an.blocks.split$beg[idx]
-        an.blocks.split = an.blocks.split[-idx,]
-      }
-      
-      # Test every block and between blocks
-      # Get number of accessions by each block
-      n.acc.block = c()
-      for(i.bl in 1:nrow(an.blocks.split)){
-        n.acc.block[i.bl] = sum(rowSums(mx.cover[,an.blocks.split$beg[i.bl]:an.blocks.split$end[i.bl], drop=F]) > 0)
-      }
-      
-      # Get number of accessions by each gap between blocks
-      # Split or merge
-      idx.merge = c()
-      for(i.bl in seq_len(nrow(an.blocks.split)-1)){
-        n.gap = sum(rowSums(mx.cover[,(an.blocks.split$end[i.bl]+1):
-                                                 (an.blocks.split$beg[i.bl+1]-1),drop=F]) > 0)
-        # print(n.gap)
-        if (2 * n.gap >= max(n.acc.block[i.bl], n.acc.block[i.bl + 1])){
-          idx.merge = c(idx.merge, i.bl)
-        }
-      }
-      
-      if(length(idx.merge) > 0){
-        an.blocks.split$end[idx.merge] = an.blocks.split$end[idx.merge + 1]
-        an.blocks.split = an.blocks.split[(-1) * (idx.merge + 1),]
-      }
-
-      
-      # ***********************************************************************
-      # Plot
-      # orfplot(genes.gr) +
-      #   # geom_vline(xintercept = 6448, color = "green") +
-      #   geom_vline(xintercept = an.blocks.split$beg, color = "red") +
-      #   geom_vline(xintercept = an.blocks.split$end, color = "blue") 
-        
-      
-      # ***********************************************************************
-      if(nrow(an.blocks.split) > 1){
-        
-        an.blocks.split = an.blocks.split + an.blocks$beg[i.gr] +1
-        an.blocks$end[i.gr] = an.blocks.split$end[1]
-        an.blocks.split = an.blocks.split[-1,]
-        an.blocks.split$strand = s.s
-        
-        an.blocks.split$idx = 0
-    
-        an.blocks = rbind(an.blocks, an.blocks.split)
-        
-      }
-      
-    }
-    
-    an.blocks = an.blocks[order(an.blocks$beg),]
-    an.blocks$idx.prev = an.blocks$idx
-    an.blocks$idx = (1:nrow(an.blocks)) + n.an
-    n.an = nrow(an.blocks)
-    
-    an.blocks.all[[s.s]] = an.blocks
-    
-  } # s.s
-  
-  
-  
-  # ---- The rest of the annotation into groups ----
-  
-  
-  # Assign exons to annotation groups and form gene genes
-  
-  for(acc in accessions){
-    # Reading
-    gff.exons = read.table(paste0(path.res, acc,'_pangen_raw.txt'), 
-                           stringsAsFactors = F,
-                           header = 1)
-    gff.exons = gff.exons[gff.exons$V3 == 'CDS',]
-    
-    for(s.s in s.strand){
-      
-      pos.blocks = fillBegEnd(len.pan, an.blocks.all[[s.s]])
-      
-      gff.exons.s = gff.exons[(gff.exons$V7 == s.s) & (gff.exons$chr == i.chr),]
-      
-      gff.exons.s$an.beg = pos.blocks[gff.exons.s$V4]
-      gff.exons.s$an.end = pos.blocks[gff.exons.s$V5]
-      
-      # To extend annotation
-      # gff.exons.s$an.end[gff.exons.s$an.end == 0] = gff.exons.s$an.beg[gff.exons.s$an.end == 0]
-      # gff.exons.s$an.beg[gff.exons.s$an.beg == 0] = gff.exons.s$an.end[gff.exons.s$an.beg == 0]
-      
-      gff.exons.s = gff.exons.s[gff.exons.s$an.beg != 0,]
-      gff.exons.s = gff.exons.s[gff.exons.s$an.end != 0,]
-      gff.exons.s = gff.exons.s[gff.exons.s$an.beg == gff.exons.s$an.end,]
-      
-      gff.exons.s = gff.exons.s[order(gff.exons.s$V4),]
-      if(nrow(gff.exons.s) == 0) next
-      checkTranslocations(gff.exons.s$an.beg)
-      
-      # Create a new GFF annotation
-      
-      # Genious counts of IDs
-      gff.exons.s$exon.id <- ave(gff.exons.s$an.beg, gff.exons.s$an.beg, FUN = seq_along)
-      
-      # Gff for exons - the same for both annotations
-      gff.exons.s$V9 = paste('ID=',
-                             'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons.s$an.beg),
-                             '.', acc,
-                             '.exon', sprintf("%02.0f",  gff.exons.s$exon.id),
-                             ';Parent=' ,
-                             'AT',i.chr,'Gr',which(s.strand == s.s),sprintf("%07.0f", gff.exons.s$group),
-                             '.', acc,
-                             sep = '')
-      gff.exons.s$V2 = s.pannagram
-      
-      
-      gff.mrna.an.gr = tapply(gff.exons.s$an.beg, gff.exons.s$an.beg, unique)
-      gff.mrna = data.frame(V1 = gff.exons.s$V1[1],
-                            V2 = s.pannagram,
-                            V3 = 'gene',
-                            V4 = tapply(gff.exons.s$V4, gff.exons.s$an.beg, min),
-                            V5 = tapply(gff.exons.s$V5, gff.exons.s$an.beg, max),
-                            V6 = '.',
-                            V7 = s.s,
-                            V8 = '.',
-                            V9 = paste('ID=',
-                                       'AT',i.chr,'Gr',which(s.strand == s.s),
-                                       sprintf("%07.0f", gff.mrna.an.gr),
-                                       '.', acc,
-                                       sep = ''))
-      
-      
-      gff.own = rbind(gff.mrna[,1:9], gff.exons.s[,1:9])
-      gff.own = gff.own[order(gff.own$V4),]
-      
-      gff.mrna$V3 = 'mrna'
-      gff.mrna$V9 = paste('ID=',
-                          'AT',i.chr,'Gr',which(s.strand == s.s),
-                          sprintf("%07.0f", gff.mrna.an.gr),
-                          '.', acc,
-                          ';Parent=' ,
-                          'AT',i.chr,'Gr',which(s.strand == s.s),
-                          sprintf("%07.0f", gff.mrna.an.gr),
-                          sep = '')
-      
-      gff.pan = rbind(gff.mrna[,1:9], gff.exons.s[,1:9])
-      gff.pan = gff.pan[order(gff.pan$V4),]
-      
-    }
-    
-    
-  } # acc
-  
-
+  gff.proj <- if(is.null(proj.gff.all[[acc]])) NULL else do.call(rbind, proj.gff.all[[acc]])
+  gff.acc <- rbind(gff.own, gff.proj)
+  if(is.null(gff.acc) || (nrow(gff.acc) == 0)) next
+  gff.acc <- gff.acc[order(gff.acc$ord.chr, gff.acc$ord.beg, gff.acc$ord.root), , drop = FALSE]
+  writeGFF(gff.acc, paste0(path.gff, acc, '.gff'))
 }
 
+gff.groups <- data.frame(V1 = paste0('PanGen_Chr', groups$chr), V2 = 'pannagram', V3 = 'annogroup',
+                         V4 = groups$beg, V5 = groups$end, V6 = '.', V7 = groups$strand, V8 = '.',
+                         V9 = paste0('ID=', groups$group, ';n_acc=', groups$n.acc, ';n_genes=', groups$n.genes),
+                         ord.group = groups$ord, ord.acc = 0, stringsAsFactors = FALSE)
+gff.pan <- rbind(gff.groups, do.call(rbind, pangen.all))
+gff.pan <- gff.pan[order(gff.pan$ord.group, gff.pan$ord.acc), , drop = FALSE]
+writeGFF(gff.pan, paste0(path.res, 'pangen.gff'))
 
-# ---- Manual testing ----
-# # TEST: Check presence of annogroups in previous annotation
-# x = paste(an.blocks$beg, an.blocks$end, sep = '_')
-# x = x[cnt.acc == 1]
-# y = paste(pal$V4, pal$V5, sep = '_')
-# 
-# z = setdiff(x, y)
-
-
-# ---- OLD CODE (2024) ----
-
-
-
-#           ATTEMPTS FOR SOLVE CONFUSING GROUPS
-# ***********************************************************************
-# # Third 
-# 
-# n.acc.tmp = length(unique(genes.gr$acc))
-# # pos.cover[pos.split == 0] = n.acc.tmp
-# 
-# # plot(pos.cover[-1] / pos.cover[-length(pos.cover)])
-# diff.cover = pos.cover[-1] / pos.cover[-length(pos.cover)]
-# diff.beg = sort(unique(c(which(diff.cover <= 0.5), 
-#                          which(diff.cover >= 2) + 1)))
-# 
-# diff.beg = which(diff.cover >= 2) + 1
-# 
-# if(length(diff.beg) == 0) next
-# 
-# an.blocks.split = data.frame(beg = c(1, diff.beg), 
-#                              end = c(diff.beg - 1, length(pos.cover)))
-# 
-# # Fis the "end" for every block
-# for(i.bl in 1:(nrow(an.blocks.split) - 1)){
-#   bl.range = an.blocks.split$end[i.bl]:(an.blocks.split$beg[i.bl]+1)
-#   for(i.end in bl.range){
-#     # stop()
-#     if(sum(mx.cover[,i.end] != mx.cover[,i.end-1]) == 0) {
-#       an.blocks.split$end[i.bl] = i.end - 1
-#     } else {
-#       break
-#     }
-#   }
-# }
-# 
-# while(T){
-#   idx = which(an.blocks.split$beg == an.blocks.split$end)
-#   if(length(idx) == 0) break
-#   idx = idx[1]
-#   an.blocks.split$beg[idx + 1] = an.blocks.split$beg[idx]
-#   an.blocks.split = an.blocks.split[-idx,]
-# }
-
-
-# ***********************************************************************
-# # Second attempt
-# n.acc.tmp = length(unique(genes.gr$acc))
-# pos.cover[pos.split == 0] = n.acc.tmp
-# an.blocks.split = findOnes((pos.cover/n.acc.tmp >= 0.5) * 1)
-
-
-# ***********************************************************************
-# First attempt
-# # ratio.split.cover = pos.split / (pos.cover + pos.split)
-# ratio.split.cover = pos.split / max((pos.cover + pos.split))
-# 
-# an.blocks.split = findOnes((ratio.split.cover <= 0.5) * 1)
-# an.blocks.split = an.blocks.split + an.blocks$beg[i.gr] - 1
-
-
-
-
-
+pokaz('Results are in', path.res)

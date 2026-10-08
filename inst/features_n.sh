@@ -197,17 +197,34 @@ if [ "$run_sv_orf" = true ]; then # -sv_orf
         --file.orfs ${file_sv_large_orfs}
 fi
 
-# Compare SVs with TEs
-# if [ "$run_annogroup" = true ]; then # -annogroup
-#     pokaz_stage "Annotation groups"
-#     path_annot_res=${path_consensus}annotation/
-#     mkdir -p ${path_annot_res}
-#     Rscript $INSTALLED_PATH/analys/analys_05_annogroups_easier.R \
-#             --path.msa ${path_consensus} \
-#             --path.annot ${path_annot} \
-#             --path.res ${path_annot_res} \
-#             --aln.type ${aln_type}
-# fi
+# Annotation groups
+if [ "$run_annogroup" = true ]; then # -annogroup
+    pokaz_stage "Annotation groups"
+
+    check_dir "$path_features_msa" || exit 1
+    path_annot=$(add_symbol_if_missing "$path_annot" "/")
+    if [ ! -d "$path_annot" ]; then
+        pokaz_error "Directory with annotations '$path_annot' does not exist."
+        exit 1
+    fi
+
+    mkdir -p ${path_annot_res}
+    mkdir -p ${path_log}
+
+    Rscript $INSTALLED_PATH/analys/analys_05_annogroups_n.R \
+        --path.features.msa ${path_features_msa} \
+        --path.annot ${path_annot} \
+        --path.res ${path_annot_res} \
+        --path.chr ${path_chrom} \
+        --ref ${ref_pref} \
+        --aln.type ${aln_type} \
+        --s.chr "${annot_s_chr}" \
+        --feature "${annot_feature}" \
+        --path.log "${path_log}annogroups/" \
+        ${annot_snap}
+
+    pokaz_message "Step -annogroup is done!"
+fi
 
 
 # SV on SVs
