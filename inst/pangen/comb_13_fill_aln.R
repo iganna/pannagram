@@ -14,7 +14,6 @@ suppressMessages({
 
 source(system.file("utils/utils.R", package = "pannagram"))
 source(system.file("pangen/comb_func.R", package = "pannagram"))
-source(system.file("pangen/comb_func_extra2.R", package = "pannagram"))
 source(system.file("pangen/synteny_func.R", package = "pannagram"))
 # source("synteny_funcs.R")
 
