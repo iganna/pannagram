@@ -129,7 +129,7 @@ loop.function <- function(i.comb,
     pokaz('Chr file not exist', file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
-  q.fasta = readFastaMy(file.in)[1]
+  q.fasta = readFasta(file.in)[1]
   q.fasta = toupper(q.fasta)
   
   if(flag.rev){  # Mirror universe
@@ -142,7 +142,7 @@ loop.function <- function(i.comb,
     # Empty chromosome: no parts. Write an empty parts file, so query_03 still counts
     # this chromosome among the accession's part files (blastn on an empty query gives an empty result)
     pokaz('Empty chromosome, no parts', file=file.log.loop, echo=echo.loop)
-    writeFastaMy(character(0), file.out)
+    writeFasta(character(0), file.out)
     markDone(item.id, file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
@@ -178,16 +178,16 @@ loop.function <- function(i.comb,
     seqs.score = repeatScoreVec(s)   # compiled fast path (~8x), identical results
     
     if (sum(seqs.score <= 0.2) > 0){
-      writeFastaMy(s[seqs.score <= 0.2], file.out)  
+      writeFasta(s[seqs.score <= 0.2], file.out)  
     } else {
       pokaz('No good sequences sequences.', file=file.log.loop, echo=echo.loop)
-      writeFastaMy(character(0), file.out)
+      writeFasta(character(0), file.out)
     }
     
     if (sum(seqs.score > 0.2) > 0){
       
       s.repeat = s[seqs.score > 0.2]
-      writeFastaMy(s.repeat, file.out.rest)
+      writeFasta(s.repeat, file.out.rest)
       
       # Masking positions
       pos.repeat = as.numeric(sapply(names(s.repeat), function(s) strsplit(s, '\\|')[[1]][4]))
@@ -201,7 +201,7 @@ loop.function <- function(i.comb,
     
   } else {
     file.out = paste0(path.parts, acc, '_chr', i.chr, '.fasta', collapse = '')
-    writeFastaMy(s, file.out)
+    writeFasta(s, file.out)
     
   }
   

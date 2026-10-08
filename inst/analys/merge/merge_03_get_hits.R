@@ -88,12 +88,12 @@ seqs.all = c()
 
 for(f in file.seqs){
   seqs.all = c(seqs.all,
-               readFastaMy(f))
+               readFasta(f))
 }
 
 seqs.all = seqs.all[x$V2]
 
-writeFastaMy(seqs.all, file.fix.seqs)
+writeFasta(seqs.all, file.fix.seqs)
 
 
 

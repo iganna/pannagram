@@ -183,7 +183,7 @@ loop.function <- function(f.maj,
     # Read reference sequences
     base.file = paste0(base.acc, '_chr', base.chr , '.fasta', collapse = '')
     pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-    base.fas.fw = readFastaMy(paste0(path.chr, base.file))
+    base.fas.fw = readFasta(paste0(path.chr, base.file))
     base.fas.fw = seq2nt(base.fas.fw)
     base.fas.bw = revCompl(base.fas.fw)
     base.len = length(base.fas.bw)
@@ -192,7 +192,7 @@ loop.function <- function(f.maj,
     query.file = paste0(acc, '_chr',query.chr, '.fasta')
     pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
     
-    query.fas.chr = readFastaMy(paste0(path.chr, query.file))
+    query.fas.chr = readFasta(paste0(path.chr, query.file))
     query.fas.chr = seq2nt(query.fas.chr)
     query.len = length(query.fas.chr)
   }

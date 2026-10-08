@@ -98,7 +98,7 @@ for(s.comb in pref.combinations){
     v = h5read(file.seq, paste0(gr.accs.e, acc))
     v = paste0(v, collapse='')
     names(v) = acc
-    writeFastaMy(v, file.aln, append = T)
+    writeFasta(v, file.aln, append = T)
 
     rmSafe(v)
     gc()
@@ -111,7 +111,7 @@ for(s.comb in pref.combinations){
   # Add pangen line
   i.chr = comb2ref(s.comb)
   file.seq.cons = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
-  s.pangen = readFastaMy(file.seq.cons)
+  s.pangen = readFasta(file.seq.cons)
   len.pangen = nchar(s.pangen)
   
   # len.pangen = 20

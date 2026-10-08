@@ -647,7 +647,7 @@ getSNPs_n <- function(path.proj = NULL,
 
     # Get Consensus
     file.seq.cons = paste0(path.seq, "seq_cons_", s.comb, ref.suff, seq.suff, ".fasta")
-    s.pangen = seq2nt(readFastaMy(file.seq.cons))
+    s.pangen = seq2nt(readFasta(file.seq.cons))
 
     # Get accessions
     file.seq = paste0(path.seq, "seq_", s.comb, ref.suff, seq.suff, ".h5")

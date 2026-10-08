@@ -101,10 +101,6 @@ readFasta <- function(file.fasta, stop.on.error = T, keep.spaces.in.names = F) {
   return(sequences)
 }
 
-readFastaMy <- function(...) {
-  readFasta(...)
-}
-
 
 #' Write Sequences to a FASTA File
 #'
@@ -154,10 +150,6 @@ writeFasta <- function(sequences, file, seq.names = NULL, pref = NULL, append = 
     cat(sprintf("%s\n", sequences[i]), file = con)
   }
   close(con)
-}
-
-writeFastaMy <- function(...) {
-  writeFasta(...)
 }
 
 
@@ -1521,11 +1513,6 @@ readBlast <- function(file, stringsAsFactors=F, header=F) {
   } else {
     return(NULL)
   }
-}
-
-readTableMy <- function(file){
-  pokaz('Replace function readTableMy to readBlast')
-  return(readBlast(file))
 }
 
 #' Read Lower Triangular Distance Matrix from File

@@ -281,7 +281,7 @@ seqs.big = c()
 for(s.coms in pref.combinations){
   i.chr = comb2ref(s.comb)
   file.chr = paste0(path.seq, 'seq_cons_', i.chr, '.fasta')
-  s.chr = readFastaMy(file.chr)
+  s.chr = readFasta(file.chr)
   s.chr = seq2nt(s.chr)
   
   # Small sequences  
@@ -305,8 +305,8 @@ for(s.coms in pref.combinations){
   }
 }
 
-writeFastaMy(seqs.small, file.sv.small)
-writeFastaMy(seqs.big, file.sv.big)
+writeFasta(seqs.small, file.sv.small)
+writeFasta(seqs.big, file.sv.big)
 
 
 # ---- GFF densities ----

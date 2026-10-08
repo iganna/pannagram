@@ -153,7 +153,7 @@ loop.function <- function(acc, done.set = character(0), echo.loop=T){
     pokaz('File out:', file.out,
                    file=file.log.loop, echo=echo.loop)
 
-    writeFastaMy(toupper(q.fasta[i.chr]),
+    writeFasta(toupper(q.fasta[i.chr]),
                  file=file.out, append=F,
                  seq.names = paste0(acc, '_Chr', i.chr ))
 

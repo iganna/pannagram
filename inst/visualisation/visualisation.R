@@ -309,7 +309,7 @@ syntenyplot <- function(path.project,
         file.chr =  paste0(path.chr, id, '_chr',i.chr,'.fasta')
         # pokaz('Chromosomel file', file.chr)
         if(!file.exists(file.chr)) break
-        seq.chr = readFastaMy(file.chr)
+        seq.chr = readFasta(file.chr)
         chr.len.tmp = data.frame(acc = id,
                                  chr = i.chr,
                                  len = nchar(seq.chr))

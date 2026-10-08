@@ -130,7 +130,7 @@ gff$chr = as.numeric(gsub('Chr', '', gff$V1))
 # ---- Read the genome ----
 
 if(!file.exists(file.genome)) stop('Genome file does not exist')
-genome = readFastaMy(file.genome)
+genome = readFasta(file.genome)
 
 genome.list = list()
 for(i.chr in 1:length(genome)){
@@ -218,7 +218,7 @@ for(type in types){
 
 if(length(seqs.merge) > 0){
   pokaz('Total number of sequences:', length(seqs.merge))
-  writeFastaMy(seqs.merge, file.seqs)  
+  writeFasta(seqs.merge, file.seqs)  
 } else {
   pokaz('No sequences were found for merging')  
 }

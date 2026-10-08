@@ -51,7 +51,7 @@ copy.number = opt$copy.number
 # ---- Read the genome ----
 
 if(!file.exists(file.genome)) stop('Genome file does not exist')
-genome = readFastaMy(file.genome)
+genome = readFasta(file.genome)
 
 genome.list = list()
 for(i.chr in 1:length(genome)){
@@ -115,7 +115,7 @@ for(irow in 1:(nrow(res) - 1)){
 
 if(length(seqs.merge) > 0){
   pokaz('Total number of sequences:', length(seqs.merge))
-  writeFastaMy(seqs.merge, file.seqs)  
+  writeFasta(seqs.merge, file.seqs)  
 } else {
   pokaz('No sequences were found for merging')  
 }

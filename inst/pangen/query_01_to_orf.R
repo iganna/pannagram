@@ -122,14 +122,14 @@ loop.function <- function(i.comb, done.set = character(0), echo.loop=T){
     # No ORF passes the minimum length (tiny or all-N chromosome):
     # write an empty ORF file, so every chromosome has its output
     pokaz('No ORFs found', file=file.log.loop, echo=echo.loop)
-    writeFastaMy(character(0), file=file.out, append=F)
+    writeFasta(character(0), file=file.out, append=F)
     rm(q.fasta)
     markDone(item.id, file=file.log.loop, echo=echo.loop)
     return(NULL)
   }
   names(s.orf) = paste(acc, '_Chr', i.chr, names(s.orf), sep='')
   
-  writeFastaMy(s.orf, file=file.out, append=F)
+  writeFasta(s.orf, file=file.out, append=F)
   
   rm(q.fasta)
 

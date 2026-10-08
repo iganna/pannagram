@@ -88,7 +88,7 @@ for (s.comb in s.combinations) {
   if(!file.exists(file.seq.cons)){
     stop("Consensus fasta does not exist")
   }
-  s.pangen = readFastaMy(file.seq.cons)
+  s.pangen = readFasta(file.seq.cons)
   s.pangen.name = names(s.pangen)[1]
   s.pangen = seq2nt(s.pangen)
   

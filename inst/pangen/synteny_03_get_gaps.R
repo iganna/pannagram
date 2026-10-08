@@ -120,16 +120,16 @@ pokaz('Number of alignments:', length(files.maj), file=file.log.main, echo=echo.
 # <unit>q<J>_query.fasta back to the single <unit>_base.fasta; synteny_05 reads the chunk
 # outputs back in chunk order.
 writeGapUnit <- function(s.q, s.b, pref.file, cap, floor.bp = 50000){
-  writeFastaMy(s.b, paste0(pref.file, '_base.fasta'))
+  writeFasta(s.b, paste0(pref.file, '_base.fasta'))
   len.q = as.numeric(nchar(s.q))
   b.bp  = sum(as.numeric(nchar(s.b)))
   chunk = max(floor.bp, min(cap, cap^2 / max(b.bp, 1)))
   if(sum(len.q) <= chunk){
-    writeFastaMy(s.q, paste0(pref.file, '_query.fasta'))
+    writeFasta(s.q, paste0(pref.file, '_query.fasta'))
   } else {
     g = as.integer((cumsum(len.q) - 1) %/% chunk)
     for(j in sort(unique(g))){
-      writeFastaMy(s.q[g == j], paste0(pref.file, 'q', j, '_query.fasta'))
+      writeFasta(s.q[g == j], paste0(pref.file, 'q', j, '_query.fasta'))
     }
   }
 }
@@ -169,7 +169,7 @@ loop.function <- function(f.maj,
   # per-nucleotide vector unless the genome-correspondence check is enabled).
   base.file = paste0(base.acc, '_chr', base.chr , '.', 'fasta', collapse = '')
   pokaz('Base:', base.file, file=file.log.loop, echo=echo.loop)
-  base.str = unname(readFastaMy(paste0(path.chr, base.file))[1])
+  base.str = unname(readFasta(paste0(path.chr, base.file))[1])
   base.len = nchar(base.str)
   pokaz('Length of base:', base.len, file=file.log.loop, echo=echo.loop)
 
@@ -177,7 +177,7 @@ loop.function <- function(f.maj,
   query.file = paste0(acc, '_chr',query.chr, '.fasta')
   pokaz('Query:', query.file, file=file.log.loop, echo=echo.loop)
 
-  query.str = unname(readFastaMy(paste0(path.chr, query.file))[1])
+  query.str = unname(readFasta(paste0(path.chr, query.file))[1])
   query.len = nchar(query.str)
   pokaz('Length of query:', query.len, file=file.log.loop, echo=echo.loop)
 
@@ -312,7 +312,7 @@ loop.function <- function(f.maj,
   cap.bp       = batch.cap.bp   # refined below once the gap lengths of this item are known
 
   # Accumulate gap sequences in memory and write each batch file ONCE after the
-  # loop. Previously writeFastaMy(append=T) opened/closed the file on every gap
+  # loop. Previously writeFasta(append=T) opened/closed the file on every gap
   # (~2 * #gaps file operations -> the dominant cost of this step).
   acc.q = list(); acc.b = list(); acc.batch = integer(0)
 
