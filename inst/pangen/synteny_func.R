@@ -1,29 +1,3 @@
-glueZero_old <- function(x){
-  x = x[order(x$V2),]
-  
-  ipos = 1
-  while(ipos < nrow(x)) {
-    # print(ipos)
-    idx = which((x[,'V4'] == (x[ipos,'V5'] + 1)) & (x[,'V2'] == (x[ipos,'V3'] + 1)))
-    if (length(idx) == 0){
-      ipos = ipos+1
-      next
-    }
-    # if(idx != (ipos+1)) print(idx)  # glue with not the next record
-    
-    x[ipos, 'V3'] <- x[idx, 'V3']
-    x[ipos, 'V5'] <- x[idx, 'V5']
-    x[ipos, 'V7'] <- x[ipos, 'V7'] + x[idx, 'V7']
-    x[ipos, 'V8'] <- paste0(x[ipos, 'V8'], x[idx, 'V8'])
-    x[ipos, 'V9'] <- paste0(x[ipos, 'V9'], x[idx, 'V9'])
-    x <- x[-idx,]
-  }
-  
-  rownames(x) <- NULL
-  return(x)
-}
-
-
 #' Merge Rows from Blast results
 #'
 #' This function merges blast hits if they follow each other.
@@ -741,74 +715,6 @@ reconstructTraverse <- function(predecessor) {
     end <- predecessor[end]
   }
   return(path)
-}
-
-
-#' Count consecutive occurrences of a specified value in a vector.
-#'
-#' This function starts counting from the next position to a specified one (`irow`) in the vector (`vec`)
-#' and continues until a different value is encountered or the end of the vector is reached.
-#' By default, the function looks for consecutive occurrences of -1.
-#'
-#' @param vec A numeric or character vector.
-#' @param irow Starting position in `vec` to begin counting from.
-#' @param value The value to count consecutive occurrences of. Default is -1.
-#' 
-#' @return An integer representing the number of consecutive occurrences of `value`
-#' starting from position `irow`.
-#' @examples
-#' vec <- c(1, 2, -1, -1, -1, 3, 4, -1)
-#' countValueStretch(vec, 2) # 3
-#' countValueStretch(vec, 1) # 0
-#' countValueStretch(vec, 7) # 1
-#' 
-countValueStretch <- function(vec, irow, value = -1) {
-  if(irow > length(vec)) stop('Wong position in vector, irow should be <= the length.')
-  
-  count <- 0
-  if(irow == length(vec)) return(0)
-  for (i in (irow + 1):length(vec)) {
-    if (vec[i] == value) {
-      count <- count + 1
-    } else {
-      break
-    }
-  }
-  return(count)
-}
-
-
-#' Count consecutive occurrences of a specified value in a vector, moving backward.
-#'
-#' This function starts counting from the previous position to a specified one (`irow`) in the vector (`vec`)
-#' and continues backward until a different value is encountered or the beginning of the vector is reached.
-#' By default, the function looks for consecutive occurrences of -1.
-#'
-#' @param vec A numeric or character vector.
-#' @param irow Starting position in `vec` to begin counting from.
-#' @param value The value to count consecutive occurrences of. Default is -1.
-#' 
-#' @return An integer representing the number of consecutive occurrences of `value`
-#' starting from position `irow` and moving backward.
-#' @examples
-#' vec <- c(1, 2, -1, -1, -1, 3, 4, -1)
-#' countValueStretchBW(vec, 6) # 3
-#' countValueStretchBW(vec, 8) # 0
-#' countValueStretchBW(vec, 4) # 1
-#' 
-countValueStretchBW <- function(vec, irow, value = -1) {
-  if(irow < 1) stop('Wong position in vector, irow should be >= 1')
-  
-  count <- 0
-  if(irow == 1) return(0)
-  for (i in (irow - 1):1) {
-    if (vec[i] == value) {
-      count <- count + 1
-    } else {
-      break
-    }
-  }
-  return(count)
 }
 
 
