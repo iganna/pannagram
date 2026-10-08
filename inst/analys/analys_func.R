@@ -646,78 +646,6 @@ getGeneBlocks <- function(g.tmp, len.pan, v.acc){
                     idx = g[idx.beg,1]))
 }
 
-saveVCF <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NULL) {
-  
-  if(length(snp.pos) != nrow(snp.val)) stop('Dimentions of the SNP matrix and the vectop of positions should match')
-  
-  if(!append){
-    # Open a connection to the output file
-    file.vcf.conn <- file(file.vcf, "w")
-    # Print the VCF header
-    cat("##fileformat=VCFv4.2\n", file = file.vcf.conn)
-    sample_names <- colnames(snp.val) # Exclude the first column (reference)
-    
-    info.line <- paste(
-      c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", sample_names),
-      collapse = "\t"
-    )
-    cat(info.line, "\n", file = file.vcf.conn, sep = "")
-    
-  } else {
-    file.vcf.conn <- file(file.vcf, "a")
-  }
-  
-  for (i in seq_len(nrow(snp.val))) {
-    
-    if(!is.null(snp.ref)){
-      ref <- snp.ref[i]  
-    } else {
-      ref <- snp.val[i, 1] # Reference nucleotide
-      if(ref == '-'){
-        alts.cnt = table(snp.val[i,snp.val[i,] != '-'])
-        ref = names(alts.cnt[alts.cnt == max(alts.cnt)])[1]
-      }
-    }
-    
-    alts <- unique(snp.val[i,]) # Unique alternative nucleotides, excluding reference
-    alts <- alts[alts != "-" & alts != ref] # Exclude dashes and reference nucleotides
-    alt <- paste(alts, collapse = ",") # Concatenate alternative nucleotides
-    
-    # Skip if there are no alternative alleles
-    if (length(alts) == 0) next
-    
-    # Prepare genotypes for each accession
-    genotypes <- sapply(1:ncol(snp.val), function(j) {
-      allele <- snp.val[i, j]
-      if (allele == ref) {
-        return("0/0") # Homozygous reference
-      } else if (allele == "-") {
-        return("./.") # Unknown genotype
-      } else {
-        alt_index <- match(allele, alts)
-        return(paste(alt_index, alt_index, sep="/")) # Homozygous alternative
-      }
-    })
-    
-    # Output VCF line with genotypes
-    cat(sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", 
-                chr.name,  # Chromosome
-                snp.pos[i],  # Position
-                '.',    # SNP ID, placeholder used here
-                ref,    # Reference nucleotide
-                alt,    # Concatenate alternative nucleotides
-                '.',    # Quality, placeholder used here
-                'PASS', # Filter, placeholder used here
-                '.',    # Additional information, placeholder used here, 
-                "GT",   # Genotype format, using GT to denote genotype
-                paste(genotypes, collapse="\t")),  # In accessions
-        file = file.vcf.conn)
-  }
-  
-  # Close the file connection
-  close(file.vcf.conn)
-}
-
 
 saveVCF2 <- function(snp.val, snp.pos, chr.name, file.vcf, append=F, snp.ref=NULL,
                      min.alleles = 2,  # positions with fewer different nucleotides are removed; 1 - keep invariant
@@ -991,7 +919,7 @@ getSNPs <- function(path.proj = NULL,
 
     # Get Consensus
     file.seq.cons = paste0(path.seq, "seq_cons_", s.comb, ref.suff, seq.suff, ".fasta")
-    s.pangen = seq2nt(readFastaMy(file.seq.cons))
+    s.pangen = seq2nt(readFasta(file.seq.cons))
 
     # Get accessions
     file.seq = paste0(path.seq, "seq_", s.comb, ref.suff, seq.suff, ".h5")

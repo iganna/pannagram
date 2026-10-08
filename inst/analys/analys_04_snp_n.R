@@ -90,7 +90,7 @@ loop.function <- function(s.comb, echo = T){
   # Get Consensus
   i.chr = comb2ref(s.comb)
   file.seq.cons = paste0(path.seq, 'seq_cons_', s.comb, ref.suff, seq.suff, '.fasta')
-  s.pangen = readFastaMy(file.seq.cons)
+  s.pangen = readFasta(file.seq.cons)
   s.pangen.name = names(s.pangen)[1]
   s.pangen = seq2nt(s.pangen)
   
@@ -152,7 +152,7 @@ loop.function <- function(s.comb, echo = T){
   #Save VCF-file
   pokaz('Save VCF-file...')
   file.vcf = paste0(path.snp, 'snps_', s.comb, ref.suff, seq.suff, '_pangen.vcf')
-  saveVCF(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
+  saveVCF2(snp.val, pos, chr.name=paste0('PanGen_Chr', i.chr), file.vcf = file.vcf)
   
   # Create the VCF-file for the first accession, the main reference.
   file.comb = paste0(path.features.msa, aln.pref, s.comb, ref.suff, '.h5')
@@ -170,7 +170,7 @@ loop.function <- function(s.comb, echo = T){
 
   pokaz('Save VCF-file for the accession', acc, '...')
   file.vcf.acc = paste0(path.snp, 'snps_', s.comb, ref.suff, seq.suff, '_', acc,'.vcf')
-  saveVCF(snp.val.acc, pos.acc, chr.name=paste0(acc,'_Chr', i.chr), file.vcf = file.vcf.acc)
+  saveVCF2(snp.val.acc, pos.acc, chr.name=paste0(acc,'_Chr', i.chr), file.vcf = file.vcf.acc)
   
 }
 
