@@ -121,7 +121,7 @@ loop.function <- function(f.in,
   pokaz(path.work)
 
   # Drop the scratch of this locus as soon as it is finished, and also when it fails.
-  # refineAlignmentRouted() leaves ~17 files per locus (seqs_*, aln_*, seg*, tbl, blast)
+  # refineAlignment() leaves ~17 files per locus (seqs_*, aln_*, seg*, tbl, blast)
   # in the single per-chromosome tmp/ directory; kept until the end of the chromosome
   # they pile up to tens of thousands (53908 on a 3144-locus chromosome), and the
   # metadata load of `cores` workers creating and removing files in one flat directory
@@ -136,7 +136,7 @@ loop.function <- function(f.in,
   }, add = TRUE)
   # keep.pos = FALSE: only the final alignment is written out, so the parallel list of
   # position matrices (the same size as the alignment matrices) is never built.
-  res = refineAlignmentRouted(seqs.clean, path.work, keep.pos = FALSE)
+  res = refineAlignment(seqs.clean, path.work, keep.pos = FALSE)
   
   alignment = res$aln[[length(res$aln)]]
   rm(res)
