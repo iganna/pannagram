@@ -16,6 +16,7 @@ run_sv_call=false
 run_sv_sim=false
 run_sv_sim_prot=false
 run_sv_graph=false
+run_sv_giant_nest=false
 run_sv_te_order=false
 run_annogroup=false
 run_sv_orf=false
@@ -37,11 +38,13 @@ while [ $# -gt 0 ]; do
         -snp_acc)         acc_snp="$2";                                     shift 2 ;;
         -snp_pi)          run_snp_pi=true;                                  shift 1 ;;
         -sv)              run_sv_call=true;                                 shift 1 ;;
+        -sv_giant)        sv_giant_len="$2";                                shift 2 ;;
         -sv_sim)          run_sv_sim=true;      set_file="$2";              shift 2 ;;
         -sv_sim_prot)     run_sv_sim_prot=true; set_file_prot="$2";         shift 2 ;;
         -sv_orf)          run_sv_orf=true;                                  shift 1 ;;
         -sv_graph | \
         -sv_families | -sv_family)      run_sv_graph=true;                  shift 1 ;;
+        -sv_giant_nest)   run_sv_giant_nest=true;                           shift 1 ;;
         -sv_te_order | -sv_te)          run_sv_te_order=true;               shift 1 ;;
         -plot_families)                 plot_families="T";                  shift 1 ;;
         -sim | -similarity)             similarity_value="$2";              shift 2 ;;
@@ -75,6 +78,7 @@ if ! $run_blocks && \
    ! $run_sv_sim && \
    ! $run_sv_sim_prot && \
    ! $run_sv_graph && \
+   ! $run_sv_giant_nest && \
    ! $run_sv_te_order && \
    ! $run_annogroup && \
    ! $run_sv_orf; then
@@ -89,6 +93,7 @@ fi
 
 cores="${cores:-1}"
 acc_anal="${acc_anal:-NULL}"
+sv_giant_len="${sv_giant_len:-0}"
 annot_s_chr="${annot_s_chr:-_Chr}"
 annot_feature="${annot_feature:-all}"
 annot_snap="${annot_snap:-}"

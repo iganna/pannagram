@@ -21,7 +21,11 @@ Options:
     -snp                            Get VCF file with SNPs;
 
     -sv                             SV calling;
+    -sv_giant LEN                   With -sv: also save sequences of SVs from 30000 to LEN bp
+                                    to seq_sv_giant_<LEN>.fasta (e.g. 300000 -> seq_sv_giant_300k.fasta);
     -sv_families                    Create the Graph of SVs;
+    -sv_giant_nest                  Nestedness of giant SVs (from -sv_giant): 1kb chunks are BLASTed
+                                    on giant SVs and stitched back, nestedness_sv_giant_<LEN>_<sim>_<cov>.txt;
     -sv_te_order                    Structural order (LTR / TIR / poly-A) of SV families;
 
     -annogroup PATH_ANNOT           Annotation groups: genes of the accessions arranged by the pangenome,

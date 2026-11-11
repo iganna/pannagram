@@ -170,6 +170,7 @@ if [ "$run_sv_call" = true ]; then # -sv_call|-sv
         --aln.type ${aln_type} \
         --acc.anal ${file_accessions} \
         --cores ${cores} \
+        --giant.len ${sv_giant_len} \
         --path.log "${path_log}sv_calling/"
     
     mkdir -p $path_plots_sv
@@ -273,6 +274,70 @@ elif [ "$run_sv_graph" = true ]; then # -sv_graph
         --coverage ${coverage_value}
 
     pokaz_message "Step -sv_families is done!"
+fi
+
+# Nestedness of giant SVs: chunks of giant SVs on themselves
+if [ "$run_sv_giant_nest" = true ]; then # -sv_giant_nest
+
+    pokaz_stage "Nestedness of giant SVs"
+
+    pokaz_message "Similarity: ${similarity_value}. Coverage: ${coverage_value}."
+
+    check_dir "$path_sv" || exit 1
+
+    files_sv_giant=( "${path_sv}"seq_sv_giant_*.fasta )
+    if [ ! -s "${files_sv_giant[0]}" ]; then
+        pokaz_attention "No giant SVs, step -sv_giant_nest is skipped. Run -sv with -sv_giant first."
+    fi
+
+    for file_sv_giant in "${files_sv_giant[@]}"; do
+        [ -s "${file_sv_giant}" ] || continue
+
+        giant_pref=$(basename "${file_sv_giant}" .fasta)
+        giant_pref=${giant_pref#seq_}
+        file_sv_giant_nest="${path_sv}nestedness_${giant_pref}_${similarity_value}_${coverage_value}.txt"
+
+        if [[ -f "$file_sv_giant_nest" ]]; then
+            pokaz_message "Nestedness for ${giant_pref} was estimated before."
+            continue
+        fi
+
+        path_sv_giant_blast="${path_sv}blast_${giant_pref}/"
+        mkdir -p ${path_sv_giant_blast}
+
+        file_sv_giant_chunks="${path_sv_giant_blast}${giant_pref}_chunks.fasta"
+        file_sv_giant_blast="${path_sv_giant_blast}${giant_pref}_chunks_blast.txt"
+
+        pokaz_message "Cut ${giant_pref} into chunks.."
+        Rscript $INSTALLED_PATH/analys/sv_10_giant_chunks.R \
+            --file.giant ${file_sv_giant} \
+            --file.chunks ${file_sv_giant_chunks} \
+            --chunk.len 1000
+
+        pokaz_message "BLAST of chunks on ${giant_pref}.."
+        makeblastdb -in "${file_sv_giant}" -dbtype nucl -out "${path_sv_giant_blast}${giant_pref}" > /dev/null
+
+        # Top-5 targets per chunk besides the SV itself
+        blastn -db "${path_sv_giant_blast}${giant_pref}" \
+               -query "${file_sv_giant_chunks}" \
+               -out "${file_sv_giant_blast}" \
+               -outfmt "6 qseqid qstart qend sstart send pident length sseqid qlen slen" \
+               -perc_identity "$((similarity_value - 1))" \
+               -max_target_seqs 6 \
+               -num_threads "${cores}"
+
+        pokaz_message "Stitch the hits.."
+        Rscript $INSTALLED_PATH/analys/sv_10_giant_nest.R \
+            --file.giant ${file_sv_giant} \
+            --file.blast ${file_sv_giant_blast} \
+            --file.out ${file_sv_giant_nest} \
+            --similarity ${similarity_value} \
+            --coverage ${coverage_value}
+
+        rm -rf ${path_sv_giant_blast}
+    done
+
+    pokaz_message "Step -sv_giant_nest is done!"
 fi
 
 # Structural order of the families: LTR / TIR / poly-A
