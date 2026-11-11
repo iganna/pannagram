@@ -471,10 +471,19 @@ filterNestedness <- function(nestedness,
                              max.len    = NULL,
                              names.remove = NULL,
                              min.copy = NULL,
-                             show.echo = F) {
+                             show.echo = F,
+                             end.gap = NULL) {
   
   if(show.echo){
     pokaz('Initial number of rows:', nrow(nestedness))
+  }
+  
+  # ---- Filter by ends ----
+  if(!is.null(end.gap)){
+    if(end.gap <= 0) stop('Wrong value of end.gap')
+    d.to.end = pmax(pmin(nestedness$beg.target, nestedness$length.target - nestedness$end.target),
+                    pmin(nestedness$beg.query, nestedness$length.query - nestedness$end.query))
+    nestedness = nestedness[d.to.end <= end.gap,,drop=F]
   }
   
   # ---- Filter by names to remove ----
@@ -653,9 +662,23 @@ filterEdges <- function(edges,
   return(edges)
 }
 
+#' Keep the dominant edges of the compact graph
+#'
+#' An edge between two compact nodes is kept when enough members of both nodes
+#' take part in it.
+#'
+#' @param edges Two-column edge list, child -> parent.
+#' @param dominant.effect Minimal fraction of the members of the child node
+#' which should have an edge to the parent node.
+#' @param dominant.effect.to Minimal fraction of the members of the parent node
+#' which should get an edge from the child node. By default the same as
+#' \code{dominant.effect}; a lower value makes the filter asymmetric: all the
+#' short variants should be attached, but not to most of the long ones.
+#'
 #' @export
 filterEdgesDominant <- function(edges,
                                 dominant.effect = 0.7,
+                                dominant.effect.to = dominant.effect,
                                 show.echo = F){
   
   graph.compact = getGraphCompact(edges)
@@ -682,7 +705,7 @@ filterEdgesDominant <- function(edges,
   cnt$p2 = cnt$sv2 / graph.compact$nodes.size[cnt$n2]
   
   comb.remove = cnt$comb[(cnt$p1 < dominant.effect) |
-                           (cnt$p2 < dominant.effect)]
+                           (cnt$p2 < dominant.effect.to)]
   
   comb.edges = paste(edges.compact[,1], edges.compact[,2], sep = '|')
   
@@ -999,6 +1022,7 @@ solveForkNodes <- function(edges,
                            seqs,
                            flank.length = 200,
                            cutoff.remain.edges = 0.7,
+                           cutoff.remain.edges.to = cutoff.remain.edges,
                            flank.cover.cutoff = 0.8,
                            show.echo = FALSE,
                            check.all.double = F,
@@ -1067,7 +1091,7 @@ solveForkNodes <- function(edges,
     stat.neighbours$p.to   <- stat.neighbours$n.to   / stat.neighbours$size.to
     
     stat.neighbours$remain <-
-      (stat.neighbours$p.to   >= cutoff.remain.edges) &
+      (stat.neighbours$p.to   >= cutoff.remain.edges.to) &
       (stat.neighbours$p.from >= cutoff.remain.edges)
     
     # Check whether the sequences are intersect by flanking regions
@@ -1136,6 +1160,7 @@ solveUmbrellaNodes <- function(edges,
                                seqs, 
                                flank.length = 200,
                                cutoff.remain.edges = 0.7,
+                               cutoff.remain.edges.to = cutoff.remain.edges,
                                flank.cover.cutoff = 0.8,
                                show.echo = FALSE,
                                flank.scores = NULL){
@@ -1200,7 +1225,7 @@ solveUmbrellaNodes <- function(edges,
     stat.neighbours$p.from = stat.neighbours$n.from / stat.neighbours$size.from
     stat.neighbours$p.to = stat.neighbours$n.to / stat.neighbours$size.to
     
-    stat.neighbours$remain = (stat.neighbours$p.to >= cutoff.remain.edges) & 
+    stat.neighbours$remain = (stat.neighbours$p.to >= cutoff.remain.edges.to) & 
       (stat.neighbours$p.from >= cutoff.remain.edges)
     
     # Check whether the sequences are intersect by flanking regions
@@ -1560,16 +1585,108 @@ getFlankScores <- function(nestedness, flank.length = 200){
                    beg        = c(nestedness$beg.target,    nestedness$beg.query),
                    end        = c(nestedness$end.target,    nestedness$end.query))
   
-  n.cut = pmin(flank.length, pos$len.child, pos$len.parent)
-  
-  # Intersection of the covered span with the flanks of the parent
-  ov.beg = pmax(0, pmin(pos$end, n.cut) - pmax(pos$beg, 1) + 1)
-  ov.end = pmax(0, pmin(pos$end, pos$len.parent) - pmax(pos$beg, pos$len.parent - n.cut + 1) + 1)
-  
-  score = pmax(ov.beg, ov.end) / n.cut
+  score = scoreFlankSpan(pos$beg, pos$end, pos$len.child, pos$len.parent, flank.length)
   key = paste(pos$child, pos$parent, sep = '\t')
   
   flank.scores = tapply(score, key, max)
   
   return(flank.scores)
+}
+
+
+#' Covered fraction of the flanks of the parent
+#'
+#' The covered span of the parent, \code{beg..end}, is intersected with its first
+#' and last \code{n.cut} positions, \code{n.cut = min(flank.length, len.child, len.parent)}.
+#'
+#' @return The largest covered fraction of the two flanks.
+scoreFlankSpan <- function(beg, end, len.child, len.parent, flank.length = 200){
+  
+  n.cut = pmin(flank.length, len.child, len.parent)
+  
+  # Intersection of the covered span with the flanks of the parent
+  ov.beg = pmax(0, pmin(end, n.cut) - pmax(beg, 1) + 1)
+  ov.end = pmax(0, pmin(end, len.parent) - pmax(beg, len.parent - n.cut + 1) + 1)
+  
+  return(pmax(ov.beg, ov.end) / n.cut)
+}
+
+
+#' Generate Graph Edges from Nestedness Results, end-to-end only
+#'
+#' As \code{getGraphFromNestedness}, but an edge child -> parent is kept only
+#' when the child lies at one of the ends of the parent: the span of the parent
+#' covered by the child should start not further than \code{end.gap} from the
+#' beginning of the parent, or stop not further than \code{end.gap} from its end.
+#' A sequence which is only nested somewhere inside of another one (e.g. a mobile
+#' element that jumped into it) gets no edge.
+#' The check is done per row of the table, i.e. the coverage and the span are
+#' taken from the same hit (same strand), and separately for every direction.
+#'
+#' @param nestedness Output of \code{simsearch -positions}.
+#' @param cov.cutoff Coverage cutoff, 0-1 or 10-100 (interpreted as %).
+#' @param end.gap Maximal distance, bp, from the covered span to the nearest
+#' end of the parent.
+#'
+#' @return A two-column matrix of unique edges.
+#' @export
+getGraphFromNestednessEnds <- function(nestedness,
+                                       cov.cutoff,
+                                       end.gap = 100){
+  
+  cols.pos = c('beg.query', 'end.query', 'beg.target', 'end.target')
+  if(!all(cols.pos %in% colnames(nestedness))){
+    stop('No positions in the nestedness table, please run simsearch with -positions')
+  }
+  
+  cov.cutoff <- normalizeCovCutoff(cov.cutoff)
+  
+  # query is the child, target is the parent
+  gap.1.to.2 = pmin(nestedness$beg.target - 1, nestedness$length.target - nestedness$end.target)
+  idx.1.to.2 = (nestedness$coverage.query >= cov.cutoff) & 
+    (nestedness$length.target / nestedness$length.query >= cov.cutoff) &
+    (gap.1.to.2 <= end.gap)
+  edges = cbind(nestedness$name.query[idx.1.to.2], nestedness$name.target[idx.1.to.2])
+  
+  # target is the child, query is the parent
+  gap.2.to.1 = pmin(nestedness$beg.query - 1, nestedness$length.query - nestedness$end.query)
+  idx.2.to.1 = (nestedness$coverage.target >= cov.cutoff) & 
+    (nestedness$length.query / nestedness$length.target >= cov.cutoff) &
+    (gap.2.to.1 <= end.gap)
+  edges = rbind(edges, cbind(nestedness$name.target[idx.2.to.1], nestedness$name.query[idx.2.to.1]))
+  
+  edges = unique(edges)
+  
+  return(edges)
+}
+
+
+#' End-to-end scores of the pairs, from the covered spans of simsearch
+#'
+#' The same rule as in \code{getGraphFromNestednessEnds}, in the form which
+#' \code{solveForkNodes} and \code{solveUmbrellaNodes} take as \code{flank.scores}:
+#' 1 when the covered span of the parent is not further than \code{end.gap} from
+#' one of its ends, 0 otherwise. Over several rows of the same pair the maximum
+#' is taken.
+#'
+#' @param nestedness Output of \code{simsearch -positions}.
+#' @param end.gap Maximal distance, bp, from the covered span to the nearest
+#' end of the parent.
+#'
+#' @return Named vector of scores, names are "child<TAB>parent".
+#' @export
+getEndScores <- function(nestedness, end.gap = 100){
+  
+  cols.pos = c('beg.query', 'end.query', 'beg.target', 'end.target')
+  if(!all(cols.pos %in% colnames(nestedness))){
+    stop('No positions in the nestedness table, please run simsearch with -positions')
+  }
+  
+  # Child - parent in both orientations
+  gap = c(pmin(nestedness$beg.target - 1, nestedness$length.target - nestedness$end.target),
+          pmin(nestedness$beg.query - 1,  nestedness$length.query - nestedness$end.query))
+  key = c(paste(nestedness$name.query,  nestedness$name.target, sep = '\t'),
+          paste(nestedness$name.target, nestedness$name.query,  sep = '\t'))
+  
+  return(tapply((gap <= end.gap) * 1, key, max))
 }

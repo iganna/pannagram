@@ -58,7 +58,7 @@ pokaz('Cutoff suffix', suff.cutoffs)
 dominant.effect = 0.7
 
 # Filtration of the graph
-min.len = 200
+min.len = 100
 min.copy = 2
 min.comp.size = 3
 
@@ -95,7 +95,8 @@ if(show.echo) pokaz('Get initial edges...')
 
 nestedness = filterNestedness(nestedness,
                               min.len = min.len,
-                              show.echo=show.echo)
+                              show.echo=show.echo,
+                              end.gap = 100)
 
 edges.init = getGraphFromNestedness(nestedness, cov.cutoff = cov.cutoff)
 
