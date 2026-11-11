@@ -968,7 +968,7 @@ pokazAttention <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('  Attention: ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- crayon::make_style("#FC345C")
+  text.color <- crayon::make_style("#FF5F5F")  # same as pokaz_attention in bash (38;5;203)
   # bg <- make_style("grey5", bg = TRUE)
   fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)
@@ -1005,10 +1005,8 @@ pokaz <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('  ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- crayon::make_style("#FDFDFD")
-  # bg <- make_style("grey5", bg = TRUE)
-  fancy <- crayon::combine_styles(text.color)
-  formatted_output <- fancy(arguments)
+  # No colour: use the default foreground of the terminal theme
+  formatted_output <- arguments
 
   if (echo) {
     # Output to console
@@ -1042,7 +1040,7 @@ pokazStage <- function(..., file = NULL, echo = T) {
   
   arguments <- paste('* ', paste(arguments_list, collapse = " "), sep = '')
   
-  text.color <- crayon::make_style("#FDFDFD")
+  text.color <- crayon::make_style("#00AFAF")  # same as pokaz_stage in bash (38;5;37)
   # bg <- make_style("grey5", bg = TRUE)
   fancy <- crayon::combine_styles(text.color)
   formatted_output <- fancy(arguments)

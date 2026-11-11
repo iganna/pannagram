@@ -298,8 +298,8 @@ pokaz_error() {
 # Display a stage message
 pokaz_message() {
     local text="$1"
-    local color_code="38;5;158"  # Very light blue color code
-    printf "\e[${color_code}m  %s\e[0m\n" "$text"
+    # No colour: use the default foreground of the terminal theme
+    printf "  %s\n" "$text"
     # echo "  ${text}"
 }
 

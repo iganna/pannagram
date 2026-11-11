@@ -134,7 +134,17 @@ for db_file in "${db_files[@]}"; do
                 else
                     blast_task="megablast"
                 fi
-                blast_extra=( -task "$blast_task" -word_size "${word_size:-20}" -evalue 1e-5 -dust no )
+                # -dust: masking of low-complexity QUERY stretches. Off by default,
+                # which is what TE detection wants in principle -- but with it off a
+                # representative carrying even a 60-bp (AT)n tail seeds across a whole
+                # repeat-rich genome: measured 114 M HSPs on a 2.8 Gb frog and 470 M on
+                # the 32 Gb axolotl, 99.5 % of them under 100 bp. blastn soft-masks by
+                # default, so `yes` removes the SEEDS in those stretches only and lets
+                # extension run through them: a diverged copy of the element body is
+                # unaffected. Set SIMSEARCH_DUST=yes to switch it on. (Env var rather
+                # than a CLI flag because argparse_simsearch.sh is read from the
+                # INSTALLED package copy, so a new flag would need a reinstall.)
+                blast_extra=( -task "$blast_task" -word_size "${word_size:-20}" -evalue 1e-5 -dust "${SIMSEARCH_DUST:-no}" )
             fi
             $blast_cmd \
                 -db "$db_path_intermediate" \
@@ -149,6 +159,9 @@ for db_file in "${db_files[@]}"; do
     # Check if the BLAST results file is empty
     if [ ! -s "${blast_res}" ]; then
         pokaz_message "Blast result is empty for ${db_file}"
+        if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
+            rm -f "$blast_res" "$blast_res_pre" "${db_path_intermediate}".*
+        fi
         continue
     fi
 
@@ -187,13 +200,19 @@ for db_file in "${db_files[@]}"; do
         # pokaz_message "File with counts was generated: ${file_out_cnt}"
     fi
 
-    # Remove the BLAST temporary file if not needed
+    # Remove the BLAST results and database if not needed
     if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
         rm -f "$blast_res"
         rm -f "$blast_res_pre"
+        rm -f "${db_path_intermediate}".*
     fi
 
 done
+
+# Remove the intermediate directory; rmdir keeps it if another run still uses it
+if [ "$keep_blast_flag" -ne 1 ] && [ "$after_blast_flag" -ne 1 ]; then
+    rmdir "$intermediate_dir" 2>/dev/null || true
+fi
 
 # Combine all files to the total count file
 if [[ -z "$file_seq" && -z "$file_genome" ]]; then
