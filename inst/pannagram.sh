@@ -1877,7 +1877,7 @@ if [ "${step_num}" -ge "${step_start}" ] || [ ! -f ${step_file} ]; then
             --path.cons ${path_features_msa} \
             --path.log ${path_log_step} \
             --log.level ${log_level}  \
-            --len.cutoff 200000 \
+            --len.cutoff 50000 \
             --aln.type.in 'extra1'
 
     # Done

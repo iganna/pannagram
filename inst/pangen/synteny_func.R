@@ -182,6 +182,11 @@ cleanOverlapsPre <- function(x.df, rm.threshold = 0.5){
 #
 defineOverlappsQuery <- function(x.df){
   
+  if(anyNA(x.df$V2) || anyNA(x.df$V3)){
+    stop('defineOverlappsQuery: NA in query positions (V2/V3) in ', sum(is.na(x.df$V2) | is.na(x.df$V3)),
+         ' row(s), e.g. ', x.df$V1[which(is.na(x.df$V2) | is.na(x.df$V3))[1]])
+  }
+  
   # if not sorted - SORT!
   if(is.unsorted(x.df$V2)){
     # Sort by the position in the reference
@@ -273,6 +278,7 @@ cutSmallOverlapsQuery <- function(x.df){
   # if(!isSorted(x.df$p.beg)) pokazAttention('2!!')
   
   idx.cut = which(x.df$rm.len != 0)
+  idx.rm = rep(FALSE, nrow(x.df))
   for(irow in idx.cut){
     
     # print(info(x.df[irow,]))
@@ -281,6 +287,13 @@ cutSmallOverlapsQuery <- function(x.df){
     adjustment <- x.df$rm.len[irow]  # sing says about "begin" or "end"
     # adjustment.dir <- ifelse(x.df$dir[irow] == 0, adjustment, (-1) * adjustment)
     n.symbols = abs(adjustment)
+    
+    # The overlap covers the whole query part of the row: nothing would remain -> remove the row
+    # (cutting it would give NA positions, or an empty query with V2 > V3)
+    if(n.symbols >= sum(seq2nt(x.df$V8[irow]) != '-')){
+      idx.rm[irow] = TRUE
+      next
+    }
     
     if(adjustment > 0){
       # stop('3')
@@ -332,6 +345,10 @@ cutSmallOverlapsQuery <- function(x.df){
     # if(x.df$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
   
+  # Remove rows that were fully covered, or lost all nucleotides on the other (base) side
+  idx.rm = idx.rm | !grepl('[^-]', x.df$V8) | !grepl('[^-]', x.df$V9)
+  x.df = x.df[!idx.rm,]
+  
   # Undate begin-eng positions
   x.df$p.beg <- ifelse(x.df$V4 < x.df$V5, x.df$V4, x.df$V5)
   x.df$p.end <- ifelse(x.df$V4 < x.df$V5, x.df$V5, x.df$V4)
@@ -367,6 +384,11 @@ defineOverlapps <- function(x.df){
     x.df$p.end <- ifelse(x.df$V4 < x.df$V5, x.df$V5, x.df$V4)
   }
   
+  
+  if(anyNA(x.df$p.beg) || anyNA(x.df$p.end)){
+    stop('defineOverlapps: NA in base positions (V4/V5) in ', sum(is.na(x.df$p.beg) | is.na(x.df$p.end)),
+         ' row(s), e.g. ', x.df$V1[which(is.na(x.df$p.beg) | is.na(x.df$p.end))[1]])
+  }
   
   # if not sorted - SORT!
   if(is.unsorted(x.df$p.beg)){
@@ -452,6 +474,7 @@ cutSmallOverlaps <- function(x.sk){
   # if(!isSorted(x.sk$p.beg)) pokazAttention('2!!')
   
   idx.cut = which(x.sk$rm.len != 0)
+  idx.rm = rep(FALSE, nrow(x.sk))
   for(irow in idx.cut){
     
     # if(x.sk$dir[irow] == 1) stop('dir')
@@ -459,6 +482,12 @@ cutSmallOverlaps <- function(x.sk){
     adjustment <- x.sk$rm.len[irow]  # sing says about "begin" or "end"
     adjustment.dir <- ifelse(x.sk$dir[irow] == 0, adjustment, (-1) * adjustment)
     n.symbols = abs(adjustment)
+    
+    # The overlap covers the whole base part of the row: nothing would remain -> remove the row
+    if(n.symbols >= sum(seq2nt(x.sk$V9[irow]) != '-')){
+      idx.rm[irow] = TRUE
+      next
+    }
     
     if(adjustment > 0){
       # stop('3')
@@ -505,6 +534,9 @@ cutSmallOverlaps <- function(x.sk){
     # if(x.sk$V1[irow] == 'acc_10001|chr_1|part_157|780001') stop()
   }
   
+  # Remove rows that were fully covered, or lost all nucleotides on the other (query) side
+  idx.rm = idx.rm | !grepl('[^-]', x.sk$V8) | !grepl('[^-]', x.sk$V9)
+  x.sk = x.sk[!idx.rm,]
   
   # Undate begin-eng positions
   x.sk$p.beg <- ifelse(x.sk$V4 < x.sk$V5, x.sk$V4, x.sk$V5)
