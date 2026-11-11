@@ -346,6 +346,7 @@ runTask <- function(task){
     NULL
   },
   error = function(err){
+    if(inherits(err, 'mafftEmpty')) stop(err)   # tmp overflow hits every task: stop, don't skip
     msg = conditionMessage(err)
     cat(paste(task$item.id, NA, NA, paste0('error:', msg), sep='\t'), '\n',
         sep='', file=file.skip, append=TRUE)

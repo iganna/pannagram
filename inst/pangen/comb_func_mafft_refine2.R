@@ -1,4 +1,28 @@
 # ============================================================================
+#  Running MAFFT
+# ============================================================================
+
+#' Run MAFFT; stop at once if the alignment came out empty.
+#'
+#' MAFFT keeps its scratch in $TMPDIR (default /tmp). When that directory overflows on
+#' the node, MAFFT may still exit 0 with an EMPTY output. The error has class
+#' 'mafftEmpty', so the tryCatch fallbacks rethrow it instead of swallowing it (checked
+#' inside the error handler: a separate mafftEmpty= handler would be caught by error=).
+runMafft <- function(args, file.out){
+  system(paste('mafft', args, '>', file.out))
+  if(file.exists(file.out) && file.size(file.out) > 0) return(invisible(file.out))
+  msg = paste0('MAFFT returned an empty alignment.\n',
+               'The tmp directory ($TMPDIR) may have run out of space.\n',
+               'Set it to another directory: export TMPDIR="new_dir"\n',
+               'and rerun the same pannagram command. It will resume from where it stopped.')
+  # Red, as pokaz_error in bash, and unconditional like it: crayon would drop the colour
+  # in PSOCK workers, whose stderr is never a terminal.
+  msg = paste0('\033[31m', msg, '\033[0m')
+  stop(structure(class = c('mafftEmpty', 'error', 'condition'), list(
+    message = paste0('\n', msg, '\n'), call = NULL)))
+}
+
+# ============================================================================
 #  FAST refinement (replaces the O(L^2) full MAFFT pairwise merge)
 # ============================================================================
 
@@ -27,7 +51,7 @@ alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 8000,
 
   mafftPairMx <- function(a, b){
     writeFasta(setNames(c(a, b), c('a', 'b')), paste0(path.work, 'seg.fasta'))
-    system(paste0('mafft --quiet --op 3 --ep 0.1 ', path.work, 'seg.fasta > ', path.work, 'seg_a.fasta'))
+    runMafft(paste0('--quiet --op 3 --ep 0.1 ', path.work, 'seg.fasta'), paste0(path.work, 'seg_a.fasta'))
     aln2mx(readFasta(paste0(path.work, 'seg_a.fasta')))[c('a', 'b'), , drop = F]
   }
   mxToPos <- function(mx){
@@ -159,14 +183,14 @@ alignTwoLong <- function(s1, s2, path.work, gap.mafft.max = 8000,
 
   # ---- a single MAFFT, if it is not forced ----
   if(max(n1, n2) <= gap.mafft.max){
-    mx = tryCatch(mafftPairMx(s1, s2), error = function(e) NULL)
+    mx = tryCatch(mafftPairMx(s1, s2), error = function(e) if(inherits(e, 'mafftEmpty')) stop(e) else NULL)
     if(!is.null(mx) && identity2(mx) >= need.ident(max(n1, n2))){
       pm = tryCatch(mxToPos(mx), error = function(e) NULL)
       if(valid(pm)) return(pm)
     }
   }
 
-  pm = tryCatch(viaAnchors(), error = function(e) NULL)
+  pm = tryCatch(viaAnchors(), error = function(e) if(inherits(e, 'mafftEmpty')) stop(e) else NULL)
   if(valid(pm)) return(pm)
 
   # ---- fallback: full MAFFT of the pair (rare edge cases; keeps every position) ----
@@ -201,7 +225,7 @@ refineAlignment <- function(seqs.clean, path.work, gap.mafft.max = 8000, keep.po
     seqs.cl.fasta = paste0(path.work, 'seqs_', i.cl, '.fasta')
     aln.fasta     = paste0(path.work, 'aln_',  i.cl, '.fasta')
     writeFasta(seqs.tmp, seqs.cl.fasta)
-    system(paste('mafft  --quiet --maxiterate 100 ', seqs.cl.fasta, '>', aln.fasta, sep = ' '))
+    runMafft(paste('--quiet --maxiterate 100', seqs.cl.fasta), aln.fasta)
     seqs.cl.mx = aln2mx(readFasta(aln.fasta))
     if(keep.pos){
       pos.cl.mx = matrix(0L, nrow = nrow(seqs.cl.mx), ncol = ncol(seqs.cl.mx))
@@ -320,7 +344,7 @@ mafftAdd <- function(seq1, seq2, path.work, n.diff = 5, n.flank = 0){
   file.mafft = paste0(path.work, 'seqs_tmp_mafft.fasta')
   
   # Run MAFFT with the specified table and merged sequences
-  system(paste('mafft --op 3  --ep 0.1 --quiet --merge', file.table, file.seqs.merge, '>', file.mafft, sep = ' '))
+  runMafft(paste('--op 3 --ep 0.1 --quiet --merge', file.table, file.seqs.merge), file.mafft)
   
   # Read the aligned sequences
   xx = readFasta(file.mafft)
