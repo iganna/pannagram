@@ -4,7 +4,17 @@ path_features="${path_project}features/"
 path_features_msa="${path_features}alignments/"
 path_snp="$path_features/snp/"
 path_seq="$path_features/consensus/"
-path_sv="$path_features/sv/"
+# SV output of every alignment type but the default ('pan') lives in its own folder:
+# sv/ for pan, sv_<type>/ otherwise (same rule as seq.suff in chunk_combinations.R).
+# With one shared folder an -aln_type extra1 run overwrote the pan SVs, GFFs, families
+# and ORFs, as all file names inside are the same.
+if [ -z "${aln_type}" ] || [ "${aln_type}" == "pan" ]; then
+    sv_suff=''
+else
+    sv_suff="_${aln_type}"
+fi
+
+path_sv="$path_features/sv${sv_suff}/"
 path_sv_simsearch="$path_sv/simsearch_sv_large/"
 path_gff="$path_sv/gff/"
 path_annot_res="${path_features}annotation/"
@@ -28,7 +38,7 @@ path_extra="${path_inter}/extra/"
 
 path_plots="${path_project}plots/"
 path_plots_snp="${path_plots}snp/"
-path_plots_sv="${path_plots}sv/"
+path_plots_sv="${path_plots}sv${sv_suff}/"
 path_plots_synteny="${path_plots}synteny_pan/"
 path_plots_pairwise="${path_plots}synteny_ref/"
 

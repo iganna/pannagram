@@ -21,6 +21,10 @@ features -path_project '${PATH_PROJECT}' -sv
 Example: `SVgr_1_id_0022|18`  
 Meaning: `SV group` • `chromosome 1` • `ID 0022` | `length = 18 bp`
 
+All paths below are for the default alignment (`pan`). For any other `-aln_type`
+(e.g. `extra1`, or `ref` with `-ref`) the folder is `features/sv_<aln_type>/`, and the
+plots go to `plots/sv_<aln_type>/`.
+
 ### FASTA files with SV sequences
 are located at `${PATH_PROJECT}/features/sv/`
 
