@@ -362,7 +362,7 @@ extractChrByFormat <- function(gff, s.chr){
   
   gff = gff[gff.matched.chr.format,]
   
-  gff$chr <- sub(paste(".*",s.chr,"(\\d+)", sep = ''), "\\1", gff$V1)
+  gff$chr <- as.numeric(sub(paste(".*",s.chr,"(\\d+)", sep = ''), "\\1", gff$V1))  # as.numeric: "Chr_01" -> 1, so it matches i.chr
   if(sum(is.na(gff$chr)) > 0) stop('Check the chromosome formats (#3)')
   
   if(nrow(gff) != n.gff){
