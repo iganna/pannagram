@@ -584,3 +584,444 @@ svFamilyOrder <- function(seqs, cons, max.perm = 0.2, perm.par = list(), ...){
 
   return(res)
 }
+
+
+#' Distance between the members of an alignment
+#'
+#' Two members are compared only where both of them are: outside of its span
+#' a sequence has no say, see \code{\link{svAlnSpan}}. A mismatch is one
+#' difference, and a run of columns where only one of the two has a gap is one
+#' difference too, whatever its length: a deletion of a hundred nucleotides is
+#' one event, not a hundred.
+#'
+#' @param mx A character matrix of the alignment.
+#' @param min.overlap Minimum number of columns where both members have a
+#' nucleotide; below it the pair cannot be compared and gets the distance of 1.
+#'
+#' @return A symmetric matrix of distances between the rows of `mx`.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svAlnDist <- function(mx, min.overlap = 50){
+
+  mx = toupper(mx)
+  span = svAlnSpan(mx)
+  is.nt = (mx != '-')
+  is.acgt = matrix(mx %in% c('A', 'C', 'G', 'T'), nrow(mx))
+
+  n = nrow(mx)
+  d = matrix(0, n, n, dimnames = list(rownames(mx), rownames(mx)))
+  if(n < 2) return(d)
+
+  for(i in 1:(n - 1)) for(j in (i + 1):n){
+    both = span[i, ] & span[j, ]
+    nt.both = both & is.acgt[i, ] & is.acgt[j, ]
+    n.nt = sum(nt.both)
+    if(n.nt < min.overlap){
+      d[i, j] = d[j, i] = 1
+      next
+    }
+    n.mism = sum(mx[i, nt.both] != mx[j, nt.both])
+
+    # columns where both have a gap do not break a run of an indel
+    keep = both & (is.nt[i, ] | is.nt[j, ])
+    x = xor(is.nt[i, keep], is.nt[j, keep])
+    n.indel = sum(diff(c(FALSE, x)) == 1)
+
+    d[i, j] = d[j, i] = (n.mism + n.indel) / (n.nt + n.indel)
+  }
+
+  return(d)
+}
+
+
+#' Split the members of an aligned family into subfamilies
+#'
+#' A family built by the similarity of pairs can join several subfamilies through
+#' the members that are close to both of them. The consensus of such a family is
+#' a chimera that exists in none of the copies, so the members are clustered by
+#' \code{\link{svAlnDist}} and the consensus is built for every cluster separately.
+#'
+#' @param mx A character matrix of the alignment.
+#' @param max.dist Height at which the tree of the members is cut.
+#' @param min.size Minimum number of members in a subfamily; the members of
+#' smaller clusters get `NA` and are left to be assigned later.
+#' @param min.overlap Parameter of \code{\link{svAlnDist}}.
+#'
+#' @return An integer vector named by the rows of `mx`: the subfamily of every
+#' member, the largest subfamily first.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svFamilySplit <- function(mx, max.dist = 0.1, min.size = 2, min.overlap = 50){
+
+  one = setNames(rep(1L, nrow(mx)), rownames(mx))
+  if(nrow(mx) < 2 * min.size) return(one)
+
+  d = svAlnDist(mx, min.overlap = min.overlap)
+  cl = cutree(hclust(as.dist(d), method = 'average'), h = max.dist)
+
+  n.cl = table(cl)
+  big = as.integer(names(n.cl)[n.cl >= min.size])
+  if(length(big) == 0) return(one)
+  big = big[order(n.cl[as.character(big)], decreasing = TRUE)]
+
+  res = match(cl, big)
+  names(res) = rownames(mx)
+
+  return(res)
+}
+
+
+#' Align a set of sequences to a reference with MAFFT
+#'
+#' The sequences are added to the reference one by one and are not aligned to
+#' each other, so the result grows linearly with their number and a truncated
+#' copy does not pull the others apart.
+#'
+#' @param ref A single named reference sequence.
+#' @param seqs Named vector of sequences.
+#' @param path.work,args,bin Parameters of \code{\link{svAlnMafft}}.
+#'
+#' @return A character matrix of the alignment; the reference is one of the rows.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svAlnMafftAdd <- function(ref, seqs, path.work = tempdir(), args = '--op 5 --ep 0.2 --quiet', bin = 'mafft'){
+
+  if(length(ref) != 1) stop('There should be only one reference sequence')
+  if(is.null(names(ref))) names(ref) = 'ref'
+  if(is.null(names(seqs))) names(seqs) = paste0('seq_', seq_along(seqs))
+  if(names(ref) %in% names(seqs)) stop('The reference has the same name as one of the sequences')
+
+  pref = tempfile(pattern = 'sv_add_', tmpdir = path.work)
+  file.ref = paste0(pref, '_ref.fasta')
+  file.add = paste0(pref, '_add.fasta')
+  file.out = paste0(pref, '_out.fasta')
+  on.exit(unlink(c(file.ref, file.add, file.out)), add = TRUE)
+
+  writeFasta(ref, file.ref)
+  writeFasta(seqs, file.add)
+  status = system(paste(bin, '--addfragments', shQuote(file.add), args,
+                        shQuote(file.ref), '>', shQuote(file.out)))
+  if((status != 0) || !file.exists(file.out) || (file.size(file.out) == 0)){
+    stop(paste0('MAFFT has failed, check that "', bin, '" is available'))
+  }
+
+  mx = aln2mx(readFasta(file.out))
+  return(mx[c(names(ref), names(seqs)), , drop = FALSE])
+}
+
+
+#' Identity of the members to the reference row of an alignment
+#'
+#' Only the columns where both the member and the reference are, see
+#' \code{\link{svAlnSpan}}, are taken: a flank of the member beyond the element
+#' does not lower its identity, and a truncated member is not punished for the
+#' part it does not have - that part goes to the coverage instead.
+#'
+#' @param mx A character matrix of the alignment.
+#' @param ref Name of the reference row.
+#'
+#' @return A data frame with the identity `ident` of every member to the
+#' reference and the share `cov` of the reference it covers.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svAlnIdent <- function(mx, ref){
+
+  mx = toupper(mx)
+  span = svAlnSpan(mx)
+  r = mx[ref, ]
+  r.nt = (r != '-')
+
+  rows = setdiff(rownames(mx), ref)
+  res = data.frame(sv = rows, ident = 0, cov = 0, stringsAsFactors = FALSE)
+  for(k in seq_along(rows)){
+    s = mx[rows[k], ]
+    keep = span[rows[k], ] & span[ref, ] & ((s != '-') | r.nt)
+    if(sum(keep) == 0) next
+    res$ident[k] = mean(s[keep] == r[keep])
+    res$cov[k] = sum(span[rows[k], ] & r.nt) / sum(r.nt)
+  }
+
+  return(res)
+}
+
+
+#' Assign the members of a family to the consensus sequences of its subfamilies
+#'
+#' @param seqs Named vector of the sequences of the members, on one strand.
+#' @param cons Named vector of the consensus sequences of the subfamilies.
+#' @param min.ident Minimum identity to the best consensus; a member below it
+#' stays unassigned.
+#' @param path.work,mafft.args,mafft.bin Parameters of \code{\link{svAlnMafftAdd}}.
+#'
+#' @return A list with the table `best` (the subfamily, the identity and the
+#' coverage of every member, in the order of `seqs`) and the alignments `aln`
+#' of all the members to every consensus.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svFamilyAssign <- function(seqs, cons, min.ident = 0.7,
+                           path.work = tempdir(), mafft.args = '--op 5 --ep 0.2 --quiet', mafft.bin = 'mafft'){
+
+  name.ref = '__cons__'
+
+  aln = list()
+  tab = NULL
+  for(k in names(cons)){
+    mx = svAlnMafftAdd(setNames(cons[[k]], name.ref), seqs,
+                       path.work = path.work, args = mafft.args, bin = mafft.bin)
+    aln[[k]] = mx[rownames(mx) != name.ref, , drop = FALSE]
+    id = svAlnIdent(mx, name.ref)
+    id$subfam = k
+    tab = rbind(tab, id)
+  }
+
+  # the closest consensus wins, the more complete copy of it on a tie
+  tab = tab[order(tab$sv, -tab$ident, -tab$cov), ]
+  best = tab[!duplicated(tab$sv), ]
+  best$subfam[best$ident < min.ident] = NA
+  rownames(best) = best$sv
+
+  return(list(best = best[names(seqs), ], aln = aln))
+}
+
+
+#' Consensus of the members aligned to a reference
+#'
+#' @param mx A character matrix of the members aligned to the reference by
+#' \code{\link{svAlnMafftAdd}}, the reference row removed.
+#' @param min.len Minimum length of the trimmed consensus; a shorter one is
+#' replaced by the untrimmed.
+#' @param trim.cov,trim.wnd,trim.agree,use.gap Parameters of \code{\link{svAlnTrim}}.
+#'
+#' @return The consensus sequence (a string).
+#'
+#' @author Anna A. Igolkina
+#' @export
+svAlnConsTrim <- function(mx, min.len = 40, trim.cov = 3, trim.wnd = 5, trim.agree = 0.7, use.gap = TRUE){
+
+  mx = mx[, colSums(mx != '-') > 0, drop = FALSE]
+  tr = svAlnTrim(mx, min.cov = trim.cov, wnd = trim.wnd, min.agree = trim.agree, use.gap = use.gap)
+  s.cons = if(is.null(tr$mx)) '' else svAlnCons(tr$mx)$seq
+  if(nchar(s.cons) < min.len) s.cons = svAlnCons(mx)$seq
+
+  return(s.cons)
+}
+
+
+#' Refine the consensus sequences of the subfamilies by all their members
+#'
+#' The first consensus is built from the representatives only, and it is only as
+#' good as their alignment. So every member is aligned to every consensus,
+#' assigned to the closest one, and the consensus is called again from the members
+#' assigned to it. The coordinates of the new alignment are those of the old
+#' consensus, so an error of the first alignment is voted out by the copies, and
+#' an end that the representatives did not reach can grow if the copies agree there.
+#' The rounds go on until the consensus sequences do not change.
+#'
+#' A subfamily that keeps fewer than `min.members` members is dropped, and its
+#' members go to the closest of the remaining ones in the next round.
+#'
+#' @param seqs Named vector of the sequences of the members, on one strand.
+#' @param cons Named vector of the initial consensus sequences of the subfamilies.
+#' @param n.iter Maximum number of rounds.
+#' @param n.max Maximum number of members that vote in a round, the longest ones;
+#' all the members are assigned in the last pass anyway.
+#' @param min.members Minimum number of members of a subfamily.
+#' @param min.ident Parameter of \code{\link{svFamilyAssign}}.
+#' @param min.len,trim.cov,trim.wnd,trim.agree,use.gap Parameters of \code{\link{svAlnConsTrim}}.
+#' @param path.work,mafft.args,mafft.bin Parameters of \code{\link{svAlnMafftAdd}}.
+#'
+#' @return A list with the refined consensus sequences `cons`, the table `best`
+#' of \code{\link{svFamilyAssign}} for all the members, the number of rounds
+#' `n.iter` and the flag `converged`.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svFamilyRefine <- function(seqs, cons, n.iter = 3, n.max = 100, min.members = 3, min.ident = 0.7,
+                           min.len = 40, trim.cov = 3, trim.wnd = 5, trim.agree = 0.7, use.gap = TRUE,
+                           path.work = tempdir(), mafft.args = '--op 5 --ep 0.2 --quiet', mafft.bin = 'mafft'){
+
+  seqs.vote = seqs[order(nchar(seqs), decreasing = TRUE)]
+  seqs.vote = seqs.vote[seq_len(min(length(seqs.vote), n.max))]
+
+  # a family smaller than min.members has nothing to drop
+  min.members = min(min.members, length(seqs.vote))
+
+  converged = FALSE
+  i.iter = 0
+  for(i.iter in seq_len(n.iter)){
+    as = svFamilyAssign(seqs.vote, cons, min.ident = min.ident,
+                        path.work = path.work, mafft.args = mafft.args, mafft.bin = mafft.bin)
+
+    cons.new = character(0)
+    for(k in names(cons)){
+      sv.k = as$best$sv[which(as$best$subfam == k)]
+      if(length(sv.k) < min.members) next
+      cons.new[k] = svAlnConsTrim(as$aln[[k]][sv.k, , drop = FALSE], min.len = min.len,
+                                  trim.cov = trim.cov, trim.wnd = trim.wnd,
+                                  trim.agree = trim.agree, use.gap = use.gap)
+    }
+    if(length(cons.new) == 0) break
+
+    converged = identical(cons.new, cons)
+    cons = cons.new
+    if(converged) break
+  }
+
+  as = svFamilyAssign(seqs, cons, min.ident = min.ident,
+                      path.work = path.work, mafft.args = mafft.args, mafft.bin = mafft.bin)
+
+  return(list(cons = cons, best = as$best, n.iter = i.iter, converged = converged))
+}
+
+
+# ***********************************************************************
+# ---- Boundaries of the consensus by its copies in the genome ----
+
+
+#' Boundaries of the element in an alignment of extended copies
+#'
+#' The copies are taken with their flanks, so the element is the block of the
+#' alignment where the copies agree, and the flanks are where they do not: every
+#' copy sits in its own place of the genome. A column is good if it is covered by
+#' at least `min.cov` copies and its dominant nucleotide is carried by at least
+#' `min.agree` of them. A gap is counted among the copies but cannot be dominant,
+#' so a column where most copies have a gap is not good: in a block of unrelated
+#' flanks the aligner often stacks the gaps, and such a column agrees on nothing.
+#'
+#' The coverage has to be a share of all the copies and not only a number: at the
+#' edges of the alignment one or two copies remain, and they agree with themselves.
+#' The agreement has to be well above what the aligner makes of unrelated
+#' sequences: it pulls them together, and with a few copies their columns agree
+#' at the level of 0.6 just by that.
+#'
+#' The element begins at the first good column of the first window of `wnd`
+#' columns with at least `wnd.good` good ones, and ends at the last good column
+#' of the last such window.
+#'
+#' @param mx A character matrix of the alignment.
+#' @param min.cov Minimum number of copies covering a column.
+#' @param min.cov.frac Minimum share of the copies covering a column.
+#' @param min.agree Minimum share of the dominant nucleotide among the covering copies.
+#' @param wnd Size of the window.
+#' @param wnd.good Minimum number of good columns in the window.
+#'
+#' @return A list with the boundaries `beg` and `end` (columns), the coverage
+#' `cov`, the agreement `agree` and the mask `good` of the columns, and the
+#' coverage `min.cov` actually required; or `NULL`.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svAlnBounds <- function(mx, min.cov = 3, min.cov.frac = 0.5, min.agree = 0.75, wnd = 10, wnd.good = 8){
+
+  mx = toupper(mx)
+  min.cov = max(min(min.cov, nrow(mx)), ceiling(min.cov.frac * nrow(mx)))
+
+  cov = svAlnCover(mx)
+  mx[!svAlnSpan(mx)] = ''
+  cnt = mx2profile(mx, gap.flag = FALSE)
+  agree = ifelse(cov > 0, apply(cnt, 2, max) / cov, 0)
+  good = (cov >= min.cov) & (agree >= min.agree)
+
+  n = ncol(mx)
+  if(n < wnd) return(NULL)
+  cs = cumsum(c(0, as.integer(good)))
+  n.good = cs[(wnd + 1):(n + 1)] - cs[1:(n - wnd + 1)]
+  w = which(n.good >= wnd.good)
+  if(length(w) == 0) return(NULL)
+
+  w1 = w[1]
+  w2 = w[length(w)]
+  beg = w1 - 1 + which(good[w1:(w1 + wnd - 1)])[1]
+  end = w2 - 1 + max(which(good[w2:(w2 + wnd - 1)]))
+
+  return(list(beg = beg, end = end, cov = cov, agree = agree, good = good, min.cov = min.cov))
+}
+
+
+#' Boundaries of the element in every row of an alignment
+#'
+#' @param mx A character matrix of the alignment.
+#' @param beg,end Boundaries of the element (columns).
+#'
+#' @return A data frame with the first `beg` and the last `end` nucleotide of the
+#' element in every sequence; `end < beg` if the sequence has nothing there.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svAlnRowBounds <- function(mx, beg, end){
+
+  is.nt = (mx != '-')
+  n.before = if(beg > 1) rowSums(is.nt[, 1:(beg - 1), drop = FALSE]) else rep(0, nrow(mx))
+  n.upto = rowSums(is.nt[, 1:end, drop = FALSE])
+
+  return(data.frame(sv = rownames(mx), beg = n.before + 1, end = n.upto, stringsAsFactors = FALSE))
+}
+
+
+#' Target site duplication at the boundaries of the copies
+#'
+#' A TSD is the same short sequence right before the element and right after it.
+#' A random match of length `k` happens with the probability of `p^k`, where `p`
+#' is the chance that two nucleotides of the flanks are the same: 1/4 for a uniform
+#' composition and more in an AT-rich genome, so it is taken from the flanks
+#' themselves. For one copy a short TSD means nothing, but for a family it does:
+#' the copies sit in different places, and their flanks agree only by chance.
+#' The number of copies with a TSD of length `k` is compared with the binomial
+#' expectation, and the TSD is accepted when the expected number of such results
+#' over all the lengths and shifts tried is below `alpha`.
+#'
+#' The boundaries of the element are known up to a few nucleotides, so both of
+#' them are shifted by up to `max.shift`, and the shift with the strongest TSD
+#' tells where the element really begins and ends. A TSD of length `k` implies the
+#' one of length `k - 1`, so the longest length still supported wins by itself.
+#'
+#' @param seqs Named vector of the copies with their flanks.
+#' @param b5,b3 The first and the last nucleotide of the element in every copy.
+#' @param k.min,k.max Range of the length of the TSD.
+#' @param max.shift Maximum shift of a boundary.
+#' @param alpha Threshold of the expected number of chance results.
+#'
+#' @return A list with the length `k`, the shifts `shift5` and `shift3`, the most
+#' frequent TSD `tsd`, the number of copies `n.tsd` that carry it, the number of
+#' copies `n` and the expected number `e` of chance results; or `NULL`.
+#'
+#' @author Anna A. Igolkina
+#' @export
+svFindTSD <- function(seqs, b5, b3, k.min = 2, k.max = 20, max.shift = 3, alpha = 0.01){
+
+  seqs = toupper(seqs)
+  n = length(seqs)
+  shifts = -max.shift:max.shift
+  n.tests = length(shifts)^2 * (k.max - k.min + 1)
+
+  fl = c(substr(seqs, 1, b5 - 1), substr(seqs, b3 + 1, nchar(seqs)))
+  cnt = table(factor(unlist(strsplit(fl, '')), levels = c('A', 'C', 'G', 'T')))
+  p.match = if(sum(cnt) > 0) sum((cnt / sum(cnt))^2) else 0.25
+
+  best = NULL
+  for(s5 in shifts) for(s3 in shifts){
+    e5 = b5 + s5
+    e3 = b3 + s3
+    for(k in k.min:k.max){
+      l = substr(seqs, e5 - k, e5 - 1)
+      r = substr(seqs, e3 + 1, e3 + k)
+      ok = (e5 - k >= 1) & (nchar(l) == k) & (l == r) & !grepl('[^ACGT]', l)
+      n.ok = sum(ok)
+      if(n.ok == 0) break
+      e = pbinom(n.ok - 1, n, p.match^k, lower.tail = FALSE) * n.tests
+      if(is.null(best) || (e < best$e)){
+        tb = table(l[ok])
+        best = list(k = k, shift5 = s5, shift3 = s3, tsd = names(tb)[which.max(tb)],
+                    n.tsd = n.ok, n = n, e = e)
+      }
+    }
+  }
+  if(is.null(best) || (best$e > alpha)) return(NULL)
+
+  return(best)
+}
