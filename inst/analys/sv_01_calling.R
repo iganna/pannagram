@@ -31,6 +31,7 @@ option_list = list(
   make_option("--min.len", type = "integer", default = 15, help = ""),
   make_option("--big.len", type = "integer", default = 50, help = ""),
   make_option("--max.len", type = "integer", default = 30000, help = ""),
+  make_option("--giant.len", type = "integer", default = 0, help = "Upper bound for giant SVs (>= max.len); 0 - do not save"),
   make_option("--cores",             type = "integer",   default = 1,            help = "number of cores to use for parallel processing"),
   make_option("--path.log",         type = "character", default = NULL, help = "Path for log files")
 );
@@ -102,6 +103,8 @@ cutoff <- opt$cutoff
 min.len <- opt$min.len
 big.len <- opt$big.len
 max.len <- opt$max.len
+giant.len <- opt$giant.len
+if((giant.len > 0) && (giant.len <= max.len)) stop(paste0('giant.len should be larger than max.len = ', max.len))
 
 # ***********************************************************************
 # ---- Combinations of chromosomes query-base to create the alignments ----
@@ -135,12 +138,16 @@ file.core.main <- initLoopLog(path.log)
 for(s.comb in s.combinations){
 
   # Sidecar result files double as the checkpoint payload (read back on resume)
-  file.sv.pos.rds = paste0(path.log, 'sv.pos_', s.comb, ref.suff, '.rds')
-  file.sv.beg.rds = paste0(path.log, 'sv.beg_', s.comb, ref.suff, '.rds')
-  file.sv.end.rds = paste0(path.log, 'sv.end_', s.comb, ref.suff, '.rds')
+  file.sv.pos.rds = paste0(path.log, 'sv.pos_', s.comb, ref.suff, seq.suff, '.rds')
+  file.sv.beg.rds = paste0(path.log, 'sv.beg_', s.comb, ref.suff, seq.suff, '.rds')
+  file.sv.end.rds = paste0(path.log, 'sv.end_', s.comb, ref.suff, seq.suff, '.rds')
 
   # ---- Checkpoint: skip combinations already fully computed ----
-  comb.id = paste0(s.comb, ref.suff)
+  # seq.suff carries the alignment type ('' for 'pan', '_extra1' and so on). Without it
+  # the checkpoint of a run over one alignment matches a run over another: a -aln_type
+  # extra1 run found 660 markers left by the September 'pan' run, skipped every
+  # combination and reproduced the pan SVs byte for byte while reporting success.
+  comb.id = paste0(s.comb, ref.suff, seq.suff)
   if(comb.id %in% done.set){
 
     pokaz('Reading beg-end', s.comb)
@@ -191,9 +198,9 @@ for(s.comb in s.combinations){
   # sv.cover = 0
   # for(acc in accessions){
   
-  file.sv.cover = paste0(path.log, 'sv_cover_',s.comb, ref.suff, '.rds')
+  file.sv.cover = paste0(path.log, 'sv_cover_',s.comb, ref.suff, seq.suff, '.rds')
 
-  cover.id = paste0(s.comb, ref.suff, '_cover')
+  cover.id = paste0(s.comb, ref.suff, seq.suff, '_cover')
   if(cover.id %in% done.set){
     sv.cover = readRDS(file.sv.cover)
   } else {
@@ -212,8 +219,8 @@ for(s.comb in s.combinations){
     ) %dopar% {
 
       # ---- Checkpoint: skip accessions already processed for this combination ----
-      item.id = paste0(acc, '_', s.comb, ref.suff)
-      file.loop.save = paste0(path.log, acc, '_', s.comb, ref.suff, '.rds')
+      item.id = paste0(acc, '_', s.comb, ref.suff, seq.suff)
+      file.loop.save = paste0(path.log, acc, '_', s.comb, ref.suff, seq.suff, '.rds')
 
       if(item.id %in% done.set){
         return(NULL)
@@ -278,7 +285,7 @@ for(s.comb in s.combinations){
     sv.cover <- 0
     for (acc in accessions) {
       # pokaz('Acc', acc)
-      file.loop.save = paste0(path.log, acc, '_', s.comb, ref.suff, '.rds')
+      file.loop.save = paste0(path.log, acc, '_', s.comb, ref.suff, seq.suff, '.rds')
       
       if (!file.exists(file.loop.save)){
         stop('Problem')
@@ -522,9 +529,12 @@ pokaz('Generate Fasta...')
 
 file.sv.small =  paste0(path.sv, 'seq_sv_short', ref.suff,'.fasta')
 file.sv.big =  paste0(path.sv, 'seq_sv_large', ref.suff,'.fasta')
+s.giant = ifelse(giant.len %% 1000 == 0, paste0(giant.len %/% 1000, 'k'), as.character(giant.len))
+file.sv.giant =  paste0(path.sv, 'seq_sv_giant_', s.giant, ref.suff,'.fasta')
 
 seqs.small = c()
 seqs.big = c()
+seqs.giant = c()
 len.pan.all = c()
 for(s.comb in s.combinations){
   i.chr = comb2ref(s.comb)
@@ -556,6 +566,19 @@ for(s.comb in s.combinations){
     if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
     seqs.big[sv.pos.all$name[irow]] = nt2seq(s.tmp)
   }
+  
+  # Giant sequence
+  if(giant.len > 0){
+    idx.giant = which((sv.pos.all$single == 1) & 
+                        (sv.pos.all$len >= max.len) &
+                        (sv.pos.all$len < giant.len) & (sv.pos.all$chr == i.chr))
+    for(irow in idx.giant){
+      s.tmp = s.chr[(sv.pos.all$beg[irow] + 1):(sv.pos.all$end[irow] - 1) ]
+      if(sum(s.tmp == 'N') > (0.5 * length(s.tmp))) next
+      seqs.giant[sv.pos.all$name[irow]] = nt2seq(s.tmp)
+    }
+    pokaz('Number of giant sequences', length(seqs.giant))
+  }
   pokaz('Number of large sequences', length(seqs.big))
   pokaz('Number of short sequences', length(seqs.small))
 }
@@ -563,6 +586,7 @@ for(s.comb in s.combinations){
 pokaz('Save Fasta...')
 writeFasta(seqs.small, file.sv.small)
 writeFasta(seqs.big, file.sv.big)
+if(giant.len > 0) writeFasta(seqs.giant, file.sv.giant)
 
 # ---- If reference-based alignment - no GFFs ----
 if(ref.suff != ''){
